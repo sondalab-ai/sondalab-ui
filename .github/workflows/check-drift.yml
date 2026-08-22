@@ -1,0 +1,34 @@
+name: Check token generation drift
+
+# Regenerates the CSS kit and Python palette from sondalab.tokens.json and fails
+# if the committed outputs differ. Guards against hand-edited or stale generated
+# files shipping to npm / PyPI.
+
+on:
+  pull_request:
+    paths:
+      - "sondalab.tokens.json"
+      - "scripts/**"
+      - "packages/**"
+      - ".github/workflows/check-drift.yml"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read   # checkout of a private repo (a permissions block defaults the rest to none)
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Regenerate tokens
+        run: npm run gen:tokens
+
+      - name: Fail if committed outputs drift from regeneration
+        run: git diff --exit-code -- packages/
