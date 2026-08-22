@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en" data-sl-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sondalab Design Language</title>
+
+  <!-- Tier A: consume the generated token + theme layers directly (relative). -->
+  <link rel="stylesheet" href="../packages/ui-kit/tokens.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    /* -- page-local conventions (per spec: not tokens) -------------------- */
+    :root {
+      --sl-measure: 63ch;
+      --sl-gutter: clamp(1.25rem, 5vw, 6rem);
+      --wrap: 74rem;
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--sl-bg-canvas);
+      color: var(--sl-text-primary);
+      font-family: var(--sl-font-sans);
+      font-size: clamp(1rem, 0.96rem + 0.2vw, 1.06rem);
+      line-height: var(--sl-line-relaxed);
+      letter-spacing: -0.006em;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    ::selection { background: var(--sl-text-primary); color: var(--sl-bg-canvas); }
+    a { color: inherit; }
+
+    .wrap { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--sl-gutter); }
+
+    /* -- L1 type: structural mono label ---------------------------------- */
+    .eyebrow {
+      font-family: var(--sl-font-mono);
+      font-size: var(--sl-text-xs);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--sl-text-muted);
+      margin: 0;
+    }
+    h1, h2, h3 {
+      font-family: var(--sl-font-display);
+      font-weight: 600;
+      text-wrap: balance;
+      letter-spacing: -0.02em;
+      line-height: var(--sl-line-tight);
+      margin: 0;
+    }
+    p { max-width: var(--sl-measure); }
+    .cap {
+      font-family: var(--sl-font-mono);
+      font-size: 0.68rem; letter-spacing: 0.06em;
+      color: var(--sl-text-muted);
+    }
+    .cap b { color: var(--sl-accent-default); font-weight: 600; }
+
+    /* -- header: signature sticky translucent ---------------------------- */
+    header.top {
+      position: sticky; top: 0; z-index: var(--sl-z-overlay);
+      background: color-mix(in srgb, var(--sl-bg-canvas) 84%, transparent);
+      backdrop-filter: saturate(140%) blur(10px);
+      border-bottom: 1px solid var(--sl-border-subtle);
+    }
+    .top-in {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding-block: 0.8rem; flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: baseline; gap: 0.6rem; }
+    .wordmark { font-family: var(--sl-font-mono); font-weight: 600; font-size: 1rem; letter-spacing: 0.18em; }
+    .brand .sub { font-family: var(--sl-font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sl-text-muted); }
+    .switches { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+    .switch { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .switch .lbl { font-family: var(--sl-font-mono); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
+    .seg { display: inline-flex; border: 1px solid var(--sl-border-default); }
+    .seg button {
+      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--sl-text-muted); background: none; border: none; border-right: 1px solid var(--sl-border-default);
+      padding: 0.34rem 0.5rem; cursor: pointer; line-height: 1;
+      transition: color var(--sl-motion-fast) var(--sl-motion-ease), background var(--sl-motion-fast) var(--sl-motion-ease);
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button:hover { color: var(--sl-text-primary); }
+    .seg button[aria-pressed="true"] { color: var(--sl-text-on-accent); background: var(--sl-accent-default); }
+
+    /* -- hero: oversized display anchor ---------------------------------- */
+    .hero { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
+    .hero h1 {
+      font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+      margin: 1.2rem 0 0;
+      max-width: 18ch;
+    }
+    .hero .accent-word { color: var(--sl-accent-default); font-style: italic; }
+    .lede {
+      margin-top: 1.5rem;
+      font-family: var(--sl-font-sans);
+      font-size: clamp(1.08rem, 1rem + 0.4vw, 1.28rem);
+      line-height: var(--sl-line-normal);
+      color: var(--sl-text-secondary);
+      letter-spacing: -0.011em;
+    }
+
+    /* -- sections: hairline + mono index --------------------------------- */
+    section { padding-block: clamp(3rem, 6vw, 5rem); border-top: 1px solid var(--sl-border-subtle); position: relative; }
+    /* gutter ruler (wide only) */
+    @media (min-width: 1080px) {
+      section::before {
+        content: ""; position: absolute; top: 0; bottom: 0;
+        left: calc(var(--sl-gutter) - 1px); width: 1px; background: var(--sl-border-subtle);
+      }
+    }
+    .sec-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2.2rem; flex-wrap: wrap; }
+    .sec-idx { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; color: var(--sl-text-muted); }
+    .sec-head h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
+
+    .type-row { display: grid; gap: 1.4rem; }
+    .type-row .line { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--sl-border-subtle); padding-bottom: 1rem; }
+    .type-row .specimen { font-family: var(--sl-font-display); letter-spacing: -0.02em; }
+    .measure-demo { margin-top: 2rem; }
+
+    /* -- L2 hairline-grid ------------------------------------------------ */
+    .hairgrid { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--sl-border-subtle); border: 1px solid var(--sl-border-subtle); margin-top: 1.5rem; }
+    @media (min-width: 720px) { .hairgrid { grid-template-columns: repeat(3, 1fr); } }
+    .cell { background: var(--sl-bg-surface); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.6rem; }
+    .cell h3 { font-size: 1.05rem; }
+    .cell p { margin: 0; color: var(--sl-text-secondary); font-size: 0.92rem; }
+
+    /* -- L3 signature components ----------------------------------------- */
+    .comp-row { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
+    @media (min-width: 860px) { .comp-row { grid-template-columns: 1fr 1fr; } }
+    .demo { border: 1px solid var(--sl-border-default); background: var(--sl-bg-surface); padding: 1.4rem; display: flex; flex-direction: column; gap: 0.9rem; }
+    .demo .cap { order: 2; }
+    .tag {
+      align-self: flex-start;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-family: var(--sl-font-mono); font-size: 0.64rem; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--sl-accent-default); border: 1px solid var(--sl-accent-subtle);
+      padding: 0.28rem 0.55rem; line-height: 1; background: var(--sl-accent-subtle);
+    }
+    .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sl-accent-default); flex: none; }
+    .invert { background: var(--sl-text-primary); color: var(--sl-bg-canvas); padding: 1.4rem; }
+    .invert .eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 60%, transparent); }
+    .invert p { margin: 0.5rem 0 0; color: var(--sl-bg-canvas); font-family: var(--sl-font-display); font-size: 1.15rem; letter-spacing: -0.02em; }
+    .realblock {
+      background: var(--sl-text-primary); color: var(--sl-bg-canvas);
+      font-family: var(--sl-font-mono); font-size: 0.8rem; line-height: 1.7;
+      padding: 1.1rem 1.2rem; overflow-x: auto; white-space: pre; margin: 0;
+    }
+    .realblock .c { color: color-mix(in srgb, var(--sl-bg-canvas) 45%, transparent); }
+    .realblock .k { color: var(--sl-accent-default); font-weight: 600; }
+
+    /* -- L4 motion ------------------------------------------------------- */
+    .rise { opacity: 0; transform: translateY(6px); animation: rise var(--sl-motion-slow) var(--sl-motion-ease) forwards; }
+    .comp-row .demo:nth-child(1) { animation-delay: 0.05s; }
+    .comp-row .demo:nth-child(2) { animation-delay: 0.13s; }
+    .comp-row .demo:nth-child(3) { animation-delay: 0.21s; }
+    .comp-row .demo:nth-child(4) { animation-delay: 0.29s; }
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { .rise { animation: none; opacity: 1; transform: none; } }
+
+    footer { border-top: 1px solid var(--sl-border-subtle); padding-block: 2.5rem; }
+    footer .cap { max-width: var(--sl-measure); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-in">
+      <div class="brand">
+        <span class="wordmark">SONDALAB</span>
+        <span class="sub">design language</span>
+      </div>
+      <div class="switches">
+        <div class="switch">
+          <span class="lbl">theme</span>
+          <div class="seg" id="theme-seg">
+            <button data-theme="light">Light</button>
+            <button data-theme="dark" aria-pressed="true">Dark</button>
+            <button data-theme="high-contrast">HC</button>
+          </div>
+        </div>
+        <div class="switch">
+          <span class="lbl">accent</span>
+          <div class="seg" id="accent-seg">
+            <button data-accent="amber" aria-pressed="true">Amber</button>
+            <button data-accent="indigo">Indigo</button>
+            <button data-accent="cyan">Cyan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap hero">
+      <p class="eyebrow">Family-resemblance reference · PoC (not delivered)</p>
+      <h1>One <span class="accent-word">grammar</span>, many products.</h1>
+      <p class="lede">Every Sondalab surface shares the same materials — type roles, spacing scale, hairline structure, motion, voice — and spends its distinctiveness on composition and a single accent hue. Switch the theme and accent above: the grammar holds; only the hue moves.</p>
+    </div>
+
+    <section>
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">01</span><h2>Type</h2></div>
+        <p class="cap">Display <b>--sl-font-display</b> Fraunces · Sans <b>--sl-font-sans</b> Instrument · Mono <b>--sl-font-mono</b> Martian</p>
+        <div class="type-row" style="margin-top:1.6rem">
+          <div class="line"><span class="specimen" style="font-size:clamp(2.2rem,1.5rem+3vw,3.6rem)">Deterministic</span><span class="cap">display / clamp anchor</span></div>
+          <div class="line"><span class="specimen" style="font-size:var(--sl-text-2xl)">Heading 2xl</span><span class="cap">--sl-text-2xl · weight 600 · tracking -0.02em</span></div>
+          <div class="line"><span class="specimen" style="font-size:var(--sl-text-xl)">Heading xl</span><span class="cap">--sl-text-xl</span></div>
+          <div class="line"><span class="eyebrow">Structural label</span><span class="cap">mono · uppercase · tracking 0.22em — the strongest family signal</span></div>
+        </div>
+        <div class="measure-demo">
+          <p>Running text is capped at roughly sixty-three characters so a line stays comfortably readable — the measure convention, defined locally rather than as a token because it is layout-level. Beyond this width prose loses the reader between the end of one line and the start of the next.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">02</span><h2>Structure &amp; spacing</h2></div>
+        <p class="cap">Hairline-grid: <b>gap:1px</b> over <b>--sl-border-subtle</b>, cells paint <b>--sl-bg-surface</b>. Sections separated by a 1px top rule + mono index; gutter ruler on wide viewports.</p>
+        <div class="hairgrid">
+          <div class="cell"><h3>Canvas</h3><p>The page ground — <span class="cap">--sl-bg-canvas</span>.</p></div>
+          <div class="cell"><h3>Surface</h3><p>Card base, one step up — <span class="cap">--sl-bg-surface</span>.</p></div>
+          <div class="cell"><h3>Raised</h3><p>Floating widgets — <span class="cap">--sl-bg-surface-raised</span>.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">03</span><h2>Signature components</h2></div>
+        <p class="cap">The recurring parts that carry the family look. Each uses the active accent.</p>
+        <div class="comp-row">
+          <div class="demo rise">
+            <p class="eyebrow">Section eyebrow</p>
+            <span class="cap">Eyebrow — mono uppercase micro-label above a heading.</span>
+          </div>
+          <div class="demo rise">
+            <span class="tag">Research tier</span>
+            <span class="cap">Tag / tier marker — accent-tinted pill with dot glyph.</span>
+          </div>
+          <div class="demo rise" style="padding:0">
+            <div class="invert">
+              <p class="eyebrow">The thesis</p>
+              <p>Family resemblance is shared materials; surprise is per-screen composition.</p>
+            </div>
+            <span class="cap" style="padding:0.9rem 1.4rem">Inversion band — flipped to canvas-on-ink.</span>
+          </div>
+          <div class="demo rise" style="padding:0">
+            <pre class="realblock"><span class="c"># real content, not filler</span>
+<span class="k">resolve</span>("q-8f2a") → cached · 0ms
+<span class="k">resolve</span>("q-11c7") → miss  · 340ms</pre>
+            <span class="cap" style="padding:0.9rem 1.4rem">Real-content block — actual output on the ink surface.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">04</span><h2>Motion</h2></div>
+        <p class="cap">One easing <b>--sl-motion-ease</b>, three speeds. Entrance = staggered rise (the cards in §03 rose in on load). Zeroed under <b>prefers-reduced-motion</b> via the token layer.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p class="cap">Sondalab Design Language — reference implementation. Consumes <b>@sondalab/ui-kit</b> tokens + themes (Tier A). Spec: <b>docs/design-language.md</b>. Status: PoC implemented (not delivered).</p>
+    </div>
+  </footer>
+
+  <script>
+    // Registry accents (dark-oriented demo values); shared grammar, per-product hue.
+    var ACCENTS = {
+      amber:  { d: "#F5A83C", h: "#F7B863", s: "rgba(245,168,60,0.16)" },
+      indigo: { d: "#8b96ff", h: "#a3acff", s: "rgba(139,150,255,0.12)" },
+      cyan:   { d: "#2ee6c0", h: "#5ad1ff", s: "rgba(46,230,192,0.12)" }
+    };
+    var root = document.documentElement;
+
+    function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+    function press(seg, attr, val) {
+      seg.querySelectorAll("button").forEach(function (b) {
+        b.setAttribute("aria-pressed", b.getAttribute(attr) === val ? "true" : "false");
+      });
+    }
+
+    function applyTheme(t) { root.setAttribute("data-sl-theme", t); press(document.getElementById("theme-seg"), "data-theme", t); store("sl-demo-theme", t); }
+    function applyAccent(a) {
+      var c = ACCENTS[a]; if (!c) return;
+      root.style.setProperty("--sl-accent-default", c.d);
+      root.style.setProperty("--sl-accent-hover", c.h);
+      root.style.setProperty("--sl-accent-subtle", c.s);
+      root.style.setProperty("--sl-focus-ring", c.d);
+      press(document.getElementById("accent-seg"), "data-accent", a);
+      store("sl-demo-accent", a);
+    }
+
+    document.getElementById("theme-seg").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (b) applyTheme(b.getAttribute("data-theme"));
+    });
+    document.getElementById("accent-seg").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (b) applyAccent(b.getAttribute("data-accent"));
+    });
+
+    applyTheme(load("sl-demo-theme") || "dark");
+    applyAccent(load("sl-demo-accent") || "amber");
+  </script>
+</body>
+</html>
