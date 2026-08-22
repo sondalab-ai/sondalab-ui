@@ -1,0 +1,51 @@
+{
+  "$schema-note": "Canonical Sondalab design tokens. Edit here only; run pnpm gen:tokens.",
+  "shared": {
+    "font": {
+      "display": "\"Fraunces\", Georgia, serif",
+      "sans": "\"Instrument Sans\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "mono": "\"Martian Mono\", ui-monospace, \"SF Mono\", Menlo, monospace"
+    },
+    "space": { "0": "0", "1": "0.25rem", "2": "0.5rem", "3": "0.75rem", "4": "1rem", "5": "1.5rem", "6": "2rem", "8": "3rem" },
+    "radius": { "sm": "4px", "md": "6px", "lg": "10px", "pill": "9999px" },
+    "text": { "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem" },
+    "line": { "tight": "1.2", "normal": "1.5", "relaxed": "1.6", "loose": "1.7" },
+    "z": { "base": "1", "overlay": "50", "modal": "100", "toast": "200" },
+    "motion": { "fast": "120ms", "mid": "220ms", "slow": "360ms", "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+    "shadow": { "sm": "0 1px 2px rgba(0,0,0,0.06)", "md": "0 4px 12px rgba(0,0,0,0.08)", "lg": "0 12px 32px rgba(0,0,0,0.16)" },
+    "focus": { "ring-width": "2px", "ring-offset": "2px" }
+  },
+  "themes": {
+    "light": {
+      "bg-canvas": "#ECE4D4", "bg-surface": "#F6F1E6", "bg-surface-raised": "#FFFFFF", "bg-overlay": "rgba(21,33,31,0.4)",
+      "border-subtle": "rgba(21,33,31,0.09)", "border-default": "rgba(21,33,31,0.16)", "border-strong": "rgba(21,33,31,0.28)",
+      "text-primary": "#15211F", "text-secondary": "#475754", "text-muted": "#6E7B78", "text-on-accent": "#FFFFFF",
+      "status-success": "#16a34a", "status-warning": "#d97706", "status-danger": "#dc2626", "status-info": "#0284c7"
+    },
+    "dark": {
+      "bg-canvas": "#070A0D", "bg-surface": "#0F151A", "bg-surface-raised": "#131C23", "bg-overlay": "rgba(0,0,0,0.6)",
+      "border-subtle": "rgba(218,227,228,0.07)", "border-default": "rgba(218,227,228,0.13)", "border-strong": "rgba(218,227,228,0.28)",
+      "text-primary": "#DAE3E4", "text-secondary": "#9AA9AD", "text-muted": "#6E8088", "text-on-accent": "#0A0A0B",
+      "status-success": "#4ade80", "status-warning": "#fbbf24", "status-danger": "#f87171", "status-info": "#38bdf8"
+    },
+    "high-contrast": {
+      "bg-canvas": "#000000", "bg-surface": "#000000", "bg-surface-raised": "#0a0a0a", "bg-overlay": "rgba(0,0,0,0.85)",
+      "border-subtle": "#ffffff", "border-default": "#ffffff", "border-strong": "#ffff00",
+      "text-primary": "#ffffff", "text-secondary": "#ffffff", "text-muted": "#cccccc", "text-on-accent": "#000000",
+      "status-success": "#00ff00", "status-warning": "#ffaa00", "status-danger": "#ff5555", "status-info": "#00ffff"
+    }
+  },
+  "accent": {
+    "light": { "default": "#B56A0C", "hover": "#A05F0A", "active": "#8A5109", "subtle": "rgba(197,122,22,0.12)", "depth": "#14606C" },
+    "dark": { "default": "#F5A83C", "hover": "#F7B863", "active": "#E0942A", "subtle": "rgba(245,168,60,0.16)", "depth": "#35A0B4" },
+    "high-contrast": { "default": "#ffff00", "hover": "#ffffa0", "active": "#cccc00", "subtle": "#1a1a00", "depth": "#00ffff" }
+  },
+  "terminal": {
+    "prompt": { "ansi": "bright_yellow", "true": "#F5A83C" },
+    "ok":     { "ansi": "green",         "true": "#62D094" },
+    "warn":   { "ansi": "yellow",        "true": "#F5A83C" },
+    "err":    { "ansi": "red",           "true": "#f87171" },
+    "dim":    { "ansi": "bright_black",  "true": "#6E8088" },
+    "accent": { "ansi": "cyan",          "true": "#35A0B4" }
+  }
+}

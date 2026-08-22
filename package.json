@@ -1,0 +1,12 @@
+{
+  "name": "sondalab-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sondalab shared design system: canonical tokens + generators for the CSS kit (@sondalab/ui-kit) and the terminal palette (sondalab-palette).",
+  "type": "module",
+  "scripts": {
+    "gen:tokens": "node scripts/gen-css.mjs && node scripts/gen-py.mjs",
+    "gen:css": "node scripts/gen-css.mjs",
+    "gen:py": "node scripts/gen-py.mjs"
+  }
+}

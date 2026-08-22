@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sondalab-palette"
+version = "0.1.0"
+description = "Sondalab terminal palette: semantic color roles with a named-ANSI floor and truecolor opt-in."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "marcellobarile" }]
+keywords = ["ansi", "terminal", "color", "cli", "tui", "sondalab"]
+classifiers = [
+  "Environment :: Console",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/marcellobarile"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sondalab_palette"]
+
+[tool.hatch.build.targets.sdist]
+include = ["sondalab_palette", "README.md"]
