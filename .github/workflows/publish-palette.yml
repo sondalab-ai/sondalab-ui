@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required for Trusted Publishing
+      contents: read    # checkout of a private repo (a permissions block defaults the rest to none)
     steps:
       - uses: actions/checkout@v4
 
