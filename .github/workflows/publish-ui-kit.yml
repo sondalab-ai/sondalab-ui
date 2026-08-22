@@ -1,0 +1,55 @@
+name: Publish @sondalab/ui-kit to npm
+
+# Publishes packages/ui-kit via npm Trusted Publishing (OIDC) + provenance — no
+# token stored. Runs on merge to main; publishes only when the version in
+# packages/ui-kit/package.json is not already on npm (bump it to release).
+# One-time setup on npmjs.com: own the @sondalab scope/org and configure the
+# trusted publisher for this repo/workflow (see repo README).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/ui-kit/**"
+      - ".github/workflows/publish-ui-kit.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-ui-kit
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for Trusted Publishing + provenance
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Update npm (Trusted Publishing needs >= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Resolve version and check whether it is already on npm
+        id: v
+        working-directory: packages/ui-kit
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "@sondalab/ui-kit@$version" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@sondalab/ui-kit $version is already on npm; skipping publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Publishing @sondalab/ui-kit $version."
+          fi
+
+      - name: Publish to npm
+        if: steps.v.outputs.exists == 'false'
+        working-directory: packages/ui-kit
+        run: npm publish --access public --provenance

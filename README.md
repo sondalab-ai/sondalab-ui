@@ -31,7 +31,7 @@ Generated files are committed; never hand-edit them.
 ## Publishing
 
 - **`sondalab-palette` (PyPI)** — via **Trusted Publishing (OIDC)**, no API token stored. The workflow `.github/workflows/publish-palette.yml` builds + publishes on merge to `main` when the version in `packages/palette-py/pyproject.toml` is not yet on PyPI (bump it to release). **One-time setup:** add a *pending* trusted publisher at https://pypi.org/manage/account/publishing/ — Project `sondalab-palette`, Owner `sondalab-ai`, Repository `sondalab-ui`, Workflow `publish-palette.yml`. After that, re-run the workflow (Actions tab → "Run workflow") to release the current version.
-- **`@sondalab/ui-kit` (npm)** — `cd packages/ui-kit && npm publish --access public` (needs a real npm token in `~/.npmrc`, not the GitHub PAT).
+- **`@sondalab/ui-kit` (npm)** — via **Trusted Publishing (OIDC) + provenance**, no token stored. Workflow `.github/workflows/publish-ui-kit.yml` builds + publishes on merge to `main` when the version in `packages/ui-kit/package.json` is not yet on npm. **One-time setup:** (1) own the `@sondalab` scope — create the org at https://www.npmjs.com/org/create (name `sondalab`, free for public packages); (2) configure the trusted publisher (npmjs.com → package or org **Settings → Trusted Publisher / Connect a repository** → GitHub Actions, Repository `sondalab-ai/sondalab-ui`, Workflow `publish-ui-kit.yml`); (3) Actions tab → "Run workflow". Note: npm configures trusted publishing per **existing** package — if the UI won't pre-register `@sondalab/ui-kit` before it exists, do one bootstrap `npm publish --access public` (with a temporary granular token or `npm login`), then switch to OIDC and remove the token.
 
 ## Consumers
 
