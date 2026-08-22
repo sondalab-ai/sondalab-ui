@@ -1,0 +1,54 @@
+name: Publish sondalab-palette to PyPI
+
+# Publishes packages/palette-py via PyPI Trusted Publishing (OIDC) — no API token
+# stored. Runs on merge to main; publishes only when the version in
+# packages/palette-py/pyproject.toml is not already on PyPI (bump it to release).
+# Configure the trusted publisher once on PyPI (see repo README).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/palette-py/**"
+      - ".github/workflows/publish-palette.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-palette
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for Trusted Publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version and check whether it is already on PyPI
+        id: v
+        run: |
+          version=$(grep -m1 -E '^version = ' packages/palette-py/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if curl -fsS "https://pypi.org/pypi/sondalab-palette/$version/json" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::sondalab-palette $version is already on PyPI; skipping publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Publishing sondalab-palette $version."
+          fi
+
+      - name: Set up uv
+        if: steps.v.outputs.exists == 'false'
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build
+        if: steps.v.outputs.exists == 'false'
+        working-directory: packages/palette-py
+        run: uv build
+
+      - name: Publish to PyPI
+        if: steps.v.outputs.exists == 'false'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/palette-py/dist/

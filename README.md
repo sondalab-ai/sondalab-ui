@@ -28,10 +28,10 @@ Generated files are committed; never hand-edit them.
 - **Terminal color = semantic roles + truecolor opt-in.** Color applies to roles (`prompt`/`ok`/`warn`/`err`/`dim`/`accent`), never decoration. Named-ANSI floor resolves through the user's theme; `COLORTERM=truecolor` upgrades to brand hex; `NO_COLOR` disables.
 - **No CSS→Python bridge exists**, so there is one canonical source and two generated distributions, not one shared package.
 
-## Publishing (manual)
+## Publishing
 
-- `@sondalab/ui-kit`: `cd packages/ui-kit && npm publish --access public`
-- `sondalab-palette`: `cd packages/palette-py && python -m build && twine upload dist/*`
+- **`sondalab-palette` (PyPI)** — via **Trusted Publishing (OIDC)**, no API token stored. The workflow `.github/workflows/publish-palette.yml` builds + publishes on merge to `main` when the version in `packages/palette-py/pyproject.toml` is not yet on PyPI (bump it to release). **One-time setup:** add a *pending* trusted publisher at https://pypi.org/manage/account/publishing/ — Project `sondalab-palette`, Owner `sondalab-ai`, Repository `sondalab-ui`, Workflow `publish-palette.yml`. After that, re-run the workflow (Actions tab → "Run workflow") to release the current version.
+- **`@sondalab/ui-kit` (npm)** — `cd packages/ui-kit && npm publish --access public` (needs a real npm token in `~/.npmrc`, not the GitHub PAT).
 
 ## Consumers
 
