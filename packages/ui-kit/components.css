@@ -250,15 +250,25 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 
 /* ══ COMPLEX (composed shells — no behaviour JS) ═════════════════════════════ */
 
-/* Callout — banner / admonition. Accent stripe on the leading edge. */
+/* Callout — banner / admonition. The accent is a short "measure tick" on the
+   top edge (a ruler mark, not the ubiquitous left stripe), aligned with the
+   title. Variants recolour the tick; the panel is plain surface. */
 .sl-callout {
-  display: flex;
-  gap: var(--sl-space-4, 1rem);
+  position: relative;
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
-  border-left: 3px solid var(--slc-accent);
   border-radius: var(--sl-radius-md, 6px);
-  padding: var(--sl-space-4, 1rem) var(--sl-space-5, 1.5rem);
+  padding: var(--sl-space-5, 1.5rem) var(--sl-space-5, 1.5rem) var(--sl-space-4, 1rem);
+}
+.sl-callout::before {
+  content: "";
+  position: absolute;
+  top: -1px;                          /* sit on the top edge, over the border */
+  left: var(--sl-space-5, 1.5rem);    /* align with the title / padding */
+  width: 2.75rem;
+  height: 3px;
+  background: var(--slc-accent);
+  border-radius: 0 0 var(--sl-radius-sm, 4px) var(--sl-radius-sm, 4px);
 }
 .sl-callout__title {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
@@ -276,10 +286,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   color: var(--slc-text-secondary);
   margin: 0;
 }
-.sl-callout--success { border-left-color: var(--slc-success); }
-.sl-callout--warning { border-left-color: var(--slc-warning); }
-.sl-callout--danger  { border-left-color: var(--slc-danger); }
-.sl-callout--info    { border-left-color: var(--slc-info); }
+.sl-callout--success::before { background: var(--slc-success); }
+.sl-callout--warning::before { background: var(--slc-warning); }
+.sl-callout--danger::before  { background: var(--slc-danger); }
+.sl-callout--info::before    { background: var(--slc-info); }
 
 /* Table — shell. Wrap in a scroll container so wide tables never scroll the page:
    <div style="overflow-x:auto"><table class="sl-table">…</table></div> */
