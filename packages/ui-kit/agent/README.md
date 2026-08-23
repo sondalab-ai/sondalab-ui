@@ -30,7 +30,7 @@ The verdict engine is `scripts/sl-audit.mjs` (repo root `scripts/`). It reads th
 | Workflow | Job | For whom | Status |
 |---|---|---|---|
 | **Migrate** | Move an existing app's UI onto the DS: audit → map values to tokens → pick tier → apply L1–L5. | An app with its own palette adopting the DS wholesale (introspect, daos). | Slice 1 |
-| **Author** | Scaffold a new surface/element DS-compliant from the first line. | Greenfield screens or components. | Slice 2 — catalog + `workflows/author.md` landed; `sl-author` CC skill pending |
+| **Author** | Scaffold a new surface/element DS-compliant from the first line. | Greenfield screens or components. | Slice 2 — catalog + `workflows/author.md` + `sl-author` skill landed |
 | **Adopt** | Pull one signature component (eyebrow, tag, inversion band) into an app without a full migration. | Consumers wanting a taste of the family look. | *(Slice 3)* |
 
 All three share the same core and the same read-only auditor. Migrate is the deepest; author and adopt are subsets of its machinery.
@@ -40,6 +40,7 @@ All three share the same core and the same read-only auditor. Migrate is the dee
 **In Claude Code (this repo).** The wrappers do it for you:
 
 - Say *"migrate `<app>` to the Sondalab DS"* or run `/sl-migrate` → the `sl-migrate` skill drives `workflows/migrate.md` and holds the gates.
+- Say *"build a new `<screen>` in the Sondalab DS"* or run `/sl-author` → the `sl-author` skill drives `workflows/author.md` and builds from `catalog.md`.
 - The `sl-ds-auditor` subagent runs the audit and reads `design-language.md` for the judgement-level findings, returning them grouped by severity with `file:line`.
 
 **In any other harness / a consumer repo.** Point the agent at three things and give it the migrate procedure as its instructions:
