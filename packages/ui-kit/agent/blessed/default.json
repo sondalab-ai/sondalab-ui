@@ -13,6 +13,7 @@
     {
       "kind": "color",
       "values": [
+        "#F7B863",
         "#8b96ff",
         "#a3acff",
         "rgba(139,150,255,0.12)",
@@ -20,7 +21,7 @@
         "#5ad1ff",
         "rgba(46,230,192,0.12)"
       ],
-      "why": "The showcase demonstrates the per-product accent registry (design-language.md §Decision 2): spexr's indigo and introspect's cyan (plus derived hover/subtle) appear as demo swatch content, not as a second accent adopted by the showcase. Blessed by exact value, not selector — the swatches live in a JS object with no distinctive selector."
+      "why": "The showcase demonstrates the per-product accent registry (design-language.md §Decision 2): spexr's indigo and introspect's cyan (plus derived hover/subtle) appear as demo swatch content, not as a second accent adopted by the showcase. Blessed by exact value, not selector — the swatches live in a JS object with no distinctive selector. #F7B863 is the amber demo hover, hardcoded in the same switcher object; once the dark accent hover became color-mix-derived it left the token allowlist, so it is blessed here alongside the other demo hovers (the switcher itself re-deriving is deferred to the migration)."
     }
   ]
 }

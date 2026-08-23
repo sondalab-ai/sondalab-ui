@@ -37,6 +37,9 @@ For elements already named eyebrow/tag, the recipe (mono + uppercase + tracking 
 ### Font-family  *(check 5 — dropped, not deferred)*
 Evaluated and **dropped**: the only literal faces across the calibrated surfaces are introspect's IBM Plex Mono (a blessed mono substitute) and spexr's editor font (blessed). A font check would yield nothing. Just keep using `var(--sl-font-display|sans|mono)`; the only allowed substitution is a *narrower mono* where fixed pixel grids demand it (`design-language.md` L1), recorded as a blessed `font` deviation.
 
+### Accent step derivation  *(check 7 — advisory this release, mechanical next)*
+`design-language.md` §Decision 2 now requires each accent step (`--sl-accent-hover/active/subtle`) to be a `color-mix()` off `--sl-accent-default`, not a baked literal — a literal is allowed only as an explicit per-(theme, step) token override with a reason (e.g. dark-active `#E0942A`). This is **syntactically checkable** (unlike the value-level checks above): a step declaration whose value is a bare hex/`rgb()` and is *not* a registered token override is a derivation defect. It ships **advisory** this release — judge it by eye, flag it in the migrate/author report, but the script does not yet fail on it. The mechanical check lands next release once the token-override escape-hatch list is settled. **How to judge:** open the product's theme layer; every accent step should read `color-mix(in srgb, var(--sl-accent-default) …)` or be a `sondalab.tokens.json accent.*` override carrying a `why`.
+
 ## Structural / judgement rules the script never sees
 
 These are always yours (the `sl-ds-auditor` subagent covers them by reading `design-language.md`), scoped to the substrate's Required column in `substrate-matrix.json`:

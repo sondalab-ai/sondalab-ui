@@ -12,6 +12,17 @@ function block(selector, entries) {
   return `${selector} {\n${body}\n}\n`;
 }
 
+/** An accent step is either a literal colour string or a derivation recipe
+ * `{ mix: [ratio, anchor] }`, emitted as a color-mix() off --sl-accent-default
+ * so a one-var override re-derives the whole family. */
+function accentValue(v) {
+  if (v && typeof v === "object" && Array.isArray(v.mix)) {
+    const [ratio, anchor] = v.mix;
+    return `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${anchor})`;
+  }
+  return v;
+}
+
 function main() {
   const t = loadTokens();
 
@@ -29,7 +40,7 @@ function main() {
     const accent = t.accent[id];
     const entries = [
       ...Object.entries(theme).map(([k, v]) => [`--sl-${k}`, v]),
-      ...Object.entries(accent).map(([k, v]) => [`--sl-accent-${k}`, v]),
+      ...Object.entries(accent).map(([k, v]) => [`--sl-accent-${k}`, accentValue(v)]),
       ["--sl-focus-ring", accent.default],
     ];
     const css = HEADER + block(`[data-sl-theme="${id}"]`, entries);
