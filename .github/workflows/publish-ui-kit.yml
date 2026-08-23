@@ -1,7 +1,9 @@
 name: Publish @sondalab/ui-kit to npm
 
-# Publishes packages/ui-kit via npm Trusted Publishing (OIDC) + provenance — no
-# token stored. Runs on merge to main; publishes only when the version in
+# Publishes packages/ui-kit via npm Trusted Publishing (OIDC) — no token stored.
+# Provenance (--provenance) is intentionally NOT used: it requires a public
+# source repo, and this repo is private. Re-add it if the repo goes public.
+# Runs on merge to main; publishes only when the version in
 # packages/ui-kit/package.json is not already on npm (bump it to release).
 # One-time setup on npmjs.com: own the @sondalab scope/org and configure the
 # trusted publisher for this repo/workflow (see repo README).
@@ -22,7 +24,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # required for Trusted Publishing + provenance
+      id-token: write   # required for Trusted Publishing (OIDC)
       contents: read
     steps:
       - uses: actions/checkout@v4
@@ -52,4 +54,4 @@ jobs:
       - name: Publish to npm
         if: steps.v.outputs.exists == 'false'
         working-directory: packages/ui-kit
-        run: npm publish --access public --provenance
+        run: npm publish --access public
