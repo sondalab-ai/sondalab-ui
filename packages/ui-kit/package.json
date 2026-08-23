@@ -12,7 +12,8 @@
     "./themes/dark.css": "./themes/dark.css",
     "./themes/high-contrast.css": "./themes/high-contrast.css",
     "./assets/wordmark.svg": "./assets/sondalab-wordmark.svg",
-    "./assets/lockup.svg": "./assets/sondalab-lockup.svg"
+    "./assets/lockup.svg": "./assets/sondalab-lockup.svg",
+    "./assets/favicon.svg": "./assets/favicon.svg"
   },
   "files": [
     "tokens.css",
@@ -21,6 +22,7 @@
     "themes/high-contrast.css",
     "assets/sondalab-wordmark.svg",
     "assets/sondalab-lockup.svg",
+    "assets/favicon.svg",
     "assets/README.md",
     "README.md"
   ]

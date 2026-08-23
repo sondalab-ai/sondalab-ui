@@ -8,6 +8,11 @@ render identically anywhere without the fonts installed.
 |---|---|---|
 | `sondalab-wordmark.svg` | primary — `sondalab.` | Fraunces, wght 500, opsz 144 |
 | `sondalab-lockup.svg` | compact — `SONDA·LAB` | Martian Mono, wght 300 |
+| `favicon.svg` | the mark — the amber dot alone | — |
+
+`favicon.svg` is the brand's accent dot (fixed `#F5A83C`) on transparent — the
+tab/app icon. Wire it as `<link rel="icon" href="…/assets/favicon.svg">`.
+(Claude Artifacts take an emoji favicon, not an SVG — use 🟠 there to match.)
 
 ## Colour
 
