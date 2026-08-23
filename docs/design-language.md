@@ -68,6 +68,7 @@ Each rule below carries a **compliance level per substrate** (see the matrix). L
 
 These recurring parts carry the family look. A surface need not use all, but any it does use should match:
 
+- **Wordmark (official logo)** — the brand is typographic, no pictorial mark. Primary: `sondalab.` set in `--sl-font-display` (Fraunces) weight 500, `letter-spacing: -0.05em`, with the trailing period in the accent (`.dot { color: accent }`). Compact lockup (headers, tight spots): `sonda·lab` in `--sl-font-mono`, uppercase, tracked `0.2em`, with the middle dot in the accent. Source of truth: the identity board artifact `https://claude.ai/code/artifact/abbebb7f-5778-4af6-a9b4-2b3f169ae20f`; reference implementation: `sondalab-ui/showcase/index.html` (`.brand-word` hero + `.wordmark` header).
 - **Eyebrow** — mono uppercase micro-label above a heading (`--sl-text-xs`, tracked `0.22em`, muted).
 - **Tag / tier marker** — inline mono uppercase pill: `1px` border in a soft accent tint, small dot or square glyph before the label, accent-coloured text. Used for status/classification.
 - **Inversion band** — a full-width block flipped to `text-on-*` on the strongest neutral (ink background, paper text), used to punctuate rhythm and mark the thesis or primary call-to-action. The recurring inversion is a core motif; at least one per long page is idiomatic.

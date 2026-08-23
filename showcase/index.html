@@ -77,7 +77,9 @@
       gap: 1rem; padding-block: 0.8rem; flex-wrap: wrap;
     }
     .brand { display: flex; align-items: baseline; gap: 0.6rem; }
-    .wordmark { font-family: var(--sl-font-mono); font-weight: 600; font-size: 1rem; letter-spacing: 0.18em; }
+    /* Official compact lockup: SONDA·LAB, mono, amber middle dot. */
+    .wordmark { font-family: var(--sl-font-mono); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .wordmark b { color: var(--sl-accent-default); font-weight: 600; }
     .brand .sub { font-family: var(--sl-font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sl-text-muted); }
     .switches { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
     .switch { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -95,10 +97,23 @@
 
     /* -- hero: oversized display anchor ---------------------------------- */
     .hero { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
-    .hero h1 {
-      font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+    /* Official primary wordmark: sondalab. in Fraunces 500, amber dot. */
+    .hero .brand-word {
+      font-family: var(--sl-font-display);
+      font-weight: 500;
+      font-size: clamp(3.5rem, 2rem + 8vw, 8rem);
+      line-height: 0.86;
+      letter-spacing: -0.05em;
       margin: 1.2rem 0 0;
-      max-width: 18ch;
+    }
+    .hero .brand-word .dot { color: var(--sl-accent-default); }
+    .hero .thesis {
+      font-family: var(--sl-font-display);
+      font-weight: 400;
+      font-size: clamp(1.4rem, 1rem + 1.5vw, 2.2rem);
+      letter-spacing: -0.02em;
+      margin: 1.1rem 0 0;
+      color: var(--sl-text-secondary);
     }
     .hero .accent-word { color: var(--sl-accent-default); font-style: italic; }
     .lede {
@@ -177,7 +192,7 @@
   <header class="top">
     <div class="wrap top-in">
       <div class="brand">
-        <span class="wordmark">SONDALAB</span>
+        <span class="wordmark">sonda<b>·</b>lab</span>
         <span class="sub">design language</span>
       </div>
       <div class="switches">
@@ -203,8 +218,9 @@
 
   <main>
     <div class="wrap hero">
-      <p class="eyebrow">Family-resemblance reference · PoC (not delivered)</p>
-      <h1>One <span class="accent-word">grammar</span>, many products.</h1>
+      <p class="eyebrow">Design language · Family-resemblance reference · PoC (not delivered)</p>
+      <h1 class="brand-word">sondalab<span class="dot">.</span></h1>
+      <p class="thesis">One <span class="accent-word">grammar</span>, many products.</p>
       <p class="lede">Every Sondalab surface shares the same materials — type roles, spacing scale, hairline structure, motion, voice — and spends its distinctiveness on composition and a single accent hue. Switch the theme and accent above: the grammar holds; only the hue moves.</p>
     </div>
 
