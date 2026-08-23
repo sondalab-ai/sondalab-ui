@@ -99,7 +99,7 @@ These recurring parts carry the family look. A surface need not use all, but any
 .tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: [accent]; flex: none; }
 ```
 
-Current citations: introspect `.sl-eyebrow`/`.sl-tag` in `introspect/web/src/theme.css`; spexr `.label`/`.caption`/`.tag`/`.badge` restyle in the theia-extensions browser styles.
+Current citations: introspect `.sl-eyebrow`/`.sl-tag` in `introspect/web/src/theme.css`; spexr `.spexr-agent-chat__label`, `.spexr-spec-resources__caption`, and `.spexr-df-card__status` in `packages/theia-extensions/src/browser/style/spexr.css` — these adopt the **eyebrow** half of the recipe (mono uppercase tracked, via spexr's `--sl-font-code`). spexr has **not** adopted the tag/pill half; its existing status pills `.spexr-df-pill--attn/--error` are untouched. In spexr the eyebrow face is the design mono `--sl-font-code`, deliberately distinct from code-content runs (`.spexr-df-card__branch`/`__trail`, which mirror the editor font `--theia-code-font-family`): labels are design-layer, code content mirrors the editor.
 
 ### L4 — Motion
 
