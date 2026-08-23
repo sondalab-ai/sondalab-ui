@@ -42,7 +42,7 @@ Shared grammar, per-product accent. The brand default is amber (with a teal *dep
 | **spexr** | `#5b6cff` / `#8b96ff` | `spexr-overrides.css` | Delivered. |
 | **introspect** | `#2ee6c0` (single) | introspect `--cy` | ⚠ Differs from the Sondalab teal depth `#35A0B4`. **Resolved:** introspect's brighter mint-cyan is registered as its product accent (kept); it is not required to match `depth`. `depth` is the *default* product's teal, not a constraint on cyan-accented products. |
 
-Rule: a product picks **one** accent hue and derives hover/active/subtle from it; it never introduces a second chromatic accent. Semantic status colours (ok/warn/err) are separate from the accent and shared.
+Rule: a product picks **one** accent hue and derives hover/active/subtle from it; it never introduces a second chromatic accent. Semantic status colours (ok/warn/err) are separate from the accent and shared — but the `--sl-status-*` tokens are tuned for **on-canvas** use. On an inverted surface (a block whose background is the strongest neutral, e.g. an ink-on-paper output panel) they lose contrast; there, derive an on-ink status pair locally rather than using the canvas tokens (daos `.artifact .ok`/`.no` are a correct instance of this — kept as light-on-ink greens/reds, not swapped to the darker canvas tokens).
 
 ## The family-resemblance layer
 
@@ -73,6 +73,33 @@ These recurring parts carry the family look. A surface need not use all, but any
 - **Inversion band** — a full-width block flipped to `text-on-*` on the strongest neutral (ink background, paper text), used to punctuate rhythm and mark the thesis or primary call-to-action. The recurring inversion is a core motif; at least one per long page is idiomatic.
 - **Sticky translucent header** — `position: sticky`, background `color-mix(paper 86%, transparent)` + `backdrop-filter: blur()`, `1px` bottom rule; brand wordmark (mono, tracked) left, mono meta/controls right.
 - **Real-content blocks** — where a surface shows output (JSON, terminal, code, data rows), show *actual* content in mono on the ink surface, not illustrative filler. This is both an editorial-voice rule and a visual one.
+
+**Canonical recipe — eyebrow + tag.** These two are the strongest family signal, so their values are fixed here (a convention, like `--sl-measure`; not a token, because products bind them to their own local colour vars). Every implementation cites this recipe rather than re-deriving it; a product substitutes its own token names for the roles in brackets.
+
+```css
+/* eyebrow — mono uppercase micro-label */
+.eyebrow {
+  font-family: var(--sl-font-mono);          /* or the product's mono face */
+  font-size: var(--sl-text-xs);              /* ~9.5–11px in px-scaled UIs */
+  letter-spacing: 0.2em;                      /* band 0.18–0.22em */
+  text-transform: uppercase;
+  color: [text-muted];
+}
+/* tag / tier marker — accent-tinted pill with a leading dot */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs); font-weight: 500;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: [accent];
+  border: 1px solid [accent-subtle];
+  background: [accent-subtle];
+  padding: 3px 7px; line-height: 1;
+}
+.tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: [accent]; flex: none; }
+```
+
+Current citations: introspect `.sl-eyebrow`/`.sl-tag` in `introspect/web/src/theme.css`; spexr `.label`/`.caption`/`.tag`/`.badge` restyle in the theia-extensions browser styles.
 
 ### L4 — Motion
 
