@@ -1,0 +1,15 @@
+{
+  "$note": "Authorized deviations for introspect. Populated during migrate calibration; colour deviations added as the baseline audit surfaces and blesses them.",
+  "substrate": "App",
+  "deviations": [
+    {
+      "kind": "font",
+      "selectors": [
+        "--sl-font-mono",
+        "mono"
+      ],
+      "value": "IBM Plex Mono",
+      "why": "design-language.md L1: a surface may substitute the mono face for a narrower one where fixed pixel grids demand it. Martian Mono overflows ch-clamped columns. sans/display roles unchanged."
+    }
+  ]
+}

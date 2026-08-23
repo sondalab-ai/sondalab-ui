@@ -1,0 +1,38 @@
+{
+  "$note": "Machine source of the per-substrate compliance matrix in docs/design-language.md. level ∈ R (required) | A (adapt) | N/A (not applicable). Adaptation nuance (the parentheticals in the doc) stays in design-language.md; this file carries only the level per (rule, substrate) so the audit can decide what is blocking.",
+  "products": {
+    "spexr": "IDE",
+    "introspect": "App",
+    "daos": "Page",
+    "default": "Page",
+    "smartctx": "Term"
+  },
+  "tiers": {
+    "$note": "Theme-selector tier per product (design-language.md §Decision 1). Authoritative machine source for the audit's tier-consistency check. Term products have no tier (no theme selector).",
+    "spexr": "A",
+    "introspect": "B",
+    "daos": "B",
+    "default": "A"
+  },
+  "rules": {
+    "theme-selector":     { "IDE": "R",   "App": "R", "Page": "R", "Term": "N/A" },
+    "accent-one-hue":     { "IDE": "R",   "App": "R", "Page": "R", "Term": "R"   },
+    "l1-type-roles":      { "IDE": "R",   "App": "A", "Page": "R", "Term": "A"   },
+    "l1-mono-labels":     { "IDE": "R",   "App": "R", "Page": "R", "Term": "A"   },
+    "l1-heading":         { "IDE": "A",   "App": "R", "Page": "R", "Term": "N/A" },
+    "l1-oversized-anchor":{ "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
+    "l1-body-measure":    { "IDE": "A",   "App": "R", "Page": "R", "Term": "R"   },
+    "l2-spacing-scale":   { "IDE": "R",   "App": "R", "Page": "R", "Term": "A"   },
+    "l2-hairline-1px":    { "IDE": "A",   "App": "R", "Page": "R", "Term": "A"   },
+    "l2-hairline-grid":   { "IDE": "N/A", "App": "R", "Page": "R", "Term": "N/A" },
+    "l2-gutter-ruler":    { "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
+    "l2-section-index":   { "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
+    "l3-eyebrow-tag":     { "IDE": "A",   "App": "R", "Page": "R", "Term": "A"   },
+    "l3-inversion-band":  { "IDE": "N/A", "App": "A", "Page": "R", "Term": "A"   },
+    "l3-sticky-header":   { "IDE": "N/A", "App": "R", "Page": "R", "Term": "N/A" },
+    "l3-real-content":    { "IDE": "R",   "App": "R", "Page": "R", "Term": "R"   },
+    "l4-motion":          { "IDE": "A",   "App": "R", "Page": "R", "Term": "N/A" },
+    "l4-reduced-motion":  { "IDE": "R",   "App": "R", "Page": "R", "Term": "N/A" },
+    "l5-voice":           { "IDE": "R",   "App": "R", "Page": "R", "Term": "R"   }
+  }
+}
