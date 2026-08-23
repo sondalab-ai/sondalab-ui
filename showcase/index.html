@@ -474,12 +474,9 @@
   </footer>
 
   <script>
-    // Registry accents (dark-oriented demo values); shared grammar, per-product hue.
-    var ACCENTS = {
-      amber:  { d: "#F5A83C", h: "#F7B863", s: "rgba(245,168,60,0.16)" },
-      indigo: { d: "#8b96ff", h: "#a3acff", s: "rgba(139,150,255,0.12)" },
-      cyan:   { d: "#2ee6c0", h: "#5ad1ff", s: "rgba(46,230,192,0.12)" }
-    };
+    // Registry accents: one hue per product. hover/active/subtle re-derive from
+    // it via the theme layer (color-mix / relative-color) — the one-var contract.
+    var ACCENTS = { amber: "#F5A83C", indigo: "#8b96ff", cyan: "#2ee6c0" };
     var root = document.documentElement;
 
     function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -493,15 +490,12 @@
 
     function applyTheme(t) { root.setAttribute("data-sl-theme", t); press(document.getElementById("theme-seg"), "data-theme", t); store("sl-demo-theme", t); }
     function applyAccent(a) {
-      var c = ACCENTS[a]; if (!c) return;
-      root.style.setProperty("--sl-accent-default", c.d);
-      root.style.setProperty("--sl-accent-hover", c.h);
-      // active must track the accent hue too (design-language §Decision 2: the
-      // product derives hover/active/subtle from the hue). Without this it fell
-      // back to the amber --slc-accent-active default on non-amber accents.
-      root.style.setProperty("--sl-accent-active", c.a || "color-mix(in srgb, " + c.d + " 88%, black)");
-      root.style.setProperty("--sl-accent-subtle", c.s);
-      root.style.setProperty("--sl-focus-ring", c.d);
+      var hue = ACCENTS[a]; if (!hue) return;
+      // Set only the hue. hover/active/subtle are color-mix()/relative-color
+      // expressions off --sl-accent-default in the theme layer, so they
+      // re-derive automatically — no per-step values, no amber leak.
+      root.style.setProperty("--sl-accent-default", hue);
+      root.style.setProperty("--sl-focus-ring", hue);
       press(document.getElementById("accent-seg"), "data-accent", a);
       store("sl-demo-accent", a);
     }
