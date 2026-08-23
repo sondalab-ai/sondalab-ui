@@ -57,10 +57,12 @@ def shape(font_bytes, text):
     return list(zip(b.glyph_infos, b.glyph_positions))
 
 
-def build_svg(ttf, axes, text, amber_char_index, out):
+def build_svg(ttf, axes, text, amber_char_index, out, tracking_em=0.0):
+    """tracking_em bakes CSS letter-spacing (em) into the advances (e.g. -0.05)."""
     f, fb = instance(ttf, axes)
     gs = f.getGlyphSet()
     upem = f["head"].unitsPerEm
+    track = tracking_em * upem
     x = 0
     glyphs = []
     bounds = [None, None, None, None]
@@ -80,7 +82,7 @@ def build_svg(ttf, axes, text, amber_char_index, out):
             bounds[3] = ymax if bounds[3] is None else max(bounds[3], ymax)
         if d:
             glyphs.append((d, info.cluster == amber_char_index))
-        x += pos.x_advance
+        x += pos.x_advance + track
     xmin, ymin, xmax, ymax = bounds
     pad = upem * 0.04
     xmin -= pad; xmax += pad; ymin -= pad; ymax += pad
@@ -102,6 +104,7 @@ def build_svg(ttf, axes, text, amber_char_index, out):
 
 if __name__ == "__main__":
     # Primary wordmark: sondalab. — Fraunces 500, display optical size; dot amber.
-    build_svg(font_path("fraunces.ttf"), {"wght": 500, "opsz": 144}, "sondalab.", 8, "sondalab-wordmark.svg")
+    # tracking -0.05em matches the identity board's tight letter-spacing.
+    build_svg(font_path("fraunces.ttf"), {"wght": 500, "opsz": 144}, "sondalab.", 8, "sondalab-wordmark.svg", tracking_em=-0.05)
     # Compact lockup: SONDA·LAB — Martian Mono 300; middle dot amber.
     build_svg(font_path("martian.ttf"), {"wght": 300}, "SONDA·LAB", 5, "sondalab-lockup.svg")
