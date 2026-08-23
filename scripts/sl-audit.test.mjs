@@ -7,6 +7,8 @@ import {
   buildAllowlistBases,
   detectTier,
   auditCss,
+  matchesSelector,
+  resolveAccentEntry,
 } from "./sl-audit.mjs";
 
 // --- colour normalization (the bug-prone core) ---
@@ -80,6 +82,54 @@ test("buildAllowlistBases includes theme, accent, and accent-subtle bases", () =
 test("detectTier reads the selector convention", () => {
   assert.equal(detectTier(`[data-sl-theme="dark"] { --x: 1 }`), "A");
   assert.equal(detectTier(`[data-theme="dark"] { --x: 1 }`), "B");
+});
+
+// --- blessed selector matching (over-match guard) ---
+
+test("matchesSelector is delimited: --rule does not match --rule-2 or --ruler", () => {
+  assert.ok(matchesSelector("  --rule: color-mix(...)", "--rule"));
+  assert.ok(!matchesSelector("  --rule-2: color-mix(...)", "--rule"));
+  assert.ok(!matchesSelector("  --ruler: 1px", "--rule"));
+});
+
+test("matchesSelector matches a compound class selector", () => {
+  assert.ok(matchesSelector(".artifact .ok { color: #62d094 }", ".artifact .ok"));
+  assert.ok(!matchesSelector(".okay { color: red }", ".ok"));
+});
+
+test("matchesSelector never matches an empty selector", () => {
+  assert.ok(!matchesSelector("anything at all", ""));
+  assert.ok(!matchesSelector("anything at all", "   "));
+});
+
+test("an empty-string blessed selector does not suppress everything", () => {
+  const css = `.x { color: #3aa0ff; }`;
+  const r = auditCss({
+    css,
+    tokens: { themes: { light: {} }, accent: { light: {} } },
+    accentEntry: {},
+    blessed: { deviations: [{ kind: "color", selectors: [""], why: "malformed" }] },
+    declaredTier: "B",
+  });
+  assert.equal(r.findings.filter((f) => f.rule === "accent-one-hue").length, 1);
+});
+
+// --- accent inherits resolution ---
+
+test("resolveAccentEntry follows a chained inherit transitively", () => {
+  const reg = {
+    products: {
+      default: { light: "#B56A0C", dark: "#F5A83C" },
+      daos: { inherits: "default" },
+      sub: { inherits: "daos" },
+    },
+  };
+  assert.equal(resolveAccentEntry(reg, "sub").light, "#B56A0C");
+});
+
+test("resolveAccentEntry throws on a circular inherit instead of degrading", () => {
+  const reg = { products: { a: { inherits: "b" }, b: { inherits: "a" } } };
+  assert.throws(() => resolveAccentEntry(reg, "a"), /circular/);
 });
 
 // --- integration: value-equality + blessed suppression + tier ---

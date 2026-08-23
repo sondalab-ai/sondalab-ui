@@ -122,7 +122,7 @@ A flat list destroys the tier nuance the whole spec is built around; grouping is
 
 **Scope-pressure fallback.** If Slice 1 must shrink, ship checks **1 + 2** only — together they cover the compliance test `design-language.md` §Decision 1 actually states (sample any colour → equals a token/registry value; plus tier). Checks 3–6 are additive.
 
-> **As built (Slice 1):** the script implements checks **1 (colour value-equality) + 2 (tier consistency)** — the documented fallback. Checks 3–6 (spacing literals, border width, font-family, recipe conformance) are **specified but not implemented**; until they land, spacing and font conformance are judgement-level, handled by the `sl-ds-auditor` subagent reading `design-language.md`, not by the script. Colour value-equality also supports two blessing mechanisms: `selectors` (suppress under a distinctive selector/property context) and `values` (suppress an exact colour value — the honest mechanism for demo data with no distinctive selector, e.g. a JS swatch object).
+> **As built (Slice 1):** the script implements checks **1 (colour value-equality) + 2 (tier consistency)** — the documented fallback. Checks 3–6 (spacing literals, border width, font-family, recipe conformance) are **specified but not implemented** (see Open decisions). Colour value-equality supports two blessing mechanisms: `selectors` (suppress under a distinctive selector/property context, matched with word-delimiters so `--rule` does not match `--rule-2`) and `values` (suppress an exact colour value — the honest mechanism for demo data with no distinctive selector, e.g. a JS swatch object; empty selectors/values are rejected, and `scripts/blessed-schema.test.mjs` enforces the blessed-file schema). `resolveAccentEntry` follows chained `inherits` transitively and throws on a cycle.
 
 **Not the script's job (subagent only):** missing structural labels, editorial voice, inversion-band warrant, "one unexpected layout decision" composition.
 
@@ -190,6 +190,16 @@ sondalab-ui/
 - Slice 1 adds no shipped files: `agent/` and `scripts/` are not in `@sondalab/ui-kit`'s `files`. No version bump (per `AGENTS.md`, docs/tooling-only changes bump neither package).
 - Slice 2 ships the portable core: add `agent/**` to ui-kit `files`/`exports` and bump **ui-kit only** (palette-py untouched).
 - The audit reads `sondalab.tokens.json` (repo root) directly; when shipped, the core must resolve tokens from the installed `@sondalab/ui-kit/tokens.css` instead — a Slice 2 concern, noted here so the Slice 1 reader signature does not calcify.
+
+## Open decisions (for review)
+
+Decisions deferred deliberately — each needs a human call, not more code:
+
+1. **Spacing check (3) + recipe check (6): build or drop?** Both are high-noise because the design language itself uses off-scale literals in blessed places: the canonical **tag recipe** in `design-language.md` L3 is `padding: 3px 7px` — off the `--sl-space-*` scale. A spacing check would flag the DS's own reference recipe on the reference surface. Building these means committing to a blessing policy for legitimate off-scale literals (recipes, hairline nudges, optical adjustments). Recommendation: **defer** until there is a real consumer demand; checks 1+2 cover the stated compliance test.
+2. **Font check (5): drop.** Evaluated at Slice 1 (grep of `font-family` across all four calibrated surfaces): the only literal faces are introspect's IBM Plex Mono and spexr's editor font — both already blessed. Zero new yield, pure false-positive surface. **Not building it.**
+3. **Border check (4): low priority.** Focus rings legitimately use the 2px `--sl-focus-ring-width` token, so a naïve "border > 1px" flags them. Needs to exempt `outline`/focus. Small but not free of judgement.
+4. **Push `feat/ds-agentic-layer`?** Held — pushing to the (private) remote is outward-facing and was not explicitly authorized. Open a PR when ready; no drift risk while local.
+5. **Slice 2 npm-shipping.** Ship the portable core: add `agent/**` to `@sondalab/ui-kit`'s `files`/`exports`, resolve tokens from the installed package rather than the repo root, bump **ui-kit only**.
 
 ## Slice plan
 

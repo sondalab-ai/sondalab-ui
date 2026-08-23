@@ -165,6 +165,16 @@ function contextByLine(css) {
   return map;
 }
 
+/** Whether a blessed selector appears in a context string, delimited so a
+ * short name does not match a longer one (`--rule` must not match `--rule-2`
+ * or `--ruler`). Empty selectors never match. */
+export function matchesSelector(context, selector) {
+  const sel = selector.trim();
+  if (!sel) return false;
+  const esc = sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\w-])${esc}(?![\\w-])`).test(context);
+}
+
 // --- audit ----------------------------------------------------------------
 
 function levelFor(matrix, rule, substrate) {
@@ -189,7 +199,10 @@ export function auditCss({
   for (const s of accentColorStrings(accentEntry)) bases.add(colorBase(normalizeColor(s)));
 
   const colorDeviations = (blessed.deviations || []).filter((d) => d.kind === "color");
-  const blessedColorSelectors = colorDeviations.flatMap((d) => d.selectors || []);
+  const blessedColorSelectors = colorDeviations
+    .flatMap((d) => d.selectors || [])
+    .map((s) => s.trim())
+    .filter(Boolean); // an empty selector would match every context — drop it
   // value-based blessing — the honest mechanism for demo data / literals that
   // do not live under a distinctive selector (e.g. a JS swatch object).
   const blessedValueBases = new Set(
@@ -222,7 +235,7 @@ export function auditCss({
     if (bases.has(colorBase(norm))) continue;
     if (blessedValueBases.has(colorBase(norm))) continue;
     const context = ctxMap[line] || "";
-    const blessedHit = blessedColorSelectors.some((sel) => context.includes(sel));
+    const blessedHit = blessedColorSelectors.some((sel) => matchesSelector(context, sel));
     if (blessedHit) continue;
     const level = levelFor(matrix, "accent-one-hue", substrate);
     if (level === "N/A") continue;
@@ -245,11 +258,21 @@ export function auditCss({
 
 // --- registry / config resolution ----------------------------------------
 
-function resolveAccentEntry(registry, product) {
-  const entry = registry.products?.[product];
-  if (!entry) return {};
-  if (entry.inherits) return registry.products?.[entry.inherits] ?? {};
-  return entry;
+export function resolveAccentEntry(registry, product) {
+  const seen = new Set();
+  let name = product;
+  while (name) {
+    if (seen.has(name)) throw new Error(`accent-registry: circular inherits at "${name}"`);
+    seen.add(name);
+    const entry = registry.products?.[name];
+    if (!entry) return {};
+    if (entry.inherits) {
+      name = entry.inherits;
+      continue;
+    }
+    return entry;
+  }
+  return {};
 }
 
 function loadJson(path) {
