@@ -12,15 +12,27 @@ function block(selector, entries) {
   return `${selector} {\n${body}\n}\n`;
 }
 
-/** An accent step is either a literal colour string or a derivation recipe
- * `{ mix: [ratio, anchor] }`, emitted as a color-mix() off --sl-accent-default
- * so a one-var override re-derives the whole family. */
-function accentValue(v) {
+/** An accent step is a literal colour string or a hue-relative derivation
+ * recipe, so that overriding only --sl-accent-default re-derives the family
+ * (the one-var contract). Two recipe shapes:
+ *   { mix: [ratio, anchor] }        -> color-mix() (Baseline)
+ *   { oklch: [L, C, H], fallback }  -> relative color (tighter floor); the
+ *                                      fallback literal is emitted first so a
+ *                                      browser without relative-color syntax
+ *                                      keeps the hand-tuned value.
+ * Returns an array of [name, value] declarations (usually one, two when a
+ * relative-color step carries a fallback). */
+function accentDecls(name, v) {
   if (v && typeof v === "object" && Array.isArray(v.mix)) {
     const [ratio, anchor] = v.mix;
-    return `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${anchor})`;
+    return [[name, `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${anchor})`]];
   }
-  return v;
+  if (v && typeof v === "object" && Array.isArray(v.oklch)) {
+    const [L, C, H] = v.oklch;
+    const derived = `oklch(from var(--sl-accent-default) ${L} ${C} ${H})`;
+    return v.fallback ? [[name, v.fallback], [name, derived]] : [[name, derived]];
+  }
+  return [[name, v]];
 }
 
 function main() {
@@ -40,7 +52,7 @@ function main() {
     const accent = t.accent[id];
     const entries = [
       ...Object.entries(theme).map(([k, v]) => [`--sl-${k}`, v]),
-      ...Object.entries(accent).map(([k, v]) => [`--sl-accent-${k}`, accentValue(v)]),
+      ...Object.entries(accent).flatMap(([k, v]) => accentDecls(`--sl-accent-${k}`, v)),
       ["--sl-focus-ring", accent.default],
     ];
     const css = HEADER + block(`[data-sl-theme="${id}"]`, entries);
