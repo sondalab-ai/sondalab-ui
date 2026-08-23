@@ -8,6 +8,7 @@
   "type": "module",
   "exports": {
     "./tokens.css": "./tokens.css",
+    "./components.css": "./components.css",
     "./themes/light.css": "./themes/light.css",
     "./themes/dark.css": "./themes/dark.css",
     "./themes/high-contrast.css": "./themes/high-contrast.css",
@@ -18,6 +19,7 @@
   },
   "files": [
     "tokens.css",
+    "components.css",
     "themes/light.css",
     "themes/dark.css",
     "themes/high-contrast.css",

@@ -8,6 +8,7 @@
 
   <!-- Tier A: consume the generated token + theme layers directly (relative). -->
   <link rel="stylesheet" href="../packages/ui-kit/tokens.css">
+  <link rel="stylesheet" href="../packages/ui-kit/components.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
@@ -211,6 +212,23 @@
     @keyframes rise { to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) { .rise { animation: none; opacity: 1; transform: none; } }
 
+    /* -- component gallery (consumes @sondalab/ui-kit components.css) ----- */
+    .gallery { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--sl-border-subtle); border: 1px solid var(--sl-border-subtle); margin-top: 1.5rem; }
+    @media (min-width: 720px) { .gallery { grid-template-columns: 1fr 1fr; } }
+    .g-cell { background: var(--sl-bg-surface); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.9rem; }
+    .g-cell > .g-label { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
+    .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+    .g-demo--col { flex-direction: column; align-items: stretch; }
+    /* Inversion band: re-map the component role-vars to the flipped ground.
+       This is exactly the Tier-B .invert recipe — border derived from the
+       band's foreground so the hairline survives the strongest neutral. */
+    .g-cell .invert {
+      --slc-text: var(--sl-bg-canvas);
+      --slc-text-secondary: color-mix(in srgb, var(--sl-bg-canvas) 82%, transparent);
+      --slc-text-muted: color-mix(in srgb, var(--sl-bg-canvas) 62%, transparent);
+      --slc-surface: color-mix(in srgb, var(--sl-text-primary) 86%, var(--sl-bg-canvas));
+      --slc-border: color-mix(in srgb, var(--sl-bg-canvas) 22%, transparent);
+    }
     footer { border-top: 1px solid var(--sl-border-subtle); padding-block: 2.5rem; }
     footer .cap { max-width: var(--sl-measure); line-height: 1.6; }
   </style>
@@ -314,7 +332,136 @@
 
     <section>
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">04</span><h2>Motion</h2></div>
+        <div class="sec-head"><span class="sec-idx">04</span><h2>Component library</h2></div>
+        <p class="cap">The shipped <b>.sl-*</b> classes from <b>@sondalab/ui-kit/components.css</b>. Colour comes from role-vars (<b>--slc-*</b>) that resolve to the active theme accent — switch theme / accent above and the whole gallery follows.</p>
+        <div class="gallery">
+
+          <div class="g-cell">
+            <span class="g-label">eyebrow · tag</span>
+            <div class="g-demo"><span class="sl-eyebrow">Section eyebrow</span></div>
+            <div class="g-demo"><span class="sl-tag">Research tier</span><span class="sl-tag sl-tag--plain">Draft</span></div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">button</span>
+            <div class="g-demo">
+              <button class="sl-btn sl-btn--primary">Run probe</button>
+              <button class="sl-btn sl-btn--ghost">Cancel</button>
+              <button class="sl-btn sl-btn--ghost sl-btn--sm">Small</button>
+              <button class="sl-btn sl-btn--primary" disabled>Disabled</button>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">badge · status pill</span>
+            <div class="g-demo">
+              <span class="sl-badge sl-badge--success">Passed</span>
+              <span class="sl-badge sl-badge--warning">Degraded</span>
+              <span class="sl-badge sl-badge--danger">Failed</span>
+              <span class="sl-badge sl-badge--info">Queued</span>
+              <span class="sl-badge">Idle</span>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">card</span>
+            <div class="sl-card">
+              <h3 class="sl-card__title">Deterministic resolve</h3>
+              <p class="sl-card__body">Cached probe answers return in <span class="sl-code">0ms</span>; a miss re-runs the tool and stores the result.</p>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">field</span>
+            <div class="g-demo g-demo--col">
+              <label class="sl-field">
+                <span class="sl-field__label">Query</span>
+                <input class="sl-field__input" type="text" placeholder="resolve(&quot;q-8f2a&quot;)">
+              </label>
+              <label class="sl-field">
+                <span class="sl-field__label">Notes</span>
+                <textarea class="sl-field__input" placeholder="Optional context…"></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">inline: kbd · code · link · tooltip</span>
+            <div class="g-demo">
+              <span>Press <kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd></span>
+              <span class="sl-code">--slc-accent</span>
+              <a class="sl-link" href="#">read the spec</a>
+              <span class="sl-tooltip" data-sl-tooltip="Resolves to the active accent" tabindex="0" style="text-decoration:underline dotted">what is this?</span>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">callout</span>
+            <div class="g-demo g-demo--col">
+              <div class="sl-callout">
+                <div><p class="sl-callout__title">Note</p><p class="sl-callout__body">Accent stripe on the leading edge — the default variant.</p></div>
+              </div>
+              <div class="sl-callout sl-callout--warning">
+                <div><p class="sl-callout__title">Warning</p><p class="sl-callout__body">Semantic hue is independent of the product accent.</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">tabs</span>
+            <div class="sl-tabs__list" role="tablist" aria-label="Demo">
+              <button class="sl-tabs__tab" role="tab" aria-selected="true">Overview</button>
+              <button class="sl-tabs__tab" role="tab" aria-selected="false">Traces</button>
+              <button class="sl-tabs__tab" role="tab" aria-selected="false">Settings</button>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">table</span>
+            <div style="overflow-x:auto">
+              <table class="sl-table sl-table--numeric">
+                <thead><tr><th>Probe</th><th>Result</th><th>Latency</th></tr></thead>
+                <tbody>
+                  <tr><td>q-8f2a</td><td>cached</td><td>0ms</td></tr>
+                  <tr><td>q-11c7</td><td>miss</td><td>340ms</td></tr>
+                  <tr><td>q-4d90</td><td>cached</td><td>1ms</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">dialog · rule</span>
+            <dialog class="sl-dialog" open style="position:static;margin:0;max-width:none;width:auto">
+              <h3 class="sl-dialog__title">Discard probe?</h3>
+              <p class="sl-dialog__body">This clears the cached answer. The next call re-runs the tool.</p>
+              <div class="sl-dialog__actions">
+                <button class="sl-btn sl-btn--ghost sl-btn--sm">Keep</button>
+                <button class="sl-btn sl-btn--primary sl-btn--sm">Discard</button>
+              </div>
+            </dialog>
+            <div class="sl-rule--labeled">section break</div>
+          </div>
+
+          <div class="g-cell" style="padding:0">
+            <div class="invert" style="padding:1.4rem">
+              <p class="sl-eyebrow">On ink</p>
+              <div class="g-demo" style="margin-top:0.7rem">
+                <span class="sl-tag">Inverted</span>
+                <span class="sl-badge sl-badge--success">Passed</span>
+                <span class="sl-kbd">esc</span>
+              </div>
+            </div>
+            <span class="g-label" style="padding:0.9rem 1.4rem">Inversion band — <b>--slc-border</b> scope-override keeps hairlines visible on the strongest neutral.</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">05</span><h2>Motion</h2></div>
         <p class="cap">One easing <b>--sl-motion-ease</b>, three speeds. Entrance = staggered rise (the cards in §03 rose in on load). Zeroed under <b>prefers-reduced-motion</b> via the token layer.</p>
       </div>
     </section>

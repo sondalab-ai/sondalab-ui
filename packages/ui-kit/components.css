@@ -1,0 +1,384 @@
+/* @sondalab/ui-kit — components.css
+   Hand-authored (NOT generated). CSS-only component layer on top of tokens.css.
+   Framework-agnostic: works in Theia widgets, React apps, and plain HTML.
+
+   ── Colour contract: role-vars (--slc-*) ─────────────────────────────────────
+   Components never read theme tokens (--sl-color-… / --sl-accent-…) directly,
+   because those resolve ONLY under [data-sl-theme] (Tier A, e.g. spexr). In
+   value-pinned products (Tier B: daos, introspect) they are absent.
+
+   Instead every component reads a small set of role-vars declared below. Each
+   defaults through a fallback chain: --sl-* token first (so Tier A products get
+   the live theme with ZERO wiring), then a hard brand literal (so a bare import
+   still renders). Tier B products MAP the role-vars ONCE to their own colour
+   layer — see the README recipe. That is the whole integration surface.
+
+   ── Inversion-band pitfall ───────────────────────────────────────────────────
+   --slc-border defaults to an alpha-over-canvas value. Inside an inversion band
+   (a block whose background is the strongest neutral, e.g. .invert), that alpha
+   sits on the wrong ground and the border vanishes. Fix at the band, not here:
+     .invert { --slc-border: color-mix(in srgb, currentColor 22%, transparent); }
+   Keeps value-equality, no new token. Any bordered component (card, table,
+   field, callout) inherits the fix automatically. */
+
+:root {
+  /* accent */
+  --slc-accent:        var(--sl-accent-default, #B56A0C);
+  --slc-accent-hover:  var(--sl-accent-hover,   #A05F0A);
+  --slc-accent-active: var(--sl-accent-active,  #8A5109);
+  --slc-accent-subtle: var(--sl-accent-subtle,  rgba(197,122,22,0.12));
+  --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
+  /* surfaces + text */
+  --slc-surface:       var(--sl-bg-surface,        #F6F1E6);
+  --slc-raised:        var(--sl-bg-surface-raised, #FFFFFF);
+  --slc-overlay:       var(--sl-bg-overlay,        rgba(21,33,31,0.4));
+  --slc-text:          var(--sl-text-primary,   #15211F);
+  --slc-text-secondary:var(--sl-text-secondary, #475754);
+  --slc-text-muted:    var(--sl-text-muted,     #6E7B78);
+  /* lines */
+  --slc-border:        var(--sl-border-default, rgba(21,33,31,0.16));
+  --slc-border-subtle: var(--sl-border-subtle,  rgba(21,33,31,0.09));
+  --slc-border-strong: var(--sl-border-strong,  rgba(21,33,31,0.28));
+  --slc-focus:         var(--sl-focus-ring, var(--slc-accent));
+  /* status */
+  --slc-success: var(--sl-status-success, #16a34a);
+  --slc-warning: var(--sl-status-warning, #d97706);
+  --slc-danger:  var(--sl-status-danger,  #dc2626);
+  --slc-info:    var(--sl-status-info,    #0284c7);
+}
+
+/* Shared focus ring for keyboard nav — every interactive component uses it. */
+.sl-btn:focus-visible,
+.sl-link:focus-visible,
+.sl-field__input:focus-visible,
+.sl-tabs__tab:focus-visible,
+[data-sl-tooltip]:focus-visible {
+  outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
+  outline-offset: var(--sl-focus-ring-offset, 2px);
+  border-radius: var(--sl-radius-sm, 4px);
+}
+
+/* ══ PRIMITIVES ══════════════════════════════════════════════════════════════ */
+
+/* Eyebrow — mono uppercase micro-label above a heading. Strongest family signal. */
+.sl-eyebrow {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+
+/* Tag — accent-tinted pill with a dot glyph. Category / tier marker. */
+.sl-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--slc-accent);
+  background: var(--slc-accent-subtle);
+  border: 1px solid var(--slc-accent-subtle);
+  border-radius: var(--sl-radius-pill, 9999px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+}
+.sl-tag::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--slc-accent);
+  flex: none;
+}
+.sl-tag--plain { color: var(--slc-text-muted); background: transparent; border-color: var(--slc-border); }
+.sl-tag--plain::before { background: var(--slc-text-muted); }
+
+/* Button — primary (filled accent), ghost (bordered), and a small size. */
+.sl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1;
+  padding: var(--sl-space-3, 0.75rem) var(--sl-space-5, 1.5rem);
+  border-radius: var(--sl-radius-md, 6px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--slc-text);
+  cursor: pointer;
+  transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sl-btn--primary { background: var(--slc-accent); color: var(--slc-on-accent); }
+.sl-btn--primary:hover:not(:disabled)  { background: var(--slc-accent-hover); }
+.sl-btn--primary:active:not(:disabled) { background: var(--slc-accent-active); }
+.sl-btn--ghost { border-color: var(--slc-border); color: var(--slc-text); }
+.sl-btn--ghost:hover:not(:disabled)  { border-color: var(--slc-accent); color: var(--slc-accent); }
+.sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: var(--sl-space-2, 0.5rem) var(--sl-space-3, 0.75rem); }
+
+/* Card — surface panel. Compose with __title / __body. */
+.sl-card {
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-lg, 10px);
+  padding: var(--sl-space-5, 1.5rem);
+}
+.sl-card__title {
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-size: var(--sl-text-lg, 1.125rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--slc-text);
+  margin: 0 0 var(--sl-space-2, 0.5rem);
+}
+.sl-card__body {
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text-secondary);
+  margin: 0;
+}
+
+/* Badge — status pill. Semantic colour is independent of the accent hue. */
+.sl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--slc-text-secondary);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-pill, 9999px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+}
+.sl-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.sl-badge--success { color: var(--slc-success); border-color: color-mix(in srgb, var(--slc-success) 40%, transparent); }
+.sl-badge--warning { color: var(--slc-warning); border-color: color-mix(in srgb, var(--slc-warning) 40%, transparent); }
+.sl-badge--danger  { color: var(--slc-danger);  border-color: color-mix(in srgb, var(--slc-danger)  40%, transparent); }
+.sl-badge--info    { color: var(--slc-info);    border-color: color-mix(in srgb, var(--slc-info)    40%, transparent); }
+
+/* Field — label + input/textarea/select. Compose __label with __input. */
+.sl-field { display: flex; flex-direction: column; gap: var(--sl-space-2, 0.5rem); }
+.sl-field__label {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+.sl-field__input {
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  color: var(--slc-text);
+  background: var(--slc-raised);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+  padding: var(--sl-space-3, 0.75rem);
+  transition: border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-field__input::placeholder { color: var(--slc-text-muted); }
+.sl-field__input:hover:not(:disabled) { border-color: var(--slc-border-strong); }
+.sl-field__input:disabled { opacity: 0.5; cursor: not-allowed; }
+textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: var(--sl-line-normal, 1.5); }
+
+/* Kbd — keyboard key. */
+.sl-kbd {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: 0.8125em;
+  line-height: 1;
+  color: var(--slc-text-secondary);
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-bottom-width: 2px;
+  border-radius: var(--sl-radius-sm, 4px);
+  padding: 0.2em 0.45em;
+}
+
+/* Inline code. */
+.sl-code {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: 0.875em;
+  color: var(--slc-accent);
+  background: var(--slc-accent-subtle);
+  border-radius: var(--sl-radius-sm, 4px);
+  padding: 0.12em 0.36em;
+}
+
+/* Link — underlined, accent on hover. */
+.sl-link {
+  color: var(--slc-text);
+  text-decoration: underline;
+  text-decoration-color: var(--slc-border-strong);
+  text-underline-offset: 0.18em;
+  transition: color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              text-decoration-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-link:hover { color: var(--slc-accent); text-decoration-color: var(--slc-accent); }
+
+/* Rule — hairline divider. --labeled centres a caption over the line. */
+.sl-rule { border: none; border-top: 1px solid var(--slc-border); margin: var(--sl-space-6, 2rem) 0; }
+.sl-rule--labeled {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-4, 1rem);
+  border: none;
+  margin: var(--sl-space-6, 2rem) 0;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+.sl-rule--labeled::before,
+.sl-rule--labeled::after { content: ""; flex: 1; border-top: 1px solid var(--slc-border); }
+
+/* ══ COMPLEX (composed shells — no behaviour JS) ═════════════════════════════ */
+
+/* Callout — banner / admonition. Accent stripe on the leading edge. */
+.sl-callout {
+  display: flex;
+  gap: var(--sl-space-4, 1rem);
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-left: 3px solid var(--slc-accent);
+  border-radius: var(--sl-radius-md, 6px);
+  padding: var(--sl-space-4, 1rem) var(--sl-space-5, 1.5rem);
+}
+.sl-callout__title {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--slc-text);
+  margin: 0 0 var(--sl-space-1, 0.25rem);
+}
+.sl-callout__body {
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text-secondary);
+  margin: 0;
+}
+.sl-callout--success { border-left-color: var(--slc-success); }
+.sl-callout--warning { border-left-color: var(--slc-warning); }
+.sl-callout--danger  { border-left-color: var(--slc-danger); }
+.sl-callout--info    { border-left-color: var(--slc-info); }
+
+/* Table — shell. Wrap in a scroll container so wide tables never scroll the page:
+   <div style="overflow-x:auto"><table class="sl-table">…</table></div> */
+.sl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  color: var(--slc-text);
+}
+.sl-table thead th {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--slc-text-muted);
+  padding: var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
+  border-bottom: 1px solid var(--slc-border);
+}
+.sl-table tbody td {
+  padding: var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
+  border-bottom: 1px solid var(--slc-border-subtle);
+}
+.sl-table tbody tr:last-child td { border-bottom: none; }
+.sl-table--numeric td, .sl-table--numeric th { font-variant-numeric: tabular-nums; }
+
+/* Dialog — visual shell for the native <dialog> element (consumer wires open/close).
+   <dialog class="sl-dialog">…</dialog>; dialog.showModal() / .close() drive it. */
+.sl-dialog {
+  background: var(--slc-raised);
+  color: var(--slc-text);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-lg, 10px);
+  box-shadow: var(--sl-shadow-lg, 0 12px 32px rgba(0,0,0,0.16));
+  padding: var(--sl-space-6, 2rem);
+  max-width: 32rem;
+  width: calc(100% - var(--sl-space-8, 3rem));
+}
+.sl-dialog::backdrop { background: var(--slc-overlay); }
+.sl-dialog__title {
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-size: var(--sl-text-xl, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--sl-space-3, 0.75rem);
+}
+.sl-dialog__body { font-family: var(--sl-font-sans, system-ui, sans-serif); font-size: var(--sl-text-sm, 0.875rem); line-height: var(--sl-line-normal, 1.5); color: var(--slc-text-secondary); margin: 0 0 var(--sl-space-5, 1.5rem); }
+.sl-dialog__actions { display: flex; justify-content: flex-end; gap: var(--sl-space-3, 0.75rem); }
+
+/* Tabs — visual only. Consumer supplies ARIA + panel switching:
+   <div class="sl-tabs__list" role="tablist">
+     <button class="sl-tabs__tab" role="tab" aria-selected="true">…</button> …
+   </div> */
+.sl-tabs__list {
+  display: flex;
+  gap: var(--sl-space-1, 0.25rem);
+  border-bottom: 1px solid var(--slc-border);
+}
+.sl-tabs__tab {
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--slc-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
+  cursor: pointer;
+  transition: color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-tabs__tab:hover { color: var(--slc-text); }
+.sl-tabs__tab[aria-selected="true"] { color: var(--slc-accent); border-bottom-color: var(--slc-accent); }
+
+/* Tooltip — CSS-only. Put text in data-sl-tooltip; give the host tabindex="0"
+   for keyboard reveal. <span class="sl-tooltip" data-sl-tooltip="…" tabindex="0">…</span> */
+.sl-tooltip { position: relative; }
+.sl-tooltip::after {
+  content: attr(data-sl-tooltip);
+  position: absolute;
+  bottom: calc(100% + var(--sl-space-2, 0.5rem));
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-xs, 0.75rem);
+  /* Inverted chip: text tracks the surface axis so it stays opposite its own
+     --slc-text background in every theme (never the unrelated on-accent role). */
+  color: var(--slc-raised);
+  background: var(--slc-text);
+  border-radius: var(--sl-radius-sm, 4px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+  z-index: var(--sl-z-overlay, 50);
+}
+.sl-tooltip:hover::after,
+.sl-tooltip:focus-visible::after { opacity: 1; }
