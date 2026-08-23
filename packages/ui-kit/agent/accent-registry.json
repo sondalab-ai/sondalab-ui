@@ -7,7 +7,15 @@
       "depth": { "light": "#14606C", "dark": "#35A0B4" }
     },
     "daos": { "inherits": "default" },
-    "spexr": { "light": "#5b6cff", "dark": "#8b96ff" },
+    "spexr": {
+      "light": "#5b6cff",
+      "dark": "#8b96ff",
+      "$steps-note": "spexr hand-tunes its indigo hover/active/subtle: the DS default derivation ratios (calibrated on amber) reproduce indigo hover within Δ1.3 but shift active/light Δ16–27, so the tuned steps stay explicit. Registered here (not blessed) because they ARE spexr's accent — the audit allowlists a product's registry colours. Kept in sync with themes/spexr-overrides.css.",
+      "steps": {
+        "light": { "hover": "#4858ee", "active": "#3645d4", "subtle": "#eef0ff" },
+        "dark": { "hover": "#a3acff", "active": "#6b78f0", "subtle": "#1c1f3a" }
+      }
+    },
     "introspect": { "single": "#2ee6c0" }
   }
 }
