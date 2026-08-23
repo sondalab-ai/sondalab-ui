@@ -1,0 +1,24 @@
+{
+  "$note": "Machine index of catalog.md. Each entry maps a component id to its classes, the --slc-* role-vars it consumes, and its kind. scripts/catalog-audit.test.mjs asserts every id has a section in catalog.md and that every snippet audits clean.",
+  "components": [
+    { "id": "eyebrow",    "kind": "primitive", "classes": ["sl-eyebrow"], "roleVars": ["--slc-text-muted"] },
+    { "id": "tag",        "kind": "primitive", "classes": ["sl-tag", "sl-tag--plain"], "roleVars": ["--slc-accent", "--slc-accent-subtle", "--slc-text-muted", "--slc-border"] },
+    { "id": "button",     "kind": "primitive", "classes": ["sl-btn", "sl-btn--primary", "sl-btn--ghost", "sl-btn--sm"], "roleVars": ["--slc-accent", "--slc-accent-hover", "--slc-accent-active", "--slc-on-accent", "--slc-border", "--slc-text"] },
+    { "id": "link",       "kind": "primitive", "classes": ["sl-link"], "roleVars": ["--slc-accent"] },
+    { "id": "badge",      "kind": "primitive", "classes": ["sl-badge", "sl-badge--success", "sl-badge--warning", "sl-badge--danger", "sl-badge--info"], "roleVars": ["--slc-success", "--slc-warning", "--slc-danger", "--slc-info"] },
+    { "id": "card",       "kind": "primitive", "classes": ["sl-card", "sl-card__title", "sl-card__body"], "roleVars": ["--slc-surface", "--slc-border", "--slc-text", "--slc-text-secondary"] },
+    { "id": "field",      "kind": "primitive", "classes": ["sl-field", "sl-field__label", "sl-field__input"], "roleVars": ["--slc-surface", "--slc-border", "--slc-border-strong", "--slc-text", "--slc-focus"] },
+    { "id": "callout",    "kind": "primitive", "classes": ["sl-callout", "sl-callout--success", "sl-callout--warning", "sl-callout--danger", "sl-callout--info", "sl-callout__title", "sl-callout__body"], "roleVars": ["--slc-surface", "--slc-border", "--slc-info", "--slc-success", "--slc-warning", "--slc-danger"] },
+    { "id": "rule",       "kind": "primitive", "classes": ["sl-rule", "sl-rule--labeled"], "roleVars": ["--slc-border"] },
+    { "id": "table",      "kind": "primitive", "classes": ["sl-table", "sl-table--numeric"], "roleVars": ["--slc-border", "--slc-text", "--slc-text-secondary", "--slc-surface"] },
+    { "id": "tabs",       "kind": "primitive", "classes": ["sl-tabs", "sl-tabs__list", "sl-tabs__tab"], "roleVars": ["--slc-accent", "--slc-text", "--slc-text-muted", "--slc-border"] },
+    { "id": "kbd",        "kind": "primitive", "classes": ["sl-kbd", "sl-code"], "roleVars": ["--slc-surface", "--slc-border", "--slc-text"] },
+    { "id": "dialog",     "kind": "primitive", "classes": ["sl-dialog", "sl-dialog__title", "sl-dialog__body", "sl-dialog__actions"], "roleVars": ["--slc-raised", "--slc-border", "--slc-overlay", "--slc-text", "--slc-text-secondary"] },
+
+    { "id": "sticky-header",   "kind": "signature", "classes": [], "roleVars": ["--sl-bg-canvas", "--sl-border-subtle", "--sl-z-overlay"] },
+    { "id": "inversion-band",  "kind": "signature", "classes": [], "roleVars": ["--sl-text-primary", "--sl-bg-canvas"] },
+    { "id": "hairline-grid",   "kind": "signature", "classes": [], "roleVars": ["--sl-border-subtle", "--sl-bg-surface", "--sl-space-5"] },
+    { "id": "section-index",   "kind": "signature", "classes": [], "roleVars": ["--sl-border-subtle", "--sl-font-mono", "--sl-text-xs", "--sl-text-muted", "--sl-space-8"] },
+    { "id": "oversized-anchor","kind": "signature", "classes": [], "roleVars": ["--sl-font-display", "--sl-line-tight"] }
+  ]
+}

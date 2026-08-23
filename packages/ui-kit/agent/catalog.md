@@ -1,0 +1,194 @@
+# Component catalog — Sondalab DS (agent-facing)
+
+> **What this file is:** a copy-paste catalog of Sondalab DS primitives and signature patterns, for an agent authoring a new interface. Each entry gives the canonical markup, the role-vars it consumes, its substrate applicability, and a do/don't. Snippets use only `var(--slc-*/--sl-*)` and `color-mix()` over those — never a colour literal — so every snippet here passes `sl-audit` by construction (`scripts/catalog-audit.test.mjs` enforces it).
+> **Audience:** agents building or extending a Sondalab surface (author workflow); humans reviewing component usage.
+> **How to use:** pick the component, copy the markup, bind it to your product's theme (Tier A: consume `@sondalab/ui-kit` `components.css` + a theme; Tier B: map the `--slc-*` role-vars to your local colour layer). Then run `sl-audit`. The machine index is `catalog.json`.
+> **Companion:** `README.md` (usage), `HANDOFF.md` (what the audit does not check), `../../../docs/design-language.md` (the grammar these components express), `workflows/author.md` (the procedure that consumes this catalog).
+
+The `--slc-*` role-vars (defined at the top of `components.css`) are the seam: components read them, and they resolve to `--sl-*` tokens (Tier A) or to your product's colour layer (Tier B). Never hardcode a colour into a component — bind the role-var.
+
+## Primitives (ready classes in `components.css`)
+
+### Eyebrow — `sl-eyebrow`
+Mono uppercase micro-label above a heading. The single strongest family signal. Substrate: **R** on App/Page/IDE.
+```html
+<p class="sl-eyebrow">System status</p>
+```
+Consumes: `--slc-text-muted`, `--sl-font-mono`. Don't: sentence-case it or use a sans face.
+
+### Tag / tier marker — `sl-tag` (`--plain`)
+Accent-tinted pill with a leading dot; classification/status. Substrate: **R** App/Page.
+```html
+<span class="sl-tag">Delivered</span>
+<span class="sl-tag sl-tag--plain">Draft</span>
+```
+Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags.
+
+### Button — `sl-btn` (`--primary` · `--ghost` · `--sm`)
+Filled-accent primary or bordered ghost. Active/hover track the accent hue. Substrate: **R** App/IDE, **A** Page.
+```html
+<button class="sl-btn sl-btn--primary">Save changes</button>
+<button class="sl-btn sl-btn--ghost">Cancel</button>
+<button class="sl-btn sl-btn--primary sl-btn--sm">Add</button>
+```
+Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-on-accent`, `--slc-border`, `--slc-text`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
+
+### Link — `sl-link`
+Underlined, accent on hover. Substrate: **R** App/Page.
+```html
+<a class="sl-link" href="/specs">read the spec</a>
+```
+Consumes: `--slc-accent`. Don't: remove the underline (leave the affordance).
+
+### Badge — `sl-badge` (`--success` · `--warning` · `--danger` · `--info`)
+Semantic status pill. Semantic colour is **independent of the accent hue** and shared. Substrate: **R** App/IDE.
+```html
+<span class="sl-badge sl-badge--success">Passing</span>
+<span class="sl-badge sl-badge--danger">Failed</span>
+```
+Consumes: `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: recolour a badge to the accent — status ≠ accent.
+
+### Card — `sl-card` (`__title` · `__body`)
+Surface panel. Substrate: **R** App.
+```html
+<article class="sl-card">
+  <h3 class="sl-card__title">Migration report</h3>
+  <div class="sl-card__body">2 R-violations resolved, 1 blessed.</div>
+</article>
+```
+Consumes: `--slc-surface`, `--slc-border`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
+
+### Field — `sl-field` (`__label` · `__input`)
+Label + input/textarea/select. Substrate: **R** App.
+```html
+<label class="sl-field">
+  <span class="sl-field__label">Product</span>
+  <input class="sl-field__input" type="text" placeholder="introspect">
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-focus`. Do: keep the shared focus ring.
+
+### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
+Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
+```html
+<div class="sl-callout sl-callout--info">
+  <p class="sl-callout__title">Tier B</p>
+  <div class="sl-callout__body">Every colour must resolve to a Sondalab value.</div>
+</div>
+```
+Consumes: `--slc-surface`, `--slc-border`, `--slc-info`/`--slc-success`/etc. Don't: reinstate a full left border stripe.
+
+### Rule — `sl-rule` (`--labeled`)
+Hairline divider; `--labeled` centres a mono caption over the line. Substrate: **R** App/Page.
+```html
+<hr class="sl-rule">
+<div class="sl-rule sl-rule--labeled">since 0.2.0</div>
+```
+Consumes: `--slc-border`. Weight is always 1px — never thicken a separator.
+
+### Table — `sl-table` (`--numeric`)
+Data table shell. Wrap in an `overflow-x:auto` container so wide tables never scroll the page. Substrate: **R** App.
+```html
+<div style="overflow-x:auto">
+  <table class="sl-table sl-table--numeric">
+    <thead><tr><th>Product</th><th>R-violations</th></tr></thead>
+    <tbody><tr><td>daos</td><td>2</td></tr></tbody>
+  </table>
+</div>
+```
+Consumes: `--slc-border`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`. Do: `--numeric` for tabular figures.
+
+### Tabs — `sl-tabs` (`__list` · `__tab`)
+Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px accent underline — an emphasis accent, not a separator. Substrate: **R** App.
+```html
+<div class="sl-tabs">
+  <div class="sl-tabs__list" role="tablist">
+    <button class="sl-tabs__tab" aria-selected="true">Tokens</button>
+    <button class="sl-tabs__tab">Components</button>
+  </div>
+</div>
+```
+Consumes: `--slc-accent`, `--slc-text`, `--slc-text-muted`, `--slc-border`. Active state is the accent (never a neutral).
+
+### Kbd / inline code — `sl-kbd` · `sl-code`
+Keyboard key and inline monospace code. Substrate: **A**.
+```html
+Press <kbd class="sl-kbd">⌘K</kbd>, then run <code class="sl-code">sl-audit</code>.
+```
+Consumes: `--slc-surface`, `--slc-border`, `--slc-text`, `--sl-font-mono`.
+
+### Dialog — `sl-dialog` (`__title` · `__body` · `__actions`)
+Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: **R** App.
+```html
+<dialog class="sl-dialog">
+  <h2 class="sl-dialog__title">Discard changes?</h2>
+  <div class="sl-dialog__body">This cannot be undone.</div>
+  <div class="sl-dialog__actions">
+    <button class="sl-btn sl-btn--ghost">Keep</button>
+    <button class="sl-btn sl-btn--primary">Discard</button>
+  </div>
+</dialog>
+```
+Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`.
+
+## Signature patterns (page-level composition — copy the CSS)
+
+These are not single classes; they are the composition motifs from `design-language.md` L2/L3. Copy the CSS into your surface (they read `--sl-*` tokens directly, theme-independent).
+
+### Sticky translucent header
+Substrate: **R** App/Page. The house header: sticky, translucent, 1px bottom rule; mono wordmark left, mono meta right.
+```css
+.site-header {
+  position: sticky; top: 0; z-index: var(--sl-z-overlay);
+  background: color-mix(in srgb, var(--sl-bg-canvas) 84%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid var(--sl-border-subtle);
+}
+```
+Don't: use an opaque header or a drop-shadow instead of the 1px rule.
+
+### Inversion band
+Substrate: **R** Page, **A** App/IDE/Term. A full-width block flipped to paper-on-ink; punctuates rhythm, marks the thesis or primary CTA. At least one per long page.
+```css
+.invert {
+  background: var(--sl-text-primary);
+  color: var(--sl-bg-canvas);
+}
+.invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 70%, transparent); }
+```
+Don't: put an alpha-on-canvas hairline inside it (it vanishes) — derive an on-ink rule locally.
+
+### Hairline grid
+Substrate: **R** App/Page. Cards formed by a 1px gap over a line-colour background; cells paint their own surface → crisp shared rules, no doubled borders. Prefer over bordered-card grids.
+```css
+.hgrid {
+  display: grid; gap: 1px;
+  background: var(--sl-border-subtle);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+.hgrid > * { background: var(--sl-bg-surface); padding: var(--sl-space-5); }
+```
+
+### Section with mono index
+Substrate: **R** Page. A section opens with a mono index label beside its heading, separated from the previous section by a 1px top rule. Number it only where the content is a real sequence.
+```css
+.section { border-top: 1px solid var(--sl-border-subtle); padding-block: var(--sl-space-8); }
+.section__idx { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--sl-text-muted); }
+```
+
+### Oversized display anchor
+Substrate: **R** Page (**A** App where a hero exists). One oversized display heading per screen, sized by a fluid clamp (a documented pattern, not a token).
+```css
+.anchor {
+  font-family: var(--sl-font-display); font-weight: 600;
+  letter-spacing: -0.02em; line-height: var(--sl-line-tight);
+  font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+}
+```
+Don't: use more than one oversized anchor per screen.
+
+## Rules of use (all components)
+
+- **Bind role-vars, never literals.** A component's colour comes from a `--slc-*`/`--sl-*` var. A raw hex fails `sl-audit`.
+- **One accent hue.** The accent varies per product (see `accent-registry.json`); status colours (success/warning/danger/info) are shared and independent of it.
+- **Spend surprise on composition, not materials.** Family resemblance comes from these shared components; distinctiveness comes from how you compose them (≥1 unexpected layout decision per screen).
