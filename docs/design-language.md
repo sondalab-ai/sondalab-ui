@@ -42,6 +42,8 @@ Shared grammar, per-product accent. The brand default is amber (with a teal *dep
 | **spexr** | `#5b6cff` / `#8b96ff` | `spexr-overrides.css` | Delivered. |
 | **introspect** | `#2ee6c0` (single) | introspect `--cy` | ⚠ Differs from the Sondalab teal depth `#35A0B4`. **Resolved:** introspect's brighter mint-cyan is registered as its product accent (kept); it is not required to match `depth`. `depth` is the *default* product's teal, not a constraint on cyan-accented products. |
 
+Machine values of this table: `packages/ui-kit/agent/accent-registry.json` (consumed by the compliance audit). The table above stays authoritative for the reasoning; `scripts/accent-registry.test.mjs` asserts product-set parity between the two.
+
 Rule: a product picks **one** accent hue and derives hover/active/subtle from it; it never introduces a second chromatic accent. Semantic status colours (ok/warn/err) are separate from the accent and shared — but the `--sl-status-*` tokens are tuned for **on-canvas** use. On an inverted surface (a block whose background is the strongest neutral, e.g. an ink-on-paper output panel) they lose contrast; there, derive an on-ink status pair locally rather than using the canvas tokens (daos `.artifact .ok`/`.no` are a correct instance of this — kept as light-on-ink greens/reds, not swapped to the darker canvas tokens).
 
 ## The family-resemblance layer

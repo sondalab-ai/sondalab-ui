@@ -1,0 +1,15 @@
+{
+  "$note": "Authorized deviations for spexr (Tier A, delivered). Presumed compliant; populated only if calibration surfaces a blessed case.",
+  "substrate": "IDE",
+  "deviations": [
+    {
+      "kind": "font",
+      "selectors": [
+        ".spexr-df-card__branch",
+        ".spexr-df-card__trail"
+      ],
+      "value": "--theia-code-font-family (editor mono)",
+      "why": "design-language.md L3: code-content runs mirror the editor font; design-layer labels use --sl-font-code. Deliberate split, not a violation."
+    }
+  ]
+}

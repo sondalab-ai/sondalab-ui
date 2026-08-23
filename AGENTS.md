@@ -7,6 +7,17 @@ This repo is the single source of truth for the Sondalab design system. `sondala
 - `packages/ui-kit/` → **`@sondalab/ui-kit`** (npm) — CSS custom properties + themes.
 - `packages/palette-py/sondalab_palette/__init__.py` → **`sondalab-palette`** (PyPI) — terminal color roles.
 
+## Agentic layer (`packages/ui-kit/agent/` + `scripts/sl-audit.mjs`)
+
+This repo ships an agentic layer that lets an AI agent author, migrate, and adopt Sondalab UI without re-deriving the rules. It is the machine-and-procedure companion to `docs/design-language.md` (grammar) and `sondalab.tokens.json` (values) — it **references** them, never restates a rule or hardcodes a token value.
+
+- `packages/ui-kit/agent/` — the portable core: `accent-registry.json` and `substrate-matrix.json` (machine sources of the `design-language.md` accent table and compliance matrix), `blessed/<product>.json` (authorized deviations, one justification each), `workflows/migrate.md` (the migrate procedure). `agent/README.md` is the usage guide (use cases + examples); `agent/HANDOFF.md` records what the audit does not mechanically check and how to judge those cases.
+- `scripts/sl-audit.mjs` — the deterministic compliance audit (colour value-equality + tier consistency; run `node scripts/sl-audit.mjs --surface <glob> --product <name>`). CI-able via `--fail-on R`.
+- `.claude/skills/sl-migrate/` + `.claude/agents/sl-ds-auditor.md` — Claude Code wrappers. **Note:** `.claude/` assets in this shared repo are deliberate here (the request that commissioned the agentic layer), not an accidental drop.
+- Contract: `docs/design-system-agentic-spec.md`. Tests: `scripts/sl-audit.test.mjs`, `scripts/accent-registry.test.mjs` (`node --test`).
+
+When you change the accent table or the compliance matrix in `design-language.md`, update the matching JSON in `agent/` — `accent-registry.test.mjs` enforces product-set parity between the two.
+
 ## Never hand-edit generated files
 
 `packages/ui-kit/tokens.css`, `packages/ui-kit/themes/*.css`, and `packages/palette-py/sondalab_palette/__init__.py` are **generated**. Edit `sondalab.tokens.json`, then regenerate:

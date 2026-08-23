@@ -1,0 +1,13 @@
+{
+  "$note": "Machine source of the per-product accent table in docs/design-language.md §Decision 2. The prose table stays authoritative for reasoning; this file is the values. scripts/accent-registry.test.mjs asserts product-set parity between the two.",
+  "products": {
+    "default": {
+      "light": "#B56A0C",
+      "dark": "#F5A83C",
+      "depth": { "light": "#14606C", "dark": "#35A0B4" }
+    },
+    "daos": { "inherits": "default" },
+    "spexr": { "light": "#5b6cff", "dark": "#8b96ff" },
+    "introspect": { "single": "#2ee6c0" }
+  }
+}

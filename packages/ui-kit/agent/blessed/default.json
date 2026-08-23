@@ -1,0 +1,26 @@
+{
+  "$note": "Authorized deviations for the reference implementation (showcase, product=default). Established during Slice 1 calibration: the audit correctly flagged these; review confirmed they are intentional, so they are recorded here rather than 'fixed'.",
+  "substrate": "Page",
+  "deviations": [
+    {
+      "kind": "color",
+      "selectors": [
+        "--bg-grad"
+      ],
+      "value": "near-canvas gradient-field stops (identity board atmospheric field)",
+      "why": "Page-local convention (showcase :root comment 'per spec: not tokens'), keyed per theme, fading to transparent. The identity-board field is the visual thesis; its stops are derived-from-canvas atmosphere, not a palette."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#8b96ff",
+        "#a3acff",
+        "rgba(139,150,255,0.12)",
+        "#2ee6c0",
+        "#5ad1ff",
+        "rgba(46,230,192,0.12)"
+      ],
+      "why": "The showcase demonstrates the per-product accent registry (design-language.md §Decision 2): spexr's indigo and introspect's cyan (plus derived hover/subtle) appear as demo swatch content, not as a second accent adopted by the showcase. Blessed by exact value, not selector — the swatches live in a JS object with no distinctive selector."
+    }
+  ]
+}
