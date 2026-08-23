@@ -16,8 +16,8 @@
   --sl-status-danger: #dc2626;
   --sl-status-info: #0284c7;
   --sl-accent-default: #B56A0C;
-  --sl-accent-hover: #A05F0A;
-  --sl-accent-active: #8A5109;
+  --sl-accent-hover: color-mix(in srgb, var(--sl-accent-default) 89%, black);
+  --sl-accent-active: color-mix(in srgb, var(--sl-accent-default) 76%, black);
   --sl-accent-subtle: rgba(197,122,22,0.12);
   --sl-accent-depth: #14606C;
   --sl-focus-ring: #B56A0C;
