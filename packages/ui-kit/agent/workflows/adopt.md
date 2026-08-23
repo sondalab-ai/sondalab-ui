@@ -1,7 +1,7 @@
 # Workflow — Adopt a single Sondalab component
 
 > **What this file is:** the ordered procedure for pulling **one** Sondalab component or signature pattern into an existing app **without** a full migration — the lightest of the three workflows. Companion to `migrate.md` (whole-surface compliance) and `author.md` (greenfield).
-> **Reads:** `catalog.md` + `catalog.json` (the component), `docs/design-language.md` (grammar), `substrate-matrix.json` (substrate applicability), `scripts/sl-audit.mjs` (verdict, scoped to the touched file).
+> **Reads:** `catalog.md` + `catalog.json` (the component), `../design-language.md` (grammar), `substrate-matrix.json` (substrate applicability), `sl-audit` (verdict, scoped to the touched file).
 > **Invariant:** adopt touches only what it adds. The rest of the app is out of scope — do not audit or "fix" surrounding code. The change is small and reversible; the gate is showing the diff, not a full migration plan.
 
 ## When to use this (vs migrate)
@@ -21,7 +21,7 @@ Place the component in the host markup. Keep the change minimal and localised �
 
 ### 3 — Audit the touched file only
 ```sh
-node scripts/sl-audit.mjs --surface "<the one file you edited>" --product <host> --substrate <host substrate>
+npx sl-audit --surface "<the one file you edited>" --product <host> --substrate <host substrate>
 ```
 The **added** component must contribute zero R-violations. Pre-existing findings elsewhere in the file are **not** yours to fix in an adopt — note them (they are migrate's job) but leave them. Populate `blessed/<host>.json` only for a deviation your added component legitimately needs.
 

@@ -40,4 +40,4 @@ If unclear, ask once, then proceed.
 - Procedure: `packages/ui-kit/agent/workflows/adopt.md`
 - Components: `packages/ui-kit/agent/catalog.md` (+ `catalog.json`)
 - Grammar / judgement: `docs/design-language.md`, `packages/ui-kit/agent/HANDOFF.md`
-- Audit (scope to the touched file): `scripts/sl-audit.mjs`
+- Audit (scope to the touched file): `packages/ui-kit/agent/sl-audit.mjs`

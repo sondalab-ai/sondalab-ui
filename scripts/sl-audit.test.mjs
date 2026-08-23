@@ -9,7 +9,7 @@ import {
   auditCss,
   matchesSelector,
   resolveAccentEntry,
-} from "./sl-audit.mjs";
+} from "../packages/ui-kit/agent/sl-audit.mjs";
 
 // --- colour normalization (the bug-prone core) ---
 

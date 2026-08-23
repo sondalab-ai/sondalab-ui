@@ -17,7 +17,7 @@ steps.
   stop for explicit human approval. Present, then wait. Apply nothing before the
   Step 3 yes — migrating a live surface is semi-irreversible.
 - **Delegate the audit** to the `sl-ds-auditor` subagent (read-only). It runs
-  `scripts/sl-audit.mjs` and reads `design-language.md` for the judgement-level
+  `packages/ui-kit/agent/sl-audit.mjs` and reads `design-language.md` for the judgement-level
   findings, returning them grouped R / A / N-A with `file:line`. You do not run
   the audit inline and you do not eyeball colour equality — trust the script for
   what is mechanical, the subagent for what needs intent.

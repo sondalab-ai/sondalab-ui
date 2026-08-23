@@ -41,4 +41,4 @@ If either is unclear, ask once, then proceed.
 - Components: `packages/ui-kit/agent/catalog.md` (+ `catalog.json`)
 - Grammar (judgement rules): `docs/design-language.md`; what's judgement vs mechanical: `packages/ui-kit/agent/HANDOFF.md`
 - Values: `sondalab.tokens.json`; role-vars: `packages/ui-kit/components.css`
-- Audit: `scripts/sl-audit.mjs` (must pass clean)
+- Audit: `packages/ui-kit/agent/sl-audit.mjs` (must pass clean)

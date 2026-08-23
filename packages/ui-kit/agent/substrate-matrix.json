@@ -1,5 +1,5 @@
 {
-  "$note": "Machine source of the per-substrate compliance matrix in docs/design-language.md. level ∈ R (required) | A (adapt) | N/A (not applicable). Adaptation nuance (the parentheticals in the doc) stays in design-language.md; this file carries only the level per (rule, substrate) so the audit can decide what is blocking.",
+  "$note": "Machine source of the per-substrate compliance matrix in design-language.md. level ∈ R (required) | A (adapt) | N/A (not applicable). Adaptation nuance (the parentheticals in the doc) stays in design-language.md; this file carries only the level per (rule, substrate) so the audit can decide what is blocking.",
   "products": {
     "spexr": "IDE",
     "introspect": "App",
