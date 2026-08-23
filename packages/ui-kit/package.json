@@ -1,6 +1,6 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sondalab design tokens as CSS custom properties: shared grammar + per-product accent, with light / dark / high-contrast themes.",
   "license": "MIT",
   "author": "marcellobarile",
@@ -10,13 +10,18 @@
     "./tokens.css": "./tokens.css",
     "./themes/light.css": "./themes/light.css",
     "./themes/dark.css": "./themes/dark.css",
-    "./themes/high-contrast.css": "./themes/high-contrast.css"
+    "./themes/high-contrast.css": "./themes/high-contrast.css",
+    "./assets/wordmark.svg": "./assets/sondalab-wordmark.svg",
+    "./assets/lockup.svg": "./assets/sondalab-lockup.svg"
   },
   "files": [
     "tokens.css",
     "themes/light.css",
     "themes/dark.css",
     "themes/high-contrast.css",
+    "assets/sondalab-wordmark.svg",
+    "assets/sondalab-lockup.svg",
+    "assets/README.md",
     "README.md"
   ]
 }
