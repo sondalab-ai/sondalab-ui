@@ -187,9 +187,9 @@ sondalab-ui/
 
 ## Packaging & release impact
 
-- Slice 1 adds no shipped files: `agent/` and `scripts/` are not in `@sondalab/ui-kit`'s `files`. No version bump (per `AGENTS.md`, docs/tooling-only changes bump neither package).
-- Slice 2 ships the portable core: add `agent/**` to ui-kit `files`/`exports` and bump **ui-kit only** (palette-py untouched).
-- The audit reads `sondalab.tokens.json` (repo root) directly; when shipped, the core must resolve tokens from the installed `@sondalab/ui-kit/tokens.css` instead — a Slice 2 concern, noted here so the Slice 1 reader signature does not calcify.
+- **Shipped in `@sondalab/ui-kit` v0.3.0** (ui-kit-only bump; palette-py untouched). The whole `agent/` directory is in `files`; `sl-audit.mjs` (relocated to `agent/`) is exposed as the **`sl-audit` bin**; agent JSON + the bin are in `exports`.
+- **Token resolution is drift-proof and install-safe.** The audit builds its colour allowlist from the shipped `tokens.css` + `themes/*.css` (generated from `sondalab.tokens.json`), not from `sondalab.tokens.json` directly — so it resolves identically in-repo and in a consumer's `node_modules`. Surface globs resolve against the caller's cwd.
+- **`design-language.md` ships as a generated copy** at `agent/design-language.md` (npm `files` can't reach `../../docs`). `scripts/gen-agent-docs.mjs` (wired into `npm run gen:tokens`) copies it byte-identically; `scripts/agent-docs-drift.test.mjs` guards against divergence.
 
 ## Open decisions (for review)
 
@@ -199,7 +199,7 @@ The deferred checks are recorded for agents in `packages/ui-kit/agent/HANDOFF.md
 
 1. **Spacing check (3), border check (4), recipe check (6): deferred (agreed 2026-08-23).** All three are high-noise because the design language itself uses "violating" values in blessed places: the canonical **tag recipe** is `padding: 3px 7px` (off the `--sl-space-*` scale), and the reference component library uses deliberate 2px emphasis borders (`components.css:208` keycap edge, `components.css:360` active-tab underline) — a mechanical check flags the DS's own reference. Building any of them means committing to a blessing policy for legitimate off-scale/2px cases; deferred until a real consumer demand justifies that policy. Until then they are judgement-level (subagent + `HANDOFF.md`). Checks 1+2 cover the stated compliance test.
 2. **Font check (5): dropped.** Evaluated at Slice 1 (grep of `font-family` across all four calibrated surfaces): the only literal faces are introspect's IBM Plex Mono and spexr's editor font — both already blessed. Zero new yield, pure false-positive surface. **Not building it.**
-3. **Slice 2 npm-shipping.** Ship the portable core: add `agent/**` to `@sondalab/ui-kit`'s `files`/`exports`, resolve tokens from the installed package rather than the repo root, bump **ui-kit only**.
+3. **npm-shipping — done (v0.3.0).** The portable core + `sl-audit` bin ship in `@sondalab/ui-kit`; tokens resolve from the installed package. Remaining direction below.
 
 ## Slice plan
 

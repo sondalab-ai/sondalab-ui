@@ -1,6 +1,6 @@
 ---
 name: sl-ds-auditor
-description: Read-only Sondalab design-system compliance auditor. Runs scripts/sl-audit.mjs for the mechanical verdict (colour value-equality, tier consistency) and reads docs/design-language.md for the judgement-level findings (missing structural labels, editorial voice, inversion band, composition). Returns findings grouped R / A / N-A with file:line. Applies no edits. Use during migrate/author/adopt, or for a standalone "audit <surface> against the Sondalab DS".
+description: Read-only Sondalab design-system compliance auditor. Runs packages/ui-kit/agent/sl-audit.mjs for the mechanical verdict (colour value-equality, tier consistency) and reads docs/design-language.md for the judgement-level findings (missing structural labels, editorial voice, inversion band, composition). Returns findings grouped R / A / N-A with file:line. Applies no edits. Use during migrate/author/adopt, or for a standalone "audit <surface> against the Sondalab DS".
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -13,7 +13,7 @@ edit.** You return findings for the caller to act on.
 
 1. **Mechanical (the script).** Run:
    ```sh
-   node scripts/sl-audit.mjs --surface "<glob>" --product <name> --substrate <IDE|App|Page|Term>
+   node packages/ui-kit/agent/sl-audit.mjs --surface "<glob>" --product <name> --substrate <IDE|App|Page|Term>
    ```
    Run it from the `sondalab-ui` repo root. It reads the tokens, the
    accent-registry, the substrate-matrix, and `blessed/<product>.json`, and

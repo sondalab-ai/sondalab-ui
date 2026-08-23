@@ -1,7 +1,7 @@
 # Workflow — Author a new Sondalab surface
 
 > **What this file is:** the ordered procedure an agent follows to author a *new* interface or element that is Sondalab-compliant from the first line, using the component catalog. Companion to `migrate.md` (which brings an *existing* surface into compliance).
-> **Reads:** `catalog.md` + `catalog.json` (components), `docs/design-language.md` (grammar), `sondalab.tokens.json` (values), `substrate-matrix.json` (what's Required for the substrate), `scripts/sl-audit.mjs` (verdict).
+> **Reads:** `catalog.md` + `catalog.json` (components), `../design-language.md` (grammar), the token CSS (`../../tokens.css` + `../../themes/*.css`, the values), `substrate-matrix.json` (what's Required for the substrate), `sl-audit` (verdict).
 > **Invariant:** authoring is greenfield, so the audit should pass on the *first* run — compliance is built in, not retrofitted. If your first audit is dirty, you bound a colour to a literal instead of a role-var.
 
 ## Steps
@@ -22,7 +22,7 @@ Assemble the components into a layout. Family resemblance comes from the shared 
 ### 4 — Audit + judgement pass
 Run the audit (must be clean on greenfield):
 ```sh
-node scripts/sl-audit.mjs --surface "<glob>" --product <name>
+npx sl-audit --surface "<glob>" --product <name>
 ```
 Then the judgement pass the script can't do (delegate to `sl-ds-auditor` or do it yourself against `design-language.md`, scoped to the substrate's Required rules): are the structural mono labels present (eyebrow, section index)? Is there real content, not filler? Is the editorial voice precise/active (L5)? See `HANDOFF.md` for what is judgement vs mechanical.
 

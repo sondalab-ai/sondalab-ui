@@ -2,7 +2,7 @@
 
 > **What this file is:** operational guidance for an AI agent working with the Sondalab DS agentic layer. It records what the audit does **not** mechanically check and how to handle those gaps, so you don't either (a) trust the script for things it doesn't cover or (b) mechanically "fix" intentional deviations. Read it before running a migrate/author/adopt job.
 > **Audience:** agents (and their humans) running `sl-audit.mjs` or the migrate workflow.
-> **Companion:** `README.md` (usage), `../../../docs/design-system-agentic-spec.md` (contract, incl. the human-facing "Open decisions").
+> **Companion:** `README.md` (usage), `design-language.md` (the grammar, shipped alongside). The contract with its human-facing "Open decisions" is `docs/design-system-agentic-spec.md` in the source repo (https://github.com/sondalab-ai/sondalab-ui).
 
 ## What the script decides — and what it does not
 

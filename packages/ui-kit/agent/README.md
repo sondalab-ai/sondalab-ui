@@ -2,8 +2,8 @@
 
 > **What this file is:** the usage guide for the Sondalab design-system *agentic layer* — how an AI agent (in any harness, in this repo or a consumer repo) loads this core and runs the author / migrate / adopt workflows against the shared design system.
 > **Audience:** anyone pointing an agent at a Sondalab surface — the DS maintainer, and engineers on consumer apps (spexr, introspect, daos, and future products) who want their UI to read as Sondalab without re-deriving the grammar.
-> **Status:** **PoC implemented (not delivered).** Slice 1 ships the migrate workflow + the audit locally; the core is not yet published via npm (Slice 2). Sections marked *(Slice 2/3)* describe the target, not shipped behaviour.
-> **Companion files:** `../../../docs/design-language.md` (the grammar this tooling enforces — never restated here), `../../../docs/design-system-agentic-spec.md` (the tooling contract), `../../../docs/design-system-spec.md` (the token values).
+> **Status:** shipped in `@sondalab/ui-kit` (v0.3.0+). The migrate / author / adopt workflows, the component catalog, and the `sl-audit` bin all ship in the package; a consumer resolves them from `node_modules/@sondalab/ui-kit/agent/`.
+> **Companion files:** `./design-language.md` (the grammar this tooling enforces — never restated here; shipped alongside). The tooling contract and the token spec live in the source repo: `docs/design-system-agentic-spec.md` and `docs/design-system-spec.md` at https://github.com/sondalab-ai/sondalab-ui.
 
 ## What this core is
 
@@ -16,12 +16,13 @@ The design system has always had the *rules* (`design-language.md`) and the *val
 | `blessed/<product>.json` | Per-product allowlist of authorized deviations, one justification each. |
 | `workflows/migrate.md` | The ordered migrate procedure with human gates. |
 | `workflows/author.md` | The ordered author procedure (greenfield), built on the catalog. |
+| `workflows/adopt.md` | The ordered adopt procedure (one component into an existing app). |
 | `catalog.md` + `catalog.json` | Copy-paste component catalog (primitives + signature patterns) with markup, role-vars, and substrate; its machine index. Snippets are audited clean. |
 | `HANDOFF.md` | What the audit does **not** check mechanically, and how to judge those cases (deferred spacing/border/recipe checks). Read before a job. |
 
 Everything else — the actual rules, why they exist, the compliance philosophy — stays in `design-language.md`. This core **references** it; it never forks it.
 
-The verdict engine is `scripts/sl-audit.mjs` (repo root `scripts/`). It reads this core plus `sondalab.tokens.json` and reports what is decidable from CSS text. What requires human/agent judgement (missing structural labels, editorial voice, layout composition) is out of the script's scope by design.
+The verdict engine is `sl-audit` (`agent/sl-audit.mjs`, exposed as the `sl-audit` bin). It reads this core plus the shipped token CSS (`../tokens.css` + `../themes/*.css`) and reports what is decidable from CSS text. What requires human/agent judgement (missing structural labels, editorial voice, layout composition) is out of the script's scope by design.
 
 **What the script checks today (Slice 1):** colour value-equality and theme-selector tier consistency — only. Spacing-off-scale, border width, font-family, and eyebrow/tag recipe conformance are *specified* (see the agentic spec) but **not yet implemented in the script**; until they land they are judgement-level and belong to the `sl-ds-auditor` subagent, not the audit script. A colour finding can be silenced two ways in `blessed/<product>.json`: `selectors` (a distinctive selector/property the colour sits under) or `values` (an exact colour value — for demo data with no distinctive selector).
 
@@ -31,7 +32,7 @@ The verdict engine is `scripts/sl-audit.mjs` (repo root `scripts/`). It reads th
 |---|---|---|---|
 | **Migrate** | Move an existing app's UI onto the DS: audit → map values to tokens → pick tier → apply L1–L5. | An app with its own palette adopting the DS wholesale (introspect, daos). | Slice 1 |
 | **Author** | Scaffold a new surface/element DS-compliant from the first line. | Greenfield screens or components. | Slice 2 — catalog + `workflows/author.md` + `sl-author` skill landed |
-| **Adopt** | Pull one signature component (eyebrow, tag, inversion band) into an app without a full migration. | Consumers wanting a taste of the family look. | *(Slice 3)* |
+| **Adopt** | Pull one signature component (eyebrow, tag, inversion band) into an app without a full migration. | Consumers wanting a taste of the family look. | Slice 3 — `workflows/adopt.md` + `sl-adopt` skill landed |
 
 All three share the same core and the same read-only auditor. Migrate is the deepest; author and adopt are subsets of its machinery.
 
@@ -41,21 +42,22 @@ All three share the same core and the same read-only auditor. Migrate is the dee
 
 - Say *"migrate `<app>` to the Sondalab DS"* or run `/sl-migrate` → the `sl-migrate` skill drives `workflows/migrate.md` and holds the gates.
 - Say *"build a new `<screen>` in the Sondalab DS"* or run `/sl-author` → the `sl-author` skill drives `workflows/author.md` and builds from `catalog.md`.
+- Say *"add a Sondalab `<component>` to this app"* or run `/sl-adopt` → the `sl-adopt` skill drives `workflows/adopt.md` (one component, scoped to the touched file).
 - The `sl-ds-auditor` subagent runs the audit and reads `design-language.md` for the judgement-level findings, returning them grouped by severity with `file:line`.
 
-**In any other harness / a consumer repo.** Point the agent at three things and give it the migrate procedure as its instructions:
+**In any other harness / a consumer repo.** `npm i @sondalab/ui-kit`, then point the agent at the installed core and give it the relevant workflow as its instructions:
 
-1. `packages/ui-kit/agent/` (this core — registry, matrix, blessed, workflow),
-2. `docs/design-language.md` (the grammar),
-3. `sondalab.tokens.json` (the values).
+1. `node_modules/@sondalab/ui-kit/agent/` (this core — registry, matrix, blessed, catalog, workflows),
+2. `node_modules/@sondalab/ui-kit/agent/design-language.md` (the grammar),
+3. `node_modules/@sondalab/ui-kit/tokens.css` + `themes/*.css` (the values the audit checks against).
 
-Then run the audit directly:
+Then run the audit via the shipped bin:
 
 ```sh
-node scripts/sl-audit.mjs --surface "web/src/**/*.css" --product introspect --substrate App
+npx sl-audit --surface "web/src/**/*.css" --product introspect --substrate App
 ```
 
-*(Slice 2: once the core ships in `@sondalab/ui-kit`, a consumer resolves it from the installed package instead of this repo.)*
+Surface globs resolve against your current working directory; the audit resolves the token allowlist from the installed package.
 
 ## Reading an audit report
 
@@ -105,7 +107,7 @@ The agent starts from the substrate (App), applies the required rules for that c
 The audit is deterministic, so it runs headless:
 
 ```sh
-node scripts/sl-audit.mjs --surface "web/src/**/*.css" --product introspect --substrate App --fail-on R
+npx sl-audit --surface "web/src/**/*.css" --product introspect --substrate App --fail-on R
 ```
 
 A non-zero exit on any unblessed R-violation keeps a merged surface from drifting off the DS — the prose "compliance test" in `design-language.md`, now enforceable.

@@ -3,15 +3,20 @@
 // Checks only what is decidable from CSS text (colour value-equality, tier
 // consistency). Judgement-level rules (missing labels, editorial voice,
 // layout composition) are out of scope by design — they belong to the
-// sl-ds-auditor subagent. See docs/design-system-agentic-spec.md.
+// sl-ds-auditor subagent. See design-system-agentic-spec.md.
+//
+// Ships inside @sondalab/ui-kit as the `sl-audit` bin. It resolves the colour
+// allowlist from the package's own token CSS (tokens.css + themes/*.css), so it
+// works identically in-repo and when installed in a consumer's node_modules.
+// Surface globs resolve against the caller's cwd.
 
 import { readFileSync, globSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative } from "node:path";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(HERE, "..");
-const AGENT_DIR = resolve(REPO_ROOT, "packages/ui-kit/agent");
+const HERE = dirname(fileURLToPath(import.meta.url)); // packages/ui-kit/agent
+const PKG_DIR = resolve(HERE, ".."); // packages/ui-kit — holds tokens.css + themes/
+const TOKEN_CSS = ["tokens.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"];
 
 // --- colour normalization -------------------------------------------------
 
@@ -102,11 +107,26 @@ function collectStrings(node, acc) {
   return acc;
 }
 
-/** Set of opaque colour bases (`#rrggbb`) that appear anywhere in the token set. */
+/** Set of opaque colour bases (`#rrggbb`) appearing anywhere in a tokens.json
+ * object. Kept for unit tests and callers that hold the token object. */
 export function buildAllowlistBases(tokens) {
   const bases = new Set();
   for (const s of collectStrings(tokens, [])) {
     for (const { value } of extractColors(s)) {
+      const norm = normalizeColor(value);
+      if (norm) bases.add(colorBase(norm));
+    }
+  }
+  return bases;
+}
+
+/** Set of opaque colour bases extracted from token CSS text (tokens.css +
+ * themes/*.css). This is the shipped, drift-proof allowlist source — the CSS is
+ * generated from sondalab.tokens.json and always ships with the package. */
+export function buildAllowlistBasesFromCss(cssTexts) {
+  const bases = new Set();
+  for (const css of cssTexts) {
+    for (const { value } of extractColors(css)) {
       const norm = normalizeColor(value);
       if (norm) bases.add(colorBase(norm));
     }
@@ -183,10 +203,13 @@ function levelFor(matrix, rule, substrate) {
   return row?.[substrate] ?? "R";
 }
 
-/** Audit one CSS string. Pure — no I/O. */
+/** Audit one CSS string. Pure — no I/O. Provide either `allowlistBases` (a Set
+ * of `#rrggbb` bases, the shipped path) or `tokens` (a tokens.json object, the
+ * test path); `allowlistBases` wins when both are given. */
 export function auditCss({
   css,
   tokens,
+  allowlistBases,
   accentEntry = {},
   blessed = { deviations: [] },
   declaredTier = null,
@@ -195,7 +218,7 @@ export function auditCss({
   file = "",
 }) {
   const findings = [];
-  const bases = buildAllowlistBases(tokens);
+  const bases = allowlistBases ? new Set(allowlistBases) : buildAllowlistBases(tokens);
   for (const s of accentColorStrings(accentEntry)) bases.add(colorBase(normalizeColor(s)));
 
   const colorDeviations = (blessed.deviations || []).filter((d) => d.kind === "color");
@@ -279,6 +302,18 @@ function loadJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function loadTokenCss() {
+  const texts = [];
+  for (const rel of TOKEN_CSS) {
+    try {
+      texts.push(readFileSync(resolve(PKG_DIR, rel), "utf8"));
+    } catch {
+      /* a theme file may be absent in a trimmed install — skip it */
+    }
+  }
+  return texts;
+}
+
 // --- CLI ------------------------------------------------------------------
 
 function parseArgs(argv) {
@@ -297,16 +332,16 @@ function group(findings, level) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.surface || !args.product) {
-    console.error("usage: node scripts/sl-audit.mjs --surface <glob> --product <name> [--substrate IDE|App|Page|Term] [--fail-on R]");
+    console.error("usage: sl-audit --surface <glob> --product <name> [--substrate IDE|App|Page|Term] [--fail-on R]");
     process.exit(2);
   }
 
-  const tokens = loadJson(resolve(REPO_ROOT, "sondalab.tokens.json"));
-  const registry = loadJson(resolve(AGENT_DIR, "accent-registry.json"));
-  const matrix = loadJson(resolve(AGENT_DIR, "substrate-matrix.json"));
+  const allowlistBases = buildAllowlistBasesFromCss(loadTokenCss());
+  const registry = loadJson(resolve(HERE, "accent-registry.json"));
+  const matrix = loadJson(resolve(HERE, "substrate-matrix.json"));
   let blessed = { deviations: [] };
   try {
-    blessed = loadJson(resolve(AGENT_DIR, `blessed/${args.product}.json`));
+    blessed = loadJson(resolve(HERE, `blessed/${args.product}.json`));
   } catch {
     /* no blessed file yet — treat as none */
   }
@@ -317,19 +352,20 @@ function main() {
     console.warn(`warning: no tier declared for "${args.product}" (add it to substrate-matrix.json "tiers") — tier-consistency check disabled`);
   const accentEntry = resolveAccentEntry(registry, args.product);
 
-  const files = globSync(args.surface, { cwd: REPO_ROOT }).map((f) => resolve(REPO_ROOT, f));
+  const cwd = process.cwd();
+  const files = globSync(args.surface, { cwd }).map((f) => resolve(cwd, f));
   const all = [];
   for (const file of files) {
     const css = readFileSync(file, "utf8");
     const res = auditCss({
       css,
-      tokens,
+      allowlistBases,
       accentEntry,
       blessed,
       declaredTier,
       substrate,
       matrix,
-      file: relative(REPO_ROOT, file),
+      file: relative(cwd, file),
     });
     all.push(...res.findings);
   }

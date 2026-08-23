@@ -1,7 +1,7 @@
 # Workflow — Migrate a surface onto the Sondalab DS
 
 > **What this file is:** the ordered, harness-agnostic procedure an agent follows to migrate an existing app's UI onto the Sondalab design system. It is the portable core; the Claude Code `sl-migrate` skill loads and executes it. Any other harness can follow it directly.
-> **Reads:** `docs/design-language.md` (grammar), `sondalab.tokens.json` (values), `packages/ui-kit/agent/` (accent-registry, substrate-matrix, blessed/<product>.json), `scripts/sl-audit.mjs` (verdict engine).
+> **Reads:** `../design-language.md` (grammar), the token CSS (`../../tokens.css` + `../../themes/*.css`, the values), the agent core (`accent-registry.json`, `substrate-matrix.json`, `blessed/<product>.json`), `sl-audit` (verdict engine).
 > **Invariant:** migrating a live surface is semi-irreversible. Work on a branch; do not edit before the human approves the mapping plan (Step 3 gate).
 
 ## Division of labour (do not blur)
@@ -18,7 +18,7 @@ Determine the product name and its substrate: **IDE** (fixed-chrome host), **App
 ### 1 — Baseline audit
 Create a branch. Run the audit, no edits:
 ```sh
-node scripts/sl-audit.mjs --surface "<glob>" --product <name> --substrate <IDE|App|Page|Term>
+npx sl-audit --surface "<glob>" --product <name> --substrate <IDE|App|Page|Term>
 ```
 Record the grouped baseline (R-violation / A-deviation / N/A counts). This is the before-picture the final report is measured against.
 

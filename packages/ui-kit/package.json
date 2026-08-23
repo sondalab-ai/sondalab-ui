@@ -1,11 +1,14 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.2.0",
-  "description": "Sondalab design tokens as CSS custom properties: shared grammar + per-product accent, with light / dark / high-contrast themes.",
+  "version": "0.3.0",
+  "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
   "license": "MIT",
   "author": "marcellobarile",
   "publishConfig": { "access": "public" },
   "type": "module",
+  "bin": {
+    "sl-audit": "./agent/sl-audit.mjs"
+  },
   "exports": {
     "./tokens.css": "./tokens.css",
     "./components.css": "./components.css",
@@ -15,7 +18,12 @@
     "./assets/wordmark.svg": "./assets/sondalab-wordmark.svg",
     "./assets/lockup.svg": "./assets/sondalab-lockup.svg",
     "./assets/favicon.svg": "./assets/favicon.svg",
-    "./assets/app-icon.svg": "./assets/app-icon.svg"
+    "./assets/app-icon.svg": "./assets/app-icon.svg",
+    "./agent/sl-audit.mjs": "./agent/sl-audit.mjs",
+    "./agent/catalog.json": "./agent/catalog.json",
+    "./agent/accent-registry.json": "./agent/accent-registry.json",
+    "./agent/substrate-matrix.json": "./agent/substrate-matrix.json",
+    "./agent/*": "./agent/*"
   },
   "files": [
     "tokens.css",
@@ -28,6 +36,7 @@
     "assets/favicon.svg",
     "assets/app-icon.svg",
     "assets/README.md",
-    "README.md"
+    "README.md",
+    "agent/"
   ]
 }
