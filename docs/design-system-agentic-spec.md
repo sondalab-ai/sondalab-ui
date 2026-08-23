@@ -195,11 +195,11 @@ sondalab-ui/
 
 Decisions deferred deliberately — each needs a human call, not more code:
 
-1. **Spacing check (3) + recipe check (6): build or drop?** Both are high-noise because the design language itself uses off-scale literals in blessed places: the canonical **tag recipe** in `design-language.md` L3 is `padding: 3px 7px` — off the `--sl-space-*` scale. A spacing check would flag the DS's own reference recipe on the reference surface. Building these means committing to a blessing policy for legitimate off-scale literals (recipes, hairline nudges, optical adjustments). Recommendation: **defer** until there is a real consumer demand; checks 1+2 cover the stated compliance test.
-2. **Font check (5): drop.** Evaluated at Slice 1 (grep of `font-family` across all four calibrated surfaces): the only literal faces are introspect's IBM Plex Mono and spexr's editor font — both already blessed. Zero new yield, pure false-positive surface. **Not building it.**
-3. **Border check (4): low priority.** Focus rings legitimately use the 2px `--sl-focus-ring-width` token, so a naïve "border > 1px" flags them. Needs to exempt `outline`/focus. Small but not free of judgement.
-4. **Push `feat/ds-agentic-layer`?** Held — pushing to the (private) remote is outward-facing and was not explicitly authorized. Open a PR when ready; no drift risk while local.
-5. **Slice 2 npm-shipping.** Ship the portable core: add `agent/**` to `@sondalab/ui-kit`'s `files`/`exports`, resolve tokens from the installed package rather than the repo root, bump **ui-kit only**.
+The deferred checks are recorded for agents in `packages/ui-kit/agent/HANDOFF.md`, with per-check guidance on how to judge the cases a mechanical rule would get wrong.
+
+1. **Spacing check (3), border check (4), recipe check (6): deferred (agreed 2026-08-23).** All three are high-noise because the design language itself uses "violating" values in blessed places: the canonical **tag recipe** is `padding: 3px 7px` (off the `--sl-space-*` scale), and the reference component library uses deliberate 2px emphasis borders (`components.css:208` keycap edge, `components.css:360` active-tab underline) — a mechanical check flags the DS's own reference. Building any of them means committing to a blessing policy for legitimate off-scale/2px cases; deferred until a real consumer demand justifies that policy. Until then they are judgement-level (subagent + `HANDOFF.md`). Checks 1+2 cover the stated compliance test.
+2. **Font check (5): dropped.** Evaluated at Slice 1 (grep of `font-family` across all four calibrated surfaces): the only literal faces are introspect's IBM Plex Mono and spexr's editor font — both already blessed. Zero new yield, pure false-positive surface. **Not building it.**
+3. **Slice 2 npm-shipping.** Ship the portable core: add `agent/**` to `@sondalab/ui-kit`'s `files`/`exports`, resolve tokens from the installed package rather than the repo root, bump **ui-kit only**.
 
 ## Slice plan
 

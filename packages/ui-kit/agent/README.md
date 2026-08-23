@@ -15,6 +15,7 @@ The design system has always had the *rules* (`design-language.md`) and the *val
 | `substrate-matrix.json` | The per-substrate compliance matrix (IDE/App/Page/Term → R/A/N-A) as a lookup. |
 | `blessed/<product>.json` | Per-product allowlist of authorized deviations, one justification each. |
 | `workflows/migrate.md` | The ordered migrate procedure with human gates. |
+| `HANDOFF.md` | What the audit does **not** check mechanically, and how to judge those cases (deferred spacing/border/recipe checks). Read before a job. |
 
 Everything else — the actual rules, why they exist, the compliance philosophy — stays in `design-language.md`. This core **references** it; it never forks it.
 
