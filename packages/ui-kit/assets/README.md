@@ -9,10 +9,14 @@ render identically anywhere without the fonts installed.
 | `sondalab-wordmark.svg` | primary — `sondalab.` | Fraunces, wght 500, opsz 144 |
 | `sondalab-lockup.svg` | compact — `SONDA·LAB` | Martian Mono, wght 300 |
 | `favicon.svg` | the mark — the amber dot alone | — |
+| `app-icon.svg` | the mark on an ink tile (rounded) | — |
 
 `favicon.svg` is the brand's accent dot (fixed `#F5A83C`) on transparent — the
 tab/app icon. Wire it as `<link rel="icon" href="…/assets/favicon.svg">`.
 (Claude Artifacts take an emoji favicon, not an SVG — use 🟠 there to match.)
+
+`app-icon.svg` is the same dot on a rounded ink tile (`#0F151A`) — the maskable /
+apple-touch icon where a bare transparent dot needs a shape and contrast.
 
 ## Colour
 
