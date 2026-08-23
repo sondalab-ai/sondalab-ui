@@ -13,15 +13,10 @@
     {
       "kind": "color",
       "values": [
-        "#F7B863",
         "#8b96ff",
-        "#a3acff",
-        "rgba(139,150,255,0.12)",
-        "#2ee6c0",
-        "#5ad1ff",
-        "rgba(46,230,192,0.12)"
+        "#2ee6c0"
       ],
-      "why": "The showcase demonstrates the per-product accent registry (design-language.md §Decision 2): spexr's indigo and introspect's cyan (plus derived hover/subtle) appear as demo swatch content, not as a second accent adopted by the showcase. Blessed by exact value, not selector — the swatches live in a JS object with no distinctive selector. #F7B863 is the amber demo hover, hardcoded in the same switcher object; once the dark accent hover became color-mix-derived it left the token allowlist, so it is blessed here alongside the other demo hovers (the switcher itself re-deriving is deferred to the migration)."
+      "why": "The two non-amber demo hues in the showcase accent switcher: spexr's indigo and introspect's cyan, both registered product accents (accent-registry.json). They appear as demo swatch content so the page can show the per-product registry (design-language.md §Decision 2), not as a second accent adopted by the showcase. Blessed by exact value — they live in a JS object with no distinctive selector. Only the hue is listed now: hover/active/subtle are no longer hardcoded (the switcher sets only the hue and they re-derive), so the previous demo step-literals are gone."
     }
   ]
 }

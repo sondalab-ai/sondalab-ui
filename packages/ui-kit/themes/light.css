@@ -18,7 +18,7 @@
   --sl-accent-default: #B56A0C;
   --sl-accent-hover: color-mix(in srgb, var(--sl-accent-default) 89%, black);
   --sl-accent-active: color-mix(in srgb, var(--sl-accent-default) 76%, black);
-  --sl-accent-subtle: rgba(197,122,22,0.12);
+  --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 12%, transparent);
   --sl-accent-depth: #14606C;
   --sl-focus-ring: #B56A0C;
 }
