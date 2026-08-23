@@ -496,6 +496,10 @@
       var c = ACCENTS[a]; if (!c) return;
       root.style.setProperty("--sl-accent-default", c.d);
       root.style.setProperty("--sl-accent-hover", c.h);
+      // active must track the accent hue too (design-language §Decision 2: the
+      // product derives hover/active/subtle from the hue). Without this it fell
+      // back to the amber --slc-accent-active default on non-amber accents.
+      root.style.setProperty("--sl-accent-active", c.a || "color-mix(in srgb, " + c.d + " 88%, black)");
       root.style.setProperty("--sl-accent-subtle", c.s);
       root.style.setProperty("--sl-focus-ring", c.d);
       press(document.getElementById("accent-seg"), "data-accent", a);
