@@ -16,6 +16,7 @@ The design system has always had the *rules* (`design-language.md`) and the *val
 | `blessed/<product>.json` | Per-product allowlist of authorized deviations, one justification each. |
 | `workflows/migrate.md` | The ordered migrate procedure with human gates. |
 | `workflows/author.md` | The ordered author procedure (greenfield), built on the catalog. |
+| `workflows/adopt.md` | The ordered adopt procedure (one component into an existing app). |
 | `catalog.md` + `catalog.json` | Copy-paste component catalog (primitives + signature patterns) with markup, role-vars, and substrate; its machine index. Snippets are audited clean. |
 | `HANDOFF.md` | What the audit does **not** check mechanically, and how to judge those cases (deferred spacing/border/recipe checks). Read before a job. |
 
@@ -31,7 +32,7 @@ The verdict engine is `scripts/sl-audit.mjs` (repo root `scripts/`). It reads th
 |---|---|---|---|
 | **Migrate** | Move an existing app's UI onto the DS: audit → map values to tokens → pick tier → apply L1–L5. | An app with its own palette adopting the DS wholesale (introspect, daos). | Slice 1 |
 | **Author** | Scaffold a new surface/element DS-compliant from the first line. | Greenfield screens or components. | Slice 2 — catalog + `workflows/author.md` + `sl-author` skill landed |
-| **Adopt** | Pull one signature component (eyebrow, tag, inversion band) into an app without a full migration. | Consumers wanting a taste of the family look. | *(Slice 3)* |
+| **Adopt** | Pull one signature component (eyebrow, tag, inversion band) into an app without a full migration. | Consumers wanting a taste of the family look. | Slice 3 — `workflows/adopt.md` + `sl-adopt` skill landed |
 
 All three share the same core and the same read-only auditor. Migrate is the deepest; author and adopt are subsets of its machinery.
 
@@ -41,6 +42,7 @@ All three share the same core and the same read-only auditor. Migrate is the dee
 
 - Say *"migrate `<app>` to the Sondalab DS"* or run `/sl-migrate` → the `sl-migrate` skill drives `workflows/migrate.md` and holds the gates.
 - Say *"build a new `<screen>` in the Sondalab DS"* or run `/sl-author` → the `sl-author` skill drives `workflows/author.md` and builds from `catalog.md`.
+- Say *"add a Sondalab `<component>` to this app"* or run `/sl-adopt` → the `sl-adopt` skill drives `workflows/adopt.md` (one component, scoped to the touched file).
 - The `sl-ds-auditor` subagent runs the audit and reads `design-language.md` for the judgement-level findings, returning them grouped by severity with `file:line`.
 
 **In any other harness / a consumer repo.** Point the agent at three things and give it the migrate procedure as its instructions:
