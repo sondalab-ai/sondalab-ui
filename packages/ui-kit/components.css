@@ -24,9 +24,12 @@
 :root {
   /* accent */
   --slc-accent:        var(--sl-accent-default, #B56A0C);
-  --slc-accent-hover:  var(--sl-accent-hover,   #A05F0A);
-  --slc-accent-active: var(--sl-accent-active,  #8A5109);
-  --slc-accent-subtle: var(--sl-accent-subtle,  rgba(197,122,22,0.12));
+  /* Steps derive from --slc-accent so a bare --sl-accent-default override
+     (or a Tier-B product that maps only --slc-accent) re-derives the whole
+     family — no amber leak. The theme layer still wins when it sets the step. */
+  --slc-accent-hover:  var(--sl-accent-hover,   color-mix(in srgb, var(--slc-accent) 89%, black));
+  --slc-accent-active: var(--sl-accent-active,  color-mix(in srgb, var(--slc-accent) 76%, black));
+  --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
   --slc-surface:       var(--sl-bg-surface,        #F6F1E6);
