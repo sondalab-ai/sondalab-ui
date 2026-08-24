@@ -195,6 +195,76 @@ export function matchesSelector(context, selector) {
   return new RegExp(`(?<![\\w-])${esc}(?![\\w-])`).test(context);
 }
 
+// --- accent-step derivation (check 7) -------------------------------------
+
+/** An accent-step value is "derived" if it re-derives off --sl-accent-default
+ * via a hue-relative expression (color-mix / relative-colour oklch) or a plain
+ * var() reference — i.e. it is not a bare literal that could leak a hue. */
+export function isDerivedAccentValue(value) {
+  const v = String(value).trim().toLowerCase();
+  return v.includes("color-mix(") || v.includes("oklch(") || v.startsWith("var(");
+}
+
+/** Accent-step declarations (--sl-accent-hover/active/subtle) grouped per `{}`
+ * block, so a graceful-fallback sibling (the same property redeclared with an
+ * expression) is scoped to its own rule. Not a full CSS parser — theme files
+ * are flat, one declaration per line. */
+function accentStepBlocks(css) {
+  const lines = css.split("\n");
+  const blocks = [];
+  let current = null;
+  let depth = 0;
+  lines.forEach((line, idx) => {
+    for (const ch of line) {
+      if (ch === "{") {
+        if (depth === 0) current = { decls: [] };
+        depth++;
+      } else if (ch === "}") {
+        if (depth > 0) depth--;
+        if (depth === 0 && current) {
+          blocks.push(current);
+          current = null;
+        }
+      }
+    }
+    for (const m of line.matchAll(/(--sl-accent-(?:hover|active|subtle))\s*:\s*([^;]+);/g)) {
+      if (current) current.decls.push({ prop: m[1], value: m[2], line: idx + 1 });
+    }
+  });
+  return blocks;
+}
+
+/** Check 7 — accent-step derivation. Every --sl-accent-hover/active/subtle must
+ * be a hue-relative expression off --sl-accent-default, so overriding only the
+ * default re-derives the family (the one-var contract). A bare hex/rgb literal
+ * is a defect UNLESS it is (a) a graceful fallback — the same property is
+ * redeclared with an expression later in the same block — or (b) an
+ * intentionally tuned step registered in the product's accent entry
+ * (`accentBases`). Returns findings shaped like auditCss's. */
+export function auditAccentDerivation(css, { accentBases = new Set(), file = "" } = {}) {
+  const findings = [];
+  for (const block of accentStepBlocks(css)) {
+    block.decls.forEach((d, i) => {
+      if (isDerivedAccentValue(d.value)) return;
+      const norm = normalizeColor(d.value);
+      if (!norm) return; // keyword / non-literal — not this check's concern
+      if (accentBases.has(colorBase(norm))) return; // (b) registered tuned step
+      const hasExprSibling = block.decls
+        .slice(i + 1)
+        .some((s) => s.prop === d.prop && isDerivedAccentValue(s.value));
+      if (hasExprSibling) return; // (a) graceful fallback before its expression
+      findings.push({
+        rule: "accent-derivation",
+        level: "R",
+        file,
+        line: d.line,
+        message: `accent step ${d.prop} is a bare literal (${d.value.trim()}) — must derive off --sl-accent-default (color-mix/oklch) or be a registered tuned step`,
+      });
+    });
+  }
+  return findings;
+}
+
 // --- audit ----------------------------------------------------------------
 
 function levelFor(matrix, rule, substrate) {
@@ -270,6 +340,13 @@ export function auditCss({
       message: `colour ${value} does not resolve to a token, product accent, or blessed value`,
     });
   }
+
+  // check 7 — accent-step derivation (one-var contract). Registered tuned steps
+  // (the product's own accent family) are exempt, as is a graceful fallback.
+  const accentBases = new Set(
+    accentColorStrings(accentEntry).map((s) => colorBase(normalizeColor(s))),
+  );
+  findings.push(...auditAccentDerivation(css, { accentBases, file }));
 
   return {
     file,
