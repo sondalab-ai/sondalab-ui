@@ -21,4 +21,14 @@
   --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 12%, transparent);
   --sl-accent-depth: #14606C;
   --sl-focus-ring: #B56A0C;
+  --sl-code-fg: #383a42;
+  --sl-code-comment: #9ca3a3;
+  --sl-code-keyword: #a626a4;
+  --sl-code-string: #50a14f;
+  --sl-code-number: #986801;
+  --sl-code-boolean: #0184bc;
+  --sl-code-function: #4078f2;
+  --sl-code-tag: #e45649;
+  --sl-code-builtin: #c18401;
+  --sl-code-null: #9ca3a3;
 }

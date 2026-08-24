@@ -50,10 +50,14 @@ function main() {
   for (const id of ["light", "dark", "high-contrast"]) {
     const theme = t.themes[id];
     const accent = t.accent[id];
+    const code = t.code?.[id];
     const entries = [
       ...Object.entries(theme).map(([k, v]) => [`--sl-${k}`, v]),
       ...Object.entries(accent).flatMap(([k, v]) => accentDecls(`--sl-accent-${k}`, v)),
       ["--sl-focus-ring", accent.default],
+      // Syntax palette (--sl-code-*): per-theme, atom-one. Omitted where the
+      // token file has no entry for the theme (e.g. high-contrast).
+      ...(code ? Object.entries(code).map(([k, v]) => [`--sl-code-${k}`, v]) : []),
     ];
     const css = HEADER + block(`[data-sl-theme="${id}"]`, entries);
     writeFileSync(resolve(OUT, `themes/${id}.css`), css);
