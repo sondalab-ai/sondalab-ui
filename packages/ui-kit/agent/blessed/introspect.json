@@ -1,5 +1,5 @@
 {
-  "$note": "Authorized deviations for introspect. Populated during migrate calibration; colour deviations added as the baseline audit surfaces and blesses them.",
+  "$note": "Authorized deviations for introspect (Tier B, App). The categorical/syntax/status/info swamp was resolved by adopting the shared --sl-viz-* / --sl-code-* / --sl-status-* tokens (v0.6.0); what remains blessed here is introspect's editorial neutral identity, which does not derive from the near-neutral Sondalab bg/text tokens. Each entry cites the rule that blesses it.",
   "substrate": "App",
   "deviations": [
     {
@@ -10,6 +10,34 @@
       ],
       "value": "IBM Plex Mono",
       "why": "design-language.md L1: a surface may substitute the mono face for a narrower one where fixed pixel grids demand it. Martian Mono overflows ch-clamped columns. sans/display roles unchanged."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#1C2830",
+        "rgba(18,28,36,0.55)",
+        "rgba(8,12,16,0.55)",
+        "rgba(90,209,200,0.14)",
+        "#162535",
+        "#1a2a36",
+        "#D8CEBC",
+        "rgba(255,253,248,0.66)",
+        "rgba(236,232,222,0.66)",
+        "rgba(60,52,38,0.05)",
+        "rgba(45,40,30,0.06)",
+        "#c7bfae"
+      ],
+      "why": "design-language.md §Decision 1 (Tier B, App substrate) + the daos --bg-grad precedent: introspect's blue-slate glassmorphism neutral layer (--line/--grid/--scroll/--glass-*/--field/--code-bg, per theme) is its editorial identity. Its base --bg/--txt/--mut ARE the Sondalab tokens, but these slates carry a blue undertone those near-neutral tokens cannot derive — deriving off them would neutralise the identity. Blessed by value (audit normalises each rgba to its opaque base, so every alpha of a given surface is covered). App adapts the strict Tier-B value-equality the way daos's atmospheric field does."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#7d909e",
+        "#3f5260",
+        "#8fa3b0",
+        "#b5c5cd"
+      ],
+      "why": "design-language.md §Decision 1 (Tier B, App): four muted-text tints that sit between --sl-text-muted (#6E8088) and --txt on introspect's blue-slate surfaces (nav items, rail headers, kind labels, blockquote). They track the same blue undertone as the neutral layer above, so they are part of that editorial identity rather than free-floating hex. Blessed by value."
     }
   ]
 }
