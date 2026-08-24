@@ -41,6 +41,7 @@ Shared grammar, per-product accent. The brand default is amber (with a teal *dep
 | **Sondalab default / daos** | `#B56A0C` / `#F5A83C` (depth `#14606C` / `#35A0B4`) | `sondalab.tokens.json` `accent.*.default` | daos re-baselines from its near-amber `#9a6a15`/`#d29a44` to the exact token values. |
 | **spexr** | `#5b6cff` / `#8b96ff` | `spexr-overrides.css` | Delivered. |
 | **introspect** | `#0e9c84` / `#2ee6c0` | introspect `--cy` | Teal-to-mint cyan, per theme. Registered as its product accent; not required to match the default's `depth` teal `#35A0B4` (`depth` constrains the default product, not cyan-accented ones). Its secondary sky-blue (`--cy2`) is **not** a second accent — it maps to `--sl-status-info`. |
+| **local-agents** | `#1d63d8` / `#58a6ff` | local-agents `--accent-coder` | Coder-blue, per theme. The de-facto primary accent (`--accent-coder → var(--sl-accent-default)`); its rgb() literals matched the pre-adoption values exactly, so tints derive via `color-mix` with no registered steps. The other three agent hues (creative/home/system) are a blessed **categorical identity**, not a second accent (`--sl-viz-*` was rejected: they carry theme-distinct pairs). |
 
 Machine values of this table: `packages/ui-kit/agent/accent-registry.json` (consumed by the compliance audit). The table above stays authoritative for the reasoning; `scripts/accent-registry.test.mjs` asserts product-set parity between the two.
 

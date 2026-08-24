@@ -5,14 +5,16 @@
     "introspect": "App",
     "daos": "Page",
     "default": "Page",
-    "smartctx": "Term"
+    "smartctx": "Term",
+    "local-agents": "App"
   },
   "tiers": {
     "$note": "Theme-selector tier per product (design-language.md §Decision 1). Authoritative machine source for the audit's tier-consistency check. Term products have no tier (no theme selector).",
     "spexr": "A",
     "introspect": "B",
     "daos": "B",
-    "default": "A"
+    "default": "A",
+    "local-agents": "B"
   },
   "rules": {
     "theme-selector":     { "IDE": "R",   "App": "R", "Page": "R", "Term": "N/A" },

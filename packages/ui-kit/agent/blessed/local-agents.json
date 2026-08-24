@@ -1,0 +1,90 @@
+{
+  "$note": "Authorized deviations for local-agents (Tier B, App). local-agents is a build-less static surface (a single dashboard.html served by FastAPI via FileResponse), so the DS primitive layer is vendored inline rather than imported from @sondalab/ui-kit — re-sync on ui-kit bumps. The accent (coder-blue) is registered in accent-registry.json and every accent/status/categorical tint derives via color-mix(var(--…) N%, transparent), so what remains blessed here is the product's own identity: a GitHub-cool neutral layer, a glassmorphism material, the four categorical agent hues, and AA-tuned status literals. Each entry cites the rule that blesses it. Audit normalises every rgba to its opaque base, so one value per RGB covers all its alphas (e.g. #ffffff covers every white-glass alpha in both themes).",
+  "substrate": "App",
+  "deviations": [
+    {
+      "kind": "font",
+      "selectors": [
+        "--font-sans",
+        "mono"
+      ],
+      "value": "DM Sans / JetBrains Mono",
+      "why": "design-language.md L1: a surface may substitute the type faces for its established identity. local-agents predates the DS with DM Sans (sans) + JetBrains Mono (mono); the vendored --sl-font-* contract is present for future adoption but the app keeps its own faces, as introspect keeps IBM Plex."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#eef0f5",
+        "#fafbfc",
+        "#ffffff",
+        "#e8ebf2",
+        "#dde1ea",
+        "#b8bfd0",
+        "#1a1f2c",
+        "#4d5568",
+        "#7a8295",
+        "#e8eef9",
+        "#c9d6ee",
+        "#f1f3f8",
+        "#b4bac9",
+        "#0f1117",
+        "#161b22",
+        "#1c2128",
+        "#22272e",
+        "#30363d",
+        "#484f58",
+        "#e6edf3",
+        "#b7c0ca",
+        "#9dacbb",
+        "#1c2d4a",
+        "#21262d"
+      ],
+      "why": "design-language.md §Decision 1 (Tier B, App substrate) + the introspect blue-slate precedent: local-agents' GitHub-cool neutral layer (--bg-*/--border*/--text-*/--msg-user-*/--md-pre-bg/--dot-off, per theme) is its editorial identity, tuned for AA contrast on cool grey. These are near-neutral but sit at a colour temperature the warm-paper Sondalab bg/text tokens cannot derive without neutralising the identity. Blessed by value; App adapts strict Tier-B value-equality the way introspect's field does."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "rgba(22,32,52,0.05)",
+        "rgba(0,0,0,0.35)",
+        "rgba(32,38,48,0.28)",
+        "rgba(44,52,64,0.42)"
+      ],
+      "why": "design-language.md §Decision 1 (Tier B, App): the glassmorphism material (--glass-*/--shadow, per theme) — translucent white frost over a cool tint in light, translucent black over slate in dark. rgba(255,255,255,*) glass whites are covered by the #ffffff base above; these four cover the coloured shadow/tint bases. The blur/saturation live in --glass-blur/--glass-sat (non-colour). Part of the same editorial identity as the neutral layer."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#7c3fa3",
+        "#2a8f47",
+        "#b45309",
+        "#bc8cff",
+        "#56d364",
+        "#e3b341"
+      ],
+      "why": "design-language.md §Decision 2 (categorical identity): local-agents colours four agent families — coder / creative / home / system. coder is the product accent (registered; --accent-coder → var(--sl-accent-default)); creative/home/system are the other three family hues, per theme. --sl-viz-* was rejected here: viz tokens are theme-independent single values, but these carry distinct, deliberately-tuned light/dark pairs that are the families' identity, not an arbitrary chart series. Blessed by value; their tints derive via color-mix off these bases."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#18794e",
+        "#a16207",
+        "#b91c1c",
+        "#3fb950",
+        "#d29922",
+        "#f85149"
+      ],
+      "why": "design-language.md §Decision 1 (Tier B, App): status bases (--success/--warning/--error, per theme) hand-tuned for AA on the GitHub-cool surfaces above. Blessed for now rather than mapped to --sl-status-* because the DS status hues differ enough to shift the look; adopting --sl-status-* is a deliberate follow-up (Slice 2). Every status tint (badge/btn-danger/rag) derives via color-mix off these bases."
+    },
+    {
+      "kind": "color",
+      "values": [
+        "#1854bf",
+        "#79b8ff",
+        "#1247a8",
+        "#79c0ff",
+        "rgba(56,139,253,0.45)"
+      ],
+      "why": "design-language.md §Decision 2: one-off tuned literals adjacent to the accent — --btn-p-hover (#1854bf/#79b8ff, a solid pressed-primary blue that does not fall exactly on the shared hover-derivation ratio) and --md-code-fg (#1247a8/#79c0ff, inline-code text). rgba(56,139,253,0.45) is --msg-user-border (dark), a distinct message-bubble blue. Blessed, not registered as accent steps, because they are not the hover/active/subtle contract — they are local semantic literals in the accent family."
+    }
+  ]
+}
