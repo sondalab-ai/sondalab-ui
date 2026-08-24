@@ -27,30 +27,6 @@
     },
     {
       "kind": "color",
-      "selectors": [
-        "--sl-hljs-base",
-        "--sl-hljs-comment",
-        "--sl-hljs-keyword",
-        "--sl-hljs-string",
-        "--sl-hljs-literal",
-        "--sl-hljs-number",
-        "--sl-hljs-tag",
-        "--sl-hljs-title",
-        "--sl-hljs-builtin"
-      ],
-      "value": "atom-one syntax-highlight palette (light + dark)",
-      "why": "design-language.md: syntax highlighting is code-viz, out of the single-brand-accent scope (a code token must stay readable and semantically stable, not track the product hue). spexr uses the atom-one light/dark palette. SCOPE: blesses the property NAME across themes. FOLLOW-UP: candidate for a shared DS --sl-code-* scale so every IDE product doesn't re-bless this."
-    },
-    {
-      "kind": "color",
-      "selectors": [
-        ".spexr-darkfactory"
-      ],
-      "value": "--sl-df-accent-0..7 categorical data-viz scale",
-      "why": "design-language.md: a categorical scale for the multi-agent monitoring wall (one distinct hue per tracked agent) is data-viz, intentionally multi-hue — it is not a second brand accent. SCOPE: blesses colours declared directly on the bare .spexr-darkfactory selector (the palette container). FOLLOW-UP: candidate for a shared DS --sl-viz-* categorical scale."
-    },
-    {
-      "kind": "color",
       "values": [
         "#e5484d"
       ],
