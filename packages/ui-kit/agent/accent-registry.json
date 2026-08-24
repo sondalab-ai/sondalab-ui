@@ -16,6 +16,6 @@
         "dark": { "hover": "#a3acff", "active": "#6b78f0", "subtle": "#1c1f3a" }
       }
     },
-    "introspect": { "single": "#2ee6c0" }
+    "introspect": { "light": "#0e9c84", "dark": "#2ee6c0" }
   }
 }
