@@ -1,5 +1,5 @@
 {
-  "$note": "Authorized deviations for local-agents (Tier B, App). local-agents is a build-less static surface (a single dashboard.html served by FastAPI via FileResponse), so the DS primitive layer is vendored inline rather than imported from @sondalab/ui-kit — re-sync on ui-kit bumps. The accent (coder-blue) is registered in accent-registry.json and every accent/status/categorical tint derives via color-mix(var(--…) N%, transparent), so what remains blessed here is the product's own identity: a GitHub-cool neutral layer, a glassmorphism material, the four categorical agent hues, and AA-tuned status literals. Each entry cites the rule that blesses it. Audit normalises every rgba to its opaque base, so one value per RGB covers all its alphas (e.g. #ffffff covers every white-glass alpha in both themes).",
+  "$note": "Authorized deviations for local-agents (Tier B, App). local-agents is a build-less static surface (a single dashboard.html served by FastAPI via FileResponse), so it consumes the DS from CDN — <link> to @sondalab/ui-kit tokens.css + components.css off jsdelivr, always latest (unpinned), no local copy. Nothing DS-side is vendored, so there is no snapshot to re-sync. The accent (coder-blue) is registered in accent-registry.json and every accent/status/categorical tint derives via color-mix(var(--…) N%, transparent), so what remains blessed here is the product's own identity: a GitHub-cool neutral layer, a glassmorphism material, the four categorical agent hues, and AA-tuned status literals — all defined in the local [data-theme] layer, which loads after the CDN links and wins on identity. Each entry cites the rule that blesses it. Audit normalises every rgba to its opaque base, so one value per RGB covers all its alphas (e.g. #ffffff covers every white-glass alpha in both themes).",
   "substrate": "App",
   "deviations": [
     {
@@ -9,7 +9,7 @@
         "mono"
       ],
       "value": "DM Sans / JetBrains Mono",
-      "why": "design-language.md L1: a surface may substitute the type faces for its established identity. local-agents predates the DS with DM Sans (sans) + JetBrains Mono (mono); the vendored --sl-font-* contract is present for future adoption but the app keeps its own faces, as introspect keeps IBM Plex."
+      "why": "design-language.md L1: a surface may substitute the type faces for its established identity. local-agents predates the DS with DM Sans (sans) + JetBrains Mono (mono); the --sl-font-* contract is available via the CDN-linked tokens.css for future adoption but the app keeps its own faces, as introspect keeps IBM Plex."
     },
     {
       "kind": "color",
