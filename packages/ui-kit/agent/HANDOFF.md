@@ -6,10 +6,11 @@
 
 ## What the script decides — and what it does not
 
-`sl-audit.mjs` (Slice 1) mechanically checks exactly two things:
+`sl-audit.mjs` mechanically checks three things:
 
 1. **Colour value-equality** — every hex/rgb literal resolves to a token, the product's accent, or a blessed value.
 2. **Tier consistency** — the theme selector (`[data-sl-theme]` vs `[data-theme]`) matches the product's tier in `substrate-matrix.json`.
+3. **Accent-step derivation** *(check 7, mechanical as of v0.7.0)* — every `--sl-accent-hover/active/subtle` derives off `--sl-accent-default` (see the check-7 section below for the exemptions).
 
 **Everything else is your judgement.** The script is silent on it — silence is not a pass. In particular, the checks below were specified but deliberately **not** built, because the design language itself uses "violating" values in blessed places, so a mechanical flag would fire on the DS's own reference. Do not treat their absence as "these are fine"; treat them as *yours to judge*.
 
@@ -37,8 +38,12 @@ For elements already named eyebrow/tag, the recipe (mono + uppercase + tracking 
 ### Font-family  *(check 5 — dropped, not deferred)*
 Evaluated and **dropped**: the only literal faces across the calibrated surfaces are introspect's IBM Plex Mono (a blessed mono substitute) and spexr's editor font (blessed). A font check would yield nothing. Just keep using `var(--sl-font-display|sans|mono)`; the only allowed substitution is a *narrower mono* where fixed pixel grids demand it (`design-language.md` L1), recorded as a blessed `font` deviation.
 
-### Accent step derivation  *(check 7 — advisory this release, mechanical next)*
-`design-language.md` §Decision 2 requires **every** accent step (`--sl-accent-hover/active/subtle`) to be a hue-relative expression off `--sl-accent-default` — `color-mix()` (Baseline) or `oklch(from var(--sl-accent-default) …)` relative colour (dark-active only) — never a bare literal that would leak the previous hue when a product overrides only the default. The relative-colour step carries a preceding baked-literal **fallback** line (for browsers below the relative-colour floor); that fallback is the *only* legitimate bare-literal accent-step declaration, and it is always paired with a following `oklch(...)`/`var(--sl-accent-default)` line. This is **syntactically checkable** (unlike the value-level checks above): an accent-step declaration whose value is a bare hex/`rgb()` with **no** sibling relative-colour declaration for the same property is a derivation defect. It ships **advisory** this release — judge it by eye, flag it in the migrate/author report, but the script does not yet fail on it. The mechanical check lands next release. **How to judge:** open the product's theme layer; every accent step should read `color-mix(in srgb, var(--sl-accent-default) …)` or an `oklch(from var(--sl-accent-default) …)` (optionally preceded by its fallback literal on the same property).
+### Accent step derivation  *(check 7 — MECHANICAL as of v0.7.0)*
+`design-language.md` §Decision 2 requires **every** accent step (`--sl-accent-hover/active/subtle`) to be a hue-relative expression off `--sl-accent-default` — `color-mix()` (Baseline) or `oklch(from var(--sl-accent-default) …)` relative colour (dark-active only) — never a bare literal that would leak the previous hue when a product overrides only the default. The relative-colour step carries a preceding baked-literal **fallback** line (for browsers below the relative-colour floor); that fallback is a legitimate bare-literal accent-step declaration because it is always paired with a following `oklch(...)`/`var(--sl-accent-default)` line for the same property.
+
+`sl-audit` now checks this mechanically (`auditAccentDerivation`): an accent-step declaration whose value is a bare hex/`rgb()` is an **R-level `accent-derivation` finding** UNLESS (a) the same property is redeclared with a relative-colour expression later **in the same block** (the graceful-fallback pattern), or (b) the literal is an **intentionally tuned step registered in the product's `accent-registry.json` entry** (the "register instead of derive" path — a fixed-hue product like spexr whose steps don't fit the shared ratios; see §Decision 2). Everything else fails.
+
+**Consequence for judgement:** you no longer eyeball this for the value itself — the script decides. What stays yours: deciding *whether a product should derive or register* its steps. Deriving is the default (keeps one-var re-hue). Registering literals is correct only when the steps are hand-tuned away from the shared ratios and the product's hue is fixed; when you register them, that same registry entry is what exempts them here.
 
 ## Structural / judgement rules the script never sees
 

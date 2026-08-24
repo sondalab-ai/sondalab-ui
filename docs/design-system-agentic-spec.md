@@ -155,7 +155,7 @@ Run the audit in this order; it converts "does the tool work" into an empirical 
 2. `spexr` (Tier A, delivered) → **measured 22 R-violations** at calibration (Theia host-chrome literals + ad-hoc panel colours), not clean. This is empirical data, not a tool failure: Tier A means spexr consumes the theme layer, not that every literal is a token. These belong to spexr's separate L3 track, not pass-1 migration.
 3. `introspect` (App, Tier B) → **70 R-violations** (its colour layer never converged, only its type did; accent-derived tints dominate — the derivation-swamp the blessed step handles). `daos` (Page, Tier B) → **2 R-violations** (`#a6abad`, `#565b5d`); nearly conformant. Feed both into the blessed-allowlist step of a real migration.
 
-Calibration verdict: the reference implementation is clean, the tool runs cross-repo, and the findings on the three live surfaces are plausible and actionable — the audit is trustworthy for checks 1+2.
+Calibration verdict: the reference implementation is clean, the tool runs cross-repo, and the findings on the three live surfaces are plausible and actionable — the audit is trustworthy for checks 1+2. *(Update: check 7 — accent-step derivation — became mechanical in ui-kit v0.7.0; the audit now covers 1, 2, and 7.)*
 
 The blessed allowlist (Layer 1) **blocks** running the audit against daos/introspect for a real migration proposal until it is populated — otherwise the first report shown is mostly false positives.
 
