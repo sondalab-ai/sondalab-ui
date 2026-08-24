@@ -16,6 +16,11 @@
         "dark": { "hover": "#a3acff", "active": "#6b78f0", "subtle": "#1c1f3a" }
       }
     },
-    "introspect": { "light": "#0e9c84", "dark": "#2ee6c0" }
+    "introspect": { "light": "#0e9c84", "dark": "#2ee6c0" },
+    "local-agents": {
+      "light": "#1d63d8",
+      "dark": "#58a6ff",
+      "$steps-note": "local-agents derives its accent tints via color-mix(var(--sl-accent-default) …) — the coder-blue base matches the pre-adoption rgb() literals exactly, so no tuned steps are registered. The two solid btn-p-hover blues (#1854bf/#79b8ff) and the inline-code fg (#1247a8/#79c0ff) are blessed in blessed/local-agents.json, not registered, because they are one-off tuned literals rather than the hover/active/subtle contract."
+    }
   }
 }
