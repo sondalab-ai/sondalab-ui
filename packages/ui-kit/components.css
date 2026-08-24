@@ -115,6 +115,7 @@
   border: 1px solid transparent;
   background: transparent;
   color: var(--slc-text);
+  text-decoration: none;
   cursor: pointer;
   transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
