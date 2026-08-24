@@ -13,7 +13,9 @@
     "z": { "base": "1", "overlay": "50", "modal": "100", "toast": "200" },
     "motion": { "fast": "120ms", "mid": "220ms", "slow": "360ms", "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)" },
     "shadow": { "sm": "0 1px 2px rgba(0,0,0,0.06)", "md": "0 4px 12px rgba(0,0,0,0.08)", "lg": "0 12px 32px rgba(0,0,0,0.16)" },
-    "focus": { "ring-width": "2px", "ring-offset": "2px" }
+    "focus": { "ring-width": "2px", "ring-offset": "2px" },
+    "$viz-note": "Categorical data-viz ramp (--sl-viz-0..7): distinct hues for arbitrary series / one-per-item colouring (agent walls, event kinds). Theme-independent by design — consumers place them on their own surface. Not brand accents; independent of --sl-accent-*.",
+    "viz": ["#b388ff", "#4dd0e1", "#ffb74d", "#81c784", "#f06292", "#7986cb", "#a1887f", "#4db6ac"]
   },
   "themes": {
     "light": {
@@ -39,6 +41,11 @@
     "light": { "default": "#B56A0C", "hover": { "mix": [89, "black"] }, "active": { "mix": [76, "black"] }, "subtle": { "mix": [12, "transparent"] }, "depth": "#14606C" },
     "dark": { "default": "#F5A83C", "hover": { "mix": [80, "white"] }, "active": { "oklch": ["calc(l * 0.92)", "calc(c * 0.96)", "h"], "fallback": "#E0942A" }, "subtle": { "mix": [16, "transparent"] }, "depth": "#35A0B4" },
     "high-contrast": { "default": "#ffff00", "hover": { "mix": [37, "white"] }, "active": { "mix": [80, "black"] }, "subtle": { "mix": [10, "black"] }, "depth": "#00ffff" }
+  },
+  "$code-note": "Syntax-highlight palette (--sl-code-<role>): code is viz, out of the single-brand-accent scope — a code token stays semantically stable and readable, it does not track the product hue. Canonical = atom-one (light + dark). Emitted per theme; high-contrast intentionally omitted (undefined there, consumers fall back).",
+  "code": {
+    "light": { "fg": "#383a42", "comment": "#9ca3a3", "keyword": "#a626a4", "string": "#50a14f", "number": "#986801", "boolean": "#0184bc", "function": "#4078f2", "tag": "#e45649", "builtin": "#c18401", "null": "#9ca3a3" },
+    "dark": { "fg": "#abb2bf", "comment": "#5c6370", "keyword": "#c678dd", "string": "#98c379", "number": "#d19a66", "boolean": "#56b6c2", "function": "#61aeee", "tag": "#e06c75", "builtin": "#e6c07b", "null": "#5c6370" }
   },
   "terminal": {
     "prompt": { "ansi": "bright_yellow", "true": "#F5A83C" },

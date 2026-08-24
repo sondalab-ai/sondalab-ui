@@ -46,6 +46,15 @@ Machine values of this table: `packages/ui-kit/agent/accent-registry.json` (cons
 
 Rule: a product picks **one** accent hue and derives hover/active/subtle from it; it never introduces a second chromatic accent. **Derivation is concrete and complete:** the generator emits **every** accent step as a hue-relative expression off `--sl-accent-default`, so a product override that sets **only the hue** re-derives the whole family (the one-var contract — no step is a bare literal that could leak the previous hue). Two forms: `color-mix()` off `--sl-accent-default` for steps a straight mix reproduces (hover everywhere, subtle everywhere, light/HC active), and CSS **relative colour** — `oklch(from var(--sl-accent-default) calc(l * k) calc(c * s) h)` — for a step whose hand-tune a mix can't reach while preserving hue (dark-active, whose value carries a slight chroma/hue shift; `color-mix` in sRGB would leave it fixed and off-hue for other products). The relative-colour step also emits a preceding baked-literal declaration as a graceful fallback for browsers below the relative-colour floor (Safari 16.4 / Chrome 119 / Firefox 128); `color-mix` itself is Baseline. This is enforced advisorily today (a judgement note); the audit gains a mechanical derivation check in a following release (see `packages/ui-kit/agent/HANDOFF.md`). Semantic status colours (ok/warn/err) are separate from the accent and shared — but the `--sl-status-*` tokens are tuned for **on-canvas** use. On an inverted surface (a block whose background is the strongest neutral, e.g. an ink-on-paper output panel) they lose contrast; there, derive an on-ink status pair locally rather than using the canvas tokens (daos `.artifact .ok`/`.no` are a correct instance of this — kept as light-on-ink greens/reds, not swapped to the darker canvas tokens).
 
+## Decision 3 — Data-viz & code palettes
+
+Two shared palettes that are **not** brand accents and must never track the product hue: a categorical data-viz ramp and a syntax-highlight set. Both were per-product literals until they recurred across ≥2 products (spexr + introspect), which is the New-token-policy threshold for promotion.
+
+- **`--sl-viz-0..7`** — a categorical ramp of eight distinct hues for arbitrary series / one-colour-per-item (an agent-monitoring wall, per-event-kind tinting). **Theme-independent** (shipped once in `tokens.css`); the consumer places the hues on its own surface. It is independent of `--sl-accent-*` and carries no semantic meaning — for *semantic* state (error, warning) use `--sl-status-*`, not a viz slot.
+- **`--sl-code-<role>`** — the syntax-highlight palette (`fg`, `comment`, `keyword`, `string`, `number`, `boolean`, `function`, `tag`, `builtin`, `null`). Canonical = **atom-one**, emitted **per theme** (light + dark). High-contrast is intentionally omitted — syntax is undefined there and consumers fall back. A code token stays semantically stable and readable; it does not re-hue per product.
+
+**Adopters:** spexr (darkfactory categorical wall → `--sl-viz-*`; atom-one hljs → `--sl-code-*`), introspect (agent-event-kind tints → `--sl-viz-*`, with error/warning routed to `--sl-status-*`; JSON view → `--sl-code-*`). Machine values live in `sondalab.tokens.json` (`shared.viz`, `code.{light,dark}`); the audit allowlists them automatically because they ship in `tokens.css` / `themes/*.css`.
+
 ## The family-resemblance layer
 
 Each rule below carries a **compliance level per substrate** (see the matrix). Layout rules are expressed as **invariants** (a spacing scale, a rule weight, a measure, a type-scale relationship) — never as fixed templates — so a data-grid app with hard pixel columns can satisfy them as readily as a marketing page.
@@ -153,7 +162,7 @@ The house aesthetic (personal `CLAUDE.md`, UI Aesthetics) requires ≥1 unexpect
 Express the language in **existing** `--sl-*` tokens. A new token forces regenerating `packages/`, satisfying `check-drift.yml`, and bumping **both** `packages/ui-kit/package.json` and `packages/palette-py/pyproject.toml` in the same PR (see `AGENTS.md`). Therefore:
 
 - **Kept as conventions, not tokens** (layout-level, fluid, or product-local): `--sl-measure` (~63ch), `--sl-gutter` (fluid clamp), the oversized-display clamp pattern. Products define these locally with the canonical values above.
-- **A new token is justified only** for a genuine shared, fixed, theme-independent value that recurs across ≥2 products and cannot be a convention — and then it goes through the full regen + dual-bump flow.
+- **A new token is justified only** for a genuine shared, fixed value that recurs across ≥2 products and cannot be a convention — and then it goes through the full regen + dual-bump flow. Realized instance: the `--sl-viz-*` / `--sl-code-*` palettes (Decision 3), promoted once spexr and introspect both needed them.
 
 ## Pass-1 application (scope & order)
 

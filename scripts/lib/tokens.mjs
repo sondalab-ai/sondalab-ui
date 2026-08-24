@@ -15,6 +15,7 @@ export function flattenShared(shared) {
   const groups = {
     font: "font", space: "space", radius: "radius", text: "text",
     line: "line", z: "z", motion: "motion", shadow: "shadow", focus: "focus",
+    viz: "viz",
   };
   for (const [group, prefix] of Object.entries(groups)) {
     for (const [key, value] of Object.entries(shared[group] ?? {})) {
