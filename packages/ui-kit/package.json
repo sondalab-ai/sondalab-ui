@@ -2,8 +2,24 @@
   "name": "@sondalab/ui-kit",
   "version": "0.7.2",
   "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "css-custom-properties",
+    "theming",
+    "sondalab"
+  ],
+  "homepage": "https://sondalab.eu",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sondalab-ai/sondalab-ui.git",
+    "directory": "packages/ui-kit"
+  },
+  "bugs": {
+    "url": "https://github.com/sondalab-ai/sondalab-ui/issues"
+  },
   "license": "MIT",
-  "author": "marcellobarile",
+  "author": "Marcello Barile <marcello.barile@gmail.com>",
   "publishConfig": {
     "access": "public"
   },
