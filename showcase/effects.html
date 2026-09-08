@@ -125,7 +125,11 @@
     .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
     .g-demo--col { flex-direction: column; align-items: stretch; }
 
-    /* -- inversion band: the Tier-B remap components.css already documents - */
+    /* -- inversion band: the Tier-B remap components.css already documents,
+       extended to all three border roles — the glass edge reads the strong/
+       subtle pair to build --slfx-edge-warm/cool/dim, so a remap of --slc-border
+       alone leaves the ring on the wrong ground even though it now resolves on
+       the edge itself rather than at :root (effects.css). ------------------- */
     .invert { background: var(--sl-text-primary); color: var(--sl-bg-canvas); }
     .invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 60%, transparent); }
     .g-cell .invert {
@@ -134,6 +138,8 @@
       --slc-text-muted: color-mix(in srgb, var(--sl-bg-canvas) 62%, transparent);
       --slc-surface: color-mix(in srgb, var(--sl-text-primary) 86%, var(--sl-bg-canvas));
       --slc-border: color-mix(in srgb, currentColor 22%, transparent);
+      --slc-border-strong: color-mix(in srgb, currentColor 38%, transparent);
+      --slc-border-subtle: color-mix(in srgb, currentColor 12%, transparent);
     }
 
     /* -- 05 declension: asymmetric split — the unexpected composition call -- */
@@ -149,6 +155,11 @@
 
     /* -- a replaced control hosts no paint layer: wrap it ------------------- */
     .sl-field__control { display: block; position: relative; }
+
+    /* <dialog> is position:absolute in the UA stylesheet; neutralise it here,
+       not in a style attribute — an inline style would also beat the effects
+       layer's `position: relative` and detach the ring from the dialog. */
+    dialog.sl-dialog[open] { position: relative; margin: 0; max-width: none; width: auto; }
 
     /* -- subtree opt-out demonstration --------------------------------------- */
     .fx-off { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--sl-border-subtle); }
@@ -331,10 +342,10 @@
             <div class="invert" style="padding:1.4rem">
               <article class="sl-card sl-fx-glass" style="padding:1.2rem">
                 <h3 class="sl-card__title">On ink</h3>
-                <p class="sl-card__body">The band remaps <b>--slc-border</b> off <b>currentColor</b>, which is what this card's own 1px border reads — it survives the strongest neutral.</p>
+                <p class="sl-card__body">The band remaps all three border roles — <b>--slc-border</b>, <b>--slc-border-strong</b>, <b>--slc-border-subtle</b> — off <b>currentColor</b>. This card's own 1px border reads the first directly; the glass ring's <b>--slfx-edge-*</b> stops read the other two, resolved on the edge itself rather than at <b>:root</b>, so both survive the strongest neutral.</p>
               </article>
             </div>
-            <span class="g-label" style="padding:0.9rem 1.4rem">without the remap the card's own border inherits the canvas-alpha default and sits invisible on ink. The glitch, liquid, and glass ring colours (<b>--slfx-*</b>) resolve once at <b>:root</b>, so unlike <b>--slc-border</b> they do not currently re-derive inside an inversion band — a gap between this spec's premise and <b>effects.css</b> as shipped.</span>
+            <span class="g-label" style="padding:0.9rem 1.4rem">without the full remap, either the card's border or the ring (or both) inherit a canvas-oriented default and sit invisible on ink</span>
           </div>
         </div>
       </div>
@@ -401,7 +412,7 @@
             </div>
             <div class="g-cell">
               <span class="g-label">dialog</span>
-              <dialog class="sl-dialog sl-fx-glass sl-fx-aurora" open style="position:static;margin:0;max-width:none;width:auto">
+              <dialog class="sl-dialog sl-fx-glass sl-fx-aurora" open>
                 <h3 class="sl-dialog__title"><span class="sl-fx-glitch sl-fx-glitch--shatter" data-text="Discard branch?" id="dialog-shatter">
                   <span class="sl-fx-glitch__text">Discard branch?</span>
                   <span class="sl-fx-glitch__shards" aria-hidden="true">
@@ -456,7 +467,7 @@
               <p class="cap">Scrambles once as it enters the viewport — every <b>.sec-idx</b> on this page (<b>01</b>…<b>05</b>) does exactly this; scroll away and back to watch one re-run.</p>
             </div>
             <div class="g-cell" style="padding:0">
-              <div class="invert sl-fx-aurora sl-fx-aurora--linear" style="padding:1.4rem">
+              <div class="invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top" style="padding:1.4rem">
                 <p class="sl-eyebrow">On ink</p>
                 <div class="g-demo" style="margin-top:0.7rem">
                   <span class="sl-tag">Inverted</span>
@@ -464,7 +475,7 @@
                   <span class="sl-kbd">esc</span>
                 </div>
               </div>
-              <span class="g-label" style="padding:0.9rem 1.4rem">inversion band — a linear aurora traces its rule, never a ring</span>
+              <span class="g-label" style="padding:0.9rem 1.4rem">inversion band — <b>--top</b> pins the linear aurora to its structural rule (a band's, unlike a tab's or a link's, is on top); granted live it would light along that edge — this page keeps its one ambient grant on the card in §03</span>
             </div>
           </div>
         </div>
@@ -528,6 +539,25 @@
     import { mount, burst, scramble, grantLive } from "../packages/ui-kit/effects.js";
     const tier1 = mount();
     document.getElementById("tier-report").textContent = tier1 ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
+
+    // -- keep the label honest across a theme switch --
+    // mount() only evaluates its guards once: once armed it always returns
+    // true on a later call, and the switcher never calls it again anyway. The
+    // CSS kill switch disables every family under high-contrast regardless, so
+    // the label must independently track the CURRENT theme (and motion
+    // preference), not the one-time mount() result above.
+    const REDUCE_QUERY = "(prefers-reduced-motion: reduce)";
+    function updateTierLabel() {
+      const html = document.documentElement;
+      const live = html.getAttribute("data-sl-fx") === "on"
+        && html.getAttribute("data-sl-theme") !== "high-contrast"
+        && !window.matchMedia(REDUCE_QUERY).matches;
+      document.getElementById("tier-report").textContent = live ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
+    }
+    new MutationObserver(updateTierLabel).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-sl-theme"],
+    });
 
     // -- one ambient aurora, granted once (Decision 5: capped at one per document) --
     const sweepCard = document.getElementById("sweep-card");

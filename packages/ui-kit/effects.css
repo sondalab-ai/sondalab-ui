@@ -25,9 +25,6 @@
   /* colour roles */
   --slfx-depth: var(--sl-accent-depth, var(--slc-accent, var(--sl-accent-default)));
   --slfx-sheen: var(--slc-text, var(--sl-text-primary));
-  --slfx-edge-warm: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 24%, var(--slc-border-strong, var(--sl-border-strong)));
-  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth) 24%, var(--slc-border-strong, var(--sl-border-strong)));
-  --slfx-edge-dim: var(--slc-border-subtle, var(--sl-border-subtle));
 
   /* edge geometry — the ring grows INWARD so it never meets the focus outline */
   --slfx-ring-w: 1px;
@@ -93,7 +90,16 @@
   initial-value: 210deg;
 }
 
-:is(.sl-fx-glass, .sl-fx-aurora) { position: relative; }
+/* Declared on the edge itself, not on :root. A custom property's var()
+   references resolve using the declaring element's cascaded values, so a
+   :root declaration can never pick up an .invert ancestor's remap — the edge
+   would keep its canvas-oriented alpha and vanish on ink. */
+:is(.sl-fx-glass, .sl-fx-aurora) {
+  --slfx-edge-warm: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 24%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth) 24%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-dim: var(--slc-border-subtle, var(--sl-border-subtle));
+  position: relative;
+}
 
 :is(.sl-fx-glass, .sl-fx-aurora)::after {
   content: "";
@@ -203,6 +209,10 @@
     color-mix(in srgb, var(--slfx-depth) 90%, transparent) 62%,
     transparent 100%);
 }
+
+/* The band's structural rule is its top edge; a tab's and a link's are their
+   bottom. The default stays bottom because two of the three want it. */
+.sl-fx-aurora--linear.sl-fx-aurora--top::after { inset: 0 0 auto 0; }
 
 /* ══ LIQUID — you are recognised ═════════════════════════════════════════════
    Two composed parts, both non-destructive:
