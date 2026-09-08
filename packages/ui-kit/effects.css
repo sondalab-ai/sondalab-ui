@@ -9,11 +9,23 @@
    An effect that means nothing is switched off. Classes are ADDITIVE: they
    compose onto components.css classes and never replace them.
 
-   ── Paint layers (spec §Decision 3b) ────────────────────────────────────────
-   Every element has exactly two: ::before is the liquid sheen, ::after is the
-   edge ring shared by glass and aurora. The glitch therefore lives on a child
-   <span class="sl-fx-glitch" data-text="…">, never on the host. Replaced form
-   controls render no pseudo-element at all — wrap them in .sl-field__control.
+   ── Who draws what (spec §Decision 2) ───────────────────────────────────────
+   glass   the element's border, as chrome. Here: a static conic hairline on
+           ::after. Under the GPU tier (effects-gpu.js) a shader replaces it
+           with a hairline that reflects a moving environment.
+   aurora  light riding the border — the border-beam recipe: a thin arc on
+           ::after that rotates, its bloom (a drop-shadow of the arc), and a
+           wash of the same light on the surface inside the edge (::before).
+           CSS at EVERY tier; there is no GPU aurora.
+   liquid  the element itself deforms: effects.js applies an SVG displacement
+           filter to the host while the pointer shapes it. No paint layer.
+   glitch  a child <span>, never the host, so the host's two paint layers stay
+           free for the edge.
+
+   ── Paint layers ────────────────────────────────────────────────────────────
+   ::after is the edge (glass at rest, the aurora's arc when lit). ::before is
+   the aurora's inner wash. Replaced form controls render no pseudo-element at
+   all — wrap them in .sl-field__control.
 
    ── Colour contract ─────────────────────────────────────────────────────────
    No literal, ever. Every hue is a color-mix() over a role-var. Role-vars carry
@@ -24,7 +36,7 @@
 /* Replaced form controls render no pseudo-element at all, so a field's effects
    bind to this wrapper instead. The control must FILL it: a wrapper that is a
    block while its input keeps an intrinsic width leaves the ring marking a box
-   wider than the field, which is what shipped before anyone looked at it. */
+   wider than the field. */
 .sl-field__control { display: block; position: relative; }
 .sl-field__control > :is(input, textarea, select) { box-sizing: border-box; width: 100%; }
 
@@ -35,48 +47,33 @@
 
   /* edge geometry — the ring grows INWARD so it never meets the focus outline */
   --slfx-ring-w: 1px;
-  --slfx-bloom: 0px;
-  --slfx-arc: 65deg;
+  --slfx-arc: 250deg;
+  --slfx-wash: min(28px, 42%);
 
-  /* ring gradient stops — rebound per state; transparent means "no ring" */
+  /* glass stops — rebound per state; transparent means "no ring" */
   --slfx-s0: transparent;
   --slfx-s1: transparent;
   --slfx-s2: transparent;
   --slfx-s3: transparent;
-
-  /* liquid pointer state — written by effects.js inside one shared rAF */
-  --slfx-px: 50%;
-  --slfx-py: 50%;
-  --slfx-d: 0;
 }
 
 /* ══ KILL SWITCHES ═══════════════════════════════════════════════════════════
-   Three, all hard requirements (spec §Decision 4). They are declared before the
+   Three, all hard requirements (spec §Decision 4). Declared before the
    families so a reader meets the exits before the entrances. */
 
 /* 1 & 2 — high contrast and the subtree opt-out neutralise the HOST as well as
-   its paint layers. The glitch animates its host and its shards, the liquid's
-   host goes transparent under Tier 1 to let its skin carry the surface, and
-   the glass paints an inset highlight on the host — a switch over
-   ::before/::after alone left three of the four families running.
-   `!important` is load-bearing here: effects.js writes the pointer and
-   engagement properties as inline styles, which beat a plain rule. The host's
-   own background/border-color are restored by scoping the transparency rule
-   itself out of these two states (below, by the liquid section), rather than
-   by trying to re-declare an unknown original value here.
-   The opt-out matches the element carrying it AND its subtree: the attribute
-   on an effect element must disable that element, which descendant-only
-   selectors never did. The opt-out branch is compounded with the family
-   classes, not left bare: `[data-sl-fx="off"] *` alone is every descendant,
-   and an unscoped `box-shadow: none !important` would strip elevation and
-   focus rings off ordinary components.css elements inside the region — a
-   collateral defect the high-contrast branch, already class-scoped, never had. */
+   its paint layers: the glitch animates its host and its shards, the liquid
+   filters its host, and the glass paints an inset highlight on the host.
+   `!important` is load-bearing: effects.js writes inline styles, which beat a
+   plain rule. The opt-out matches the element carrying the attribute AND its
+   subtree, compounded with the family classes so an unscoped
+   `box-shadow: none !important` never strips elevation or focus rings off
+   ordinary components.css elements inside the region. */
 :root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
 :is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
-  --slfx-d: 0 !important;
-  --slfx-bloom: 0px !important;
+  filter: none !important;
 }
 
 /* The shatter variant replaces the label with jumping bands, so restoring the
@@ -88,22 +85,22 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch__shard,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__shard { opacity: 0 !important; }
 
-/* Paint layers. The edge selector is written as two rules rather than
+/* Paint layers. Written as separate selectors rather than
    :is(.sl-fx-glass, .sl-fx-aurora)::after so this text never collides with
    the shared ring rule's own selector further down the file — a test locates
    that rule by its first occurrence of that exact substring. */
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
-:root[data-sl-theme="high-contrast"] .sl-fx-liquid::before,
+:root[data-sl-theme="high-contrast"] .sl-fx-aurora::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid::before,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
 :is(.sl-fx-glass, .sl-fx-aurora):is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
-.sl-fx-liquid:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
+.sl-fx-aurora:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
 .sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
 .sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::after {
   display: none !important;
@@ -112,23 +109,19 @@
 /* 3 — reduced motion is not a rule here but a structural one: every `animation:`
    declaration in this file sits inside a `prefers-reduced-motion: no-preference`
    block, and effects.js never sets data-sl-fx="on" under `reduce`. Static
-   material (the glass edge, a resting ring) survives, because it is not motion.
+   material (the glass edge, a resting arc) survives, because it is not motion.
    scripts/effects-guards.test.mjs enforces the placement mechanically. */
 
-/* ══ EDGE — glass and aurora share ONE ring, because CSS gives one layer ═════
-   Every element has exactly two paint layers, so glass and aurora cannot each
-   have their own: they share ::after and rebind its stops. That is a limit of
-   the medium, not a claim that they are the same thing — under Tier 2 they are
-   two different phenomena (a metal bezel and emissive light) and an element
-   carrying both shows both. See effects-shader.js. Do not re-unify them there
-   on the strength of this rule.
-   The ring occupies exactly the border band: for an absolutely positioned child
-   `inset: 0` resolves against the PADDING box, so `inset: -1px` lands on a 1px
-   border — and 1px outside the box when the element has none (a filled button,
-   the only case where the ring is external). Width is `padding`, so it grows
-   INWARD: growing outward would walk into the focus outline at
-   `outline-offset: 2px`, which the aurora must never occupy.
-   Do not "correct" the negative inset to a positive one. */
+/* ══ EDGE — one ring shape, two readings ═════════════════════════════════════
+   Glass and aurora share ::after because a single pseudo-element is all the
+   medium gives an edge: at rest it is the glass hairline, and while attention
+   lives on the element it is the aurora's arc. The ring occupies exactly the
+   border band: for an absolutely positioned child `inset: 0` resolves against
+   the PADDING box, so `inset: -1px` lands on a 1px border — and 1px outside
+   the box when the element has none (a filled button, the only case where the
+   ring is external). Width is `padding`, so it grows INWARD: growing outward
+   would walk into the focus outline at `outline-offset: 2px`, which no effect
+   may ever occupy. Do not "correct" the negative inset to a positive one. */
 
 @property --slfx-angle {
   syntax: "<angle>";
@@ -136,15 +129,16 @@
   initial-value: 210deg;
 }
 
-/* Declared on the edge itself, not on :root. A custom property's var()
+/* Declared on the edge itself, not on :root: a custom property's var()
    references resolve using the declaring element's cascaded values, so a
-   :root declaration can never pick up an .invert ancestor's remap — the edge
-   would keep its canvas-oriented alpha and vanish on ink. */
+   :root declaration could never pick up an .invert ancestor's remap. */
 :is(.sl-fx-glass, .sl-fx-aurora) {
-  --slfx-edge-warm: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 24%, var(--slc-border-strong, var(--sl-border-strong)));
-  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth) 24%, var(--slc-border-strong, var(--sl-border-strong)));
-  --slfx-edge-dim: var(--slc-border-subtle, var(--sl-border-subtle));
+  --slfx-edge-hi: color-mix(in srgb, var(--slfx-sheen) 55%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-lo: var(--slc-border-subtle, var(--sl-border-subtle));
+  --slfx-edge-mid: var(--slc-border-strong, var(--sl-border-strong));
+  --slfx-edge-tint: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 40%, var(--slfx-edge-hi));
   position: relative;
+  isolation: isolate;
 }
 
 :is(.sl-fx-glass, .sl-fx-aurora)::after {
@@ -155,11 +149,18 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
+  z-index: 1;
+  /* The glass reading: chrome alternates bright and dark around the ring, with
+     the product's hue as a fleck at one transition — never as a tint over the
+     whole band. Static; the GPU tier is what makes it move. */
   background: conic-gradient(from var(--slfx-angle),
     var(--slfx-s0) 0deg,
-    var(--slfx-s1) 70deg,
-    var(--slfx-s2) 210deg,
-    var(--slfx-s3) 320deg,
+    var(--slfx-s1) 48deg,
+    var(--slfx-s2) 92deg,
+    var(--slfx-s0) 130deg,
+    var(--slfx-s1) 196deg,
+    var(--slfx-s3) 244deg,
+    var(--slfx-s1) 300deg,
     var(--slfx-s0) 360deg);
   /* `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
   mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
@@ -168,14 +169,12 @@
   transition: opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
 }
 
-/* Glass — the resting temperament. Two light angles caught on the edge, plus a
-   single inner highlight. The stops are neutral-dominant with a whisper of the
-   accent and its depth companion, so the edge reads as material, not as accent. */
+/* ══ GLASS — this is a physical surface ══════════════════════════════════════ */
 .sl-fx-glass {
-  --slfx-s0: var(--slfx-edge-warm);
-  --slfx-s1: var(--slfx-edge-dim);
-  --slfx-s2: var(--slfx-edge-cool);
-  --slfx-s3: var(--slfx-edge-dim);
+  --slfx-s0: var(--slfx-edge-hi);
+  --slfx-s1: var(--slfx-edge-lo);
+  --slfx-s2: var(--slfx-edge-tint);
+  --slfx-s3: var(--slfx-edge-mid);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--slfx-sheen) 7%, transparent);
 }
 .sl-fx-glass::after { opacity: 1; }
@@ -183,22 +182,27 @@
 /* Container-scale edges. Width is emphasis, not separation — HANDOFF check 4
    classes an emphasis edge as a blessed category, so this is not an L2 breach. */
 .sl-fx-glass--wide,
-.sl-fx-aurora--wide { --slfx-ring-w: 3px; --slfx-bloom: 22px; }
+.sl-fx-aurora--wide { --slfx-ring-w: 2px; }
 .sl-fx-glass--field,
-.sl-fx-aurora--field { --slfx-ring-w: 2px; --slfx-bloom: 0px; }
+.sl-fx-aurora--field { --slfx-ring-w: 2px; }
+
+/* ══ GPU TIER STAND-DOWN ═════════════════════════════════════════════════════
+   Once effects-gpu.js has a frame on screen it sets data-sl-fx-gpu, and the
+   glass hairline steps aside for the chrome. The CSS rule is NOT removed: it
+   is the Tier 0/1 answer and the only thing a visitor without WebGPU ever
+   sees. Placed BEFORE the aurora rules on purpose: those set opacity: 1 at the
+   same specificity, and later wins — an element that is glass AND lit shows
+   the aurora's arc over the chrome, which is the intended reading. */
+[data-sl-fx-gpu="on"] .sl-fx-glass::after { opacity: 0; }
 
 /* ══ AURORA — attention lives here ═══════════════════════════════════════════
-   Under Tier 2 this family is not a ring at all but emissive light around the
-   edge; what follows is the CSS reading of the same four states, and the two
-   tiers are kept in agreement about the FRACTION each state occupies and about
-   where an arc starts (210deg), so a determinate value measures the same at
-   either tier.
-   Three readings of the one ring, separated by the FRACTION OF THE PERIMETER
-   that is lit — not by colour and not by speed, which is why they stay legible
-   side by side.
+   The border-beam recipe (libraries.dev/beam): a thin arc of light riding the
+   border, its bloom, and a wash of the same light on the surface just inside
+   the edge. Four readings, separated by the FRACTION OF THE PERIMETER lit —
+   not by colour and not by speed, which is why they stay legible side by side.
      static (~70%)  :focus-visible / :focus-within — this element has focus
-     sweep  (~70%)  [data-sl-fx-live="on"]         — ambient liveness, capped at
-                                                     one per document
+     sweep  (~70%)  [data-sl-fx-live="on"]         — ambient liveness, capped
+                                                     at one per document
      busy   (~18%)  [data-sl-fx-live="busy"]       — a real operation runs here
      determinate    busy + --slfx-progress          — the arc LENGTH is the value
 
@@ -206,60 +210,81 @@
    aria-busy="true"; a determinate one role="progressbar" + aria-valuenow. That
    is what keeps reduced-motion and high-contrast visitors fully informed. */
 
-.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"]) {
-  --slfx-s0: transparent;
-  --slfx-s1: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 90%, transparent);
-  --slfx-s2: color-mix(in srgb, var(--slfx-depth) 90%, transparent);
-  --slfx-s3: transparent;
-  box-shadow: inset 0 0 var(--slfx-bloom) color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 18%, transparent);
-}
-.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
-
-/* Bloom follows the arc rather than the box: drop-shadow filters by the layer's
-   own alpha shape, unlike box-shadow, which would just re-blur a rectangle.
-   Two stacked passes for a soft falloff; the crisp core above is undimmed —
-   it is the focus affordance and must stay legible on its own. A raster pass
-   is real cost, so it is declared only in the active states below, never at
-   rest. */
+/* The arc: depth at the tails, the accent along it, a white-hot core at the
+   centre — light, not a stroke. Its bloom is a drop-shadow of its own alpha
+   shape, so it follows the arc rather than re-blurring the box. */
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
-  filter:
-    drop-shadow(0 0 4px color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 55%, transparent))
-    drop-shadow(0 0 14px color-mix(in srgb, var(--slfx-depth) 38%, transparent));
-}
-
-/* Busy — a short travelling marker, so a different GEOMETRY rather than a
-   rebinding of the stops. Declaring its own background is what separates a
-   SHAPE from a STATE: states swap --slfx-s0..s3 on the shared ring, and only
-   the three shape rules (the ring, this arc, and --linear below) paint their
-   own. On an element that is both glass and busy, busy wins, which is correct:
-   a resting edge and a working edge are not the same edge.
-
-   --linear is excluded because the two shapes are incompatible: a conic arc
-   painted into a 2px horizontal strip renders as a smear. A linear aurora has
-   no busy mode — report work on a ring aurora, not on an underline. */
-.sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
-.sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after {
   opacity: 1;
   background: conic-gradient(from var(--slfx-angle),
-    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 92%, transparent) 0deg,
-    color-mix(in srgb, var(--slfx-depth) 78%, transparent) calc(var(--slfx-arc) * 0.62),
+    transparent 0deg,
+    color-mix(in srgb, var(--slfx-depth) 75%, transparent) calc(var(--slfx-arc) * 0.14),
+    var(--slc-accent, var(--sl-accent-default)) calc(var(--slfx-arc) * 0.32),
+    color-mix(in srgb, var(--slfx-sheen) 86%, var(--slc-accent, var(--sl-accent-default))) calc(var(--slfx-arc) * 0.5),
+    var(--slc-accent, var(--sl-accent-default)) calc(var(--slfx-arc) * 0.68),
+    color-mix(in srgb, var(--slfx-depth) 75%, transparent) calc(var(--slfx-arc) * 0.86),
     transparent var(--slfx-arc),
     transparent 360deg);
+  filter: var(--slfx-bloom);
 }
+.sl-fx-aurora {
+  --slfx-bloom:
+    drop-shadow(0 0 2px color-mix(in srgb, var(--slfx-sheen) 70%, transparent))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 75%, transparent))
+    drop-shadow(0 0 16px color-mix(in srgb, var(--slfx-depth) 60%, transparent));
+}
+
+/* The wash: the same arc, wide and faint, confined to a band just inside the
+   edge, under the content. z-index: -1 lands above the host's own background
+   because the host is a stacking context (isolation: isolate, above). */
+.sl-fx-aurora:not(.sl-fx-aurora--linear)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(from var(--slfx-angle),
+    transparent 0deg,
+    color-mix(in srgb, var(--slfx-depth) 34%, transparent) calc(var(--slfx-arc) * 0.16),
+    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 36%, transparent) calc(var(--slfx-arc) * 0.5),
+    color-mix(in srgb, var(--slfx-depth) 34%, transparent) calc(var(--slfx-arc) * 0.84),
+    transparent var(--slfx-arc),
+    transparent 360deg);
+  mask:
+    linear-gradient(black, transparent var(--slfx-wash), transparent calc(100% - var(--slfx-wash)), black),
+    linear-gradient(90deg, black, transparent var(--slfx-wash), transparent calc(100% - var(--slfx-wash)), black);
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+  /* Blurred before it is masked (filter runs before mask), so the light has
+     no hard edges of its own and only the band's inner edge stays crisp.
+     Screened, because light can only brighten: on ink it adds glow, on paper
+     it stays a faint tint instead of painting a grey shadow onto the card. */
+  filter: blur(8px);
+  mix-blend-mode: screen;
+  transition: opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+}
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"]):not(.sl-fx-aurora--linear)::before {
+  opacity: 1;
+}
+
+/* Busy — a short travelling marker: the same arc, a fraction of the length.
+   --linear is excluded from busy below: a conic arc painted into a 2px strip
+   renders as a smear. A linear aurora has no busy mode — report work on a
+   ring aurora, not on an underline. */
+.sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
 
 /* Determinate — the arc length is the value; nothing rotates. The edge of a
    card IS its progress bar: no extra widget, no layout.
    CONSUMER CONTRACT: --slfx-progress must be set INLINE on the element (an
    inline style is what [style*="--slfx-progress"] detects). Setting it from a
-   stylesheet rule leaves the element in indeterminate mode — self-consistent,
-   but not what the author asked for. element.style.setProperty() and a
-   framework `style` prop both satisfy this. */
+   stylesheet rule leaves the element in indeterminate mode. */
 .sl-fx-aurora[data-sl-fx-live="busy"][style*="--slfx-progress"] {
   --slfx-arc: calc(var(--slfx-progress) * 360deg);
 }
 
 /* Linear aurora — where the edge is not a ring. The active tab's 2px underline,
-   a link's underline, an inversion band's top rule: the same two hues swept
+   a link's underline, an inversion band's top rule: the same light swept
    along a segment instead of a perimeter. */
 .sl-fx-aurora--linear::after {
   inset: auto 0 0 0;
@@ -268,8 +293,9 @@
   mask: none;
   background: linear-gradient(90deg,
     transparent 0%,
-    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 90%, transparent) 38%,
-    color-mix(in srgb, var(--slfx-depth) 90%, transparent) 62%,
+    color-mix(in srgb, var(--slfx-depth) 80%, transparent) 30%,
+    color-mix(in srgb, var(--slfx-sheen) 70%, var(--slc-accent, var(--sl-accent-default))) 50%,
+    color-mix(in srgb, var(--slfx-depth) 80%, transparent) 70%,
     transparent 100%);
 }
 
@@ -278,125 +304,18 @@
 .sl-fx-aurora--linear.sl-fx-aurora--top::after { inset: 0 0 auto 0; }
 
 /* ══ LIQUID — you are recognised ═════════════════════════════════════════════
-   Under Tier 0 a specular sheen on ::before tracks the pointer and scales
-   with engagement. Under Tier 1 the ::before layer additionally takes over
-   the host's own surface — background-color: transparent on the host,
-   border-radius: inherit on the skin — so a spring-driven SVG filter
-   (effects.js) has an actual silhouette to deform, not just a highlight.
-   The radius itself is never rewritten: the filter distorts what the
-   component already declared, so a component is free to re-parametrise its
-   own --sl-radius-* later without touching this file.
-
-   NON-DESTRUCTIVENESS IS A CONTRACT: the filter is applied to the sheen
-   pseudo-element ONLY, never to a box containing text. An SVG filter disables
-   subpixel antialiasing across its whole subtree, so filtering the host would
-   visibly degrade every label in the interface. Text geometry never moves —
-   only light does. */
-
-/* isolation: isolate gives the host its own local stacking context, so
-   ::before's negative z-index below is scoped here rather than escaping to
-   whatever real stacking context is further up the page. Without it, an
-   absolutely positioned ::before paints AFTER the host's own in-flow text
-   regardless of source order — CSS stacking runs non-positioned content
-   before positioned descendants — so once the skin carries an opaque fill
-   (Tier 1, below) it would silently paint over every label in the interface. */
+   The element ITSELF deforms. effects.js applies an SVG displacement filter
+   (a Gaussian dent that follows the pointer, driven by an underdamped spring)
+   to the host, and only to the one host the pointer is currently shaping —
+   the filter is a single shared resource whose scale would otherwise distort
+   every liquid element in lockstep. Fill, border, text and the aurora's arc
+   all bend together; a crisp ring around a deforming box would read as
+   broken. The filter is removed once the spring settles: non-destructive.
+   The radius is never rewritten — the filter distorts whatever the component
+   declared, so a component stays free to re-parametrise its own --sl-radius-*.
+   The GPU chrome bends its hairline with the same field (effects-shader.js). */
 .sl-fx-liquid { position: relative; isolation: isolate; }
-
-.sl-fx-liquid::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background-image: radial-gradient(9rem 9rem at var(--slfx-px) var(--slfx-py),
-    color-mix(in srgb, var(--slfx-sheen) calc(var(--slfx-d) * 34%), transparent) 0%,
-    transparent 68%);
-}
-
-/* Tier 1: the skin takes over the surface so the filter has a silhouette to
-   deform. --slfx-ground is the host's own computed background, captured by
-   effects.js at mount — not a value this layer invents. The host keeps its
-   text, which is never filtered. `border-radius: inherit` is what keeps the
-   radius parametrisable: whatever the component declares flows straight
-   through, undisturbed by the effect.
-   Excluded from both kill switches: a host made transparent under high
-   contrast or the opt-out, with its ::before skin then hidden by the kill
-   switch below, would render as an empty hole rather than a restored box. */
-/* Gated on --slfx-ground actually being SET, the same [style*=…] pattern the
-   determinate aurora uses for --slfx-progress: an element the ground sweep
-   has not reached yet (or one effects.js just cleared to force a recapture
-   after a theme/accent change — see mount()) keeps its own real background
-   rather than going transparent over an empty custom property. Fail-safe,
-   not fail-invisible. */
-/* Scoped OUT under Tier 2 by the `:not([data-sl-fx-gpu="on"])` below, not
-   reverted by a later override: `revert-layer` cannot do this job here, since
-   effects.css declares no @layer and would therefore revert past the author
-   origin entirely — to the UA default, transparent — rather than back to the
-   component's own fill. Narrowing the rule that causes the takeover is the
-   cascade-safe way to say "Tier 1 only".
-   Standing it down is what gives :hover and :active their visible effect back
-   and what makes --slfx-ground unnecessary under Tier 2: the material draws a
-   band ON the boundary, thick enough to cover the fill's own edge, so the host
-   keeps its background and its border and the skin reverts to being only the
-   sheen. */
-:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"]):not([data-sl-fx-gpu="on"])
-  .sl-fx-liquid[style*="--slfx-ground"]:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
-  background-color: transparent;
-  border-color: transparent;
-}
-:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"]):not([data-sl-fx-gpu="on"])
-  .sl-fx-liquid[style*="--slfx-ground"]:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *))::before {
-  background-color: var(--slfx-ground);
-}
-
-/* ══ TIER 2 STAND-DOWN ═══════════════════════════════════════════════════════
-   Everything below applies only once bootField() has a frame on screen and has
-   set data-sl-fx-gpu. The CSS ring is NOT removed: it is the Tier 0/1 answer
-   and the only thing a visitor without WebGPU, under reduced motion, or in
-   high contrast ever sees, so it stays correct on its own — the shader simply
-   takes the edge over where it is available.
-
-   The linear aurora is deliberately excluded: it is a segment, not a
-   perimeter — a tab's underline, a link's rule, an inversion band's top edge —
-   and the material draws rings, so effects-gpu.js never registers one and its
-   CSS gradient must survive. The focus outline is untouched by any of this. */
-[data-sl-fx-gpu="on"] :is(.sl-fx-glass, .sl-fx-aurora):not(.sl-fx-aurora--linear)::after {
-  opacity: 0;
-  /* The drop-shadow bloom is a real raster pass; an invisible layer should not
-     still be paying for one. */
-  filter: none;
-}
-/* Tier 2 owns the sheen: the CSS gradient and the deformation filter stand down
-   so the two do not double up — the shader paints the sheen in the same pass as
-   the edge, with real inertia. Not inside the reduced-motion guard below: this
-   is a hand-off of ownership, not an animation, and it must hold whatever the
-   visitor's motion preference is. The SVG deformation filter is not cancelled
-   here but scoped out at the two rules that apply it, further down: an
-   invisible layer still carrying a filter is still a raster pass. */
-[data-sl-fx-gpu="on"] .sl-fx-liquid::before { background-image: none; }
-/* The filter runs only on the element the pointer is currently shaping —
-   effects.js toggles this class on exactly one element at a time. The filter
-   definition is a single shared <svg> resource: applying it unconditionally
-   to every .sl-fx-liquid on the page would mean feDisplacementMap's `scale`
-   (also shared, since it lives on that one definition) distorts every other
-   liquid element in lockstep with whichever one is actually under the
-   pointer. Scoping to the live element is what keeps the declension section's
-   several simultaneous liquid elements independent. */
-[data-sl-fx="on"]:not([data-sl-fx-gpu="on"]) .sl-fx-liquid.is-liquid-live::before { filter: url(#slfx-liquid); }
-/* An element that is also glass or aurora must wobble with its own edge, or a
-   crisp ring sits around a deforming fill and the whole thing reads as broken.
-   Written as two selectors rather than :is(.sl-fx-glass, .sl-fx-aurora)::after
-   — that exact text is how a guards test locates the shared ring rule's own
-   selector further down the file, and a substring match would collide. */
-[data-sl-fx="on"]:not([data-sl-fx-gpu="on"]) .sl-fx-liquid.is-liquid-live.sl-fx-glass::after,
-[data-sl-fx="on"]:not([data-sl-fx-gpu="on"]) .sl-fx-liquid.is-liquid-live.sl-fx-aurora::after {
-  filter: url(#slfx-liquid);
-}
-
-/* Reduced amplitude for containers — a card is not a button. */
-.sl-fx-liquid--calm { --slfx-d: 0; }
-[data-sl-fx="on"] .sl-fx-liquid--calm.is-liquid-live::before { filter: none; }
+[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live { filter: url(#slfx-liquid); }
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand
@@ -405,12 +324,8 @@
    owns the look and loops while `is-glitching` is present.
 
    The element needs data-text set to its own text, for the ghost copies. It is
-   a CHILD of the component, never the component itself (spec §Decision 3b) —
-   that keeps ::before/::after free for the ring and the sheen on the host.
-
-   Unlike the sondalab-site original this respects prefers-reduced-motion. The
-   site's opt-out is a site-level blessed deviation; l4-reduced-motion is R on
-   IDE/App/Page and the kit ships to all of them. */
+   a CHILD of the component, never the component itself — that keeps
+   ::before/::after free for the edge on the host. */
 
 .sl-fx-glitch {
   position: relative;
@@ -458,15 +373,31 @@
      instead of snapping back through the resting angle. */
   @keyframes slfx-sweep { to { --slfx-angle: 570deg; } }
   @keyframes slfx-orbit { to { --slfx-angle: 570deg; } }
+  /* The light's hue drifts either side of the accent, as an aurora's does. A
+     narrow range on purpose: the product's hue must stay recognisable. */
+  @keyframes slfx-drift {
+    0%, 100% { filter: hue-rotate(-16deg) var(--slfx-bloom); }
+    50%      { filter: hue-rotate(16deg) var(--slfx-bloom); }
+  }
+  @keyframes slfx-drift-wash {
+    0%, 100% { filter: blur(8px) hue-rotate(-16deg); }
+    50%      { filter: blur(8px) hue-rotate(16deg); }
+  }
 
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]::after {
-    animation: slfx-sweep 3.2s linear infinite;
+    animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
     will-change: background;
+  }
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]:not(.sl-fx-aurora--linear)::before {
+    animation: slfx-sweep 3.2s linear infinite, slfx-drift-wash 9s ease-in-out infinite;
   }
   /* Determinate never orbits — its arc length carries the value. */
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: slfx-orbit 1.1s linear infinite;
     will-change: background;
+  }
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::before {
+    animation: slfx-orbit 1.1s linear infinite;
   }
 
   /* Base jitter on the real text plus a third colour halo via text-shadow. */

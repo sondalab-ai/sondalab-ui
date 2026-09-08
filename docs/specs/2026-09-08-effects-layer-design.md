@@ -1,9 +1,10 @@
 # Sondalab DS — Effects layer (glitch · liquid · aurora · glass)
 
-> **What this file is:** the implementation contract for `@sondalab/ui-kit`'s effects layer — a fifth, opt-in layer above tokens, themes and components that gives interactive elements material behaviour (instability, response to touch, attention, physical edge). It fixes the effect grammar, the tiering and fallback policy, the colour contract, the per-component declension, and the delivery split. Where `design-language.md` is the human grammar contract and `design-system-spec.md` the machine token contract, this file is the design contract for one new layer; on delivery of Slice 2 its grammar half is promoted into `design-language.md` as **L6** and this file becomes the rationale record.
-> **Audience:** engineers implementing the layer; reviewers checking it against the house grammar; agents authoring Sondalab surfaces that consume it.
+> **What this file is:** the implementation contract for `@sondalab/ui-kit`'s effects layer — a fifth, opt-in layer above tokens, themes and components that gives interactive elements material behaviour (instability, response to touch, attention, physical edge). It fixes the effect grammar, who draws what and with which technology, the tiering and fallback policy, the colour contract, the per-component declension, and the delivery split. Where `design-language.md` is the human grammar contract and `design-system-spec.md` the machine token contract, this file is the design contract for one new layer; its grammar half is promoted into `design-language.md` as **L6**, and this file is the rationale record.
+> **Audience:** engineers implementing the layer; reviewers checking it against the house grammar and against the visual reference; agents authoring Sondalab surfaces that consume it.
 > **Owner:** marcellobarile.
-> **Companion files:** `design-language.md` (the grammar these effects extend — L2 hairline, L4 motion, L5 voice), `design-system-spec.md` (token contract — no token is added here), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot check), `sondalab-site/docs/webgpu-surfaces.md` (the WebGPU boot/fallback pattern this reuses), `sondalab-site/src/lib/glitch.ts` (the glitch prior art being generalised).
+> **Companion files:** `design-language.md` (the grammar these effects extend — L2 hairline, L4 motion, L5 voice), `design-system-spec.md` (token contract — no token is added here), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot check), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling), `sondalab-site/docs/webgpu-surfaces.md` (the WebGPU boot/fallback pattern this reuses).
+> **Visual reference:** **https://libraries.dev/** — the owner's stated desiderata. Where this document and that site disagree about how something should *look*, the site is right. Its `Metal` entry (https://libraries.dev/metal) is the reference for glass and for the cursor's liquid dent; its `Border beam` entry (https://libraries.dev/beam) is the reference for the aurora.
 
 ## Legend (status vocabulary)
 
@@ -11,19 +12,29 @@
 - **PoC implemented (not delivered)** — built as a prototype, not merged/released.
 - **Placeholder (not delivered)** — stub or scaffold only.
 
-At authoring time (2026-09-08) the entire layer is **Placeholder (not delivered)**. `showcase/effects.html` is targeted at **PoC implemented (not delivered)**; the published `@sondalab/ui-kit` files (`effects.css`, `effects.js`) are targeted at **Delivered** on the 0.8.0 release.
+At the time of this revision (2026-09-08) the layer is **PoC implemented (not delivered)** on `feat/effects-layer`: `effects.css`, `effects.js`, `effects-gpu.js`, `effects-shader.js` and `showcase/effects.html` exist and run; nothing is published.
 
 ## Why this exists
 
-The design language currently fixes *materials* (type roles, spacing scale, 1px rule weight, motifs, motion easing) and spends distinctiveness on *composition*. It has no vocabulary for **material behaviour** — how a surface reacts to being looked at, touched, focused, or invalidated. The result is correct and inert: a Sondalab surface reads as one family but never as alive.
+The house grammar (`design-language.md`) says a surface is *precise, technical and editorial*: hairline structure, restrained motion, one strong accent. Sondalab products are instruments, and the owner asked for the instruments to feel physical — glitches on interactive elements; buttons that look solid and go liquid under the mouse, non-destructively; aurora light on the borders of interactive elements and cards; borders like the edge of a piece of glass. The reference for all of that is https://libraries.dev/: chrome hairlines, a wandering halo, a cursor that bends the ring, a rainbow beam riding a border — and, above everything, **restraint at the pixel level.** Everything there is one or two pixels wide, low in opacity, and fades within a few tens of pixels.
 
-The prior art already exists but is stranded. `sondalab-site` has a two-channel VHS glitch (`src/lib/glitch.ts` + `src/styles/site.css` lines 240–340) and a WebGPU CRT surface (`src/lib/crt-surface.ts`, generalised in `docs/webgpu-surfaces.md`), neither of which any other product can reach. This layer generalises the reusable half into the kit and leaves the site's blessed exceptions where they are.
+## What the reference actually does (read before changing anything)
+
+Measured on the site, not inferred from its copy:
+
+| Entry | Technology | What it draws |
+|---|---|---|
+| **Metal** (`metal-fx` v2) | 2D canvas hairline + a WebGL "plasma" environment texture + SVG `feDisplacementMap` on the element for the bend; halo as blurred SVG strokes | a **1–2 px chrome ring exactly on the element's border**, filled from a moving seven-stop environment (mostly white and black with pastel flecks — `#aae8ff`, `#c5fe9e`, `#f7888d`, `#fffdc3`, `#007cff` in its chromatic preset; white and mid-grey in its light preset), a soft white halo that wanders around the ring and breathes, a bright spot under the cursor, reflections on neighbouring elements, and a Gaussian **dent of the element itself** under the cursor |
+| **Border beam** | CSS only: `@property` angle, `conic-gradient` masked to a 1 px ring, radial colour blobs, a blurred copy for glow, `hue-rotate` drifting ±30° | a **1 px arc of light rotating along the border** (1.96 s per turn), its bloom, and a wash of the same colours confined to a ~28 px band inside the edge; every layer at 0.24–0.42 opacity |
+| **Gooey** | SVG filter | pieces that merge and morph |
+
+Two things follow and are load-bearing for this document. First, **"the shader look" is a look, not a technology**: the reference's aurora is CSS and its liquid is an SVG filter; only the chrome's environment needs a GPU. Second, the look is **thin and quiet**: the reference never spends more than two pixels on an edge, and its light is felt more than seen.
 
 ## Thesis
 
-**The surface is an instrument panel behind glass, with live signal underneath.**
+**The surface is an instrument panel behind glass, with live signal underneath — at the scale of the reference.**
 
-The operative constraint: effects spend their budget on **light and shape**, never on **weight**. The house grammar forbids heavy borders (L2: structural separation is always `1px`) and generic card-grid decoration. So the glass edge stays exactly `1px` and becomes chromatically alive rather than thick; the aurora widens only inward and pays for its presence in light rather than in an added concentric ring; the liquid deforms an element's silhouette through a filter over its declared shape, never by rewriting a declared value — `border-radius` stays whatever the component declares, so it can be re-parametrised later without touching the effect. This is what keeps four expressive effect families compatible with editorial modernism instead of turning the suite into generic glassmorphism.
+Effects spend their budget on *light and shape*, never on *weight*: a structural separator stays `1px` whatever an effect is doing to it; the chrome is a hairline on the border the component already has; the aurora is a 1 px arc with bloom, not a band; the liquid deforms the silhouette the component declared, through a filter, and never rewrites a declared value. That is what keeps four expressive families compatible with editorial modernism instead of turning the suite into generic glassmorphism.
 
 ## Decision 1 — Effects are semantic, not decorative
 
@@ -32,21 +43,28 @@ L5 ("structure encodes truth") applied to motion: **an effect that means nothing
 | Family | Means | Fires on |
 |---|---|---|
 | **Glitch** | *something re-resolved* | discrete events: value change, destructive confirmation, validation failure, dialog open, identity |
-| **Liquid** | *you are recognised* | pointer proximity/pressure; re-solidifies on leave |
+| **Liquid** | *you are recognised* | pointer proximity; re-solidifies on leave |
 | **Aurora** | *attention lives here* | `:focus-visible`, `:focus-within`, active tab, a running operation, primary call-to-action |
 | **Glass** | *this is a physical surface* | a **state**, not an event: card, field, dialog, keycap edges |
 
-Consequence: glitch is never ambient on a control (ambient glitch is the wordmark's alone, and rare); liquid never fires without a pointer; aurora never marks something that is not currently the focus of attention; glass never animates on its own.
+Consequence: glitch is never ambient on a control (ambient glitch is the wordmark's alone, and rare); liquid never fires without a pointer; aurora never marks something that is not currently the focus of attention; glass never animates on its own — its environment moves, the way a mirror's reflection moves, but the edge does not.
 
-## Decision 2 — No new tokens; ui-kit-only versioning
+## Decision 2 — Who draws what, and with which technology
 
-`design-language.md` §New-token policy admits a token only for a shared fixed value recurring across **≥2 products**. An effects layer has zero adopters at authoring time and fails that bar by construction. Independently, editing `sondalab.tokens.json` regenerates **both** distributions and forces a `sondalab-palette` (PyPI) bump for a web-only visual effect — semantically wrong, and it drags the terminal palette (whose values are pinned by smartctx's contract test in `claude-loadout`) into an unrelated release.
+Four families, three mechanisms. This is the decision the first sixteen tasks of this layer got wrong (see the plan's root-cause ruling): the layer was scoped as "CSS first, GPU as an optional extra on the liquid", which produced a conic hairline where the owner wanted chrome and a painted dent where the owner wanted the element to bend. It is replaced by what the reference does.
 
-Therefore:
+| Family | Mechanism | Tier | File |
+|---|---|---|---|
+| **Glass** | a **chrome hairline** drawn by a WebGPU fragment shader on one page-level canvas: a signed distance field of the element's rounded box, filled from a moving environment through a five-stop palette, with a wandering halo, a cursor reflection and the liquid's dent. Fallback: a static conic hairline on `::after`. | 2, fallback 0 | `effects-shader.js`, `effects-gpu.js`, `effects.css` |
+| **Aurora** | **CSS at every tier** — the border-beam recipe: a 1 px arc of light on `::after` swept by an `@property` angle, its bloom as `drop-shadow` of the arc's own alpha, a blurred wash of the same light on `::before` confined to a band inside the edge, hue drifting ±16° while it sweeps. There is no GPU aurora. | 0 (static) / 1 (moving) | `effects.css` |
+| **Liquid** | **the element itself deforms**: an SVG `feDisplacementMap` on the host, fed a Gaussian push away from the pointer, driven by an underdamped spring; removed when the spring settles. The chrome shader evaluates the same Gaussian so the ring bends where the surface does. | 1 | `effects.js`, `effects-shader.js` |
+| **Glitch** | CSS ghost channels on a required child `<span>`; JavaScript owns timing only | 1 | `effects.css`, `effects.js` |
 
-- `packages/ui-kit/effects.css` and `packages/ui-kit/effects.js` are **hand-authored**, like `components.css` and the `agent/` core. `npm run gen:tokens` does not emit them, so `check-drift.yml` (which runs the generators and then `git diff --exit-code -- packages/`) stays green.
-- Every colour derives via `color-mix()` from the existing role-vars.
-- Release: **`packages/ui-kit/package.json` → `0.8.0`** (minor — new backward-compatible surface). **`packages/palette-py/pyproject.toml` is not bumped.** This is the same "ui-kit-only change" posture `AGENTS.md` records for the agent core.
+Why the GPU is *necessary* for glass and only for glass: a chrome reflection is a texture sliding along a ring — bright and dark bands at high contrast with coloured flecks between them, changing as the environment moves. A conic gradient can hold one static arrangement of that; it cannot move it, dent it, or put a halo beside it. The reference reaches for WebGL at exactly this point and nowhere else, and so does this layer.
+
+Why the aurora is *not* on the GPU: the reference's beam is CSS, and it is the look the owner pointed at. A shader aurora was built here first (drifting ribbons, tens of pixels of reach) and it read as marbling, not as light. CSS also keeps the aurora available under every tier and every browser, which matters more for an attention affordance than for a material.
+
+Why the liquid filters the whole element and not a paint layer: a filter can only deform the layer it is applied to. Filtering a pseudo-element required that pseudo-element to impersonate the surface (capturing the host's background, making the host transparent), which broke hover and active states, lost a bordered control's edge, and still left a crisp ring around a deforming fill. The reference filters the element, text included; filtered text rasterises with greyscale antialiasing, which every Sondalab surface already sets. Non-destructiveness is preserved where it matters: the filter is present only while the pointer shapes the element and its spring is settling, and nothing about the element is changed afterwards.
 
 ## Decision 3 — Namespace
 
@@ -61,17 +79,15 @@ Two role-vars are introduced at the top of `effects.css`, following the `--slc-*
 --slfx-sheen: var(--slc-text);
 ```
 
-The rest of the namespace is geometry rather than colour, and every entry is a per-component binding with a conservative default: `--slfx-ring-w` (`1px`) and `--slfx-bloom` (`0`) size the aurora edge, `--slfx-arc` / `--slfx-progress` shape its busy arc, `--slfx-angle` is its `@property`-registered sweep angle, and `--slfx-px`/`--slfx-py`/`--slfx-d` carry the liquid's pointer state. Defaults are chosen so an element that opts into a class without binding anything renders the most restrained version of the effect, never a broken one.
+The rest of the namespace is geometry, each entry a per-component binding with a conservative default: `--slfx-ring-w` (`1px`) is the width of the CSS ring, `--slfx-arc` the aurora's arc length, `--slfx-progress` its determinate value, `--slfx-wash` how far the aurora's inner wash reaches, `--slfx-angle` its `@property`-registered sweep angle, `--slfx-s0..s3` the glass fallback's stops. Defaults are chosen so an element that opts into a class without binding anything renders the most restrained version of the effect, never a broken one.
 
-`--slfx-depth` exists because `--sl-accent-depth` is a theme-layer token: Tier A products get it live, Tier B products that mapped only `--slc-accent` still resolve to a valid single-accent value rather than to nothing.
+No new design token is added (`design-language.md` §New-token policy: a token needs ≥2 adopters; this layer has none at authoring time, and editing `sondalab.tokens.json` would force a PyPI bump for a web-only effect). `effects.css` and the three JavaScript files are hand-authored, not generated. Release: ui-kit only; `packages/palette-py/` is untouched.
 
 ## Decision 3b — Two paint layers per element, and where they cannot go
 
-Discovered while planning the implementation; recorded here because it constrains the markup a consumer has to write.
+**Every element has exactly two paint layers.** `::after` is the edge — the glass hairline at rest, the aurora's arc while attention lives on the element. `::before` is the aurora's inner wash. The liquid uses neither: it filters the host. There is no third layer.
 
-**Every element has exactly two paint layers, and the layer budget is fixed:** `::before` is the liquid sheen, `::after` is the edge ring (glass and aurora share it, per the Aurora section). There is no third.
-
-Consequence: **the glitch never uses its host's pseudo-elements.** Its two ghost channels live on a required child, `<span class="sl-fx-glitch" data-text="…">`, which is also how the shatter variant already works in the prior art (`.glitch__text` + `.glitch__shard` children). Without this, a primary button that both glitches on destructive confirmation and carries an aurora on focus — a combination the declension table calls for — would need three layers and one effect would silently win.
+Consequence: **the glitch never uses its host's pseudo-elements.** Its two ghost channels live on a required child, `<span class="sl-fx-glitch" data-text="…">`. Without this, a primary button that both glitches on destructive confirmation and carries an aurora on focus — a combination the declension table calls for — would need three layers and one effect would silently win.
 
 ```html
 <button class="sl-btn sl-btn--primary sl-fx-aurora">
@@ -79,18 +95,7 @@ Consequence: **the glitch never uses its host's pseudo-elements.** Its two ghost
 </button>
 ```
 
-**Replaced form controls cannot host a paint layer at all.** `<input>`, `<textarea>` and `<select>` do not render `::before`/`::after`. Any effect on a form control therefore binds to a wrapper, `.sl-field__control`, and never to the control itself:
-
-```html
-<label class="sl-field">
-  <span class="sl-field__label">Product</span>
-  <span class="sl-field__control sl-fx-glass sl-fx-aurora">
-    <input class="sl-field__input" type="text">
-  </span>
-</label>
-```
-
-`.sl-field__control` is a new markup convention introduced by this layer (a bare `display: block; position: relative` wrapper). It is additive: an existing `.sl-field` without it keeps working, unstyled by the effects layer. `:focus-within` on the wrapper is what drives the field's aurora, which is why the declension table names `:focus-within` rather than `:focus-visible` for fields.
+**Replaced form controls cannot host a paint layer at all.** `<input>`, `<textarea>` and `<select>` do not render `::before`/`::after`. Any effect on a form control binds to a wrapper, `.sl-field__control` (`display: block; position: relative`, with the control filling it), and never to the control itself. `:focus-within` on the wrapper is what drives the field's aurora, which is why the declension table names `:focus-within` rather than `:focus-visible` for fields.
 
 ## Decision 4 — Three tiers, attribute-keyed; the base tier is the default state
 
@@ -98,31 +103,34 @@ Reusing the rule from `sondalab-site/docs/webgpu-surfaces.md` verbatim — *"the
 
 | Tier | Key | Requires | Delivers |
 |---|---|---|---|
-| **0 — material** | none (always on) | CSS only | glass edge; static aurora ring on `:focus-visible`/`:focus-within` |
-| **1 — behaviour** | `data-sl-fx="on"` on `<html>`, set by `effects.js` at `mount()` | JavaScript | pointer-driven liquid, finite glitch bursts, animated aurora sweep |
-| **2 — material** | `data-sl-fx-gpu="on"`, set only after the GPU device answers | WebGPU + `vgpu` | glass as a shaded metal bezel (lit perimeter, specular kiss, chromatic dispersion, cursor-driven dent) and the aurora as emissive drifting light around the edge — two phenomena, both on an element carrying both classes — plus the liquid sheen with inertia (Slice 3) |
+| **0 — material** | none (always on) | CSS only | the glass fallback hairline; a static aurora arc on `:focus-visible`/`:focus-within` |
+| **1 — behaviour** | `data-sl-fx="on"` on `<html>`, set by `effects.js` at `mount()` | JavaScript | the liquid's deformation, finite glitch bursts, the aurora's sweep, orbit and hue drift |
+| **2 — chrome** | `data-sl-fx-gpu="on"`, set by `effects-gpu.js` only after the first frame is on screen | WebGPU + `vgpu` | the glass hairline as chrome: moving environment, wandering halo, cursor reflection, the liquid's dent carried into the ring |
 
 Nothing auto-mounts on import. `mount()` is explicit, which is what makes the IDE opt-in of Decision 6 possible at all.
 
+**The fallback must be correct, not beautiful.** A browser without WebGPU sees the static conic hairline and everything else at full quality — the aurora and the liquid do not depend on the GPU tier at all. Tier 2 stands the glass hairline down by `opacity: 0` under `[data-sl-fx-gpu="on"]` and never removes it; the attribute is cleared by the same `stop()` that removes the canvas, so a lost device or a shader error restores the hairline by itself.
+
 ### Kill switches (all three are hard requirements)
 
-1. **`prefers-reduced-motion: reduce`** — `effects.js` never arms Tier 1, and `effects.css` additionally guards every animation in a `@media (prefers-reduced-motion: no-preference)` block. Tier 0 survives, because the glass edge and the static aurora ring are not motion.
-   **The site's exception does not travel.** `sondalab-site/src/lib/glitch.ts` deliberately ignores reduced-motion ("the glitch is brand, not decoration"), protected by `scripts/motion-gate.mjs`. That is a **site-level blessed deviation**: `l4-reduced-motion` is **R** on IDE/App/Page in `substrate-matrix.json`, and the kit ships to spexr, introspect, local-agents and daos. The kit respects the preference; a product that wants the site's posture opts out explicitly and records it as a blessed deviation of its own.
-2. **`[data-sl-theme="high-contrast"]`** — all four families are disabled. Precedent: `showcase/index.html` already drops `#field` and the hero scrim under high-contrast.
-3. **`data-sl-fx="off"`** on any element — disables effects for that element and its subtree. Enables a dense data region inside an otherwise expressive page.
+1. **`prefers-reduced-motion: reduce`** — `effects.js` never arms Tier 1, and `effects.css` guards every `animation:` declaration in a `@media (prefers-reduced-motion: no-preference)` block (enforced by `scripts/effects-guards.test.mjs`). Tier 0 survives, because the glass edge and the static aurora arc are not motion. Under Tier 2 the chrome still renders — it is material — but its environment stops sliding, the halo stops wandering and the pointer stops denting (`look.flags.x`, read live from the media query).
+   **The site's exception does not travel.** `sondalab-site` deliberately ignores reduced-motion for its glitch; that is a site-level blessed deviation. The kit respects the preference; a product that wants the site's posture opts out explicitly and records it as a blessed deviation of its own.
+2. **`[data-sl-theme="high-contrast"]`** — all four families are disabled: every host-level effect (`animation`, `box-shadow`, `filter`) is neutralised with `!important`, every paint layer is `display: none`, `mount()` and `mountGpu()` refuse, and a live GPU field tears itself down when the theme switches.
+3. **`data-sl-fx="off"`** on any element — disables effects for that element **and** its subtree: the same neutralisation as high contrast, compounded with the family classes so ordinary components inside the region keep their own shadows and focus rings; `effects.js` ignores pointer events inside it; `effects-gpu.js` registers no geometry from it.
 
 ## Decision 5 — The effect budget (anti-neon-soup)
 
 Four families across a dozen components, unconstrained, is a Christmas tree. `effects.js` acts as a coordinator holding module-level singletons:
 
-- **At most one *ambient* aurora is animated per document.** Ambient auroras are the coordinator's: an element requests one via `data-sl-fx-live="on"`, and the coordinator grants it to at most one element at a time (most recent request wins; the previous falls back to its static ring).
-- **At most one glitch burst runs at a time.** A burst requested while another runs is dropped, not queued — a queue would produce a stutter train, which reads as breakage rather than as signal.
-- **State-driven auroras are exempt** because they are singular by construction: `:focus-visible` and `:focus-within` are pure CSS, and the platform guarantees a single focused element.
-- **Busy auroras are exempt.** `data-sl-fx-live="busy"` is bound to real work, and several cards can legitimately be loading at once; capping them would make the interface report a false state. The cap exists to stop decoration accumulating, not to stop the interface telling the truth — which is Decision 1 read in the other direction.
+- **At most one *ambient* aurora is animated per document.** An element requests one via `grantLive(el)` (which sets `data-sl-fx-live="on"`); the coordinator grants it to at most one element at a time — most recent request wins, the previous falls back to its resting edge.
+- **At most one glitch burst runs at a time.** A burst requested while another runs is dropped, not queued — a queue produces a stutter train, which reads as breakage rather than as signal.
+- **At most one element deforms at a time.** The liquid's filter is one shared SVG resource; `effects.js` marks the single element the pointer is shaping with `is-liquid-live`, and the CSS scopes the filter to it.
+- **State-driven auroras are exempt** because they are singular by construction: the platform guarantees a single focused element.
+- **Busy auroras are exempt.** `data-sl-fx-live="busy"` is bound to real work, and several cards can legitimately be loading at once; capping them would make the interface report a false state.
 
-**Aurora never replaces the focus ring.** The `outline` from the shared focus-ring rule in `components.css` stays, drawn outside the border box at `outline-offset: 2px`; the aurora inhabits the border band itself and therefore never occupies the outline's position. An effect that removes an accessibility affordance is a defect, not a variant.
+**No effect ever replaces or removes the focus ring.** The `outline` from `components.css` stays, at `outline-offset: 2px` outside the border box; the edge effects occupy the border band itself and grow **inward** (`padding`, never a positive inset), so they never reach the outline's position.
 
-**Aurora renders state; it never *is* the state.** Same discipline, one level up: a busy aurora requires the element to carry `aria-busy="true"`, and a determinate one `role="progressbar"` with `aria-valuenow`. A screen reader, a reduced-motion visitor and a high-contrast visitor all get the state from the markup; the aurora is how the state looks, not where it lives.
+**Aurora renders state; it never *is* the state.** A busy aurora requires `aria-busy="true"`; a determinate one `role="progressbar"` with `aria-valuenow`. A screen reader, a reduced-motion visitor and a high-contrast visitor all get the state from the markup; the aurora is how the state looks, not where it lives.
 
 ## Decision 6 — Substrate scope
 
@@ -130,271 +138,142 @@ Four families across a dozen components, unconstrained, is a Christmas tree. `ef
 |---|---|
 | **Page** (daos, sondalab-site) | primary target — glass and aurora are **R**, liquid and glitch **A** |
 | **App** (introspect, local-agents) | measured — every family is **A**; the effect budget is **R** if any family is used |
-| **IDE** (spexr in Theia) | **N/A by default, opt-in.** The host chrome is fixed and competes for the same visual bandwidth; `effects.css` is a separate import precisely so an IDE surface can decline it at the import boundary. A spexr panel that deliberately imports it is then held to the **App** column. |
+| **IDE** (spexr in Theia) | **N/A by default, opt-in.** `effects.css` is a separate import precisely so an IDE surface can decline it at the import boundary. A spexr panel that imports it is then held to the **App** column. |
 | **Term** (smartctx) | **N/A** |
-
-This is why `effects.css` is a separate file rather than an append to `components.css`: declining it must be free.
 
 ## Per-component declension
 
-The design work proper. Each component gets the families that match its semantics — never all four, and never one because it was available.
+Each component gets the families that match its semantics — never all four, and never one because it was available.
 
 ● = required where the substrate requires the family · ○ = adapt (reduced amplitude) · — = never
 
 | Component | Glitch | Liquid | Aurora | Glass |
 |---|---|---|---|---|
-| `sl-btn--primary` | on destructive confirmation | ● specular + silhouette deform | ● `:focus-visible`; ● `busy` while submitting | — (filled; no edge to cut) |
-| `sl-btn--ghost` | — | ○ specular on the border | ● `:focus-visible` | ● its `1px` border **is** the glass edge |
-| `sl-card` | — | ○ low amplitude, no tilt | ● `busy` while loading; `sweep` only when granted | ● edge + inner top highlight |
-| `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | ● `:focus-within` | ● |
-| `sl-tabs__tab` | scramble on label change | — | ● the 2px active underline becomes a sweep | — |
+| `sl-btn--primary` | on destructive confirmation | ● dents under the pointer | ● `:focus-visible`; ● `busy` while submitting — the one case where the arc sits outside the box | — (filled; no edge to cut) |
+| `sl-btn--ghost` | — | ○ dents under the pointer | ● `:focus-visible` | ● its `1px` border **is** the chrome |
+| `sl-card` | — | ○ `--calm`: a fraction of the depth | ● `busy` while loading; `sweep` only when granted | ● |
+| `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | ● `:focus-within` on the wrapper | ● on the wrapper |
+| `sl-tabs__tab` | scramble on label change | — | ● the 2px active underline becomes a linear aurora | — |
 | `sl-badge` / `sl-tag` | scramble on value change | — | — | ○ micro-rim |
 | `sl-dialog` | shatter-in on open (1 burst) | — | ● rim while open; `busy` while its action runs | ● |
-| `sl-table tbody tr` | — | ○ row-level specular | — | — |
+| `sl-table tbody tr` | — | ○ `--calm` | — | — |
 | `sl-eyebrow` / section index | scramble on entering the viewport | — | — | — |
 | wordmark | rare ambient burst | — | — | — |
 | `sl-callout--danger` | 1 burst on mount | — | — | ● |
-| `sl-link` | — | — | ● underline becomes an aurora on hover | — |
+| `sl-link` | — | — | ● underline becomes a linear aurora on hover | — |
 | `sl-kbd` | — | — | — | ● the keycap edge |
-| inversion band | — | — | ● along the top edge | — |
+| inversion band | — | — | ● along the top edge (`--linear --top`) | — |
 
 Two exclusions are deliberate and load-bearing:
 
 - **No liquid on `sl-field__input`.** A text field that deforms while being typed into trades legibility for spectacle.
 - **No glitch on `sl-btn--ghost` or `sl-card`.** Glitch marks *something re-resolved*; a passive container has nothing to re-resolve, so a burst there would be decoration and Decision 1 forbids it.
 
-One composition constraint, not an exclusion but load-bearing the same way: **`sl-fx-liquid` on a bordered control requires `sl-fx-glass`.** Under Tier 1 the host goes `border-color: transparent` along with its background, so the skin has a clean silhouette to deform — a filled control loses nothing (it had no border), but a control whose *border* is its visible edge (`sl-btn--ghost`) would lose it outright without glass's `::after` ring standing in for it, which is exactly what the declension table's `sl-btn--ghost` row requires (`●` glass, not optional). A future component that pairs liquid with a border and skips glass will render with no visible edge at all under Tier 1 — not a partial or degraded look, an absent one.
-
-A second, narrower consequence of the same architecture: **`--slfx-ground` is a frozen literal, captured at rest (and re-captured on a theme/accent change), not a live reference to `:hover`/`:active` state.** `sl-btn--primary:hover`/`:active` rebind `background` in `components.css`, but the skin keeps painting whatever it captured at rest regardless — the host's own hover/active background is invisible under Tier 1 (transparent, same as its resting background). The pointer sheen and the deformation itself still respond (the whole point of the family), so hover reads as *something* changing; press does not, since nothing in the spring or the sheen distinguishes `:active` from a held hover. On `sl-btn--primary` (destructive-confirmation use, per the declension table) that is the one state most worth a visible confirmation, and today it is silent. Recapturing per interaction state would defeat the frozen-literal design an SVG filter's `feDisplacementMap` requires (it cannot resolve a live `var()`), so this is a known, documented limit of the mechanism rather than a defect to fix inside this task.
-
 ## Implementation contract
 
 ### Glass — `sl-fx-glass`
 
-A `1px` edge painted with a conic gradient so it catches light at two angles, plus a single inner highlight. Border **width is unchanged**; only its colour becomes a gradient.
+**What it looks like.** A hairline of chrome exactly on the element's own border: `max(border-width, 1px)` wide plus a hair of cover, so a ghost button's `1px` border *is* the chrome and a borderless card gets a 1 px line. Along it, a mirror's environment slides: bright and dark bands at high contrast, the product's hue as pastel flecks between them — never as a tint over the whole ring. A directional key from the upper left and a slightly darker outer half are the only shading, both as subtle multipliers. Outside the ring, one soft halo (≈30 px along the edge, ≈14 px of reach, ≈0.3 peak alpha) wanders slowly around the perimeter and breathes. Under the cursor the ring goes bright and slightly coloured, and only there.
 
-Glass and aurora share **one** edge mechanism — the masked `::after` ring described under Aurora below, occupying exactly the border band. Glass is its resting temperament (static angle, neutral-dominant stops); aurora is its attention temperament (swept angle, accent-dominant stops). A `background-clip: border-box` gradient was rejected for this: it would require every component to declare its own ground colour (`--slc-surface` for a card, `--slc-raised` for a field) so the padding-box layer could repaint it, adding a role-var and a per-component binding for no visual gain. The ring composites over whatever background the element already has.
+**How (Tier 2, `effects-shader.js`).** One page-level `<canvas>`, `position: absolute`, re-topped to the scroll offset each frame (a fixed overlay composites a frame behind the page during scroll), below `--sl-z-overlay`, `pointer-events: none`, alpha only on the hairline and the halo. Per registered element, uniforms carry its rect, its **corner radius read from its own `border-radius`** (a `%` radius resolved against the current box, never assumed), its **border width read from its own `border-top-width`**, and the liquid's current dent depth and radius. The fragment stage: signed distance to the nearest element's rounded box (through the dent), coverage `1 − smoothstep(hw − 0.6, hw + 0.6, |d|)`, the environment `environment(angle, p, t)` — sines along the perimeter angle and across page space, warped by one another, sliding at `ENV_RATE` — mapped through a five-stop palette (`dark · pastel accent · bright · pastel depth · dark`, Gaussian weights with `k = 64`, the reference's shape) and gamma-punched (`pow 1.3`). The poles are placed **around the page's own ground**: on ink, bright = the theme's brightest neutral and dark = the ground lifted a fifth toward it (a trough at the page's own value is a gap, and a ring with gaps reads as dashed); on paper, bright = the ground pushed to 0.985 luminance with its hue intact and dark = a mid grey at 0.60 (a black trough on a light page reads as dirt — the reference's own light preset is white and mid-grey). Which of `--sl-text-primary` / `--sl-bg-canvas` is the bright one is decided at runtime from their luminance, so an inversion band reads correctly.
 
-**One ring, four stop variables, swapped by state.** The two temperaments cannot be two `background` declarations on the same `::after` — an element carrying both classes would resolve to a single winning background and show the attention state permanently. So the ring declares its gradient once in terms of `--slfx-s0..s3`, and each state binds the stops:
+**Where the aurora holds the edge, the chrome stands down.** The canvas sits above the DOM, so on an element whose aurora is lit (`data-sl-fx-live` on/busy, or focus) `effects-gpu.js` registers no geometry at all; the edge belongs to the light until attention leaves.
 
-```css
-.sl-fx-glass {
-  --slfx-s0: var(--slfx-edge-warm);
-  --slfx-s1: var(--slfx-edge-dim);
-  --slfx-s2: var(--slfx-edge-cool);
-  --slfx-s3: var(--slfx-edge-dim);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--slfx-sheen) 7%, transparent);
-}
-.sl-fx-glass::after { opacity: 1; }
-```
-
-with the three edge stops mixed from role-vars only:
-
-```css
---slfx-edge-warm: color-mix(in srgb, var(--slc-accent) 24%, var(--slc-border-strong));
---slfx-edge-cool: color-mix(in srgb, var(--slfx-depth)  24%, var(--slc-border-strong));
---slfx-edge-dim:  var(--slc-border-subtle);
-```
-
-Inside an inversion band the alpha-over-canvas default of `--slc-border` sits on the wrong ground — the pitfall `components.css` already documents. The fix stays at the band, unchanged: `.invert { --slc-border: color-mix(in srgb, currentColor 22%, transparent); }`.
+**Fallback (Tiers 0/1, `effects.css`).** The shared `::after` ring, `inset: -1px; padding: var(--slfx-ring-w)`, masked to the border band, painted with a static conic alternating `--slfx-edge-hi` / `--slfx-edge-lo` / `--slfx-edge-tint` / `--slfx-edge-mid` — all `color-mix()` over the border and text roles, resolved on the edge itself so an inversion band's remap reaches them. Static by design. Under `[data-sl-fx-gpu="on"]` it goes `opacity: 0`.
 
 ### Aurora — `sl-fx-aurora`
 
-**The aurora inhabits an edge that already exists; it never adds a concentric ring.** A second ring would be added chrome, which the thesis forbids, and on a focused element it would stack three concentric rings — the `1px` border, the aurora, then the `outline` at `outline-offset: 2px` — blurring the accessibility affordance into the decoration. So:
+**What it looks like.** The border-beam: a 1 px arc of light riding the border — the depth companion at its tails, the accent along it, a white-hot core at its centre (`--slfx-sheen` mixed 86% over the accent) — with a three-stage bloom (`drop-shadow` 2 px sheen, 6 px accent, 16 px depth) that follows the arc's own alpha shape, and a wash of the same light blurred 8 px and confined to a `--slfx-wash` (28 px, at most 42%) band inside the edge, under the content. While it sweeps, its hue drifts ±16° either side of the accent over 9 s — an aurora's colour moves, and a narrow range keeps the product's hue recognisable.
 
-1. **Where the element has a border, the aurora *is* that border in its attention state** — same geometry, same `1px`, no growth, and the `outline` stays the only external ring and therefore unambiguously readable as focus.
-2. **An external rim only where there is no edge to inhabit** — `sl-btn--primary` is filled and borderless, and is the one case where the ring genuinely sits outside the box.
-3. **Where the edge is not a ring, the aurora is linear** — it inhabits the active tab's 2px underline, the link's underline, the inversion band's top rule. It never becomes a ring there.
+**Four readings, separated by the fraction of the perimeter lit** — never by colour, never by speed, which is why they stay legible side by side:
 
-**The band is not fixed at `1px`.** The hairline rule (L2) governs *separators*; `HANDOFF.md` check 4 already draws the distinction the aurora falls on the other side of — *"a 2px edge that emphasizes (active-tab underline, keycap, measure-tick) is a deliberate accent — leave it"*. The aurora is emphasis, so its width is an already-blessed category rather than a deviation. It is `--slfx-ring-w`, and it scales with how much room the element has: `1px` on inline controls (a thick ring on a 28px-tall control eats the control), `2px` on fields and tabs, `3px` on cards, dialogs and panels.
+| Reading | Trigger | Arc | Motion |
+|---|---|---|---|
+| static | `:focus-visible` / `:focus-within` | ~70% (`--slfx-arc: 250deg`) | none — it marks where focus is |
+| sweep | `data-sl-fx-live="on"` (granted by `grantLive`) | ~70% | one turn per 3.2 s |
+| busy | `data-sl-fx-live="busy"` + `aria-busy` | 18% (`65deg`) | one turn per 1.1 s |
+| determinate | busy + inline `--slfx-progress` + `role="progressbar"` | `progress × 360deg` | none — the length is the value |
 
-**The band grows inward, never outward** — outward growth would walk into the focus `outline` at `outline-offset: 2px`, which Decision 5 protects. Mechanically that is `padding: var(--slfx-ring-w)` on a ring whose `inset` stays pinned to the border box. On a card the ring eats `3px` of a `--sl-space-5` (24px) padding, which is invisible to the layout.
+**The aurora inhabits an edge that already exists; it never adds a concentric ring.** Where the element has a border, the arc *is* that border in its attention state; on a filled, borderless `sl-btn--primary` it is the one case where the arc sits `1px` outside the box. Where the edge is not a ring, the aurora is **linear** (`--linear`, `--top` for an inversion band's rule): the same light swept along a segment. A linear aurora has no busy mode.
 
-**Width alone is not the aurora, though.** A thick hard-edged ring is just a fat border; an aurora in nature has no edge. So width pairs with `--slfx-bloom`, an inward luminous falloff carried by `box-shadow: inset` on the element (it follows `border-radius` exactly, composites cheaply, and costs no third stacking layer — `::before` is already the liquid sheen). The division of labour: **the rim carries direction, the bloom carries volume.** `--slfx-bloom` is `0` on inline controls and roughly `18px`–`28px` on containers.
+**Geometry note:** for an absolutely positioned child, `inset: 0` resolves against the *padding* box, so `inset: -1px` with `padding: var(--slfx-ring-w)` and `mask-composite: exclude` lands exactly **on** a `1px` border. Implementations must not "correct" it to a positive inset — that would walk the ring into the focus outline.
 
-The corollary is that **glass and aurora are one mechanism, not two stacked decorations**: a single `::after` occupying exactly the border band, with two temperaments — at rest the static conic catching light at two angles (glass), under attention the same conic saturated to the accent and swept (aurora). An element carrying both classes does not stack them; the aurora is the attention state of its glass edge.
-
-A masked `1px` conic ring on a pseudo-element, swept by an `@property`-registered angle. **Geometry note:** for an absolutely positioned child, `inset: 0` resolves against the *padding* box, so `inset: -1px` with `padding: 1px` and `mask-composite: exclude` lands exactly **on** the border when the border is `1px`, and `1px` outside the visible box when the element has none — which is precisely the rule above, expressed in one declaration. Implementations must not "correct" it to a positive inset.
-
-```css
-@property --slfx-angle { syntax: "<angle>"; inherits: false; initial-value: 210deg; }
-
-/* shared ring geometry — glass and aurora are two temperaments of this one edge */
-:is(.sl-fx-glass, .sl-fx-aurora) { position: relative; }
-:is(.sl-fx-glass, .sl-fx-aurora)::after {
-  content: ""; position: absolute; inset: -1px; border-radius: inherit;
-  padding: var(--slfx-ring-w, 1px); pointer-events: none; opacity: 0;
-  background: conic-gradient(from var(--slfx-angle),
-    var(--slfx-s0) 0deg, var(--slfx-s1) 95deg,
-    var(--slfx-s2) 185deg, var(--slfx-s3) 290deg, var(--slfx-s0) 360deg);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;   /* Safari below 15.4 */
-  mask-composite: exclude;
-  transition: opacity var(--sl-motion-mid) var(--sl-motion-ease);
-}
-
-.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"]) {
-  --slfx-s0: transparent;
-  --slfx-s1: color-mix(in srgb, var(--slc-accent) 90%, transparent);
-  --slfx-s2: color-mix(in srgb, var(--slfx-depth) 90%, transparent);
-  --slfx-s3: transparent;
-}
-.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
-```
-
-Because the stops are variables on the *element* and the gradient lives once on the pseudo-element, an element carrying both classes transitions from glass to aurora by rebinding four custom properties — the ring itself never changes, which is what makes the two families read as one material rather than as a swap.
-
-`--slfx-s0..s3` default to `transparent` in the `--slfx-*` block, so a bare `.sl-fx-aurora` at rest is a well-formed invisible ring rather than an invalid gradient. The sweep (`@keyframes` animating `--slfx-angle` from its `210deg` initial value to `570deg`, so the rotation is continuous rather than snapping back through the resting angle) is added only under Tier 1 and `prefers-reduced-motion: no-preference`. Where `@property` is unsupported the angle is not animatable and the ring renders **static** — a correct Tier-0 degradation, not a broken state. The `@property` floor (Chrome 85 / Safari 16.4 / Firefox 128) is the same floor the theme layer already accepts for its relative-colour accent step, so this adds no new browser requirement.
-
-#### Three modes, distinguished by illuminated arc
-
-One mechanism, three readings. What separates them is **the fraction of the perimeter that is lit** — not colour, not speed, which is why they stay legible next to each other.
-
-| Mode | Selector | Arc | Motion | Means |
-|---|---|---|---|---|
-| **static** | `:focus-visible`, `:focus-within` | ~60% | none | this element has focus |
-| **sweep** | `[data-sl-fx-live="on"]` | ~60% | angle rotates, ~3.2s linear | ambient liveness; capped at one per document |
-| **busy** | `[data-sl-fx-live="busy"]` | `--slfx-arc`, `65deg` (~18%) | arc orbits, ~1.1s linear | a real operation is running here |
-| **determinate** | `[data-sl-fx-live="busy"]` + `--slfx-progress` | `calc(var(--slfx-progress) * 360deg)` | none — the **length** is the value | how far that operation has got |
-
-`busy` is the one mode that replaces the shared four-stop background rather than rebinding the stops, because it is a different geometry — a short travelling marker, not a full-perimeter wash. That override is deliberate and is the *only* one: on an element carrying both `sl-fx-glass` and a busy state, busy wins, which is correct — a resting edge and a working edge are not the same edge, and the work is the more important thing to report.
-
-```css
-@keyframes slfx-orbit { to { --slfx-angle: 570deg; } }
-
-.sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
-.sl-fx-aurora[data-sl-fx-live="busy"]::after {
-  opacity: 1;
-  background: conic-gradient(from var(--slfx-angle),
-    color-mix(in srgb, var(--slc-accent) 92%, transparent) 0deg,
-    color-mix(in srgb, var(--slfx-depth)  78%, transparent) calc(var(--slfx-arc) * 0.62),
-    transparent var(--slfx-arc),
-    transparent 360deg);
-}
-[data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])::after {
-  animation: slfx-orbit 1.1s linear infinite;
-}
-```
-
-Determinate needs no animation: `--slfx-progress` sets `--slfx-arc` directly and the arc stays pinned at the resting angle, so the edge of a card *is* its progress bar — no extra widget, no layout.
-
-**Under reduced motion the arc does not orbit.** It renders as a static full ring at reduced opacity: present, honest about there being something going on, and not moving. The state itself is carried by `aria-busy` / `role="progressbar"` per Decision 5, so nothing is lost — which is the whole reason that rule is a hard requirement rather than a recommendation. Under high-contrast the aurora is off entirely and only the ARIA remains.
+Under `prefers-reduced-motion: reduce` the busy arc does not orbit: it renders as a full static ring at reduced opacity, and `aria-busy` carries the state. A determinate arc keeps its length, because its length is the value.
 
 ### Liquid — `sl-fx-liquid`
 
-Under Tier 0, a specular sheen on `::before` tracks the pointer: a radial gradient centred on `--slfx-px`/`--slfx-py`, scaled by `--slfx-d` (engagement, `0`→`1`).
+**What it looks like.** The element is solid until the pointer touches it; then its outline gives under the cursor — a smooth dent, a few pixels deep, that follows the pointer with a little lag — and text near the pointer flees it. Released, the shape springs back, overshoots, and settles. Nothing is left behind.
 
-Under Tier 1, `::before` additionally becomes the **skin** — the layer that carries the element's actual surface, not just a highlight on top of it. `effects.js` captures the host's own computed `background-color` once, at `mount()`, into `--slfx-ground`; the host itself goes `background-color: transparent` and `::before` paints `--slfx-ground` in its place, at `border-radius: inherit` — the declared radius, never rewritten. That skin is what an SVG filter (`feTurbulence` → `feDisplacementMap` → `feGaussianBlur` → `feColorMatrix` alpha stretch → `feComposite`, injected once as a hidden `<svg>` on `mount()`) deforms: turbulence-driven displacement pushed through a blur-and-contrast "goo" pass, which is what makes an edge read as a liquid meniscus rather than a wobbling, noisy rectangle. **The radius is never rewritten — the filter distorts the rendered result of what the component already declared**, so a component stays free to re-parametrise its own `--sl-radius-*` later without touching this file.
+**How.** `effects.js` injects one hidden `<svg>` with one filter: `feImage` (the map) → `feDisplacementMap` (`R` → x, `G` → y). The map is a Gaussian push *away* from the pointer, `v = (p − c)/σ`, `push = v · exp(−|v|²/2) / 0.6065`, so the peak sits one sigma out and is normalised to exactly `depth` pixels; points between the pointer and the edge sample from beyond the edge, so the edge recedes toward the pointer. It is rasterised **every frame at a quarter of the resolution, covering the whole filter region** — the reference's own approach. (A static map moved under the pointer through `feImage`'s `x`/`y` was tried first and abandoned: Chrome placed the raster unpredictably and read the area it covered as a constant offset.) `color-interpolation-filters="sRGB"` is set on **every** primitive: under the default `linearRGB` the map's 128 decodes to 0.22 and the element slides by a third of the scale, and the filter element's own attribute does not reach a `feImage`'s raster — both verified against the rendered page. The filter region is sized per live element in pixels (its box plus room for the overshoot's outward bulge).
 
-The deformation is driven by a critically-underdamped spring (`effects.js`, stiffness `260`, damping `16`, integrated in a single shared frame loop), not an eased transition — a transition has no mass, and mass is the point: released quickly, the shape overshoots and settles rather than easing to a stop, and the deformed centre trails the pointer with its own lag rather than sitting under it. The filter definition is a single shared SVG resource, so only one element deforms at a time — the one currently live, tracked by `effects.js` and marked with a class the CSS scopes the filter to (see `packages/ui-kit/effects.css`, LIQUID section) — otherwise the shared `feDisplacementMap` `scale` attribute would distort every `.sl-fx-liquid` on the page in lockstep with whichever one the pointer actually touched.
+`σ = clamp(0.42 × shortSide, 12px, 30px)`, `depth = 0.30 × σ` (× 0.4 for `--calm`). The spring (`k = 170`, damping `14`) is critically underdamped, so the release overshoots (a negative scale, which is valid SVG and is the bulge) and settles within about a second; the dent's centre chases the pointer with its own lag, so it arrives after the cursor — that trail is the mass. The filter is applied only while `is-liquid-live` is on the host (`[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live`), and the class is removed when the spring settles.
 
-**Non-destructiveness is a contract, not a preference: the filter is applied only to paint layers (the sheen `::before`, and the edge ring `::after` on an element that is also glass or aurora), never to a box that contains text.** SVG filters disable subpixel antialiasing on their subtree; filtering the element itself would visibly degrade every label in the interface. Text geometry never moves; only light and shape do.
+**The chrome bends with the surface.** `effects-gpu.js` reads `liquidState()` — the live element, its current signed depth, its sigma and the *lagged* centre — and the shader evaluates the same Gaussian on its distance field (`dentAt`), so the hairline dents exactly where the border does. Anything that changes in one place must change in the other.
+
+**The radius is never rewritten.** The filter distorts whatever the component declared, so a component stays free to re-parametrise its own `--sl-radius-*` without touching this layer.
 
 ### Glitch — `sl-fx-glitch`
 
-Generalised from `sondalab-site/src/lib/glitch.ts` and its CSS. Kept as-is:
+Generalised from `sondalab-site/src/lib/glitch.ts` and its CSS: two ghost channels on the child span's `::before`/`::after` reading `attr(data-text)`, `mix-blend-mode: screen`, coloured `--slc-accent` and `--slfx-depth`; JavaScript owns burst *timing* — finite, randomised length, hard-capped at 1500 ms; per-burst randomisation of channel durations, phase offsets and amplitude via inline custom properties; `scramble()` for short labels; the `--shatter` variant (horizontal bands with random sideways offsets, each carrying `--slfx-i`/`--slfx-n` inline). Reduced motion is respected, high contrast disables it, bursts go through the coordinator, and `burst()` refuses a detached element.
 
-- two ghost channels on `::before`/`::after` reading `attr(data-text)`, `mix-blend-mode: screen`, coloured `--slc-accent` and `--slfx-depth`;
-- JS owns burst *timing* — finite, randomised length, hard-capped;
-- per-burst randomisation of channel durations, phase offsets and amplitude multiplier via inline custom properties;
-- `scramble()` for short labels (decode-readout, left-to-right lock), reading its target from `data-num`/`textContent`;
-- the `--shatter` variant (horizontal bands with random sideways offsets).
+### GPU tier boot
 
-Changed on the way into the kit: reduced-motion is respected (Decision 4), high-contrast disables it, and bursts go through the coordinator (Decision 5). The `CAP_MS` ceiling is carried over unchanged, and the prior art's detached-node guard moves to `burst()` — the kit ships no `autoBurst`, because an ambient rhythm is the consumer's editorial decision, not the kit's. A consumer that wants the wordmark's rare ambient burst drives it from its own timer, and `burst()` refusing a detached element is what makes that safe. Both guards exist because of real defects.
+Double-guarded exactly as `sondalab-site/src/lib/crt-surface.ts` does it: `typeof navigator === "undefined" || !("gpu" in navigator)` returns null before anything is created; the `vgpu` import, `init()`, surface, effect and first frame all sit in one `try` whose `catch` runs the same `stop()` the happy path uses; `gpu.onError` and `gpu.gpu.lost` both call `stop()`; a switch to high contrast calls `stop()`. `stop()` removes the canvas, disconnects every observer and listener, and clears `data-sl-fx-gpu` only if this handle set it.
 
-### GPU tier (Slice 3)
-
-One shared `<canvas>`, `pointer-events: none`, below `--sl-z-overlay` so the sticky translucent header stays above it. It is `position: absolute` and re-topped to the scroll offset once per frame, not `position: fixed`: a fixed overlay is repainted from the main thread while the page scrolls on the compositor, so during a scroll it composites bands at the offset they were *measured* at while their elements have already moved. An absolutely positioned canvas is scrolled by the compositor along with the content it draws on. It renders only within the bounding rectangles of currently visible elements, passed as a uniform array with a fixed cap, each with the element's own corner radius and its current temperament.
-
-What justifies the GPU: the edge families stop being one ring with two temperaments and become **two different phenomena**, neither of which CSS can express.
-
-- **Glass — a shaded metal bezel ON the boundary.** A signed distance field of the element's rounded rectangle gives the edge; the outward in-plane normal dotted with a fixed key light gives the brightness *around* the perimeter (bright where the ring faces the light, dark where it faces away — a ring of even brightness is a neon outline, not metal); a shallow relief gives the profile *across* the band. Achromatic silver between the theme's own two neutrals, with the product's hue appearing only in a tight specular kiss. Chromatic dispersion evaluates the shading three times, one per channel, displaced both around the ring and across the band. The pointer bends the field locally, so the ring dents rather than the element moving.
-- **Aurora — emissive light AROUND the boundary.** Coloured ribbons running along the perimeter, blurred perpendicular to it, bleeding tens of pixels outside the element and drifting on their own clock. Additive, not reflective: no bezel, no specular, no environment. The hue runs the accent into its depth companion as the light gets further out, the way a real aurora shifts one colour into another. Its arc stays **angularly bounded** however soft it gets, because a determinate aurora's arc length is its value.
-
-An element carrying both classes shows both: the bezel with the light around it. **This supersedes the "two temperaments of one ring" framing below**, which remains true of Tier 0/1 — where a single `::after` is all CSS gives — and is not true of Tier 2. The liquid's **inertia** rides along in the same pass.
-
-**The CSS ring is a genuine fallback, not the target.** The edge families render as a shaded material where a GPU is available and degrade to a conic hairline where it is not; the hairline is what a browser without WebGPU, a visitor under reduced motion and a visitor in high contrast see, and it must stay correct on its own. Tier 2 stands it down by `opacity: 0` under `[data-sl-fx-gpu="on"]`, and never removes it. The linear aurora is excluded from the material — it is a segment, not a perimeter — and keeps its CSS gradient at every tier.
-
-Boot, double-guarded exactly as `sondalab-site/src/lib/crt-surface.ts` does it — `navigator.gpu` alone is insufficient because the adapter can refuse and the device can be lost:
-
-```js
-if (!('gpu' in navigator) || !navigator.gpu) return false;
-let gpu;
-try { gpu = await (await import('vgpu')).init(); } catch { return false; }
-```
-
-`vgpu` is declared an **optional peer dependency** — `peerDependencies` plus `peerDependenciesMeta: { vgpu: { optional: true } }`, not `optionalDependencies`, which npm installs by default and only tolerates failing. As a peer, `vgpu` is not installed at all unless the consumer's own `package.json` requests it, so a consumer that never calls `mountGpu()` installs nothing extra and a missing peer cannot break `npm install`. The WGSL ships as an inline template string, not through a bundler plugin — the same call `sondalab-site` made, for the same reason (no consumer build-config change).
+`vgpu` is an **optional peer dependency** — `peerDependencies` plus `peerDependenciesMeta: { vgpu: { optional: true } }`, never `optionalDependencies`. The WGSL ships as an inline template string.
 
 ### Public API — `effects.js`
 
 ```js
-import { mount, burst, scramble, mountGpu } from '@sondalab/ui-kit/effects.js';
+import { mount, burst, scramble, grantLive, revokeLive, mountGpu } from '@sondalab/ui-kit/effects.js';
 
-mount(root = document);   // arms Tier 1: sets data-sl-fx, injects filter defs, wires pointer + observers
+mount(root = document);   // arms Tier 1: sets data-sl-fx, injects the filter, wires the pointer + observers
 burst(el, opts);          // one finite glitch burst, subject to the coordinator
 scramble(el, opts);       // decode-scramble a short label
-await mountGpu();         // Slice 3; resolves false when WebGPU is unavailable
+grantLive(el);            // the one ambient aurora; revokeLive(el) gives it back
+await mountGpu();         // Tier 2; resolves false when WebGPU is unavailable
 ```
 
-Importing the module has no side effects. Pointer tracking is a single delegated listener writing custom properties inside one shared `requestAnimationFrame`. Off-screen elements need no separate exclusion: `pointermove` only resolves to an element under the pointer, which is on screen by definition, so an `IntersectionObserver` would be dead weight rather than an optimisation.
+Importing the module has no side effects. Pointer tracking is one delegated listener; the liquid's integration runs in one shared `requestAnimationFrame` that stops itself when the spring settles.
 
 ## Colour contract, and the audit gap it has to cover
 
-Every hue resolves through `color-mix()` over `--slc-*`/`--sl-*` role-vars. No literal appears in `effects.css`.
+Every hue in `effects.css` resolves through `color-mix()` over `--slc-*`/`--sl-*` role-vars; masks use the `black` keyword. No literal appears in any shipped file.
 
-**The real trap is JavaScript.** `sl-audit` reads CSS; a colour literal in `effects.js` or in WGSL **passes the gate while breaking the contract** — recorded in `sondalab-site/docs/webgpu-surfaces.md` after it cost a debugging cycle there. Therefore:
-
-- every hue used by JavaScript or the shader is read with `getComputedStyle` from `--sl-accent-default`, `--sl-accent-depth`, `--sl-text-primary`, `--sl-bg-canvas`;
-- values are re-read on theme change, via a `MutationObserver` on the root's `data-sl-theme`;
-- a test asserts `effects.js` contains no hex or `rgb()` literal, closing the gap mechanically rather than by convention.
+**The real trap is JavaScript and WGSL.** `sl-audit` reads CSS; a literal in `effects.js`, `effects-gpu.js` or the shader would pass the gate while breaking the contract. Therefore every hue the GPU tier uses is read with `getComputedStyle` from `--sl-accent-default`, `--sl-accent-depth`, `--sl-text-primary`, `--sl-bg-canvas` (re-read on `data-sl-theme` and inline-style changes on `<html>`) and reaches the shader as a uniform; the shader's palette takes its coloured stops from the accent pair and its poles from the neutral pair, and `scripts/effects-gpu.test.mjs` asserts exactly that, alongside the literal ban on all three JavaScript files. The dent map's `128` and the feColorMatrix-free filter are numbers, not colours. The aurora's `hue-rotate` drift is a filter on a token-derived colour, not a colour.
 
 ## Testing
 
 | Test | Asserts |
 |---|---|
-| `scripts/effects-audit.test.mjs` | `effects.css` passes `auditCss` (no colour literal, tier-agnostic) |
-| `scripts/effects-guards.test.mjs` | `effects.css` disables every animation under `prefers-reduced-motion: reduce`; disables all four families under `[data-sl-theme="high-contrast"]`; the busy aurora's orbit is inside the reduced-motion guard while its ring is not; `effects.js` contains no hex/`rgb()` literal |
-| `scripts/catalog-audit.test.mjs` | *(existing)* the new catalog snippets carry no colour literals |
-| `scripts/agent-docs-drift.test.mjs` | *(existing)* `agent/design-language.md` stays byte-identical after the L6 edit + regeneration |
+| `scripts/effects-audit.test.mjs` | `effects.css` passes `auditCss` (no colour literal, no accent redefinition, `black` for masks) |
+| `scripts/effects-guards.test.mjs` | both kill switches neutralise host-level `animation`/`box-shadow`/`filter` on every family; the opt-out matches the carrying element; one shared ring rule growing inward; `--slfx-angle` registered; every `animation:` inside the reduced-motion guard; exactly four edge rules paint (shared ring, aurora arc covering busy, aurora wash, linear); the busy arc paints outside the guard while its orbit is inside; determinate drives arc length; the liquid filter sits on the host, scoped to `.is-liquid-live` and to `[data-sl-fx="on"]` |
+| `scripts/effects-js.test.mjs` | no colour literal; the documented exports; import has no side effects; `mount()` refuses under reduced motion and high contrast; `mountGpu()` refuses under high contrast; a live field tears down on high contrast; burst drops rather than queues, refuses detached and unarmed; the ambient grant is single |
+| `scripts/effects-gpu.test.mjs` | no colour literal in the GPU module or the shader; the palette is fed from the token uniforms; `bootField` returns null without WebGPU and when `vgpu` is missing; `vgpu` is an optional peer; the WGSL is inline |
+| `scripts/effects-showcase.test.mjs` | the package ships the layer; the showcase applies all four families; every busy aurora carries ARIA; the glitch is a child span; the tier label reads `data-sl-fx-gpu` |
+| `scripts/agent-docs-drift.test.mjs` | `agent/design-language.md` stays byte-identical to `docs/design-language.md` |
 
-`scripts/showcase-accent.test.mjs` reads `showcase/index.html` only and is unaffected by a new sibling page.
+Nothing in this repository renders a frame. **Every real defect in this layer was found by looking at the rendered page beside the reference, and none by reading**; a change to any of the four shipped files is not done until it has been looked at, in dark and in light, with the reference open.
 
-## Delivery slices
+## Delivery
 
-Each slice is independently reviewable and independently revertible.
+`packages/ui-kit/effects.css`, `effects.js`, `effects-gpu.js`, `effects-shader.js`; `showcase/effects.html`; the tests above; `docs/design-language.md` L6 with `packages/ui-kit/agent/design-language.md` regenerated; `agent/catalog.md`, `agent/HANDOFF.md` and the `l6-*` rows of `agent/substrate-matrix.json`. `packages/ui-kit/package.json` carries the version; `packages/palette-py/` is not touched.
 
-### Slice 1 — Effects layer and demo page
+## Known gaps against the reference (honest)
 
-`packages/ui-kit/effects.css`, `packages/ui-kit/effects.js` (Tiers 0 and 1), `showcase/effects.html`, `scripts/effects-audit.test.mjs`, `scripts/effects-guards.test.mjs`. Package `exports` and `files` gain the two new entries.
-
-The demo page ships in the same slice deliberately: an effects layer cannot be reviewed by reading its CSS. The page shows every common component in its declension, with the tier and the active kill switches stated on the page in the house's mono structural labels — it documents its own state rather than asserting a look.
-
-Status on merge: `showcase/effects.html` → **PoC implemented (not delivered)**; `effects.css`/`effects.js` → **Delivered** at 0.8.0.
-
-### Slice 2 — Promotion into the design-system contract
-
-`docs/design-language.md` gains **L6 — Effects & material** plus the effect-budget rule; `npm run gen:tokens` regenerates `packages/ui-kit/agent/design-language.md`. `agent/substrate-matrix.json` gains the rows below; `agent/catalog.md` + `catalog.json` gain the four effect entries; `agent/HANDOFF.md` records what `sl-audit` cannot check about effects. `packages/ui-kit/package.json` → `0.8.0`.
-
-```json
-"l6-glass":         { "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
-"l6-aurora":        { "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
-"l6-liquid":        { "IDE": "N/A", "App": "A", "Page": "A", "Term": "N/A" },
-"l6-glitch":        { "IDE": "N/A", "App": "A", "Page": "A", "Term": "N/A" },
-"l6-effect-budget": { "IDE": "N/A", "App": "R", "Page": "R", "Term": "N/A" }
-```
-
-The `HANDOFF.md` addition is the substantive part: `sl-audit` can check that `effects.css` uses no literal, but it cannot check that a surface **used the right family for the right meaning** (Decision 1), **respected the budget** (Decision 5), or **kept the focus ring** — those join the existing judgement list.
-
-### Slice 3 — WebGPU liquid field
-
-`packages/ui-kit/effects-gpu.js` + the WGSL template string, `vgpu` as an optional peer dependency, `showcase/effects.html` extended to report which tier actually resolved. Package version → `0.8.1` or `0.9.0` depending on whether `mountGpu` lands as a new export in Slice 1's API surface (it does — so `0.8.1`, patch, since Slice 1 already publishes the export as a documented no-op returning `false`).
+- **Reflections on neighbours.** The reference paints the chrome's environment onto adjacent elements' edges. Not built.
+- **Inner reflection.** The reference's metal shows its environment faintly *inside* the element too. Not built; the glass here is the edge only.
+- **Straight runs.** A rectangle's long edge has one surface direction; the reference's circle sweeps continuously. The environment varies along page space as well as angle to compensate, but a very long edge still reads calmer than the reference's ring.
+- **The busy arc on a filled accent button** is faint by construction: its accent core sits on an accent fill and only the white core and the bloom distinguish it. A disabled busy button additionally inherits `opacity: 0.5` from `components.css`.
+- **Tier 2 does not arm from a cold load under `prefers-reduced-motion: reduce`**, because `mount()` refuses and `mountGpu()` requires `mount()`; the static chrome is therefore not shown to a reduced-motion visitor, who gets the CSS hairline instead. Coherent, documented, not equal.
 
 ## Risks
 
 | Risk | Handling |
 |---|---|
-| Conic-gradient borders and masked rings repaint on every frame while swept | `will-change` is set only while the aurora is active, and the budget caps ambient auroras at one |
-| `mix-blend-mode` on the GPU canvas interacting with the sticky header's `backdrop-filter` | canvas sits below `--sl-z-overlay`; verified against the showcase header in Slice 3 |
-| Glass edge invisible inside an inversion band | already-documented `--slc-border` remap at the band; the effects layer adds no new instance of the pitfall |
-| An adopting product enables all four families everywhere | Decision 1 + Decision 5 are the written defence; the judgement half lands in `HANDOFF.md` so the auditing agent enforces it |
-| `vgpu` is at `0.3.x` and pre-1.0 | it is optional and dynamically imported behind a `try`/`catch`; a breaking change degrades the page to Tier 1 rather than breaking the build |
+| Per-frame `toDataURL` for the dent map | quarter resolution over one element's region — a few kilobytes a frame, only while one element is live; the reference does the same |
+| `filter` on the host disables subpixel antialiasing while live | every Sondalab surface sets `-webkit-font-smoothing: antialiased`; the filter is removed when the spring settles |
+| Conic rings and drop-shadow bloom repaint while swept | the budget caps ambient auroras at one per document; busy ones are bound to real work |
+| The page-level canvas over a sticky translucent header | canvas below `--sl-z-overlay`; verified against the showcase header |
+| `vgpu` is at `0.3.x` and pre-1.0 | optional peer, dynamically imported inside the guarded boot; a breaking change degrades to the CSS hairline rather than breaking a build |
+| An adopting product enables all four families everywhere | Decisions 1 and 5 are the written defence; the judgement half lives in `HANDOFF.md` so the auditing agent enforces it |

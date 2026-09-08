@@ -1,5 +1,7 @@
 /* @sondalab/ui-kit — effects.js
-   Hand-authored Tier 1 driver for effects.css.
+   Hand-authored Tier 1 driver for effects.css: the liquid's deformation, the
+   glitch's timing, the aurora's one-per-document grant, and the hand-off to
+   the GPU chrome.
    Contract: docs/specs/2026-09-08-effects-layer-design.md
 
    Importing this module does nothing. mount() is explicit, which is what makes
@@ -36,107 +38,164 @@ function readTokens(root = document.documentElement) {
   tokens.canvas = cs.getPropertyValue("--sl-bg-canvas").trim();
 }
 
-/** The turbulence + goo filter the liquid skin references. Injected once.
- *  scale starts at 0 — a resting element is undeformed; the spring below
- *  drives it. The blur-then-alpha-contrast pass (feGaussianBlur into
- *  feColorMatrix, composited back over the raw displacement) is what makes
- *  an edge read as a liquid meniscus rather than a wobbling, noisy rectangle. */
+/* ── liquid: the element itself deforms ─────────────────────────────────────
+   The reference (libraries.dev/metal, useMetalBend) bends the element with an
+   SVG feDisplacementMap on the element ITSELF, and so does this: the host's
+   own fill, border, text and pseudo-elements all move together, so a crisp
+   ring never sits rigid around a deforming box. The filter is on for exactly
+   as long as the pointer shapes the element and its spring is settling, and
+   is removed afterwards — non-destructive: nothing about the element changes
+   once the pointer has gone. (Filtered text is rasterised with greyscale
+   antialiasing; the kit's surfaces already set that, and it is what the
+   reference does.)
+
+   THE DENT. A Gaussian push AWAY from the pointer: points between the pointer
+   and the edge sample from beyond the edge, so the edge recedes toward the
+   pointer, and text near the pointer flees it. The map covers the whole
+   filter region and is re-rasterised each frame at a quarter of the
+   resolution — the reference's own approach. A static map moved under the
+   pointer with feImage's x/y was tried first and abandoned: Chrome placed the
+   raster unpredictably and read the area it covered as a constant offset,
+   translating everything under it. A map that IS the region has nothing to
+   place and no outside.
+
+   The chrome tier evaluates the same Gaussian (effects-shader.js, dentAt) so
+   the ring bends where the surface does; liquidState() is how it learns
+   which element, how deep and how wide. */
+
+const NS = "http://www.w3.org/2000/svg";
+const MAP_RES = 0.25;                 // map texels per CSS px
+let liquidDisplacementEl = null;
+let liquidImageEl = null;
+let liquidFilterEl = null;
+let liquidMapCanvas = null;
+let liquidMap = null;                 // ImageData for the live element's region
+let liquidRegion = { x: 0, y: 0, w: 0, h: 0 };
+
 function injectFilterDefs() {
   if (document.getElementById("slfx-defs")) return;
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg");
+  const svg = document.createElementNS(NS, "svg");
   svg.id = "slfx-defs";
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("width", "0");
   svg.setAttribute("height", "0");
-  svg.style.position = "absolute";
+  svg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden;pointer-events:none";
+  // sRGB on EVERY primitive, not only on the filter: the default is
+  // linearRGB, under which the map's 128 decodes to 0.22 and the element
+  // slides by a third of the scale — and the filter element's own attribute
+  // does not reach a feImage's raster. The region is set per live element,
+  // in px (setLiquidLive).
+  const srgb = 'color-interpolation-filters="sRGB"';
   svg.innerHTML = `
-    <filter id="slfx-liquid" x="-30%" y="-30%" width="160%" height="160%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="7" result="n">
-        <animate attributeName="baseFrequency" dur="11s" repeatCount="indefinite"
-                 values="0.008 0.014; 0.013 0.009; 0.008 0.014" />
-      </feTurbulence>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G" result="d" />
-      <feGaussianBlur in="d" stdDeviation="6" result="b" />
-      <feColorMatrix in="b" type="matrix" result="goo"
-        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" />
-      <feComposite in="d" in2="goo" operator="atop" />
+    <filter id="slfx-liquid" filterUnits="userSpaceOnUse" x="0" y="0" width="1" height="1" ${srgb}>
+      <feImage result="map" preserveAspectRatio="none" x="0" y="0" width="1" height="1" ${srgb} />
+      <feDisplacementMap in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" ${srgb} />
     </filter>`;
   document.body.appendChild(svg);
   liquidDisplacementEl = svg.querySelector("feDisplacementMap");
+  liquidImageEl = svg.querySelector("feImage");
+  liquidFilterEl = svg.querySelector("filter");
 }
 
-/** The host's own background, captured once so the skin can take it over.
- *  Read, never invented — this file declares no colour.
- *
- *  Timing is load-bearing in two ways. First: effects.css only makes the
- *  host transparent when --slfx-ground is actually SET
- *  (`[style*="--slfx-ground"]`), specifically so capturing late reads the
- *  host's own real background rather than the transparent it would
- *  otherwise have become. Second: most components.css controls transition
- *  `background`, so a plain getComputedStyle() read right after a theme or
- *  accent change (see recaptureGrounds) can catch the interpolation
- *  mid-flight rather than the target colour — the transition is suppressed
- *  for one synchronous style flush so the read always lands on the real
- *  target. Idempotent, so a node matched by more than one call site below is
- *  a no-op after the first. */
-function captureGround(el) {
-  if (el.style.getPropertyValue("--slfx-ground")) return;
-  const prevTransition = el.style.transition;
-  el.style.transition = "none";
-  void el.offsetHeight; // force the recalc before reading, not after
-  const ground = getComputedStyle(el).backgroundColor;
-  el.style.transition = prevTransition;
-  el.style.setProperty("--slfx-ground", ground);
+/** Size the filter region and the map to the live element's box plus room
+ *  for the overshoot's outward bulge, in the element's own user space (its
+ *  border box, for a CSS filter on an HTML element). */
+function sizeDentRegion(width, height, depth) {
+  const m = Math.ceil(depth * 1.6 + 2);
+  liquidRegion = { x: -m, y: -m, w: Math.ceil(width) + 2 * m, h: Math.ceil(height) + 2 * m };
+  const { x, y, w, h } = liquidRegion;
+  for (const el of [liquidFilterEl, liquidImageEl]) {
+    if (!el) continue;
+    el.setAttribute("x", String(x));
+    el.setAttribute("y", String(y));
+    el.setAttribute("width", String(w));
+    el.setAttribute("height", String(h));
+  }
+  if (!liquidMapCanvas) liquidMapCanvas = document.createElement("canvas");
+  const tw = Math.max(2, Math.round(w * MAP_RES));
+  const th = Math.max(2, Math.round(h * MAP_RES));
+  liquidMapCanvas.width = tw;
+  liquidMapCanvas.height = th;
+  liquidMap = liquidMapCanvas.getContext("2d").createImageData(tw, th);
 }
 
-/** Re-reads every liquid element's ground after something that can change
- *  the resolved colour — a theme or accent switch. --slfx-ground is a frozen
- *  literal, not a live var() reference (an SVG filter can't resolve a custom
- *  property), so nothing keeps it in sync on its own. Clearing before
- *  re-capturing (rather than overwriting) is what makes the read correct:
- *  clearing drops the CSS gate above, which makes the host briefly opaque
- *  again at its OWN cascaded colour — the very thing captureGround needs to
- *  read — and both steps run in the same synchronous pass, before the
- *  browser paints, so nothing is visibly transparent in between. */
-function recaptureGrounds(root) {
-  const els = root.querySelectorAll(".sl-fx-liquid");
-  for (const el of els) el.style.removeProperty("--slfx-ground");
-  for (const el of els) captureGround(el);
+/** Rasterise the push for this frame: 128 everywhere, the Gaussian within
+ *  three sigma of the dent's centre. R and G hold the x and y push,
+ *  normalised so the peak (one sigma out) is exactly ±127. */
+function renderDentMap(cx, cy, sigma) {
+  if (!liquidMap || !liquidImageEl) return;
+  const { x: rx, y: ry } = liquidRegion;
+  const tw = liquidMap.width;
+  const th = liquidMap.height;
+  const d = liquidMap.data;
+  const reach = sigma * 3;
+  const x0 = Math.max(0, Math.floor((cx - reach - rx) * MAP_RES));
+  const x1 = Math.min(tw - 1, Math.ceil((cx + reach - rx) * MAP_RES));
+  const y0 = Math.max(0, Math.floor((cy - reach - ry) * MAP_RES));
+  const y1 = Math.min(th - 1, Math.ceil((cy + reach - ry) * MAP_RES));
+  for (let i = 0; i < d.length; i += 4) { d[i] = 128; d[i + 1] = 128; d[i + 2] = 0; d[i + 3] = 255; }
+  for (let ty = y0; ty <= y1; ty++) {
+    const vy = (ry + (ty + 0.5) / MAP_RES - cy) / sigma;
+    for (let tx = x0; tx <= x1; tx++) {
+      const vx = (rx + (tx + 0.5) / MAP_RES - cx) / sigma;
+      const g = Math.exp(-0.5 * (vx * vx + vy * vy)) / 0.60653;
+      const i = (ty * tw + tx) * 4;
+      d[i] = Math.round(128 + 127 * Math.max(-1, Math.min(1, vx * g)));
+      d[i + 1] = Math.round(128 + 127 * Math.max(-1, Math.min(1, vy * g)));
+    }
+  }
+  liquidMapCanvas.getContext("2d").putImageData(liquidMap, 0, 0);
+  liquidImageEl.setAttribute("href", liquidMapCanvas.toDataURL("image/png"));
 }
 
-/* ── liquid: one delegated listener, one shared spring ───────────────────────
-   Only one .sl-fx-liquid element deforms at a time. The filter above is a
-   single shared SVG resource, so its feDisplacementMap `scale` is necessarily
-   shared too — driving it from every hovered element independently would
-   distort every OTHER liquid element on the page in lockstep with whichever
-   one the pointer actually touched. effects.js instead tracks one "live"
-   element and toggles the class effects.css scopes the filter to; the spring
-   itself stays the single set of module-level values below, matching the
-   shared-rAF pattern used everywhere in this file.
-
-   Critically underdamped: the shape overshoots and settles rather than easing
+/* Critically underdamped: the shape overshoots and settles rather than easing
    to a stop. Stiffness and damping are tuned so a flick reads as elastic and
    a slow drag as viscous — the same spring, different input. Tuned against
-   the rendered page (see task-16-report.md), not against a guess. */
+   the rendered page, not against a guess. */
 const LIQUID_K = 170;
 const LIQUID_DAMP = 14;
-const LIQUID_SCALE_MULT = 26;
 const LIQUID_SETTLE_EPS = 0.002;
+/** Dent radius and depth, from the element's own size: sigma is a share of
+ *  its short side, clamped so a keycap still dents visibly and a card does
+ *  not swallow the pointer; depth is a share of sigma. A calm element takes
+ *  a fraction of the depth — a card is not a button. */
+const DENT_SIGMA_K = 0.42;
+const DENT_SIGMA_MIN = 12;
+const DENT_SIGMA_MAX = 30;
+const DENT_DEPTH_K = 0.30;
+const DENT_CALM = 0.4;
 
 let amp = 0, ampV = 0, target = 0;
-let lagX = 50, lagY = 50;        // percent, within the live element's own box
-let pointerXPct = 50, pointerYPct = 50;
+let lagX = 0, lagY = 0;              // CSS px, within the live element's own box
+let pointerX = 0, pointerY = 0;
 let liquidLiveEl = null;
-let liquidDisplacementEl = null;
+let liquidSigma = 0;
+let liquidDepth = 0;
 let liquidRafId = 0;
 let liquidPrevT = 0;
 
+/** What the pointer is currently shaping, for the chrome tier: the element,
+ *  its dent depth right now (signed, CSS px), its dent radius, and the dent's
+ *  centre in viewport px — the LAGGED centre, which trails the pointer, so
+ *  the ring and the surface dent in the same place. */
+function liquidState() {
+  if (!liquidLiveEl) return { el: null, depth: 0, sigma: 0, x: 0, y: 0 };
+  const r = liquidLiveEl.getBoundingClientRect();
+  return { el: liquidLiveEl, depth: liquidDepth * amp, sigma: liquidSigma, x: r.left + lagX, y: r.top + lagY };
+}
+
 function setLiquidLive(el) {
   if (liquidLiveEl === el) return;
-  if (liquidLiveEl) liquidLiveEl.classList.remove("is-liquid-live");
+  if (liquidLiveEl) {
+    liquidLiveEl.classList.remove("is-liquid-live");
+  }
   liquidLiveEl = el;
-  if (liquidLiveEl) liquidLiveEl.classList.add("is-liquid-live");
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  liquidSigma = Math.max(DENT_SIGMA_MIN, Math.min(DENT_SIGMA_MAX, Math.min(r.width, r.height) * DENT_SIGMA_K));
+  liquidDepth = liquidSigma * DENT_DEPTH_K * (el.classList.contains("sl-fx-liquid--calm") ? DENT_CALM : 1);
+  sizeDentRegion(r.width, r.height, liquidDepth);
+  el.classList.add("is-liquid-live");
 }
 
 function integrateLiquid(now) {
@@ -145,28 +204,24 @@ function integrateLiquid(now) {
   const a = LIQUID_K * (target - amp) - LIQUID_DAMP * ampV;
   ampV += a * dt;
   amp += ampV * dt;
-  // The centre chases the pointer with its own lag, so the deformation
-  // arrives after the cursor rather than under it — that trail IS the mass.
-  lagX += (pointerXPct - lagX) * Math.min(dt * 9, 1);
-  lagY += (pointerYPct - lagY) * Math.min(dt * 9, 1);
+  // The dent chases the pointer with its own lag, so it arrives after the
+  // cursor rather than under it — that trail IS the mass.
+  lagX += (pointerX - lagX) * Math.min(dt * 11, 1);
+  lagY += (pointerY - lagY) * Math.min(dt * 11, 1);
 
-  if (liquidLiveEl) {
-    liquidLiveEl.style.setProperty("--slfx-px", `${lagX.toFixed(1)}%`);
-    liquidLiveEl.style.setProperty("--slfx-py", `${lagY.toFixed(1)}%`);
-    liquidLiveEl.style.setProperty("--slfx-d", Math.max(0, Math.min(1, amp)).toFixed(3));
+  if (liquidLiveEl && liquidDisplacementEl) {
+    renderDentMap(lagX, lagY, liquidSigma);
+    // feDisplacementMap samples at scale·(map − 0.5), and the map's peak is
+    // 0.5 out, so a scale of twice the depth moves the edge by exactly the
+    // depth. Left unclamped: a negative scale is valid SVG and IS the release
+    // overshoot — the surface bulging back past rest before it settles.
+    liquidDisplacementEl.setAttribute("scale", (2 * liquidDepth * amp).toFixed(2));
   }
-  // feDisplacementMap's scale is an SVG attribute, not a CSS property.
-  // Left unclamped, unlike --slfx-d below: a negative scale is valid SVG (it
-  // mirrors the displacement rather than erasing it), and clamping it at 0
-  // would silently flatten the release overshoot — the spring crossing back
-  // past rest is exactly the elastic motion this tier exists to show.
-  if (liquidDisplacementEl) liquidDisplacementEl.setAttribute("scale", (amp * LIQUID_SCALE_MULT).toFixed(2));
 
   const settled = target === 0 && Math.abs(amp) < LIQUID_SETTLE_EPS && Math.abs(ampV) < LIQUID_SETTLE_EPS;
   if (settled) {
     liquidRafId = 0;
     amp = 0; ampV = 0;
-    if (liquidLiveEl) liquidLiveEl.style.setProperty("--slfx-d", "0");
     if (liquidDisplacementEl) liquidDisplacementEl.setAttribute("scale", "0");
     setLiquidLive(null);
     return; // idle page costs nothing: the loop does not reschedule itself
@@ -182,17 +237,15 @@ function ensureLiquidLoop() {
 
 function onPointerMove(ev) {
   const el = ev.target instanceof Element ? ev.target.closest(".sl-fx-liquid") : null;
-  if (!el) return;
+  if (!el || el.closest('[data-sl-fx="off"]')) return;
   const r = el.getBoundingClientRect();
-  pointerXPct = ((ev.clientX - r.left) / r.width) * 100;
-  pointerYPct = ((ev.clientY - r.top) / r.height) * 100;
+  pointerX = ev.clientX - r.left;
+  pointerY = ev.clientY - r.top;
   if (liquidLiveEl !== el) {
     // A fresh target starts its lag from its own entry point, not the
-    // previous element's leftover coordinates — those are meaningless in a
-    // different box, and would read as a jump-cut trail rather than a clean
-    // arrival.
-    lagX = pointerXPct;
-    lagY = pointerYPct;
+    // previous element's leftover coordinates.
+    lagX = pointerX;
+    lagY = pointerY;
     setLiquidLive(el);
   }
   target = 1;
@@ -253,51 +306,14 @@ export function mount(root = document) {
   readTokens(html);
   // data-sl-theme and style both matter: a theme switch changes the former,
   // a per-product accent override (root.style.setProperty("--sl-accent-..."))
-  // changes only the latter, and either can change what --slfx-ground should
-  // now hold — a captured background literal, unlike the tokens above, is
-  // never a live var() reference (an SVG filter cannot resolve a custom
-  // property), so nothing keeps it in sync without this.
-  //
-  // recaptureGrounds forces one synchronous style flush per liquid element,
-  // so it only runs when readTokens actually observed one of the four hues
-  // change — not on every `style` mutation. A consumer that writes something
-  // else to <html>'s inline style on scroll or resize (a --vh custom
-  // property, a sticky-header offset) would otherwise turn every such event
-  // into a reflow storm across the whole page. This is a heuristic, not a
-  // guarantee: a consumer that remaps --slc-accent directly without moving
-  // --sl-accent-default would slip past it — better than never recapturing
-  // at all, not a substitute for a real dependency graph.
-  new MutationObserver(() => {
-    const prev = { ...tokens };
-    readTokens(html);
-    if (Object.keys(tokens).some((k) => tokens[k] !== prev[k])) recaptureGrounds(document);
-  }).observe(html, {
+  // changes only the latter. The GPU tier reads the shared `tokens` object,
+  // and this is the one observer that keeps it live.
+  new MutationObserver(() => readTokens(html)).observe(html, {
     attributes: true,
     attributeFilter: ["data-sl-theme", "style"],
   });
 
   injectFilterDefs();
-
-  // Capture every existing liquid element's ground before the attribute
-  // below makes it transparent, then keep capturing for elements a framework
-  // inserts afterwards — the observer fires at a microtask checkpoint, ahead
-  // of the browser's next paint, so it still runs before that element's own
-  // background would otherwise read back as transparent. A node that gains
-  // the class after insertion (rather than arriving with it) is not covered;
-  // that is a real limitation, not exercised by anything this kit ships.
-  const captureGrounds = (scope) => {
-    for (const el of scope.querySelectorAll(".sl-fx-liquid")) captureGround(el);
-  };
-  captureGrounds(root instanceof Document ? document : root);
-  new MutationObserver((records) => {
-    for (const rec of records) {
-      for (const node of rec.addedNodes) {
-        if (!(node instanceof Element)) continue;
-        if (node.matches(".sl-fx-liquid")) captureGround(node);
-        captureGrounds(node);
-      }
-    }
-  }).observe(root, { childList: true, subtree: true });
 
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -387,8 +403,9 @@ export function revokeLive(el) {
 }
 
 /**
- * Tier 2 — the WebGPU material: a shaded metal edge on the glass and aurora
- * families, and the liquid sheen with real inertia. Additive: everything
+ * Tier 2 — the WebGPU chrome on the glass family: a hairline reflecting a
+ * moving environment, a wandering halo, the cursor's reflection, and the
+ * liquid's dent carried into the ring. Additive: everything
  * already works without it, and it is only attached once the device has
  * actually answered. Refuses under high contrast, the same way mount() does —
  * a CSS kill switch cannot silence a canvas, so the refusal has to live here.
@@ -413,16 +430,16 @@ export async function mountGpu() {
   } catch {
     return false;
   }
-  const { bootField, trackLiquid } = mod;
+  const { bootField, trackEdges } = mod;
 
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
   // Below --sl-z-overlay so the sticky translucent header stays above the
-  // material. Composited normally, NOT with plus-lighter: an additive canvas
-  // can only brighten, and metal needs values below the ground it sits on as
-  // much as above it — the dark half of the band is what makes the bright half
-  // read as a reflection. The material writes alpha only in the band and in
-  // the sheen, so nothing else on the page is touched, and no text is ever
+  // chrome. Composited normally, NOT with plus-lighter: an additive canvas
+  // can only brighten, and chrome needs values below the ground it sits on as
+  // much as above it — the dark bands are what make the bright bands read as
+  // a reflection. The chrome writes alpha only on the hairline and in the
+  // halo, so nothing else on the page is touched, and no text is ever
   // painted over.
   //
   // ABSOLUTE, NOT FIXED, and re-topped to the scroll offset every frame by
@@ -448,12 +465,12 @@ export async function mountGpu() {
     `height:${Math.max(root.clientHeight, 1)}px;pointer-events:none;z-index:1`;
   document.body.appendChild(canvas);
 
-  // Kept by observation, not by measuring every effect element on the page
-  // every rendered frame — see trackLiquid()'s own doc comment. bootField()
-  // is handed the read side, the radius refresh and the teardown, so its own
+  // Kept by observation, not by measuring every glass element on the page
+  // every rendered frame — see trackEdges()'s own doc comment. bootField()
+  // is handed the read side, the shape refresh and the teardown, so its own
   // stop() also stops this: nothing is left observing once the field is torn
-  // down.
-  const tracker = trackLiquid();
+  // down. liquidState is how the chrome learns where the surface is dented.
+  const tracker = trackEdges({ liquid: liquidState });
 
   const handle = await bootField({
     canvas,

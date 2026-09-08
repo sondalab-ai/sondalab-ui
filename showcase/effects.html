@@ -213,7 +213,7 @@
         <p class="sl-eyebrow" id="tier-report">TIER 0 — MATERIAL</p>
         <h1 class="anchor">Material becomes <span class="accent">behaviour</span>.</h1>
         <p class="lede">A fifth, opt-in layer above tokens, themes and <b>components.css</b>: four families, each carrying one meaning — glitch marks something re-resolved, liquid says you are recognised, aurora says attention lives here, glass says this is a physical surface. Every class here is additive; it composes onto a shipped <b>.sl-*</b> class and never replaces it. Ships as <b>@sondalab/ui-kit 0.8.0</b>.</p>
-        <p class="lede">Tier 0 is the default and is correct on its own: a resting glass edge, a static aurora ring, no motion. Tier 1 arms on <b>mount()</b> — pointer-driven liquid, finite glitch bursts, an animated aurora sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running. Tier 2 arms on <b>mountGpu()</b> where WebGPU answers, and redraws the glass and aurora edge as a shaded metal in WGSL — reflection, specular, chromatic dispersion at the rims, a halo that wanders on its own, and a dent where the cursor pulls the field. The conic hairline below it is the fallback, not a lesser draft of it.</p>
+        <p class="lede">Tier 0 is the default and is correct on its own: a resting glass hairline, a static aurora arc on focus, no motion. Tier 1 arms on <b>mount()</b> — the liquid’s deformation, finite glitch bursts, the aurora’s sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running. Tier 2 arms on <b>mountGpu()</b> where WebGPU answers, and turns the glass hairline into chrome: a reflection that slides along the edge, a halo that wanders around it, a bright spot under the cursor, and a ring that bends with the surface. The reference for all of it is <b>libraries.dev</b>; the conic hairline beneath the chrome is the fallback, not a lesser draft of it.</p>
       </div>
     </section>
 
@@ -269,17 +269,17 @@
     <section id="liquid">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
-        <p class="cap">You are recognised. Under Tier 1, <b>::before</b> becomes the skin: the host goes transparent and its own captured background moves onto the sheen layer at <b>border-radius: inherit</b> — the declared radius, never rewritten — so a critically-underdamped spring (stiffness, damping, one shared frame loop) can drive an SVG <b>feTurbulence</b> → <b>feDisplacementMap</b> → blur/alpha-stretch "goo" filter that deforms the element's actual silhouette, not just its highlight. The deformed centre trails the pointer with its own lag, and a released shape overshoots and settles rather than easing to a stop. Only one element deforms at a time — the filter is a single shared resource — never the box's text, which would lose subpixel antialiasing across the whole subtree.</p>
+        <p class="cap">You are recognised. The element itself gives under the pointer: an SVG <b>feDisplacementMap</b> on the host, fed a Gaussian push away from the cursor and driven by a critically-underdamped spring, dents the outline a few pixels deep and lets the text near the pointer flee it. The dent trails the pointer with its own lag, a released shape overshoots and settles, and the filter is removed once the spring is still — non-destructive. Only one element deforms at a time, and under Tier 2 the chrome ring bends with the same field, so the edge and the surface never disagree. The radius is never rewritten: the filter distorts whatever the component declared.</p>
         <div class="gallery">
           <div class="g-cell">
-            <span class="g-label">specular on the border</span>
+            <span class="g-label">the edge gives under the pointer</span>
             <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
-            <p class="cap">Move the pointer across the button. Text geometry never moves — only the light does.</p>
+            <p class="cap">Move the pointer across the button. The outline gives where the cursor is, the chrome bends with it, and the text nearest the pointer moves out of its way.</p>
           </div>
           <div class="g-cell" style="padding:0">
             <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm" style="padding:1.4rem">
               <h3 class="sl-card__title">Deterministic resolve</h3>
-              <p class="sl-card__body">A container is not a button: <b>.sl-fx-liquid--calm</b> reduces the amplitude so the sheen reads as material, not as a toy.</p>
+              <p class="sl-card__body">A container is not a button: <b>.sl-fx-liquid--calm</b> takes a fraction of the depth, so the surface reads as material, not as a toy.</p>
             </article>
           </div>
         </div>
@@ -289,7 +289,7 @@
     <section id="aurora">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">03</span><h2>Aurora</h2></div>
-        <p class="cap">Attention lives here. Under Tier 2 the aurora is not a metal at all but emissive light: coloured ribbons running along the perimeter, blurred across it, bleeding outside the element and drifting on their own clock — aurora borealis, not a sheen. Four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed.</p>
+        <p class="cap">Attention lives here. The border beam, in CSS at every tier: a 1px arc of light riding the border — the depth companion at its tails, the accent along it, a white-hot core — with a bloom that follows the arc’s own shape and a wash of the same light just inside the edge, its hue drifting a little while it sweeps. Four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed. Where the light is on, the chrome stands down: the edge belongs to attention.</p>
         <div class="gallery">
           <div class="g-cell" style="padding:0">
             <article class="sl-card sl-fx-glass sl-fx-glass--wide sl-fx-aurora sl-fx-aurora--wide"
@@ -332,7 +332,7 @@
     <section id="glass">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">04</span><h2>Glass</h2></div>
-        <p class="cap">This is a physical surface. Under Tier 2 the edge is shaded metal: the element’s own <b>border-radius</b> is read into a signed distance field, its gradient gives a surface normal, and that normal drives an environment reflection tinted from <b>--sl-accent-default</b> and <b>--sl-accent-depth</b>. Without a GPU the same edge is a 1px conic gradient catching two light angles, plus a single inner highlight — the resting temperament of the same ring aurora uses under attention. Under Tier 0 and Tier 1 glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives — an element carrying both rebinds four custom properties rather than adding a second ring. Under Tier 2 they are two different phenomena and an element carrying both shows both: the metal bezel, with the aurora’s light around it.</p>
+        <p class="cap">This is a physical surface. Under Tier 2 the element’s own border becomes chrome: its <b>border-radius</b> and <b>border-width</b> are read into a signed distance field, and a hairline exactly that wide reflects a moving environment — bright and dark bands, the product’s hue as pastel flecks between them, never a tint over the whole ring — with one soft halo wandering around the edge and a bright spot under the cursor. The chrome’s two poles sit around the page’s own ground, on ink and on paper alike. Without a GPU the same border carries a static conic hairline; glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives an edge, and while the aurora is lit it owns that edge.</p>
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">border-as-edge</span>

@@ -21,9 +21,12 @@ test("neither the GPU module nor the shader carries a colour literal", () => {
 test("the shader's colour comes from the token uniforms, not from itself", () => {
   // WGSL's way to hardcode a colour is a numeric constructor — `vec3f(.9,.2,.1)`
   // — which no regex can tell apart from geometry. So assert the reachable
-  // thing instead: the fragment's output hue is a mix of the two uniforms fed
-  // from --sl-accent-default and --sl-accent-depth, and nothing else.
-  assert.match(shader, /mix\(look\.depth\.rgb,\s*look\.accent\.rgb/);
+  // thing instead: the chrome's palette takes its coloured stops from the two
+  // uniforms fed by --sl-accent-default and --sl-accent-depth, and its poles
+  // from the two neutral tokens, and nothing else.
+  assert.match(shader, /mix\(hi,\s*look\.accent\.rgb/, "the accent must reach the palette");
+  assert.match(shader, /mix\(hi,\s*look\.depth\.rgb/, "the depth companion must reach the palette");
+  assert.match(shader, /fn brightToken\(\)[\s\S]*look\.sheen\.rgb[\s\S]*look\.ground\.rgb/, "the poles come from the neutral tokens");
 });
 
 // The two guards are executable here, so execute them. Node has a `navigator`

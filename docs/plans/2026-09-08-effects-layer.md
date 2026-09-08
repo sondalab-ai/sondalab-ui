@@ -3045,3 +3045,25 @@ node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/effects.css" 
 npm run gen:tokens && git status --short -- packages/
 ```
 No colour literal may enter `effects-shader.js`: every hue arrives as a uniform read from a token. The existing test enforces it and must keep passing.
+
+## Task 18: The rescue — rebuild against the reference
+
+**Status: done (this branch).** Written after the fact as the record of what replaced Tasks 16–17's approach and why; the owner had rejected three rounds, and the fourth was given authority to demolish.
+
+**Root cause, restated from the outside.** Two decisions at the second message set the direction for sixteen tasks: "glitch, aurora and glass are already at full quality in CSS", and "effects spend their budget on light and material, never on weight, radius or added chrome" (which forbade the shape deformation the owner asked for in the first message). Task 17 corrected the first by moving *everything* to a shader; that over-corrected — the reference's own aurora is CSS and its liquid is an SVG filter, and only its chrome environment needs WebGL. The result was a heavy bezel and a marbled cloud where the reference has a hairline and a beam.
+
+**What was measured on the reference before any code was touched** (libraries.dev, `metal-examples-v2` and the beam's computed styles, not its marketing copy):
+- Metal: 2D canvas hairline ≈ border width, filled from a WebGL seven-stop plasma; a soft halo as blurred SVG strokes that wanders; the *element* bent through `feDisplacementMap` fed a per-frame quarter-resolution map; reflections on neighbours.
+- Border beam: pure CSS — `@property` angle at 1.96 s/turn, a conic arc masked to a 1 px ring, radial colour blobs, a blurred copy for glow, hue-rotate ±30°, every layer at 0.24–0.42 opacity, colour wash confined to 28 px inside the edge.
+
+**What changed.**
+- `effects-shader.js` — rewritten. Draws the glass family only: a chrome hairline (`max(border, 1px)/2 + 0.3` half-width) filled from a moving environment through a five-stop palette (`dark · pastel accent · bright · pastel depth · dark`, k = 64, gamma 1.3), a directional key and a darker outer half as multipliers, a fixed-size wandering halo (ray/box intersection places it, so a card and a button get the same halo), a cursor reflection, and the liquid's Gaussian dent on the distance field (`dentAt`) about the *lagged* centre effects.js reports. Poles around the ground: ink → ground lifted 20% toward the bright neutral / bright neutral; paper → 0.60 luma grey / 0.985 luma white with the ground's hue.
+- `effects-gpu.js` — tracks `.sl-fx-glass` only; reads `border-top-width` beside the radius; skips elements whose aurora is lit (the canvas sits above the DOM and would paint over the arc); new `dent` uniform; pointer velocity and the wake are gone.
+- `effects.js` — the liquid filters the **host**: `feImage` → `feDisplacementMap`, `color-interpolation-filters="sRGB"` on every primitive (verified: with it only on `<filter>`, Chrome decodes the map's 128 as 0.22 and slides the element), the map re-rasterised per frame at 0.25 res over the element's region (a static map translated with `feImage` x/y was tried first: Chrome read the covered area as a constant offset). σ = clamp(0.42·short side, 12, 30), depth = 0.30σ (×0.4 calm); spring k = 170, damping 14. `--slfx-ground`, the skin takeover and the ::before sheen are gone. `liquidState()` feeds the chrome.
+- `effects.css` — the aurora is the border-beam recipe at every tier: the arc on `::after` (depth tails, accent, sheen core) with a three-stage `drop-shadow` bloom and ±16° hue drift; an 8 px-blurred wash on `::before` masked to `--slfx-wash`; the chrome stands down under `[data-sl-fx-gpu="on"]` for glass at rest only, and the aurora rules come after it so they win at equal specificity. Kill switches gain `filter: none !important`.
+- Tests: guards test rewritten for the host-level filter and the four painting rules; GPU test asserts the palette is fed from the token uniforms.
+- Spec and L6 rewritten around "who draws what, and with which technology"; catalog and HANDOFF updated.
+
+**Rulings recorded.** (1) The CSS-first sentence and the no-weight constraint are both retired; the reference outranks them. (2) "Shader look" is a look, not a technology — the aurora stays CSS; a GPU aurora would be built only if the reference had one. (3) Filtering text is allowed while the pointer shapes the element; greyscale antialiasing is what every Sondalab surface already sets, and it is what the reference does. (4) An element whose aurora is lit hands its edge to the light; the chrome stands down there rather than compete.
+
+**Still short of the reference, honestly:** reflections on neighbours and the inner reflection are not built; a long straight edge reads calmer than the reference's circle; the busy arc on a filled accent button is faint by construction.

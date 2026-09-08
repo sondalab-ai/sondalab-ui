@@ -48,7 +48,7 @@ const PAINTS = /background(?:-color|-image)?\s*:/;
 
 // Every property an effect can put on a HOST element, as opposed to on a paint
 // layer. A kill switch that only hides ::before/::after leaves these running.
-const HOST_EFFECT = /(?:^|;)\s*(?:animation|box-shadow|border-radius|opacity)\s*:/;
+const HOST_EFFECT = /(?:^|;)\s*(?:animation|box-shadow|border-radius|opacity|filter)\s*:/;
 
 test("both kill switches neutralise host-level effects, not only paint layers", () => {
   const targets = RULES.filter(
@@ -130,11 +130,15 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 3,
-    `exactly three edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 4,
+    `exactly four edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
   assert.ok(declaring.some((s) => s.startsWith(":is(")), "the shared ring must be one");
-  assert.ok(declaring.some((s) => s.includes('[data-sl-fx-live="busy"]')), "the busy arc must be one");
+  assert.ok(
+    declaring.some((s) => s.includes('[data-sl-fx-live="busy"]') && s.endsWith("::after")),
+    "the aurora's arc must be one, and it must cover busy",
+  );
+  assert.ok(declaring.some((s) => s.endsWith("::before")), "the aurora's inner wash must be one");
   assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
 });
 
@@ -153,30 +157,18 @@ test("determinate progress drives arc length, not an animation", () => {
   assert.match(effects, /--slfx-arc:\s*calc\(var\(--slfx-progress\)\s*\*\s*360deg\)/);
 });
 
-test("the liquid filter is applied to paint layers only, never to a text box", () => {
-  // Isolate the RULEs that carry the filter, then assert on their own selectors.
-  // Do NOT slice a text window backwards from the declaration to the previous
-  // `}`: that asserts on whatever happens to sit in the window, so it fails on
-  // the very same rule written on one line, and would pass on any preceding
-  // text that merely contained the substring `::before`. The source is already
-  // comment-stripped at read time, so a rule's selector is all that precedes it.
-  //
-  // Two rules, not one: the sheen (::before) always carries it, and an element
-  // that is also glass or aurora must wobble with its own edge (::after) too —
-  // a crisp ring around a deforming fill would read as broken. Neither may
-  // ever land on the host itself, which is where the text lives.
+test("the liquid filter deforms the host, and only the one host the pointer is shaping", () => {
+  // The element ITSELF deforms — fill, border, text and the aurora's arc
+  // together — as the reference does (libraries.dev/metal, useMetalBend). The
+  // filter is one shared SVG resource whose scale is shared too, so it must be
+  // scoped to the single element effects.js marks live, never to every
+  // .sl-fx-liquid at once.
   const carrying = RULES.filter((r) => /filter:\s*url\(#slfx-liquid\)/.test(r.body));
-  assert.ok(carrying.length > 0, "at least one rule must carry the liquid filter");
-  for (const r of carrying) {
-    assert.match(
-      r.selector, /::(before|after)$/,
-      `the liquid filter must sit on a paint layer, never on the host — got: ${r.selector}`,
-    );
-  }
-  assert.ok(
-    carrying.some((r) => r.selector.endsWith("::before")),
-    "the sheen layer must carry the filter",
-  );
+  assert.equal(carrying.length, 1, "exactly one rule carries the liquid filter");
+  const [rule] = carrying;
+  assert.doesNotMatch(rule.selector, /::(before|after)$/, "the filter must sit on the host, not on a paint layer");
+  assert.match(rule.selector, /\.sl-fx-liquid\.is-liquid-live$/, "the filter must be scoped to the live element");
+  assert.match(rule.selector, /\[data-sl-fx="on"\]/, "the filter must only apply once Tier 1 is armed");
 });
 
 test("the glitch ghosts are real rules on the child span", () => {
@@ -195,11 +187,11 @@ test("the glitch ghosts are real rules on the child span", () => {
 });
 
 test("the glitch never claims the host's paint layers", () => {
-  // ::before is the liquid sheen and ::after is the edge ring, so a glitch that
-  // nested an edge or sheen class under itself would be competing for a layer
+  // ::before is the aurora's wash and ::after is the edge ring, so a glitch that
+  // nested an edge or liquid class under itself would be competing for a layer
   // it does not own.
   const nested = RULES
     .filter((r) => /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/.test(r.selector))
     .map((r) => r.selector);
-  assert.deepEqual(nested, [], "the glitch must not nest an edge or sheen class");
+  assert.deepEqual(nested, [], "the glitch must not nest an edge or liquid class");
 });

@@ -60,7 +60,7 @@ These are always yours (the `sl-ds-auditor` subagent covers them by reading `des
 > - **the budget** — more than one ambient `data-sl-fx-live="on"` per document, or four families stacked on one component;
 > - **the focus ring** — an aurora that replaced the `outline` instead of sitting inside the border band;
 > - **the ARIA** — a `busy` or determinate aurora without `aria-busy` / `role="progressbar"`, which leaves reduced-motion and high-contrast visitors with no state at all;
-> - **the paint-layer budget** — a glitch put on the component instead of on a child span, which silently drops the ring or the sheen.
+> - **the paint-layer budget** — a glitch put on the component instead of on a child span, which silently drops the edge or the aurora's wash.
 >
 > Judge these by reading the surface against `design-language.md` L6 and `docs/specs/2026-09-08-effects-layer-design.md`.
 
