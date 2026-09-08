@@ -72,16 +72,31 @@ test("every animation sits inside a reduced-motion guard", () => {
   }
 });
 
-test("busy is the only mode that replaces the ring background", () => {
-  const overrides = effects.match(/\.sl-fx-aurora\[data-sl-fx-live[^{]*\{[^}]*background:/g) || [];
-  assert.equal(overrides.length, 1, "only the busy arc may re-declare the ring background");
-  assert.match(overrides[0], /busy/, "the one background override must be the busy arc");
+test("only shape re-declares the ring background; states rebind the stops", () => {
+  // The invariant: a STATE temperament never gets its own background — it swaps
+  // --slfx-s0..s3 on the shared ring, which is what keeps glass and aurora one
+  // material. Only rules that change the edge's SHAPE declare their own, and
+  // there are exactly three: the shared ring itself, the busy arc, and the
+  // linear segment. Scanning by selector shape (the earlier form of this test)
+  // silently skipped any override whose selector did not match the guessed
+  // pattern; this scans every edge rule in the file.
+  const rules = effects.match(/[^{}]*\.sl-fx-(?:glass|aurora)[^{}]*\{[^}]*\}/g) || [];
+  const declaring = rules
+    .filter((r) => /\{[^}]*background\s*:/.test(r))
+    .map((r) => r.slice(0, r.indexOf("{")).trim().replace(/\s+/g, " "));
+  assert.equal(
+    declaring.length, 3,
+    `exactly three edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+  );
+  assert.ok(declaring.some((s) => s.startsWith(":is(")), "the shared ring must be one");
+  assert.ok(declaring.some((s) => s.includes('[data-sl-fx-live="busy"]')), "the busy arc must be one");
+  assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
 });
 
 test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
   const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
   const orbit = effects.indexOf("slfx-orbit 1.1s");
-  const ring = effects.indexOf('.sl-fx-aurora[data-sl-fx-live="busy"]::after');
+  const ring = effects.indexOf('sl-fx-aurora[data-sl-fx-live="busy"]');
   assert.ok(orbit > guardStart, "the orbit animation must sit inside the reduced-motion guard");
   assert.ok(ring < guardStart, "the busy ring itself must render regardless of motion preference");
 });

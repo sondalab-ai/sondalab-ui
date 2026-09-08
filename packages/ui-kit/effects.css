@@ -159,11 +159,17 @@
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
 
 /* Busy — a short travelling marker, so a different GEOMETRY rather than a
-   rebinding of the stops. This is the ONE background override in the file; on
-   an element that is both glass and busy, busy wins, which is correct: a
-   resting edge and a working edge are not the same edge. */
+   rebinding of the stops. Declaring its own background is what separates a
+   SHAPE from a STATE: states swap --slfx-s0..s3 on the shared ring, and only
+   the three shape rules (the ring, this arc, and --linear below) paint their
+   own. On an element that is both glass and busy, busy wins, which is correct:
+   a resting edge and a working edge are not the same edge.
+
+   --linear is excluded because the two shapes are incompatible: a conic arc
+   painted into a 2px horizontal strip renders as a smear. A linear aurora has
+   no busy mode — report work on a ring aurora, not on an underline. */
 .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
-.sl-fx-aurora[data-sl-fx-live="busy"]::after {
+.sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after {
   opacity: 1;
   background: conic-gradient(from var(--slfx-angle),
     color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 92%, transparent) 0deg,
@@ -173,7 +179,12 @@
 }
 
 /* Determinate — the arc length is the value; nothing rotates. The edge of a
-   card IS its progress bar: no extra widget, no layout. */
+   card IS its progress bar: no extra widget, no layout.
+   CONSUMER CONTRACT: --slfx-progress must be set INLINE on the element (an
+   inline style is what [style*="--slfx-progress"] detects). Setting it from a
+   stylesheet rule leaves the element in indeterminate mode — self-consistent,
+   but not what the author asked for. element.style.setProperty() and a
+   framework `style` prop both satisfy this. */
 .sl-fx-aurora[data-sl-fx-live="busy"][style*="--slfx-progress"] {
   --slfx-arc: calc(var(--slfx-progress) * 360deg);
 }
@@ -204,7 +215,7 @@
     will-change: background;
   }
   /* Determinate never orbits — its arc length carries the value. */
-  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])::after {
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: slfx-orbit 1.1s linear infinite;
     will-change: background;
   }
