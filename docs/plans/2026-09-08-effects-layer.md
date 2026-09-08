@@ -787,18 +787,36 @@ Generalised from `sondalab-site/src/lib/glitch.ts` and `src/styles/site.css:240-
 **Interfaces:**
 - Consumes: nothing from earlier tasks except the kill switches.
 - Produces: the markup contract `<span class="sl-fx-glitch" data-text="…">`, the burst class `is-glitching`, and the per-burst inline properties `effects.js` sets in Task 6 — `--slfx-gda`, `--slfx-gdb`, `--slfx-gdj` (durations), `--slfx-gpha`, `--slfx-gphb` (negative phase delays), `--slfx-gmul` (amplitude multiplier), `--slfx-sx` (per-shard offset).
+- Also produces two **markup-level** properties that `effects.js` does NOT set: each `.sl-fx-glitch__shard` carries `--slfx-i` (its 0-based band index) and `--slfx-n` (the band count) as inline styles authored by the consumer. The shard `clip-path` divides by them; a shard missing them has an invalid `clip-path` and silently does not render. Task 7's showcase and Task 10's catalog snippet must both emit them.
 
 - [ ] **Step 1: Write the failing test**
 
 Append to `scripts/effects-guards.test.mjs`:
 
 ```js
+test("the glitch ghosts are real rules on the child span", () => {
+  // Assert on real rules, never on substrings: Task 1's kill switches already
+  // contain the literal text `.sl-fx-glitch::before`, so a substring match here
+  // would pass on a file where this task's rules had never been written at all.
+  const ghost = RULES.find(
+    (r) => /\.sl-fx-glitch::before/.test(r.selector) && /content:\s*attr\(data-text\)/.test(r.body),
+  );
+  assert.ok(ghost, "the ghost channels must declare content: attr(data-text)");
+  assert.match(ghost.selector, /\.sl-fx-glitch::after/, "both channels share one rule");
+  assert.match(ghost.body, /mix-blend-mode:\s*screen/, "the channels must blend where they overlap");
+
+  const channels = RULES.filter((r) => /^\.sl-fx-glitch\.is-glitching::(before|after)$/.test(r.selector));
+  assert.equal(channels.length, 2, "both ghost channels must be coloured");
+});
+
 test("the glitch never claims the host's paint layers", () => {
-  // Its ghosts must be pseudo-elements of .sl-fx-glitch itself (the child span),
-  // never of a host that also carries a ring or a sheen.
-  assert.match(effects, /\.sl-fx-glitch::before/);
-  assert.match(effects, /\.sl-fx-glitch::after/);
-  assert.doesNotMatch(effects, /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/);
+  // ::before is the liquid sheen and ::after is the edge ring, so a glitch that
+  // nested an edge or sheen class under itself would be competing for a layer
+  // it does not own.
+  const nested = RULES
+    .filter((r) => /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/.test(r.selector))
+    .map((r) => r.selector);
+  assert.deepEqual(nested, [], "the glitch must not nest an edge or sheen class");
 });
 ```
 
@@ -849,6 +867,12 @@ Insert **before** the `@media (prefers-reduced-motion: no-preference)` block:
    random --slfx-sx per band per burst. The intact copy hides while they show. */
 .sl-fx-glitch__text { position: relative; z-index: 1; }
 .sl-fx-glitch__shards { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+/* MARKUP CONTRACT: each shard carries --slfx-i (this band's index, 0-based) and
+   --slfx-n (how many bands) as inline styles, authored by the consumer — the
+   clip-path below divides by them. effects.js sets only --slfx-sx, the per-burst
+   sideways offset. A shard without them has an invalid clip-path and does not
+   render, which is a silent failure, so emit them on every shard:
+     <span class="sl-fx-glitch__shard" style="--slfx-i:0; --slfx-n:5">…</span> */
 .sl-fx-glitch__shard {
   position: absolute;
   inset: 0;
@@ -1338,6 +1362,16 @@ Model the page shell on `showcase/index.html` (same font links, same sticky head
            data-sl-fx-live="busy" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
            style="--slfx-progress: .62">…</article>
   <button class="sl-btn sl-btn--primary sl-fx-aurora" data-sl-fx-live="busy" aria-busy="true">…</button>
+  ```
+- The shatter variant demonstrated with its markup contract intact — every shard carrying `--slfx-i` and `--slfx-n` inline, since the `clip-path` divides by them and a shard without them silently does not render:
+  ```html
+  <span class="sl-fx-glitch sl-fx-glitch--shatter" data-text="No signal">
+    <span class="sl-fx-glitch__text">No signal</span>
+    <span class="sl-fx-glitch__shards" aria-hidden="true">
+      <span class="sl-fx-glitch__shard" style="--slfx-i:0; --slfx-n:5">No signal</span>
+      <!-- …one per band, i = 0…n-1 -->
+    </span>
+  </span>
   ```
 - The glitch always as a child span:
   ```html
