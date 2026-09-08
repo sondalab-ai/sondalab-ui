@@ -82,7 +82,9 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   // pattern; this scans every edge rule in the file.
   const rules = effects.match(/[^{}]*\.sl-fx-(?:glass|aurora)[^{}]*\{[^}]*\}/g) || [];
   const declaring = rules
-    .filter((r) => /\{[^}]*background\s*:/.test(r))
+    // Longhands too: an earlier form of this guard matched only the shorthand,
+    // which is a narrower net than "any rule that paints a background".
+    .filter((r) => /\{[^}]*background(?:-color|-image)?\s*:/.test(r))
     .map((r) => r.slice(0, r.indexOf("{")).trim().replace(/\s+/g, " "));
   assert.equal(
     declaring.length, 3,
@@ -96,9 +98,16 @@ test("only shape re-declares the ring background; states rebind the stops", () =
 test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
   const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
   const orbit = effects.indexOf("slfx-orbit 1.1s");
-  const ring = effects.indexOf('sl-fx-aurora[data-sl-fx-live="busy"]');
+  // Anchor on the rule that PAINTS the busy ring — the one whose body declares a
+  // background — not on any rule that merely shares a selector prefix. A plain
+  // indexOf on the selector text resolves to the `--slfx-arc` property-setting
+  // rule that sits just above it, and would pass on a file where the painting
+  // rule had been moved inside the guard. Matching the body keeps the assertion
+  // true to its own name while tolerating future `:not()` modifiers.
+  const rule = /[^{}]*\[data-sl-fx-live="busy"\][^{}]*::after[^{}]*\{[^}]*background(?:-color|-image)?\s*:[^}]*\}/.exec(effects);
+  assert.ok(rule, "the busy ring's painting rule must exist");
   assert.ok(orbit > guardStart, "the orbit animation must sit inside the reduced-motion guard");
-  assert.ok(ring < guardStart, "the busy ring itself must render regardless of motion preference");
+  assert.ok(rule.index < guardStart, "the busy ring itself must render regardless of motion preference");
 });
 
 test("determinate progress drives arc length, not an animation", () => {

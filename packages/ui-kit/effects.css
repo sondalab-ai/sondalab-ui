@@ -225,6 +225,6 @@
    reduced opacity — present, honest that something is happening, not moving.
    aria-busy carries the state, which is why that attribute is a requirement. */
 @media (prefers-reduced-motion: reduce) {
-  .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 360deg; }
-  .sl-fx-aurora[data-sl-fx-live="busy"]::after { opacity: 0.55; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear) { --slfx-arc: 360deg; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after { opacity: 0.55; }
 }
