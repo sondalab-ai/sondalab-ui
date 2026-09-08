@@ -147,10 +147,27 @@ test("the liquid filter is applied to the sheen layer only, never to a text box"
   );
 });
 
+test("the glitch ghosts are real rules on the child span", () => {
+  // Assert on real rules, never on substrings: Task 1's kill switches already
+  // contain the literal text `.sl-fx-glitch::before`, so a substring match here
+  // would pass on a file where this task's rules had never been written at all.
+  const ghost = RULES.find(
+    (r) => /\.sl-fx-glitch::before/.test(r.selector) && /content:\s*attr\(data-text\)/.test(r.body),
+  );
+  assert.ok(ghost, "the ghost channels must declare content: attr(data-text)");
+  assert.match(ghost.selector, /\.sl-fx-glitch::after/, "both channels share one rule");
+  assert.match(ghost.body, /mix-blend-mode:\s*screen/, "the channels must blend where they overlap");
+
+  const channels = RULES.filter((r) => /^\.sl-fx-glitch\.is-glitching::(before|after)$/.test(r.selector));
+  assert.equal(channels.length, 2, "both ghost channels must be coloured");
+});
+
 test("the glitch never claims the host's paint layers", () => {
-  // Its ghosts must be pseudo-elements of .sl-fx-glitch itself (the child span),
-  // never of a host that also carries a ring or a sheen.
-  assert.match(effects, /\.sl-fx-glitch::before/);
-  assert.match(effects, /\.sl-fx-glitch::after/);
-  assert.doesNotMatch(effects, /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/);
+  // ::before is the liquid sheen and ::after is the edge ring, so a glitch that
+  // nested an edge or sheen class under itself would be competing for a layer
+  // it does not own.
+  const nested = RULES
+    .filter((r) => /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/.test(r.selector))
+    .map((r) => r.selector);
+  assert.deepEqual(nested, [], "the glitch must not nest an edge or sheen class");
 });

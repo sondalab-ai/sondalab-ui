@@ -284,6 +284,12 @@
    random --slfx-sx per band per burst. The intact copy hides while they show. */
 .sl-fx-glitch__text { position: relative; z-index: 1; }
 .sl-fx-glitch__shards { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+/* MARKUP CONTRACT: each shard carries --slfx-i (this band's index, 0-based) and
+   --slfx-n (how many bands) as inline styles, authored by the consumer — the
+   clip-path below divides by them. effects.js sets only --slfx-sx, the per-burst
+   sideways offset. A shard without them has an invalid clip-path and does not
+   render, which is a silent failure, so emit them on every shard:
+     <span class="sl-fx-glitch__shard" style="--slfx-i:0; --slfx-n:5">…</span> */
 .sl-fx-glitch__shard {
   position: absolute;
   inset: 0;
