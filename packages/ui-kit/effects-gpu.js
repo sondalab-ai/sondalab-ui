@@ -13,7 +13,11 @@
 
 import { SHADER } from "./effects-shader.js";
 
-const MAX_RECTS = 8;
+// Exported: effects.js's trackLiquid() caller and the shader's own array
+// binding must agree on this, or a future bump in one file and not the
+// others writes past the declared WGSL array length — the packer does not
+// bound the index for you.
+export const MAX_RECTS = 8;
 
 /** Parse a computed CSS colour into a gamma-encoded triple.
  *  Carried over from sondalab-site/src/lib/crt-surface.ts's colour helper,
@@ -33,17 +37,93 @@ function hexToGamma(value) {
 }
 
 /**
+ * On-screen `.sl-fx-liquid` elements, kept by observation rather than by
+ * measuring everything every frame. getBoundingClientRect forces layout, so a
+ * full-document querySelectorAll + getBoundingClientRect sweep — done once
+ * per rendered frame, sixty times a second — cost one forced reflow per
+ * matching element per frame, most of them off-screen and discarded.
+ * @param {() => void} [onChange] called once the initial observed set is built
+ * @returns {{rects: () => DOMRect[], stop(): void}}
+ */
+export function trackLiquid(onChange) {
+  const onScreen = new Set();
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target);
+  });
+  const observeAll = () => {
+    io.disconnect();
+    onScreen.clear();
+    for (const el of document.querySelectorAll(".sl-fx-liquid")) io.observe(el);
+  };
+  observeAll();
+  const mo = new MutationObserver(observeAll);
+  mo.observe(document.body, { childList: true, subtree: true });
+  onChange?.();
+  return {
+    rects: () => [...onScreen].slice(0, MAX_RECTS).map((el) => el.getBoundingClientRect()),
+    stop: () => {
+      io.disconnect();
+      mo.disconnect();
+    },
+  };
+}
+
+/**
  * Bring the field up, or leave the page exactly as it is.
- * @param {{canvas: HTMLCanvasElement, rects: () => DOMRect[], tokens: {accent: string, depth: string}}} opts
+ * @param {{canvas: HTMLCanvasElement, rects: () => DOMRect[], stopTracking?: () => void, tokens: {accent: string, depth: string}}} opts
  * @returns {Promise<{stop(): void}|null>} null when the GPU path is unavailable
  */
-export async function bootField({ canvas, rects, tokens }) {
+export async function bootField({ canvas, rects, stopTracking, tokens }) {
   // `typeof navigator` first: a consumer server-rendering its page has no
   // navigator at all, and a bare `in` check would throw there rather than
   // degrade. This is also what makes the guard executable in a test.
   if (typeof navigator === "undefined" || !("gpu" in navigator) || !navigator.gpu) return null;
 
+  // Every piece `stop()` touches is declared here, outside the try block, so
+  // `stop` itself can be defined once — before anything that can fail — and
+  // reused verbatim as the catch's cleanup. Every reference inside it is
+  // optional-chained or existence-checked, so calling it after zero, some or
+  // all of the setup below ran is always safe: there is exactly one teardown
+  // path, not a "happy path stop()" and a separate "boot failed" cleanup that
+  // could silently drift apart from each other.
   let gpu;
+  let onMove;
+  let themeObserver;
+  let loop;
+  let running = true;
+
+  function stop() {
+    if (!running) return;
+    running = false;
+    // GPU teardown is best-effort and individually guarded: this runs from
+    // the device-lost and async-error paths too, where a call against the
+    // dead device could itself throw, and from the boot catch, where some of
+    // these were never created. Either way, the visual restore below must
+    // still happen — a lost or never-booted device must degrade, never
+    // freeze on a dead frame.
+    try {
+      loop?.stop();
+    } catch {
+      /* best-effort: the visual restore below is what actually matters */
+    }
+    try {
+      gpu?.dispose?.();
+    } catch {
+      /* best-effort: the visual restore below is what actually matters */
+    }
+    if (onMove) removeEventListener("pointermove", onMove);
+    themeObserver?.disconnect();
+    stopTracking?.();
+    // Optional-chained/guarded rather than assumed: the guard-path tests in
+    // scripts/effects-gpu.test.mjs call bootField() with a bare `{}` as
+    // `canvas` and no global `document` at all, to exercise the capability
+    // and import/init guards without a DOM — exactly the environment this
+    // function must also degrade cleanly through, same as the `typeof
+    // navigator === "undefined"` check above.
+    canvas?.remove?.();
+    if (typeof document !== "undefined") document.documentElement.removeAttribute("data-sl-fx-gpu");
+  }
+
   try {
     const vgpu = await import("vgpu");
     gpu = await vgpu.init();
@@ -71,8 +151,11 @@ export async function bootField({ canvas, rects, tokens }) {
     // Effect.set()/effect()'s `set` option write each field by name against
     // the shader's own struct/array/vector layout (vgpu/dist/set-packing.js),
     // the same shape sondalab-site's CRT surface passes for its `params`
-    // binding — not a hand-packed Float32Array.
-    const look = { accent: [0, 0, 0, 1], depth: [0, 0, 0, 1], time: 0, rectCount: 0 };
+    // binding — not a hand-packed Float32Array. Every channel starts at zero,
+    // not at an opaque-black placeholder: applyTokens() below overwrites
+    // accent/depth before any GPU call reads them, so there is no reason for
+    // a colour-shaped value to sit here even transiently.
+    const look = { accent: [0, 0, 0, 0], depth: [0, 0, 0, 0], time: 0, rectCount: 0 };
     const rectsUniform = [];
     const pointer = [0.5, 0.5, 0, 0];
 
@@ -87,18 +170,39 @@ export async function bootField({ canvas, rects, tokens }) {
     const fx = vgpu.effect(gpu, SHADER, { set: { look, rects: rectsUniform, pointer } });
     const clock = vgpu.clock(gpu);
 
+    // Re-read the hues on theme change, the same contract effects.js honours.
+    themeObserver = new MutationObserver(applyTokens);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-sl-theme"],
+    });
+
     // Pointer state is normalised to the viewport; zw carries velocity, which
     // is what gives the field its inertia — the whole reason this tier
-    // exists.
+    // exists. Velocity is per-second, not per-event: a per-event delta
+    // (`nx - px`) is event-rate dependent, so a higher-frequency pointer
+    // would report a *smaller* speed for the same physical motion — dividing
+    // by the wall-clock gap between events fixes that.
     let px = 0.5, py = 0.5, vx = 0, vy = 0;
-    function onMove(ev) {
+    let lastMove = 0;
+    onMove = function (ev) {
+      const now = ev.timeStamp || performance.now();
+      // The floor guards a zero dt when two events share a timestamp.
+      const dt = Math.max((now - lastMove) / 1000, 1 / 240);
+      lastMove = now;
       const nx = ev.clientX / innerWidth;
       const ny = ev.clientY / innerHeight;
-      vx = nx - px;
-      vy = ny - py;
+      vx = (nx - px) / dt;
+      vy = (ny - py) / dt;
+      // Cap the flick: the shader reads length(pointer.zw) into a 0..1-ish band.
+      const speed = Math.hypot(vx, vy);
+      if (speed > 1.5) {
+        vx = (vx / speed) * 1.5;
+        vy = (vy / speed) * 1.5;
+      }
       px = nx;
       py = ny;
-    }
+    };
     addEventListener("pointermove", onMove, { passive: true });
 
     function frameUniforms() {
@@ -113,7 +217,11 @@ export async function bootField({ canvas, rects, tokens }) {
       look.time = clock.time;
       look.rectCount = list.length;
 
-      // Velocity decays so the wake keeps moving after the pointer stops.
+      // Velocity decays so the wake keeps moving after the pointer stops. A
+      // fresh pointermove event overwrites vx/vy outright before this can
+      // meaningfully erode it, so during continuous motion the field reads
+      // close to the true current speed; once the pointer stops, this is the
+      // only thing still touching vx/vy, and it carries the wake down.
       vx *= 0.92;
       vy *= 0.92;
       pointer[0] = px;
@@ -124,38 +232,30 @@ export async function bootField({ canvas, rects, tokens }) {
       fx.set({ look, rects: rectsUniform, pointer });
     }
 
-    // Draw one frame synchronously, before this promise resolves, so
-    // mountGpu() in effects.js never sets data-sl-fx-gpu="on" ahead of
-    // anything actually having been submitted to the screen.
+    // Validation and WGSL compilation errors are delivered asynchronously and
+    // never throw out of effect() or frame() — without this, a shader defect
+    // leaves a live handle, the attribute set, the CSS sheen switched off
+    // (Tier 2 owns it once data-sl-fx-gpu="on") and nothing painted, with no
+    // path back to Tier 1. Registered before the first frame, after stop is
+    // defined.
+    gpu.onError?.((err) => {
+      console.error("[sondalab] GPU effects tier stopped:", err);
+      stop();
+    });
+
+    // Draw one frame synchronously, then set the attribute — ownership of
+    // data-sl-fx-gpu lives entirely in this module now, set the moment the
+    // frame that justifies it exists and cleared by the same stop() that
+    // removes the canvas, so mountGpu() in effects.js never has to race it:
+    // it only reports whether bootField() returned a handle at all.
     frameUniforms();
     vgpu.frame(gpu, (f) => f.pass(surf, fx));
+    document.documentElement.setAttribute("data-sl-fx-gpu", "on");
 
-    let running = true;
-    const loop = vgpu.frameLoop(gpu, (f) => {
+    loop = vgpu.frameLoop(gpu, (f) => {
       frameUniforms();
       f.pass(surf, fx);
     });
-
-    function stop() {
-      if (!running) return;
-      running = false;
-      // GPU teardown is best-effort and guarded: this runs from the
-      // device-lost path too, where a call against the dead device could
-      // itself throw. The visual restore below must happen either way — a
-      // lost device must degrade, never freeze on a dead frame.
-      try {
-        loop.stop();
-        // Tears the surface down with it (kernel "resource" phase) and drops
-        // the frame loop's own scheduler registration before that.
-        gpu.dispose();
-      } catch {
-        /* best-effort: the visual restore below is what actually matters */
-      }
-      removeEventListener("pointermove", onMove);
-      themeObserver.disconnect();
-      canvas.remove();
-      document.documentElement.removeAttribute("data-sl-fx-gpu");
-    }
 
     // A lost device must degrade to Tier 1, never freeze on a dead frame.
     // `gpu.device` is vgpu's own Device wrapper and exposes no public loss
@@ -164,25 +264,16 @@ export async function bootField({ canvas, rects, tokens }) {
     // is the standard WebGPU signal and always resolves, never rejects.
     gpu.gpu.lost.then(stop);
 
-    // Re-read the hues on theme change, the same contract effects.js honours.
-    const themeObserver = new MutationObserver(applyTokens);
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-sl-theme"],
-    });
-
     return { stop };
   } catch {
-    // Guard the whole boot, not only the import/init step: the adapter
-    // refused, the module failed to resolve (it is an optionalDependency and
-    // may simply not be installed), the device was lost during creation, or
-    // any later vgpu call threw. The page stays on Tier 1 with no visual
-    // break either way.
-    try {
-      gpu?.dispose?.();
-    } catch {
-      /* best-effort: returning null below is what actually matters */
-    }
+    // One teardown path, not a second hand-rolled one: whatever ran before
+    // the throw — nothing, the pointer listener, the theme observer, the
+    // frame loop, the attribute — stop() unwinds all of it, guarded piece by
+    // piece. The adapter refused, the module failed to resolve (it is an
+    // optionalDependency and may simply not be installed), the device was
+    // lost during creation, or any later vgpu call threw: the page stays on
+    // Tier 1 with no visual break either way.
+    stop();
     return null;
   }
 }

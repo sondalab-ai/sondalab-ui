@@ -222,7 +222,19 @@ export function revokeLive(el) {
  */
 export async function mountGpu() {
   if (!armed) return false;
-  const { bootField } = await import("./effects-gpu.js");
+
+  // Dynamic import is the one path in this tier that can reject at the
+  // caller rather than degrade through bootField()'s own guard: vgpu is an
+  // optionalDependency, and a consumer without it (or a bundler that fails
+  // to resolve it) throws here, before bootField ever runs.
+  let mod;
+  try {
+    mod = await import("./effects-gpu.js");
+  } catch {
+    return false;
+  }
+  const { bootField, trackLiquid } = mod;
+
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
   // Below --sl-z-overlay so the sticky translucent header stays above the field.
@@ -230,17 +242,20 @@ export async function mountGpu() {
     "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;mix-blend-mode:plus-lighter";
   document.body.appendChild(canvas);
 
-  const visible = () =>
-    [...document.querySelectorAll(".sl-fx-liquid")]
-      .map((el) => el.getBoundingClientRect())
-      .filter((r) => r.bottom > 0 && r.top < innerHeight)
-      .slice(0, 8);
+  // Kept by observation, not by measuring every .sl-fx-liquid on the page
+  // every rendered frame — see trackLiquid()'s own doc comment. bootField()
+  // is handed both the read side and the teardown, so its own stop() also
+  // stops this: nothing is left observing once the field is torn down.
+  const tracker = trackLiquid();
 
-  const handle = await bootField({ canvas, rects: visible, tokens });
+  const handle = await bootField({ canvas, rects: tracker.rects, stopTracking: tracker.stop, tokens });
   if (!handle) {
+    tracker.stop();
     canvas.remove();
     return false;
   }
-  document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+  // data-sl-fx-gpu="on" is set inside bootField() itself, right after the
+  // first frame is actually on screen — not here, and not before. This
+  // function only reports whether that happened.
   return true;
 }
