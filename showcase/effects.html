@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en" data-sl-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sondalab Effects Layer</title>
+  <link rel="icon" href="../packages/ui-kit/assets/favicon.svg">
+
+  <!-- Tier A: consume the generated token + theme layers directly (relative). -->
+  <link rel="stylesheet" href="../packages/ui-kit/tokens.css">
+  <link rel="stylesheet" href="../packages/ui-kit/components.css">
+  <link rel="stylesheet" href="../packages/ui-kit/effects.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    /* -- page-local conventions (per spec: not tokens) -------------------- */
+    :root {
+      --sl-measure: 63ch;
+      --sl-gutter: clamp(1.25rem, 5vw, 6rem);
+      --wrap: 74rem;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--sl-bg-canvas);
+      color: var(--sl-text-primary);
+      font-family: var(--sl-font-sans);
+      font-size: clamp(1rem, 0.96rem + 0.2vw, 1.06rem);
+      line-height: var(--sl-line-relaxed);
+      letter-spacing: -0.006em;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    ::selection { background: var(--sl-text-primary); color: var(--sl-bg-canvas); }
+    a { color: inherit; }
+
+    .wrap { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--sl-gutter); }
+
+    h1, h2, h3 {
+      font-family: var(--sl-font-display);
+      font-weight: 600;
+      text-wrap: balance;
+      letter-spacing: -0.02em;
+      line-height: var(--sl-line-tight);
+      margin: 0;
+    }
+    p { max-width: var(--sl-measure); }
+    .cap {
+      font-family: var(--sl-font-mono);
+      font-size: 0.68rem; letter-spacing: 0.06em;
+      color: var(--sl-text-muted);
+    }
+    .cap b { color: var(--sl-accent-default); font-weight: 600; }
+
+    /* -- header: signature sticky translucent ---------------------------- */
+    header.top {
+      position: sticky; top: 0; z-index: var(--sl-z-overlay);
+      background: color-mix(in srgb, var(--sl-bg-canvas) 84%, transparent);
+      backdrop-filter: saturate(140%) blur(10px);
+      border-bottom: 1px solid var(--sl-border-subtle);
+    }
+    .top-in {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding-block: 0.8rem; flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: baseline; gap: 0.6rem; }
+    .brand .word { font-family: var(--sl-font-display); font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+    .brand .word i { font-style: italic; color: var(--sl-accent-default); }
+    .brand .sub { font-family: var(--sl-font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sl-text-muted); }
+    .switches { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+    .switch { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .switch .lbl { font-family: var(--sl-font-mono); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
+    .seg { display: inline-flex; border: 1px solid var(--sl-border-default); }
+    .seg button {
+      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--sl-text-muted); background: none; border: none; border-right: 1px solid var(--sl-border-default);
+      padding: 0.34rem 0.5rem; cursor: pointer; line-height: 1;
+      transition: color var(--sl-motion-fast) var(--sl-motion-ease), background var(--sl-motion-fast) var(--sl-motion-ease);
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button:hover { color: var(--sl-text-primary); }
+    .seg button[aria-pressed="true"] { color: var(--sl-text-on-accent); background: var(--sl-accent-default); }
+
+    /* -- hero: oversized display anchor ------------------------------------ */
+    .hero { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
+    .anchor {
+      font-family: var(--sl-font-display); font-weight: 600;
+      letter-spacing: -0.02em; line-height: var(--sl-line-tight);
+      font-size: clamp(2.4rem, 1.6rem + 4vw, 4.6rem);
+      margin: 1.1rem 0 0;
+    }
+    .anchor .accent { color: var(--sl-accent-default); font-style: italic; }
+    .hero .lede {
+      margin-top: 1.5rem;
+      font-family: var(--sl-font-sans);
+      font-size: clamp(1.08rem, 1rem + 0.4vw, 1.28rem);
+      line-height: var(--sl-line-normal);
+      color: var(--sl-text-secondary);
+      letter-spacing: -0.011em;
+    }
+
+    /* -- sections: hairline + mono index ------------------------------------ */
+    section { padding-block: clamp(3rem, 6vw, 5rem); border-top: 1px solid var(--sl-border-subtle); position: relative; }
+    @media (min-width: 1080px) {
+      section::before {
+        content: ""; position: absolute; top: 0; bottom: 0;
+        left: calc(var(--sl-gutter) - 1px); width: 1px; background: var(--sl-border-subtle);
+      }
+    }
+    .sec-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2.2rem; flex-wrap: wrap; }
+    .sec-idx { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; color: var(--sl-text-muted); }
+    .sec-head h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
+
+    /* -- hairline-grid gallery (shared by every section on this page) ------ */
+    .gallery { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--sl-border-subtle); border: 1px solid var(--sl-border-subtle); margin-top: 1.5rem; }
+    @media (min-width: 720px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+    .g-cell { background: var(--sl-bg-surface); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.9rem; }
+    .g-cell > .g-label { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
+    .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+    .g-demo--col { flex-direction: column; align-items: stretch; }
+
+    /* -- inversion band: the Tier-B remap components.css already documents - */
+    .invert { background: var(--sl-text-primary); color: var(--sl-bg-canvas); }
+    .invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 60%, transparent); }
+    .g-cell .invert {
+      --slc-text: var(--sl-bg-canvas);
+      --slc-text-secondary: color-mix(in srgb, var(--sl-bg-canvas) 82%, transparent);
+      --slc-text-muted: color-mix(in srgb, var(--sl-bg-canvas) 62%, transparent);
+      --slc-surface: color-mix(in srgb, var(--sl-text-primary) 86%, var(--sl-bg-canvas));
+      --slc-border: color-mix(in srgb, currentColor 22%, transparent);
+    }
+
+    /* -- 05 declension: asymmetric split — the unexpected composition call -- */
+    .declension-split { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
+    @media (min-width: 860px) { .declension-split { grid-template-columns: 12rem 1fr; align-items: start; } }
+    .fam-index__label { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--sl-text-muted); margin: 0 0 0.8rem; }
+    .fam-index ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; border-left: 1px solid var(--sl-border-subtle); }
+    .fam-index a { display: block; padding: 0.3rem 0 0.3rem 0.8rem; font-family: var(--sl-font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--sl-text-secondary); text-decoration: none; }
+    .fam-index a:hover { color: var(--sl-accent-default); }
+    .fam-index .cap { margin-top: 1rem; }
+    @media (min-width: 860px) { .fam-index { position: sticky; top: 4.5rem; } }
+    .declension-split .gallery { margin-top: 0; }
+
+    /* -- a replaced control hosts no paint layer: wrap it ------------------- */
+    .sl-field__control { display: block; position: relative; }
+
+    /* -- subtree opt-out demonstration --------------------------------------- */
+    .fx-off { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--sl-border-subtle); }
+    .fx-off .g-demo { margin-top: 0.8rem; gap: 1rem; }
+
+    footer { border-top: 1px solid var(--sl-border-subtle); padding-block: 2.5rem; }
+    footer .cap { max-width: var(--sl-measure); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-in">
+      <div class="brand">
+        <span class="word">sondalab<i>.</i></span>
+        <span class="sub">effects layer</span>
+      </div>
+      <div class="switches">
+        <div class="switch">
+          <span class="lbl">theme</span>
+          <div class="seg" id="theme-seg">
+            <button data-theme="light">Light</button>
+            <button data-theme="dark" aria-pressed="true">Dark</button>
+            <button data-theme="high-contrast">HC</button>
+          </div>
+        </div>
+        <div class="switch">
+          <span class="lbl">accent</span>
+          <div class="seg" id="accent-seg">
+            <button data-accent="amber" aria-pressed="true">Amber</button>
+            <button data-accent="indigo">Indigo</button>
+            <button data-accent="cyan">Cyan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="wrap hero">
+        <p class="sl-eyebrow" id="tier-report">TIER 0 — MATERIAL</p>
+        <h1 class="anchor">Material becomes <span class="accent">behaviour</span>.</h1>
+        <p class="lede">A fifth, opt-in layer above tokens, themes and <b>components.css</b>: four families, each carrying one meaning — glitch marks something re-resolved, liquid says you are recognised, aurora says attention lives here, glass says this is a physical surface. Every class here is additive; it composes onto a shipped <b>.sl-*</b> class and never replaces it. Ships as <b>@sondalab/ui-kit 0.8.0</b>.</p>
+        <p class="lede">Tier 0 is the default and is correct on its own: a resting glass edge, a static aurora ring, no motion. Tier 1 arms on <b>mount()</b> — pointer-driven liquid, finite glitch bursts, an animated aurora sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running.</p>
+      </div>
+    </section>
+
+    <section id="glitch">
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">01</span><h2>Glitch</h2></div>
+        <p class="cap">Something re-resolved. Two ghost channels off <b>--slc-accent</b> and <b>--slfx-depth</b>, blended with <b>mix-blend-mode: screen</b>. JS owns timing only — <b>burst()</b> runs one finite, randomised pulse (200–500ms, capped at 1500ms); a burst requested while another runs is dropped, not queued, because a queue reads as breakage rather than signal. The glitch never uses its host's <b>::before</b>/<b>::after</b> — it lives on a required child <b>&lt;span class="sl-fx-glitch"&gt;</b>, so a button can glitch, sheen and ring all at once without one effect winning by accident.</p>
+        <div class="gallery">
+          <div class="g-cell">
+            <span class="g-label">child span, never the host</span>
+            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora" id="delete-branch">
+              <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
+            </button>
+            <p class="cap">Click to re-resolve. The button itself carries the liquid sheen and the aurora ring; the glitch sits on its child, never on <b>.sl-btn</b> directly.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">shatter — bands jump sideways</span>
+            <span class="sl-fx-glitch sl-fx-glitch--shatter" data-text="No signal" id="no-signal">
+              <span class="sl-fx-glitch__text">No signal</span>
+              <span class="sl-fx-glitch__shards" aria-hidden="true">
+                <span class="sl-fx-glitch__shard" style="--slfx-i:0; --slfx-n:5">No signal</span>
+                <span class="sl-fx-glitch__shard" style="--slfx-i:1; --slfx-n:5">No signal</span>
+                <span class="sl-fx-glitch__shard" style="--slfx-i:2; --slfx-n:5">No signal</span>
+                <span class="sl-fx-glitch__shard" style="--slfx-i:3; --slfx-n:5">No signal</span>
+                <span class="sl-fx-glitch__shard" style="--slfx-i:4; --slfx-n:5">No signal</span>
+              </span>
+            </span>
+            <button class="sl-btn sl-btn--ghost sl-btn--sm" id="simulate-loss">Simulate signal loss</button>
+            <p class="cap">Five bands, each carrying <b>--slfx-i</b> (0…4) and <b>--slfx-n</b> (5) inline — the <b>clip-path</b> divides by them. A shard missing either variable has an invalid <b>clip-path</b> and silently does not render.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">scramble — decode readout</span>
+            <div class="g-demo">
+              <span class="sl-tag" id="probe-tag" data-num="8f2a">8f2a</span>
+              <button class="sl-btn sl-btn--ghost sl-btn--sm" id="rerun-probe">Re-run</button>
+            </div>
+            <p class="cap"><b>scramble()</b> cycles random glyphs and locks the real characters left to right, terminal-readout style — a text change, not motion, so it is safe under reduced motion.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">one burst on mount</span>
+            <div class="sl-callout sl-callout--danger sl-fx-glass">
+              <div>
+                <p class="sl-callout__title"><span class="sl-fx-glitch" data-text="Cache miss" id="callout-glitch">Cache miss</span></p>
+                <p class="sl-callout__body">resolve("q-11c7") re-ran the tool — 340ms, not cached.</p>
+              </div>
+            </div>
+            <p class="cap">A danger callout is the one container that carries a glitch: it marks something that just re-resolved, fired once when the page mounts.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="liquid">
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
+        <p class="cap">You are recognised. A specular sheen on <b>::before</b> tracks the pointer at <b>--slfx-px</b>/<b>--slfx-py</b>, written by one delegated <b>pointermove</b> listener inside a single shared <b>requestAnimationFrame</b> — not one listener per element. The four corners nearest the pointer soften by up to 10px; the box never grows, so nothing reflows around it. Under Tier 1 the sheen is additionally warped by an SVG <b>feTurbulence</b> filter, applied to the sheen layer only — never to the box's text, which would lose subpixel antialiasing across the whole subtree.</p>
+        <div class="gallery">
+          <div class="g-cell">
+            <span class="g-label">specular on the border</span>
+            <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
+            <p class="cap">Move the pointer across the button. Text geometry never moves — only the light does.</p>
+          </div>
+          <div class="g-cell" style="padding:0">
+            <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm" style="padding:1.4rem">
+              <h3 class="sl-card__title">Deterministic resolve</h3>
+              <p class="sl-card__body">A container is not a button: <b>.sl-fx-liquid--calm</b> reduces the amplitude so the sheen reads as material, not as a toy.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="aurora">
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">03</span><h2>Aurora</h2></div>
+        <p class="cap">Attention lives here. One ring, four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed.</p>
+        <div class="gallery">
+          <div class="g-cell" style="padding:0">
+            <article class="sl-card sl-fx-glass sl-fx-glass--wide sl-fx-aurora sl-fx-aurora--wide"
+                     data-sl-fx-live="busy" aria-busy="true" style="padding:1.4rem">
+              <h3 class="sl-card__title">resolve("q-11c7")</h3>
+              <p class="sl-card__body">Indeterminate — the tool has not returned yet.</p>
+            </article>
+            <p class="cap" style="padding:0 1.4rem 1.2rem">A short arc orbits, ~1.1s. <b>aria-busy="true"</b> is the requirement, not the ring.</p>
+          </div>
+          <div class="g-cell" style="padding:0">
+            <article class="sl-card sl-fx-glass sl-fx-glass--wide sl-fx-aurora sl-fx-aurora--wide"
+                     data-sl-fx-live="busy" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
+                     style="--slfx-progress: .62; padding:1.4rem">
+              <h3 class="sl-card__title">migrate --product introspect</h3>
+              <p class="sl-card__body">62% — 8 of 13 surfaces re-audited.</p>
+            </article>
+            <p class="cap" style="padding:0 1.4rem 1.2rem"><b>--slfx-progress</b> pins the arc length; nothing rotates. The card's edge is its own progress bar.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">busy button</span>
+            <button class="sl-btn sl-btn--primary sl-fx-aurora" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
+            <p class="cap">A filled button has no border to inhabit, so its ring sits <i>outside</i> the box — the one case where the aurora is a true external rim.</p>
+          </div>
+          <div class="g-cell" style="padding:0">
+            <article class="sl-card sl-fx-glass sl-fx-aurora" id="sweep-card" style="padding:1.4rem">
+              <h3 class="sl-card__title">Live: daos</h3>
+              <p class="sl-card__body">Holds the one ambient sweep, granted by <b>grantLive()</b> on mount. Granting it elsewhere revokes it here — the coordinator allows exactly one.</p>
+            </article>
+            <p class="cap" style="padding:0 1.4rem 1.2rem">Sweep: ~60% of the ring, rotating continuously, ~3.2s.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">linear — not every edge is a ring</span>
+            <a class="sl-link sl-fx-aurora sl-fx-aurora--linear" href="../docs/specs/2026-09-08-effects-layer-design.md">read the spec</a>
+            <p class="cap">A link's underline, a tab's active bar, an inversion band's rule: the aurora sweeps a segment instead of a perimeter, and never becomes a ring there.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="glass">
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">04</span><h2>Glass</h2></div>
+        <p class="cap">This is a physical surface. A 1px edge, painted with a conic gradient catching two light angles, plus a single inner highlight — the resting temperament of the same ring aurora uses under attention. Glass and aurora are two states of one <b>::after</b>, not two stacked layers: an element carrying both classes rebinds four custom properties rather than adding a second ring.</p>
+        <div class="gallery">
+          <div class="g-cell">
+            <span class="g-label">border-as-edge</span>
+            <button class="sl-btn sl-btn--ghost sl-fx-glass">Cancel</button>
+            <p class="cap">A ghost button's 1px border <b>is</b> the glass edge — no second ring is added on top of it.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">keycap</span>
+            <span>Press <kbd class="sl-kbd sl-fx-glass">⌘</kbd><kbd class="sl-kbd sl-fx-glass">K</kbd></span>
+            <p class="cap">The keycap edge is glass at rest, always — a keycap never takes focus, so it never has an attention state.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">replaced controls host no paint layer</span>
+            <p class="cap">An <b>&lt;input&gt;</b>, <b>&lt;textarea&gt;</b> or <b>&lt;select&gt;</b> renders no <b>::before</b>/<b>::after</b> of its own — the browser owns that box. Wrap it in <b>.sl-field__control</b> instead; the field entry in <a class="sl-link" href="#declension">§05 Declension</a> below carries the live example.</p>
+          </div>
+          <div class="g-cell" style="padding:0">
+            <div class="invert" style="padding:1.4rem">
+              <article class="sl-card sl-fx-glass" style="padding:1.2rem">
+                <h3 class="sl-card__title">On ink</h3>
+                <p class="sl-card__body">The band remaps <b>--slc-border</b> off <b>currentColor</b>, which is what this card's own 1px border reads — it survives the strongest neutral.</p>
+              </article>
+            </div>
+            <span class="g-label" style="padding:0.9rem 1.4rem">without the remap the card's own border inherits the canvas-alpha default and sits invisible on ink. The glitch, liquid, and glass ring colours (<b>--slfx-*</b>) resolve once at <b>:root</b>, so unlike <b>--slc-border</b> they do not currently re-derive inside an inversion band — a gap between this spec's premise and <b>effects.css</b> as shipped.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="declension">
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">05</span><h2>Declension</h2></div>
+        <p class="cap">Every family, applied to the shipped <b>.sl-*</b> classes from <b>@sondalab/ui-kit/components.css</b> — never all four per component, and never one because it was available. The mapping is <b>docs/specs/2026-09-08-effects-layer-design.md</b> §Per-component declension; <b>sl-audit</b> checks colour, not this.</p>
+        <div class="declension-split">
+          <nav class="fam-index" aria-label="Effect families">
+            <p class="fam-index__label">Families</p>
+            <ol>
+              <li><a href="#glitch">01 Glitch</a></li>
+              <li><a href="#liquid">02 Liquid</a></li>
+              <li><a href="#aurora">03 Aurora</a></li>
+              <li><a href="#glass">04 Glass</a></li>
+            </ol>
+            <p class="cap">— never · ○ adapted · ● required</p>
+          </nav>
+          <div class="gallery">
+            <div class="g-cell">
+              <span class="g-label">button — primary · ghost</span>
+              <div class="g-demo">
+                <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora">Run probe</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
+              </div>
+              <p class="cap">Primary: ● liquid, ● aurora, — glass (filled, no edge to cut). Ghost: its border doubles as ● glass, plus ○ liquid and ● aurora.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">card</span>
+              <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm sl-fx-aurora">
+                <h3 class="sl-card__title">daos</h3>
+                <p class="sl-card__body">Focus it, or scroll §03 for the granted sweep — hover for the calm sheen.</p>
+              </article>
+              <p class="cap">● glass always; ○ calm liquid, no tilt; ● aurora only on focus, busy or a granted sweep.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">field</span>
+              <label class="sl-field">
+                <span class="sl-field__label">Product</span>
+                <span class="sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field">
+                  <input class="sl-field__input" type="text" placeholder="introspect">
+                </span>
+              </label>
+              <p class="cap">— never liquid: a field that deforms while typed into trades legibility for spectacle. ● glass + ● aurora bind to the <b>.sl-field__control</b> wrapper, since the <b>&lt;input&gt;</b> itself hosts no pseudo-element.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">tabs</span>
+              <div class="sl-tabs__list" role="tablist" aria-label="Demo">
+                <button class="sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear" role="tab" aria-selected="true">Overview</button>
+                <button class="sl-tabs__tab" role="tab" aria-selected="false">Traces</button>
+                <button class="sl-tabs__tab" role="tab" aria-selected="false">Settings</button>
+              </div>
+              <p class="cap">The active tab's 2px underline is a linear aurora; scramble runs on a label change, not shown here to keep the tab order stable.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">badge · tag</span>
+              <div class="g-demo">
+                <span class="sl-badge sl-badge--success sl-fx-glass">Passed</span>
+                <span class="sl-tag sl-fx-glass">Delivered</span>
+              </div>
+              <p class="cap">— never aurora or liquid, a status pill states a fact instantly. ○ glass is a micro-rim only; scramble runs on value change (§01).</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">dialog</span>
+              <dialog class="sl-dialog sl-fx-glass sl-fx-aurora" open style="position:static;margin:0;max-width:none;width:auto">
+                <h3 class="sl-dialog__title"><span class="sl-fx-glitch sl-fx-glitch--shatter" data-text="Discard branch?" id="dialog-shatter">
+                  <span class="sl-fx-glitch__text">Discard branch?</span>
+                  <span class="sl-fx-glitch__shards" aria-hidden="true">
+                    <span class="sl-fx-glitch__shard" style="--slfx-i:0; --slfx-n:4">Discard branch?</span>
+                    <span class="sl-fx-glitch__shard" style="--slfx-i:1; --slfx-n:4">Discard branch?</span>
+                    <span class="sl-fx-glitch__shard" style="--slfx-i:2; --slfx-n:4">Discard branch?</span>
+                    <span class="sl-fx-glitch__shard" style="--slfx-i:3; --slfx-n:4">Discard branch?</span>
+                  </span>
+                </span></h3>
+                <p class="sl-dialog__body">This clears the cached probe answer. The next call re-runs the tool.</p>
+                <div class="sl-dialog__actions">
+                  <button class="sl-btn sl-btn--ghost sl-btn--sm">Keep</button>
+                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-aurora" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
+                </div>
+              </dialog>
+              <p class="cap">Shatters in once on open — fired here on mount. Per the table its rim stays lit for as long as the dialog is open; this page keeps its one ambient <b>grantLive()</b> grant on the card in §03, so this dialog shows its resting and busy states only, not the sweep.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">table</span>
+              <div style="overflow-x:auto">
+                <table class="sl-table sl-table--numeric">
+                  <thead><tr><th>Probe</th><th>Result</th><th>Latency</th></tr></thead>
+                  <tbody>
+                    <tr class="sl-fx-liquid sl-fx-liquid--calm"><td>q-8f2a</td><td>cached</td><td>0ms</td></tr>
+                    <tr class="sl-fx-liquid sl-fx-liquid--calm"><td>q-11c7</td><td>miss</td><td>340ms</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="cap">Row-level ○ liquid only — the table shell itself takes no family.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">link · kbd</span>
+              <div class="g-demo">
+                <a class="sl-link sl-fx-aurora sl-fx-aurora--linear" href="../packages/ui-kit/agent/sl-audit.mjs">sl-audit source</a>
+                <span>Press <kbd class="sl-kbd sl-fx-glass">⌘</kbd><kbd class="sl-kbd sl-fx-glass">K</kbd></span>
+              </div>
+              <p class="cap">Link: the underline becomes a linear aurora on hover. Kbd: ● glass at rest, always.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">callout</span>
+              <div class="sl-callout sl-callout--danger sl-fx-glass">
+                <div>
+                  <p class="sl-callout__title">Cache miss</p>
+                  <p class="sl-callout__body">resolve("q-4d90") re-ran the tool once, on mount.</p>
+                </div>
+              </div>
+              <p class="cap">● glass edge, plus one glitch burst on mount — the wired example is §01.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">eyebrow · section index</span>
+              <p class="sl-eyebrow">Section eyebrow</p>
+              <p class="cap">Scrambles once as it enters the viewport — every <b>.sec-idx</b> on this page (<b>01</b>…<b>05</b>) does exactly this; scroll away and back to watch one re-run.</p>
+            </div>
+            <div class="g-cell" style="padding:0">
+              <div class="invert sl-fx-aurora sl-fx-aurora--linear" style="padding:1.4rem">
+                <p class="sl-eyebrow">On ink</p>
+                <div class="g-demo" style="margin-top:0.7rem">
+                  <span class="sl-tag">Inverted</span>
+                  <span class="sl-badge sl-badge--success">Passed</span>
+                  <span class="sl-kbd">esc</span>
+                </div>
+              </div>
+              <span class="g-label" style="padding:0.9rem 1.4rem">inversion band — a linear aurora traces its rule, never a ring</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fx-off">
+          <p class="sl-eyebrow">data-sl-fx="off" — subtree opt-out</p>
+          <div data-sl-fx="off" class="g-demo">
+            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora">Run probe</button>
+            <article class="sl-card sl-fx-glass sl-fx-aurora" data-sl-fx-live="on" style="padding:1rem;max-width:20rem">
+              <p class="sl-card__body">Inert inside this region — no sheen, no ring, no glitch, regardless of the classes present.</p>
+            </article>
+          </div>
+          <p class="cap">A dense data region inside an expressive page — a table of probe results, say — declines the whole layer at the subtree boundary without touching a single component class.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p class="cap">Sondalab Effects Layer — reference implementation, sibling to <b>showcase/index.html</b>. Consumes <b>@sondalab/ui-kit</b> tokens, themes and components (Tier A) plus <b>effects.css</b> + <b>effects.js</b> (Tier 1). Spec: <b>docs/specs/2026-09-08-effects-layer-design.md</b>. Status: PoC implemented (not delivered).</p>
+    </div>
+  </footer>
+
+  <script>
+    // Registry accents: one hue per product. hover/active/subtle re-derive from
+    // it via the theme layer (color-mix / relative-color) — the one-var contract.
+    var ACCENTS = { amber: "#F5A83C", indigo: "#8b96ff", cyan: "#2ee6c0" };
+    var root = document.documentElement;
+
+    function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+    function press(seg, attr, val) {
+      seg.querySelectorAll("button").forEach(function (b) {
+        b.setAttribute("aria-pressed", b.getAttribute(attr) === val ? "true" : "false");
+      });
+    }
+
+    function applyTheme(t) { root.setAttribute("data-sl-theme", t); press(document.getElementById("theme-seg"), "data-theme", t); store("sl-demo-theme", t); }
+    function applyAccent(a) {
+      var hue = ACCENTS[a]; if (!hue) return;
+      root.style.setProperty("--sl-accent-default", hue);
+      root.style.setProperty("--sl-focus-ring", hue);
+      press(document.getElementById("accent-seg"), "data-accent", a);
+      store("sl-demo-accent", a);
+    }
+
+    document.getElementById("theme-seg").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (b) applyTheme(b.getAttribute("data-theme"));
+    });
+    document.getElementById("accent-seg").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (b) applyAccent(b.getAttribute("data-accent"));
+    });
+
+    applyTheme(load("sl-demo-theme") || "dark");
+    applyAccent(load("sl-demo-accent") || "amber");
+  </script>
+
+  <script type="module">
+    import { mount, burst, scramble, grantLive } from "../packages/ui-kit/effects.js";
+    const tier1 = mount();
+    document.getElementById("tier-report").textContent = tier1 ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
+
+    // -- one ambient aurora, granted once (Decision 5: capped at one per document) --
+    const sweepCard = document.getElementById("sweep-card");
+    if (sweepCard) grantLive(sweepCard);
+
+    // -- glitch: click to re-resolve --
+    const deleteBtn = document.getElementById("delete-branch");
+    if (deleteBtn) {
+      const glitchEl = deleteBtn.querySelector(".sl-fx-glitch");
+      deleteBtn.addEventListener("click", function (e) { e.preventDefault(); burst(glitchEl); });
+    }
+    const simulateLoss = document.getElementById("simulate-loss");
+    const noSignal = document.getElementById("no-signal");
+    if (simulateLoss && noSignal) {
+      simulateLoss.addEventListener("click", function () { burst(noSignal); });
+    }
+
+    // -- one burst on mount, staggered so both are visible (only one burst runs at a time) --
+    const calloutGlitch = document.getElementById("callout-glitch");
+    if (calloutGlitch) setTimeout(function () { burst(calloutGlitch); }, 500);
+    const dialogShatter = document.getElementById("dialog-shatter");
+    if (dialogShatter) setTimeout(function () { burst(dialogShatter); }, 1400);
+
+    // -- scramble: re-run a probe id --
+    const rerun = document.getElementById("rerun-probe");
+    const probeTag = document.getElementById("probe-tag");
+    if (rerun && probeTag) {
+      rerun.addEventListener("click", function () {
+        probeTag.dataset.num = Math.random().toString(16).slice(2, 6);
+        scramble(probeTag);
+      });
+    }
+
+    // -- scramble on entering the viewport: the mono section index --
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) { if (entry.isIntersecting) scramble(entry.target); });
+      }, { threshold: 0.6 });
+      document.querySelectorAll(".sec-idx").forEach(function (el) { io.observe(el); });
+    }
+  </script>
+</body>
+</html>
