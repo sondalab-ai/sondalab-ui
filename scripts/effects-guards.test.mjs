@@ -113,3 +113,11 @@ test("the busy orbit is inside the reduced-motion guard but the busy ring is not
 test("determinate progress drives arc length, not an animation", () => {
   assert.match(effects, /--slfx-arc:\s*calc\(var\(--slfx-progress\)\s*\*\s*360deg\)/);
 });
+
+test("the liquid filter is applied to the sheen layer only, never to a text box", () => {
+  const filtered = effects.match(/[^\n]*filter:\s*url\(#slfx-liquid\)[^\n]*/g) || [];
+  assert.equal(filtered.length, 1, "exactly one rule may carry the liquid filter");
+  const block = effects.slice(0, effects.indexOf(filtered[0]));
+  const selector = block.slice(block.lastIndexOf("}") + 1).trim();
+  assert.match(selector, /::before/, "the liquid filter must sit on the ::before sheen, never on the host");
+});

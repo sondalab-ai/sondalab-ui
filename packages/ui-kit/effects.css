@@ -204,6 +204,50 @@
     transparent 100%);
 }
 
+/* ══ LIQUID — you are recognised ═════════════════════════════════════════════
+   Two composed parts, both non-destructive:
+     1. a specular sheen on ::before, centred on the pointer and scaled by
+        engagement, warped by an SVG turbulence filter under Tier 1;
+     2. a per-corner radius morph, so the box softens towards the pointer.
+
+   NON-DESTRUCTIVENESS IS A CONTRACT: the filter is applied to the sheen
+   pseudo-element ONLY, never to a box containing text. An SVG filter disables
+   subpixel antialiasing across its whole subtree, so filtering the host would
+   visibly degrade every label in the interface. Text geometry never moves —
+   only light does. */
+
+.sl-fx-liquid {
+  --slfx-c0: 0px; --slfx-c1: 0px; --slfx-c2: 0px; --slfx-c3: 0px;
+  position: relative;
+  border-radius:
+    calc(var(--sl-radius-md, 6px) + var(--slfx-c0))
+    calc(var(--sl-radius-md, 6px) + var(--slfx-c1))
+    calc(var(--sl-radius-md, 6px) + var(--slfx-c2))
+    calc(var(--sl-radius-md, 6px) + var(--slfx-c3));
+  transition: border-radius var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+}
+
+.sl-fx-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(9rem 9rem at var(--slfx-px) var(--slfx-py),
+    color-mix(in srgb, var(--slfx-sheen) calc(var(--slfx-d) * 34%), transparent) 0%,
+    transparent 68%);
+  transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+
+/* Tier 1 only: effects.js injects <filter id="slfx-liquid"> on mount(). Without
+   it the sheen is a clean gradient, which is the correct Tier 0 reading. */
+[data-sl-fx="on"] .sl-fx-liquid::before
+{ filter: url(#slfx-liquid); }
+
+/* Reduced amplitude for containers — a card is not a button. */
+.sl-fx-liquid--calm { --slfx-d: 0; }
+[data-sl-fx="on"] .sl-fx-liquid--calm::before { filter: none; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* Sweep: 210deg → 570deg rather than 0 → 360, so the rotation is continuous
      instead of snapping back through the resting angle. */
