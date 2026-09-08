@@ -216,10 +216,31 @@ export function revokeLive(el) {
 }
 
 /**
- * Tier 2 — the WebGPU liquid field. A documented no-op until Slice 3 lands, so
- * consumers can call it today and get the honest answer rather than a crash.
+ * Tier 2 — the WebGPU liquid field. Additive: everything already works without
+ * it, and it is only attached once the device has actually answered.
  * @returns {Promise<boolean>} whether the GPU tier came up
  */
 export async function mountGpu() {
-  return false;
+  if (!armed) return false;
+  const { bootField } = await import("./effects-gpu.js");
+  const canvas = document.createElement("canvas");
+  canvas.setAttribute("aria-hidden", "true");
+  // Below --sl-z-overlay so the sticky translucent header stays above the field.
+  canvas.style.cssText =
+    "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;mix-blend-mode:plus-lighter";
+  document.body.appendChild(canvas);
+
+  const visible = () =>
+    [...document.querySelectorAll(".sl-fx-liquid")]
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.bottom > 0 && r.top < innerHeight)
+      .slice(0, 8);
+
+  const handle = await bootField({ canvas, rects: visible, tokens });
+  if (!handle) {
+    canvas.remove();
+    return false;
+  }
+  document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+  return true;
 }

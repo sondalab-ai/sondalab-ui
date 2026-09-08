@@ -372,6 +372,10 @@
     animation: slfx-shatter var(--slfx-gda, 0.16s) steps(2) infinite;
     animation-delay: calc(var(--slfx-i) * -0.028s);
   }
+
+  /* Tier 2 owns the sheen: the CSS gradient stands down so the two do not
+     double up. The radius morph stays — it is geometry, not light. */
+  [data-sl-fx-gpu="on"] .sl-fx-liquid::before { background: none; filter: none; }
 }
 
 /* Under `reduce` the busy arc does not orbit: it renders as a static ring at
