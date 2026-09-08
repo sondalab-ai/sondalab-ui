@@ -257,9 +257,20 @@ export function mount(root = document) {
   // now hold — a captured background literal, unlike the tokens above, is
   // never a live var() reference (an SVG filter cannot resolve a custom
   // property), so nothing keeps it in sync without this.
+  //
+  // recaptureGrounds forces one synchronous style flush per liquid element,
+  // so it only runs when readTokens actually observed one of the four hues
+  // change — not on every `style` mutation. A consumer that writes something
+  // else to <html>'s inline style on scroll or resize (a --vh custom
+  // property, a sticky-header offset) would otherwise turn every such event
+  // into a reflow storm across the whole page. This is a heuristic, not a
+  // guarantee: a consumer that remaps --slc-accent directly without moving
+  // --sl-accent-default would slip past it — better than never recapturing
+  // at all, not a substitute for a real dependency graph.
   new MutationObserver(() => {
+    const prev = { ...tokens };
     readTokens(html);
-    recaptureGrounds(document);
+    if (Object.keys(tokens).some((k) => tokens[k] !== prev[k])) recaptureGrounds(document);
   }).observe(html, {
     attributes: true,
     attributeFilter: ["data-sl-theme", "style"],
