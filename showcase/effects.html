@@ -536,7 +536,7 @@
   </script>
 
   <script type="module">
-    import { mount, burst, scramble, grantLive } from "../packages/ui-kit/effects.js";
+    import { mount, mountGpu, burst, scramble, grantLive } from "../packages/ui-kit/effects.js";
     const tier1 = mount();
     document.getElementById("tier-report").textContent = tier1 ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
 
@@ -552,12 +552,19 @@
       const live = html.getAttribute("data-sl-fx") === "on"
         && html.getAttribute("data-sl-theme") !== "high-contrast"
         && !window.matchMedia(REDUCE_QUERY).matches;
-      document.getElementById("tier-report").textContent = live ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
+      const gpu = html.getAttribute("data-sl-fx-gpu") === "on";
+      document.getElementById("tier-report").textContent = gpu
+        ? "TIER 2 — FIELD"
+        : live ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
     }
     new MutationObserver(updateTierLabel).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["data-sl-theme"],
     });
+
+    // Tier 2 is additive: everything above already works without it, and the
+    // label reports what actually resolved rather than what was attempted.
+    if (await mountGpu()) updateTierLabel();
 
     // -- one ambient aurora, granted once (Decision 5: capped at one per document) --
     const sweepCard = document.getElementById("sweep-card");

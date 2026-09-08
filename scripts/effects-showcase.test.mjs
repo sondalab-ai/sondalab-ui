@@ -44,3 +44,8 @@ test("the glitch is a child span, never the component itself", () => {
   assert.doesNotMatch(html, /class="[^"]*sl-btn[^"]*sl-fx-glitch/);
   assert.match(html, /<span class="sl-fx-glitch" data-text=/);
 });
+
+test("the showcase reports which tier actually resolved", () => {
+  assert.match(html, /mountGpu\(\)/);
+  assert.match(html, /TIER 2/);
+});
