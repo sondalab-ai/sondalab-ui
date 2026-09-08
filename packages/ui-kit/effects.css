@@ -1,0 +1,84 @@
+/* @sondalab/ui-kit — effects.css
+   Hand-authored (NOT generated). Opt-in effects layer above components.css.
+   Contract: docs/specs/2026-09-08-effects-layer-design.md
+
+   ── What this layer is ──────────────────────────────────────────────────────
+   Four families, each carrying one meaning (spec §Decision 1):
+     glitch  — something re-resolved      liquid — you are recognised
+     aurora  — attention lives here       glass  — this is a physical surface
+   An effect that means nothing is switched off. Classes are ADDITIVE: they
+   compose onto components.css classes and never replace them.
+
+   ── Paint layers (spec §Decision 3b) ────────────────────────────────────────
+   Every element has exactly two: ::before is the liquid sheen, ::after is the
+   edge ring shared by glass and aurora. The glitch therefore lives on a child
+   <span class="sl-fx-glitch" data-text="…">, never on the host. Replaced form
+   controls render no pseudo-element at all — wrap them in .sl-field__control.
+
+   ── Colour contract ─────────────────────────────────────────────────────────
+   No literal, ever. Every hue is a color-mix() over a role-var. Role-vars carry
+   a --sl-* fallback so this file also works imported without components.css.
+   Mask colours use the `black` keyword: `#000` would be extracted by sl-audit
+   as a design colour. */
+
+:root {
+  /* colour roles */
+  --slfx-depth: var(--sl-accent-depth, var(--slc-accent, var(--sl-accent-default)));
+  --slfx-sheen: var(--slc-text, var(--sl-text-primary));
+  --slfx-edge-warm: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 24%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth) 24%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-dim: var(--slc-border-subtle, var(--sl-border-subtle));
+
+  /* edge geometry — the ring grows INWARD so it never meets the focus outline */
+  --slfx-ring-w: 1px;
+  --slfx-bloom: 0px;
+  --slfx-arc: 65deg;
+
+  /* ring gradient stops — rebound per state; transparent means "no ring" */
+  --slfx-s0: transparent;
+  --slfx-s1: transparent;
+  --slfx-s2: transparent;
+  --slfx-s3: transparent;
+
+  /* liquid pointer state — written by effects.js inside one shared rAF */
+  --slfx-px: 50%;
+  --slfx-py: 50%;
+  --slfx-d: 0;
+}
+
+/* ══ KILL SWITCHES ═══════════════════════════════════════════════════════════
+   Three, all hard requirements (spec §Decision 4). They are declared before the
+   families so a reader meets the exits before the entrances. */
+
+/* 1 — high contrast: the palette is a legibility contract, not a canvas. */
+:root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
+:root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
+:root[data-sl-theme="high-contrast"] .sl-fx-liquid::before,
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch::after {
+  display: none;
+}
+:root[data-sl-theme="high-contrast"] .sl-fx-glass,
+:root[data-sl-theme="high-contrast"] .sl-fx-aurora {
+  box-shadow: none;
+}
+
+/* 2 — subtree opt-out: a dense data region inside an expressive page. */
+[data-sl-fx="off"] .sl-fx-glass::after,
+[data-sl-fx="off"] .sl-fx-aurora::after,
+[data-sl-fx="off"] .sl-fx-liquid::before,
+[data-sl-fx="off"] .sl-fx-glitch::before,
+[data-sl-fx="off"] .sl-fx-glitch::after {
+  display: none;
+}
+
+/* 3 — reduced motion is not a rule here but a structural one: every `animation:`
+   declaration in this file sits inside a `prefers-reduced-motion: no-preference`
+   block, and effects.js never sets data-sl-fx="on" under `reduce`. Static
+   material (the glass edge, a resting ring) survives, because it is not motion.
+   scripts/effects-guards.test.mjs enforces the placement mechanically. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Every animated rule in this file lives here. Filled by Task 3 (aurora
+     sweep/orbit), Task 4 (liquid settle) and Task 5 (glitch channels). */
+}
