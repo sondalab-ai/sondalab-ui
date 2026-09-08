@@ -2276,6 +2276,98 @@ export async function mountGpu() {
 }
 ```
 
+- [ ] **Step 2b: Fixes from review**
+
+Six corrections, four of them load-bearing. Apply all of them to `packages/ui-kit/effects-gpu.js` and `packages/ui-kit/effects.js`.
+
+**(a) The inertia signal is two orders of magnitude too small.** `vx = nx - px` is a per-*event* delta in viewport-normalised units: a fast 1000 px/s drag across a 1440 px viewport at ~120 Hz coalesced events gives ≈0.006, which the shader spends as `0.4 * length(pointer.zw)` against a constant `0.6` — under half a percent of amplitude. It is also event-rate dependent, so a higher-frequency pointer reports a *smaller* speed for the same physical motion. Since inertia is the sole justification for this tier existing, this would fail the tier's own eye-check. Convert to a per-second velocity:
+
+```js
+let px = 0.5, py = 0.5, vx = 0, vy = 0;
+let lastMove = 0;
+function onMove(ev) {
+  const now = ev.timeStamp || performance.now();
+  // Per-second, not per-event: a higher-frequency pointer must not report a
+  // smaller speed for the same physical motion. The floor guards a zero dt
+  // when two events share a timestamp.
+  const dt = Math.max((now - lastMove) / 1000, 1 / 240);
+  lastMove = now;
+  const nx = ev.clientX / innerWidth;
+  const ny = ev.clientY / innerHeight;
+  vx = (nx - px) / dt;
+  vy = (ny - py) / dt;
+  // Cap the flick: the shader reads length(pointer.zw) into a 0..1-ish band.
+  const speed = Math.hypot(vx, vy);
+  if (speed > 1.5) { vx = (vx / speed) * 1.5; vy = (vy / speed) * 1.5; }
+  px = nx;
+  py = ny;
+}
+```
+
+The per-frame `vx *= 0.92` decay stays as it is — that is what carries the wake after the pointer stops.
+
+**(b) `data-sl-fx-gpu="on"` can be left set on a dead field.** The attribute's lifecycle is split across two modules: `mountGpu` sets it, `stop()` clears it. If the device is lost during boot, `stop()` runs as a microtask before `mountGpu`'s continuation, so the attribute gets set *after* the teardown that was meant to prevent it — on a page with no canvas, with `running` already false so nothing clears it again. The CSS then suppresses the Tier 1 sheen permanently with no field to replace it: exactly the visual break the fallback contract forbids, and unrecoverable.
+
+Move ownership entirely into `bootField`: set the attribute there, immediately after the first synchronous frame, and let `stop()` clear it. `mountGpu` then only reports what happened:
+
+```js
+// in bootField, after the pre-loop frame:
+document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+
+// in effects.js:
+const handle = await bootField({ canvas, rects: visible, tokens });
+if (!handle) { canvas.remove(); return false; }
+return true;
+```
+
+**(c) No async-error listener.** WebGPU validation and WGSL compilation errors are delivered asynchronously and never throw out of `effect()` or `frame()`. A shader defect would leave a live handle, the attribute set, the CSS sheen switched off and nothing painted — silently. Since nothing in this repo can compile the shader, this is the failure most likely to actually occur. Register before the first frame, after `stop` is defined:
+
+```js
+gpu.onError?.((err) => {
+  // Validation and compilation errors never throw out of effect() or frame().
+  // Without this a shader defect is a blank field with no path back to Tier 1.
+  console.error("[sondalab] GPU effects tier stopped:", err);
+  stop();
+});
+```
+
+**(d) The frame loop measures every liquid element on the page, every frame.** `visible()` runs a full-document `querySelectorAll` and then `getBoundingClientRect()` on every match — N forced synchronous layouts per frame, sixty times a second, to then discard most of them. Keep the set of on-screen elements with an `IntersectionObserver`, refresh the observed set from a `MutationObserver`, and measure only what is actually visible:
+
+```js
+/** On-screen liquid elements, kept by observation rather than by measuring
+ *  everything each frame. getBoundingClientRect forces layout, so the old
+ *  full-document sweep cost one forced reflow per element per frame. */
+function trackLiquid(onChange) {
+  const onScreen = new Set();
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target);
+  });
+  const observeAll = () => {
+    io.disconnect();
+    onScreen.clear();
+    for (const el of document.querySelectorAll(".sl-fx-liquid")) io.observe(el);
+  };
+  observeAll();
+  const mo = new MutationObserver(observeAll);
+  mo.observe(document.body, { childList: true, subtree: true });
+  onChange?.();
+  return {
+    rects: () => [...onScreen].slice(0, MAX_RECTS).map((el) => el.getBoundingClientRect()),
+    stop: () => { io.disconnect(); mo.disconnect(); },
+  };
+}
+```
+
+`mountGpu` builds this and passes `tracker.rects`; `bootField`'s `stop()` calls `tracker.stop`. Wire the tracker's teardown through the handle so nothing is left observing.
+
+**(e) Ordering and teardown hygiene.** Four small corrections in the same file:
+- Declare `themeObserver` before `stop()` closes over it — today it is safe only because `.then()` defers to a microtask, one reordering away from a TDZ `ReferenceError` on the device-lost path.
+- Separate `loop.stop()` and `gpu.dispose()` into their own `try` blocks: if the first throws, the device is never destroyed.
+- Remove the `pointermove` listener in the boot `catch`, so a failure after it is attached does not leak an inert closure.
+- Guard `await import("./effects-gpu.js")` in `mountGpu` with a `try`/`catch` returning `false`. It is the one path in this tier that can reject at a caller rather than degrade.
+
+**(f) Two constants.** Export `MAX_RECTS` from `effects-gpu.js` and use it in `effects.js` rather than a bare `8` — the packer does not bound the index to the declared array length, so a future bump in one file and not the others writes past the buffer. And replace the `[0, 0, 0, 1]` uniform placeholder with `[0, 0, 0, 0]`: it is overwritten before any GPU call, but an opaque-black colour value in a file that bans colour literals is a bad look in a contract package.
+
 - [ ] **Step 3: Add the Tier 2 CSS switch to `effects.css`**
 
 Append, inside the existing `@media (prefers-reduced-motion: no-preference)` block:
