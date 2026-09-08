@@ -146,3 +146,11 @@ test("the liquid filter is applied to the sheen layer only, never to a text box"
     `the liquid filter must sit on the ::before sheen, never on the host — got: ${carrying[0].selector}`,
   );
 });
+
+test("the glitch never claims the host's paint layers", () => {
+  // Its ghosts must be pseudo-elements of .sl-fx-glitch itself (the child span),
+  // never of a host that also carries a ring or a sheen.
+  assert.match(effects, /\.sl-fx-glitch::before/);
+  assert.match(effects, /\.sl-fx-glitch::after/);
+  assert.doesNotMatch(effects, /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/);
+});

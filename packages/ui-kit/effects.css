@@ -247,6 +247,55 @@
 .sl-fx-liquid--calm { --slfx-d: 0; }
 [data-sl-fx="on"] .sl-fx-liquid--calm::before { filter: none; }
 
+/* ══ GLITCH — something re-resolved ══════════════════════════════════════════
+   Short staccato RGB pulses in a finite burst. Two ghost channels off the brand
+   pair (accent + its depth companion), blended with mix-blend-mode: screen so
+   they mix where they overlap. JS owns TIMING (finite, randomised, capped); CSS
+   owns the look and loops while `is-glitching` is present.
+
+   The element needs data-text set to its own text, for the ghost copies. It is
+   a CHILD of the component, never the component itself (spec §Decision 3b) —
+   that keeps ::before/::after free for the ring and the sheen on the host.
+
+   Unlike the sondalab-site original this respects prefers-reduced-motion. The
+   site's opt-out is a site-level blessed deviation; l4-reduced-motion is R on
+   IDE/App/Page and the kit ships to all of them. */
+
+.sl-fx-glitch {
+  position: relative;
+  display: inline-block;
+  --slfx-gx: 2px;
+}
+.sl-fx-glitch::before,
+.sl-fx-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  white-space: inherit;
+  mix-blend-mode: screen;
+}
+.sl-fx-glitch.is-glitching::before { color: var(--slc-accent, var(--sl-accent-default)); }
+.sl-fx-glitch.is-glitching::after  { color: var(--slfx-depth); }
+
+/* Shatter variant — during a burst the text breaks into horizontal bands that
+   jump sideways. Bands are stacked copies clipped to one strip each; JS sets a
+   random --slfx-sx per band per burst. The intact copy hides while they show. */
+.sl-fx-glitch__text { position: relative; z-index: 1; }
+.sl-fx-glitch__shards { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.sl-fx-glitch__shard {
+  position: absolute;
+  inset: 0;
+  white-space: nowrap;
+  opacity: 0;
+  clip-path: inset(
+    calc(var(--slfx-i) / var(--slfx-n) * 100%) 0
+    calc((var(--slfx-n) - 1 - var(--slfx-i)) / var(--slfx-n) * 100%) 0);
+}
+.sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__text { opacity: 0; }
+.sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 1; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* Sweep: 210deg → 570deg rather than 0 → 360, so the rotation is continuous
      instead of snapping back through the resting angle. */
@@ -261,6 +310,51 @@
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: slfx-orbit 1.1s linear infinite;
     will-change: background;
+  }
+
+  /* Base jitter on the real text plus a third colour halo via text-shadow. */
+  @keyframes slfx-glitch-jit {
+    0%   { transform: translate(0, 0); text-shadow: none; }
+    50%  {
+      transform: translate(calc(-0.4 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0);
+      text-shadow:
+        calc(0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--slc-accent-hover, var(--sl-accent-hover)) 55%, transparent),
+        calc(-0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--slfx-depth) 40%, transparent);
+    }
+    100% { transform: translate(calc(0.4 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0); text-shadow: none; }
+  }
+  /* Accent ghost — slices flicker, opacity pulses so it strobes. */
+  @keyframes slfx-glitch-a {
+    0%   { opacity: 0.22; transform: translate(calc(-1 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0);      clip-path: inset(0 0 68% 0); }
+    50%  { opacity: 0.4;  transform: translate(calc(-1.7 * var(--slfx-gx) * var(--slfx-gmul, 1)), 1px);  clip-path: inset(55% 0 12% 0); }
+    100% { opacity: 0.28; transform: translate(calc(-0.6 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0);    clip-path: inset(28% 0 42% 0); }
+  }
+  /* Depth ghost — offset phase so the two channels cross and blend. */
+  @keyframes slfx-glitch-b {
+    0%   { opacity: 0.38; transform: translate(calc(var(--slfx-gx) * var(--slfx-gmul, 1)), 0);           clip-path: inset(52% 0 18% 0); }
+    50%  { opacity: 0.2;  transform: translate(calc(1.7 * var(--slfx-gx) * var(--slfx-gmul, 1)), -1px);  clip-path: inset(8% 0 60% 0); }
+    100% { opacity: 0.34; transform: translate(calc(0.6 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0);     clip-path: inset(30% 0 40% 0); }
+  }
+  @keyframes slfx-shatter {
+    0%   { transform: translateX(0); }
+    50%  { transform: translateX(calc(var(--slfx-sx, 0px) * var(--slfx-gmul, 1))); }
+    100% { transform: translateX(0); }
+  }
+
+  [data-sl-fx="on"] .sl-fx-glitch.is-glitching {
+    animation: slfx-glitch-jit var(--slfx-gdj, 0.16s) steps(2) infinite;
+  }
+  [data-sl-fx="on"] .sl-fx-glitch.is-glitching::before {
+    animation: slfx-glitch-a var(--slfx-gda, 0.16s) steps(2) infinite;
+    animation-delay: var(--slfx-gpha, 0s);
+  }
+  [data-sl-fx="on"] .sl-fx-glitch.is-glitching::after {
+    animation: slfx-glitch-b var(--slfx-gdb, 0.16s) steps(2) infinite;
+    animation-delay: var(--slfx-gphb, 0s);
+  }
+  [data-sl-fx="on"] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard {
+    animation: slfx-shatter var(--slfx-gda, 0.16s) steps(2) infinite;
+    animation-delay: calc(var(--slfx-i) * -0.028s);
   }
 }
 
