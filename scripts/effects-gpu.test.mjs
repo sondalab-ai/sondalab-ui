@@ -28,8 +28,8 @@ test("the shader's colour comes from the token uniforms, not from itself", () =>
 
 // The two guards are executable here, so execute them. Node has a `navigator`
 // global without a `gpu` member, which is the first guard's exact condition;
-// and `vgpu` is an optionalDependency that need not be installed, so a faked
-// capability drives the dynamic import into the second guard's catch.
+// and `vgpu` is an optional peer dependency that need not be installed, so a
+// faked capability drives the dynamic import into the second guard's catch.
 
 test("bootField returns null when WebGPU is absent", async () => {
   const { bootField } = await import(pathToFileURL(GPU).href);
@@ -50,9 +50,15 @@ test("bootField returns null when the device refuses or vgpu is missing", async 
   }
 });
 
-test("vgpu is optional, never a hard dependency", () => {
-  assert.ok(pkg.optionalDependencies?.vgpu, "vgpu must be an optionalDependency");
+test("vgpu is an optional peer dependency, never installed by default", () => {
+  // optionalDependencies is not opt-in: npm installs those by default, and
+  // "optional" only tolerates an install failure. A peer dependency marked
+  // optional in peerDependenciesMeta is the shape that actually stays out of
+  // a consumer's install unless they ask for it.
   assert.ok(!pkg.dependencies, "the kit stays free of hard runtime dependencies");
+  assert.ok(!pkg.optionalDependencies, "vgpu must not be an optionalDependency — npm installs those by default");
+  assert.equal(pkg.peerDependencies?.vgpu, "^0.3.1", "vgpu must be declared as a peer dependency");
+  assert.equal(pkg.peerDependenciesMeta?.vgpu?.optional, true, "the vgpu peer must be marked optional");
 });
 
 test("the shader ships as an inline template string, not through a loader", () => {

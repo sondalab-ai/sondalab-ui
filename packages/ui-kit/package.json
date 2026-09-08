@@ -65,7 +65,10 @@
     "README.md",
     "agent/"
   ],
-  "optionalDependencies": {
+  "peerDependencies": {
     "vgpu": "^0.3.1"
+  },
+  "peerDependenciesMeta": {
+    "vgpu": { "optional": true }
   }
 }

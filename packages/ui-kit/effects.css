@@ -47,26 +47,59 @@
    Three, all hard requirements (spec §Decision 4). They are declared before the
    families so a reader meets the exits before the entrances. */
 
-/* 1 — high contrast: the palette is a legibility contract, not a canvas. */
+/* 1 & 2 — high contrast and the subtree opt-out neutralise the HOST as well as
+   its paint layers. The glitch animates its host and its shards, the liquid
+   morphs the host's border-radius, and the glass paints an inset highlight on
+   the host — a switch over ::before/::after alone left three of the four
+   families running. `!important` is load-bearing here: effects.js writes the
+   pointer and bulge properties as inline styles, which beat a plain rule.
+   The opt-out matches the element carrying it AND its subtree: the attribute
+   on an effect element must disable that element, which descendant-only
+   selectors never did. The opt-out branch is compounded with the family
+   classes, not left bare: `[data-sl-fx="off"] *` alone is every descendant,
+   and an unscoped `box-shadow: none !important` would strip elevation and
+   focus rings off ordinary components.css elements inside the region — a
+   collateral defect the high-contrast branch, already class-scoped, never had. */
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
+  animation: none !important;
+  box-shadow: none !important;
+  --slfx-c0: 0px !important;
+  --slfx-c1: 0px !important;
+  --slfx-c2: 0px !important;
+  --slfx-c3: 0px !important;
+  --slfx-d: 0 !important;
+  --slfx-bloom: 0px !important;
+}
+
+/* The shatter variant replaces the label with jumping bands, so restoring the
+   text is part of switching it off, not a separate concern. */
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch__text,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__text,
+.sl-fx-glitch__text:is([data-sl-fx="off"], [data-sl-fx="off"] *) { opacity: 1 !important; }
+
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch__shard,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__shard { opacity: 0 !important; }
+
+/* Paint layers. The edge selector is written as two rules rather than
+   :is(.sl-fx-glass, .sl-fx-aurora)::after so this text never collides with
+   the shared ring rule's own selector further down the file — a test locates
+   that rule by its first occurrence of that exact substring. */
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-liquid::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
-:root[data-sl-theme="high-contrast"] .sl-fx-glitch::after {
-  display: none;
-}
-:root[data-sl-theme="high-contrast"] .sl-fx-glass,
-:root[data-sl-theme="high-contrast"] .sl-fx-aurora {
-  box-shadow: none;
-}
-
-/* 2 — subtree opt-out: a dense data region inside an expressive page. */
-[data-sl-fx="off"] .sl-fx-glass::after,
-[data-sl-fx="off"] .sl-fx-aurora::after,
-[data-sl-fx="off"] .sl-fx-liquid::before,
-[data-sl-fx="off"] .sl-fx-glitch::before,
-[data-sl-fx="off"] .sl-fx-glitch::after {
-  display: none;
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid::before,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
+:is(.sl-fx-glass, .sl-fx-aurora):is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
+.sl-fx-liquid:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
+.sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
+.sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::after {
+  display: none !important;
 }
 
 /* 3 — reduced motion is not a rule here but a structural one: every `animation:`
@@ -382,6 +415,6 @@
    reduced opacity — present, honest that something is happening, not moving.
    aria-busy carries the state, which is why that attribute is a requirement. */
 @media (prefers-reduced-motion: reduce) {
-  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear) { --slfx-arc: 360deg; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
   .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after { opacity: 0.55; }
 }

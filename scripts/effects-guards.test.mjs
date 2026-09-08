@@ -46,24 +46,35 @@ function rules(css) {
 const RULES = rules(effects);
 const PAINTS = /background(?:-color|-image)?\s*:/;
 
-// The kill-switch assertions from Task 1 sliced to end-of-file, which stops
-// testing anything the moment a later task appends a rule naming one of these
-// classes — which is exactly what this task does. Bound them to the selectors
-// that actually carry the switch. REPLACE the two Task 1 kill-switch tests
-// with these two; do not add them alongside.
-const selectorsCarrying = (attr) =>
-  (effects.match(new RegExp(`[^{}]*\\[${attr}\\][^{}]*\\{`, "g")) || []).join("\n");
+// Every property an effect can put on a HOST element, as opposed to on a paint
+// layer. A kill switch that only hides ::before/::after leaves these running.
+const HOST_EFFECT = /(?:^|;)\s*(?:animation|box-shadow|border-radius|opacity)\s*:/;
 
-const FAMILIES = ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"];
+test("both kill switches neutralise host-level effects, not only paint layers", () => {
+  const targets = RULES.filter(
+    (r) => /\.sl-fx-/.test(r.selector) && !/::(before|after)/.test(r.selector) && HOST_EFFECT.test(r.body),
+  );
+  assert.ok(targets.length > 0, "the parser must find the host-level rules");
 
-test("effects.css disables every family under high-contrast", () => {
-  const sel = selectorsCarrying('data-sl-theme="high-contrast"');
-  for (const cls of FAMILIES) assert.ok(sel.includes(cls), `high-contrast kill switch must cover .${cls}`);
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    const killed = RULES.filter((r) => r.selector.includes(attr) && HOST_EFFECT.test(r.body));
+    assert.ok(killed.length > 0, `no rule neutralises a host-level effect under [${attr}]`);
+    const covered = killed.map((r) => r.selector).join(" ");
+    for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"]) {
+      assert.ok(covered.includes(cls), `[${attr}] must neutralise host-level .${cls}, not just its pseudo-elements`);
+    }
+  }
 });
 
-test("effects.css honours the subtree opt-out for every family", () => {
-  const sel = selectorsCarrying('data-sl-fx="off"');
-  for (const cls of FAMILIES) assert.ok(sel.includes(cls), `opt-out must cover .${cls}`);
+test("the opt-out disables the element carrying it, not only its descendants", () => {
+  // `[data-sl-fx="off"] .sl-fx-glass` is descendant-only: putting the attribute
+  // ON an effect element did nothing at all. design-language.md L6 and the spec
+  // both say "that element and its subtree".
+  const selectors = RULES.map((r) => r.selector).join("\n");
+  assert.match(
+    selectors, /:is\(\[data-sl-fx="off"\],\s*\[data-sl-fx="off"\] \*\)/,
+    'the opt-out must match [data-sl-fx="off"] itself as well as its subtree',
+  );
 });
 
 test("the ring is one shared rule, not one per family", () => {

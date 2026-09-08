@@ -313,7 +313,7 @@ let gpu;
 try { gpu = await (await import('vgpu')).init(); } catch { return false; }
 ```
 
-`vgpu` is declared an **`optionalDependency`**, so a consumer that never calls `mountGpu()` installs nothing extra and a failed optional install cannot break `npm install`. The WGSL ships as an inline template string, not through a bundler plugin — the same call `sondalab-site` made, for the same reason (no consumer build-config change).
+`vgpu` is declared an **optional peer dependency** — `peerDependencies` plus `peerDependenciesMeta: { vgpu: { optional: true } }`, not `optionalDependencies`, which npm installs by default and only tolerates failing. As a peer, `vgpu` is not installed at all unless the consumer's own `package.json` requests it, so a consumer that never calls `mountGpu()` installs nothing extra and a missing peer cannot break `npm install`. The WGSL ships as an inline template string, not through a bundler plugin — the same call `sondalab-site` made, for the same reason (no consumer build-config change).
 
 ### Public API — `effects.js`
 
@@ -377,7 +377,7 @@ The `HANDOFF.md` addition is the substantive part: `sl-audit` can check that `ef
 
 ### Slice 3 — WebGPU liquid field
 
-`packages/ui-kit/effects-gpu.js` + the WGSL template string, `vgpu` as an `optionalDependency`, `showcase/effects.html` extended to report which tier actually resolved. Package version → `0.8.1` or `0.9.0` depending on whether `mountGpu` lands as a new export in Slice 1's API surface (it does — so `0.8.1`, patch, since Slice 1 already publishes the export as a documented no-op returning `false`).
+`packages/ui-kit/effects-gpu.js` + the WGSL template string, `vgpu` as an optional peer dependency, `showcase/effects.html` extended to report which tier actually resolved. Package version → `0.8.1` or `0.9.0` depending on whether `mountGpu` lands as a new export in Slice 1's API surface (it does — so `0.8.1`, patch, since Slice 1 already publishes the export as a documented no-op returning `false`).
 
 ## Risks
 

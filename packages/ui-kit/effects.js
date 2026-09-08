@@ -114,6 +114,15 @@ function randomizeGhosts(el) {
   }
 }
 
+/** The conditions under which no effect may run, re-read at call time rather
+ *  than sampled at mount: a visitor can switch theme, or turn on reduced
+ *  motion, long after the page loaded. */
+function suppressed() {
+  if (typeof document === "undefined") return true;
+  if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return true;
+  return window.matchMedia(REDUCE).matches;
+}
+
 /* ── public API ──────────────────────────────────────────────────────────────*/
 
 /**
@@ -156,8 +165,11 @@ export function burst(el, { burstMin = 200, burstMax = 500 } = {}) {
   // isConnected: a caller may take the element out of the document between the
   // event and the burst, and a timer toggling a class on a detached node would
   // otherwise run for nothing. The guard is carried over from the prior art,
-  // where it exists because of a real defect.
-  if (!armed || burstActive || !el?.isConnected) return;
+  // where it exists because of a real defect. blocked is read into a local
+  // rather than called inline so the guard clause stays a single paren-free
+  // condition — scripts/effects-js.test.mjs locates it by that shape.
+  const blocked = suppressed();
+  if (!armed || burstActive || blocked || !el?.isConnected) return;
   burstActive = true;
   randomizeGhosts(el);
   el.classList.add("is-glitching");
@@ -170,13 +182,19 @@ export function burst(el, { burstMin = 200, burstMax = 500 } = {}) {
 /**
  * Decode-scramble a short label: cycle random glyphs and lock the real
  * characters in left to right, terminal-readout style. Distinct from the ghost
- * glitch, and safe under reduced motion because it is a text change, not motion.
+ * glitch. Under high contrast or reduced motion the cycling is suppressed, but
+ * the final value still lands immediately — dropping it would replace absent
+ * motion with absent information, the same failure the aurora fix closes.
  * Reads its target from data-num so repeats stay correct.
  * @param {HTMLElement} el
  */
 export function scramble(el, { duration = 520, tick = 45 } = {}) {
   if (!el || el.dataset.scrambling === "1") return;
   const final = el.dataset.num ?? el.textContent ?? "";
+  if (suppressed()) {
+    el.textContent = final;
+    return;
+  }
   const n = final.length;
   const glyphs = "0123456789#/\\<>";
   el.dataset.scrambling = "1";
