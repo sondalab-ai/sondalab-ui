@@ -58,6 +58,16 @@ test("importing the module has no side effects", async () => {
   await assert.doesNotReject(load);
 });
 
+/** The single statement a guard opens: from its text to its first `;`.
+ *  Bounding to the statement matters — mount()'s two guards sit three lines
+ *  apart, and a window spanning both accepted either one's `return false` as
+ *  evidence for the other, so gutting one guard alone went undetected. */
+function guardStatement(body, needle) {
+  const at = body.indexOf(needle);
+  assert.ok(at > -1, `guard not found: ${needle}`);
+  return body.slice(at, body.indexOf(";", at) + 1);
+}
+
 test("mount() refuses to arm Tier 1 under reduced motion", () => {
   const body = fnBody("mount");
   const guard = body.indexOf("matchMedia(REDUCE).matches");
@@ -65,7 +75,10 @@ test("mount() refuses to arm Tier 1 under reduced motion", () => {
   assert.ok(guard > -1, "mount() must consult the reduced-motion query");
   assert.ok(arm > -1, "mount() must arm Tier 1 by setting data-sl-fx");
   assert.ok(guard < arm, "the reduced-motion guard must precede arming, not follow it");
-  assert.match(body.slice(guard, arm), /return false/, "the guard must return, not merely branch");
+  assert.match(
+    guardStatement(body, "matchMedia(REDUCE).matches"), /return false/,
+    "the reduced-motion guard must return, not merely branch",
+  );
 });
 
 test("mount() refuses to arm Tier 1 under high contrast", () => {
@@ -74,7 +87,10 @@ test("mount() refuses to arm Tier 1 under high contrast", () => {
   const arm = body.indexOf('setAttribute("data-sl-fx", "on")');
   assert.ok(guard > -1, "mount() must consult the theme");
   assert.ok(guard < arm, "the high-contrast guard must precede arming");
-  assert.match(body.slice(guard, arm), /return false/);
+  assert.match(
+    guardStatement(body, '"high-contrast"'), /return false/,
+    "the high-contrast guard must return, not merely branch",
+  );
 });
 
 test("burst drops an overlapping burst rather than queueing it", () => {
