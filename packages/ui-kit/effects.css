@@ -21,6 +21,13 @@
    Mask colours use the `black` keyword: `#000` would be extracted by sl-audit
    as a design colour. */
 
+/* Replaced form controls render no pseudo-element at all, so a field's effects
+   bind to this wrapper instead. The control must FILL it: a wrapper that is a
+   block while its input keeps an intrinsic width leaves the ring marking a box
+   wider than the field, which is what shipped before anyone looked at it. */
+.sl-field__control { display: block; position: relative; }
+.sl-field__control > :is(input, textarea, select) { box-sizing: border-box; width: 100%; }
+
 :root {
   /* colour roles */
   --slfx-depth: var(--sl-accent-depth, var(--slc-accent, var(--sl-accent-default)));

@@ -153,8 +153,8 @@
     @media (min-width: 860px) { .fam-index { position: sticky; top: 4.5rem; } }
     .declension-split .gallery { margin-top: 0; }
 
-    /* -- a replaced control hosts no paint layer: wrap it ------------------- */
-    .sl-field__control { display: block; position: relative; }
+    /* .sl-field__control now ships from effects.css itself, including the
+       control-fill rule this page never had — no page-local rule needed. */
 
     /* <dialog> is position:absolute in the UA stylesheet; neutralise it here,
        not in a style attribute — an inline style would also beat the effects

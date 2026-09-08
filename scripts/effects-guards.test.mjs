@@ -109,7 +109,17 @@ test("every animation sits inside a reduced-motion guard", () => {
   }
   assert.ok(guards.length > 0, "effects.css must contain a reduced-motion guard");
 
-  for (const m of effects.matchAll(/\banimation:/g)) {
+  // `animation: none` is exempt: it STOPS animation, which is what the kill
+  // switches do, and they must apply regardless of motion preference. The rule
+  // this guard exists for is that nothing may START animating outside the
+  // block — so match a declaration that names an animation, not one that
+  // removes it. The lookahead sits directly after the colon, not after `\s*`:
+  // a trailing `\s*(?!none\b)` lets the quantifier give back the whitespace it
+  // matched, so the lookahead is satisfied at zero-width (the character right
+  // after the colon is never "none", it's a space) and the exemption never
+  // actually fires — `animation: none` still matches. Folding the optional
+  // whitespace into the lookahead itself closes that.
+  for (const m of effects.matchAll(/\banimation:(?!\s*none\b)/g)) {
     const inside = guards.some(([a, b]) => m.index > a && m.index < b);
     assert.ok(inside, `animation at index ${m.index} is outside a reduced-motion guard`);
   }
