@@ -625,13 +625,86 @@ git commit -m "feat(ui-kit): aurora — static, sweep, busy and determinate mode
 
 Append to `scripts/effects-guards.test.mjs`:
 
+First, add a brace-aware rule extractor near the top of `scripts/effects-guards.test.mjs`, just below the comment-stripped `effects` constant, and **retrofit every rule-scanning assertion in the file to use it** — the three-shape background test and the busy ring/orbit ordering test from Task 3 as well as the new filter test. A flat `/[^{}]*\{[^}]*\}/g` cannot see nesting: inside `@media (...) { .sel { … } }` it consumes the prelude and the inner rule's opening brace together and reports the media prelude as a selector. That is the fourth assertion in this file to test something adjacent to what it names, so it gets fixed as a class rather than as an instance.
+
+```js
+/** Leaf CSS rules with their own selector, body and source index.
+ *  At-rules are descended into rather than reported, so a rule nested in an
+ *  @media block yields its real selector and its real position in the file. */
+function rules(css) {
+  const out = [];
+  const parse = (from, to) => {
+    let selStart = from;
+    let j = from;
+    while (j < to) {
+      if (css[j] === "}") { selStart = ++j; continue; }
+      if (css[j] !== "{") { j++; continue; }
+      let depth = 1;
+      let k = j + 1;
+      while (k < to && depth > 0) {
+        if (css[k] === "{") depth++;
+        else if (css[k] === "}") depth--;
+        k++;
+      }
+      const body = css.slice(j + 1, k - 1);
+      if (body.includes("{")) parse(j + 1, k - 1);
+      else out.push({ selector: css.slice(selStart, j).trim().replace(/\s+/g, " "), body, index: selStart });
+      selStart = k;
+      j = k;
+    }
+  };
+  parse(0, css.length);
+  return out;
+}
+
+const RULES = rules(effects);
+const PAINTS = /background(?:-color|-image)?\s*:/;
+```
+
+Retrofit the two Task 3 assertions to read from `RULES`:
+
+```js
+test("only shape re-declares the ring background; states rebind the stops", () => {
+  const declaring = RULES
+    .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && PAINTS.test(r.body))
+    .map((r) => r.selector);
+  assert.equal(
+    declaring.length, 3,
+    `exactly three edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+  );
+  assert.ok(declaring.some((s) => s.startsWith(":is(")), "the shared ring must be one");
+  assert.ok(declaring.some((s) => s.includes('[data-sl-fx-live="busy"]')), "the busy arc must be one");
+  assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
+});
+
+test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
+  const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
+  const orbit = effects.indexOf("slfx-orbit 1.1s");
+  const ring = RULES.find(
+    (r) => /\[data-sl-fx-live="busy"\]/.test(r.selector) && r.selector.endsWith("::after") && PAINTS.test(r.body),
+  );
+  assert.ok(ring, "the busy ring's painting rule must exist");
+  assert.ok(orbit > guardStart, "the orbit animation must sit inside the reduced-motion guard");
+  assert.ok(ring.index < guardStart, "the busy ring itself must render regardless of motion preference");
+});
+```
+
+Then the new filter test:
+
 ```js
 test("the liquid filter is applied to the sheen layer only, never to a text box", () => {
-  const filtered = effects.match(/[^\n]*filter:\s*url\(#slfx-liquid\)[^\n]*/g) || [];
-  assert.equal(filtered.length, 1, "exactly one rule may carry the liquid filter");
-  const block = effects.slice(0, effects.indexOf(filtered[0]));
-  const selector = block.slice(block.lastIndexOf("}") + 1).trim();
-  assert.match(selector, /::before/, "the liquid filter must sit on the ::before sheen, never on the host");
+  // Isolate the RULE that carries the filter, then assert on its own selector.
+  // Do NOT slice a text window backwards from the declaration to the previous
+  // `}`: that asserts on whatever happens to sit in the window, so it fails on
+  // the very same rule written on one line, and would pass on any preceding
+  // text that merely contained the substring `::before`. The source is already
+  // comment-stripped at read time, so a rule's selector is all that precedes it.
+  const carrying = RULES.filter((r) => /filter:\s*url\(#slfx-liquid\)/.test(r.body));
+  assert.equal(carrying.length, 1, "exactly one rule may carry the liquid filter");
+  assert.match(
+    carrying[0].selector, /::before$/,
+    `the liquid filter must sit on the ::before sheen, never on the host — got: ${carrying[0].selector}`,
+  );
 });
 ```
 
