@@ -2296,9 +2296,13 @@ function onMove(ev) {
   const ny = ev.clientY / innerHeight;
   vx = (nx - px) / dt;
   vy = (ny - py) / dt;
-  // Cap the flick: the shader reads length(pointer.zw) into a 0..1-ish band.
+  // Cap the flick at 1.0 so the shader's `0.6 + 0.4 * length(pointer.zw)` tops
+  // out at exactly 1.0, which is the band its comment claims. A zero-size
+  // viewport makes the deltas non-finite; zero the velocity rather than
+  // letting a NaN reach a uniform.
   const speed = Math.hypot(vx, vy);
-  if (speed > 1.5) { vx = (vx / speed) * 1.5; vy = (vy / speed) * 1.5; }
+  if (!Number.isFinite(speed)) { vx = 0; vy = 0; }
+  else if (speed > 1) { vx /= speed; vy /= speed; }
   px = nx;
   py = ny;
 }
@@ -2311,8 +2315,20 @@ The per-frame `vx *= 0.92` decay stays as it is — that is what carries the wak
 Move ownership entirely into `bootField`: set the attribute there, immediately after the first synchronous frame, and let `stop()` clear it. `mountGpu` then only reports what happened:
 
 ```js
-// in bootField, after the pre-loop frame:
-document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+// in bootField, after the pre-loop frame. Gated on `running` because gpu.onError
+// is registered before this line: if an error were ever delivered synchronously
+// rather than asynchronously, stop() would already have run and this would set
+// the attribute on a dead field with nothing left to clear it. Track that it was
+// set, so a failed boot's stop() cannot strip a live field's attribute.
+let attributeSet = false;
+if (running) {
+  document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+  attributeSet = true;
+}
+// ...and in stop(), clear it only if this handle set it:
+//   if (attributeSet && typeof document !== "undefined") {
+//     document.documentElement.removeAttribute("data-sl-fx-gpu");
+//   }
 
 // in effects.js:
 const handle = await bootField({ canvas, rects: visible, tokens });
@@ -2335,24 +2351,40 @@ gpu.onError?.((err) => {
 
 ```js
 /** On-screen liquid elements, kept by observation rather than by measuring
- *  everything each frame. getBoundingClientRect forces layout, so the old
- *  full-document sweep cost one forced reflow per element per frame. */
-function trackLiquid(onChange) {
+ *  everything each frame. getBoundingClientRect forces layout, so a
+ *  full-document sweep costs one forced reflow per element per frame.
+ *
+ *  The live set is NEVER cleared wholesale. An IntersectionObserver redelivers
+ *  asynchronously, so disconnecting and re-observing on every mutation batch
+ *  would empty the set ahead of the redelivery and blank the field for a frame
+ *  every time anything on the page changed. Instead: observe only what is not
+ *  observed yet, and drop elements that left the document as they are read. */
+function trackLiquid() {
   const onScreen = new Set();
+  const observed = new WeakSet();
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target);
   });
-  const observeAll = () => {
-    io.disconnect();
-    onScreen.clear();
-    for (const el of document.querySelectorAll(".sl-fx-liquid")) io.observe(el);
+  const scan = () => {
+    for (const el of document.querySelectorAll(".sl-fx-liquid")) {
+      if (observed.has(el)) continue;
+      observed.add(el);
+      io.observe(el);
+    }
   };
-  observeAll();
-  const mo = new MutationObserver(observeAll);
+  scan();
+  const mo = new MutationObserver(scan);
   mo.observe(document.body, { childList: true, subtree: true });
-  onChange?.();
   return {
-    rects: () => [...onScreen].slice(0, MAX_RECTS).map((el) => el.getBoundingClientRect()),
+    rects: () => {
+      const out = [];
+      for (const el of onScreen) {
+        if (!el.isConnected) { onScreen.delete(el); continue; }
+        out.push(el.getBoundingClientRect());
+        if (out.length === MAX_RECTS) break;
+      }
+      return out;
+    },
     stop: () => { io.disconnect(); mo.disconnect(); },
   };
 }
@@ -2424,15 +2456,20 @@ Expected: FAIL — `mountGpu()` not found in the page.
 
 - [ ] **Step 3: Extend the showcase boot script**
 
-```html
-<script type="module">
-  import { mount, mountGpu } from "../packages/ui-kit/effects.js";
-  const report = document.getElementById("tier-report");
-  const tier1 = mount();
-  report.textContent = tier1 ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
-  if (tier1 && await mountGpu()) report.textContent = "TIER 2 — FIELD";
-</script>
+**EXTEND it; do not replace it.** By now that script also imports `burst`, `scramble` and `grantLive` to drive the page's demos, and carries an `updateTierLabel()` recomputed from live state through a `MutationObserver` on `data-sl-theme` — added because `mount()` refuses under high contrast but the theme switcher never re-runs it, so the label went stale. A wholesale replacement would silently delete both.
+
+Two changes only:
+
+1. Add `mountGpu` to the existing import list.
+2. After the existing `mount()` call and its label update, attempt the GPU tier and let the label reflect it:
+
+```js
+// Tier 2 is additive: everything above already works without it, and the
+// label reports what actually resolved rather than what was attempted.
+if (await mountGpu()) updateTierLabel();
 ```
+
+`updateTierLabel()` must learn about Tier 2 — read `data-sl-fx-gpu` from the root, the same way it already reads `data-sl-fx` and `data-sl-theme`, and report `TIER 2 — FIELD` when it is `"on"`. That keeps one function as the single place the page decides what to claim, which is what stops the label and the reality drifting apart again. Do not set the label directly from the `mountGpu()` result: `bootField` owns the attribute and can tear itself down after returning, so the attribute is the truth and the return value is only the trigger to re-read it.
 
 - [ ] **Step 4: Bump the ui-kit version**
 
