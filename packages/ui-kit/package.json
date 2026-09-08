@@ -32,6 +32,8 @@
     "./components.css": "./components.css",
     "./effects.css": "./effects.css",
     "./effects.js": "./effects.js",
+    "./effects-gpu.js": "./effects-gpu.js",
+    "./effects-shader.js": "./effects-shader.js",
     "./themes/light.css": "./themes/light.css",
     "./themes/dark.css": "./themes/dark.css",
     "./themes/high-contrast.css": "./themes/high-contrast.css",
@@ -50,6 +52,8 @@
     "components.css",
     "effects.css",
     "effects.js",
+    "effects-gpu.js",
+    "effects-shader.js",
     "themes/light.css",
     "themes/dark.css",
     "themes/high-contrast.css",
@@ -60,5 +64,8 @@
     "assets/README.md",
     "README.md",
     "agent/"
-  ]
+  ],
+  "optionalDependencies": {
+    "vgpu": "^0.3.1"
+  }
 }
