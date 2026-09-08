@@ -19,7 +19,10 @@ const MAX_RECTS = 8;
  * @returns {Promise<{stop(): void}|null>} null when the GPU path is unavailable
  */
 export async function bootField({ canvas, rects, tokens }) {
-  if (!("gpu" in navigator) || !navigator.gpu) return null;
+  // `typeof navigator` first: a consumer server-rendering its page has no
+  // navigator at all, and a bare `in` check would throw there rather than
+  // degrade. This is also what makes the guard executable in a test.
+  if (typeof navigator === "undefined" || !("gpu" in navigator) || !navigator.gpu) return null;
   let gpu;
   try {
     gpu = await (await import("vgpu")).init();

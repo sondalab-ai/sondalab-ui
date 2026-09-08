@@ -7,6 +7,9 @@
    hardcoded here; scripts/effects-gpu.test.mjs enforces that. */
 
 export const SHADER = `
+// Fragment stage only. \`vgpu.effect()\` supplies the full-screen vertex stage —
+// the same arrangement sondalab-site's CRT surface uses. If a future vgpu drops
+// that, this module grows an @vertex entry point; nothing else changes.
 struct Look {
   accent   : vec4f,
   depth    : vec4f,
