@@ -1413,9 +1413,15 @@ test("the package exports and ships the effects layer", () => {
   assert.ok(pkg.files.includes("effects.js"));
 });
 
-test("the showcase demonstrates all four families", () => {
+test("the showcase applies all four families to real elements", () => {
+  // Assert the class is APPLIED, not merely mentioned. The page's own captions
+  // name these classes as documentation text, so a bare substring match passes
+  // on a page where every class attribute had been deleted.
   for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"]) {
-    assert.ok(html.includes(cls), `showcase must demonstrate .${cls}`);
+    assert.match(
+      html, new RegExp(`class="[^"]*\\b${cls}\\b`),
+      `showcase must apply .${cls} to an element, not just name it in prose`,
+    );
   }
 });
 
@@ -1513,10 +1519,62 @@ Model the page shell on `showcase/index.html` (same font links, same sticky head
   ```
   with the page-local rule `.sl-field__control { display: block; position: relative; }`.
 - A `data-sl-fx="off"` region demonstrating the subtree opt-out, labelled as such.
-- **An inversion band containing a glass-edged card**, with the band carrying the remap `components.css` already documents: `.invert { --slc-border: color-mix(in srgb, currentColor 22%, transparent); }`. Without it the edge sits on the wrong ground and vanishes — the effects layer inherits the fix rather than adding a new instance of the pitfall, and the page should prove that.
+- **An inversion band containing a glass-edged card**, carrying the remap for **all three** border roles — `--slc-border`, `--slc-border-strong` and `--slc-border-subtle` — since the edge reads the latter two. Without it the edge sits on the wrong ground and vanishes. The band's own aurora uses `sl-fx-aurora--linear sl-fx-aurora--top`, because a band's structural rule is its top edge.
 - **One unexpected composition decision** (house rule): make the declension section an asymmetric two-column split — a narrow sticky mono index of the families on the left, the component gallery on the right — rather than a centred card grid.
 - **Real content, not filler** (L5): the copy names actual things — `sl-audit`, `introspect`, `@sondalab/ui-kit 0.8.0` — never lorem or marketing adjectives.
 - All page-local colour must resolve to tokens; run the audit in Step 5 before committing.
+
+- [ ] **Step 4b: Fix the two `effects.css` defects this page exposes**
+
+Building the page surfaced two defects in earlier tasks' CSS. Both are real, both are invisible without a rendered page, and both would ship as broken reference behaviour. Fix them here, in `packages/ui-kit/effects.css`.
+
+**(a) The edge variables cannot re-derive inside an inversion band.** `--slfx-edge-warm`, `--slfx-edge-cool` and `--slfx-edge-dim` are declared once at `:root`. A custom property's `var()` references are substituted using the *declaring* element's cascaded values, so an `.invert` ancestor that remaps `--slc-border-strong` cannot change a value already substituted at `:root` — the glass edge keeps its canvas-oriented alpha and vanishes on ink. Move the three declarations off `:root` and onto the edge selector, where they resolve against the element's own inherited values:
+
+```css
+/* Declared on the edge itself, not on :root. A custom property's var()
+   references resolve using the declaring element's cascaded values, so a
+   :root declaration can never pick up an .invert ancestor's remap — the edge
+   would keep its canvas-oriented alpha and vanish on ink. */
+:is(.sl-fx-glass, .sl-fx-aurora) {
+  --slfx-edge-warm: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 24%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth) 24%, var(--slc-border-strong, var(--sl-border-strong)));
+  --slfx-edge-dim: var(--slc-border-subtle, var(--sl-border-subtle));
+  position: relative;
+}
+```
+
+Delete those three lines from the `:root` block and merge the declaration into the existing `:is(.sl-fx-glass, .sl-fx-aurora) { position: relative; }` rule as shown. Then extend the inversion-band note: a band must remap **all three** border roles, not only `--slc-border`, or the edge still sits on the wrong ground:
+
+```css
+/* .invert { --slc-border: …; --slc-border-strong: …; --slc-border-subtle: …; } */
+```
+
+**(b) The linear aurora is bottom-anchored, but the inversion band's rule is its top edge.** `.sl-fx-aurora--linear::after` hardcodes `inset: auto 0 0 0`. The active tab's underline and a link's underline are bottom edges, but the inversion band's structural rule is on top. Add a top anchor rather than changing the default:
+
+```css
+/* The band's structural rule is its top edge; a tab's and a link's are their
+   bottom. The default stays bottom because two of the three want it. */
+.sl-fx-aurora--linear.sl-fx-aurora--top::after { inset: 0 0 auto 0; }
+```
+
+Use `sl-fx-aurora--linear sl-fx-aurora--top` on the inversion band in the page.
+
+- [ ] **Step 4c: Fix the dialog demo's cascade collision**
+
+`<dialog>` carries `position: absolute` from the UA stylesheet, so the demo neutralises it with an inline `style`. But an inline style beats any stylesheet rule, so it also beats `:is(.sl-fx-glass, .sl-fx-aurora) { position: relative }` — the ring's `::after` then finds no positioned ancestor at the dialog and resolves its containing block up to the section, rendering as a box the size of the whole section instead of a rim.
+
+Move every dialog override out of the `style` attribute and into the page-local `<style>` block, so the effects rule can win:
+
+```css
+/* <dialog> is position:absolute in the UA stylesheet; neutralise it here, not
+   in a style attribute — an inline style would also beat the effects layer's
+   `position: relative` and detach the ring from the dialog. */
+dialog.sl-dialog[open] { position: relative; margin: 0; max-width: none; width: auto; }
+```
+
+- [ ] **Step 4d: Keep the tier label honest across a theme switch**
+
+`mount()` refuses under high contrast, but the accent/theme switcher does not re-run it, so switching to high-contrast after load leaves the label claiming Tier 1 while the CSS kill switch has disabled every family. Recompute the label whenever the theme changes, reporting Tier 0 under high contrast.
 
 - [ ] **Step 5: Audit the new page**
 
