@@ -23,7 +23,7 @@ The prior art already exists but is stranded. `sondalab-site` has a two-channel 
 
 **The surface is an instrument panel behind glass, with live signal underneath.**
 
-The operative constraint: effects spend their budget on **light and material**, never on **weight, radius, or added chrome**. The house grammar forbids heavy borders (L2: structural separation is always `1px`) and generic card-grid decoration. So the glass edge stays exactly `1px` and becomes chromatically alive rather than thick; the aurora is a `1px` ring, not a glow halo; the liquid warps light, not geometry that carries text. This is what keeps four expressive effect families compatible with editorial modernism instead of turning the suite into generic glassmorphism.
+The operative constraint: effects spend their budget on **light and material**, never on **weight, radius, or added chrome**. The house grammar forbids heavy borders (L2: structural separation is always `1px`) and generic card-grid decoration. So the glass edge stays exactly `1px` and becomes chromatically alive rather than thick; the aurora widens only inward and pays for its presence in light rather than in an added concentric ring; the liquid warps light, not geometry that carries text. This is what keeps four expressive effect families compatible with editorial modernism instead of turning the suite into generic glassmorphism.
 
 ## Decision 1 — Effects are semantic, not decorative
 
@@ -33,7 +33,7 @@ L5 ("structure encodes truth") applied to motion: **an effect that means nothing
 |---|---|---|
 | **Glitch** | *something re-resolved* | discrete events: value change, destructive confirmation, validation failure, dialog open, identity |
 | **Liquid** | *you are recognised* | pointer proximity/pressure; re-solidifies on leave |
-| **Aurora** | *attention lives here* | `:focus-visible`, `:focus-within`, active tab, running process, primary call-to-action |
+| **Aurora** | *attention lives here* | `:focus-visible`, `:focus-within`, active tab, a running operation, primary call-to-action |
 | **Glass** | *this is a physical surface* | a **state**, not an event: card, field, dialog, keycap edges |
 
 Consequence: glitch is never ambient on a control (ambient glitch is the wordmark's alone, and rare); liquid never fires without a pointer; aurora never marks something that is not currently the focus of attention; glass never animates on its own.
@@ -61,6 +61,8 @@ Two role-vars are introduced at the top of `effects.css`, following the `--slc-*
 --slfx-sheen: var(--slc-text);
 ```
 
+The rest of the namespace is geometry rather than colour, and every entry is a per-component binding with a conservative default: `--slfx-ring-w` (`1px`) and `--slfx-bloom` (`0`) size the aurora edge, `--slfx-arc` / `--slfx-progress` shape its busy arc, `--slfx-angle` is its `@property`-registered sweep angle, and `--slfx-px`/`--slfx-py`/`--slfx-d` carry the liquid's pointer state. Defaults are chosen so an element that opts into a class without binding anything renders the most restrained version of the effect, never a broken one.
+
 `--slfx-depth` exists because `--sl-accent-depth` is a theme-layer token: Tier A products get it live, Tier B products that mapped only `--slc-accent` still resolve to a valid single-accent value rather than to nothing.
 
 ## Decision 4 — Three tiers, attribute-keyed; the base tier is the default state
@@ -86,11 +88,14 @@ Nothing auto-mounts on import. `mount()` is explicit, which is what makes the ID
 
 Four families across a dozen components, unconstrained, is a Christmas tree. `effects.js` acts as a coordinator holding module-level singletons:
 
-- **At most one *ambient* aurora is animated per document.** Ambient auroras are the coordinator's: an element requests one via `data-sl-fx-live`, and the coordinator grants it to at most one element at a time (most recent request wins; the previous falls back to its static ring).
+- **At most one *ambient* aurora is animated per document.** Ambient auroras are the coordinator's: an element requests one via `data-sl-fx-live="on"`, and the coordinator grants it to at most one element at a time (most recent request wins; the previous falls back to its static ring).
 - **At most one glitch burst runs at a time.** A burst requested while another runs is dropped, not queued — a queue would produce a stutter train, which reads as breakage rather than as signal.
 - **State-driven auroras are exempt** because they are singular by construction: `:focus-visible` and `:focus-within` are pure CSS, and the platform guarantees a single focused element.
+- **Busy auroras are exempt.** `data-sl-fx-live="busy"` is bound to real work, and several cards can legitimately be loading at once; capping them would make the interface report a false state. The cap exists to stop decoration accumulating, not to stop the interface telling the truth — which is Decision 1 read in the other direction.
 
-**Aurora never replaces the focus ring.** The `outline` from the shared focus-ring rule in `components.css` stays; the aurora ring is drawn additively outside it. An effect that removes an accessibility affordance is a defect, not a variant.
+**Aurora never replaces the focus ring.** The `outline` from the shared focus-ring rule in `components.css` stays, drawn outside the border box at `outline-offset: 2px`; the aurora inhabits the border band itself and therefore never occupies the outline's position. An effect that removes an accessibility affordance is a defect, not a variant.
+
+**Aurora renders state; it never *is* the state.** Same discipline, one level up: a busy aurora requires the element to carry `aria-busy="true"`, and a determinate one `role="progressbar"` with `aria-valuenow`. A screen reader, a reduced-motion visitor and a high-contrast visitor all get the state from the markup; the aurora is how the state looks, not where it lives.
 
 ## Decision 6 — Substrate scope
 
@@ -111,13 +116,13 @@ The design work proper. Each component gets the families that match its semantic
 
 | Component | Glitch | Liquid | Aurora | Glass |
 |---|---|---|---|---|
-| `sl-btn--primary` | on destructive confirmation | ● specular + radius morph | ● `:focus-visible` | — (filled; no edge to cut) |
+| `sl-btn--primary` | on destructive confirmation | ● specular + radius morph | ● `:focus-visible`; ● `busy` while submitting | — (filled; no edge to cut) |
 | `sl-btn--ghost` | — | ○ specular on the border | ● `:focus-visible` | ● its `1px` border **is** the glass edge |
-| `sl-card` | — | ○ low amplitude, no tilt | on `[data-sl-fx-live]` only | ● edge + inner top highlight |
+| `sl-card` | — | ○ low amplitude, no tilt | ● `busy` while loading; `sweep` only when granted | ● edge + inner top highlight |
 | `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | ● `:focus-within` | ● |
 | `sl-tabs__tab` | scramble on label change | — | ● the 2px active underline becomes a sweep | — |
 | `sl-badge` / `sl-tag` | scramble on value change | — | — | ○ micro-rim |
-| `sl-dialog` | shatter-in on open (1 burst) | — | ● rim while open | ● |
+| `sl-dialog` | shatter-in on open (1 burst) | — | ● rim while open; `busy` while its action runs | ● |
 | `sl-table tbody tr` | — | ○ row-level specular | — | — |
 | `sl-eyebrow` / section index | scramble on entering the viewport | — | — | — |
 | wordmark | rare ambient burst | — | — | — |
@@ -170,6 +175,12 @@ Inside an inversion band the alpha-over-canvas default of `--slc-border` sits on
 2. **An external rim only where there is no edge to inhabit** — `sl-btn--primary` is filled and borderless, and is the one case where the ring genuinely sits outside the box.
 3. **Where the edge is not a ring, the aurora is linear** — it inhabits the active tab's 2px underline, the link's underline, the inversion band's top rule. It never becomes a ring there.
 
+**The band is not fixed at `1px`.** The hairline rule (L2) governs *separators*; `HANDOFF.md` check 4 already draws the distinction the aurora falls on the other side of — *"a 2px edge that emphasizes (active-tab underline, keycap, measure-tick) is a deliberate accent — leave it"*. The aurora is emphasis, so its width is an already-blessed category rather than a deviation. It is `--slfx-ring-w`, and it scales with how much room the element has: `1px` on inline controls (a thick ring on a 28px-tall control eats the control), `2px` on fields and tabs, `3px` on cards, dialogs and panels.
+
+**The band grows inward, never outward** — outward growth would walk into the focus `outline` at `outline-offset: 2px`, which Decision 5 protects. Mechanically that is `padding: var(--slfx-ring-w)` on a ring whose `inset` stays pinned to the border box. On a card the ring eats `3px` of a `--sl-space-5` (24px) padding, which is invisible to the layout.
+
+**Width alone is not the aurora, though.** A thick hard-edged ring is just a fat border; an aurora in nature has no edge. So width pairs with `--slfx-bloom`, an inward luminous falloff carried by `box-shadow: inset` on the element (it follows `border-radius` exactly, composites cheaply, and costs no third stacking layer — `::before` is already the liquid sheen). The division of labour: **the rim carries direction, the bloom carries volume.** `--slfx-bloom` is `0` on inline controls and roughly `18px`–`28px` on containers.
+
 The corollary is that **glass and aurora are one mechanism, not two stacked decorations**: a single `::after` occupying exactly the border band, with two temperaments — at rest the static conic catching light at two angles (glass), under attention the same conic saturated to the accent and swept (aurora). An element carrying both classes does not stack them; the aurora is the attention state of its glass edge.
 
 A masked `1px` conic ring on a pseudo-element, swept by an `@property`-registered angle. **Geometry note:** for an absolutely positioned child, `inset: 0` resolves against the *padding* box, so `inset: -1px` with `padding: 1px` and `mask-composite: exclude` lands exactly **on** the border when the border is `1px`, and `1px` outside the visible box when the element has none — which is precisely the rule above, expressed in one declaration. Implementations must not "correct" it to a positive inset.
@@ -181,7 +192,7 @@ A masked `1px` conic ring on a pseudo-element, swept by an `@property`-registere
 :is(.sl-fx-glass, .sl-fx-aurora) { position: relative; }
 :is(.sl-fx-glass, .sl-fx-aurora)::after {
   content: ""; position: absolute; inset: -1px; border-radius: inherit;
-  padding: 1px; pointer-events: none; opacity: 0;
+  padding: var(--slfx-ring-w, 1px); pointer-events: none; opacity: 0;
   background: conic-gradient(from var(--slfx-angle),
     var(--slfx-s0) 0deg, var(--slfx-s1) 95deg,
     var(--slfx-s2) 185deg, var(--slfx-s3) 290deg, var(--slfx-s0) 360deg);
@@ -203,6 +214,40 @@ A masked `1px` conic ring on a pseudo-element, swept by an `@property`-registere
 Because the stops are variables on the *element* and the gradient lives once on the pseudo-element, an element carrying both classes transitions from glass to aurora by rebinding four custom properties — the ring itself never changes, which is what makes the two families read as one material rather than as a swap.
 
 `--slfx-s0..s3` default to `transparent` in the `--slfx-*` block, so a bare `.sl-fx-aurora` at rest is a well-formed invisible ring rather than an invalid gradient. The sweep (`@keyframes` animating `--slfx-angle` from its `210deg` initial value to `570deg`, so the rotation is continuous rather than snapping back through the resting angle) is added only under Tier 1 and `prefers-reduced-motion: no-preference`. Where `@property` is unsupported the angle is not animatable and the ring renders **static** — a correct Tier-0 degradation, not a broken state. The `@property` floor (Chrome 85 / Safari 16.4 / Firefox 128) is the same floor the theme layer already accepts for its relative-colour accent step, so this adds no new browser requirement.
+
+#### Three modes, distinguished by illuminated arc
+
+One mechanism, three readings. What separates them is **the fraction of the perimeter that is lit** — not colour, not speed, which is why they stay legible next to each other.
+
+| Mode | Selector | Arc | Motion | Means |
+|---|---|---|---|---|
+| **static** | `:focus-visible`, `:focus-within` | ~60% | none | this element has focus |
+| **sweep** | `[data-sl-fx-live="on"]` | ~60% | angle rotates, ~3.2s linear | ambient liveness; capped at one per document |
+| **busy** | `[data-sl-fx-live="busy"]` | `--slfx-arc`, `65deg` (~18%) | arc orbits, ~1.1s linear | a real operation is running here |
+| **determinate** | `[data-sl-fx-live="busy"]` + `--slfx-progress` | `calc(var(--slfx-progress) * 360deg)` | none — the **length** is the value | how far that operation has got |
+
+`busy` is the one mode that replaces the shared four-stop background rather than rebinding the stops, because it is a different geometry — a short travelling marker, not a full-perimeter wash. That override is deliberate and is the *only* one: on an element carrying both `sl-fx-glass` and a busy state, busy wins, which is correct — a resting edge and a working edge are not the same edge, and the work is the more important thing to report.
+
+```css
+@keyframes slfx-orbit { to { --slfx-angle: 570deg; } }
+
+.sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
+.sl-fx-aurora[data-sl-fx-live="busy"]::after {
+  opacity: 1;
+  background: conic-gradient(from var(--slfx-angle),
+    color-mix(in srgb, var(--slc-accent) 92%, transparent) 0deg,
+    color-mix(in srgb, var(--slfx-depth)  78%, transparent) calc(var(--slfx-arc) * 0.62),
+    transparent var(--slfx-arc),
+    transparent 360deg);
+}
+[data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])::after {
+  animation: slfx-orbit 1.1s linear infinite;
+}
+```
+
+Determinate needs no animation: `--slfx-progress` sets `--slfx-arc` directly and the arc stays pinned at the resting angle, so the edge of a card *is* its progress bar — no extra widget, no layout.
+
+**Under reduced motion the arc does not orbit.** It renders as a static full ring at reduced opacity: present, honest about there being something going on, and not moving. The state itself is carried by `aria-busy` / `role="progressbar"` per Decision 5, so nothing is lost — which is the whole reason that rule is a hard requirement rather than a recommendation. Under high-contrast the aurora is off entirely and only the ARIA remains.
 
 ### Liquid — `sl-fx-liquid`
 
@@ -271,7 +316,7 @@ Every hue resolves through `color-mix()` over `--slc-*`/`--sl-*` role-vars. No l
 | Test | Asserts |
 |---|---|
 | `scripts/effects-audit.test.mjs` | `effects.css` passes `auditCss` (no colour literal, tier-agnostic) |
-| `scripts/effects-guards.test.mjs` | `effects.css` disables every animation under `prefers-reduced-motion: reduce`; disables all four families under `[data-sl-theme="high-contrast"]`; `effects.js` contains no hex/`rgb()` literal |
+| `scripts/effects-guards.test.mjs` | `effects.css` disables every animation under `prefers-reduced-motion: reduce`; disables all four families under `[data-sl-theme="high-contrast"]`; the busy aurora's orbit is inside the reduced-motion guard while its ring is not; `effects.js` contains no hex/`rgb()` literal |
 | `scripts/catalog-audit.test.mjs` | *(existing)* the new catalog snippets carry no colour literals |
 | `scripts/agent-docs-drift.test.mjs` | *(existing)* `agent/design-language.md` stays byte-identical after the L6 edit + regeneration |
 
