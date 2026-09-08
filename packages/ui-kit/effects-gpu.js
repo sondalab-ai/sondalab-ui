@@ -42,25 +42,59 @@ function hexToGamma(value) {
  * full-document querySelectorAll + getBoundingClientRect sweep — done once
  * per rendered frame, sixty times a second — cost one forced reflow per
  * matching element per frame, most of them off-screen and discarded.
- * @param {() => void} [onChange] called once the initial observed set is built
+ *
+ * The live set is NEVER cleared wholesale. An IntersectionObserver redelivers
+ * asynchronously, so disconnecting everything and re-observing on every
+ * mutation batch (the first version of this function did exactly that) would
+ * empty the set ahead of the redelivery — rectCount reads 0 for that stretch,
+ * and the field paints nothing. On a framework-rendered page, where the
+ * MutationObserver's childList+subtree on document.body fires on *any* DOM
+ * change anywhere, that is a recurring, visible flicker to blank, invisible
+ * to every test here since nothing in this repo renders a frame. Instead:
+ * observe only elements not already observed (tracked in a WeakSet so a
+ * removed-and-regarbage-collected element doesn't leak an entry), and drop
+ * elements that left the document as they are read, one at a time — never by
+ * clearing the whole set.
  * @returns {{rects: () => DOMRect[], stop(): void}}
  */
-export function trackLiquid(onChange) {
+export function trackLiquid() {
   const onScreen = new Set();
+  const observed = new WeakSet();
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target);
   });
-  const observeAll = () => {
-    io.disconnect();
-    onScreen.clear();
-    for (const el of document.querySelectorAll(".sl-fx-liquid")) io.observe(el);
+  const scan = () => {
+    for (const el of document.querySelectorAll(".sl-fx-liquid")) {
+      if (observed.has(el)) continue;
+      observed.add(el);
+      io.observe(el);
+    }
   };
-  observeAll();
-  const mo = new MutationObserver(observeAll);
+  scan();
+  const mo = new MutationObserver(scan);
   mo.observe(document.body, { childList: true, subtree: true });
-  onChange?.();
   return {
-    rects: () => [...onScreen].slice(0, MAX_RECTS).map((el) => el.getBoundingClientRect()),
+    rects: () => {
+      // Deleting the Set's current entry mid-iteration is well-defined by the
+      // spec (ECMA-262 %SetIteratorPrototype%.next / Set-object internal
+      // methods: a `for...of` over a Set uses a live iterator keyed to the
+      // set's own insertion-ordered internal list, and removing the entry the
+      // iterator just yielded does not disturb the entries after it or cause
+      // any to be skipped or revisited) — verified against the spec here
+      // rather than assumed, since "works today" and "well-defined" are not
+      // the same claim. Elements after the MAX_RECTS cutoff are simply left
+      // for the next call to check, not scanned early.
+      const out = [];
+      for (const el of onScreen) {
+        if (!el.isConnected) {
+          onScreen.delete(el);
+          continue;
+        }
+        out.push(el.getBoundingClientRect());
+        if (out.length === MAX_RECTS) break;
+      }
+      return out;
+    },
     stop: () => {
       io.disconnect();
       mo.disconnect();
@@ -91,6 +125,13 @@ export async function bootField({ canvas, rects, stopTracking, tokens }) {
   let themeObserver;
   let loop;
   let running = true;
+  // Tracks whether THIS handle is the one that set the attribute, so stop()
+  // never strips it on a handle that never actually set it (a failed boot
+  // calling stop() must not strip a live field's attribute) and so a
+  // synchronously-delivered error (gpu.onError is registered before the
+  // attribute is set) can't leave it set on an already-dead field, without
+  // relying on vgpu's async-delivery premise to hold.
+  let attributeSet = false;
 
   function stop() {
     if (!running) return;
@@ -121,7 +162,9 @@ export async function bootField({ canvas, rects, stopTracking, tokens }) {
     // function must also degrade cleanly through, same as the `typeof
     // navigator === "undefined"` check above.
     canvas?.remove?.();
-    if (typeof document !== "undefined") document.documentElement.removeAttribute("data-sl-fx-gpu");
+    if (attributeSet && typeof document !== "undefined") {
+      document.documentElement.removeAttribute("data-sl-fx-gpu");
+    }
   }
 
   try {
@@ -194,11 +237,18 @@ export async function bootField({ canvas, rects, stopTracking, tokens }) {
       const ny = ev.clientY / innerHeight;
       vx = (nx - px) / dt;
       vy = (ny - py) / dt;
-      // Cap the flick: the shader reads length(pointer.zw) into a 0..1-ish band.
+      // Cap the flick at 1.0 so the shader's `0.6 + 0.4 * length(pointer.zw)`
+      // tops out at exactly 1.0 — the band its own comment claims, not 1.2.
+      // A zero-size viewport (innerWidth/innerHeight of 0) makes the deltas
+      // above non-finite; zero the velocity rather than letting a NaN reach
+      // a uniform.
       const speed = Math.hypot(vx, vy);
-      if (speed > 1.5) {
-        vx = (vx / speed) * 1.5;
-        vy = (vy / speed) * 1.5;
+      if (!Number.isFinite(speed)) {
+        vx = 0;
+        vy = 0;
+      } else if (speed > 1) {
+        vx /= speed;
+        vy /= speed;
       }
       px = nx;
       py = ny;
@@ -247,10 +297,17 @@ export async function bootField({ canvas, rects, stopTracking, tokens }) {
     // data-sl-fx-gpu lives entirely in this module now, set the moment the
     // frame that justifies it exists and cleared by the same stop() that
     // removes the canvas, so mountGpu() in effects.js never has to race it:
-    // it only reports whether bootField() returned a handle at all.
+    // it only reports whether bootField() returned a handle at all. Gated on
+    // `running`: gpu.onError was registered above this, so if an error were
+    // ever delivered synchronously rather than asynchronously, stop() would
+    // already have run by the time execution reaches here, and this must not
+    // set the attribute on a field that is already dead.
     frameUniforms();
     vgpu.frame(gpu, (f) => f.pass(surf, fx));
-    document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+    if (running) {
+      document.documentElement.setAttribute("data-sl-fx-gpu", "on");
+      attributeSet = true;
+    }
 
     loop = vgpu.frameLoop(gpu, (f) => {
       frameUniforms();
