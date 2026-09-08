@@ -968,23 +968,53 @@ git commit -m "feat(ui-kit): glitch — two ghost channels on a child, reduced-m
 
 - [ ] **Step 1: Write the failing test**
 
-`effects.js` touches the DOM, so the test asserts on its source rather than executing it — the repo has no DOM test harness and adding one is out of scope. Create `scripts/effects-js.test.mjs`:
+`effects.js` touches the DOM, so the test asserts on its source rather than executing it — the repo has no DOM test harness and adding one is out of scope. Create `scripts/effects-js.test.mjs`. Three of these tests execute the module rather than inspecting its source — Node has no `document` and no `window`, so a top-level DOM access throws on import, and the coordinator's state machine is testable with plain objects. Only what genuinely needs a browser stays a source assertion, and those are written to be order-sensitive rather than presence-sensitive:
 
 ```js
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const KIT = resolve(HERE, "../packages/ui-kit");
-const js = readFileSync(resolve(KIT, "effects.js"), "utf8");
+const MODULE = resolve(HERE, "../packages/ui-kit/effects.js");
+const js = readFileSync(MODULE, "utf8");
+const load = () => import(pathToFileURL(MODULE).href);
+
+/** The body of a top-level exported function, so an assertion can be about
+ *  ORDER inside it rather than about a string existing somewhere in the file. */
+function fnBody(name) {
+  const start = js.search(new RegExp(`export (?:async )?function ${name}\\b`));
+  assert.ok(start > -1, `missing export: ${name}`);
+  // Step over the parameter list first. A destructured default such as
+  // `{ burstMin = 200 }` puts a brace before the body, so the first `{` after
+  // the function name is not the body's.
+  let i = js.indexOf("(", start);
+  let depth = 0;
+  do {
+    if (js[i] === "(") depth++;
+    else if (js[i] === ")") depth--;
+    i++;
+  } while (depth > 0 && i < js.length);
+  const open = js.indexOf("{", i);
+  depth = 0;
+  i = open;
+  do {
+    if (js[i] === "{") depth++;
+    else if (js[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < js.length);
+  return js.slice(open + 1, i - 1);
+}
 
 // The audit reads CSS only, so a literal here would pass the gate while
-// breaking the contract. This closes that hole mechanically.
+// breaking the contract. Cover every CSS colour function, not just rgb() —
+// `color-mix(` is deliberately not matched, since it takes role-vars.
+const COLOUR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
+
 test("effects.js contains no colour literal", () => {
-  const hits = js.match(/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|rgba?\([^)]*\)/g) || [];
+  const hits = js.match(COLOUR) || [];
   assert.deepEqual(hits, [], `hues must be read from tokens with getComputedStyle, found: ${hits}`);
 });
 
@@ -994,19 +1024,104 @@ test("effects.js exports the documented API", () => {
   }
 });
 
+test("importing the module has no side effects", async () => {
+  // Node has no `document` and no `window`, so ANY top-level DOM access throws
+  // a ReferenceError here. Executing the module beats guessing at its shape:
+  // a regex for `^document\.` missed indented and `window.`-prefixed access.
+  await assert.doesNotReject(load);
+});
+
+/** The single statement a guard opens: from its text to its first `;`.
+ *  Bounding to the statement matters — mount()'s two guards sit three lines
+ *  apart, and a window spanning both accepted either one's `return false` as
+ *  evidence for the other, so gutting one guard alone went undetected. */
+function guardStatement(body, needle) {
+  const at = body.indexOf(needle);
+  assert.ok(at > -1, `guard not found: ${needle}`);
+  return body.slice(at, body.indexOf(";", at) + 1);
+}
+
 test("mount() refuses to arm Tier 1 under reduced motion", () => {
-  assert.match(js, /prefers-reduced-motion:\s*reduce/);
+  const body = fnBody("mount");
+  const guard = body.indexOf("matchMedia(REDUCE).matches");
+  const arm = body.indexOf('setAttribute("data-sl-fx", "on")');
+  assert.ok(guard > -1, "mount() must consult the reduced-motion query");
+  assert.ok(arm > -1, "mount() must arm Tier 1 by setting data-sl-fx");
+  assert.ok(guard < arm, "the reduced-motion guard must precede arming, not follow it");
+  assert.match(
+    guardStatement(body, "matchMedia(REDUCE).matches"), /return false/,
+    "the reduced-motion guard must return, not merely branch",
+  );
 });
 
-test("importing the module has no side effects", () => {
-  // No top-level call that touches the document: every DOM read happens inside
-  // a function body. A bare `document.` at column 0 would be a side effect.
-  assert.doesNotMatch(js, /^document\./m);
-  assert.doesNotMatch(js, /^mount\(/m);
+test("mount() refuses to arm Tier 1 under high contrast", () => {
+  const body = fnBody("mount");
+  const guard = body.indexOf('"high-contrast"');
+  const arm = body.indexOf('setAttribute("data-sl-fx", "on")');
+  assert.ok(guard > -1, "mount() must consult the theme");
+  assert.ok(guard < arm, "the high-contrast guard must precede arming");
+  assert.match(
+    guardStatement(body, '"high-contrast"'), /return false/,
+    "the high-contrast guard must return, not merely branch",
+  );
 });
 
-test("the glitch coordinator drops overlapping bursts rather than queueing", () => {
-  assert.match(js, /burstActive/);
+test("burst drops an overlapping burst rather than queueing it", () => {
+  const body = fnBody("burst");
+  assert.match(
+    body, /if\s*\([^)]*burstActive[^)]*\)\s*return;/,
+    "an in-flight burst must cause an early return",
+  );
+  assert.doesNotMatch(
+    body, /setTimeout\([^)]*\bburst\s*\(/,
+    "a dropped burst must not be re-scheduled — a queue reads as breakage, not as signal",
+  );
+});
+
+test("burst refuses a detached element", () => {
+  assert.match(
+    fnBody("burst"), /isConnected/,
+    "a burst on a detached node leaves a timer mutating something nothing can see",
+  );
+});
+
+test("burst does nothing before mount() has armed Tier 1", async () => {
+  const { burst } = await load();
+  const el = {
+    isConnected: true,
+    classList: { add: () => assert.fail("burst must not fire before mount() arms Tier 1") },
+    style: { setProperty() {} },
+    querySelectorAll: () => [],
+  };
+  burst(el);
+});
+
+test("the ambient aurora is granted to one element at a time", async () => {
+  const { grantLive, revokeLive } = await load();
+  const make = () => {
+    const attrs = {};
+    return {
+      attrs,
+      setAttribute: (k, v) => { attrs[k] = v; },
+      removeAttribute: (k) => { delete attrs[k]; },
+    };
+  };
+  const first = make();
+  const second = make();
+  grantLive(first);
+  assert.equal(first.attrs["data-sl-fx-live"], "on");
+  grantLive(second);
+  assert.equal(first.attrs["data-sl-fx-live"], undefined, "the previous holder falls back to its resting ring");
+  assert.equal(second.attrs["data-sl-fx-live"], "on");
+  revokeLive(second);
+  assert.equal(second.attrs["data-sl-fx-live"], undefined);
+});
+
+test("the coordinator never touches the busy value", () => {
+  // Busy auroras are the consumer's and are exempt from the budget: they are
+  // bound to real work, and several can legitimately run at once.
+  assert.doesNotMatch(fnBody("grantLive"), /busy/);
+  assert.doesNotMatch(fnBody("revokeLive"), /busy/);
 });
 ```
 
@@ -1041,7 +1156,11 @@ let liveEl = null;
 let burstActive = false;
 let armed = false;
 
-/** The document's live token values, re-read whenever the theme changes. */
+/** The document's live token values, re-read whenever the theme changes.
+ *  Nothing in Tier 1 reads these — the CSS owns every colour it paints. They
+ *  exist for the GPU tier, whose shader needs real values as uniforms and
+ *  cannot resolve a custom property. Kept here so there is exactly one place
+ *  that reads a hue from the token layer, and one observer keeping it live. */
 const tokens = { accent: "", depth: "", text: "", canvas: "" };
 
 function readTokens(root = document.documentElement) {
@@ -1165,11 +1284,15 @@ export function mount(root = document) {
 /**
  * One finite glitch burst of randomised length. A burst requested while another
  * runs is dropped, not queued: a queue produces a stutter train, which reads as
- * breakage rather than as signal.
- * @param {Element} el an element carrying .sl-fx-glitch
+ * breakage rather than as signal. A detached element is refused.
+ * @param {Element} el an element carrying .sl-fx-glitch, still in the document
  */
 export function burst(el, { burstMin = 200, burstMax = 500 } = {}) {
-  if (!armed || burstActive || !el) return;
+  // isConnected: a caller may take the element out of the document between the
+  // event and the burst, and a timer toggling a class on a detached node would
+  // otherwise run for nothing. The guard is carried over from the prior art,
+  // where it exists because of a real defect.
+  if (!armed || burstActive || !el?.isConnected) return;
   burstActive = true;
   randomizeGhosts(el);
   el.classList.add("is-glitching");

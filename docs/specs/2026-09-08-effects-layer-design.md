@@ -297,7 +297,7 @@ Generalised from `sondalab-site/src/lib/glitch.ts` and its CSS. Kept as-is:
 - `scramble()` for short labels (decode-readout, left-to-right lock), reading its target from `data-num`/`textContent`;
 - the `--shatter` variant (horizontal bands with random sideways offsets).
 
-Changed on the way into the kit: reduced-motion is respected (Decision 4), high-contrast disables it, and bursts go through the coordinator (Decision 5). The `CAP_MS` ceiling and the detached-node guard in `autoBurst` are carried over unchanged — both exist because of real defects.
+Changed on the way into the kit: reduced-motion is respected (Decision 4), high-contrast disables it, and bursts go through the coordinator (Decision 5). The `CAP_MS` ceiling is carried over unchanged, and the prior art's detached-node guard moves to `burst()` — the kit ships no `autoBurst`, because an ambient rhythm is the consumer's editorial decision, not the kit's. A consumer that wants the wordmark's rare ambient burst drives it from its own timer, and `burst()` refusing a detached element is what makes that safe. Both guards exist because of real defects.
 
 ### GPU tier (Slice 3)
 
@@ -326,7 +326,7 @@ scramble(el, opts);       // decode-scramble a short label
 await mountGpu();         // Slice 3; resolves false when WebGPU is unavailable
 ```
 
-Importing the module has no side effects. Pointer tracking is a single delegated listener writing custom properties inside one shared `requestAnimationFrame`; elements outside the viewport are skipped via `IntersectionObserver`.
+Importing the module has no side effects. Pointer tracking is a single delegated listener writing custom properties inside one shared `requestAnimationFrame`. Off-screen elements need no separate exclusion: `pointermove` only resolves to an element under the pointer, which is on screen by definition, so an `IntersectionObserver` would be dead weight rather than an optimisation.
 
 ## Colour contract, and the audit gap it has to cover
 
