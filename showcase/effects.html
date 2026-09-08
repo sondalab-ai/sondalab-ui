@@ -559,12 +559,8 @@
     }
     new MutationObserver(updateTierLabel).observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-sl-theme"],
+      attributeFilter: ["data-sl-theme", "data-sl-fx-gpu"],
     });
-
-    // Tier 2 is additive: everything above already works without it, and the
-    // label reports what actually resolved rather than what was attempted.
-    if (await mountGpu()) updateTierLabel();
 
     // -- one ambient aurora, granted once (Decision 5: capped at one per document) --
     const sweepCard = document.getElementById("sweep-card");
@@ -605,6 +601,12 @@
       }, { threshold: 0.6 });
       document.querySelectorAll(".sec-idx").forEach(function (el) { io.observe(el); });
     }
+
+    // Tier 2 is additive: everything above already works without it, and the label
+    // reports what actually resolved rather than what was attempted. Not awaited at
+    // the top level — that would hold the demo wiring above until the GPU handshake
+    // settles, leaving the page's controls inert for as long as it takes.
+    mountGpu().then((ok) => ok && updateTierLabel());
   </script>
 </body>
 </html>

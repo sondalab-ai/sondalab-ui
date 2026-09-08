@@ -45,7 +45,38 @@ test("the glitch is a child span, never the component itself", () => {
   assert.match(html, /<span class="sl-fx-glitch" data-text=/);
 });
 
+/** The body of a top-level function in the page's boot script, so an assertion
+ *  can be about where a claim LIVES rather than whether a string exists. */
+function fnBody(name) {
+  const start = html.search(new RegExp(`function ${name}\\b`));
+  assert.ok(start > -1, `missing function: ${name}`);
+  const open = html.indexOf("{", start);
+  let depth = 0;
+  let i = open;
+  do {
+    if (html[i] === "{") depth++;
+    else if (html[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < html.length);
+  return html.slice(open + 1, i - 1);
+}
+
 test("the showcase reports which tier actually resolved", () => {
-  assert.match(html, /mountGpu\(\)/);
-  assert.match(html, /TIER 2/);
+  assert.match(html, /mountGpu\(\)/, "the page must attempt the GPU tier");
+
+  // The Tier 2 claim must be derived from the attribute bootField owns, in the
+  // same function that reads it. A bare substring check would pass on a page
+  // that hardcoded the label, or set it from mountGpu()'s return value — which
+  // is the one thing the design forbids, because the field can tear itself down
+  // after resolving, on a lost device or an async validation error.
+  const label = fnBody("updateTierLabel");
+  assert.match(label, /data-sl-fx-gpu/, "the label must read the attribute, not the return value");
+  assert.match(label, /TIER 2/, "the Tier 2 claim must live where the attribute is read");
+
+  // And the observer must actually watch that attribute, or a torn-down field
+  // leaves the label frozen on TIER 2 until an unrelated theme toggle.
+  assert.match(
+    html, /attributeFilter:\s*\[[^\]]*data-sl-fx-gpu/,
+    "the MutationObserver must watch data-sl-fx-gpu, not only data-sl-theme",
+  );
 });
