@@ -65,6 +65,33 @@ The rest of the namespace is geometry rather than colour, and every entry is a p
 
 `--slfx-depth` exists because `--sl-accent-depth` is a theme-layer token: Tier A products get it live, Tier B products that mapped only `--slc-accent` still resolve to a valid single-accent value rather than to nothing.
 
+## Decision 3b — Two paint layers per element, and where they cannot go
+
+Discovered while planning the implementation; recorded here because it constrains the markup a consumer has to write.
+
+**Every element has exactly two paint layers, and the layer budget is fixed:** `::before` is the liquid sheen, `::after` is the edge ring (glass and aurora share it, per the Aurora section). There is no third.
+
+Consequence: **the glitch never uses its host's pseudo-elements.** Its two ghost channels live on a required child, `<span class="sl-fx-glitch" data-text="…">`, which is also how the shatter variant already works in the prior art (`.glitch__text` + `.glitch__shard` children). Without this, a primary button that both glitches on destructive confirmation and carries an aurora on focus — a combination the declension table calls for — would need three layers and one effect would silently win.
+
+```html
+<button class="sl-btn sl-btn--primary sl-fx-aurora">
+  <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
+</button>
+```
+
+**Replaced form controls cannot host a paint layer at all.** `<input>`, `<textarea>` and `<select>` do not render `::before`/`::after`. Any effect on a form control therefore binds to a wrapper, `.sl-field__control`, and never to the control itself:
+
+```html
+<label class="sl-field">
+  <span class="sl-field__label">Product</span>
+  <span class="sl-field__control sl-fx-glass sl-fx-aurora">
+    <input class="sl-field__input" type="text">
+  </span>
+</label>
+```
+
+`.sl-field__control` is a new markup convention introduced by this layer (a bare `display: block; position: relative` wrapper). It is additive: an existing `.sl-field` without it keeps working, unstyled by the effects layer. `:focus-within` on the wrapper is what drives the field's aurora, which is why the declension table names `:focus-within` rather than `:focus-visible` for fields.
+
 ## Decision 4 — Three tiers, attribute-keyed; the base tier is the default state
 
 Reusing the rule from `sondalab-site/docs/webgpu-surfaces.md` verbatim — *"the fallback is the default state"*. CSS is the implementation; JavaScript and the GPU are additive tiers keyed off attributes that only get set once each capability has actually answered.
