@@ -1841,6 +1841,57 @@ git commit -m "feat(ui-kit): effects layer judgement notes; release 0.8.0"
 
 ---
 
+## Task 11b: Make the effects layer reachable from the agent workflows
+
+Added during execution. Slice 2 shipped the catalog entries, the matrix rows and the judgement notes, but nothing an agent actually *starts* from mentions effects — so an agent following the author workflow literally would never learn the section exists, which defeats the slice's stated purpose. Three of the five edits also correct claims that are simply inaccurate.
+
+**Files:**
+- Modify: `packages/ui-kit/agent/catalog.md`
+- Modify: `packages/ui-kit/agent/README.md`
+- Modify: `packages/ui-kit/agent/workflows/author.md`
+- Modify: `.claude/agents/sl-ds-auditor.md`
+
+**Interfaces:**
+- Consumes: everything Slice 2 shipped.
+- Produces: nothing later tasks depend on. No version bump — `0.8.0` is not yet published, and these are documentation edits inside the already-bumped `agent/` directory.
+
+- [ ] **Step 1: Correct the glitch entry's `Consumes:` list**
+
+`packages/ui-kit/agent/catalog.md` — the glitch entry lists only `--slc-accent`, but `effects.css`'s `slfx-glitch-jit` keyframe also reads `--slc-accent-hover`. A Tier B consumer mapping role-vars from that list would leave one ghost channel unmapped to its own brand colour. Add `--slc-accent-hover`.
+
+- [ ] **Step 2: Say that the glitch needs the driver**
+
+Still in the glitch entry: every other family in the section renders something from CSS alone, and the glitch is the one that renders nothing at all until `effects.js` is mounted and something calls `burst()`. Add that to its `Do:` line, naming `mount()` and `burst()`.
+
+- [ ] **Step 3: Name effects in the agent README**
+
+`packages/ui-kit/agent/README.md` describes the catalog as "primitives + signature patterns". Add effects, and say they are a separate opt-in import (`effects.css`, plus `effects.js` for Tier 1) rather than part of `components.css`.
+
+- [ ] **Step 4: Name effects in the author workflow**
+
+`packages/ui-kit/agent/workflows/author.md` tells an agent to prefer the ready primitives and reach for the signature patterns. Add one step: after the surface is composed and compliant, effects are the optional layer, each family carrying one meaning, subject to the budget — and point at `design-language.md` L6 and the catalog's `## Effects` section.
+
+- [ ] **Step 5: Add L6 to the judgement auditor's checklist**
+
+`.claude/agents/sl-ds-auditor.md` enumerates L1/L2/L3/L5 in its judgement checklist and omits L6 entirely. Since `sl-audit.mjs` deliberately does not check effects — `HANDOFF.md` says so — the judgement agent is the *only* thing that can, and today it does not know to look. Add L6, scoped to what `HANDOFF.md` already lists: the right family for the meaning, the effect budget, the focus ring, the ARIA, the paint-layer budget.
+
+- [ ] **Step 6: Run the suite and the drift check**
+
+```bash
+npm test
+npm run gen:tokens && git diff --exit-code -- packages/
+```
+Expected: all pass, no drift. `scripts/catalog-audit.test.mjs` covers the catalog edit.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add packages/ui-kit/agent/catalog.md packages/ui-kit/agent/README.md packages/ui-kit/agent/workflows/author.md .claude/agents/sl-ds-auditor.md
+git commit -m "docs(agent): make the effects layer reachable from the author workflow"
+```
+
+---
+
 # Slice 3 — WebGPU liquid field
 
 ## Task 12: Shader module and the double-guarded boot
