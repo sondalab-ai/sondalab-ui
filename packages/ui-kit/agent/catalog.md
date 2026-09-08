@@ -180,7 +180,7 @@ The `--shatter` variant additionally wraps an intact `sl-fx-glitch__text` and a 
   </span>
 </button>
 ```
-Consumes: `--slc-accent`. Do: set `data-text` to the element's own text, and give every shard its `--slfx-i`/`--slfx-n` pair. Don't: run it ambiently on a control — ambient glitch is the wordmark's alone.
+Consumes: `--slc-accent`, `--slc-accent-hover`. Do: call `effects.js`'s `mount()` once and fire `burst(el)` on the triggering event — CSS alone renders nothing; set `data-text` to the element's own text, and give every shard its `--slfx-i`/`--slfx-n` pair. Don't: run it ambiently on a control — ambient glitch is the wordmark's alone.
 
 ## Signature patterns (page-level composition — copy the CSS)
 

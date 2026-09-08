@@ -36,6 +36,10 @@ edit.** You return findings for the caller to act on.
      translucent header, real-content blocks) present and matching.
    - **L5** — editorial voice: precise/technical, active, structure-encodes-truth,
      English identifiers.
+   - **L6** — effects (`sl-audit` verifies only that `effects.css`/`effects.js` use
+     no colour literal): the right family for the meaning, the effect budget, the
+     focus ring, the ARIA (`aria-busy` / `role="progressbar"`), the paint-layer
+     budget (glitch on a child span, never the component). See `HANDOFF.md`.
    Report only what the substrate marks R or A; stay silent on N/A.
 
 ## Output

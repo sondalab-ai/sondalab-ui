@@ -26,7 +26,10 @@ npx sl-audit --surface "<glob>" --product <name>
 ```
 Then the judgement pass the script can't do (delegate to `sl-ds-auditor` or do it yourself against `design-language.md`, scoped to the substrate's Required rules): are the structural mono labels present (eyebrow, section index)? Is there real content, not filler? Is the editorial voice precise/active (L5)? See `HANDOFF.md` for what is judgement vs mechanical.
 
-### 5 — Visual check
+### 5 — Effects (optional layer)
+Once the surface is composed and compliant, reach for effects (`catalog.md` `## Effects`) where a meaning applies — each family carries exactly one meaning, subject to the effect budget (`design-language.md` L6). Skip if no meaning fits; an effect that means nothing is switched off.
+
+### 6 — Visual check
 Render across the applicable themes (light / dark / high-contrast); verify reduced-motion and that active/pressed states show the accent, not a neutral.
 
 ## Output
