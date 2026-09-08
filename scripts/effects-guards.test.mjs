@@ -14,6 +14,38 @@ const KIT = resolve(HERE, "../packages/ui-kit");
 const effects = readFileSync(resolve(KIT, "effects.css"), "utf8")
   .replace(/\/\*[\s\S]*?\*\//g, "");
 
+/** Leaf CSS rules with their own selector, body and source index.
+ *  At-rules are descended into rather than reported, so a rule nested in an
+ *  @media block yields its real selector and its real position in the file. */
+function rules(css) {
+  const out = [];
+  const parse = (from, to) => {
+    let selStart = from;
+    let j = from;
+    while (j < to) {
+      if (css[j] === "}") { selStart = ++j; continue; }
+      if (css[j] !== "{") { j++; continue; }
+      let depth = 1;
+      let k = j + 1;
+      while (k < to && depth > 0) {
+        if (css[k] === "{") depth++;
+        else if (css[k] === "}") depth--;
+        k++;
+      }
+      const body = css.slice(j + 1, k - 1);
+      if (body.includes("{")) parse(j + 1, k - 1);
+      else out.push({ selector: css.slice(selStart, j).trim().replace(/\s+/g, " "), body, index: selStart });
+      selStart = k;
+      j = k;
+    }
+  };
+  parse(0, css.length);
+  return out;
+}
+
+const RULES = rules(effects);
+const PAINTS = /background(?:-color|-image)?\s*:/;
+
 // The kill-switch assertions from Task 1 sliced to end-of-file, which stops
 // testing anything the moment a later task appends a rule naming one of these
 // classes — which is exactly what this task does. Bound them to the selectors
@@ -73,19 +105,9 @@ test("every animation sits inside a reduced-motion guard", () => {
 });
 
 test("only shape re-declares the ring background; states rebind the stops", () => {
-  // The invariant: a STATE temperament never gets its own background — it swaps
-  // --slfx-s0..s3 on the shared ring, which is what keeps glass and aurora one
-  // material. Only rules that change the edge's SHAPE declare their own, and
-  // there are exactly three: the shared ring itself, the busy arc, and the
-  // linear segment. Scanning by selector shape (the earlier form of this test)
-  // silently skipped any override whose selector did not match the guessed
-  // pattern; this scans every edge rule in the file.
-  const rules = effects.match(/[^{}]*\.sl-fx-(?:glass|aurora)[^{}]*\{[^}]*\}/g) || [];
-  const declaring = rules
-    // Longhands too: an earlier form of this guard matched only the shorthand,
-    // which is a narrower net than "any rule that paints a background".
-    .filter((r) => /\{[^}]*background(?:-color|-image)?\s*:/.test(r))
-    .map((r) => r.slice(0, r.indexOf("{")).trim().replace(/\s+/g, " "));
+  const declaring = RULES
+    .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && PAINTS.test(r.body))
+    .map((r) => r.selector);
   assert.equal(
     declaring.length, 3,
     `exactly three edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
@@ -98,16 +120,12 @@ test("only shape re-declares the ring background; states rebind the stops", () =
 test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
   const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
   const orbit = effects.indexOf("slfx-orbit 1.1s");
-  // Anchor on the rule that PAINTS the busy ring — the one whose body declares a
-  // background — not on any rule that merely shares a selector prefix. A plain
-  // indexOf on the selector text resolves to the `--slfx-arc` property-setting
-  // rule that sits just above it, and would pass on a file where the painting
-  // rule had been moved inside the guard. Matching the body keeps the assertion
-  // true to its own name while tolerating future `:not()` modifiers.
-  const rule = /[^{}]*\[data-sl-fx-live="busy"\][^{}]*::after[^{}]*\{[^}]*background(?:-color|-image)?\s*:[^}]*\}/.exec(effects);
-  assert.ok(rule, "the busy ring's painting rule must exist");
+  const ring = RULES.find(
+    (r) => /\[data-sl-fx-live="busy"\]/.test(r.selector) && r.selector.endsWith("::after") && PAINTS.test(r.body),
+  );
+  assert.ok(ring, "the busy ring's painting rule must exist");
   assert.ok(orbit > guardStart, "the orbit animation must sit inside the reduced-motion guard");
-  assert.ok(rule.index < guardStart, "the busy ring itself must render regardless of motion preference");
+  assert.ok(ring.index < guardStart, "the busy ring itself must render regardless of motion preference");
 });
 
 test("determinate progress drives arc length, not an animation", () => {
@@ -121,12 +139,10 @@ test("the liquid filter is applied to the sheen layer only, never to a text box"
   // the very same rule written on one line, and would pass on any preceding
   // text that merely contained the substring `::before`. The source is already
   // comment-stripped at read time, so a rule's selector is all that precedes it.
-  const rules = effects.match(/[^{}]*\{[^}]*\}/g) || [];
-  const carrying = rules.filter((r) => /filter:\s*url\(#slfx-liquid\)/.test(r));
+  const carrying = RULES.filter((r) => /filter:\s*url\(#slfx-liquid\)/.test(r.body));
   assert.equal(carrying.length, 1, "exactly one rule may carry the liquid filter");
-  const selector = carrying[0].slice(0, carrying[0].indexOf("{")).trim();
   assert.match(
-    selector, /::before$/,
-    `the liquid filter must sit on the ::before sheen, never on the host — got: ${selector}`,
+    carrying[0].selector, /::before$/,
+    `the liquid filter must sit on the ::before sheen, never on the host — got: ${carrying[0].selector}`,
   );
 });
