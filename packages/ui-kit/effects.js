@@ -21,7 +21,11 @@ let liveEl = null;
 let burstActive = false;
 let armed = false;
 
-/** The document's live token values, re-read whenever the theme changes. */
+/** The document's live token values, re-read whenever the theme changes.
+ *  Nothing in Tier 1 reads these — the CSS owns every colour it paints. They
+ *  exist for the GPU tier, whose shader needs real values as uniforms and
+ *  cannot resolve a custom property. Kept here so there is exactly one place
+ *  that reads a hue from the token layer, and one observer keeping it live. */
 const tokens = { accent: "", depth: "", text: "", canvas: "" };
 
 function readTokens(root = document.documentElement) {
@@ -145,11 +149,15 @@ export function mount(root = document) {
 /**
  * One finite glitch burst of randomised length. A burst requested while another
  * runs is dropped, not queued: a queue produces a stutter train, which reads as
- * breakage rather than as signal.
- * @param {Element} el an element carrying .sl-fx-glitch
+ * breakage rather than as signal. A detached element is refused.
+ * @param {Element} el an element carrying .sl-fx-glitch, still in the document
  */
 export function burst(el, { burstMin = 200, burstMax = 500 } = {}) {
-  if (!armed || burstActive || !el) return;
+  // isConnected: a caller may take the element out of the document between the
+  // event and the burst, and a timer toggling a class on a detached node would
+  // otherwise run for nothing. The guard is carried over from the prior art,
+  // where it exists because of a real defect.
+  if (!armed || burstActive || !el?.isConnected) return;
   burstActive = true;
   randomizeGhosts(el);
   el.classList.add("is-glitching");

@@ -1,17 +1,47 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const KIT = resolve(HERE, "../packages/ui-kit");
-const js = readFileSync(resolve(KIT, "effects.js"), "utf8");
+const MODULE = resolve(HERE, "../packages/ui-kit/effects.js");
+const js = readFileSync(MODULE, "utf8");
+const load = () => import(pathToFileURL(MODULE).href);
+
+/** The body of a top-level exported function, so an assertion can be about
+ *  ORDER inside it rather than about a string existing somewhere in the file. */
+function fnBody(name) {
+  const start = js.search(new RegExp(`export (?:async )?function ${name}\\b`));
+  assert.ok(start > -1, `missing export: ${name}`);
+  // Step over the parameter list first. A destructured default such as
+  // `{ burstMin = 200 }` puts a brace before the body, so the first `{` after
+  // the function name is not the body's.
+  let i = js.indexOf("(", start);
+  let depth = 0;
+  do {
+    if (js[i] === "(") depth++;
+    else if (js[i] === ")") depth--;
+    i++;
+  } while (depth > 0 && i < js.length);
+  const open = js.indexOf("{", i);
+  depth = 0;
+  i = open;
+  do {
+    if (js[i] === "{") depth++;
+    else if (js[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < js.length);
+  return js.slice(open + 1, i - 1);
+}
 
 // The audit reads CSS only, so a literal here would pass the gate while
-// breaking the contract. This closes that hole mechanically.
+// breaking the contract. Cover every CSS colour function, not just rgb() —
+// `color-mix(` is deliberately not matched, since it takes role-vars.
+const COLOUR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
+
 test("effects.js contains no colour literal", () => {
-  const hits = js.match(/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|rgba?\([^)]*\)/g) || [];
+  const hits = js.match(COLOUR) || [];
   assert.deepEqual(hits, [], `hues must be read from tokens with getComputedStyle, found: ${hits}`);
 });
 
@@ -21,17 +51,86 @@ test("effects.js exports the documented API", () => {
   }
 });
 
+test("importing the module has no side effects", async () => {
+  // Node has no `document` and no `window`, so ANY top-level DOM access throws
+  // a ReferenceError here. Executing the module beats guessing at its shape:
+  // a regex for `^document\.` missed indented and `window.`-prefixed access.
+  await assert.doesNotReject(load);
+});
+
 test("mount() refuses to arm Tier 1 under reduced motion", () => {
-  assert.match(js, /prefers-reduced-motion:\s*reduce/);
+  const body = fnBody("mount");
+  const guard = body.indexOf("matchMedia(REDUCE).matches");
+  const arm = body.indexOf('setAttribute("data-sl-fx", "on")');
+  assert.ok(guard > -1, "mount() must consult the reduced-motion query");
+  assert.ok(arm > -1, "mount() must arm Tier 1 by setting data-sl-fx");
+  assert.ok(guard < arm, "the reduced-motion guard must precede arming, not follow it");
+  assert.match(body.slice(guard, arm), /return false/, "the guard must return, not merely branch");
 });
 
-test("importing the module has no side effects", () => {
-  // No top-level call that touches the document: every DOM read happens inside
-  // a function body. A bare `document.` at column 0 would be a side effect.
-  assert.doesNotMatch(js, /^document\./m);
-  assert.doesNotMatch(js, /^mount\(/m);
+test("mount() refuses to arm Tier 1 under high contrast", () => {
+  const body = fnBody("mount");
+  const guard = body.indexOf('"high-contrast"');
+  const arm = body.indexOf('setAttribute("data-sl-fx", "on")');
+  assert.ok(guard > -1, "mount() must consult the theme");
+  assert.ok(guard < arm, "the high-contrast guard must precede arming");
+  assert.match(body.slice(guard, arm), /return false/);
 });
 
-test("the glitch coordinator drops overlapping bursts rather than queueing", () => {
-  assert.match(js, /burstActive/);
+test("burst drops an overlapping burst rather than queueing it", () => {
+  const body = fnBody("burst");
+  assert.match(
+    body, /if\s*\([^)]*burstActive[^)]*\)\s*return;/,
+    "an in-flight burst must cause an early return",
+  );
+  assert.doesNotMatch(
+    body, /setTimeout\([^)]*\bburst\s*\(/,
+    "a dropped burst must not be re-scheduled — a queue reads as breakage, not as signal",
+  );
+});
+
+test("burst refuses a detached element", () => {
+  assert.match(
+    fnBody("burst"), /isConnected/,
+    "a burst on a detached node leaves a timer mutating something nothing can see",
+  );
+});
+
+test("burst does nothing before mount() has armed Tier 1", async () => {
+  const { burst } = await load();
+  const el = {
+    isConnected: true,
+    classList: { add: () => assert.fail("burst must not fire before mount() arms Tier 1") },
+    style: { setProperty() {} },
+    querySelectorAll: () => [],
+  };
+  burst(el);
+});
+
+test("the ambient aurora is granted to one element at a time", async () => {
+  const { grantLive, revokeLive } = await load();
+  const make = () => {
+    const attrs = {};
+    return {
+      attrs,
+      setAttribute: (k, v) => { attrs[k] = v; },
+      removeAttribute: (k) => { delete attrs[k]; },
+    };
+  };
+  const first = make();
+  const second = make();
+  grantLive(first);
+  assert.equal(first.attrs["data-sl-fx-live"], "on");
+  grantLive(second);
+  assert.equal(first.attrs["data-sl-fx-live"], undefined, "the previous holder falls back to its resting ring");
+  assert.equal(second.attrs["data-sl-fx-live"], "on");
+  revokeLive(second);
+  assert.equal(second.attrs["data-sl-fx-live"], undefined);
+});
+
+test("the coordinator never touches the busy value", () => {
+  // Busy auroras are the consumer's and are exempt from the budget: they are
+  // bound to real work, and several can legitimately run at once.
+  assert.doesNotMatch(fnBody("grantLive"), /busy/);
+  assert.doesNotMatch(fnBody("revokeLive"), /busy/);
 });
