@@ -78,6 +78,63 @@
    material (the glass edge, a resting ring) survives, because it is not motion.
    scripts/effects-guards.test.mjs enforces the placement mechanically. */
 
+/* ══ EDGE — glass and aurora are two temperaments of ONE ring ════════════════
+   The ring occupies exactly the border band: for an absolutely positioned child
+   `inset: 0` resolves against the PADDING box, so `inset: -1px` lands on a 1px
+   border — and 1px outside the box when the element has none (a filled button,
+   the only case where the ring is external). Width is `padding`, so it grows
+   INWARD: growing outward would walk into the focus outline at
+   `outline-offset: 2px`, which the aurora must never occupy.
+   Do not "correct" the negative inset to a positive one. */
+
+@property --slfx-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 210deg;
+}
+
+:is(.sl-fx-glass, .sl-fx-aurora) { position: relative; }
+
+:is(.sl-fx-glass, .sl-fx-aurora)::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: var(--slfx-ring-w);
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(from var(--slfx-angle),
+    var(--slfx-s0) 0deg,
+    var(--slfx-s1) 95deg,
+    var(--slfx-s2) 185deg,
+    var(--slfx-s3) 290deg,
+    var(--slfx-s0) 360deg);
+  /* `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
+  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;   /* Safari below 15.4 */
+  mask-composite: exclude;
+  transition: opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+}
+
+/* Glass — the resting temperament. Two light angles caught on the edge, plus a
+   single inner highlight. The stops are neutral-dominant with a whisper of the
+   accent and its depth companion, so the edge reads as material, not as accent. */
+.sl-fx-glass {
+  --slfx-s0: var(--slfx-edge-warm);
+  --slfx-s1: var(--slfx-edge-dim);
+  --slfx-s2: var(--slfx-edge-cool);
+  --slfx-s3: var(--slfx-edge-dim);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--slfx-sheen) 7%, transparent);
+}
+.sl-fx-glass::after { opacity: 1; }
+
+/* Container-scale edges. Width is emphasis, not separation — HANDOFF check 4
+   classes an emphasis edge as a blessed category, so this is not an L2 breach. */
+.sl-fx-glass--wide,
+.sl-fx-aurora--wide { --slfx-ring-w: 3px; --slfx-bloom: 22px; }
+.sl-fx-glass--field,
+.sl-fx-aurora--field { --slfx-ring-w: 2px; --slfx-bloom: 0px; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* Every animated rule in this file lives here. Filled by Task 3 (aurora
      sweep/orbit), Task 4 (liquid settle) and Task 5 (glitch channels). */

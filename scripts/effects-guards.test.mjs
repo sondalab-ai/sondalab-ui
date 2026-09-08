@@ -14,16 +14,39 @@ const KIT = resolve(HERE, "../packages/ui-kit");
 const effects = readFileSync(resolve(KIT, "effects.css"), "utf8")
   .replace(/\/\*[\s\S]*?\*\//g, "");
 
+// The kill-switch assertions from Task 1 sliced to end-of-file, which stops
+// testing anything the moment a later task appends a rule naming one of these
+// classes — which is exactly what this task does. Bound them to the selectors
+// that actually carry the switch. REPLACE the two Task 1 kill-switch tests
+// with these two; do not add them alongside.
+const selectorsCarrying = (attr) =>
+  (effects.match(new RegExp(`[^{}]*\\[${attr}\\][^{}]*\\{`, "g")) || []).join("\n");
+
+const FAMILIES = ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"];
+
 test("effects.css disables every family under high-contrast", () => {
-  assert.match(effects, /\[data-sl-theme="high-contrast"\]/);
-  for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"]) {
-    const block = effects.slice(effects.indexOf('[data-sl-theme="high-contrast"]'));
-    assert.ok(block.includes(cls), `high-contrast kill switch must cover .${cls}`);
-  }
+  const sel = selectorsCarrying('data-sl-theme="high-contrast"');
+  for (const cls of FAMILIES) assert.ok(sel.includes(cls), `high-contrast kill switch must cover .${cls}`);
 });
 
-test("effects.css honours the subtree opt-out", () => {
-  assert.match(effects, /\[data-sl-fx="off"\]/);
+test("effects.css honours the subtree opt-out for every family", () => {
+  const sel = selectorsCarrying('data-sl-fx="off"');
+  for (const cls of FAMILIES) assert.ok(sel.includes(cls), `opt-out must cover .${cls}`);
+});
+
+test("the ring is one shared rule, not one per family", () => {
+  const ring = effects.match(/:is\(\.sl-fx-glass,\s*\.sl-fx-aurora\)::after\s*\{/g) || [];
+  assert.equal(ring.length, 1, "glass and aurora must share exactly one ::after rule");
+});
+
+test("the ring grows inward — padding is the width, inset stays at the border box", () => {
+  const block = effects.slice(effects.indexOf(":is(.sl-fx-glass, .sl-fx-aurora)::after"));
+  assert.match(block.slice(0, 600), /inset:\s*-1px/, "ring inset must stay pinned to the border box");
+  assert.match(block.slice(0, 600), /padding:\s*var\(--slfx-ring-w/, "ring width must be padding, so it grows inward");
+});
+
+test("--slfx-angle is registered with @property", () => {
+  assert.match(effects, /@property\s+--slfx-angle\s*\{[^}]*syntax:\s*"<angle>"/);
 });
 
 test("every animation sits inside a reduced-motion guard", () => {
