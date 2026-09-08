@@ -135,21 +135,21 @@ Two exclusions are deliberate and load-bearing:
 
 ### Glass — `sl-fx-glass`
 
-A `1px` border painted with a conic gradient so the edge catches light at two angles, plus a single inner highlight. Border **width is unchanged**; only its colour becomes a gradient.
+A `1px` edge painted with a conic gradient so it catches light at two angles, plus a single inner highlight. Border **width is unchanged**; only its colour becomes a gradient.
+
+Glass and aurora share **one** edge mechanism — the masked `::after` ring described under Aurora below, occupying exactly the border band. Glass is its resting temperament (static angle, neutral-dominant stops); aurora is its attention temperament (swept angle, accent-dominant stops). A `background-clip: border-box` gradient was rejected for this: it would require every component to declare its own ground colour (`--slc-surface` for a card, `--slc-raised` for a field) so the padding-box layer could repaint it, adding a role-var and a per-component binding for no visual gain. The ring composites over whatever background the element already has.
+
+**One ring, four stop variables, swapped by state.** The two temperaments cannot be two `background` declarations on the same `::after` — an element carrying both classes would resolve to a single winning background and show the attention state permanently. So the ring declares its gradient once in terms of `--slfx-s0..s3`, and each state binds the stops:
 
 ```css
 .sl-fx-glass {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--slc-surface), var(--slc-surface)) padding-box,
-    conic-gradient(from var(--slfx-light, 210deg),
-      var(--slfx-edge-warm) 0deg,
-      var(--slfx-edge-dim)  95deg,
-      var(--slfx-edge-cool) 185deg,
-      var(--slfx-edge-dim)  290deg,
-      var(--slfx-edge-warm) 360deg) border-box;
+  --slfx-s0: var(--slfx-edge-warm);
+  --slfx-s1: var(--slfx-edge-dim);
+  --slfx-s2: var(--slfx-edge-cool);
+  --slfx-s3: var(--slfx-edge-dim);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--slfx-sheen) 7%, transparent);
 }
+.sl-fx-glass::after { opacity: 1; }
 ```
 
 with the three edge stops mixed from role-vars only:
@@ -164,28 +164,45 @@ Inside an inversion band the alpha-over-canvas default of `--slc-border` sits on
 
 ### Aurora — `sl-fx-aurora`
 
-A masked `1px` conic ring on a pseudo-element, swept by an `@property`-registered angle.
+**The aurora inhabits an edge that already exists; it never adds a concentric ring.** A second ring would be added chrome, which the thesis forbids, and on a focused element it would stack three concentric rings — the `1px` border, the aurora, then the `outline` at `outline-offset: 2px` — blurring the accessibility affordance into the decoration. So:
+
+1. **Where the element has a border, the aurora *is* that border in its attention state** — same geometry, same `1px`, no growth, and the `outline` stays the only external ring and therefore unambiguously readable as focus.
+2. **An external rim only where there is no edge to inhabit** — `sl-btn--primary` is filled and borderless, and is the one case where the ring genuinely sits outside the box.
+3. **Where the edge is not a ring, the aurora is linear** — it inhabits the active tab's 2px underline, the link's underline, the inversion band's top rule. It never becomes a ring there.
+
+The corollary is that **glass and aurora are one mechanism, not two stacked decorations**: a single `::after` occupying exactly the border band, with two temperaments — at rest the static conic catching light at two angles (glass), under attention the same conic saturated to the accent and swept (aurora). An element carrying both classes does not stack them; the aurora is the attention state of its glass edge.
+
+A masked `1px` conic ring on a pseudo-element, swept by an `@property`-registered angle. **Geometry note:** for an absolutely positioned child, `inset: 0` resolves against the *padding* box, so `inset: -1px` with `padding: 1px` and `mask-composite: exclude` lands exactly **on** the border when the border is `1px`, and `1px` outside the visible box when the element has none — which is precisely the rule above, expressed in one declaration. Implementations must not "correct" it to a positive inset.
 
 ```css
-@property --slfx-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --slfx-angle { syntax: "<angle>"; inherits: false; initial-value: 210deg; }
 
-.sl-fx-aurora { position: relative; }
-.sl-fx-aurora::after {
+/* shared ring geometry — glass and aurora are two temperaments of this one edge */
+:is(.sl-fx-glass, .sl-fx-aurora) { position: relative; }
+:is(.sl-fx-glass, .sl-fx-aurora)::after {
   content: ""; position: absolute; inset: -1px; border-radius: inherit;
   padding: 1px; pointer-events: none; opacity: 0;
   background: conic-gradient(from var(--slfx-angle),
-    transparent 0deg,
-    color-mix(in srgb, var(--slc-accent) 90%, transparent) 55deg,
-    color-mix(in srgb, var(--slfx-depth) 90%, transparent) 130deg,
-    transparent 215deg);
+    var(--slfx-s0) 0deg, var(--slfx-s1) 95deg,
+    var(--slfx-s2) 185deg, var(--slfx-s3) 290deg, var(--slfx-s0) 360deg);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;   /* Safari below 15.4 */
   mask-composite: exclude;
   transition: opacity var(--sl-motion-mid) var(--sl-motion-ease);
+}
+
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"]) {
+  --slfx-s0: transparent;
+  --slfx-s1: color-mix(in srgb, var(--slc-accent) 90%, transparent);
+  --slfx-s2: color-mix(in srgb, var(--slfx-depth) 90%, transparent);
+  --slfx-s3: transparent;
 }
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
 ```
 
-The sweep (`@keyframes` animating `--slfx-angle` to `360deg`) is added only under Tier 1 and `prefers-reduced-motion: no-preference`. Where `@property` is unsupported the angle is not animatable and the ring renders **static** — a correct Tier-0 degradation, not a broken state. The `@property` floor (Chrome 85 / Safari 16.4 / Firefox 128) is the same floor the theme layer already accepts for its relative-colour accent step, so this adds no new browser requirement.
+Because the stops are variables on the *element* and the gradient lives once on the pseudo-element, an element carrying both classes transitions from glass to aurora by rebinding four custom properties — the ring itself never changes, which is what makes the two families read as one material rather than as a swap.
+
+`--slfx-s0..s3` default to `transparent` in the `--slfx-*` block, so a bare `.sl-fx-aurora` at rest is a well-formed invisible ring rather than an invalid gradient. The sweep (`@keyframes` animating `--slfx-angle` from its `210deg` initial value to `570deg`, so the rotation is continuous rather than snapping back through the resting angle) is added only under Tier 1 and `prefers-reduced-motion: no-preference`. Where `@property` is unsupported the angle is not animatable and the ring renders **static** — a correct Tier-0 degradation, not a broken state. The `@property` floor (Chrome 85 / Safari 16.4 / Firefox 128) is the same floor the theme layer already accepts for its relative-colour accent step, so this adds no new browser requirement.
 
 ### Liquid — `sl-fx-liquid`
 
