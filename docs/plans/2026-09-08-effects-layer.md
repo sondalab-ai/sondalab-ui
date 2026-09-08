@@ -18,6 +18,7 @@ Every task's requirements implicitly include this section.
 - **No colour literal anywhere.** Every hue comes from `color-mix()` over `--slc-*`/`--sl-*` role-vars. In JavaScript, hues are read with `getComputedStyle` and re-read on `data-sl-theme` change.
 - **Mask colours use the `black` keyword, never `#000`.** `sl-audit`'s `COLOR_RE` matches `#[0-9a-fA-F]{3}\b` and would extract `#000` as a design colour; the `black` keyword is not extracted at all. (`#000` happens to be allowlisted today via high-contrast `--sl-bg-canvas: #000000`, but relying on that is accidental.)
 - **Two paint layers per element:** `::before` = liquid sheen, `::after` = edge ring. The glitch uses a child `<span class="sl-fx-glitch" data-text="…">`, never the host's pseudo-elements (spec §Decision 3b).
+- **Shape declares a background; state rebinds the stops.** A state temperament of the edge (focus, sweep) never re-declares the ring's `background` — it swaps `--slfx-s0..s3`, which is what keeps glass and aurora one material rather than two decorations. Only rules that change the edge's *shape* paint their own, and there are exactly three: the shared ring, the busy arc, and `--linear`. A fourth is a defect.
 - **Replaced controls host nothing.** `<input>`/`<textarea>`/`<select>` get their effects on a `.sl-field__control` wrapper (spec §Decision 3b).
 - **Namespace:** `--slfx-*` custom properties, `.sl-fx-*` classes. Never `--sl-fx-*`.
 - **Role-var fallback chains.** `effects.css` may be loaded without `components.css`, so every `--slc-*` read carries a `--sl-*` fallback: `var(--slc-accent, var(--sl-accent-default))`.
@@ -134,7 +135,13 @@ import { dirname, resolve } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const KIT = resolve(HERE, "../packages/ui-kit");
-const effects = readFileSync(resolve(KIT, "effects.css"), "utf8");
+
+// Scan declarations, not prose. A comment that mentions `animation:` is not an
+// animation, and this file's comments explain the very rules it asserts — so
+// every assertion below reads the comment-stripped source. Stripping cannot
+// hide a real declaration, so the guard loses no strength.
+const effects = readFileSync(resolve(KIT, "effects.css"), "utf8")
+  .replace(/\/\*[\s\S]*?\*\//g, "");
 
 test("effects.css disables every family under high-contrast", () => {
   assert.match(effects, /\[data-sl-theme="high-contrast"\]/);
@@ -303,6 +310,26 @@ The one mechanism glass and aurora both use. Delivered here in its resting tempe
 Append to `scripts/effects-guards.test.mjs`:
 
 ```js
+// The kill-switch assertions from Task 1 sliced to end-of-file, which stops
+// testing anything the moment a later task appends a rule naming one of these
+// classes — which is exactly what this task does. Bound them to the selectors
+// that actually carry the switch. REPLACE the two Task 1 kill-switch tests
+// with these two; do not add them alongside.
+const selectorsCarrying = (attr) =>
+  (effects.match(new RegExp(`[^{}]*\\[${attr}\\][^{}]*\\{`, "g")) || []).join("\n");
+
+const FAMILIES = ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"];
+
+test("effects.css disables every family under high-contrast", () => {
+  const sel = selectorsCarrying('data-sl-theme="high-contrast"');
+  for (const cls of FAMILIES) assert.ok(sel.includes(cls), `high-contrast kill switch must cover .${cls}`);
+});
+
+test("effects.css honours the subtree opt-out for every family", () => {
+  const sel = selectorsCarrying('data-sl-fx="off"');
+  for (const cls of FAMILIES) assert.ok(sel.includes(cls), `opt-out must cover .${cls}`);
+});
+
 test("the ring is one shared rule, not one per family", () => {
   const ring = effects.match(/:is\(\.sl-fx-glass,\s*\.sl-fx-aurora\)::after\s*\{/g) || [];
   assert.equal(ring.length, 1, "glass and aurora must share exactly one ::after rule");
@@ -416,18 +443,42 @@ git commit -m "feat(ui-kit): shared edge ring + the glass temperament"
 Append to `scripts/effects-guards.test.mjs`:
 
 ```js
-test("busy is the only mode that replaces the ring background", () => {
-  const overrides = effects.match(/\.sl-fx-aurora\[data-sl-fx-live[^{]*\{[^}]*background:/g) || [];
-  assert.equal(overrides.length, 1, "only the busy arc may re-declare the ring background");
-  assert.match(overrides[0], /busy/, "the one background override must be the busy arc");
+test("only shape re-declares the ring background; states rebind the stops", () => {
+  // The invariant: a STATE temperament never gets its own background — it swaps
+  // --slfx-s0..s3 on the shared ring, which is what keeps glass and aurora one
+  // material. Only rules that change the edge's SHAPE declare their own, and
+  // there are exactly three: the shared ring itself, the busy arc, and the
+  // linear segment. Scanning by selector shape (the earlier form of this test)
+  // silently skipped any override whose selector did not match the guessed
+  // pattern; this scans every edge rule in the file.
+  const rules = effects.match(/[^{}]*\.sl-fx-(?:glass|aurora)[^{}]*\{[^}]*\}/g) || [];
+  const declaring = rules
+    // Longhands too: an earlier form of this guard matched only the shorthand,
+    // which is a narrower net than "any rule that paints a background".
+    .filter((r) => /\{[^}]*background(?:-color|-image)?\s*:/.test(r))
+    .map((r) => r.slice(0, r.indexOf("{")).trim().replace(/\s+/g, " "));
+  assert.equal(
+    declaring.length, 3,
+    `exactly three edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+  );
+  assert.ok(declaring.some((s) => s.startsWith(":is(")), "the shared ring must be one");
+  assert.ok(declaring.some((s) => s.includes('[data-sl-fx-live="busy"]')), "the busy arc must be one");
+  assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
 });
 
 test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
   const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
   const orbit = effects.indexOf("slfx-orbit 1.1s");
-  const ring = effects.indexOf('.sl-fx-aurora[data-sl-fx-live="busy"]::after');
+  // Anchor on the rule that PAINTS the busy ring — the one whose body declares a
+  // background — not on any rule that merely shares a selector prefix. A plain
+  // indexOf on the selector text resolves to the `--slfx-arc` property-setting
+  // rule that sits just above it, and would pass on a file where the painting
+  // rule had been moved inside the guard. Matching the body keeps the assertion
+  // true to its own name while tolerating future `:not()` modifiers.
+  const rule = /[^{}]*\[data-sl-fx-live="busy"\][^{}]*::after[^{}]*\{[^}]*background(?:-color|-image)?\s*:[^}]*\}/.exec(effects);
+  assert.ok(rule, "the busy ring's painting rule must exist");
   assert.ok(orbit > guardStart, "the orbit animation must sit inside the reduced-motion guard");
-  assert.ok(ring < guardStart, "the busy ring itself must render regardless of motion preference");
+  assert.ok(rule.index < guardStart, "the busy ring itself must render regardless of motion preference");
 });
 
 test("determinate progress drives arc length, not an animation", () => {
@@ -469,11 +520,17 @@ Insert **before** the `@media (prefers-reduced-motion: no-preference)` block:
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
 
 /* Busy — a short travelling marker, so a different GEOMETRY rather than a
-   rebinding of the stops. This is the ONE background override in the file; on
-   an element that is both glass and busy, busy wins, which is correct: a
-   resting edge and a working edge are not the same edge. */
+   rebinding of the stops. Declaring its own background is what separates a
+   SHAPE from a STATE: states swap --slfx-s0..s3 on the shared ring, and only
+   the three shape rules (the ring, this arc, and --linear below) paint their
+   own. On an element that is both glass and busy, busy wins, which is correct:
+   a resting edge and a working edge are not the same edge.
+
+   --linear is excluded because the two shapes are incompatible: a conic arc
+   painted into a 2px horizontal strip renders as a smear. A linear aurora has
+   no busy mode — report work on a ring aurora, not on an underline. */
 .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
-.sl-fx-aurora[data-sl-fx-live="busy"]::after {
+.sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after {
   opacity: 1;
   background: conic-gradient(from var(--slfx-angle),
     color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 92%, transparent) 0deg,
@@ -483,7 +540,12 @@ Insert **before** the `@media (prefers-reduced-motion: no-preference)` block:
 }
 
 /* Determinate — the arc length is the value; nothing rotates. The edge of a
-   card IS its progress bar: no extra widget, no layout. */
+   card IS its progress bar: no extra widget, no layout.
+   CONSUMER CONTRACT: --slfx-progress must be set INLINE on the element (an
+   inline style is what [style*="--slfx-progress"] detects). Setting it from a
+   stylesheet rule leaves the element in indeterminate mode — self-consistent,
+   but not what the author asked for. element.style.setProperty() and a
+   framework `style` prop both satisfy this. */
 .sl-fx-aurora[data-sl-fx-live="busy"][style*="--slfx-progress"] {
   --slfx-arc: calc(var(--slfx-progress) * 360deg);
 }
@@ -520,7 +582,7 @@ Replace the placeholder `@media (prefers-reduced-motion: no-preference) { … }`
     will-change: background;
   }
   /* Determinate never orbits — its arc length carries the value. */
-  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])::after {
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: slfx-orbit 1.1s linear infinite;
     will-change: background;
   }
@@ -530,8 +592,8 @@ Replace the placeholder `@media (prefers-reduced-motion: no-preference) { … }`
    reduced opacity — present, honest that something is happening, not moving.
    aria-busy carries the state, which is why that attribute is a requirement. */
 @media (prefers-reduced-motion: reduce) {
-  .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 360deg; }
-  .sl-fx-aurora[data-sl-fx-live="busy"]::after { opacity: 0.55; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear) { --slfx-arc: 360deg; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after { opacity: 0.55; }
 }
 ```
 
