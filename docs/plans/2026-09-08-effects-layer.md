@@ -2532,3 +2532,516 @@ Expected: PASS.
 git add showcase/effects.html packages/ui-kit/package.json scripts/effects-showcase.test.mjs
 git commit -m "feat(showcase): report the resolved effect tier; release 0.8.1"
 ```
+
+
+---
+
+# Final-review fixes
+
+Three blocking findings from the whole-branch review, which opened the page in a real browser and turned cascade inferences into observed facts. All three are properties of the *rendered* cascade, which is why fifteen task-scoped reviews missed them, and each sits where two tasks' outputs meet.
+
+## Task 15: Close the three blocking findings
+
+**Files:**
+- Modify: `packages/ui-kit/effects.css`
+- Modify: `packages/ui-kit/effects.js`
+- Modify: `packages/ui-kit/package.json`
+- Modify: `docs/specs/2026-09-08-effects-layer-design.md`
+- Modify: `scripts/effects-guards.test.mjs`
+
+- [ ] **Step 1: Write the kill-switch completeness test**
+
+The existing switch test asserts the four class *names* appear inside a selector carrying the attribute. It passed while three families escaped both switches — the eleventh assertion in this plan to match something adjacent to what it names. Invert the quantifier, reusing the `rules()` parser already in the file:
+
+```js
+// Every property an effect can put on a HOST element, as opposed to on a paint
+// layer. A kill switch that only hides ::before/::after leaves these running.
+const HOST_EFFECT = /(?:^|;)\s*(?:animation|box-shadow|border-radius|opacity)\s*:/;
+
+test("both kill switches neutralise host-level effects, not only paint layers", () => {
+  const targets = RULES.filter(
+    (r) => /\.sl-fx-/.test(r.selector) && !/::(before|after)/.test(r.selector) && HOST_EFFECT.test(r.body),
+  );
+  assert.ok(targets.length > 0, "the parser must find the host-level rules");
+
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    const killed = RULES.filter((r) => r.selector.includes(attr) && HOST_EFFECT.test(r.body));
+    assert.ok(killed.length > 0, `no rule neutralises a host-level effect under [${attr}]`);
+    const covered = killed.map((r) => r.selector).join(" ");
+    for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"]) {
+      assert.ok(covered.includes(cls), `[${attr}] must neutralise host-level .${cls}, not just its pseudo-elements`);
+    }
+  }
+});
+
+test("the opt-out disables the element carrying it, not only its descendants", () => {
+  // `[data-sl-fx="off"] .sl-fx-glass` is descendant-only: putting the attribute
+  // ON an effect element did nothing at all. design-language.md L6 and the spec
+  // both say "that element and its subtree".
+  const selectors = RULES.map((r) => r.selector).join("\n");
+  assert.match(
+    selectors, /:is\(\[data-sl-fx="off"\],\s*\[data-sl-fx="off"\] \*\)/,
+    'the opt-out must match [data-sl-fx="off"] itself as well as its subtree',
+  );
+});
+```
+
+- [ ] **Step 2: Run it to verify it fails**
+
+Run: `node --test scripts/effects-guards.test.mjs`
+Expected: FAIL — the host-level effects are not neutralised, and the opt-out is descendant-only.
+
+- [ ] **Step 3: Rewrite the two kill switches**
+
+Replace the existing high-contrast and opt-out blocks in `effects.css`. The neutralising declarations need `!important` because `effects.js` writes `--slfx-c0..c3` and `--slfx-d` as inline styles, which otherwise win over any stylesheet rule:
+
+```css
+/* 1 & 2 — high contrast and the subtree opt-out neutralise the HOST as well as
+   its paint layers. The glitch animates its host and its shards, the liquid
+   morphs the host's border-radius, and the glass paints an inset highlight on
+   the host — a switch over ::before/::after alone left three of the four
+   families running. `!important` is load-bearing here: effects.js writes the
+   pointer and bulge properties as inline styles, which beat a plain rule.
+   The opt-out matches the element carrying it AND its subtree: the attribute
+   on an effect element must disable that element, which descendant-only
+   selectors never did. */
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) {
+  animation: none !important;
+  box-shadow: none !important;
+  --slfx-c0: 0px !important;
+  --slfx-c1: 0px !important;
+  --slfx-c2: 0px !important;
+  --slfx-c3: 0px !important;
+  --slfx-d: 0 !important;
+  --slfx-bloom: 0px !important;
+}
+
+/* The shatter variant replaces the label with jumping bands, so restoring the
+   text is part of switching it off, not a separate concern. */
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch__text,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__text,
+.sl-fx-glitch__text:is([data-sl-fx="off"], [data-sl-fx="off"] *) { opacity: 1 !important; }
+
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch__shard,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__shard { opacity: 0 !important; }
+
+/* Paint layers. */
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora)::after,
+:root[data-sl-theme="high-contrast"] .sl-fx-liquid::before,
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
+:root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) :is(.sl-fx-glass, .sl-fx-aurora)::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid::before,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
+:is(.sl-fx-glass, .sl-fx-aurora):is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
+.sl-fx-liquid:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
+.sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
+.sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::after {
+  display: none !important;
+}
+```
+
+- [ ] **Step 4: Close the JS half of the same hole**
+
+`burst()` checks only `armed`, and `mount()` evaluates its guards once at load and never re-arms. So the showcase's own *Simulate signal loss* button fires a burst under high contrast. Re-read the live state at call time in `effects.js`:
+
+```js
+/** The conditions under which no effect may run, re-read at call time rather
+ *  than sampled at mount: a visitor can switch theme, or turn on reduced
+ *  motion, long after the page loaded. */
+function suppressed() {
+  if (typeof document === "undefined") return true;
+  if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return true;
+  return window.matchMedia(REDUCE).matches;
+}
+```
+
+Use it in `burst()` — `if (!armed || burstActive || suppressed() || !el?.isConnected) return;` — and in `scramble()`, which likewise runs regardless today.
+
+- [ ] **Step 5: Stop a determinate aurora reading as complete under reduced motion**
+
+`effects.css`'s `@media (prefers-reduced-motion: reduce)` block sets `--slfx-arc: 360deg` at the same specificity as the determinate rule and later in the file, so a card at `aria-valuenow="62"` renders a full ring. That is misinformation rather than absent information, and a determinate arc has no animation to suppress. Add the exclusion the orbit rule already carries:
+
+```css
+.sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
+```
+
+- [ ] **Step 6: Correct the dependency posture**
+
+npm installs `optionalDependencies` by default — "optional" means a *failure* to install is tolerated, not that installation is deferred. So every consumer of a CSS token package currently pulls a pre-1.0 WebGPU library. In `packages/ui-kit/package.json`, replace the `optionalDependencies` block with:
+
+```json
+  "peerDependencies": {
+    "vgpu": "^0.3.1"
+  },
+  "peerDependenciesMeta": {
+    "vgpu": { "optional": true }
+  }
+```
+
+`mountGpu()`'s existing try/catch needs no change — a missing peer is exactly the case its catch already absorbs. Update `scripts/effects-gpu.test.mjs` to assert the new shape: no `dependencies`, no `optionalDependencies`, and `peerDependenciesMeta.vgpu.optional === true`.
+
+Then correct the spec, which currently states something false — `docs/specs/2026-09-08-effects-layer-design.md`, the GPU-tier section: `vgpu` is declared an optional **peer** dependency, so a consumer who never calls `mountGpu()` installs nothing extra and a missing peer cannot break `npm install`.
+
+- [ ] **Step 7: Verify**
+
+```bash
+node --test scripts/effects-guards.test.mjs scripts/effects-gpu.test.mjs
+npm test
+npm run gen:tokens && git status --short -- packages/
+node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/effects.css" --product default
+```
+Expected: all green, no generated drift, no `R` findings. No version bump — `0.8.1` is unpublished, so these fixes ride with it.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add packages/ui-kit/effects.css packages/ui-kit/effects.js packages/ui-kit/package.json docs/specs/2026-09-08-effects-layer-design.md scripts/effects-guards.test.mjs scripts/effects-gpu.test.mjs
+git commit -m "fix(ui-kit): kill switches must reach the host; determinate arc under reduced motion; peer-dep posture"
+```
+
+
+## Task 15b: The reduced-motion guard conflict, and the field ring
+
+Two items. The first is a conflict the fix wave correctly refused to resolve on its own; the second is the only defect in this plan found by looking at the rendered page rather than at source.
+
+- [ ] **Step 1: Narrow the reduced-motion guard so it governs starts, not stops**
+
+The guard asserts every `animation:` declaration sits inside `@media (prefers-reduced-motion: no-preference)`. The new kill switches declare `animation: none !important` outside it, and must — a kill switch applies regardless of motion preference, and a visitor in high contrast is not necessarily a visitor who asked for less motion. Two correct requirements, colliding on a regex.
+
+The guard's intent is that no effect *starts* animating outside the block. `animation: none` is the opposite of starting one. Narrow the match in `scripts/effects-guards.test.mjs`:
+
+```js
+  // `animation: none` is exempt: it STOPS animation, which is what the kill
+  // switches do, and they must apply regardless of motion preference. The rule
+  // this guard exists for is that nothing may START animating outside the
+  // block — so match a declaration that names an animation, not one that
+  // removes it.
+  for (const m of effects.matchAll(/\banimation:\s*(?!none\b)/g)) {
+```
+
+Leave the assertion and its message unchanged.
+
+- [ ] **Step 2: Ship the `.sl-field__control` rule, and make the control fill it**
+
+Found by opening the page: the field's glass and aurora ring is roughly twice the width of the input it marks. The wrapper fills its grid cell while the `<input>` keeps its intrinsic width, so the ring hugs the wrapper and the field floats inside it with a visible seam. The spec calls this wrapper "a new markup convention introduced by this layer (a bare `display: block; position: relative` wrapper)" but `effects.css` never shipped the rule — only the showcase had a page-local one, and `display: block` alone would not have fixed it either.
+
+Add to `effects.css`, beside the paint-layer comment that already names the wrapper:
+
+```css
+/* Replaced form controls render no pseudo-element at all, so a field's effects
+   bind to this wrapper instead. The control must FILL it: a wrapper that is a
+   block while its input keeps an intrinsic width leaves the ring marking a box
+   wider than the field, which is what shipped before anyone looked at it. */
+.sl-field__control { display: block; position: relative; }
+.sl-field__control > :is(input, textarea, select) { box-sizing: border-box; width: 100%; }
+```
+
+Then delete the now-redundant page-local `.sl-field__control` rule from `showcase/effects.html`, so the page demonstrates the shipped rule rather than masking its absence.
+
+- [ ] **Step 3: Verify**
+
+```bash
+node --test scripts/effects-guards.test.mjs
+npm test
+node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/effects.css" --product default
+node packages/ui-kit/agent/sl-audit.mjs --surface "showcase/effects.html" --product default
+npm run gen:tokens && git status --short -- packages/
+```
+Expected: 133/133, no `R` findings, no generated drift.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git commit -m "fix(ui-kit): guard animation starts not stops; ship the field-control wrapper"
+```
+
+
+---
+
+# Redesign — the liquid deforms, the aurora blooms
+
+The branch owner looked at the shipped page and rejected the visual result as too tame. The diagnosis is a constraint I invented and then enforced through fifteen reviews: L6 said effects "spend their budget on light and material, never on weight, radius or added chrome", which translated the original request — *a button that looks solid and becomes liquid under the mouse* — into "light moves, geometry does not". That was never the ask.
+
+## Task 16: Give the liquid mass and the aurora light
+
+**Files:**
+- Modify: `packages/ui-kit/effects.css`
+- Modify: `packages/ui-kit/effects.js`
+- Modify: `docs/design-language.md` (then regenerate)
+- Modify: `docs/specs/2026-09-08-effects-layer-design.md`
+- Modify: `showcase/effects.html` (copy that describes the old mechanism)
+
+**The load-bearing constraint, from the owner:** the deformation must **not** rewrite `border-radius`. The radius stays whatever the component declares, so a surface can re-parametrise its own geometry later without touching the effect. The shape deforms through a **filter over the declared radius**, never by replacing the value. This also deletes a defect the final review found: the current code hardcodes `--sl-radius-md` as the base, so a 10px card was forced to 6px the moment liquid was added.
+
+- [ ] **Step 1: Delete the radius rewrite**
+
+Remove the `border-radius: calc(...)` block and the `--slfx-c0..c3` properties from `.sl-fx-liquid` in `effects.css`, and remove the per-corner bulge writes from `flush()` in `effects.js`. Nothing replaces them: the radius is the component's business again.
+
+- [ ] **Step 2: Make the skin the deformable silhouette**
+
+The layer that paints the silhouette has to be the filtered one, so under Tier 1 the skin carries the surface and the host goes transparent. `border-radius: inherit` is what keeps the radius parametrisable — whatever the component declares flows straight through.
+
+```css
+.sl-fx-liquid { position: relative; }
+
+.sl-fx-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: radial-gradient(9rem 9rem at var(--slfx-px) var(--slfx-py),
+    color-mix(in srgb, var(--slfx-sheen) calc(var(--slfx-d) * 34%), transparent) 0%,
+    transparent 68%);
+}
+
+/* Tier 1: the skin takes over the surface so the filter has a silhouette to
+   deform. --slfx-ground is the host's own computed background, captured by
+   effects.js at mount — not a value this layer invents. The host keeps its
+   text, which is never filtered. */
+[data-sl-fx="on"] .sl-fx-liquid {
+  background-color: transparent;
+  border-color: transparent;
+}
+[data-sl-fx="on"] .sl-fx-liquid::before {
+  background-color: var(--slfx-ground);
+  filter: url(#slfx-liquid);
+}
+/* An element that is also glass or aurora must wobble with its own edge, or a
+   crisp ring sits around a deforming fill and the whole thing reads as broken. */
+[data-sl-fx="on"] .sl-fx-liquid:is(.sl-fx-glass, .sl-fx-aurora)::after {
+  filter: url(#slfx-liquid);
+}
+```
+
+- [ ] **Step 3: Capture the ground, and spring the deformation**
+
+In `effects.js`:
+
+```js
+/** The host's own background, captured once so the skin can take it over.
+ *  Read, never invented — this file declares no colour. */
+function captureGround(el) {
+  if (el.style.getPropertyValue("--slfx-ground")) return;
+  el.style.setProperty("--slfx-ground", getComputedStyle(el).backgroundColor);
+}
+```
+
+Replace the eased transition with a spring integrated in the shared frame loop. A `transition` has no mass, and mass is the whole point:
+
+```js
+// Critically underdamped: the shape overshoots and settles rather than easing
+// to a stop. Stiffness and damping are tuned so a flick reads as elastic and a
+// slow drag as viscous — the same spring, different input.
+const K = 170;
+const DAMP = 14;
+let amp = 0, ampV = 0, target = 0;
+let lagX = 50, lagY = 50;   // the shape trails the pointer; that trail IS the mass
+let prevT = 0;
+
+function integrate(now) {
+  const dt = Math.min((now - prevT) / 1000 || 0, 1 / 30);
+  prevT = now;
+  const a = K * (target - amp) - DAMP * ampV;
+  ampV += a * dt;
+  amp += ampV * dt;
+  // The centre chases the pointer with its own lag, so the deformation arrives
+  // after the cursor rather than under it.
+  lagX += (pointerX - lagX) * Math.min(dt * 9, 1);
+  lagY += (pointerY - lagY) * Math.min(dt * 9, 1);
+}
+```
+
+Each frame, write `--slfx-px`/`--slfx-py` from the lagged centre and `--slfx-d` from `amp`, and drive the filter itself — `feDisplacementMap`'s `scale` is an SVG attribute, not a CSS property, so it is set directly:
+
+```js
+displacement.setAttribute("scale", (amp * 26).toFixed(2));
+```
+
+Keep the loop running while `amp` or `ampV` is non-negligible, so the overshoot actually plays out after the pointer leaves; stop it when both settle, so an idle page costs nothing.
+
+- [ ] **Step 4: Make the filter read as surface tension**
+
+The current filter is turbulence plus displacement, which ripples. Add the gooey pass — a blur followed by an alpha contrast stretch — which is what makes an edge read as a liquid meniscus rather than a wobbling rectangle. Still on the skin only; the host's text is never inside a filtered subtree.
+
+```xml
+<filter id="slfx-liquid" x="-30%" y="-30%" width="160%" height="160%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="7" result="n">
+    <animate attributeName="baseFrequency" dur="11s" repeatCount="indefinite"
+             values="0.008 0.014; 0.013 0.009; 0.008 0.014" />
+  </feTurbulence>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G" result="d" />
+  <feGaussianBlur in="d" stdDeviation="6" result="b" />
+  <feColorMatrix in="b" type="matrix" result="goo"
+    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" />
+  <feComposite in="d" in2="goo" operator="atop" />
+</filter>
+```
+
+`scale` starts at `0` so a resting element is undeformed; Step 3 drives it.
+
+- [ ] **Step 5: Give the aurora a bloom that follows the arc**
+
+The ring is a masked conic, so `drop-shadow` — which follows the alpha shape, unlike `box-shadow` — gives a halo that tracks the lit arc. Two stacked shadows for a soft falloff. The crisp core stays: it is the focus affordance and must not blur.
+
+```css
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
+  filter:
+    drop-shadow(0 0 4px color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 55%, transparent))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--slfx-depth) 38%, transparent));
+}
+```
+
+Widen the lit arc and soften its stops in the four-stop binding, so the sweep reads as light rather than as a painted band — move the accent and depth stops apart and let them fade to transparent over a longer span rather than at a hard edge.
+
+Both filters are raster passes, so they are declared in the active states only, never at rest. Add a one-line comment saying so, since it is a deliberate cost decision.
+
+- [ ] **Step 6: Correct the grammar that forbade this**
+
+In `docs/design-language.md`, the L6 bullet currently reads that effects spend their budget "on light and material, never on weight, radius or added chrome". That sentence is what produced the tame result, and the final review had already noted it contradicts the shipped liquid. Replace it with the rule that actually holds:
+
+> **Effects spend their budget on light and shape; never on weight.** A structural separator stays `1px` whatever an effect is doing to it. Shape and light are theirs to move — the liquid deforms an element's silhouette, the aurora blooms past its edge — but always as a *filter over what the component declares*, never by rewriting a declared value. An effect that replaced an element's `border-radius` would freeze its geometry at whatever the effect assumed; deforming the rendered result leaves the surface free to re-parametrise its own radius without touching the effect.
+
+Regenerate with `npm run gen:tokens` and update the matching passage in the spec's liquid section.
+
+- [ ] **Step 7: Update the showcase copy**
+
+The page describes the old mechanism in prose — "the four corners nearest the pointer soften by up to 10px", "the box never grows". Replace with what it now does. Keep the editorial voice: name the mechanism, not an adjective.
+
+- [ ] **Step 8: Verify**
+
+```bash
+npm test
+node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/effects.css" --product default
+node packages/ui-kit/agent/sl-audit.mjs --surface "showcase/effects.html" --product default
+npm run gen:tokens && git status --short -- packages/
+```
+Expected: green, no `R` findings, and only `agent/design-language.md` regenerated. Note the guards test asserts every `animation:` outside a reduced-motion block — the SVG `<animate>` element is not a CSS declaration and is not matched; if it somehow is, report rather than work around.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git commit -m "feat(ui-kit): the liquid deforms its silhouette, the aurora blooms"
+```
+
+
+---
+
+# The metal edge — shader as the primary path
+
+The owner's reference is `metal-fx` on libraries.dev: *"Real-time liquid metal for buttons, icons, text and badges — a wandering halo, reflections on neighbours, a cursor that bends the ring. v2 on Paper Shaders."* Its API is `useMetalBend(ref)` with the comment `// cursor-driven liquid dent`.
+
+That is a **material simulation** — a shaded metal ring with environment reflection and chromatic dispersion — not a gradient border. No amount of tuning turns a `1px` conic hairline into it. The gap is a category, not a value.
+
+**The planning error, recorded because it explains the whole branch:** the original request said "usiamo libreria webgpu dove necessario". The spec answered that glitch, aurora and glass "are already at full quality in CSS and have no GPU tier", and scoped WebGPU to an optional Tier 2 on the liquid alone. That was decided at the second message of the project and every subsequent review enforced it faithfully. It was wrong: the look asked for *is* the shader look.
+
+## Task 17: A shaded metal edge in WGSL, driving glass and aurora
+
+**Files:**
+- Modify: `packages/ui-kit/effects-shader.js` (the material)
+- Modify: `packages/ui-kit/effects-gpu.js` (per-element geometry, radius, pointer bend)
+- Modify: `packages/ui-kit/effects.css` (stand the CSS ring down under Tier 2)
+- Modify: `docs/specs/2026-09-08-effects-layer-design.md`, `docs/design-language.md`
+- Modify: `showcase/effects.html`
+
+**What survives untouched:** the double-guarded boot, the three tiers, both kill switches, the token-read plumbing, the ARIA discipline, the coordinator budget, `trackLiquid`, the whole test suite. This changes *what the shader draws* and *that it drives the edge* rather than a background field. The infrastructure was built right; it was pointed at the wrong target.
+
+- [ ] **Step 1: Give the shader per-element geometry, including the radius**
+
+Today rects are `vec4f(x, y, w, h)`. The edge needs the element's corner radius too — and reading it rather than assuming it is what honours the owner's constraint that the radius stay parametrisable. `effects-gpu.js` reads `getComputedStyle(el).borderTopLeftRadius` alongside the rect, and packs a second uniform array:
+
+```wgsl
+@group(0) @binding(1) var<uniform> rects  : array<vec4f, 8>;  // x, y, w, h  (normalised)
+@group(0) @binding(3) var<uniform> params : array<vec4f, 8>;  // radius, bend, _, _
+```
+
+The shader draws the edge the component declared. A surface that re-parametrises its radius gets a metal edge that follows, with no change here.
+
+- [ ] **Step 2: Write the material**
+
+A signed distance field gives the edge; its gradient gives a surface normal; the normal drives reflection and specular. That is the whole trick — a 2.5D torus over a rounded rectangle.
+
+```wgsl
+fn sdRoundBox(p: vec2f, b: vec2f, r: f32) -> f32 {
+  let q = abs(p) - b + vec2f(r);
+  return min(max(q.x, q.y), 0.0) + length(max(q, vec2f(0.0))) - r;
+}
+
+// The cursor bends the ring: the field is pulled toward the pointer, so the
+// edge dents rather than the element moving. Falloff is exponential, so the
+// dent is local and the rest of the ring stays where the component put it.
+fn bend(d: f32, p: vec2f, strength: f32) -> f32 {
+  let pull = exp(-distance(p, pointer.xy) * 7.0) * strength;
+  return d + pull * 0.02;
+}
+```
+
+Shade the band `abs(d) < halfWidth` as metal:
+
+- **normal** — `normalize(vec3f(dFdx(d), dFdy(d), h))`, so the band reads as a rounded torus rather than a flat stroke;
+- **environment** — a cheap procedural gradient sampled by the normal, **tinted with `look.accent` and `look.depth`**. This is the reason for writing our own rather than adopting the reference's: neutral chrome knows nothing about a per-product accent, and the design system's whole thesis is that products share a grammar and differ by hue. The metal must be *this product's* metal;
+- **specular** — a tight power lobe from a fixed light direction, so there is one bright highlight that travels as the geometry turns;
+- **chromatic dispersion** — sample the environment three times at slightly offset normals, one per channel. That is what produces the coloured fringing at the edges, and it is the single detail that most separates "metal" from "grey gradient";
+- **wandering halo** — one broad bright arc whose angular position advances slowly with `look.time`, independent of the pointer. The reference calls it wandering because it is not tied to interaction.
+
+- [ ] **Step 2b: Under Tier 2, the skin stops taking the surface**
+
+Task 16 had to make the skin paint the host's background, because a CSS filter can only deform the layer it is applied to. That forced three compromises it documented honestly: the host's `:hover`/`:active` background changes became invisible (the skin holds a captured literal and cannot track live state), a bordered control without glass lost its edge, and `--slfx-ground` had to be recaptured on every theme change.
+
+**All three disappear here.** The shader draws a band *on* the element's boundary, thick enough to cover the fill's own edge — which is exactly how the reference works: the button keeps its own fill and the metal ring surrounds it. So under Tier 2 the host keeps its background and its border, and the skin reverts to being only the sheen:
+
+```css
+/* Tier 2 draws the edge, so the skin no longer has to impersonate the surface.
+   The host keeps its own background and border, which is what gives :hover and
+   :active back their visible effect and what makes --slfx-ground unnecessary. */
+[data-sl-fx-gpu="on"] .sl-fx-liquid {
+  background-color: revert-layer;
+  border-color: revert-layer;
+}
+[data-sl-fx-gpu="on"] .sl-fx-liquid::before { background-color: transparent; }
+```
+
+Verify `revert-layer` behaves here; if the cascade makes it unreliable, drop the Tier 1 override to a class that `effects.js` adds only when Tier 2 has not come up, rather than fighting it with specificity. Say in the report which you used and why.
+
+- [ ] **Step 3: Stand the CSS ring down under Tier 2**
+
+The CSS ring becomes what it should always have been — the fallback. Same mechanism as the sheen already uses:
+
+```css
+/* Tier 2 owns the edge. The CSS ring is the fallback, not the intended result:
+   a conic hairline is what a browser without WebGPU gets, and it stays correct
+   on its own. The focus outline is untouched by any of this. */
+[data-sl-fx-gpu="on"] :is(.sl-fx-glass, .sl-fx-aurora)::after { opacity: 0; }
+```
+
+**Do not remove the CSS ring.** It is the Tier 0/1 answer and it must stay correct — that is the fallback contract, and it is the only thing a reduced-motion or high-contrast visitor sees.
+
+- [ ] **Step 4: Bind the two temperaments to the material**
+
+Glass and aurora already share one ring with two temperaments. Keep exactly that, now in the shader: glass is the resting metal — reflective, low-key, no halo; aurora is the same metal lit — the halo brightens, the accent tint saturates, and under `busy` the halo stops wandering and becomes the travelling arc that reports work. One material, four readings, the same semantics the design language already fixed.
+
+Pass the per-element state in `params.z` as a mode, so the shader branches once per rect rather than the JavaScript maintaining two element registries.
+
+- [ ] **Step 5: Reduced motion and high contrast**
+
+Both kill switches must reach Tier 2, and today's neither know about it. Under `prefers-reduced-motion: reduce` the halo does not wander and the bend does not spring — the metal renders, still, which is honest: it is material, not motion. Under high contrast `mountGpu()` must refuse outright, the same way `mount()` does. Add that guard and a test for it.
+
+- [ ] **Step 6: Tune it against the rendered page**
+
+Serve the showcase and open it. The constants in Steps 1–2 are a starting point and nothing more; the deliverable is how it looks. Adjust band width, specular exponent, dispersion offset, halo speed and bend strength against what you see, and record what you changed and why. A report that does not name the numbers you moved has not done this step.
+
+- [ ] **Step 7: Correct the grammar, again**
+
+`docs/design-language.md` L6 and the spec both assert that glitch, aurora and glass are at full quality in CSS and need no GPU tier. That sentence is the origin of this rework. Replace it with what is now true: the edge families render as a shaded material where a GPU is available, and degrade to a conic hairline where it is not — the CSS path is a genuine fallback, not the target. Regenerate with `npm run gen:tokens`.
+
+- [ ] **Step 8: Verify, then commit**
+
+```bash
+npm test
+node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/effects.css" --product default
+npm run gen:tokens && git status --short -- packages/
+```
+No colour literal may enter `effects-shader.js`: every hue arrives as a uniform read from a token. The existing test enforces it and must keep passing.
