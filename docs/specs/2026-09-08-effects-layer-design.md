@@ -12,7 +12,7 @@
 - **PoC implemented (not delivered)** — built as a prototype, not merged/released.
 - **Placeholder (not delivered)** — stub or scaffold only.
 
-At the time of this revision (2026-09-08) the layer is **PoC implemented (not delivered)** on `feat/effects-layer`: `effects.css`, `effects.js`, `effects-gpu.js`, `effects-shader.js` and `showcase/effects.html` exist and run; nothing is published.
+At the time of this revision (2026-09-09) the layer is **PoC implemented (not delivered)** on `feat/effects-layer`: `effects.css`, `effects.js`, `effects-gpu.js`, `effects-shader.js` and `showcase/effects.html` exist and run; nothing is published.
 
 ## Why this exists
 
@@ -55,7 +55,7 @@ Four families, three mechanisms. This is the decision the first sixteen tasks of
 
 | Family | Mechanism | Tier | File |
 |---|---|---|---|
-| **Glass** | a **chrome hairline** drawn by a WebGPU fragment shader on one page-level canvas: a signed distance field of the element's rounded box, filled from a moving environment through a five-stop palette, with a wandering halo, a cursor reflection and the liquid's dent. Fallback: a static conic hairline on `::after`. | 2, fallback 0 | `effects-shader.js`, `effects-gpu.js`, `effects.css` |
+| **Glass** | a **chrome hairline** drawn by a WebGPU fragment shader on one page-level canvas: a signed distance field of the element's rounded box, filled from a moving environment through a five-stop palette, with a wandering halo, a cursor reflection, reflections onto neighbouring effect elements, and the liquid's dent. Fallback: a static conic hairline on `::after`. | 2, fallback 0 | `effects-shader.js`, `effects-gpu.js`, `effects.css` |
 | **Aurora** | **CSS at every tier** — the border-beam recipe: a 1 px arc of light on `::after` swept by an `@property` angle, its bloom as `drop-shadow` of the arc's own alpha, a blurred wash of the same light on `::before` confined to a band inside the edge, hue drifting ±16° while it sweeps. There is no GPU aurora. | 0 (static) / 1 (moving) | `effects.css` |
 | **Liquid** | **the element itself deforms**: an SVG `feDisplacementMap` on the host, fed a Gaussian push away from the pointer, driven by an underdamped spring; removed when the spring settles. The chrome shader evaluates the same Gaussian so the ring bends where the surface does. | 1 | `effects.js`, `effects-shader.js` |
 | **Glitch** | CSS ghost channels on a required child `<span>`; JavaScript owns timing only | 1 | `effects.css`, `effects.js` |
@@ -149,7 +149,7 @@ Each component gets the families that match its semantics — never all four, an
 
 | Component | Glitch | Liquid | Aurora | Glass |
 |---|---|---|---|---|
-| `sl-btn--primary` | on destructive confirmation | ● dents under the pointer | ● `:focus-visible`; ● `busy` while submitting — the one case where the arc sits outside the box | — (filled; no edge to cut) |
+| `sl-btn--primary` | on destructive confirmation | ● dents under the pointer | ● `:focus-visible`; ● `busy` while submitting — **`--rim`**: the arc sits outside the box, in the depth companion | — (filled; no edge to cut) |
 | `sl-btn--ghost` | — | ○ dents under the pointer | ● `:focus-visible` | ● its `1px` border **is** the chrome |
 | `sl-card` | — | ○ `--calm`: a fraction of the depth | ● `busy` while loading; `sweep` only when granted | ● |
 | `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | ● `:focus-within` on the wrapper | ● on the wrapper |
@@ -177,7 +177,9 @@ Two exclusions are deliberate and load-bearing:
 
 **How (Tier 2, `effects-shader.js`).** One page-level `<canvas>`, `position: absolute`, re-topped to the scroll offset each frame (a fixed overlay composites a frame behind the page during scroll), below `--sl-z-overlay`, `pointer-events: none`, alpha only on the hairline and the halo. Per registered element, uniforms carry its rect, its **corner radius read from its own `border-radius`** (a `%` radius resolved against the current box, never assumed), its **border width read from its own `border-top-width`**, and the liquid's current dent depth and radius. The fragment stage: signed distance to the nearest element's rounded box (through the dent), coverage `1 − smoothstep(hw − 0.6, hw + 0.6, |d|)`, the environment `environment(angle, p, t)` — sines along the perimeter angle and across page space, warped by one another, sliding at `ENV_RATE` — mapped through a five-stop palette (`dark · pastel accent · bright · pastel depth · dark`, Gaussian weights with `k = 64`, the reference's shape) and gamma-punched (`pow 1.3`). The poles are placed **around the page's own ground**: on ink, bright = the theme's brightest neutral and dark = the ground lifted a fifth toward it (a trough at the page's own value is a gap, and a ring with gaps reads as dashed); on paper, bright = the ground pushed to 0.985 luminance with its hue intact and dark = a mid grey at 0.60 (a black trough on a light page reads as dirt — the reference's own light preset is white and mid-grey). Which of `--sl-text-primary` / `--sl-bg-canvas` is the bright one is decided at runtime from their luminance, so an inversion band reads correctly.
 
-**Where the aurora holds the edge, the chrome stands down.** The canvas sits above the DOM, so on an element whose aurora is lit (`data-sl-fx-live` on/busy, or focus) `effects-gpu.js` registers no geometry at all; the edge belongs to the light until attention leaves.
+**Reflections on neighbours.** The reference's one-line description names them, and a mirror does cast its environment onto what stands beside it. Every effect element (`.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid`) is registered as a surface; a pixel inside one element and within `REF_GAP` (14 px, exponential) of another element's chrome edge receives that chrome's environment, fading into the neighbour over `REF_DEPTH` (12 px) at a peak alpha of `REF_GAIN` (0.34) scaled by the environment's own brightness. The source is the nearest chrome edge the pixel is *outside* of, so a keycap beside a keycap catches the other's light on the facing edge. The canvas paints above the DOM, which is why the reflection is a short strip along the edge rather than a wash across the element: text sits further in than 12 px on every shipped component. Perceptibility, measured on the showcase: clear on adjacent keycaps and pills, faint on a filled accent button (a light strip on an amber fill), absent where elements are further apart than a gap — which is most of a page. Cheap: one extra distance per registered element per pixel.
+
+**Where the aurora holds the edge, the chrome stands down.** The canvas sits above the DOM, so on an element whose aurora is lit (`data-sl-fx-live` on/busy, or focus) `effects-gpu.js` registers it as a reflection surface only, never as chrome; the edge belongs to the light until attention leaves.
 
 **Fallback (Tiers 0/1, `effects.css`).** The shared `::after` ring, `inset: -1px; padding: var(--slfx-ring-w)`, masked to the border band, painted with a static conic alternating `--slfx-edge-hi` / `--slfx-edge-lo` / `--slfx-edge-tint` / `--slfx-edge-mid` — all `color-mix()` over the border and text roles, resolved on the edge itself so an inversion band's remap reaches them. Static by design. Under `[data-sl-fx-gpu="on"]` it goes `opacity: 0`.
 
@@ -194,7 +196,9 @@ Two exclusions are deliberate and load-bearing:
 | busy | `data-sl-fx-live="busy"` + `aria-busy` | 18% (`65deg`) | one turn per 1.1 s |
 | determinate | busy + inline `--slfx-progress` + `role="progressbar"` | `progress × 360deg` | none — the length is the value |
 
-**The aurora inhabits an edge that already exists; it never adds a concentric ring.** Where the element has a border, the arc *is* that border in its attention state; on a filled, borderless `sl-btn--primary` it is the one case where the arc sits `1px` outside the box. Where the edge is not a ring, the aurora is **linear** (`--linear`, `--top` for an inversion band's rule): the same light swept along a segment. A linear aurora has no busy mode.
+**The aurora inhabits an edge that already exists; it never adds a concentric ring.** Where the element has a border, the arc *is* that border in its attention state. Where the edge is not a ring, the aurora is **linear** (`--linear`, `--top` for an inversion band's rule): the same light swept along a segment. A linear aurora has no busy mode.
+
+**Filled elements take `--rim`.** `sl-btn` has a `1px` *transparent* border that its fill paints under, so the shared ring — pinned to that border band — would sit on the fill, accent on accent, and vanish; that is what happened on this branch until it was looked at. `--rim` steps the ring one border-width further out (`inset: calc(-1px - var(--slfx-ring-w))`), hugging the fill inside the 2 px the focus outline leaves free and never past it, at `2px` wide (a 1 px line of the depth companion against the page is below the threshold of notice), with the beam rebound to the **depth companion** — the accent is what the fill is made of, so the contrast is against the page — and no inner wash. A busy `--rim` element keeps full opacity even when `:disabled`: it is working, not unavailable, and `components.css`'s half-opacity would dim the very ring that says so. The override is scoped out of both kill switches, which restore the plain disabled look.
 
 **Geometry note:** for an absolutely positioned child, `inset: 0` resolves against the *padding* box, so `inset: -1px` with `padding: var(--slfx-ring-w)` and `mask-composite: exclude` lands exactly **on** a `1px` border. Implementations must not "correct" it to a positive inset — that would walk the ring into the focus outline.
 
@@ -261,10 +265,9 @@ Nothing in this repository renders a frame. **Every real defect in this layer wa
 
 ## Known gaps against the reference (honest)
 
-- **Reflections on neighbours.** The reference paints the chrome's environment onto adjacent elements' edges. Not built.
+- **Reflections on neighbours** are built (glass section above) but reach only across a gap of a few pixels and only onto other effect elements: a plain `<p>` beside a chrome card catches nothing, and a neighbour further away than ~14 px catches nothing visible. The reference reflects onto explicitly named targets at up to 32 px.
 - **Inner reflection.** The reference's metal shows its environment faintly *inside* the element too. Not built; the glass here is the edge only.
 - **Straight runs.** A rectangle's long edge has one surface direction; the reference's circle sweeps continuously. The environment varies along page space as well as angle to compensate, but a very long edge still reads calmer than the reference's ring.
-- **The busy arc on a filled accent button** is faint by construction: its accent core sits on an accent fill and only the white core and the bloom distinguish it. A disabled busy button additionally inherits `opacity: 0.5` from `components.css`.
 - **Tier 2 does not arm from a cold load under `prefers-reduced-motion: reduce`**, because `mount()` refuses and `mountGpu()` requires `mount()`; the static chrome is therefore not shown to a reduced-motion visitor, who gets the CSS hairline instead. Coherent, documented, not equal.
 
 ## Risks

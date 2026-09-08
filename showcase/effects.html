@@ -224,7 +224,7 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">child span, never the host</span>
-            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora" id="delete-branch">
+            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora sl-fx-aurora--rim" id="delete-branch">
               <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
             </button>
             <p class="cap">Click to re-resolve. The button itself carries the liquid sheen and the aurora ring; the glitch sits on its child, never on <b>.sl-btn</b> directly.</p>
@@ -310,8 +310,8 @@
           </div>
           <div class="g-cell">
             <span class="g-label">busy button</span>
-            <button class="sl-btn sl-btn--primary sl-fx-aurora" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
-            <p class="cap">A filled button has no border to inhabit, so its ring sits <i>outside</i> the box — the one case where the aurora is a true external rim.</p>
+            <button class="sl-btn sl-btn--primary sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
+            <p class="cap">A filled button has only a transparent border, which its fill paints under — so <b>--rim</b> steps the ring outside the box, hugging the fill, and swaps the beam to the depth companion: the accent is what the fill is made of. While busy the button keeps full opacity; it is working, not unavailable.</p>
           </div>
           <div class="g-cell" style="padding:0">
             <article class="sl-card sl-fx-glass sl-fx-aurora" id="sweep-card" style="padding:1.4rem">
@@ -380,7 +380,7 @@
             <div class="g-cell">
               <span class="g-label">button — primary · ghost</span>
               <div class="g-demo">
-                <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora">Run probe</button>
+                <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
                 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
               </div>
               <p class="cap">Primary: ● liquid, ● aurora, — glass (filled, no edge to cut). Ghost: its border doubles as ● glass, plus ○ liquid and ● aurora.</p>
@@ -435,7 +435,7 @@
                 <p class="sl-dialog__body">This clears the cached probe answer. The next call re-runs the tool.</p>
                 <div class="sl-dialog__actions">
                   <button class="sl-btn sl-btn--ghost sl-btn--sm">Keep</button>
-                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-aurora" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
+                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
                 </div>
               </dialog>
               <p class="cap">Shatters in once on open — fired here on mount. Per the table its rim stays lit for as long as the dialog is open; this page keeps its one ambient <b>grantLive()</b> grant on the card in §03, so this dialog shows its resting and busy states only, not the sweep.</p>
@@ -493,7 +493,7 @@
         <div class="fx-off">
           <p class="sl-eyebrow">data-sl-fx="off" — subtree opt-out</p>
           <div data-sl-fx="off" class="g-demo">
-            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora">Run probe</button>
+            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
             <article class="sl-card sl-fx-glass sl-fx-aurora" data-sl-fx-live="on" style="padding:1rem;max-width:20rem">
               <p class="sl-card__body">Inert inside this region — no sheen, no ring, no glitch, regardless of the classes present.</p>
             </article>

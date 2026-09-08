@@ -217,20 +217,59 @@
   opacity: 1;
   background: conic-gradient(from var(--slfx-angle),
     transparent 0deg,
-    color-mix(in srgb, var(--slfx-depth) 75%, transparent) calc(var(--slfx-arc) * 0.14),
-    var(--slc-accent, var(--sl-accent-default)) calc(var(--slfx-arc) * 0.32),
-    color-mix(in srgb, var(--slfx-sheen) 86%, var(--slc-accent, var(--sl-accent-default))) calc(var(--slfx-arc) * 0.5),
-    var(--slc-accent, var(--sl-accent-default)) calc(var(--slfx-arc) * 0.68),
-    color-mix(in srgb, var(--slfx-depth) 75%, transparent) calc(var(--slfx-arc) * 0.86),
+    var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.14),
+    var(--slfx-beam) calc(var(--slfx-arc) * 0.32),
+    color-mix(in srgb, var(--slfx-sheen) 86%, var(--slfx-beam)) calc(var(--slfx-arc) * 0.5),
+    var(--slfx-beam) calc(var(--slfx-arc) * 0.68),
+    var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.86),
     transparent var(--slfx-arc),
     transparent 360deg);
   filter: var(--slfx-bloom);
 }
 .sl-fx-aurora {
+  /* The beam's own hue and its tails. Rebound by --rim below, where the
+     accent would vanish against an accent fill. */
+  --slfx-beam: var(--slc-accent, var(--sl-accent-default));
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth) 75%, transparent);
   --slfx-bloom:
     drop-shadow(0 0 2px color-mix(in srgb, var(--slfx-sheen) 70%, transparent))
-    drop-shadow(0 0 6px color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 75%, transparent))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--slfx-beam) 75%, transparent))
     drop-shadow(0 0 16px color-mix(in srgb, var(--slfx-depth) 60%, transparent));
+}
+
+/* ── Filled elements: the rim ──────────────────────────────────────────────
+   A filled control (sl-btn--primary) has a 1px TRANSPARENT border that its
+   fill paints under, so the shared ring — pinned to that border band — sits
+   on the fill, accent on accent, and vanishes. The declension says a filled
+   element's ring sits OUTSIDE the box, and this is what makes it true: the
+   ring steps one border-width further out, hugging the fill, in the 2px the
+   focus outline (outline-offset: 2px) leaves free, and never past it. Its
+   hue is the depth companion, because the accent is what the fill is made
+   of — contrast against the page, not against the button. No inner wash: the
+   inside is the fill.
+   A busy filled control is working, not unavailable: components.css dims a
+   :disabled control to half opacity, which would dim the very ring that
+   says work is in progress, so while busy the host keeps full opacity. The
+   override is scoped out of both kill switches, which restore the plain
+   disabled look. */
+.sl-fx-aurora--rim {
+  /* 2px: the whole of the strip the outline leaves free. A 1px line of the
+     depth companion against the page is below the threshold of notice; the
+     ring has to carry its own weight out here, with nothing behind it. */
+  --slfx-ring-w: 2px;
+  --slfx-beam: var(--slfx-depth);
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth) 85%, transparent);
+  --slfx-bloom:
+    drop-shadow(0 0 2px color-mix(in srgb, var(--slfx-sheen) 80%, transparent))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--slfx-depth) 90%, transparent))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--slfx-depth) 70%, transparent));
+}
+.sl-fx-aurora--rim::after {
+  inset: calc(-1px - var(--slfx-ring-w));
+}
+.sl-fx-aurora--rim::before { display: none; }
+:root:not([data-sl-theme="high-contrast"]) .sl-fx-aurora--rim[data-sl-fx-live="busy"]:disabled:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
+  opacity: 1;
 }
 
 /* The wash: the same arc, wide and faint, confined to a band just inside the

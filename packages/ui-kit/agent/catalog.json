@@ -16,7 +16,7 @@
     { "id": "dialog",     "kind": "primitive", "classes": ["sl-dialog", "sl-dialog__title", "sl-dialog__body", "sl-dialog__actions"], "roleVars": ["--slc-raised", "--slc-border", "--slc-overlay", "--slc-text", "--slc-text-secondary"] },
 
     { "id": "fx-glass",  "kind": "effect", "classes": ["sl-fx-glass", "sl-fx-glass--wide", "sl-fx-glass--field"], "roleVars": ["--slc-border-strong", "--slc-border-subtle", "--slc-accent", "--slc-text"] },
-    { "id": "fx-aurora", "kind": "effect", "classes": ["sl-fx-aurora", "sl-fx-aurora--wide", "sl-fx-aurora--field", "sl-fx-aurora--linear"], "roleVars": ["--slc-accent", "--slc-text"] },
+    { "id": "fx-aurora", "kind": "effect", "classes": ["sl-fx-aurora", "sl-fx-aurora--wide", "sl-fx-aurora--field", "sl-fx-aurora--linear", "sl-fx-aurora--rim"], "roleVars": ["--slc-accent", "--slc-text"] },
     { "id": "fx-liquid", "kind": "effect", "classes": ["sl-fx-liquid", "sl-fx-liquid--calm"], "roleVars": [] },
     { "id": "fx-glitch", "kind": "effect", "classes": ["sl-fx-glitch", "sl-fx-glitch--shatter", "sl-fx-glitch__text", "sl-fx-glitch__shards", "sl-fx-glitch__shard"], "roleVars": ["--slc-accent"] },
 

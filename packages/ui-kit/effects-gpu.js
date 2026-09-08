@@ -26,9 +26,12 @@ import { SHADER } from "./effects-shader.js";
 // this length in effects-shader.js.
 export const MAX_RECTS = 16;
 
-/** Every element the chrome may draw on. Only glass: the aurora is CSS at
- *  every tier, and a liquid element without glass has no edge to draw. */
-const TRACKED = ".sl-fx-glass";
+/** Every element the chrome draws on or reflects into. The chrome itself is
+ *  drawn on glass only — the aurora is CSS at every tier, and a liquid
+ *  element without glass has no edge to draw — but every effect element is
+ *  a surface the chrome's environment can fall onto, the way the reference
+ *  reflects its ring onto the controls beside it. */
+const TRACKED = ".sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid";
 
 /** Whether the aurora currently holds this element's edge. While attention
  *  lives on an element the edge belongs to the light, and the chrome stands
@@ -96,7 +99,7 @@ function radiusPx(raw, rect) {
  *   `liquid` reports which element the pointer is currently shaping and how
  *   deep and wide its dent is — the SAME numbers effects.js feeds its SVG
  *   displacement map, so the chrome bends exactly where the surface does.
- * @returns {{rects: () => {rect: DOMRect, radius: string, border: string, depth: number, sigma: number, dentX: number, dentY: number}[], refresh(): void, stop(): void}}
+ * @returns {{rects: () => {rect: DOMRect, radius: string, border: string, metal: number, depth: number, sigma: number, dentX: number, dentY: number}[], refresh(): void, stop(): void}}
  */
 export function trackEdges({ liquid } = {}) {
   const onScreen = new Set();
@@ -141,13 +144,16 @@ export function trackEdges({ liquid } = {}) {
         // geometry at all, so the chrome never draws on it. closest() reads
         // the tree, not style, so it costs no flush.
         if (el.closest('[data-sl-fx="off"]')) continue;
-        if (auroraLit(el)) continue;
+        // While the aurora holds an element's edge the chrome stands down
+        // there, but the element still catches its neighbours' reflections.
+        const metal = el.classList.contains("sl-fx-glass") && !auroraLit(el) ? 1 : 0;
         const sh = shape.get(el) || { radius: "0px", border: "0px" };
         const dented = live && live.el === el;
         out.push({
           rect: el.getBoundingClientRect(),
           radius: sh.radius,
           border: sh.border,
+          metal,
           depth: dented ? live.depth : 0,
           sigma: dented ? live.sigma : 0,
           dentX: dented ? live.x : 0,
@@ -291,6 +297,9 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
     // than stale, so a slot that comes back into use never flashes an old rect.
     const rectsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
     const paramsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
+    // x: 1 when the element carries the chrome, 0 when it only catches
+    // reflections of its neighbours' chrome.
+    const kindsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
     // xy: position, normalised. z: 1 while the pointer is on the page — the
     // cursor reflection must not sit at a stale spot after the pointer left.
     const pointer = [0.5, 0.5, 0, 0];
@@ -311,7 +320,7 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
     applyTokens();
 
     const fx = vgpu.effect(gpu, SHADER, {
-      set: { look, rects: rectsUniform, pointer, params: paramsUniform, dent },
+      set: { look, rects: rectsUniform, pointer, params: paramsUniform, dent, kinds: kindsUniform },
     });
     const clock = vgpu.clock(gpu);
 
@@ -418,12 +427,15 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
       for (let i = 0; i < MAX_RECTS; i++) {
         const r = rectsUniform[i];
         const q = paramsUniform[i];
+        const k = kindsUniform[i];
         const e = list[i];
         if (!e) {
           r[0] = 0; r[1] = 0; r[2] = 0; r[3] = 0;
           q[0] = 0; q[1] = 0; q[2] = 0; q[3] = 0;
+          k[0] = 0; k[1] = 0; k[2] = 0; k[3] = 0;
           continue;
         }
+        k[0] = e.metal || 0;
         r[0] = e.rect.left / view[0];
         r[1] = e.rect.top / view[1];
         r[2] = e.rect.width / view[0];
@@ -446,7 +458,7 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
       pointer[2] = onPage;
       pointer[3] = 0;
 
-      fx.set({ look, rects: rectsUniform, pointer, params: paramsUniform, dent });
+      fx.set({ look, rects: rectsUniform, pointer, params: paramsUniform, dent, kinds: kindsUniform });
       // After the reads above, never before: rects() forces layout, and moving
       // the canvas first would make that a second forced layout per frame.
       followViewport(view);

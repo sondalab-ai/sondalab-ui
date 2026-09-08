@@ -59,6 +59,9 @@ struct Look {
 // effects.js's displacement map uses, which trails the pointer; the dent has
 // to be evaluated about the same point or the ring and the surface disagree.
 @group(0) @binding(4) var<uniform> dent : vec4f;
+// x: 1 when the element carries the chrome; 0 when it is only a surface the
+// chrome's environment falls onto — every registered element is one.
+@group(0) @binding(5) var<uniform> kinds : array<vec4f, 16>;
 
 // ── tuning ──────────────────────────────────────────────────────────────────
 // Every one of these was moved against the rendered showcase beside the
@@ -81,6 +84,14 @@ const HALO_WANDER: f32 = 0.22; // radians per second the halo drifts around the 
 
 const CUR_REACH : f32 = 34.0;  // radius of the cursor's reflection, CSS px
 const CUR_GAIN  : f32 = 0.85;  // how far toward the bright pole it pushes the chrome
+
+// Reflections on neighbours: the chrome's environment falling onto the
+// near edge of another element, the way the reference reflects its ring
+// onto the controls beside it. Reaches only across a small gap, and fades
+// into the neighbour so its text is never sat on.
+const REF_GAP   : f32 = 14.0;  // how far the light carries across the gap, CSS px
+const REF_DEPTH : f32 = 12.0;  // how far it falls into the neighbour, CSS px
+const REF_GAIN  : f32 = 0.34;  // peak alpha, at zero gap on the neighbour's edge
 
 // The key light, in page space. uv y points DOWN, so negative y is above:
 // this light is up and to the left, where a reader expects one.
@@ -240,15 +251,22 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let motion = look.flags.x;
   let t = look.time * mix(0.0, ENV_RATE, motion) + 1.0;
 
-  // The nearest edge wins: chrome is a surface, and two surfaces cannot
-  // occupy one pixel.
+  // The nearest chrome edge wins: chrome is a surface, and two surfaces
+  // cannot occupy one pixel. Separately, note whether this pixel lies
+  // inside some OTHER registered element — a surface a reflection can land on.
   var best = 1.0e9;
   var hit = 0u;
+  var inside = 1.0e9;   // signed distance to the edge of the element p is inside
+  var host = 16u;
+  var refD = 1.0e9;     // nearest chrome edge OUTSIDE of which p lies
+  var refHit = 16u;
   for (var i = 0u; i < n; i = i + 1u) {
     let d = edgeAt(i, p);
-    if (abs(d) < abs(best)) { best = d; hit = i; }
+    if (kinds[i].x > 0.5 && abs(d) < abs(best)) { best = d; hit = i; }
+    if (kinds[i].x > 0.5 && d > 0.0 && d < refD) { refD = d; refHit = i; }
+    if (d < 0.0 && d < inside) { inside = d; host = i; }
   }
-  if (n == 0u) { return vec4f(0.0); }
+  if (n == 0u || best > 1.0e8) { return vec4f(0.0); }
 
   let hw = halfWidthOf(hit);
   if (best > hw + HALO_REACH * 4.0 || best < -(hw + 1.5)) { return vec4f(0.0); }
@@ -259,6 +277,20 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   var col = vec3f(0.0);
   var alpha = 0.0;
 
+  // ── reflection: the chrome's environment on a neighbour's near edge ──────
+  // The neighbour may itself be chrome: a keycap beside a keycap catches the
+  // other's light on the facing edge, so the source is the nearest chrome
+  // edge p is OUTSIDE of, not the nearest edge overall.
+  if (host < n && refHit < n && refHit != host && refD < REF_GAP * 2.0) {
+    let rc = centreOf(refHit);
+    let ra = atan2(p.y - rc.y, p.x - rc.x);
+    let across = exp(-refD / REF_GAP);                         // fades across the gap
+    let into = exp(max(inside, -REF_DEPTH * 4.0) / REF_DEPTH); // fades into the neighbour
+    let env = pow(palette(environment(ra, p, t)), vec3f(CONTRAST));
+    col = mix(poleHi(), env, 0.6);
+    alpha = across * into * REF_GAIN * luma(env) / max(luma(poleHi()), 0.05);
+  }
+
   // ── the halo: soft light outside the ring at one wandering place ──────────
   {
     let hp = haloPoint(hit, haloAngle(look.time * motion));
@@ -266,8 +298,9 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
     let out = exp(-max(best, 0.0) / HALO_REACH) * smoothstep(-2.0, 0.5, best);
     let breathe = mix(1.0, 0.72 + 0.28 * sin(look.time * 0.6), motion);
     let amt = along * out * HALO_GAIN * breathe;
-    col = mix(poleHi(), look.accent.rgb, 0.30);
-    alpha = amt;
+    let o = over(mix(poleHi(), look.accent.rgb, 0.30), amt, col, alpha);
+    col = o.xyz;
+    alpha = o.w;
   }
 
   // ── the hairline: chrome on the element's own border ──────────────────────

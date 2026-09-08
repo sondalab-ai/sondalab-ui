@@ -136,16 +136,17 @@ Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).
 
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
-The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
+The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
 ```html
 <article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
 ```
 Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px.
 
-### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear`)
-Attention lives here: a 1px arc of light riding the border with its bloom and a wash inside the edge — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. Substrate: **R** Page, **A** App.
+### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
+Attention lives here: a 1px arc of light riding the border with its bloom and a wash inside the edge — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. A filled element (`sl-btn--primary`) takes `--rim`: the arc steps just outside the fill, in the depth companion. Substrate: **R** Page, **A** App.
 ```html
 <button class="sl-btn sl-btn--ghost sl-fx-aurora">Run audit</button>
+<button class="sl-btn sl-btn--primary sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Saving…</button>
 <article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy" aria-busy="true">…</article>
 <article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy"
          role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
