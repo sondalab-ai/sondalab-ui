@@ -71,3 +71,21 @@ test("every animation sits inside a reduced-motion guard", () => {
     assert.ok(inside, `animation at index ${m.index} is outside a reduced-motion guard`);
   }
 });
+
+test("busy is the only mode that replaces the ring background", () => {
+  const overrides = effects.match(/\.sl-fx-aurora\[data-sl-fx-live[^{]*\{[^}]*background:/g) || [];
+  assert.equal(overrides.length, 1, "only the busy arc may re-declare the ring background");
+  assert.match(overrides[0], /busy/, "the one background override must be the busy arc");
+});
+
+test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
+  const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
+  const orbit = effects.indexOf("slfx-orbit 1.1s");
+  const ring = effects.indexOf('.sl-fx-aurora[data-sl-fx-live="busy"]::after');
+  assert.ok(orbit > guardStart, "the orbit animation must sit inside the reduced-motion guard");
+  assert.ok(ring < guardStart, "the busy ring itself must render regardless of motion preference");
+});
+
+test("determinate progress drives arc length, not an animation", () => {
+  assert.match(effects, /--slfx-arc:\s*calc\(var\(--slfx-progress\)\s*\*\s*360deg\)/);
+});

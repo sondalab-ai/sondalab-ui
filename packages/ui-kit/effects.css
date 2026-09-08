@@ -135,7 +135,85 @@
 .sl-fx-glass--field,
 .sl-fx-aurora--field { --slfx-ring-w: 2px; --slfx-bloom: 0px; }
 
+/* ══ AURORA — attention lives here ═══════════════════════════════════════════
+   Three readings of the one ring, separated by the FRACTION OF THE PERIMETER
+   that is lit — not by colour and not by speed, which is why they stay legible
+   side by side.
+     static (~60%)  :focus-visible / :focus-within — this element has focus
+     sweep  (~60%)  [data-sl-fx-live="on"]         — ambient liveness, capped at
+                                                     one per document
+     busy   (~18%)  [data-sl-fx-live="busy"]       — a real operation runs here
+     determinate    busy + --slfx-progress          — the arc LENGTH is the value
+
+   The aurora renders state; it never IS the state. A busy element carries
+   aria-busy="true"; a determinate one role="progressbar" + aria-valuenow. That
+   is what keeps reduced-motion and high-contrast visitors fully informed. */
+
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"]) {
+  --slfx-s0: transparent;
+  --slfx-s1: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 90%, transparent);
+  --slfx-s2: color-mix(in srgb, var(--slfx-depth) 90%, transparent);
+  --slfx-s3: transparent;
+  box-shadow: inset 0 0 var(--slfx-bloom) color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 18%, transparent);
+}
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
+
+/* Busy — a short travelling marker, so a different GEOMETRY rather than a
+   rebinding of the stops. This is the ONE background override in the file; on
+   an element that is both glass and busy, busy wins, which is correct: a
+   resting edge and a working edge are not the same edge. */
+.sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
+.sl-fx-aurora[data-sl-fx-live="busy"]::after {
+  opacity: 1;
+  background: conic-gradient(from var(--slfx-angle),
+    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 92%, transparent) 0deg,
+    color-mix(in srgb, var(--slfx-depth) 78%, transparent) calc(var(--slfx-arc) * 0.62),
+    transparent var(--slfx-arc),
+    transparent 360deg);
+}
+
+/* Determinate — the arc length is the value; nothing rotates. The edge of a
+   card IS its progress bar: no extra widget, no layout. */
+.sl-fx-aurora[data-sl-fx-live="busy"][style*="--slfx-progress"] {
+  --slfx-arc: calc(var(--slfx-progress) * 360deg);
+}
+
+/* Linear aurora — where the edge is not a ring. The active tab's 2px underline,
+   a link's underline, an inversion band's top rule: the same two hues swept
+   along a segment instead of a perimeter. */
+.sl-fx-aurora--linear::after {
+  inset: auto 0 0 0;
+  height: var(--slfx-ring-w);
+  padding: 0;
+  mask: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 90%, transparent) 38%,
+    color-mix(in srgb, var(--slfx-depth) 90%, transparent) 62%,
+    transparent 100%);
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  /* Every animated rule in this file lives here. Filled by Task 3 (aurora
-     sweep/orbit), Task 4 (liquid settle) and Task 5 (glitch channels). */
+  /* Sweep: 210deg → 570deg rather than 0 → 360, so the rotation is continuous
+     instead of snapping back through the resting angle. */
+  @keyframes slfx-sweep { to { --slfx-angle: 570deg; } }
+  @keyframes slfx-orbit { to { --slfx-angle: 570deg; } }
+
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]::after {
+    animation: slfx-sweep 3.2s linear infinite;
+    will-change: background;
+  }
+  /* Determinate never orbits — its arc length carries the value. */
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])::after {
+    animation: slfx-orbit 1.1s linear infinite;
+    will-change: background;
+  }
+}
+
+/* Under `reduce` the busy arc does not orbit: it renders as a static ring at
+   reduced opacity — present, honest that something is happening, not moving.
+   aria-busy carries the state, which is why that attribute is a requirement. */
+@media (prefers-reduced-motion: reduce) {
+  .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 360deg; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]::after { opacity: 0.55; }
 }
