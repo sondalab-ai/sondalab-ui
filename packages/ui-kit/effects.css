@@ -115,7 +115,13 @@
    material (the glass edge, a resting ring) survives, because it is not motion.
    scripts/effects-guards.test.mjs enforces the placement mechanically. */
 
-/* ══ EDGE — glass and aurora are two temperaments of ONE ring ════════════════
+/* ══ EDGE — glass and aurora share ONE ring, because CSS gives one layer ═════
+   Every element has exactly two paint layers, so glass and aurora cannot each
+   have their own: they share ::after and rebind its stops. That is a limit of
+   the medium, not a claim that they are the same thing — under Tier 2 they are
+   two different phenomena (a metal bezel and emissive light) and an element
+   carrying both shows both. See effects-shader.js. Do not re-unify them there
+   on the strength of this rule.
    The ring occupies exactly the border band: for an absolutely positioned child
    `inset: 0` resolves against the PADDING box, so `inset: -1px` lands on a 1px
    border — and 1px outside the box when the element has none (a filled button,
@@ -182,6 +188,11 @@
 .sl-fx-aurora--field { --slfx-ring-w: 2px; --slfx-bloom: 0px; }
 
 /* ══ AURORA — attention lives here ═══════════════════════════════════════════
+   Under Tier 2 this family is not a ring at all but emissive light around the
+   edge; what follows is the CSS reading of the same four states, and the two
+   tiers are kept in agreement about the FRACTION each state occupies and about
+   where an arc starts (210deg), so a determinate value measures the same at
+   either tier.
    Three readings of the one ring, separated by the FRACTION OF THE PERIMETER
    that is lit — not by colour and not by speed, which is why they stay legible
    side by side.
@@ -318,15 +329,52 @@
    after a theme/accent change — see mount()) keeps its own real background
    rather than going transparent over an empty custom property. Fail-safe,
    not fail-invisible. */
-:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"])
+/* Scoped OUT under Tier 2 by the `:not([data-sl-fx-gpu="on"])` below, not
+   reverted by a later override: `revert-layer` cannot do this job here, since
+   effects.css declares no @layer and would therefore revert past the author
+   origin entirely — to the UA default, transparent — rather than back to the
+   component's own fill. Narrowing the rule that causes the takeover is the
+   cascade-safe way to say "Tier 1 only".
+   Standing it down is what gives :hover and :active their visible effect back
+   and what makes --slfx-ground unnecessary under Tier 2: the material draws a
+   band ON the boundary, thick enough to cover the fill's own edge, so the host
+   keeps its background and its border and the skin reverts to being only the
+   sheen. */
+:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"]):not([data-sl-fx-gpu="on"])
   .sl-fx-liquid[style*="--slfx-ground"]:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   background-color: transparent;
   border-color: transparent;
 }
-:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"])
+:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"]):not([data-sl-fx-gpu="on"])
   .sl-fx-liquid[style*="--slfx-ground"]:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *))::before {
   background-color: var(--slfx-ground);
 }
+
+/* ══ TIER 2 STAND-DOWN ═══════════════════════════════════════════════════════
+   Everything below applies only once bootField() has a frame on screen and has
+   set data-sl-fx-gpu. The CSS ring is NOT removed: it is the Tier 0/1 answer
+   and the only thing a visitor without WebGPU, under reduced motion, or in
+   high contrast ever sees, so it stays correct on its own — the shader simply
+   takes the edge over where it is available.
+
+   The linear aurora is deliberately excluded: it is a segment, not a
+   perimeter — a tab's underline, a link's rule, an inversion band's top edge —
+   and the material draws rings, so effects-gpu.js never registers one and its
+   CSS gradient must survive. The focus outline is untouched by any of this. */
+[data-sl-fx-gpu="on"] :is(.sl-fx-glass, .sl-fx-aurora):not(.sl-fx-aurora--linear)::after {
+  opacity: 0;
+  /* The drop-shadow bloom is a real raster pass; an invisible layer should not
+     still be paying for one. */
+  filter: none;
+}
+/* Tier 2 owns the sheen: the CSS gradient and the deformation filter stand down
+   so the two do not double up — the shader paints the sheen in the same pass as
+   the edge, with real inertia. Not inside the reduced-motion guard below: this
+   is a hand-off of ownership, not an animation, and it must hold whatever the
+   visitor's motion preference is. The SVG deformation filter is not cancelled
+   here but scoped out at the two rules that apply it, further down: an
+   invisible layer still carrying a filter is still a raster pass. */
+[data-sl-fx-gpu="on"] .sl-fx-liquid::before { background-image: none; }
 /* The filter runs only on the element the pointer is currently shaping —
    effects.js toggles this class on exactly one element at a time. The filter
    definition is a single shared <svg> resource: applying it unconditionally
@@ -335,14 +383,14 @@
    liquid element in lockstep with whichever one is actually under the
    pointer. Scoping to the live element is what keeps the declension section's
    several simultaneous liquid elements independent. */
-[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live::before { filter: url(#slfx-liquid); }
+[data-sl-fx="on"]:not([data-sl-fx-gpu="on"]) .sl-fx-liquid.is-liquid-live::before { filter: url(#slfx-liquid); }
 /* An element that is also glass or aurora must wobble with its own edge, or a
    crisp ring sits around a deforming fill and the whole thing reads as broken.
    Written as two selectors rather than :is(.sl-fx-glass, .sl-fx-aurora)::after
    — that exact text is how a guards test locates the shared ring rule's own
    selector further down the file, and a substring match would collide. */
-[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live.sl-fx-glass::after,
-[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live.sl-fx-aurora::after {
+[data-sl-fx="on"]:not([data-sl-fx-gpu="on"]) .sl-fx-liquid.is-liquid-live.sl-fx-glass::after,
+[data-sl-fx="on"]:not([data-sl-fx-gpu="on"]) .sl-fx-liquid.is-liquid-live.sl-fx-aurora::after {
   filter: url(#slfx-liquid);
 }
 
@@ -466,13 +514,6 @@
     animation-delay: calc(var(--slfx-i) * -0.028s);
   }
 
-  /* Tier 2 owns the sheen: the CSS gradient and the deformation filter stand
-     down so the two do not double up — the GPU canvas paints both, with real
-     inertia. The ground fill stays: it is what makes the skin an opaque
-     silhouette rather than a hole, and Tier 2's own fragment shader is a
-     low-alpha tint meant to composite over it, not replace it. Only
-     background-image is cleared, never background-color. */
-  [data-sl-fx-gpu="on"] .sl-fx-liquid::before { background-image: none; filter: none; }
 }
 
 /* Under `reduce` the busy arc does not orbit: it renders as a static ring at

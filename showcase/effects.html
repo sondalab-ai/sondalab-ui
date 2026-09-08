@@ -10,6 +10,16 @@
   <link rel="stylesheet" href="../packages/ui-kit/tokens.css">
   <link rel="stylesheet" href="../packages/ui-kit/components.css">
   <link rel="stylesheet" href="../packages/ui-kit/effects.css">
+
+  <!-- vgpu is an optional PEER dependency of @sondalab/ui-kit: the kit never
+       installs it, and effects-gpu.js reaches it through a bare specifier. A
+       static demo page has no bundler to resolve that, so without this map
+       `await import("vgpu")` throws, the guard absorbs it, and the page can
+       never reach the tier it reports. A consumer with a bundler needs none of
+       this — it is the cost of the showcase being a plain file. -->
+  <script type="importmap">
+  { "imports": { "vgpu": "https://cdn.jsdelivr.net/npm/vgpu@0.3.1/+esm" } }
+  </script>
   <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
@@ -203,7 +213,7 @@
         <p class="sl-eyebrow" id="tier-report">TIER 0 — MATERIAL</p>
         <h1 class="anchor">Material becomes <span class="accent">behaviour</span>.</h1>
         <p class="lede">A fifth, opt-in layer above tokens, themes and <b>components.css</b>: four families, each carrying one meaning — glitch marks something re-resolved, liquid says you are recognised, aurora says attention lives here, glass says this is a physical surface. Every class here is additive; it composes onto a shipped <b>.sl-*</b> class and never replaces it. Ships as <b>@sondalab/ui-kit 0.8.0</b>.</p>
-        <p class="lede">Tier 0 is the default and is correct on its own: a resting glass edge, a static aurora ring, no motion. Tier 1 arms on <b>mount()</b> — pointer-driven liquid, finite glitch bursts, an animated aurora sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running.</p>
+        <p class="lede">Tier 0 is the default and is correct on its own: a resting glass edge, a static aurora ring, no motion. Tier 1 arms on <b>mount()</b> — pointer-driven liquid, finite glitch bursts, an animated aurora sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running. Tier 2 arms on <b>mountGpu()</b> where WebGPU answers, and redraws the glass and aurora edge as a shaded metal in WGSL — reflection, specular, chromatic dispersion at the rims, a halo that wanders on its own, and a dent where the cursor pulls the field. The conic hairline below it is the fallback, not a lesser draft of it.</p>
       </div>
     </section>
 
@@ -279,7 +289,7 @@
     <section id="aurora">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">03</span><h2>Aurora</h2></div>
-        <p class="cap">Attention lives here. One ring, four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed.</p>
+        <p class="cap">Attention lives here. Under Tier 2 the aurora is not a metal at all but emissive light: coloured ribbons running along the perimeter, blurred across it, bleeding outside the element and drifting on their own clock — aurora borealis, not a sheen. Four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed.</p>
         <div class="gallery">
           <div class="g-cell" style="padding:0">
             <article class="sl-card sl-fx-glass sl-fx-glass--wide sl-fx-aurora sl-fx-aurora--wide"
@@ -322,7 +332,7 @@
     <section id="glass">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">04</span><h2>Glass</h2></div>
-        <p class="cap">This is a physical surface. A 1px edge, painted with a conic gradient catching two light angles, plus a single inner highlight — the resting temperament of the same ring aurora uses under attention. Glass and aurora are two states of one <b>::after</b>, not two stacked layers: an element carrying both classes rebinds four custom properties rather than adding a second ring.</p>
+        <p class="cap">This is a physical surface. Under Tier 2 the edge is shaded metal: the element’s own <b>border-radius</b> is read into a signed distance field, its gradient gives a surface normal, and that normal drives an environment reflection tinted from <b>--sl-accent-default</b> and <b>--sl-accent-depth</b>. Without a GPU the same edge is a 1px conic gradient catching two light angles, plus a single inner highlight — the resting temperament of the same ring aurora uses under attention. Under Tier 0 and Tier 1 glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives — an element carrying both rebinds four custom properties rather than adding a second ring. Under Tier 2 they are two different phenomena and an element carrying both shows both: the metal bezel, with the aurora’s light around it.</p>
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">border-as-edge</span>
@@ -554,7 +564,7 @@
         && !window.matchMedia(REDUCE_QUERY).matches;
       const gpu = html.getAttribute("data-sl-fx-gpu") === "on";
       document.getElementById("tier-report").textContent = gpu
-        ? "TIER 2 — FIELD"
+        ? "TIER 2 — METAL"
         : live ? "TIER 1 — BEHAVIOUR" : "TIER 0 — MATERIAL";
     }
     new MutationObserver(updateTierLabel).observe(document.documentElement, {

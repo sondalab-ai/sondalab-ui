@@ -93,6 +93,35 @@ test("mount() refuses to arm Tier 1 under high contrast", () => {
   );
 });
 
+test("mountGpu() refuses to bring Tier 2 up under high contrast", () => {
+  // A CSS kill switch cannot silence a canvas, so the refusal has to live in
+  // the module. mount()'s own guard is not enough: `armed` latches true, and a
+  // visitor can switch to high contrast between mount() and this call.
+  const body = fnBody("mountGpu");
+  const guard = body.indexOf('"high-contrast"');
+  const attach = body.indexOf('createElement("canvas")');
+  assert.ok(guard > -1, "mountGpu() must consult the theme");
+  assert.ok(attach > -1, "mountGpu() must create the canvas it guards");
+  assert.ok(guard < attach, "the high-contrast guard must precede the canvas, not follow it");
+  assert.match(
+    guardStatement(body, '"high-contrast"'), /return false/,
+    "the high-contrast guard must return, not merely branch",
+  );
+});
+
+test("a switch to high contrast tears a live Tier 2 down", () => {
+  // The guard above only covers the moment of mounting. Once the field is up,
+  // nothing in CSS can stop it painting, so the theme observer inside
+  // bootField() has to stop() outright — which also restores the CSS ring, by
+  // removing the attribute that stood it down.
+  const gpu = readFileSync(resolve(HERE, "../packages/ui-kit/effects-gpu.js"), "utf8");
+  const at = gpu.indexOf("themeObserver = new MutationObserver");
+  assert.ok(at > -1, "bootField() must observe the theme");
+  const block = gpu.slice(at, gpu.indexOf("themeObserver.observe", at));
+  assert.match(block, /"high-contrast"/, "the theme observer must recognise high contrast");
+  assert.match(block, /stop\(\)/, "high contrast must tear the field down, not merely re-read tokens");
+});
+
 test("burst drops an overlapping burst rather than queueing it", () => {
   const body = fnBody("burst");
   assert.match(

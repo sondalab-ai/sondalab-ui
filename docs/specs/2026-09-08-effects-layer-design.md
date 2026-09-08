@@ -100,7 +100,7 @@ Reusing the rule from `sondalab-site/docs/webgpu-surfaces.md` verbatim — *"the
 |---|---|---|---|
 | **0 — material** | none (always on) | CSS only | glass edge; static aurora ring on `:focus-visible`/`:focus-within` |
 | **1 — behaviour** | `data-sl-fx="on"` on `<html>`, set by `effects.js` at `mount()` | JavaScript | pointer-driven liquid, finite glitch bursts, animated aurora sweep |
-| **2 — field** | `data-sl-fx-gpu="on"`, set only after the GPU device answers | WebGPU + `vgpu` | fluid liquid field with inertia (Slice 3) |
+| **2 — material** | `data-sl-fx-gpu="on"`, set only after the GPU device answers | WebGPU + `vgpu` | glass as a shaded metal bezel (lit perimeter, specular kiss, chromatic dispersion, cursor-driven dent) and the aurora as emissive drifting light around the edge — two phenomena, both on an element carrying both classes — plus the liquid sheen with inertia (Slice 3) |
 
 Nothing auto-mounts on import. `mount()` is explicit, which is what makes the IDE opt-in of Decision 6 possible at all.
 
@@ -304,9 +304,16 @@ Changed on the way into the kit: reduced-motion is respected (Decision 4), high-
 
 ### GPU tier (Slice 3)
 
-One shared `<canvas>`, `position: fixed`, `pointer-events: none`, below `--sl-z-overlay` so the sticky translucent header stays above it. It renders a fluid field only within the bounding rectangles of currently visible elements carrying `data-sl-fx-gpu`, passed as a uniform array with a fixed cap.
+One shared `<canvas>`, `pointer-events: none`, below `--sl-z-overlay` so the sticky translucent header stays above it. It is `position: absolute` and re-topped to the scroll offset once per frame, not `position: fixed`: a fixed overlay is repainted from the main thread while the page scrolls on the compositor, so during a scroll it composites bands at the offset they were *measured* at while their elements have already moved. An absolutely positioned canvas is scrolled by the compositor along with the content it draws on. It renders only within the bounding rectangles of currently visible elements, passed as a uniform array with a fixed cap, each with the element's own corner radius and its current temperament.
 
-What justifies the GPU here and nowhere else: **inertia**. The field keeps moving after the pointer leaves, and the displacement is a real advection of the sheen rather than a gradient repositioned per frame. Glitch, aurora and glass have no such gap — they are already at full quality in CSS, which is why they have no GPU tier.
+What justifies the GPU: the edge families stop being one ring with two temperaments and become **two different phenomena**, neither of which CSS can express.
+
+- **Glass — a shaded metal bezel ON the boundary.** A signed distance field of the element's rounded rectangle gives the edge; the outward in-plane normal dotted with a fixed key light gives the brightness *around* the perimeter (bright where the ring faces the light, dark where it faces away — a ring of even brightness is a neon outline, not metal); a shallow relief gives the profile *across* the band. Achromatic silver between the theme's own two neutrals, with the product's hue appearing only in a tight specular kiss. Chromatic dispersion evaluates the shading three times, one per channel, displaced both around the ring and across the band. The pointer bends the field locally, so the ring dents rather than the element moving.
+- **Aurora — emissive light AROUND the boundary.** Coloured ribbons running along the perimeter, blurred perpendicular to it, bleeding tens of pixels outside the element and drifting on their own clock. Additive, not reflective: no bezel, no specular, no environment. The hue runs the accent into its depth companion as the light gets further out, the way a real aurora shifts one colour into another. Its arc stays **angularly bounded** however soft it gets, because a determinate aurora's arc length is its value.
+
+An element carrying both classes shows both: the bezel with the light around it. **This supersedes the "two temperaments of one ring" framing below**, which remains true of Tier 0/1 — where a single `::after` is all CSS gives — and is not true of Tier 2. The liquid's **inertia** rides along in the same pass.
+
+**The CSS ring is a genuine fallback, not the target.** The edge families render as a shaded material where a GPU is available and degrade to a conic hairline where it is not; the hairline is what a browser without WebGPU, a visitor under reduced motion and a visitor in high contrast see, and it must stay correct on its own. Tier 2 stands it down by `opacity: 0` under `[data-sl-fx-gpu="on"]`, and never removes it. The linear aurora is excluded from the material — it is a segment, not a perimeter — and keeps its CSS gradient at every tier.
 
 Boot, double-guarded exactly as `sondalab-site/src/lib/crt-surface.ts` does it — `navigator.gpu` alone is insufficient because the adapter can refuse and the device can be lost:
 

@@ -387,12 +387,21 @@ export function revokeLive(el) {
 }
 
 /**
- * Tier 2 — the WebGPU liquid field. Additive: everything already works without
- * it, and it is only attached once the device has actually answered.
+ * Tier 2 — the WebGPU material: a shaded metal edge on the glass and aurora
+ * families, and the liquid sheen with real inertia. Additive: everything
+ * already works without it, and it is only attached once the device has
+ * actually answered. Refuses under high contrast, the same way mount() does —
+ * a CSS kill switch cannot silence a canvas, so the refusal has to live here.
  * @returns {Promise<boolean>} whether the GPU tier came up
  */
 export async function mountGpu() {
   if (!armed) return false;
+  // Re-read at call time rather than relying on mount()'s own guard: a visitor
+  // can switch to high contrast between mount() and this call, and `armed`
+  // stays true once set. bootField() additionally tears the field down if the
+  // switch happens while it is already live.
+  if (typeof document === "undefined") return false;
+  if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return false;
 
   // Dynamic import is the one path in this tier that can reject at the
   // caller rather than degrade through bootField()'s own guard: vgpu is an
@@ -408,18 +417,51 @@ export async function mountGpu() {
 
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
-  // Below --sl-z-overlay so the sticky translucent header stays above the field.
+  // Below --sl-z-overlay so the sticky translucent header stays above the
+  // material. Composited normally, NOT with plus-lighter: an additive canvas
+  // can only brighten, and metal needs values below the ground it sits on as
+  // much as above it — the dark half of the band is what makes the bright half
+  // read as a reflection. The material writes alpha only in the band and in
+  // the sheen, so nothing else on the page is touched, and no text is ever
+  // painted over.
+  //
+  // ABSOLUTE, NOT FIXED, and re-topped to the scroll offset every frame by
+  // bootField(). A fixed overlay is repainted from the main thread while the
+  // page itself scrolls on the compositor, so during a scroll the bands are
+  // composited at the offset they were MEASURED at while the elements have
+  // already moved — bands visibly detached from their elements by a hundred
+  // pixels or more, on any ordinary wheel scroll. An absolutely positioned
+  // canvas is scrolled by the compositor along with the content it is drawing
+  // on, so the two stay glued together whether or not the main thread has
+  // committed; what lags instead is the canvas's own coverage window, and the
+  // worst case is a band missing at the leading edge for a frame rather than a
+  // band in the wrong place. `top`, `width` and `height` are all written in
+  // pixels by bootField() every frame — a percentage size would resolve against
+  // whatever containing block the consumer's page happens to give this canvas,
+  // and `body { position: relative }` would make that the body's full content
+  // height.
+  // Sized once here as well, so the surface is not created against a 0x0 box;
+  // bootField() keeps it in step from the first frame onward.
+  const root = document.documentElement;
   canvas.style.cssText =
-    "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;mix-blend-mode:plus-lighter";
+    `position:absolute;left:0;top:0;width:${Math.max(root.clientWidth, 1)}px;` +
+    `height:${Math.max(root.clientHeight, 1)}px;pointer-events:none;z-index:1`;
   document.body.appendChild(canvas);
 
-  // Kept by observation, not by measuring every .sl-fx-liquid on the page
+  // Kept by observation, not by measuring every effect element on the page
   // every rendered frame — see trackLiquid()'s own doc comment. bootField()
-  // is handed both the read side and the teardown, so its own stop() also
-  // stops this: nothing is left observing once the field is torn down.
+  // is handed the read side, the radius refresh and the teardown, so its own
+  // stop() also stops this: nothing is left observing once the field is torn
+  // down.
   const tracker = trackLiquid();
 
-  const handle = await bootField({ canvas, rects: tracker.rects, stopTracking: tracker.stop, tokens });
+  const handle = await bootField({
+    canvas,
+    rects: tracker.rects,
+    refresh: tracker.refresh,
+    stopTracking: tracker.stop,
+    tokens,
+  });
   if (!handle) {
     tracker.stop();
     canvas.remove();
