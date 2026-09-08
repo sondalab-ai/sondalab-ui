@@ -153,18 +153,29 @@ test("determinate progress drives arc length, not an animation", () => {
   assert.match(effects, /--slfx-arc:\s*calc\(var\(--slfx-progress\)\s*\*\s*360deg\)/);
 });
 
-test("the liquid filter is applied to the sheen layer only, never to a text box", () => {
-  // Isolate the RULE that carries the filter, then assert on its own selector.
+test("the liquid filter is applied to paint layers only, never to a text box", () => {
+  // Isolate the RULEs that carry the filter, then assert on their own selectors.
   // Do NOT slice a text window backwards from the declaration to the previous
   // `}`: that asserts on whatever happens to sit in the window, so it fails on
   // the very same rule written on one line, and would pass on any preceding
   // text that merely contained the substring `::before`. The source is already
   // comment-stripped at read time, so a rule's selector is all that precedes it.
+  //
+  // Two rules, not one: the sheen (::before) always carries it, and an element
+  // that is also glass or aurora must wobble with its own edge (::after) too —
+  // a crisp ring around a deforming fill would read as broken. Neither may
+  // ever land on the host itself, which is where the text lives.
   const carrying = RULES.filter((r) => /filter:\s*url\(#slfx-liquid\)/.test(r.body));
-  assert.equal(carrying.length, 1, "exactly one rule may carry the liquid filter");
-  assert.match(
-    carrying[0].selector, /::before$/,
-    `the liquid filter must sit on the ::before sheen, never on the host — got: ${carrying[0].selector}`,
+  assert.ok(carrying.length > 0, "at least one rule must carry the liquid filter");
+  for (const r of carrying) {
+    assert.match(
+      r.selector, /::(before|after)$/,
+      `the liquid filter must sit on a paint layer, never on the host — got: ${r.selector}`,
+    );
+  }
+  assert.ok(
+    carrying.some((r) => r.selector.endsWith("::before")),
+    "the sheen layer must carry the filter",
   );
 });
 

@@ -259,7 +259,7 @@
     <section id="liquid">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
-        <p class="cap">You are recognised. A specular sheen on <b>::before</b> tracks the pointer at <b>--slfx-px</b>/<b>--slfx-py</b>, written by one delegated <b>pointermove</b> listener inside a single shared <b>requestAnimationFrame</b> — not one listener per element. The four corners nearest the pointer soften by up to 10px; the box never grows, so nothing reflows around it. Under Tier 1 the sheen is additionally warped by an SVG <b>feTurbulence</b> filter, applied to the sheen layer only — never to the box's text, which would lose subpixel antialiasing across the whole subtree.</p>
+        <p class="cap">You are recognised. Under Tier 1, <b>::before</b> becomes the skin: the host goes transparent and its own captured background moves onto the sheen layer at <b>border-radius: inherit</b> — the declared radius, never rewritten — so a critically-underdamped spring (stiffness, damping, one shared frame loop) can drive an SVG <b>feTurbulence</b> → <b>feDisplacementMap</b> → blur/alpha-stretch "goo" filter that deforms the element's actual silhouette, not just its highlight. The deformed centre trails the pointer with its own lag, and a released shape overshoots and settles rather than easing to a stop. Only one element deforms at a time — the filter is a single shared resource — never the box's text, which would lose subpixel antialiasing across the whole subtree.</p>
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">specular on the border</span>

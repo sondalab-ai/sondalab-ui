@@ -55,11 +55,15 @@
    families so a reader meets the exits before the entrances. */
 
 /* 1 & 2 — high contrast and the subtree opt-out neutralise the HOST as well as
-   its paint layers. The glitch animates its host and its shards, the liquid
-   morphs the host's border-radius, and the glass paints an inset highlight on
-   the host — a switch over ::before/::after alone left three of the four
-   families running. `!important` is load-bearing here: effects.js writes the
-   pointer and bulge properties as inline styles, which beat a plain rule.
+   its paint layers. The glitch animates its host and its shards, the liquid's
+   host goes transparent under Tier 1 to let its skin carry the surface, and
+   the glass paints an inset highlight on the host — a switch over
+   ::before/::after alone left three of the four families running.
+   `!important` is load-bearing here: effects.js writes the pointer and
+   engagement properties as inline styles, which beat a plain rule. The host's
+   own background/border-color are restored by scoping the transparency rule
+   itself out of these two states (below, by the liquid section), rather than
+   by trying to re-declare an unknown original value here.
    The opt-out matches the element carrying it AND its subtree: the attribute
    on an effect element must disable that element, which descendant-only
    selectors never did. The opt-out branch is compounded with the family
@@ -71,10 +75,6 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
-  --slfx-c0: 0px !important;
-  --slfx-c1: 0px !important;
-  --slfx-c2: 0px !important;
-  --slfx-c3: 0px !important;
   --slfx-d: 0 !important;
   --slfx-bloom: 0px !important;
 }
@@ -151,9 +151,9 @@
   opacity: 0;
   background: conic-gradient(from var(--slfx-angle),
     var(--slfx-s0) 0deg,
-    var(--slfx-s1) 95deg,
-    var(--slfx-s2) 185deg,
-    var(--slfx-s3) 290deg,
+    var(--slfx-s1) 70deg,
+    var(--slfx-s2) 210deg,
+    var(--slfx-s3) 320deg,
     var(--slfx-s0) 360deg);
   /* `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
   mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
@@ -185,8 +185,8 @@
    Three readings of the one ring, separated by the FRACTION OF THE PERIMETER
    that is lit — not by colour and not by speed, which is why they stay legible
    side by side.
-     static (~60%)  :focus-visible / :focus-within — this element has focus
-     sweep  (~60%)  [data-sl-fx-live="on"]         — ambient liveness, capped at
+     static (~70%)  :focus-visible / :focus-within — this element has focus
+     sweep  (~70%)  [data-sl-fx-live="on"]         — ambient liveness, capped at
                                                      one per document
      busy   (~18%)  [data-sl-fx-live="busy"]       — a real operation runs here
      determinate    busy + --slfx-progress          — the arc LENGTH is the value
@@ -203,6 +203,18 @@
   box-shadow: inset 0 0 var(--slfx-bloom) color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 18%, transparent);
 }
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"])::after { opacity: 1; }
+
+/* Bloom follows the arc rather than the box: drop-shadow filters by the layer's
+   own alpha shape, unlike box-shadow, which would just re-blur a rectangle.
+   Two stacked passes for a soft falloff; the crisp core above is undimmed —
+   it is the focus affordance and must stay legible on its own. A raster pass
+   is real cost, so it is declared only in the active states below, never at
+   rest. */
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
+  filter:
+    drop-shadow(0 0 4px color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 55%, transparent))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--slfx-depth) 38%, transparent));
+}
 
 /* Busy — a short travelling marker, so a different GEOMETRY rather than a
    rebinding of the stops. Declaring its own background is what separates a
@@ -255,10 +267,14 @@
 .sl-fx-aurora--linear.sl-fx-aurora--top::after { inset: 0 0 auto 0; }
 
 /* ══ LIQUID — you are recognised ═════════════════════════════════════════════
-   Two composed parts, both non-destructive:
-     1. a specular sheen on ::before, centred on the pointer and scaled by
-        engagement, warped by an SVG turbulence filter under Tier 1;
-     2. a per-corner radius morph, so the box softens towards the pointer.
+   Under Tier 0 a specular sheen on ::before tracks the pointer and scales
+   with engagement. Under Tier 1 the ::before layer additionally takes over
+   the host's own surface — background-color: transparent on the host,
+   border-radius: inherit on the skin — so a spring-driven SVG filter
+   (effects.js) has an actual silhouette to deform, not just a highlight.
+   The radius itself is never rewritten: the filter distorts what the
+   component already declared, so a component is free to re-parametrise its
+   own --sl-radius-* later without touching this file.
 
    NON-DESTRUCTIVENESS IS A CONTRACT: the filter is applied to the sheen
    pseudo-element ONLY, never to a box containing text. An SVG filter disables
@@ -266,36 +282,73 @@
    visibly degrade every label in the interface. Text geometry never moves —
    only light does. */
 
-.sl-fx-liquid {
-  --slfx-c0: 0px; --slfx-c1: 0px; --slfx-c2: 0px; --slfx-c3: 0px;
-  position: relative;
-  border-radius:
-    calc(var(--sl-radius-md, 6px) + var(--slfx-c0))
-    calc(var(--sl-radius-md, 6px) + var(--slfx-c1))
-    calc(var(--sl-radius-md, 6px) + var(--slfx-c2))
-    calc(var(--sl-radius-md, 6px) + var(--slfx-c3));
-  transition: border-radius var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
-}
+/* isolation: isolate gives the host its own local stacking context, so
+   ::before's negative z-index below is scoped here rather than escaping to
+   whatever real stacking context is further up the page. Without it, an
+   absolutely positioned ::before paints AFTER the host's own in-flow text
+   regardless of source order — CSS stacking runs non-positioned content
+   before positioned descendants — so once the skin carries an opaque fill
+   (Tier 1, below) it would silently paint over every label in the interface. */
+.sl-fx-liquid { position: relative; isolation: isolate; }
 
 .sl-fx-liquid::before {
   content: "";
   position: absolute;
+  z-index: -1;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(9rem 9rem at var(--slfx-px) var(--slfx-py),
+  background-image: radial-gradient(9rem 9rem at var(--slfx-px) var(--slfx-py),
     color-mix(in srgb, var(--slfx-sheen) calc(var(--slfx-d) * 34%), transparent) 0%,
     transparent 68%);
-  transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 
-/* Tier 1 only: effects.js injects <filter id="slfx-liquid"> on mount(). Without
-   it the sheen is a clean gradient, which is the correct Tier 0 reading. */
-[data-sl-fx="on"] .sl-fx-liquid::before { filter: url(#slfx-liquid); }
+/* Tier 1: the skin takes over the surface so the filter has a silhouette to
+   deform. --slfx-ground is the host's own computed background, captured by
+   effects.js at mount — not a value this layer invents. The host keeps its
+   text, which is never filtered. `border-radius: inherit` is what keeps the
+   radius parametrisable: whatever the component declares flows straight
+   through, undisturbed by the effect.
+   Excluded from both kill switches: a host made transparent under high
+   contrast or the opt-out, with its ::before skin then hidden by the kill
+   switch below, would render as an empty hole rather than a restored box. */
+/* Gated on --slfx-ground actually being SET, the same [style*=…] pattern the
+   determinate aurora uses for --slfx-progress: an element the ground sweep
+   has not reached yet (or one effects.js just cleared to force a recapture
+   after a theme/accent change — see mount()) keeps its own real background
+   rather than going transparent over an empty custom property. Fail-safe,
+   not fail-invisible. */
+:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"])
+  .sl-fx-liquid[style*="--slfx-ground"]:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
+  background-color: transparent;
+  border-color: transparent;
+}
+:root[data-sl-fx="on"]:not([data-sl-theme="high-contrast"])
+  .sl-fx-liquid[style*="--slfx-ground"]:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *))::before {
+  background-color: var(--slfx-ground);
+}
+/* The filter runs only on the element the pointer is currently shaping —
+   effects.js toggles this class on exactly one element at a time. The filter
+   definition is a single shared <svg> resource: applying it unconditionally
+   to every .sl-fx-liquid on the page would mean feDisplacementMap's `scale`
+   (also shared, since it lives on that one definition) distorts every other
+   liquid element in lockstep with whichever one is actually under the
+   pointer. Scoping to the live element is what keeps the declension section's
+   several simultaneous liquid elements independent. */
+[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live::before { filter: url(#slfx-liquid); }
+/* An element that is also glass or aurora must wobble with its own edge, or a
+   crisp ring sits around a deforming fill and the whole thing reads as broken.
+   Written as two selectors rather than :is(.sl-fx-glass, .sl-fx-aurora)::after
+   — that exact text is how a guards test locates the shared ring rule's own
+   selector further down the file, and a substring match would collide. */
+[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live.sl-fx-glass::after,
+[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live.sl-fx-aurora::after {
+  filter: url(#slfx-liquid);
+}
 
 /* Reduced amplitude for containers — a card is not a button. */
 .sl-fx-liquid--calm { --slfx-d: 0; }
-[data-sl-fx="on"] .sl-fx-liquid--calm::before { filter: none; }
+[data-sl-fx="on"] .sl-fx-liquid--calm.is-liquid-live::before { filter: none; }
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand
@@ -413,9 +466,13 @@
     animation-delay: calc(var(--slfx-i) * -0.028s);
   }
 
-  /* Tier 2 owns the sheen: the CSS gradient stands down so the two do not
-     double up. The radius morph stays — it is geometry, not light. */
-  [data-sl-fx-gpu="on"] .sl-fx-liquid::before { background: none; filter: none; }
+  /* Tier 2 owns the sheen: the CSS gradient and the deformation filter stand
+     down so the two do not double up — the GPU canvas paints both, with real
+     inertia. The ground fill stays: it is what makes the skin an opaque
+     silhouette rather than a hole, and Tier 2's own fragment shader is a
+     low-alpha tint meant to composite over it, not replace it. Only
+     background-image is cleared, never background-color. */
+  [data-sl-fx-gpu="on"] .sl-fx-liquid::before { background-image: none; filter: none; }
 }
 
 /* Under `reduce` the busy arc does not orbit: it renders as a static ring at

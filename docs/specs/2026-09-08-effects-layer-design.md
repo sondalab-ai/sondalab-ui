@@ -23,7 +23,7 @@ The prior art already exists but is stranded. `sondalab-site` has a two-channel 
 
 **The surface is an instrument panel behind glass, with live signal underneath.**
 
-The operative constraint: effects spend their budget on **light and material**, never on **weight, radius, or added chrome**. The house grammar forbids heavy borders (L2: structural separation is always `1px`) and generic card-grid decoration. So the glass edge stays exactly `1px` and becomes chromatically alive rather than thick; the aurora widens only inward and pays for its presence in light rather than in an added concentric ring; the liquid warps light, not geometry that carries text. This is what keeps four expressive effect families compatible with editorial modernism instead of turning the suite into generic glassmorphism.
+The operative constraint: effects spend their budget on **light and shape**, never on **weight**. The house grammar forbids heavy borders (L2: structural separation is always `1px`) and generic card-grid decoration. So the glass edge stays exactly `1px` and becomes chromatically alive rather than thick; the aurora widens only inward and pays for its presence in light rather than in an added concentric ring; the liquid deforms an element's silhouette through a filter over its declared shape, never by rewriting a declared value — `border-radius` stays whatever the component declares, so it can be re-parametrised later without touching the effect. This is what keeps four expressive effect families compatible with editorial modernism instead of turning the suite into generic glassmorphism.
 
 ## Decision 1 — Effects are semantic, not decorative
 
@@ -143,7 +143,7 @@ The design work proper. Each component gets the families that match its semantic
 
 | Component | Glitch | Liquid | Aurora | Glass |
 |---|---|---|---|---|
-| `sl-btn--primary` | on destructive confirmation | ● specular + radius morph | ● `:focus-visible`; ● `busy` while submitting | — (filled; no edge to cut) |
+| `sl-btn--primary` | on destructive confirmation | ● specular + silhouette deform | ● `:focus-visible`; ● `busy` while submitting | — (filled; no edge to cut) |
 | `sl-btn--ghost` | — | ○ specular on the border | ● `:focus-visible` | ● its `1px` border **is** the glass edge |
 | `sl-card` | — | ○ low amplitude, no tilt | ● `busy` while loading; `sweep` only when granted | ● edge + inner top highlight |
 | `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | ● `:focus-within` | ● |
@@ -162,6 +162,8 @@ Two exclusions are deliberate and load-bearing:
 
 - **No liquid on `sl-field__input`.** A text field that deforms while being typed into trades legibility for spectacle.
 - **No glitch on `sl-btn--ghost` or `sl-card`.** Glitch marks *something re-resolved*; a passive container has nothing to re-resolve, so a burst there would be decoration and Decision 1 forbids it.
+
+One composition constraint, not an exclusion but load-bearing the same way: **`sl-fx-liquid` on a bordered control requires `sl-fx-glass`.** Under Tier 1 the host goes `border-color: transparent` along with its background, so the skin has a clean silhouette to deform — a filled control loses nothing (it had no border), but a control whose *border* is its visible edge (`sl-btn--ghost`) would lose it outright without glass's `::after` ring standing in for it, which is exactly what the declension table's `sl-btn--ghost` row requires (`●` glass, not optional). A future component that pairs liquid with a border and skips glass will render with no visible edge at all under Tier 1 — not a partial or degraded look, an absent one.
 
 ## Implementation contract
 
@@ -278,14 +280,13 @@ Determinate needs no animation: `--slfx-progress` sets `--slfx-arc` directly and
 
 ### Liquid — `sl-fx-liquid`
 
-Two composed parts, both non-destructive:
+Under Tier 0, a specular sheen on `::before` tracks the pointer: a radial gradient centred on `--slfx-px`/`--slfx-py`, scaled by `--slfx-d` (engagement, `0`→`1`).
 
-1. **Specular sheen** on a `::before` layer: a radial gradient centred on `--slfx-px`/`--slfx-py` (pointer position, written by `effects.js` inside a single shared `requestAnimationFrame`), scaled by `--slfx-d` (engagement, `0`→`1`, eased on enter and leave).
-2. **Radius morph**: `effects.js` writes four per-corner bulge values from the pointer's proximity to each corner; `border-radius` interpolates between `--sl-radius-md` and roughly `+10px` on the near corners.
+Under Tier 1, `::before` additionally becomes the **skin** — the layer that carries the element's actual surface, not just a highlight on top of it. `effects.js` captures the host's own computed `background-color` once, at `mount()`, into `--slfx-ground`; the host itself goes `background-color: transparent` and `::before` paints `--slfx-ground` in its place, at `border-radius: inherit` — the declared radius, never rewritten. That skin is what an SVG filter (`feTurbulence` → `feDisplacementMap` → `feGaussianBlur` → `feColorMatrix` alpha stretch → `feComposite`, injected once as a hidden `<svg>` on `mount()`) deforms: turbulence-driven displacement pushed through a blur-and-contrast "goo" pass, which is what makes an edge read as a liquid meniscus rather than a wobbling, noisy rectangle. **The radius is never rewritten — the filter distorts the rendered result of what the component already declared**, so a component stays free to re-parametrise its own `--sl-radius-*` later without touching this file.
 
-Under Tier 1 the sheen layer additionally carries an SVG `feTurbulence` + `feDisplacementMap` filter, injected once by `effects.js` as a hidden `<svg>` on `mount()`.
+The deformation is driven by a critically-underdamped spring (`effects.js`, stiffness `260`, damping `16`, integrated in a single shared frame loop), not an eased transition — a transition has no mass, and mass is the point: released quickly, the shape overshoots and settles rather than easing to a stop, and the deformed centre trails the pointer with its own lag rather than sitting under it. The filter definition is a single shared SVG resource, so only one element deforms at a time — the one currently live, tracked by `effects.js` and marked with a class the CSS scopes the filter to (see `packages/ui-kit/effects.css`, LIQUID section) — otherwise the shared `feDisplacementMap` `scale` attribute would distort every `.sl-fx-liquid` on the page in lockstep with whichever one the pointer actually touched.
 
-**Non-destructiveness is a contract, not a preference: the filter is applied only to the sheen pseudo-element, never to a box that contains text.** SVG filters disable subpixel antialiasing on their subtree; filtering the element itself would visibly degrade every label in the interface. Text geometry never moves; only light does.
+**Non-destructiveness is a contract, not a preference: the filter is applied only to paint layers (the sheen `::before`, and the edge ring `::after` on an element that is also glass or aurora), never to a box that contains text.** SVG filters disable subpixel antialiasing on their subtree; filtering the element itself would visibly degrade every label in the interface. Text geometry never moves; only light and shape do.
 
 ### Glitch — `sl-fx-glitch`
 

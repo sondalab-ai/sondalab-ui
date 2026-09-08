@@ -36,7 +36,11 @@ function readTokens(root = document.documentElement) {
   tokens.canvas = cs.getPropertyValue("--sl-bg-canvas").trim();
 }
 
-/** The turbulence filter the liquid sheen references. Injected once. */
+/** The turbulence + goo filter the liquid skin references. Injected once.
+ *  scale starts at 0 — a resting element is undeformed; the spring below
+ *  drives it. The blur-then-alpha-contrast pass (feGaussianBlur into
+ *  feColorMatrix, composited back over the raw displacement) is what makes
+ *  an edge read as a liquid meniscus rather than a wobbling, noisy rectangle. */
 function injectFilterDefs() {
   if (document.getElementById("slfx-defs")) return;
   const ns = "http://www.w3.org/2000/svg";
@@ -47,52 +51,159 @@ function injectFilterDefs() {
   svg.setAttribute("height", "0");
   svg.style.position = "absolute";
   svg.innerHTML = `
-    <filter id="slfx-liquid" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="n">
-        <animate attributeName="baseFrequency" dur="9s" repeatCount="indefinite"
-                 values="0.012 0.028; 0.019 0.017; 0.012 0.028" />
+    <filter id="slfx-liquid" x="-30%" y="-30%" width="160%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="7" result="n">
+        <animate attributeName="baseFrequency" dur="11s" repeatCount="indefinite"
+                 values="0.008 0.014; 0.013 0.009; 0.008 0.014" />
       </feTurbulence>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G" />
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G" result="d" />
+      <feGaussianBlur in="d" stdDeviation="6" result="b" />
+      <feColorMatrix in="b" type="matrix" result="goo"
+        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" />
+      <feComposite in="d" in2="goo" operator="atop" />
     </filter>`;
   document.body.appendChild(svg);
+  liquidDisplacementEl = svg.querySelector("feDisplacementMap");
 }
 
-/* ── liquid: one delegated listener, one shared rAF ──────────────────────────
-   Pointer coordinates are written as custom properties on the hovered element
-   only. Elements outside the viewport never receive a write. */
-let pending = null;
-let rafId = 0;
+/** The host's own background, captured once so the skin can take it over.
+ *  Read, never invented — this file declares no colour.
+ *
+ *  Timing is load-bearing in two ways. First: effects.css only makes the
+ *  host transparent when --slfx-ground is actually SET
+ *  (`[style*="--slfx-ground"]`), specifically so capturing late reads the
+ *  host's own real background rather than the transparent it would
+ *  otherwise have become. Second: most components.css controls transition
+ *  `background`, so a plain getComputedStyle() read right after a theme or
+ *  accent change (see recaptureGrounds) can catch the interpolation
+ *  mid-flight rather than the target colour — the transition is suppressed
+ *  for one synchronous style flush so the read always lands on the real
+ *  target. Idempotent, so a node matched by more than one call site below is
+ *  a no-op after the first. */
+function captureGround(el) {
+  if (el.style.getPropertyValue("--slfx-ground")) return;
+  const prevTransition = el.style.transition;
+  el.style.transition = "none";
+  void el.offsetHeight; // force the recalc before reading, not after
+  const ground = getComputedStyle(el).backgroundColor;
+  el.style.transition = prevTransition;
+  el.style.setProperty("--slfx-ground", ground);
+}
 
-function flush() {
-  rafId = 0;
-  if (!pending) return;
-  const { el, x, y, w, h } = pending;
-  pending = null;
-  el.style.setProperty("--slfx-px", `${((x / w) * 100).toFixed(1)}%`);
-  el.style.setProperty("--slfx-py", `${((y / h) * 100).toFixed(1)}%`);
-  el.style.setProperty("--slfx-d", "1");
-  // Per-corner bulge: the near corners soften, the far ones stay crisp. The
-  // box never grows — only its radii change, so nothing reflows around it.
-  const corners = [[0, 0], [w, 0], [w, h], [0, h]];
-  corners.forEach(([cx, cy], i) => {
-    const d = Math.hypot(x - cx, y - cy) / Math.hypot(w, h);
-    el.style.setProperty(`--slfx-c${i}`, `${(10 * (1 - d)).toFixed(1)}px`);
-  });
+/** Re-reads every liquid element's ground after something that can change
+ *  the resolved colour — a theme or accent switch. --slfx-ground is a frozen
+ *  literal, not a live var() reference (an SVG filter can't resolve a custom
+ *  property), so nothing keeps it in sync on its own. Clearing before
+ *  re-capturing (rather than overwriting) is what makes the read correct:
+ *  clearing drops the CSS gate above, which makes the host briefly opaque
+ *  again at its OWN cascaded colour — the very thing captureGround needs to
+ *  read — and both steps run in the same synchronous pass, before the
+ *  browser paints, so nothing is visibly transparent in between. */
+function recaptureGrounds(root) {
+  const els = root.querySelectorAll(".sl-fx-liquid");
+  for (const el of els) el.style.removeProperty("--slfx-ground");
+  for (const el of els) captureGround(el);
+}
+
+/* ── liquid: one delegated listener, one shared spring ───────────────────────
+   Only one .sl-fx-liquid element deforms at a time. The filter above is a
+   single shared SVG resource, so its feDisplacementMap `scale` is necessarily
+   shared too — driving it from every hovered element independently would
+   distort every OTHER liquid element on the page in lockstep with whichever
+   one the pointer actually touched. effects.js instead tracks one "live"
+   element and toggles the class effects.css scopes the filter to; the spring
+   itself stays the single set of module-level values below, matching the
+   shared-rAF pattern used everywhere in this file.
+
+   Critically underdamped: the shape overshoots and settles rather than easing
+   to a stop. Stiffness and damping are tuned so a flick reads as elastic and
+   a slow drag as viscous — the same spring, different input. Tuned against
+   the rendered page (see task-16-report.md), not against a guess. */
+const LIQUID_K = 170;
+const LIQUID_DAMP = 14;
+const LIQUID_SCALE_MULT = 26;
+const LIQUID_SETTLE_EPS = 0.002;
+
+let amp = 0, ampV = 0, target = 0;
+let lagX = 50, lagY = 50;        // percent, within the live element's own box
+let pointerXPct = 50, pointerYPct = 50;
+let liquidLiveEl = null;
+let liquidDisplacementEl = null;
+let liquidRafId = 0;
+let liquidPrevT = 0;
+
+function setLiquidLive(el) {
+  if (liquidLiveEl === el) return;
+  if (liquidLiveEl) liquidLiveEl.classList.remove("is-liquid-live");
+  liquidLiveEl = el;
+  if (liquidLiveEl) liquidLiveEl.classList.add("is-liquid-live");
+}
+
+function integrateLiquid(now) {
+  const dt = Math.min((now - liquidPrevT) / 1000 || 0, 1 / 30);
+  liquidPrevT = now;
+  const a = LIQUID_K * (target - amp) - LIQUID_DAMP * ampV;
+  ampV += a * dt;
+  amp += ampV * dt;
+  // The centre chases the pointer with its own lag, so the deformation
+  // arrives after the cursor rather than under it — that trail IS the mass.
+  lagX += (pointerXPct - lagX) * Math.min(dt * 9, 1);
+  lagY += (pointerYPct - lagY) * Math.min(dt * 9, 1);
+
+  if (liquidLiveEl) {
+    liquidLiveEl.style.setProperty("--slfx-px", `${lagX.toFixed(1)}%`);
+    liquidLiveEl.style.setProperty("--slfx-py", `${lagY.toFixed(1)}%`);
+    liquidLiveEl.style.setProperty("--slfx-d", Math.max(0, Math.min(1, amp)).toFixed(3));
+  }
+  // feDisplacementMap's scale is an SVG attribute, not a CSS property.
+  // Left unclamped, unlike --slfx-d below: a negative scale is valid SVG (it
+  // mirrors the displacement rather than erasing it), and clamping it at 0
+  // would silently flatten the release overshoot — the spring crossing back
+  // past rest is exactly the elastic motion this tier exists to show.
+  if (liquidDisplacementEl) liquidDisplacementEl.setAttribute("scale", (amp * LIQUID_SCALE_MULT).toFixed(2));
+
+  const settled = target === 0 && Math.abs(amp) < LIQUID_SETTLE_EPS && Math.abs(ampV) < LIQUID_SETTLE_EPS;
+  if (settled) {
+    liquidRafId = 0;
+    amp = 0; ampV = 0;
+    if (liquidLiveEl) liquidLiveEl.style.setProperty("--slfx-d", "0");
+    if (liquidDisplacementEl) liquidDisplacementEl.setAttribute("scale", "0");
+    setLiquidLive(null);
+    return; // idle page costs nothing: the loop does not reschedule itself
+  }
+  liquidRafId = requestAnimationFrame(integrateLiquid);
+}
+
+function ensureLiquidLoop() {
+  if (liquidRafId) return;
+  liquidPrevT = performance.now();
+  liquidRafId = requestAnimationFrame(integrateLiquid);
 }
 
 function onPointerMove(ev) {
   const el = ev.target instanceof Element ? ev.target.closest(".sl-fx-liquid") : null;
   if (!el) return;
   const r = el.getBoundingClientRect();
-  pending = { el, x: ev.clientX - r.left, y: ev.clientY - r.top, w: r.width, h: r.height };
-  if (!rafId) rafId = requestAnimationFrame(flush);
+  pointerXPct = ((ev.clientX - r.left) / r.width) * 100;
+  pointerYPct = ((ev.clientY - r.top) / r.height) * 100;
+  if (liquidLiveEl !== el) {
+    // A fresh target starts its lag from its own entry point, not the
+    // previous element's leftover coordinates — those are meaningless in a
+    // different box, and would read as a jump-cut trail rather than a clean
+    // arrival.
+    lagX = pointerXPct;
+    lagY = pointerYPct;
+    setLiquidLive(el);
+  }
+  target = 1;
+  ensureLiquidLoop();
 }
 
 function onPointerLeave(ev) {
   const el = ev.target instanceof Element ? ev.target.closest(".sl-fx-liquid") : null;
-  if (!el) return;
-  el.style.setProperty("--slfx-d", "0");
-  for (let i = 0; i < 4; i++) el.style.setProperty(`--slfx-c${i}`, "0px");
+  if (!el || el !== liquidLiveEl) return;
+  target = 0;
+  ensureLiquidLoop(); // keep the loop running so the overshoot plays out
 }
 
 /* ── glitch ──────────────────────────────────────────────────────────────────
@@ -140,12 +251,43 @@ export function mount(root = document) {
   if (html.getAttribute("data-sl-theme") === "high-contrast") return false;
 
   readTokens(html);
-  new MutationObserver(() => readTokens(html)).observe(html, {
+  // data-sl-theme and style both matter: a theme switch changes the former,
+  // a per-product accent override (root.style.setProperty("--sl-accent-..."))
+  // changes only the latter, and either can change what --slfx-ground should
+  // now hold — a captured background literal, unlike the tokens above, is
+  // never a live var() reference (an SVG filter cannot resolve a custom
+  // property), so nothing keeps it in sync without this.
+  new MutationObserver(() => {
+    readTokens(html);
+    recaptureGrounds(document);
+  }).observe(html, {
     attributes: true,
-    attributeFilter: ["data-sl-theme"],
+    attributeFilter: ["data-sl-theme", "style"],
   });
 
   injectFilterDefs();
+
+  // Capture every existing liquid element's ground before the attribute
+  // below makes it transparent, then keep capturing for elements a framework
+  // inserts afterwards — the observer fires at a microtask checkpoint, ahead
+  // of the browser's next paint, so it still runs before that element's own
+  // background would otherwise read back as transparent. A node that gains
+  // the class after insertion (rather than arriving with it) is not covered;
+  // that is a real limitation, not exercised by anything this kit ships.
+  const captureGrounds = (scope) => {
+    for (const el of scope.querySelectorAll(".sl-fx-liquid")) captureGround(el);
+  };
+  captureGrounds(root instanceof Document ? document : root);
+  new MutationObserver((records) => {
+    for (const rec of records) {
+      for (const node of rec.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        if (node.matches(".sl-fx-liquid")) captureGround(node);
+        captureGrounds(node);
+      }
+    }
+  }).observe(root, { childList: true, subtree: true });
+
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
   root.addEventListener("pointerleave", onPointerLeave, { capture: true, passive: true });
