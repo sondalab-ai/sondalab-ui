@@ -241,8 +241,7 @@
 
 /* Tier 1 only: effects.js injects <filter id="slfx-liquid"> on mount(). Without
    it the sheen is a clean gradient, which is the correct Tier 0 reading. */
-[data-sl-fx="on"] .sl-fx-liquid::before
-{ filter: url(#slfx-liquid); }
+[data-sl-fx="on"] .sl-fx-liquid::before { filter: url(#slfx-liquid); }
 
 /* Reduced amplitude for containers — a card is not a button. */
 .sl-fx-liquid--calm { --slfx-d: 0; }
