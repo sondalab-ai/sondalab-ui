@@ -1899,8 +1899,9 @@ git commit -m "docs(agent): make the effects layer reachable from the author wor
 **Files:**
 - Create: `packages/ui-kit/effects-gpu.js`
 - Create: `packages/ui-kit/effects-shader.js`
-- Modify: `packages/ui-kit/effects.js` (replace the `mountGpu` stub)
 - Create: `scripts/effects-gpu.test.mjs`
+
+`packages/ui-kit/effects.js` is **not** touched here. Its `mountGpu` stub stays a no-op returning `false` until Task 13 wires it, which is what keeps this task's boot provable in isolation.
 
 **Interfaces:**
 - Consumes: `readTokens` behaviour from Task 6 (hues come from `getComputedStyle`, never literals).
@@ -1914,25 +1915,53 @@ Create `scripts/effects-gpu.test.mjs`:
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const KIT = resolve(HERE, "../packages/ui-kit");
-const gpu = readFileSync(resolve(KIT, "effects-gpu.js"), "utf8");
+const GPU = resolve(KIT, "effects-gpu.js");
+const gpu = readFileSync(GPU, "utf8");
 const shader = readFileSync(resolve(KIT, "effects-shader.js"), "utf8");
 const pkg = JSON.parse(readFileSync(resolve(KIT, "package.json"), "utf8"));
 
-const COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|rgba?\([^)]*\)/g;
+const COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
 
 test("neither the GPU module nor the shader carries a colour literal", () => {
   assert.deepEqual(gpu.match(COLOR_RE) || [], []);
   assert.deepEqual(shader.match(COLOR_RE) || [], []);
 });
 
-test("the boot is double-guarded — capability AND a try/catch around init", () => {
-  assert.match(gpu, /'gpu' in navigator|"gpu" in navigator/);
-  assert.match(gpu, /try\s*\{[\s\S]*await import\("vgpu"\)[\s\S]*\}\s*catch/);
+test("the shader's colour comes from the token uniforms, not from itself", () => {
+  // WGSL's way to hardcode a colour is a numeric constructor — `vec3f(.9,.2,.1)`
+  // — which no regex can tell apart from geometry. So assert the reachable
+  // thing instead: the fragment's output hue is a mix of the two uniforms fed
+  // from --sl-accent-default and --sl-accent-depth, and nothing else.
+  assert.match(shader, /mix\(look\.depth\.rgb,\s*look\.accent\.rgb/);
+});
+
+// The two guards are executable here, so execute them. Node has a `navigator`
+// global without a `gpu` member, which is the first guard's exact condition;
+// and `vgpu` is an optionalDependency that need not be installed, so a faked
+// capability drives the dynamic import into the second guard's catch.
+
+test("bootField returns null when WebGPU is absent", async () => {
+  const { bootField } = await import(pathToFileURL(GPU).href);
+  const result = await bootField({ canvas: {}, rects: () => [], tokens: {} });
+  assert.equal(result, null, "no WebGPU must leave the page exactly as it is");
+});
+
+test("bootField returns null when the device refuses or vgpu is missing", async () => {
+  const { bootField } = await import(pathToFileURL(GPU).href);
+  const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { value: { gpu: {} }, configurable: true });
+  try {
+    const result = await bootField({ canvas: {}, rects: () => [], tokens: {} });
+    assert.equal(result, null, "a refused adapter or a missing vgpu must be absorbed, not thrown");
+  } finally {
+    if (saved) Object.defineProperty(globalThis, "navigator", saved);
+    else delete globalThis.navigator;
+  }
 });
 
 test("vgpu is optional, never a hard dependency", () => {
@@ -1962,6 +1991,10 @@ Expected: FAIL — `ENOENT` on `effects-gpu.js`.
    hardcoded here; scripts/effects-gpu.test.mjs enforces that. */
 
 export const SHADER = `
+// Fragment stage only. vgpu.effect() supplies the full-screen vertex stage —
+// the same arrangement sondalab-site's CRT surface uses. If a future vgpu drops
+// that, this module grows an @vertex entry point; nothing else changes.
+// (No backticks in this comment: it lives inside a template literal.)
 struct Look {
   accent   : vec4f,
   depth    : vec4f,
@@ -2023,7 +2056,10 @@ const MAX_RECTS = 8;
  * @returns {Promise<{stop(): void}|null>} null when the GPU path is unavailable
  */
 export async function bootField({ canvas, rects, tokens }) {
-  if (!("gpu" in navigator) || !navigator.gpu) return null;
+  // `typeof navigator` first: a consumer server-rendering its page has no
+  // navigator at all, and a bare `in` check would throw there rather than
+  // degrade. This is also what makes the guard executable in a test.
+  if (typeof navigator === "undefined" || !("gpu" in navigator) || !navigator.gpu) return null;
   let gpu;
   try {
     gpu = await (await import("vgpu")).init();
