@@ -19,11 +19,13 @@
 
 import { SHADER } from "./effects-shader.js";
 
-// Exported: effects.js's trackEdges() caller and the shader's own array
-// bindings must agree on this, or a future bump in one file and not the
-// others writes past the declared WGSL array length — the packer does not
-// bound the index for you. `rects` and `params` are both declared at
-// this length in effects-shader.js.
+// Exported: the uniform arrays built here and every `array<vec4f, N>` in
+// effects-shader.js (rects, params, kinds), plus the shader's two "no
+// element" sentinels (`16u`), must all agree on this number — the packer
+// does not bound the index for you, and a bump in one file and not the
+// others writes past the declared WGSL array length or turns a sentinel into
+// a valid index. scripts/effects-gpu.test.mjs extracts the shader and checks
+// every one of them against this constant.
 export const MAX_RECTS = 16;
 
 /** Every element the chrome draws on or reflects into. The chrome itself is
@@ -136,6 +138,10 @@ export function trackEdges({ liquid } = {}) {
       const live = liquid ? liquid() : null;
       for (const el of onScreen) {
         if (!el.isConnected) {
+          // The observer holds a strong reference the Set's delete does not
+          // release: on a long-lived surface that re-renders, every removed
+          // element would otherwise stay observed until teardown.
+          io.unobserve(el);
           onScreen.delete(el);
           continue;
         }

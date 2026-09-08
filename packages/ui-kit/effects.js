@@ -199,6 +199,11 @@ function setLiquidLive(el) {
 }
 
 function integrateLiquid(now) {
+  // A live host taken out of the document fires no pointerleave, so nothing
+  // would ever clear `target` and the loop would run a toDataURL() every
+  // frame for nothing, forever. Same guard burst() carries, for the same
+  // reason: a timer or a loop mutating something nothing can see.
+  if (liquidLiveEl && !liquidLiveEl.isConnected) target = 0;
   const dt = Math.min((now - liquidPrevT) / 1000 || 0, 1 / 30);
   liquidPrevT = now;
   const a = LIQUID_K * (target - amp) - LIQUID_DAMP * ampV;
@@ -420,10 +425,13 @@ export async function mountGpu() {
   if (typeof document === "undefined") return false;
   if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return false;
 
-  // Dynamic import is the one path in this tier that can reject at the
-  // caller rather than degrade through bootField()'s own guard: vgpu is an
-  // optionalDependency, and a consumer without it (or a bundler that fails
-  // to resolve it) throws here, before bootField ever runs.
+  // Dynamic import, so a consumer that never calls mountGpu() never loads
+  // the GPU module or the shader. This import only ever pulls in
+  // ./effects-gpu.js and ./effects-shader.js — vgpu itself (an optional
+  // PEER dependency, installed only if the consumer asks for it) is
+  // imported inside bootField()'s own try/catch, which is where a missing
+  // peer degrades to Tier 1. The catch here covers a bundler that fails to
+  // resolve the kit's own module, nothing else.
   let mod;
   try {
     mod = await import("./effects-gpu.js");

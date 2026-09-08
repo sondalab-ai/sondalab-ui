@@ -46,6 +46,7 @@ Semantic status pill. Semantic colour is **independent of the accent hue** and s
 <span class="sl-badge sl-badge--success">Passing</span>
 <span class="sl-badge sl-badge--danger">Failed</span>
 ```
+One modifier per status: `--success`, `--warning`, `--danger`, `--info` — never a bare `sl-badge`.
 Consumes: `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: recolour a badge to the accent — status ≠ accent.
 
 ### Card — `sl-card` (`__title` · `__body`)
@@ -58,7 +59,7 @@ Surface panel. Substrate: **R** App.
 ```
 Consumes: `--slc-surface`, `--slc-border`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
 
-### Field — `sl-field` (`__label` · `__input`)
+### Field — `sl-field` (`__label` · `__input` · `__control`)
 Label + input/textarea/select. Substrate: **R** App.
 ```html
 <label class="sl-field">
@@ -66,7 +67,7 @@ Label + input/textarea/select. Substrate: **R** App.
   <input class="sl-field__input" type="text" placeholder="introspect">
 </label>
 ```
-Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-focus`. Do: keep the shared focus ring.
+Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
 
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
 Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
@@ -76,7 +77,8 @@ Banner / admonition. The accent is a short "measure tick" on the top edge (not a
   <div class="sl-callout__body">Every colour must resolve to a Sondalab value.</div>
 </div>
 ```
-Consumes: `--slc-surface`, `--slc-border`, `--slc-info`/`--slc-success`/etc. Don't: reinstate a full left border stripe.
+One modifier per status: `--success`, `--warning`, `--danger`, `--info` colours the tick.
+Consumes: `--slc-surface`, `--slc-border`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: reinstate a full left border stripe.
 
 ### Rule — `sl-rule` (`--labeled`)
 Hairline divider; `--labeled` centres a mono caption over the line. Substrate: **R** App/Page.
@@ -139,7 +141,14 @@ Additive classes over `components.css` — never a replacement for the shared co
 The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
 ```html
 <article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
+<label class="sl-field">
+  <span class="sl-field__label">Product</span>
+  <span class="sl-field__control sl-fx-glass sl-fx-glass--field">
+    <input class="sl-field__input" type="text">
+  </span>
+</label>
 ```
+`--wide` widens the CSS fallback ring to 2px for containers (card, dialog, panel); `--field` does the same for a field's wrapper. Neither changes the chrome, which is always the element's own border width. **On a replaced control the `sl-field__control` wrapper is mandatory:** `<input>`, `<textarea>` and `<select>` render no `::before`/`::after`, so the class on the control itself renders nothing at all — no error, no ring.
 Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px.
 
 ### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
@@ -147,18 +156,22 @@ Attention lives here: a 1px arc of light riding the border with its bloom and a 
 ```html
 <button class="sl-btn sl-btn--ghost sl-fx-aurora">Run audit</button>
 <button class="sl-btn sl-btn--primary sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Saving…</button>
+<span class="sl-field__control sl-fx-aurora sl-fx-aurora--field"><input class="sl-field__input" type="text"></span>
 <article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy" aria-busy="true">…</article>
 <article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy"
          role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
          style="--slfx-progress: .62">…</article>
 ```
+`--wide` widens the arc to 2px on containers, `--field` on a field's wrapper; `--linear` sweeps a segment (a tab's or link's underline; add `--top` for an inversion band's rule) instead of a perimeter and has no busy mode; `--rim` is for filled elements. **On a replaced control the `sl-field__control` wrapper is mandatory** — the control itself hosts no pseudo-element, and `:focus-within` on the wrapper is what lights the arc.
 Consumes: `--slc-accent`, `--slc-text`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document.
 
 ### Liquid — `sl-fx-liquid` (`--calm`)
 The element itself gives under the pointer — a smooth dent that follows it with a little lag, springs back and settles when it leaves (an SVG displacement filter, driven by `mount()`). Non-destructive: the filter is present only while the pointer shapes the element, and nothing is changed afterwards. Substrate: **A** App/Page.
 ```html
 <button class="sl-btn sl-btn--primary sl-fx-liquid">Save changes</button>
+<article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm">…</article>
 ```
+`--calm` takes a fraction of the dent's depth — a container is not a button.
 Consumes: nothing — it moves pixels, it paints none. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle.
 
 ### Glitch — `sl-fx-glitch` (`--shatter`)

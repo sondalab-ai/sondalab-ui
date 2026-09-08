@@ -486,10 +486,15 @@
 
 }
 
-/* Under `reduce` the busy arc does not orbit: it renders as a static ring at
-   reduced opacity — present, honest that something is happening, not moving.
-   aria-busy carries the state, which is why that attribute is a requirement. */
+/* Under `reduce` the busy arc does not orbit: it renders as a static full
+   ring at reduced opacity — present, honest that something is happening, not
+   moving, and dimmed so a full static ring is not mistaken for focus.
+   aria-busy carries the state, which is why that attribute is a requirement.
+   A DETERMINATE arc is exempt from both: it never moved, its length is the
+   value, and looked at on the page at 0.55 the end of the arc — the thing
+   that carries the value — loses the crispness it needs. It stays at full
+   opacity, static as it always was. */
 @media (prefers-reduced-motion: reduce) {
   .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
-  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear)::after { opacity: 0.55; }
+  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"])::after { opacity: 0.55; }
 }

@@ -67,3 +67,19 @@ test("vgpu is an optional peer dependency, never installed by default", () => {
 test("the shader ships as an inline template string, not through a loader", () => {
   assert.match(shader, /export const SHADER = `/);
 });
+
+test("every WGSL array length and sentinel agrees with MAX_RECTS", async () => {
+  // The packer does not bound the index: a bump of MAX_RECTS in one file and
+  // not the others writes past a declared array, or turns the shader's
+  // "no element" sentinel into a valid index. Extract the shader and check
+  // every `array<vec4f, N>` and every `Nu` sentinel against the constant.
+  const { MAX_RECTS } = await import(pathToFileURL(GPU).href);
+  const { SHADER } = await import(pathToFileURL(resolve(KIT, "effects-shader.js")).href);
+  const arrays = [...SHADER.matchAll(/array<vec4f,\s*(\d+)>/g)].map((m) => Number(m[1]));
+  assert.ok(arrays.length >= 3, "the shader must declare its per-element arrays");
+  for (const n of arrays) assert.equal(n, MAX_RECTS, `array length ${n} != MAX_RECTS`);
+  const sentinels = [...SHADER.matchAll(/=\s*(\d+)u;/g)].map((m) => Number(m[1])).filter((n) => n > 1);
+  assert.ok(sentinels.length >= 2, "the shader's no-element sentinels must be present");
+  for (const n of sentinels) assert.equal(n, MAX_RECTS, `sentinel ${n} != MAX_RECTS`);
+  assert.equal(SHADER.match(/rectCount/g).length > 0, true);
+});

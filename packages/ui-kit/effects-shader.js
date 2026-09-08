@@ -151,8 +151,11 @@ fn atLuma(c: vec3f, want: f32) -> vec3f {
 }
 
 // Which token is the brighter of the pair is decided at runtime from their
-// own luminance, never assumed: on canvas the text token is the bright one,
-// on an inversion band it is the ground token.
+// own luminance, never assumed: in the dark theme the text token is the
+// bright one, in the light theme the ground is. Both are page-level uniforms
+// read once from <html>; an inversion band inside the page is not seen here
+// (the same page values are used on it), which is why the poles are placed
+// around the ground rather than taken from the pair directly.
 fn brightToken() -> vec3f {
   return select(look.ground.rgb, look.sheen.rgb, luma(look.sheen.rgb) > luma(look.ground.rgb));
 }

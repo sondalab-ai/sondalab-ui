@@ -7,7 +7,7 @@
     { "id": "link",       "kind": "primitive", "classes": ["sl-link"], "roleVars": ["--slc-accent"] },
     { "id": "badge",      "kind": "primitive", "classes": ["sl-badge", "sl-badge--success", "sl-badge--warning", "sl-badge--danger", "sl-badge--info"], "roleVars": ["--slc-success", "--slc-warning", "--slc-danger", "--slc-info"] },
     { "id": "card",       "kind": "primitive", "classes": ["sl-card", "sl-card__title", "sl-card__body"], "roleVars": ["--slc-surface", "--slc-border", "--slc-text", "--slc-text-secondary"] },
-    { "id": "field",      "kind": "primitive", "classes": ["sl-field", "sl-field__label", "sl-field__input"], "roleVars": ["--slc-surface", "--slc-border", "--slc-border-strong", "--slc-text", "--slc-focus"] },
+    { "id": "field",      "kind": "primitive", "classes": ["sl-field", "sl-field__label", "sl-field__input", "sl-field__control"], "roleVars": ["--slc-surface", "--slc-border", "--slc-border-strong", "--slc-text", "--slc-focus"] },
     { "id": "callout",    "kind": "primitive", "classes": ["sl-callout", "sl-callout--success", "sl-callout--warning", "sl-callout--danger", "sl-callout--info", "sl-callout__title", "sl-callout__body"], "roleVars": ["--slc-surface", "--slc-border", "--slc-info", "--slc-success", "--slc-warning", "--slc-danger"] },
     { "id": "rule",       "kind": "primitive", "classes": ["sl-rule", "sl-rule--labeled"], "roleVars": ["--slc-border"] },
     { "id": "table",      "kind": "primitive", "classes": ["sl-table", "sl-table--numeric"], "roleVars": ["--slc-border", "--slc-text", "--slc-text-secondary", "--slc-surface"] },
@@ -18,7 +18,7 @@
     { "id": "fx-glass",  "kind": "effect", "classes": ["sl-fx-glass", "sl-fx-glass--wide", "sl-fx-glass--field"], "roleVars": ["--slc-border-strong", "--slc-border-subtle", "--slc-accent", "--slc-text"] },
     { "id": "fx-aurora", "kind": "effect", "classes": ["sl-fx-aurora", "sl-fx-aurora--wide", "sl-fx-aurora--field", "sl-fx-aurora--linear", "sl-fx-aurora--rim"], "roleVars": ["--slc-accent", "--slc-text"] },
     { "id": "fx-liquid", "kind": "effect", "classes": ["sl-fx-liquid", "sl-fx-liquid--calm"], "roleVars": [] },
-    { "id": "fx-glitch", "kind": "effect", "classes": ["sl-fx-glitch", "sl-fx-glitch--shatter", "sl-fx-glitch__text", "sl-fx-glitch__shards", "sl-fx-glitch__shard"], "roleVars": ["--slc-accent"] },
+    { "id": "fx-glitch", "kind": "effect", "classes": ["sl-fx-glitch", "sl-fx-glitch--shatter", "sl-fx-glitch__text", "sl-fx-glitch__shards", "sl-fx-glitch__shard"], "roleVars": ["--slc-accent", "--slc-accent-hover"] },
 
     { "id": "sticky-header",   "kind": "signature", "classes": [], "roleVars": ["--sl-bg-canvas", "--sl-border-subtle", "--sl-z-overlay"] },
     { "id": "inversion-band",  "kind": "signature", "classes": [], "roleVars": ["--sl-text-primary", "--sl-bg-canvas"] },

@@ -202,7 +202,7 @@ Two exclusions are deliberate and load-bearing:
 
 **Geometry note:** for an absolutely positioned child, `inset: 0` resolves against the *padding* box, so `inset: -1px` with `padding: var(--slfx-ring-w)` and `mask-composite: exclude` lands exactly **on** a `1px` border. Implementations must not "correct" it to a positive inset — that would walk the ring into the focus outline.
 
-Under `prefers-reduced-motion: reduce` the busy arc does not orbit: it renders as a full static ring at reduced opacity, and `aria-busy` carries the state. A determinate arc keeps its length, because its length is the value.
+Under `prefers-reduced-motion: reduce` the busy arc does not orbit: it renders as a full static ring at reduced opacity (0.55, so a full static ring is not mistaken for focus), and `aria-busy` carries the state. A determinate arc is exempt from both the full ring and the dimming: it never moved, its length is the value, and looked at on the page the dimmed version blurs the end of the arc — the very thing that carries the value. It stays at full opacity.
 
 ### Liquid — `sl-fx-liquid`
 

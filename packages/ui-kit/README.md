@@ -1,6 +1,6 @@
 # @sondalab/ui-kit
 
-Sondalab design tokens as CSS custom properties (`--sl-*`) plus a CSS-only component layer (`.sl-*`). No build step, no runtime JS — import the stylesheets and theme via a `data-sl-theme` attribute.
+Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component layer (`.sl-*`), and an opt-in effects layer (`.sl-fx-*`). No build step; the tokens and components need no runtime JS — import the stylesheets and theme via a `data-sl-theme` attribute. The effects layer ships a small JavaScript driver you call explicitly (see below).
 
 ```css
 @import "@sondalab/ui-kit/tokens.css";        /* shared: type, spacing, radii, motion, shadow, z */
@@ -62,5 +62,26 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
 ```
 
 The full reference implementation — every component in all three themes — is `showcase/index.html` (§04).
+
+## Effects (`effects.css` + `effects.js`, opt-in)
+
+Four additive families, each carrying one meaning, composed onto a shipped `.sl-*` class — never replacing it. **Glass** (`sl-fx-glass`) — the element's own border as chrome. **Aurora** (`sl-fx-aurora`) — a 1px arc of light riding the border while attention lives on the element: focus, `data-sl-fx-live="on"` (one ambient sweep per document), `data-sl-fx-live="busy"` (with `aria-busy`), or a determinate arc from an inline `--slfx-progress` (with `role="progressbar"`). **Liquid** (`sl-fx-liquid`) — the element gives under the pointer and springs back. **Glitch** (`sl-fx-glitch`) — a finite burst on a child `<span>`, fired from JavaScript.
+
+```css
+@import "@sondalab/ui-kit/effects.css";   /* after components.css */
+```
+
+```js
+import { mount, mountGpu, burst, scramble, grantLive } from "@sondalab/ui-kit/effects.js";
+mount();                      // Tier 1: the liquid, glitch bursts, the aurora's sweep. Explicit, never automatic.
+mountGpu().then((ok) => {});  // Tier 2: the glass edge as chrome where WebGPU answers; resolves false otherwise.
+```
+
+- **Tiers.** Without `mount()` the CSS alone is Tier 0 and correct on its own: a static glass hairline, a static aurora arc on focus. `mount()` arms Tier 1 by setting `data-sl-fx="on"` on `<html>`. `mountGpu()` needs `vgpu` (an optional peer dependency — install it yourself if you want Tier 2; nothing breaks without it) and sets `data-sl-fx-gpu="on"` only once a frame is actually on screen.
+- **Kill switches, all honoured at every tier:** `prefers-reduced-motion: reduce` (nothing animates; `mount()` refuses), `[data-sl-theme="high-contrast"]` (every family off, the GPU tier torn down), and `data-sl-fx="off"` on any element (that element and its subtree). The focus `outline` is never replaced or removed.
+- **Replaced controls** (`<input>`, `<textarea>`, `<select>`) render no pseudo-element: wrap them in `<span class="sl-field__control sl-fx-…">` and put the effect classes on the wrapper.
+- **Filled elements** (`sl-btn--primary`) take `sl-fx-aurora--rim`, which steps the arc just outside the fill.
+
+The reference page is `showcase/effects.html`; the contract is `docs/specs/2026-09-08-effects-layer-design.md`; the per-component declension (which family goes on which component, and which never do) is `agent/catalog.md` § Effects.
 
 Generated tokens (`tokens.css`, `themes/*.css`) come from the canonical `sondalab.tokens.json` — do not hand-edit them. `components.css` is hand-authored.
