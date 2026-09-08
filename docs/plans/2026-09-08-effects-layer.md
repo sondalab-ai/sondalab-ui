@@ -2443,9 +2443,40 @@ git commit -m "feat(ui-kit): render the liquid field and attach it behind mountG
 Append to `scripts/effects-showcase.test.mjs`:
 
 ```js
+/** The body of a top-level function in the page's boot script, so an assertion
+ *  can be about where a claim LIVES rather than whether a string exists. */
+function fnBody(name) {
+  const start = html.search(new RegExp(`function ${name}\\b`));
+  assert.ok(start > -1, `missing function: ${name}`);
+  const open = html.indexOf("{", start);
+  let depth = 0;
+  let i = open;
+  do {
+    if (html[i] === "{") depth++;
+    else if (html[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < html.length);
+  return html.slice(open + 1, i - 1);
+}
+
 test("the showcase reports which tier actually resolved", () => {
-  assert.match(html, /mountGpu\(\)/);
-  assert.match(html, /TIER 2/);
+  assert.match(html, /mountGpu\(\)/, "the page must attempt the GPU tier");
+
+  // The Tier 2 claim must be derived from the attribute bootField owns, in the
+  // same function that reads it. A bare substring check would pass on a page
+  // that hardcoded the label, or set it from mountGpu()'s return value — which
+  // is the one thing the design forbids, because the field can tear itself down
+  // after resolving, on a lost device or an async validation error.
+  const label = fnBody("updateTierLabel");
+  assert.match(label, /data-sl-fx-gpu/, "the label must read the attribute, not the return value");
+  assert.match(label, /TIER 2/, "the Tier 2 claim must live where the attribute is read");
+
+  // And the observer must actually watch that attribute, or a torn-down field
+  // leaves the label frozen on TIER 2 until an unrelated theme toggle.
+  assert.match(
+    html, /attributeFilter:\s*\[[^\]]*data-sl-fx-gpu/,
+    "the MutationObserver must watch data-sl-fx-gpu, not only data-sl-theme",
+  );
 });
 ```
 
@@ -2464,10 +2495,16 @@ Two changes only:
 2. After the existing `mount()` call and its label update, attempt the GPU tier and let the label reflect it:
 
 ```js
-// Tier 2 is additive: everything above already works without it, and the
-// label reports what actually resolved rather than what was attempted.
-if (await mountGpu()) updateTierLabel();
+// Tier 2 is additive: everything above already works without it, and the label
+// reports what actually resolved rather than what was attempted. Not awaited at
+// the top level — that would hold the demo wiring below until the GPU handshake
+// settles, leaving the page's controls inert for as long as it takes.
+mountGpu().then((ok) => ok && updateTierLabel());
 ```
+
+**Do not use a top-level `await` for this.** The rest of the module — `grantLive`, the burst and scramble handlers, every demo the page exists to show — would not run until the GPU handshake settles, so a visitor loading the page during that window finds the controls simply inert. Write it as `mountGpu().then((ok) => ok && updateTierLabel());` and place it after the demo wiring.
+
+**Add `"data-sl-fx-gpu"` to the existing `MutationObserver`'s `attributeFilter`.** Without it the observer watches only `data-sl-theme`, and a field that tears itself down after `mountGpu()` resolved — a lost device, an async validation error — leaves the label frozen on `TIER 2 — FIELD` with no path back short of an unrelated theme toggle. That is exactly the case that makes the attribute the truth rather than the return value, so not observing it defeats the reason for reading it.
 
 `updateTierLabel()` must learn about Tier 2 — read `data-sl-fx-gpu` from the root, the same way it already reads `data-sl-fx` and `data-sl-theme`, and report `TIER 2 — FIELD` when it is `"on"`. That keeps one function as the single place the page decides what to claim, which is what stops the label and the reality drifting apart again. Do not set the label directly from the `mountGpu()` result: `bootField` owns the attribute and can tear itself down after returning, so the attribute is the truth and the return value is only the trigger to re-read it.
 
@@ -2480,9 +2517,9 @@ Set `"version": "0.8.1"` in `packages/ui-kit/package.json`. Patch, not minor: `m
 Run:
 ```bash
 curl -o /dev/null -s -w "%{http_code}\n" https://registry.npmjs.org/@sondalab%2Fui-kit/0.8.1
-npm run gen:tokens && git diff --exit-code -- packages/
+npm run gen:tokens && git status --short -- packages/
 ```
-Expected: `404`, then exit 0 with no diff.
+Expected: `404`, then a single modified path — `packages/ui-kit/package.json`, carrying the version bump and nothing else. `git diff --exit-code` cannot be used here: Step 4's bump is deliberately uncommitted at this point, so a clean exit is impossible by construction. What is being checked is that no *generated* file drifted, not that the tree is untouched.
 
 - [ ] **Step 6: Run the full suite**
 
