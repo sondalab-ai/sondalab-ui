@@ -169,7 +169,7 @@ Something re-resolved. A finite burst, fired from JavaScript on a discrete event
 ```
 The `--shatter` variant additionally wraps an intact `sl-fx-glitch__text` and a `sl-fx-glitch__shards` stack. Every `sl-fx-glitch__shard` carries `--slfx-i` (its 0-based index) and `--slfx-n` (the band count) inline — the shard's `clip-path` divides by them, so a shard missing either one silently fails to render.
 ```html
-<button class="sl-btn sl-btn--danger">
+<button class="sl-btn sl-btn--primary">
   <span class="sl-fx-glitch sl-fx-glitch--shatter" data-text="Delete branch">
     <span class="sl-fx-glitch__text">Delete branch</span>
     <span class="sl-fx-glitch__shards">
