@@ -131,6 +131,57 @@ Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: *
 ```
 Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`.
 
+## Effects (opt-in, `effects.css`)
+
+Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).
+
+### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
+A 1px edge painted with a conic gradient so it catches light at two angles. Width is emphasis, not separation. Substrate: **R** Page, **A** App.
+```html
+<article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
+```
+Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`. Don't: thicken it to replace a separator — a separator is always 1px.
+
+### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear`)
+Attention lives here. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. Substrate: **R** Page, **A** App.
+```html
+<button class="sl-btn sl-btn--ghost sl-fx-aurora">Run audit</button>
+<article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy" aria-busy="true">…</article>
+<article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy"
+         role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
+         style="--slfx-progress: .62">…</article>
+```
+Consumes: `--slc-accent`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document.
+
+### Liquid — `sl-fx-liquid` (`--calm`)
+The element acknowledges the pointer: a specular sheen follows it and the near corners soften. Non-destructive — text never moves. Substrate: **A** App/Page.
+```html
+<button class="sl-btn sl-btn--primary sl-fx-liquid">Save changes</button>
+```
+Consumes: `--slc-text`. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle.
+
+### Glitch — `sl-fx-glitch` (`--shatter`)
+Something re-resolved. A finite burst, fired from JavaScript on a discrete event. Always a child span, never the component itself. Substrate: **A** App/Page.
+```html
+<button class="sl-btn sl-btn--primary">
+  <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
+</button>
+```
+The `--shatter` variant additionally wraps an intact `sl-fx-glitch__text` and a `sl-fx-glitch__shards` stack. Every `sl-fx-glitch__shard` carries `--slfx-i` (its 0-based index) and `--slfx-n` (the band count) inline — the shard's `clip-path` divides by them, so a shard missing either one silently fails to render.
+```html
+<button class="sl-btn sl-btn--danger">
+  <span class="sl-fx-glitch sl-fx-glitch--shatter" data-text="Delete branch">
+    <span class="sl-fx-glitch__text">Delete branch</span>
+    <span class="sl-fx-glitch__shards">
+      <span class="sl-fx-glitch__shard" style="--slfx-i:0; --slfx-n:3">Delete branch</span>
+      <span class="sl-fx-glitch__shard" style="--slfx-i:1; --slfx-n:3">Delete branch</span>
+      <span class="sl-fx-glitch__shard" style="--slfx-i:2; --slfx-n:3">Delete branch</span>
+    </span>
+  </span>
+</button>
+```
+Consumes: `--slc-accent`. Do: set `data-text` to the element's own text, and give every shard its `--slfx-i`/`--slfx-n` pair. Don't: run it ambiently on a control — ambient glitch is the wordmark's alone.
+
 ## Signature patterns (page-level composition — copy the CSS)
 
 These are not single classes; they are the composition motifs from `design-language.md` L2/L3. Copy the CSS into your surface (they read `--sl-*` tokens directly, theme-independent).
