@@ -147,6 +147,40 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
 });
 
+// The owner's ruling: a mark burning on every element at all times is not
+// glass, it is an outline. The aurora is the one family allowed to glow
+// unprompted, so it is excluded here; everything the glass family paints must
+// either sit behind an interaction state in its selector, or be scaled to
+// nothing by --slfx-lit, which effects.js only ever writes on the one element
+// under the pointer.
+const LIT_STATE = /:hover|:focus-visible|:focus-within|\.is-glass-lit|\[data-sl-fx-live/;
+
+test("a glass element at rest is quiet: light arrives with the pointer", () => {
+  const glass = RULES.filter((r) => /\.sl-fx-glass/.test(r.selector) && !/\.sl-fx-aurora/.test(r.selector));
+  assert.ok(glass.length > 0, "the parser must find the glass rules");
+
+  for (const r of glass) {
+    if (LIT_STATE.test(r.selector)) continue;
+    assert.ok(
+      !/(?:^|;)\s*opacity\s*:\s*1\b/.test(r.body),
+      `${r.selector} reveals a paint layer at rest`,
+    );
+    for (const decl of r.body.split(";")) {
+      const at = decl.indexOf(":");
+      if (at < 0) continue;
+      const prop = decl.slice(0, at).trim();
+      if (!/^(?:background|background-image|box-shadow)$/.test(prop)) continue;
+      const value = decl.slice(at + 1);
+      const mixes = (value.match(/color-mix\(/g) ?? []).length;
+      const gated = (value.match(/var\(--slfx-lit\)/g) ?? []).length;
+      assert.equal(
+        gated, mixes,
+        `${r.selector} paints ${prop} at rest: ${mixes} colour-mix() terms, only ${gated} scaled by --slfx-lit`,
+      );
+    }
+  }
+});
+
 test("the busy orbit is inside the reduced-motion guard but the busy ring is not", () => {
   const guardStart = effects.indexOf("@media (prefers-reduced-motion: no-preference)");
   const orbit = effects.indexOf("slfx-orbit 1.1s");
