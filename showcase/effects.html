@@ -143,6 +143,12 @@
        real structure behind it. At 22% under a 28% cell a letterform passes
        under a pane sharp on one side of its edge and smoothed on the other,
        which is the reading; body text still sits comfortably over it.
+       It also has to be WIDE. Centred at 15rem the word spanned the middle of
+       the gallery and stopped short of the controls at its left, so the panes
+       that most needed something behind them had nothing: the owner's
+       screenshot shows a letterform ending exactly at a button's edge. Full
+       bleed across the section, centred, at a size that carries it under the
+       whole row.
        No `overflow` anywhere on the section: the aurora's bloom reaches 55px
        past its element, and clipping it here is the truncation the owner
        objected to. The word is placed to stay inside instead. */
@@ -150,12 +156,14 @@
       content: attr(data-back);
       position: absolute;
       z-index: -1;
-      left: 50%;
+      left: 0;
+      right: 0;
       top: 50%;
-      transform: translate(-50%, -42%);
+      transform: translateY(-42%);
+      text-align: center;
       font-family: var(--sl-font-display);
       font-weight: 700;
-      font-size: clamp(6rem, 17vw, 15rem);
+      font-size: clamp(9rem, 23vw, 22rem);
       line-height: 0.8;
       letter-spacing: -0.045em;
       color: color-mix(in srgb, var(--sl-text-primary) 22%, transparent);

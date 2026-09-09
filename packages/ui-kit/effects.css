@@ -77,10 +77,25 @@
   /* translucency — how much of the component's own fill survives, and how
      hard the page behind it is blurred. The saturate() is the reference's:
      its light preset composites light with saturate(5.4), because a blur
-     alone washes the colour out of what it blurs. */
-  --slfx-fill-a: 76%;
-  --slfx-back: 12px;
-  --slfx-back-sat: 1.4;
+     alone washes the colour out of what it blurs.
+
+     Two passes got this wrong by being timid. At 76% the owner saw no
+     translucency at all; at 58% he still called it too little. The value is
+     30%, with the blur at 26px and saturation at 1.8 — the register is
+     Apple's glass, where the material is mostly what is behind it, heavily
+     blurred and pushed in saturation because a blur washes colour out of
+     what it blurs. A pane is a lens, not a tinted panel.
+
+     What bounds it is label contrast on a filled brand button, and there the
+     layer has inherited a defect it did not cause: --sl-text-on-accent is
+     white, and white on the amber accent measures 1.99:1 on the plain
+     component with every effect off — already below 4.5:1 before anything
+     here runs. Thinning the fill on paper moves the amber toward cream and
+     makes it worse (1.63:1 at 58%). That is a token decision, not one this
+     layer may take on its own; it is recorded rather than worked around. */
+  --slfx-fill-a: 30%;
+  --slfx-back: 26px;
+  --slfx-back-sat: 1.8;
 
   /* glass stops — rebound per state; transparent means "no ring" */
   --slfx-s0: transparent;
@@ -445,6 +460,28 @@
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
+
+/* A filled brand button is the one surface whose own content constrains how
+   translucent it may be: thinning the fill on paper moves the amber toward
+   cream and its white label goes with it. The owner's ruling is to carry the
+   label rather than thin the glass less — a dark shadow in the accent's own
+   hue, 2px and softly blurred, so the letterform keeps an edge whatever the
+   fill is doing behind it.
+
+   Said plainly: this is a LEGIBILITY aid, not a contrast fix. WCAG measures
+   foreground against background and a shadow changes neither, so the pair
+   still computes 1.99:1 on the plain component. The real fix is
+   --sl-text-on-accent, which is white on both themes and fails on the light
+   accent before this layer runs at all; that is a token decision. */
+.sl-btn--primary.sl-fx-glass {
+  text-shadow: 0 1px 2px oklch(from var(--slc-accent) 0.24 c h / 0.55);
+  /* A brand fill is identity, and identity does not survive being mostly the
+     page behind it: at the layer's 30% the amber went to a dark olive on ink
+     and to a cream wash on paper. A filled button is the one glass surface
+     whose colour is load-bearing, so it keeps more of itself than a ghost
+     button or a card, which have nothing to lose by thinning. */
+  --slfx-fill-a: 48%;
+}
 
 @supports (backdrop-filter: blur(1px)) {
   .sl-fx-glass,

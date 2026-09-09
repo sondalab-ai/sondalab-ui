@@ -61,17 +61,28 @@ const REACH_K   : f32 = 0.85;
 const REACH_MIN : f32 = 44.0;
 // The specular band, in multiples of the element's own border width. Read
 // from the border rather than fixed, so a control that re-parametrises its
-// own edge keeps the light on that edge.
-const EDGE_K    : f32 = 3.0;
-const EDGE_MIN  : f32 = 2.5;
+// own edge keeps the light on that edge. Narrow: on glass the highlight is a
+// line along the rim, not a wash inside it.
+const EDGE_K    : f32 = 1.8;
+const EDGE_MIN  : f32 = 1.6;
+// How sharply the rim highlight falls away from the part of the edge facing
+// the pointer. A lamp lights half a shape; a lens catches light on a short
+// arc of its rim, so the term is raised rather than used flat.
+const EDGE_TIGHT: f32 = 4.0;
 // Channel separation on the edge band, in CSS pixels. Refraction, not a
-// rainbow: at this scale it reads as a warm side and a cool side to a
-// hairline, which is what the reference's one colour-separation knob does.
-const DISPERSE  : f32 = 0.9;
-// How much of the surface the pool lights, and how much brighter the edge
-// goes where the light meets it.
-const POOL_GAIN : f32 = 0.30;
-const EDGE_GAIN : f32 = 0.62;
+// rainbow: at this scale it reads as a warm side and a cool side to the rim,
+// which is what the reference's one colour-separation knob does.
+const DISPERSE  : f32 = 1.8;
+// How much of the surface the pool lights, and how much brighter the rim goes
+// where the light meets it. The first pass had these the other way round and
+// read as a lamp behind a panel: the material IS the translucency, and what
+// the pointer adds is a highlight on the rim, not a glow in the middle.
+const POOL_GAIN : f32 = 0.09;
+const EDGE_GAIN : f32 = 1.15;
+// The rim's own brightness, independent of where the pointer is along it. An
+// edge is brighter than a face at every angle, and that is most of what
+// separates a pane of glass from a hole cut in the page.
+const RIM_GAIN  : f32 = 0.26;
 
 /** Signed distance to a rounded box centred on the origin. Negative inside.
  *  b is the half-extent, r the corner radius. */
@@ -121,7 +132,8 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
     sdRoundBox(p - half + e.yx, half, radius) - sdRoundBox(p - half - e.yx, half, radius),
   ) + vec2f(1e-6, 0.0));
   let band = 1.0 - smoothstep(0.0, hw, abs(d));
-  let toward = clamp(dot(normalize(look.ptr.xy - p + vec2f(1e-6, 0.0)), -grad), 0.0, 1.0);
+  let facing = clamp(dot(normalize(look.ptr.xy - p + vec2f(1e-6, 0.0)), -grad), 0.0, 1.0);
+  let toward = pow(facing, EDGE_TIGHT);
 
   // Refraction: the three channels leave the glass at slightly different
   // angles, so each samples the pool from a slightly different place. Only on
@@ -133,7 +145,9 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
 
   let surface = vec3f(lr, lg, lb) * POOL_GAIN;
   let specular = vec3f(lr, lg, lb) * band * toward * EDGE_GAIN;
-  let lit = (surface + specular) * inside * presence * breath;
+  // The rim along its whole length, not only where it faces the pointer.
+  let rim = vec3f(band * RIM_GAIN, band * RIM_GAIN, band * RIM_GAIN);
+  let lit = (surface + specular + rim) * inside * presence * breath;
 
   // The colour of the light. On ink it is the sheen — the text colour is the
   // page's own light pole — warmed toward the accent where it is strongest,
