@@ -102,8 +102,8 @@
    subtree, compounded with the family classes so an unscoped
    `box-shadow: none !important` never strips elevation or focus rings off
    ordinary components.css elements inside the region. */
-:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
   filter: none !important;
@@ -131,6 +131,7 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora__glow,
+:root[data-sl-theme="high-contrast"] .sl-fx-glass__lit,
 :root[data-sl-theme="high-contrast"] .sl-fx-liquid__skin,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
@@ -138,6 +139,7 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora__glow,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lit,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid__skin,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
@@ -585,13 +587,39 @@
 .sl-fx-aurora--field { --slfx-ring-w: 2px; }
 
 /* ══ GPU TIER STAND-DOWN ═════════════════════════════════════════════════════
-   Once effects-gpu.js has a frame on screen it sets data-sl-fx-gpu, and the
-   glass hairline steps aside for the chrome. The CSS rule is NOT removed: it
-   is the Tier 0/1 answer and the only thing a visitor without WebGPU ever
-   sees. Placed BEFORE the aurora rules on purpose: those set opacity: 1 at the
-   same specificity, and later wins — an element that is glass AND lit shows
-   the aurora's arc over the chrome, which is the intended reading. */
-[data-sl-fx-gpu="on"] .sl-fx-glass::after { opacity: 0; }
+   The light is per-element now, so "the GPU tier is available" and "this
+   element is lit" are different facts and only the second one may silence
+   anything. The lit element is the one holding the canvas, and :has() is how
+   the CSS reads that — keyed on the child rather than on the page-level
+   attribute, which would otherwise stand the Tier 1 pane down on every glass
+   element the moment one of them lit up.
+
+   The CSS answer is NOT removed: it is the Tier 0/1 reading and the only
+   thing a visitor without WebGPU ever sees. Placed BEFORE the aurora rules on
+   purpose: those set opacity: 1 at the same specificity, and later wins — an
+   element that is glass AND lit shows the aurora's arc over the light, which
+   is the intended reading. */
+.sl-fx-glass:has(> .sl-fx-glass__lit)::after { opacity: 0; }
+.sl-fx-glass--pane:has(> .sl-fx-glass__lit)::before { opacity: 0; }
+
+/* The Tier 2 canvas. Its box is the host's BORDER box — the shader is handed
+   that rect and reads the pointer against the same origin — and it sits in the
+   same layer as the pane's own slab: above the host's fill, below the label.
+   The owner's ruling that the light must stay on the element's inside face is
+   the reason it is a child at all, and the reason nothing here has a negative
+   inset. No clip is needed: the shader's own silhouette zeroes the alpha
+   outside the rounded box, which antialiases the corners better than a mask
+   would and leaves no container to truncate it. */
+.sl-fx-glass__lit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
 
 /* While a glass element is liquid under Tier 1, its edge is the liquid's own
    outline (the skin's band, in the host's border colour): the static conic

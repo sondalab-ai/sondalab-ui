@@ -93,7 +93,6 @@ const GOO_CONTRAST = 18;
 const GOO_INTERCEPT = -(GOO_CONTRAST / 2 - 0.5);
 /** The chrome's smooth-union radius (effects-shader.js, `smin`) that matches
  *  this goo's neck; passed to the GPU tier so the two silhouettes agree. */
-const GOO_BLEND = GOO_BLUR * 1.5;
 let skin = null;
 let skinParts = null;
 
@@ -213,16 +212,6 @@ let liquidDrop = { x: 0, y: 0, r: 0 };
 let liquidRafId = 0;
 let liquidPrevT = 0;
 
-/** What the pointer is currently shaping, for the chrome tier: the element,
- *  the drop's centre in viewport px, its radius (0 while it is not
- *  protruding), and the smooth-union radius that matches the goo's neck —
- *  the shader welds the same circle onto the same box (effects-shader.js,
- *  `edgeAt`), so the hairline follows the silhouette. */
-function liquidState() {
-  if (!liquidLiveEl) return { el: null, radius: 0, blend: 0, x: 0, y: 0 };
-  const r = liquidLiveEl.getBoundingClientRect();
-  return { el: liquidLiveEl, radius: liquidDrop.r, blend: GOO_BLEND, x: r.left + liquidDrop.x, y: r.top + liquidDrop.y };
-}
 
 function setLiquidLive(el) {
   if (liquidLiveEl === el) return;
@@ -386,6 +375,16 @@ let paneTarget = 0;
 let paneBearing = 0;      // degrees, continuous — never wrapped, so it never turns the long way
 let paneRafId = 0;
 let panePrevT = 0;
+/** The lit pane's geometry, in its own CSS pixels, refreshed on every pointer
+ *  move and read once per frame by the Tier 2 light. It exists so the GPU
+ *  module forces no layout of its own: onPanePointer already has the rect and
+ *  the computed style, because it needs both to place the CSS spot. */
+const paneGeom = { w: 0, h: 0, radius: 0, border: 0, x: 0, y: 0, lit: 0 };
+/** The Tier 2 handle and its single canvas, moved between hosts exactly the
+ *  way the liquid's single skin is. One device, one surface, one pipeline,
+ *  created once in mountGpu() and never per element. */
+let light = null;
+let lightCanvas = null;
 
 function setPaneLive(el) {
   if (paneEl === el) return;
@@ -394,10 +393,16 @@ function setPaneLive(el) {
     for (const k of ["--slfx-px", "--slfx-py", "--slfx-ptr", "--slfx-lit"]) paneEl.style.removeProperty(k);
     // Leave no empty style="" behind on an element that had none.
     if (!paneEl.getAttribute("style")) paneEl.removeAttribute("style");
+    // Detach the light before it can be attached anywhere else: exactly one
+    // canvas exists, so moving it IS the release.
+    lightCanvas?.remove();
   }
   paneEl = el;
   paneLit = 0;
-  if (el) el.classList.add("is-glass-lit");
+  if (el) {
+    el.classList.add("is-glass-lit");
+    if (lightCanvas) el.appendChild(lightCanvas);
+  }
 }
 
 function onPanePointer(ev) {
@@ -427,6 +432,15 @@ function onPanePointer(ev) {
   if (d < -180) d += 360;
   paneBearing += d;
   el.style.setProperty("--slfx-ptr", `${paneBearing.toFixed(1)}deg`);
+  // The same measurement, in the host's own pixels, for the Tier 2 light.
+  // The light is drawn on the BORDER box — the canvas is inset: 0 against it —
+  // so the pointer is measured from that origin, not the padding box's.
+  paneGeom.w = r.width;
+  paneGeom.h = r.height;
+  paneGeom.radius = cornerPx(cs.borderTopLeftRadius, r.width, r.height);
+  paneGeom.border = parseFloat(cs.borderTopWidth) || 0;
+  paneGeom.x = ev.clientX - r.left;
+  paneGeom.y = ev.clientY - r.top;
   paneTarget = 1;
   ensurePaneLoop();
 }
@@ -450,6 +464,11 @@ function integratePane(now) {
     return;
   }
   paneEl?.style.setProperty("--slfx-lit", paneLit.toFixed(3));
+  // Tier 2 rides the pane's own loop rather than running a frame loop of its
+  // own: that loop already starts on pointer entry and stops itself once the
+  // light has eased to nothing, which is exactly when the GPU should be idle.
+  paneGeom.lit = paneLit;
+  light?.draw();
   paneRafId = requestAnimationFrame(integratePane);
 }
 
@@ -646,7 +665,7 @@ export async function mountGpu() {
   if (!armed) return false;
   // Re-read at call time rather than relying on mount()'s own guard: a visitor
   // can switch to high contrast between mount() and this call, and `armed`
-  // stays true once set. bootField() additionally tears the field down if the
+  // stays true once set. bootLight() additionally tears the light down if the
   // switch happens while it is already live.
   if (typeof document === "undefined") return false;
   if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return false;
@@ -655,7 +674,7 @@ export async function mountGpu() {
   // the GPU module or the shader. This import only ever pulls in
   // ./effects-gpu.js and ./effects-shader.js — vgpu itself (an optional
   // PEER dependency, installed only if the consumer asks for it) is
-  // imported inside bootField()'s own try/catch, which is where a missing
+  // imported inside bootLight()'s own try/catch, which is where a missing
   // peer degrades to Tier 1. The catch here covers a bundler that fails to
   // resolve the kit's own module, nothing else.
   let mod;
@@ -664,62 +683,33 @@ export async function mountGpu() {
   } catch {
     return false;
   }
-  const { bootField, trackEdges } = mod;
+  const { bootLight } = mod;
 
-  const canvas = document.createElement("canvas");
-  canvas.setAttribute("aria-hidden", "true");
-  // Below --sl-z-overlay so the sticky translucent header stays above the
-  // chrome. Composited normally, NOT with plus-lighter: an additive canvas
-  // can only brighten, and chrome needs values below the ground it sits on as
-  // much as above it — the dark bands are what make the bright bands read as
-  // a reflection. The chrome writes alpha only on the hairline and in the
-  // halo, so nothing else on the page is touched, and no text is ever
-  // painted over.
+  // ONE canvas, for the whole page, moved between hosts by the pane driver —
+  // the same single-instance discipline the liquid's skin has. Its box is
+  // pure CSS (.sl-fx-glass__lit: inset 0 on the host, below the label), so
+  // nothing here writes geometry: vgpu's surface is layout-backed and picks
+  // up each new host's size on the next frame clock advance by itself.
   //
-  // ABSOLUTE, NOT FIXED, and re-topped to the scroll offset every frame by
-  // bootField(). A fixed overlay is repainted from the main thread while the
-  // page itself scrolls on the compositor, so during a scroll the bands are
-  // composited at the offset they were MEASURED at while the elements have
-  // already moved — bands visibly detached from their elements by a hundred
-  // pixels or more, on any ordinary wheel scroll. An absolutely positioned
-  // canvas is scrolled by the compositor along with the content it is drawing
-  // on, so the two stay glued together whether or not the main thread has
-  // committed; what lags instead is the canvas's own coverage window, and the
-  // worst case is a band missing at the leading edge for a frame rather than a
-  // band in the wrong place. `top`, `width` and `height` are all written in
-  // pixels by bootField() every frame — a percentage size would resolve against
-  // whatever containing block the consumer's page happens to give this canvas,
-  // and `body { position: relative }` would make that the body's full content
-  // height.
-  // Sized once here as well, so the surface is not created against a 0x0 box;
-  // bootField() keeps it in step from the first frame onward.
-  const root = document.documentElement;
-  canvas.style.cssText =
-    `position:absolute;left:0;top:0;width:${Math.max(root.clientWidth, 1)}px;` +
-    `height:${Math.max(root.clientHeight, 1)}px;pointer-events:none;z-index:1`;
-  document.body.appendChild(canvas);
+  // A child of the host, not an overlay on the page. The host carries
+  // backdrop-filter, which makes it a backdrop root, so only a child
+  // composites over the blurred result — and a canvas above the DOM would
+  // paint its light over the label, which is what the old field did and what
+  // the owner objected to.
+  lightCanvas = document.createElement("canvas");
+  lightCanvas.className = "sl-fx-glass__lit";
+  lightCanvas.setAttribute("aria-hidden", "true");
 
-  // Kept by observation, not by measuring every glass element on the page
-  // every rendered frame — see trackEdges()'s own doc comment. bootField()
-  // is handed the read side, the shape refresh and the teardown, so its own
-  // stop() also stops this: nothing is left observing once the field is torn
-  // down. liquidState is how the chrome learns where the silhouette swells.
-  const tracker = trackEdges({ liquid: liquidState });
-
-  const handle = await bootField({
-    canvas,
-    rects: tracker.rects,
-    refresh: tracker.refresh,
-    stopTracking: tracker.stop,
-    tokens,
-  });
+  const handle = await bootLight({ canvas: lightCanvas, state: () => paneGeom, tokens });
   if (!handle) {
-    tracker.stop();
-    canvas.remove();
+    lightCanvas.remove();
+    lightCanvas = null;
     return false;
   }
-  // data-sl-fx-gpu="on" is set inside bootField() itself, right after the
-  // first frame is actually on screen — not here, and not before. This
-  // function only reports whether that happened.
+  light = handle;
+  // data-sl-fx-gpu="on" is set inside the GPU module itself, on the first
+  // frame it actually draws — which, for a per-element light, is the first
+  // time a pointer lands on a pane. This function only reports that the
+  // device and pipeline came up.
   return true;
 }

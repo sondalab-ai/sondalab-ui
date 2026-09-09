@@ -215,7 +215,10 @@ test("the gooey engages only behind a modifier written in the markup", () => {
   assert.match(js, /const LIQUID_HOSTS = "\.sl-fx-liquid:is\(\.sl-fx-liquid--drop, \.sl-fx-liquid--calm\)"/);
   assert.doesNotMatch(js, /closest\("\.sl-fx-liquid"\)/, "the pointer path must not match a bare .sl-fx-liquid");
   assert.match(js.slice(js.indexOf("function onPointerMove(")), /closest\(LIQUID_HOSTS\)/);
-  const pointer = js.slice(js.indexOf("function onPointerMove("), js.indexOf("function onPaneLeave("));
+  // Bounded at onPanePointer, not at onPaneLeave: the pane driver in between
+  // reads borderTopLeftRadius legitimately, to hand the Tier 2 light the
+  // element's own corner. What must not measure a radius is the liquid's gate.
+  const pointer = js.slice(js.indexOf("function onPointerMove("), js.indexOf("function onPanePointer("));
   assert.doesNotMatch(pointer, /borderRadius|borderTopLeftRadius|Radius/, "no radius may be measured to decide who goes gooey");
 });
 

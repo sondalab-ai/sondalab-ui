@@ -10,6 +10,7 @@ const GPU = resolve(KIT, "effects-gpu.js");
 const gpu = readFileSync(GPU, "utf8");
 const shader = readFileSync(resolve(KIT, "effects-shader.js"), "utf8");
 const pkg = JSON.parse(readFileSync(resolve(KIT, "package.json"), "utf8"));
+const js = readFileSync(resolve(KIT, "effects.js"), "utf8");
 
 const COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
 
@@ -21,12 +22,13 @@ test("neither the GPU module nor the shader carries a colour literal", () => {
 test("the shader's colour comes from the token uniforms, not from itself", () => {
   // WGSL's way to hardcode a colour is a numeric constructor — `vec3f(.9,.2,.1)`
   // — which no regex can tell apart from geometry. So assert the reachable
-  // thing instead: the chrome's palette takes its coloured stops from the two
-  // uniforms fed by --sl-accent-default and --sl-accent-depth, and its poles
-  // from the two neutral tokens, and nothing else.
-  assert.match(shader, /mix\(hi,\s*look\.accent\.rgb/, "the accent must reach the palette");
-  assert.match(shader, /mix\(hi,\s*look\.depth\.rgb/, "the depth companion must reach the palette");
-  assert.match(shader, /fn brightToken\(\)[\s\S]*look\.sheen\.rgb[\s\S]*look\.ground\.rgb/, "the poles come from the neutral tokens");
+  // thing instead: every channel of the light traces back to a uniform fed by
+  // a token, and the only thing that decides between the ink and the paper
+  // pole is a flag read off the canvas token.
+  assert.match(shader, /let cool = mix\(look\.sheen\.rgb, look\.depth\.rgb, paper\);/, "the neutral and the depth pole are both tokens");
+  assert.match(shader, /mix\(cool, look\.accent\.rgb,/, "the accent must warm the light");
+  assert.match(shader, /let paper = look\.flags\.y;/, "paper vs ink is a uniform, not a literal");
+  assert.match(gpu, /look\.flags = \[look\.flags\[0\], isPaper\(tokens\.canvas\)/, "and it is read off the canvas token");
 });
 
 // The two guards are executable here, so execute them. Node has a `navigator`
@@ -34,18 +36,18 @@ test("the shader's colour comes from the token uniforms, not from itself", () =>
 // and `vgpu` is an optional peer dependency that need not be installed, so a
 // faked capability drives the dynamic import into the second guard's catch.
 
-test("bootField returns null when WebGPU is absent", async () => {
-  const { bootField } = await import(pathToFileURL(GPU).href);
-  const result = await bootField({ canvas: {}, rects: () => [], tokens: {} });
+test("bootLight returns null when WebGPU is absent", async () => {
+  const { bootLight } = await import(pathToFileURL(GPU).href);
+  const result = await bootLight({ canvas: {}, state: () => null, tokens: {} });
   assert.equal(result, null, "no WebGPU must leave the page exactly as it is");
 });
 
-test("bootField returns null when the device refuses or vgpu is missing", async () => {
-  const { bootField } = await import(pathToFileURL(GPU).href);
+test("bootLight returns null when the device refuses or vgpu is missing", async () => {
+  const { bootLight } = await import(pathToFileURL(GPU).href);
   const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
   Object.defineProperty(globalThis, "navigator", { value: { gpu: {} }, configurable: true });
   try {
-    const result = await bootField({ canvas: {}, rects: () => [], tokens: {} });
+    const result = await bootLight({ canvas: {}, state: () => null, tokens: {} });
     assert.equal(result, null, "a refused adapter or a missing vgpu must be absorbed, not thrown");
   } finally {
     if (saved) Object.defineProperty(globalThis, "navigator", saved);
@@ -68,52 +70,53 @@ test("the shader ships as an inline template string, not through a loader", () =
   assert.match(shader, /export const SHADER = `/);
 });
 
-test("the chrome welds the liquid's drop onto the box, the way the skin does", () => {
-  // The skin (effects.js) is the host's rounded box plus a circle at the
-  // pointer, merged by a goo filter. The chrome must describe the same
-  // silhouette — a smooth union of the same two shapes about the same point —
-  // or the ring and the skin diverge. The Gaussian displacement the old
-  // filter used has no counterpart any more and must not survive here.
-  assert.doesNotMatch(shader, /dentAt|displacement/i, "the displacement-era geometry must be gone");
-  assert.match(shader, /fn smin\(a: f32, b: f32, k: f32\)/, "the union must be a smooth minimum");
-  assert.match(shader, /fn edgeAt\(i: u32, p: vec2f\)[\s\S]*?smin\(box, blob, /, "edgeAt must weld the box and the drop");
-  assert.match(shader, /length\(p - drop\.xy \* look\.res\) - r/, "the drop is a circle about the reported centre");
-  // The packer feeds the drop's radius and the neck width, and moves the
-  // centre only while a drop is live.
-  assert.match(gpu, /q\[2\] = e\.blend \|\| 0;\s*q\[3\] = e\.dropR \|\| 0;/, "params.z is the blend, params.w the drop radius");
-  assert.match(gpu, /if \(q\[3\] !== 0\) \{\s*drop\[0\] = e\.dropX/, "the centre follows the live drop");
+test("the light is confined to the element it is drawn in", () => {
+  // The owner's ruling on this tier: nothing may leave the element's box. The
+  // old field drew from a canvas above the whole page and haloed everything it
+  // tracked. Now one silhouette is both the shape and the mask — the same SDF
+  // that curves the corners zeroes the alpha outside them — so there is no
+  // clip to escape and no container to be truncated by.
+  assert.match(shader, /let inside = 1\.0 - smoothstep\(-1\.0, 0\.0, d\);/, "the silhouette must be the mask");
+  assert.match(shader, /if \(inside <= 0\.001\) \{ return vec4f\(0\.0\); \}/, "outside it, nothing is written");
+  assert.doesNotMatch(shader, /array<vec4f/, "the per-page element arrays must be gone");
+  assert.doesNotMatch(gpu, /document\.body\.appendChild/, "the canvas is never parented to the page");
+  assert.doesNotMatch(gpu, /position:\s*(?:absolute|fixed)/, "the GPU module writes no page-level geometry");
+  // The host is a backdrop root, so only a CHILD composites over the blur.
+  assert.match(js, /el\.appendChild\(lightCanvas\)/, "the canvas is a child of the lit host");
 });
 
-test("every WGSL array length and sentinel agrees with MAX_RECTS", async () => {
-  // The packer does not bound the index: a bump of MAX_RECTS in one file and
-  // not the others writes past a declared array, or turns the shader's
-  // "no element" sentinel into a valid index. Extract the shader and check
-  // every `array<vec4f, N>` and every `Nu` sentinel against the constant.
-  const { MAX_RECTS } = await import(pathToFileURL(GPU).href);
-  const { SHADER } = await import(pathToFileURL(resolve(KIT, "effects-shader.js")).href);
-  const arrays = [...SHADER.matchAll(/array<vec4f,\s*(\d+)>/g)].map((m) => Number(m[1]));
-  assert.ok(arrays.length >= 3, "the shader must declare its per-element arrays");
-  for (const n of arrays) assert.equal(n, MAX_RECTS, `array length ${n} != MAX_RECTS`);
-  const sentinels = [...SHADER.matchAll(/=\s*(\d+)u;/g)].map((m) => Number(m[1])).filter((n) => n > 1);
-  assert.ok(sentinels.length >= 2, "the shader's no-element sentinels must be present");
-  for (const n of sentinels) assert.equal(n, MAX_RECTS, `sentinel ${n} != MAX_RECTS`);
-  assert.equal(SHADER.match(/rectCount/g).length > 0, true);
+test("exactly one canvas exists, and it is moved rather than multiplied", () => {
+  // A WebGPU device plus surface per pointer entry is far heavier than moving
+  // an element, and a leaked context per host would exhaust them. One canvas
+  // is created at boot and re-parented, the same single-instance discipline
+  // the liquid's skin has — so the device, the surface and the pipeline are
+  // built once and never per element.
+  assert.equal(
+    (js.match(/createElement\("canvas"\)/g) || []).length, 1,
+    "effects.js may create the light canvas once and only once",
+  );
+  assert.doesNotMatch(gpu, /createElement/, "the GPU module creates no element of its own");
+  const release = js.slice(js.indexOf("function setPaneLive("), js.indexOf("function onPanePointer("));
+  assert.match(release, /lightCanvas\?\.remove\(\);/, "leaving a host must detach the canvas");
+  assert.match(release, /if \(lightCanvas\) el\.appendChild\(lightCanvas\);/, "entering one must attach it");
+  // Tier 2 rides the pane's self-stopping loop, so an idle page runs no frames.
+  assert.doesNotMatch(gpu, /frameLoop/, "the GPU module must not run a loop of its own");
+  assert.match(js, /paneGeom\.lit = paneLit;\s*light\?\.draw\(\);/, "one GPU frame per pane tick");
 });
 
-test("a pane's cursor reflection disperses on the hairline, and only there", () => {
-  // The owner's refraction lives on the edge band: the chrome's cursor
-  // reflection on a pane splits its channels either side of the environment
-  // sample (the reference's shiftRed / shiftBlue), scaled by the cursor's
-  // presence so it is zero away from the pointer. The packer flags a pane in
-  // kinds.y; the shader reads it from the hit element. Nothing samples the
-  // page — the canvas has no backdrop, and a lens over the label is refused.
-  assert.match(gpu, /const pane = el\.classList\.contains\("sl-fx-glass--pane"\) \? 1 : 0;/);
-  assert.match(gpu, /k\[1\] = e\.pane \|\| 0;/, "kinds.y must carry the pane flag");
-  assert.match(shader, /let pane = kinds\[hit\]\.y;/);
-  assert.match(shader, /let split = DISPERSE \* cur \* pane;/, "the split must scale with the cursor's presence on a pane");
-  const hairline = shader.slice(shader.indexOf("if (cover > 0.0)"), shader.indexOf("if (alpha <= 0.0)"));
-  assert.match(hairline, /environment\(a \+ split, p, t\)\)\.r/, "red samples one side");
-  assert.match(hairline, /environment\(a - split, p, t\)\)\.b/, "blue samples the other");
-  const outside = shader.replace(hairline, "").replace(/\/\/.*$/gm, "");
-  assert.doesNotMatch(outside, /\bsplit\b/, "dispersion must stay inside the hairline branch");
+test("refraction lives on the edge band, and samples no backdrop", () => {
+  // The owner's refraction: the three channels leave the glass at slightly
+  // different angles, so each samples the pool of light from a slightly
+  // different place. Scaled by the edge band, so the middle of a pane bends
+  // nothing. Nothing samples the page — the host carries backdrop-filter and
+  // is therefore a backdrop root, so this canvas cannot read what is behind
+  // it even in principle, and a lens over the label was refused outright.
+  assert.match(shader, /let sep = DISPERSE \* band;/, "the separation is scaled by the edge band");
+  assert.match(shader, /let lr = pool\(p \+ grad \* sep, reach\);/, "red samples one side of the normal");
+  assert.match(shader, /let lb = pool\(p - grad \* sep, reach\);/, "blue samples the other");
+  assert.match(shader, /let lg = pool\(p, reach\);/, "green stays on the surface");
+  assert.doesNotMatch(shader, /textureSample|textureLoad/, "the shader reads no texture, so it reads no backdrop");
+  // band is the only thing that turns the separation on, and it is zero away
+  // from the edge — so a pixel in the middle of the pane gets one sample.
+  assert.match(shader, /let band = 1\.0 - smoothstep\(0\.0, hw, abs\(d\)\);/);
 });
