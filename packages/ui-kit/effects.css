@@ -159,10 +159,54 @@
   initial-value: 210deg;
 }
 
-/* Declared on the edge itself, not on :root: a custom property's var()
-   references resolve using the declaring element's cascaded values, so a
-   :root declaration could never pick up an .invert ancestor's remap. */
-:is(.sl-fx-glass, .sl-fx-aurora) {
+/* The six fitted colours are registered, so each computes once where it is
+   declared and reaches its consumers as a colour, not as a token stream that
+   every gradient stop expands and parses again. Inherited: they are declared
+   on the parent of the edge (below) and painted by its pseudo-elements.
+   Transparent where nothing declares them, which is no element that paints
+   an effect. */
+@property --slfx-accent-vivid {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --slfx-depth-vivid {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --slfx-spot {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --slfx-accent-bloom {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --slfx-depth-bloom {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --slfx-rim-beam {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+/* The fits are declared on the PARENT of the edge, not on :root and not on
+   the edge itself. A custom property's var() references resolve using the
+   declaring element's cascaded values, so a :root declaration could never
+   pick up an .invert ancestor's remap — the parent sees every ancestor's.
+   And a fit is nine nested relative colours, ~0.15 ms of style resolution
+   each in Chrome 152: on the edge itself the six would be paid again every
+   time the pointer writes --slfx-px on a pane (1.7 ms per move, against
+   0.13 before the fits); on the parent they are paid when the parent's own
+   style changes, which the pointer never causes. What the parent cannot
+   see is a remap on the edge element itself; remap at the band. */
+:has(> :is(.sl-fx-glass, .sl-fx-aurora)) {
   /* ── The vivid tier ─────────────────────────────────────────────────────
      Light on a light page cannot take its contrast from luminance. The beam
      is the accent, and its tails, bloom and rim are the depth companion; on
@@ -173,15 +217,111 @@
      already sit on both themes (paper: L 0.58–0.67, C 0.14–0.22; ink: L
      0.71–0.84, C 0.14–0.18): a FLOOR on lightness, and the lift is paid for
      in chroma, 0.45 per unit of lift — which is what keeps a lifted hue a
-     colour instead of a tint. Paper: depth L 0.45 / C 0.07 → 0.66 / 0.17,
-     accent 0.60 / 0.13 → 0.66 / 0.16. Ink: both tokens already sit above
-     the floor and pass through (the depth companion moves by 0.003). One
-     rule for both themes, and an inversion band's remapped tokens follow
-     it — which is why this is a derivation, not a [data-sl-theme] branch. */
+     colour instead of a tint. Ink: both tokens already sit above the floor
+     and pass through (the depth companion moves by 0.003). One rule for
+     both themes, and a band's remapped --slc-accent follows it — which is
+     why this is a derivation, not a [data-sl-theme] branch. (--slfx-depth
+     and --slfx-sheen are substituted on :root, where they are declared, so
+     a band's remap of the depth companion or the text does not reach them;
+     recorded, not fixed here.)
+
+     ── The fit ──
+     The lift can ask for more chroma than sRGB holds at that lightness and
+     hue: teal at L 0.66 holds C 0.114 and the tier asks 0.166; amber holds
+     0.151 and the tier asks 0.162. Chrome does not gamut-map such a colour,
+     it clips it in sRGB, which moves the hue (the teal by +7°) and the
+     lightness, silently. So every colour that pushes chroma goes through
+     a fit — CSS Color 4 §13's own mapping, chroma reduced at constant
+     lightness and hue until the colour is inside, which no engine runs
+     yet — written as seven bisection steps over [0, 0.32] (no sRGB colour
+     above L 0.66 holds more than 0.31): each step converts the current
+     point to linear sRGB and writes "inside the cube" into its alpha (a
+     clamp with a 1/1000 ramp, --slfx-in-gamut, a bare expression over the
+     channel keywords that var() drops into each probe), and the next step
+     reads that alpha back and halves the stride. A last probe steps down
+     once if the point is still outside, so the result sits within 0.0025 of
+     the ceiling and never past it. A colour that fit to begin with passes
+     through untouched: the closing mix weights it by its own probe (1
+     inside, 0 outside) against the fitted one at 0.001, so the one is the
+     whole and the other the remainder. Tokens are opaque by contract; the
+     fit returns alpha 1. Paper: depth 0.45 / 0.07 → asks 0.66 / 0.17, gets
+     0.66 / 0.11; accent 0.60 / 0.13 → asks 0.66 / 0.16, gets 0.66 / 0.15.
+     scripts/effects-gamut.test.mjs evaluates these declarations over a hue
+     sweep on both themes. */
   --slfx-vivid-l: 0.66;
   --slfx-vivid-k: 0.45;
-  --slfx-accent-vivid: oklch(from var(--slc-accent, var(--sl-accent-default)) max(l, var(--slfx-vivid-l)) calc(c + max(0, var(--slfx-vivid-l) - l) * var(--slfx-vivid-k)) h);
-  --slfx-depth-vivid: oklch(from var(--slfx-depth) max(l, var(--slfx-vivid-l)) calc(c + max(0, var(--slfx-vivid-l) - l) * var(--slfx-vivid-k)) h);
+  --slfx-in-gamut: clamp(0, 1 - 1000 * max(0, -1 * min(r, g, b), max(r, g, b) - 1), 1);
+  --slfx-accent-vivid-want: oklch(from var(--slc-accent, var(--sl-accent-default)) max(l, var(--slfx-vivid-l)) calc(c + max(0, var(--slfx-vivid-l) - l) * var(--slfx-vivid-k)) h);
+  --slfx-accent-vivid-b1: oklch(from color(from oklch(from var(--slfx-accent-vivid-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
+  --slfx-accent-vivid-b2: oklch(from color(from var(--slfx-accent-vivid-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
+  --slfx-accent-vivid-b3: oklch(from color(from var(--slfx-accent-vivid-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
+  --slfx-accent-vivid-b4: oklch(from color(from var(--slfx-accent-vivid-b3) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.01) h);
+  --slfx-accent-vivid-b5: oklch(from color(from var(--slfx-accent-vivid-b4) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.005) h);
+  --slfx-accent-vivid-b6: oklch(from color(from var(--slfx-accent-vivid-b5) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.0025) h);
+  --slfx-accent-vivid-b7: oklch(from color(from var(--slfx-accent-vivid-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
+  --slfx-accent-vivid-fit: oklch(from color(from var(--slfx-accent-vivid-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
+  --slfx-accent-vivid: oklch(from color-mix(in oklch, color(from var(--slfx-accent-vivid-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-accent-vivid-fit)) l c h / 1);
+  --slfx-depth-vivid-want: oklch(from var(--slfx-depth) max(l, var(--slfx-vivid-l)) calc(c + max(0, var(--slfx-vivid-l) - l) * var(--slfx-vivid-k)) h);
+  --slfx-depth-vivid-b1: oklch(from color(from oklch(from var(--slfx-depth-vivid-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
+  --slfx-depth-vivid-b2: oklch(from color(from var(--slfx-depth-vivid-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
+  --slfx-depth-vivid-b3: oklch(from color(from var(--slfx-depth-vivid-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
+  --slfx-depth-vivid-b4: oklch(from color(from var(--slfx-depth-vivid-b3) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.01) h);
+  --slfx-depth-vivid-b5: oklch(from color(from var(--slfx-depth-vivid-b4) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.005) h);
+  --slfx-depth-vivid-b6: oklch(from color(from var(--slfx-depth-vivid-b5) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.0025) h);
+  --slfx-depth-vivid-b7: oklch(from color(from var(--slfx-depth-vivid-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
+  --slfx-depth-vivid-fit: oklch(from color(from var(--slfx-depth-vivid-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
+  --slfx-depth-vivid: oklch(from color-mix(in oklch, color(from var(--slfx-depth-vivid-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-depth-vivid-fit)) l c h / 1);
+  /* The pane's warm spot: the vivid accent at the floor, fitted again — see
+     --slfx-spot-warm. */
+  --slfx-spot-want: oklch(from var(--slfx-accent-vivid) var(--slfx-vivid-l) c h);
+  --slfx-spot-b1: oklch(from color(from oklch(from var(--slfx-spot-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
+  --slfx-spot-b2: oklch(from color(from var(--slfx-spot-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
+  --slfx-spot-b3: oklch(from color(from var(--slfx-spot-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
+  --slfx-spot-b4: oklch(from color(from var(--slfx-spot-b3) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.01) h);
+  --slfx-spot-b5: oklch(from color(from var(--slfx-spot-b4) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.005) h);
+  --slfx-spot-b6: oklch(from color(from var(--slfx-spot-b5) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.0025) h);
+  --slfx-spot-b7: oklch(from color(from var(--slfx-spot-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
+  --slfx-spot-fit: oklch(from color(from var(--slfx-spot-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
+  --slfx-spot: oklch(from color-mix(in oklch, color(from var(--slfx-spot-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-spot-fit)) l c h / 1);
+  /* The aurora's blooms and the --rim's beam: the vivid pair lifted toward
+     white and pushed in chroma, fitted at the lifted lightness — see
+     --slfx-bloom-hi and --slfx-aurora--rim. */
+  --slfx-accent-bloom-want: oklch(from var(--slfx-accent-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h);
+  --slfx-accent-bloom-b1: oklch(from color(from oklch(from var(--slfx-accent-bloom-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
+  --slfx-accent-bloom-b2: oklch(from color(from var(--slfx-accent-bloom-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
+  --slfx-accent-bloom-b3: oklch(from color(from var(--slfx-accent-bloom-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
+  --slfx-accent-bloom-b4: oklch(from color(from var(--slfx-accent-bloom-b3) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.01) h);
+  --slfx-accent-bloom-b5: oklch(from color(from var(--slfx-accent-bloom-b4) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.005) h);
+  --slfx-accent-bloom-b6: oklch(from color(from var(--slfx-accent-bloom-b5) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.0025) h);
+  --slfx-accent-bloom-b7: oklch(from color(from var(--slfx-accent-bloom-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
+  --slfx-accent-bloom-fit: oklch(from color(from var(--slfx-accent-bloom-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
+  --slfx-accent-bloom: oklch(from color-mix(in oklch, color(from var(--slfx-accent-bloom-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-accent-bloom-fit)) l c h / 1);
+  --slfx-depth-bloom-want: oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h);
+  --slfx-depth-bloom-b1: oklch(from color(from oklch(from var(--slfx-depth-bloom-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
+  --slfx-depth-bloom-b2: oklch(from color(from var(--slfx-depth-bloom-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
+  --slfx-depth-bloom-b3: oklch(from color(from var(--slfx-depth-bloom-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
+  --slfx-depth-bloom-b4: oklch(from color(from var(--slfx-depth-bloom-b3) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.01) h);
+  --slfx-depth-bloom-b5: oklch(from color(from var(--slfx-depth-bloom-b4) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.005) h);
+  --slfx-depth-bloom-b6: oklch(from color(from var(--slfx-depth-bloom-b5) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.0025) h);
+  --slfx-depth-bloom-b7: oklch(from color(from var(--slfx-depth-bloom-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
+  --slfx-depth-bloom-fit: oklch(from color(from var(--slfx-depth-bloom-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
+  --slfx-depth-bloom: oklch(from color-mix(in oklch, color(from var(--slfx-depth-bloom-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-depth-bloom-fit)) l c h / 1);
+  --slfx-rim-beam-want: oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.25) calc(c * 1.15) h);
+  --slfx-rim-beam-b1: oklch(from color(from oklch(from var(--slfx-rim-beam-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
+  --slfx-rim-beam-b2: oklch(from color(from var(--slfx-rim-beam-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
+  --slfx-rim-beam-b3: oklch(from color(from var(--slfx-rim-beam-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
+  --slfx-rim-beam-b4: oklch(from color(from var(--slfx-rim-beam-b3) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.01) h);
+  --slfx-rim-beam-b5: oklch(from color(from var(--slfx-rim-beam-b4) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.005) h);
+  --slfx-rim-beam-b6: oklch(from color(from var(--slfx-rim-beam-b5) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.0025) h);
+  --slfx-rim-beam-b7: oklch(from color(from var(--slfx-rim-beam-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
+  --slfx-rim-beam-fit: oklch(from color(from var(--slfx-rim-beam-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
+  --slfx-rim-beam: oklch(from color-mix(in oklch, color(from var(--slfx-rim-beam-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-rim-beam-fit)) l c h / 1);
+}
+
+/* The edge's own derivations: the glint and the chrome's stops — one
+   relative colour and three mixes, cheap enough to be recomputed with the
+   pointer. */
+:is(.sl-fx-glass, .sl-fx-aurora) {
   /* The glint: the light pole of the neutral pair, which the hairline's
      bright stop and the arc's hot core are made of. On ink that is the sheen
      itself (the text token, L 0.91). On paper the sheen is the DARK pole
@@ -303,16 +443,20 @@
   /* The spot's two colours. Cool: the glint, with alpha 1 where the sheen
      is the light pole (ink, L 0.91 → (0.91 − 0.45) × 4, clamped to 1) and 0
      where it is the dark one (paper, L 0.24). Warm: the accent's hue at the
-     vivid tier with the opposite alpha, read off a 30/70 mix of the accent
-     and the sheen in oklab — the near-neutral sheen leaves the accent's hue
-     alone and scales its chroma by 0.3 (restored ×3.3) while the lightness
-     is 0.3 accent + 0.7 sheen: paper 0.3 × 0.66 + 0.7 × 0.24 = 0.36 → alpha
-     1 (still 0.97 with an ink accent of L 0.80 pinned onto paper, which the
-     showcase does); ink 0.3 × 0.80 + 0.7 × 0.91 = 0.88 → alpha 0. The sheen
-     decides, as it does for the glint and for the chrome's poles, so an
-     inversion band's remapped sheen flips the spot. */
+     vivid tier's floor — the vivid accent brought to L 0.66 and fitted to
+     the gamut again, since a bright token (an ink accent pinned onto paper,
+     which the showcase does) can hold more chroma at its own lightness than
+     the floor holds — with the opposite alpha, read off a 30/70 mix of that
+     colour and the sheen's LIGHTNESS in oklab: the sheen with its chroma
+     zeroed, because the real sheen is not neutral (paper's is a cool
+     near-black, C 0.02) and 70% of it turned the amber 14° toward yellow.
+     Against a grey the mix is exact: the accent's hue untouched, its chroma
+     × 0.3 (restored ÷ 0.3), the lightness 0.3 × 0.66 + 0.7 × sheen: paper
+     0.3 × 0.66 + 0.7 × 0.24 = 0.37 → alpha 1; ink 0.3 × 0.66 + 0.7 × 0.91 =
+     0.84 → alpha 0. The sheen decides, as it does for the glint and for the
+     chrome's poles, so an inversion band's remapped sheen flips the spot. */
   --slfx-spot-cool: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h / clamp(0, (l - 0.45) * 4, 1));
-  --slfx-spot-warm: oklch(from color-mix(in oklab, var(--slfx-accent-vivid) 30%, var(--slfx-sheen)) var(--slfx-vivid-l) calc(c * 3.3) h / clamp(0, (0.6 - l) * 5, 1));
+  --slfx-spot-warm: oklch(from color-mix(in oklab, var(--slfx-spot) 30%, oklch(from var(--slfx-sheen) l 0 h)) var(--slfx-vivid-l) calc(c / 0.3) h / clamp(0, (0.6 - l) * 5, 1));
   /* The dispersion fringes either side of the hot stop. */
   --slfx-edge-warm: color-mix(in srgb, var(--slfx-accent-vivid) 70%, var(--slfx-edge-hi));
   --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth-vivid) 70%, var(--slfx-edge-hi));
@@ -439,11 +583,16 @@
      paper the depth companion (a dark teal) came out as a grey-teal haze
      around the element — dirt, not light; lifted from the vivid tier it is a
      saturated haze, and on ink the lift only turns the glow pastel, which is
-     what the reference's bloom is. Relative colour syntax is already the
-     kit's own vocabulary (themes/*.css derive the accent steps with it); l
-     and c are channels, not a literal. */
-  --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-beam) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 78%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 66%, transparent);
+     what the reference's bloom is. The push is a request, fitted to the
+     gamut at the lifted lightness like the tier itself (see the fit above):
+     at L 0.85 sRGB holds less amber than at 0.66 (C 0.11 against 0.15) and
+     more teal (0.14 against 0.11), and unfitted, Chrome clipped the amber
+     bloom to a darker, yellower colour (L 0.80, +10°) than the one asked
+     for. Relative colour syntax is already the kit's own vocabulary
+     (themes/*.css derive the accent steps with it); l and c are channels,
+     not a literal. --rim's own blooms are the depth's. */
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 78%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 66%, transparent);
   /* Where the ring's outer edge sits, measured from the padding box
      outward: 0 on a bordered element (the ring is on the border), the
      ring's own width on --rim, which steps the ring out past the fill. */
@@ -480,12 +629,13 @@
   /* The vivid depth companion, lifted a quarter of the way toward white: a
      line at the same lightness as the amber fill it hugs reads as a shadow
      rather than as light, on paper especially, where the two tokens sit
-     within 0.06 of each other. */
-  --slfx-beam: oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.25) calc(c * 1.15) h);
+     within 0.06 of each other. Fitted to the gamut at the lifted lightness
+     like every pushed colour (the fit, above). */
+  --slfx-beam: var(--slfx-rim-beam);
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
   --slfx-core: 40%;
-  --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 90%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 78%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-depth-bloom) 90%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 78%, transparent);
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
