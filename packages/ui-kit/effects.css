@@ -431,11 +431,17 @@
    see, and a translucent fill over an unblurred page reads as a weakened
    colour rather than as glass. So the whole thing stands down together and
    the component keeps the fill it shipped with. */
+/* Base classes first, then their variants: a variant binding is 0-2-0 like the
+   base's, so only source order separates them. */
 .sl-fx-glass { --slfx-fill: var(--slc-surface); }
+.sl-btn.sl-fx-glass,
+.sl-badge.sl-fx-glass,
+.sl-field__control.sl-fx-glass { --slfx-fill: transparent; }
+.sl-tag.sl-fx-glass { --slfx-fill: var(--slc-accent-subtle); }
+.sl-dialog.sl-fx-glass { --slfx-fill: var(--slc-raised); }
 .sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
-.sl-btn--ghost.sl-fx-glass,
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
 
 @supports (backdrop-filter: blur(1px)) {

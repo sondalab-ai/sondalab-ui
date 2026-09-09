@@ -167,6 +167,56 @@ test("only shape re-declares the ring background; states rebind the stops", () =
 // under the pointer.
 const LIT_STATE = /:hover|:focus-visible|:focus-within|\.is-glass-lit|\[data-sl-fx-live/;
 
+// The translucency mix replaces the component's own background, so the fill it
+// names has to BE that background. Nothing in the cascade catches a wrong
+// binding: --slfx-fill resolves, the mix is valid, and the element quietly
+// wears a colour it never shipped with. So the two sheets are compared
+// directly, for every component the showcase actually pairs with the family.
+test("--slfx-fill names the background the component actually ships", () => {
+  // Both sheets: .sl-field__control is declared by the effects layer itself,
+  // and a component the family invents needs a fill as much as a shipped one.
+  const components = effects + readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const page = readFileSync(resolve(HERE, "../showcase/effects.html"), "utf8");
+
+  // Every component class the showcase puts the glass family on.
+  const hosts = new Set();
+  for (const m of page.matchAll(/class="([^"]*\bsl-fx-glass\b[^"]*)"/g)) {
+    for (const cls of m[1].split(/\s+/)) if (/^sl-(?!fx-)/.test(cls)) hosts.add(cls);
+  }
+  assert.ok(hosts.size > 3, `the page must exercise several components, found ${[...hosts]}`);
+
+  // What components.css gives each of them, taking the last declaration to win.
+  const shipped = new Map();
+  for (const r of rules(components)) {
+    const sel = r.selector.trim();
+    if (!/^\.[a-z0-9-]+$/.test(sel)) continue;
+    const m = [...r.body.matchAll(/(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/g)].pop();
+    if (m) shipped.set(sel.slice(1), m[1].trim());
+  }
+
+  const bound = new Map();
+  for (const r of RULES) {
+    if (!/--slfx-fill\s*:/.test(r.body)) continue;
+    const value = r.body.match(/--slfx-fill\s*:\s*([^;]+)/)[1].trim();
+    for (const sel of r.selector.split(",")) {
+      const s = sel.trim();
+      if (!/\.sl-fx-glass/.test(s) || /:(?:hover|active|focus)/.test(s)) continue;
+      const own = s.replace(/\.sl-fx-glass.*$/, "").replace(/^\./, "");
+      bound.set(own || "*", value);
+    }
+  }
+  const fallback = bound.get("*");
+  assert.ok(fallback, "the family must declare a default fill");
+
+  for (const host of [...hosts].sort()) {
+    // A modifier inherits its base's fill unless it rebinds one of its own.
+    const base = host.replace(/--.*$/, "");
+    const want = shipped.get(host) ?? shipped.get(base) ?? "transparent";
+    const got = bound.get(host) ?? bound.get(base) ?? fallback;
+    assert.equal(got, want, `.${host}: components.css fills it ${want}, the family binds ${got}`);
+  }
+});
+
 test("a glass element at rest is quiet: light arrives with the pointer", () => {
   const glass = RULES.filter((r) => /\.sl-fx-glass/.test(r.selector) && !/\.sl-fx-aurora/.test(r.selector));
   assert.ok(glass.length > 0, "the parser must find the glass rules");
