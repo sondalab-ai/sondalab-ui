@@ -1,10 +1,10 @@
 /* @sondalab/ui-kit — effects-gpu.js
    Tier 2: the WebGPU chrome. What justifies the GPU is that the glass EDGE is
    a mirror rather than a stroke: a hairline reflecting a moving environment,
-   a halo wandering around it, a reflection where the cursor is, and a dent
-   that follows the liquid's own displacement filter — none of which a conic
+   a halo wandering around it, a reflection where the cursor is, and a swell
+   that follows the liquid's own gooey skin — none of which a conic
    gradient can express. Only the glass family is drawn here; the aurora is
-   CSS at every tier and the liquid deforms the element itself (effects.js).
+   CSS at every tier and the liquid is a skin under the content (effects.js).
 
    The CSS ring is the genuine fallback, not a lesser version of the intent: a
    browser without WebGPU, a visitor under reduced motion and a visitor in high
@@ -97,11 +97,12 @@ function radiusPx(raw, rect) {
  * elements not already observed (tracked in a WeakSet), and drop elements that
  * left the document as they are read, one at a time.
  *
- * @param {{liquid?: () => {el: Element|null, depth: number, sigma: number, x: number, y: number}}} opts
- *   `liquid` reports which element the pointer is currently shaping and how
- *   deep and wide its dent is — the SAME numbers effects.js feeds its SVG
- *   displacement map, so the chrome bends exactly where the surface does.
- * @returns {{rects: () => {rect: DOMRect, radius: string, border: string, metal: number, depth: number, sigma: number, dentX: number, dentY: number}[], refresh(): void, stop(): void}}
+ * @param {{liquid?: () => {el: Element|null, radius: number, blend: number, x: number, y: number}}} opts
+ *   `liquid` reports which element the pointer is currently shaping, the
+ *   radius of the drop its skin draws, where the drop sits and how wide the
+ *   goo's neck is — the SAME circle effects.js welds onto the box, so the
+ *   chrome follows exactly the silhouette the skin has.
+ * @returns {{rects: () => {rect: DOMRect, radius: string, border: string, metal: number, blend: number, dropR: number, dropX: number, dropY: number}[], refresh(): void, stop(): void}}
  */
 export function trackEdges({ liquid } = {}) {
   const onScreen = new Set();
@@ -154,16 +155,16 @@ export function trackEdges({ liquid } = {}) {
         // there, but the element still catches its neighbours' reflections.
         const metal = el.classList.contains("sl-fx-glass") && !auroraLit(el) ? 1 : 0;
         const sh = shape.get(el) || { radius: "0px", border: "0px" };
-        const dented = live && live.el === el;
+        const swelling = live && live.el === el;
         out.push({
           rect: el.getBoundingClientRect(),
           radius: sh.radius,
           border: sh.border,
           metal,
-          depth: dented ? live.depth : 0,
-          sigma: dented ? live.sigma : 0,
-          dentX: dented ? live.x : 0,
-          dentY: dented ? live.y : 0,
+          blend: swelling ? live.blend : 0,
+          dropR: swelling ? live.radius : 0,
+          dropX: swelling ? live.x : 0,
+          dropY: swelling ? live.y : 0,
         });
         if (out.length === MAX_RECTS) break;
       }
@@ -314,9 +315,9 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
     let presence = 0;
     let presenceT = -1;
     const PRESENCE_TAU = 0.16;
-    // xy: where the liquid's dent is centred, normalised — the lagged centre
-    // effects.js's own displacement map uses, not the raw pointer.
-    const dent = [0, 0, 0, 0];
+    // xy: where the liquid's drop is centred, normalised — the lagged point
+    // effects.js's own skin places it at, not the raw pointer.
+    const drop = [0, 0, 0, 0];
 
     function applyTokens() {
       const [ar, ag, ab] = hexToGamma(tokens.accent);
@@ -331,13 +332,13 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
     applyTokens();
 
     const fx = vgpu.effect(gpu, SHADER, {
-      set: { look, rects: rectsUniform, pointer, params: paramsUniform, dent, kinds: kindsUniform },
+      set: { look, rects: rectsUniform, pointer, params: paramsUniform, drop, kinds: kindsUniform },
     });
     const clock = vgpu.clock(gpu);
 
     // Reduced motion reaches Tier 2 as well: the chrome still renders — it is
     // material, not motion — but its environment stops sliding, the halo stops
-    // wandering and the pointer stops denting the ring. Read live, not sampled
+    // wandering and the liquid stops swelling it. Read live, not sampled
     // at boot, so a visitor who turns the preference on mid-session is
     // honoured without a reload.
     motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
@@ -434,7 +435,7 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
       // contribute nothing — the shader early-outs on anything whose band the
       // pixel is not near.
       const list = rects().slice(0, MAX_RECTS);
-      dent[0] = 0; dent[1] = 0;
+      drop[0] = 0; drop[1] = 0;
       for (let i = 0; i < MAX_RECTS; i++) {
         const r = rectsUniform[i];
         const q = paramsUniform[i];
@@ -453,11 +454,11 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
         r[3] = e.rect.height / view[1];
         q[0] = radiusPx(e.radius, e.rect);
         q[1] = Math.max(parseFloat(e.border) || 0, 0);
-        q[2] = e.depth || 0;
-        q[3] = e.sigma || 0;
-        if (q[2] !== 0) {
-          dent[0] = e.dentX / view[0];
-          dent[1] = e.dentY / view[1];
+        q[2] = e.blend || 0;
+        q[3] = e.dropR || 0;
+        if (q[3] !== 0) {
+          drop[0] = e.dropX / view[0];
+          drop[1] = e.dropY / view[1];
         }
       }
       look.time = clock.time;
@@ -472,7 +473,7 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
       pointer[2] = presence;
       pointer[3] = 0;
 
-      fx.set({ look, rects: rectsUniform, pointer, params: paramsUniform, dent, kinds: kindsUniform });
+      fx.set({ look, rects: rectsUniform, pointer, params: paramsUniform, drop, kinds: kindsUniform });
       // After the reads above, never before: rects() forces layout, and moving
       // the canvas first would make that a second forced layout per frame.
       followViewport(view);

@@ -5,14 +5,14 @@
    WHAT THIS DRAWS — the glass family only. One thing, at the scale of the
    reference (libraries.dev/metal): a CHROME HAIRLINE exactly on the element's
    own border, a wandering HALO of soft light outside it, a bright CURSOR
-   REFLECTION where the pointer is, and — on liquid elements — the same DENT the
-   SVG displacement filter puts into the element itself, so the ring bends with
-   the surface instead of sitting rigid around a deforming box.
+   REFLECTION where the pointer is, and — on liquid elements — the same SWELL
+   the liquid's skin gives the silhouette, so the ring follows the surface
+   instead of sitting rigid around a deforming shape.
 
    The aurora is NOT drawn here. It is light, and it is CSS at every tier
-   (effects.css, the border-beam recipe). The liquid's deformation is not drawn
-   here either — effects.js deforms the element through an SVG filter; this
-   shader only agrees with it about the shape of the dent.
+   (effects.css, the border-beam recipe). The liquid's swell is not drawn
+   here either — effects.js draws it as a gooey skin under the content; this
+   shader only agrees with it about the shape of the silhouette.
 
    THE LOOK. Chrome is not a lit bevel. A bevel has a light side and a dark
    side; chrome has a mirror's environment sliding along it — bright and dark
@@ -38,7 +38,7 @@ struct Look {
   ground   : vec4f,   // --sl-bg-canvas
   // x: 1 when motion is allowed, 0 under prefers-reduced-motion. The chrome
   // still renders at 0 — it is material, not motion — but its environment
-  // stops sliding, the halo stops wandering and the cursor stops denting.
+  // stops sliding, the halo stops wandering and the liquid stops swelling.
   flags    : vec4f,
   res      : vec2f,   // viewport, CSS pixels
   time     : f32,
@@ -51,14 +51,15 @@ struct Look {
 @group(0) @binding(2) var<uniform> pointer : vec4f;
 // x: corner radius in CSS pixels, read from the element's own border-radius
 // y: hairline width in CSS pixels, read from the element's own border width
-// z: dent depth in CSS pixels, signed — the liquid spring's amplitude scaled;
-//    0 on every element the pointer is not currently shaping
-// w: dent radius (sigma) in CSS pixels
+// z: the liquid's smooth-union radius in CSS pixels — the width of the neck
+//    the goo filter welds between the box and its drop (effects.js, GOO_BLEND)
+// w: the liquid's drop radius in CSS pixels; 0 on every element the pointer
+//    is not currently shaping, and while the drop is still inside the box
 @group(0) @binding(3) var<uniform> params : array<vec4f, 16>;
-// xy: the centre of the liquid's dent, normalised — the LAGGED centre
-// effects.js's displacement map uses, which trails the pointer; the dent has
-// to be evaluated about the same point or the ring and the surface disagree.
-@group(0) @binding(4) var<uniform> dent : vec4f;
+// xy: the centre of the liquid's drop, normalised — the LAGGED point
+// effects.js places the drop at, which trails the pointer; the silhouette has
+// to be welded about the same point or the ring and the skin disagree.
+@group(0) @binding(4) var<uniform> drop : vec4f;
 // x: 1 when the element carries the chrome; 0 when it is only a surface the
 // chrome's environment falls onto — every registered element is one.
 @group(0) @binding(5) var<uniform> kinds : array<vec4f, 16>;
@@ -108,30 +109,34 @@ fn halfOf(i: u32) -> vec2f { return rects[i].zw * look.res * 0.5; }
 fn centreOf(i: u32) -> vec2f { return rects[i].xy * look.res + halfOf(i); }
 
 /**
- * The swell, as a displacement of the sampling position — the same field
- * effects.js paints into its feDisplacementMap. The content moves AWAY from
- * the pointer, so a point past the edge samples from inside it and the edge
- * bulges outward where the cursor is; the sampling position therefore moves
- * TOWARD the pointer, which is the minus sign. Its peak sits one sigma from
- * the pointer and is normalised to exactly \`depth\` pixels there; a negative
- * depth (the spring overshooting on release) sinks inward instead.
- * Anything that changes here must change in effects.js's map too, or the ring
- * and the surface disagree about where the edge is.
+ * The smooth minimum of two distances: the union of two shapes with a
+ * rounded neck where they meet, \`k\` wide. This is what the goo filter in
+ * effects.js does to the same box and drop — a blur then an alpha slope
+ * welds two touching pieces with a fillet about as wide as the blur — and
+ * GOO_BLEND there is the k that matches it. Outside the neck it is an exact
+ * min, so an element without a live drop is its own rounded box.
  */
-fn dentAt(p: vec2f, depth: f32, sigma: f32) -> vec2f {
-  if (depth == 0.0 || sigma <= 0.0) { return vec2f(0.0); }
-  let ptr = dent.xy * look.res;
-  let v = (p - ptr) / sigma;
-  let g = exp(-0.5 * dot(v, v)) / 0.60653;
-  return -(v * g * depth * look.flags.x);
+fn smin(a: f32, b: f32, k: f32) -> f32 {
+  let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+  return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-/** Signed distance to element i's edge, through its dent. */
+/**
+ * Signed distance to element i's edge, through its swell: the rounded box
+ * the element declared, welded to the liquid's drop while one is live. The
+ * drop is the circle the skin draws, at the point the skin places it, so
+ * the chrome and the skin describe one silhouette. Anything that changes
+ * here must change in effects.js's skin too, or the two disagree about
+ * where the edge is.
+ */
 fn edgeAt(i: u32, p: vec2f) -> f32 {
   let half = halfOf(i);
   let rad = clamp(params[i].x, 0.0, min(half.x, half.y));
-  let q = p + dentAt(p, params[i].z, params[i].w);
-  return sdRoundBox(q - centreOf(i), half, rad);
+  let box = sdRoundBox(p - centreOf(i), half, rad);
+  let r = params[i].w * look.flags.x;
+  if (r <= 0.0) { return box; }
+  let blob = length(p - drop.xy * look.res) - r;
+  return smin(box, blob, max(params[i].z, 0.001));
 }
 
 /** The chrome's half-width for element i, in CSS px: half its own border
@@ -310,8 +315,8 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   // ── the hairline: chrome on the element's own border ──────────────────────
   let cover = 1.0 - smoothstep(hw - AA, hw + AA, abs(best));
   if (cover > 0.0) {
-    // Outward normal through the dent, by central differences: the analytic
-    // gradient of a rounded box would miss the dent entirely.
+    // Outward normal through the swell, by central differences: the analytic
+    // gradient of a rounded box would miss the drop entirely.
     let e = 0.75;
     let gx = edgeAt(hit, p + vec2f(e, 0.0)) - edgeAt(hit, p - vec2f(e, 0.0));
     let gy = edgeAt(hit, p + vec2f(0.0, e)) - edgeAt(hit, p - vec2f(0.0, e));

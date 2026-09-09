@@ -68,6 +68,22 @@ test("the shader ships as an inline template string, not through a loader", () =
   assert.match(shader, /export const SHADER = `/);
 });
 
+test("the chrome welds the liquid's drop onto the box, the way the skin does", () => {
+  // The skin (effects.js) is the host's rounded box plus a circle at the
+  // pointer, merged by a goo filter. The chrome must describe the same
+  // silhouette — a smooth union of the same two shapes about the same point —
+  // or the ring and the skin diverge. The Gaussian displacement the old
+  // filter used has no counterpart any more and must not survive here.
+  assert.doesNotMatch(shader, /dentAt|displacement/i, "the displacement-era geometry must be gone");
+  assert.match(shader, /fn smin\(a: f32, b: f32, k: f32\)/, "the union must be a smooth minimum");
+  assert.match(shader, /fn edgeAt\(i: u32, p: vec2f\)[\s\S]*?smin\(box, blob, /, "edgeAt must weld the box and the drop");
+  assert.match(shader, /length\(p - drop\.xy \* look\.res\) - r/, "the drop is a circle about the reported centre");
+  // The packer feeds the drop's radius and the neck width, and moves the
+  // centre only while a drop is live.
+  assert.match(gpu, /q\[2\] = e\.blend \|\| 0;\s*q\[3\] = e\.dropR \|\| 0;/, "params.z is the blend, params.w the drop radius");
+  assert.match(gpu, /if \(q\[3\] !== 0\) \{\s*drop\[0\] = e\.dropX/, "the centre follows the live drop");
+});
+
 test("every WGSL array length and sentinel agrees with MAX_RECTS", async () => {
   // The packer does not bound the index: a bump of MAX_RECTS in one file and
   // not the others writes past a declared array, or turns the shader's
