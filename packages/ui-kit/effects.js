@@ -297,6 +297,31 @@ function randomizeGhosts(el) {
   }
 }
 
+/* ── aurora: the bloom's child ──────────────────────────────────────────────
+   The bloom is a Gaussian blur of a thicker copy of the arc, and CSS applies
+   a filter before a mask, so the masked band and the blur need two boxes:
+   a child of the host, whose ::before is the band. The host's own two
+   pseudo-elements stay what they are (::after the edge). Injected here, so
+   a consumer who never calls mount() keeps the CSS-only ring and never sees
+   an element it did not write; aria-hidden, and CSS makes it inert to the
+   pointer and to selection. A linear aurora has no ring and gets none. */
+const GLOW_HOSTS = ".sl-fx-aurora:not(.sl-fx-aurora--linear)";
+
+function injectGlow(el) {
+  for (const child of el.children) {
+    if (child.classList.contains("sl-fx-aurora__glow")) return;
+  }
+  const glow = document.createElement("span");
+  glow.className = "sl-fx-aurora__glow";
+  glow.setAttribute("aria-hidden", "true");
+  el.appendChild(glow);
+}
+
+function injectGlows(root) {
+  if (root instanceof Element && root.matches(GLOW_HOSTS)) injectGlow(root);
+  for (const el of root.querySelectorAll(GLOW_HOSTS)) injectGlow(el);
+}
+
 /** The conditions under which no effect may run, re-read at call time rather
  *  than sampled at mount: a visitor can switch theme, or turn on reduced
  *  motion, long after the page loaded. */
@@ -333,6 +358,13 @@ export function mount(root = document) {
   });
 
   injectFilterDefs();
+  // Before data-sl-fx="on" goes up: the arc's sweep and its bloom's sweep
+  // start on the same frame, so the two stay in phase. Elements that arrive
+  // later get theirs as they arrive.
+  injectGlows(root);
+  new MutationObserver((records) => {
+    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) injectGlows(n);
+  }).observe(root, { childList: true, subtree: true });
 
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
