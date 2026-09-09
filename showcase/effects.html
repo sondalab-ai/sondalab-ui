@@ -137,6 +137,12 @@
        The gallery and its cells go translucent so the word carries through
        them — an opaque cell would give every glass element a flat colour to
        blur, which looks identical to no blur at all.
+       The two numbers are the whole effect, and the first pass had them far
+       too low: at 12% under a 62% cell only ~4.6% of the word survived behind
+       a button, and blurring something invisible is invisible. Glass needs
+       real structure behind it. At 22% under a 28% cell a letterform passes
+       under a pane sharp on one side of its edge and smoothed on the other,
+       which is the reading; body text still sits comfortably over it.
        No `overflow` anywhere on the section: the aurora's bloom reaches 55px
        past its element, and clipping it here is the truncation the owner
        objected to. The word is placed to stay inside instead. */
@@ -152,14 +158,21 @@
       font-size: clamp(6rem, 17vw, 15rem);
       line-height: 0.8;
       letter-spacing: -0.045em;
-      color: color-mix(in srgb, var(--sl-text-primary) 12%, transparent);
+      color: color-mix(in srgb, var(--sl-text-primary) 22%, transparent);
       pointer-events: none;
       user-select: none;
       white-space: nowrap;
     }
+    /* The same alpha does not weigh the same on both grounds: near-black at
+       22% on cream reads far heavier than near-white at 22% on ink, and on
+       paper the word started competing with the body text. Page-local, so
+       the branch on the theme attribute is a page decision, not a token one. */
+    :root[data-sl-theme="light"] section[data-back]::after {
+      color: color-mix(in srgb, var(--sl-text-primary) 12%, transparent);
+    }
     .gallery { display: grid; grid-template-columns: 1fr; gap: 1px; background: color-mix(in srgb, var(--sl-border-subtle) 55%, transparent); border: 1px solid var(--sl-border-subtle); margin-top: 1.5rem; }
     @media (min-width: 720px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
-    .g-cell { background: color-mix(in srgb, var(--sl-bg-surface) 62%, transparent); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.9rem; }
+    .g-cell { background: color-mix(in srgb, var(--sl-bg-surface) 28%, transparent); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.9rem; }
     .g-cell > .g-label { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
     .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
     .g-demo--col { flex-direction: column; align-items: stretch; }
