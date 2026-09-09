@@ -7,7 +7,6 @@ import { dirname, resolve } from "node:path";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MODULE = resolve(HERE, "../packages/ui-kit/effects.js");
 const js = readFileSync(MODULE, "utf8");
-const css = readFileSync(resolve(dirname(MODULE), "effects.css"), "utf8");
 const load = () => import(pathToFileURL(MODULE).href);
 
 /** The body of a top-level exported function, so an assertion can be about
@@ -183,28 +182,8 @@ test("the liquid never filters, re-radiuses or re-colours the host", () => {
   // hover state the skin is supposed to follow.
   assert.doesNotMatch(js, /\.style\.filter\s*=|setProperty\(\s*["']filter["']/, "no filter may be written onto an element's style");
   assert.doesNotMatch(js, /\.style\.border(?:Radius|Color|TopColor|Image)\s*=|setProperty\(\s*["']border-/, "no border property may be written onto an element");
-  // Scoped to the skin's own builder. Glass now displaces too, but it
-  // displaces the BACKDROP through backdrop-filter, which never touches the
-  // element or anything inside it — the liquid's skin must stay a shape.
-  const skin = js.slice(js.indexOf("function buildSkin("), js.indexOf("function cornerPx("));
-  assert.doesNotMatch(skin, /feDisplacementMap|feImage/, "the skin is a shape, not a lens");
+  assert.doesNotMatch(js, /feDisplacementMap|feImage/, "the displacement filter is gone; the skin is a shape, not a lens");
   assert.match(js, /<g filter="url\(#slfx-goo\)">/, "the goo filter sits on the skin's own group");
-});
-
-test("refraction bends the backdrop, never the element or its content", () => {
-  // The whole point of reaching for an SVG filter here: feDisplacementMap
-  // inside a backdrop-filter acts on what is BEHIND the element. A filter on
-  // the element itself would warp its own label, which is the lens the owner
-  // refused outright.
-  assert.match(js, /--slfx-refract/, "the filter is handed to CSS as a custom property");
-  assert.match(css, /backdrop-filter:[^;]*var\(--slfx-refract, \)/, "and consumed as a backdrop-filter");
-  assert.doesNotMatch(js, /setProperty\(\s*["']filter["']|\.style\.filter\s*=/, "never as a filter on the element");
-  // Chrome alone accepts it, so it must be asked for rather than assumed, and
-  // its absence must leave a page that is still correct.
-  assert.match(js, /CSS\.supports\?\.\("backdrop-filter", "url\(#slfx\)"\)/, "support is tested, not presumed");
-  assert.match(js, /if \(!refractSupported\(\)\) return;/, "and nothing is written when it is absent");
-  // One map per geometry, not per element.
-  assert.match(js, /const known = refractCache\.get\(key\);\s*if \(known\) return known;/);
 });
 
 test("one skin, parented into one live element at a time", async () => {
