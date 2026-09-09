@@ -18,8 +18,11 @@
            Gaussian-blurred, on a child effects.js injects at mount()
            (.sl-fx-aurora__glow). CSS-drawn at every tier; the bloom needs
            Tier 1 only because the child has to exist. No GPU aurora.
-   liquid  the element itself deforms: effects.js applies an SVG displacement
-           filter to the host while the pointer shapes it. No paint layer.
+   liquid  the silhouette goes gooey: effects.js parents one shared <svg>
+           (.sl-fx-liquid__skin) into the host while the pointer shapes it —
+           the host's own box plus a drop at the pointer, welded by a goo
+           filter (blur + alpha contrast) and painted in the host's own fill
+           and border colours. Content is never filtered. No pseudo-element.
    glitch  a child <span>, never the host, so the host's two paint layers stay
            free for the edge.
 
@@ -77,17 +80,19 @@
 
 /* 1 & 2 — high contrast and the subtree opt-out neutralise the HOST as well as
    its paint layers: the glitch animates its host and its shards, the liquid
-   filters its host, and the glass paints an inset highlight on the host.
+   hides its host's border under a transparent border-image while its skin
+   holds the edge, and the glass paints an inset highlight on the host.
    `!important` is load-bearing: effects.js writes inline styles, which beat a
    plain rule. The opt-out matches the element carrying the attribute AND its
    subtree, compounded with the family classes so an unscoped
    `box-shadow: none !important` never strips elevation or focus rings off
    ordinary components.css elements inside the region. */
-:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
   filter: none !important;
+  border-image: none !important;
 }
 
 /* The shatter variant replaces the label with jumping bands, so restoring the
@@ -106,11 +111,13 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora__glow,
+:root[data-sl-theme="high-contrast"] .sl-fx-liquid__skin,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora__glow,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid__skin,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
 :is(.sl-fx-glass, .sl-fx-aurora):is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
@@ -213,6 +220,15 @@
    same specificity, and later wins — an element that is glass AND lit shows
    the aurora's arc over the chrome, which is the intended reading. */
 [data-sl-fx-gpu="on"] .sl-fx-glass::after { opacity: 0; }
+
+/* While a glass element is liquid under Tier 1, its edge is the liquid's own
+   outline (the skin's band, in the host's border colour): the static conic
+   hairline would stay rigid on the box while the silhouette swells past it,
+   and a crisp ring around a deforming shape reads as broken. It fades over
+   the slow beat and returns when the surface re-solidifies. Under Tier 2 the
+   chrome follows the silhouette instead (effects-shader.js, edgeAt). Same
+   placement rule as the stand-down above: a lit aurora still wins. */
+[data-sl-fx="on"] .sl-fx-glass.sl-fx-liquid.is-liquid-live::after { opacity: 0; }
 
 /* ══ AURORA — attention lives here ═══════════════════════════════════════════
    The border-beam recipe (libraries.dev/beam): a thin arc of light riding the
@@ -400,18 +416,38 @@
 .sl-fx-aurora--linear.sl-fx-aurora--top::after { inset: 0 0 auto 0; }
 
 /* ══ LIQUID — you are recognised ═════════════════════════════════════════════
-   The element ITSELF deforms. effects.js applies an SVG displacement filter
-   (a Gaussian dent that follows the pointer, driven by an underdamped spring)
-   to the host, and only to the one host the pointer is currently shaping —
-   the filter is a single shared resource whose scale would otherwise distort
-   every liquid element in lockstep. Fill, border, text and the aurora's arc
-   all bend together; a crisp ring around a deforming box would read as
-   broken. The filter is removed once the spring settles: non-destructive.
-   The radius is never rewritten — the filter distorts whatever the component
+   The SILHOUETTE deforms; the content never does. While the pointer shapes an
+   element, effects.js parents one shared <svg class="sl-fx-liquid__skin">
+   into it: the host's own rounded box plus a drop at the pointer, welded by a
+   goo filter (blur, then alpha contrast — libraries.dev/gooey's own chain)
+   and painted in the host's computed background and border colours, with the
+   band following the merged outline. It sits at z-index -2: above the host's
+   own background and border (a negative z-index child paints over both), and
+   below its content, which is never filtered. Nothing is written to the host
+   but a transparent border-image, which hides the host's own border under the
+   skin's band WITHOUT touching border-color — the skin reads the computed
+   border colour every frame, so hover and active states stay the host's.
+   The radius is never rewritten: the skin traces the radii the component
    declared, so a component stays free to re-parametrise its own --sl-radius-*.
-   The GPU chrome bends its hairline with the same field (effects-shader.js). */
+   One element deforms at a time; the skin leaves when the spring settles.
+   The GPU chrome welds the same drop onto the same box (effects-shader.js). */
 .sl-fx-liquid { position: relative; isolation: isolate; }
-[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live { filter: url(#slfx-liquid); }
+.sl-fx-liquid__skin {
+  position: absolute;
+  /* The host's BORDER box: an absolutely positioned child resolves inset: 0
+     against the padding box, and the skin has to cover the border it hides.
+     effects.js sets --slfx-bw to the host's border width. */
+  inset: calc(-1 * var(--slfx-bw, 0px));
+  width: calc(100% + 2 * var(--slfx-bw, 0px));
+  height: calc(100% + 2 * var(--slfx-bw, 0px));
+  z-index: -2;
+  overflow: visible;   /* the UA hides an inline svg's overflow; the swell is outside the box */
+  pointer-events: none;
+  user-select: none;
+}
+[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live {
+  border-image: linear-gradient(transparent 0 0) 1;
+}
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand

@@ -48,7 +48,7 @@ const PAINTS = /background(?:-color|-image)?\s*:/;
 
 // Every property an effect can put on a HOST element, as opposed to on a paint
 // layer. A kill switch that only hides ::before/::after leaves these running.
-const HOST_EFFECT = /(?:^|;)\s*(?:animation|box-shadow|border-radius|opacity|filter)\s*:/;
+const HOST_EFFECT = /(?:^|;)\s*(?:animation|box-shadow|border-radius|border-image|opacity|filter)\s*:/;
 
 test("both kill switches neutralise host-level effects, not only paint layers", () => {
   const targets = RULES.filter(
@@ -157,18 +157,56 @@ test("determinate progress drives arc length, not an animation", () => {
   assert.match(effects, /--slfx-arc:\s*calc\(var\(--slfx-progress\)\s*\*\s*360deg\)/);
 });
 
-test("the liquid filter deforms the host, and only the one host the pointer is shaping", () => {
-  // The element ITSELF deforms — fill, border, text and the aurora's arc
-  // together — as the reference does (libraries.dev/metal, useMetalBend). The
-  // filter is one shared SVG resource whose scale is shared too, so it must be
-  // scoped to the single element effects.js marks live, never to every
-  // .sl-fx-liquid at once.
-  const carrying = RULES.filter((r) => /filter:\s*url\(#slfx-liquid\)/.test(r.body));
-  assert.equal(carrying.length, 1, "exactly one rule carries the liquid filter");
-  const [rule] = carrying;
-  assert.doesNotMatch(rule.selector, /::(before|after)$/, "the filter must sit on the host, not on a paint layer");
-  assert.match(rule.selector, /\.sl-fx-liquid\.is-liquid-live$/, "the filter must be scoped to the live element");
-  assert.match(rule.selector, /\[data-sl-fx="on"\]/, "the filter must only apply once Tier 1 is armed");
+test("the liquid never filters the host or its content", () => {
+  // The owner's rule, confirmed twice: the text is never distorted. The
+  // silhouette is a skin effects.js draws BELOW the content (libraries.dev/
+  // gooey: "your real DOM rides crisp on top"), and the goo filter lives on
+  // that skin's own SVG groups — so no CSS rule may put a filter on a liquid
+  // host, on its skin, or on anything scoped under a liquid selector.
+  const filtered = RULES
+    .filter((r) => /\.sl-fx-liquid/.test(r.selector) && /(?:^|;)\s*filter\s*:(?!\s*none\b)/.test(r.body))
+    .map((r) => r.selector);
+  assert.deepEqual(filtered, [], "no rule may filter a liquid host, its skin, or its content");
+  assert.doesNotMatch(effects, /url\(#slfx-/, "no CSS rule may reference an SVG filter");
+});
+
+test("the liquid's skin sits below the content and never takes the pointer", () => {
+  const skin = RULES.find((r) => r.selector === ".sl-fx-liquid__skin");
+  assert.ok(skin, "the skin must have its own rule");
+  assert.match(skin.body, /z-index:\s*-\d/, "the skin must paint below the host's content");
+  assert.match(skin.body, /pointer-events:\s*none/, "the skin must not intercept the pointer");
+  assert.match(skin.body, /overflow:\s*visible/, "the swell leaves the box, so the svg must not clip it");
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    const killed = RULES.some(
+      (r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-liquid__skin") && /display:\s*none/.test(r.body),
+    );
+    assert.ok(killed, `[${attr}] must hide the skin, the way it hides every other paint layer`);
+  }
+});
+
+test("one element deforms at a time, and its border hides without touching border-color", () => {
+  // The skin is one shared element, so the host-level rule that hides the
+  // host's own border under the skin's band must be scoped to the single
+  // element effects.js marks live, and only once Tier 1 is armed. It hides
+  // the border with a transparent border-image, never with border-color:
+  // the skin reads the computed border colour every frame, so hover and
+  // active states have to stay the host's own.
+  const live = RULES.filter((r) => /is-liquid-live/.test(r.selector) && !/::(before|after)$/.test(r.selector));
+  assert.equal(live.length, 1, "exactly one host-level rule may key on the live element");
+  const [rule] = live;
+  assert.equal(rule.selector, '[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live');
+  assert.match(rule.body, /border-image:/, "the host's border hides under a border-image");
+  assert.doesNotMatch(rule.body, /border-color|border-radius|filter|transform/, "the live rule may only hide the border");
+});
+
+test("no effect rewrites a host's border-radius", () => {
+  // The skin traces the radii the component declared; a component stays free
+  // to re-parametrise its own --sl-radius-* without this layer noticing.
+  // Paint layers inherit the radius; nothing may set one.
+  const rewriting = RULES
+    .filter((r) => /\.sl-fx-/.test(r.selector) && /(?:^|;)\s*border-radius\s*:(?!\s*inherit\b)/.test(r.body))
+    .map((r) => r.selector);
+  assert.deepEqual(rewriting, [], "border-radius may only ever be inherited by a paint layer");
 });
 
 test("the glitch ghosts are real rules on the child span", () => {

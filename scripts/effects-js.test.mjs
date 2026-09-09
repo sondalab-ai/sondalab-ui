@@ -173,6 +173,32 @@ test("the ambient aurora is granted to one element at a time", async () => {
   assert.equal(second.attrs["data-sl-fx-live"], undefined);
 });
 
+test("the liquid never filters, re-radiuses or re-colours the host", () => {
+  // The silhouette deforms; the content does not. effects.js draws the swell
+  // on its own <svg> skin and its goo filter is applied to the skin's groups,
+  // never to the host. It reads the host's radii and colours; it never
+  // writes them — a rewritten radius would break a component's own
+  // --sl-radius-* contract, and a rewritten border-color would freeze the
+  // hover state the skin is supposed to follow.
+  assert.doesNotMatch(js, /\.style\.filter\s*=|setProperty\(\s*["']filter["']/, "no filter may be written onto an element's style");
+  assert.doesNotMatch(js, /\.style\.border(?:Radius|Color|TopColor|Image)\s*=|setProperty\(\s*["']border-/, "no border property may be written onto an element");
+  assert.doesNotMatch(js, /feDisplacementMap|feImage/, "the displacement filter is gone; the skin is a shape, not a lens");
+  assert.match(js, /<g filter="url\(#slfx-goo\)">/, "the goo filter sits on the skin's own group");
+});
+
+test("one skin, parented into one live element at a time", async () => {
+  // The skin is a single module-level element. Before it is parented into a
+  // new host it must leave the previous one — otherwise two elements would
+  // carry the same silhouette, or the old host would keep a stale one.
+  assert.match(js, /function buildSkin\(\)\s*\{\s*if \(skin\) return;/, "the skin is built once");
+  const set = js.slice(js.indexOf("function setLiquidLive("));
+  const leave = set.indexOf("skin?.remove()");
+  const enter = set.indexOf("el.appendChild(skin)");
+  assert.ok(leave > -1 && enter > -1, "setLiquidLive must move the skin");
+  assert.ok(leave < enter, "the skin must leave the previous host before it enters the next");
+  assert.match(js, /liquidLiveEl\.classList\.remove\("is-liquid-live"\)/, "the previous host must lose its live class");
+});
+
 test("the coordinator never touches the busy value", () => {
   // Busy auroras are the consumer's and are exempt from the budget: they are
   // bound to real work, and several can legitimately run at once.
