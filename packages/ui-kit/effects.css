@@ -96,6 +96,19 @@
   --slfx-fill-a: 30%;
   --slfx-back: 26px;
   --slfx-back-sat: 1.8;
+  /* THE VEIL — the correction that took three passes to find. Glassmorphism
+     does not thin a component's colour toward transparency; it lays a light
+     film over the blurred backdrop. Every published recipe agrees on the
+     shape: about rgba(255,255,255,.05-.10) on a dark ground, about .45 on a
+     light one, and the guidance is explicit that on dark you want a light
+     tint rather than a dark one. Thinning the amber toward nothing was why a
+     filled button went to dark olive on ink.
+     The colour is the page's own light pole — the sheen where the sheen is
+     bright, its lightness mirrored where it is dark — so it is near-white on
+     both themes without a [data-sl-theme] branch. The alpha is linear in the
+     sheen's lightness through the two published anchors: 0.09 at L 0.91
+     (ink), 0.85 at L 0.24 (paper). */
+  --slfx-veil: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h / clamp(0, 1.12 - 1.13 * l, 1));
 
   /* glass stops — rebound per state; transparent means "no ring" */
   --slfx-s0: transparent;
@@ -474,21 +487,36 @@
    --sl-text-on-accent, which is white on both themes and fails on the light
    accent before this layer runs at all; that is a token decision. */
 .sl-btn--primary.sl-fx-glass {
-  text-shadow: 0 1px 2px oklch(from var(--slc-accent) 0.24 c h / 0.55);
-  /* A brand fill is identity, and identity does not survive being mostly the
-     page behind it: at the layer's 30% the amber went to a dark olive on ink
-     and to a cream wash on paper. A filled button is the one glass surface
-     whose colour is load-bearing, so it keeps more of itself than a ghost
-     button or a card, which have nothing to lose by thinning. */
-  --slfx-fill-a: 48%;
+  /* Gated to paper by its own lightness. On ink the composited fill is dark
+     and the label is dark with it, so a dark shadow is mud — which is what
+     the owner saw. The colour is a 55/45 mix of the accent and the sheen, so
+     it keeps the accent's hue while its LIGHTNESS reports the theme: 0.84 on
+     ink (alpha 0), 0.44 on paper (alpha 0.8). */
+  text-shadow: 0 1px 2px oklch(from color-mix(in oklab, var(--slc-accent) 55%, var(--slfx-sheen))
+                               0.24 c h / clamp(0, (0.6 - l) * 5, 1));
+  /* A saturated brand fill cannot be thinned far on a dark page: at 48% over
+     near-black the amber read as dark olive, and no veil recovers a hue that
+     has been mixed away. This is not a compromise but the way the register
+     actually works — a prominent filled control in Apple's own glass is very
+     nearly solid, and the strong translucency lives on the neutral surfaces
+     (ghost buttons, cards, keycaps) where there is no hue to lose. */
+  --slfx-fill-a: 80%;
 }
 
 @supports (backdrop-filter: blur(1px)) {
   .sl-fx-glass,
   .sl-btn--primary.sl-fx-glass:hover:not(:disabled),
   .sl-btn--primary.sl-fx-glass:active:not(:disabled) {
-    background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), transparent);
+    /* The component's own colour at its share, and the veil for the rest —
+       not transparency for the rest. A ghost button, whose fill IS
+       transparent, therefore ends up as the veil alone, which is exactly the
+       canonical recipe; a filled button ends up as its brand colour LIFTED
+       rather than darkened. */
+    background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), var(--slfx-veil));
     backdrop-filter: blur(var(--slfx-back)) saturate(var(--slfx-back-sat));
+    /* Glass has a rim, and the component already declares one: it is lifted
+       into the material rather than a second edge being added on top. */
+    border-color: color-mix(in srgb, var(--slfx-veil) 60%, var(--slc-border));
   }
 }
 /* ══ GLASS PANE — the element is made of glass ═══════════════════════════════
