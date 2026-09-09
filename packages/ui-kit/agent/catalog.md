@@ -166,13 +166,13 @@ Attention lives here: a 1px arc of light riding the border with its bloom, which
 Consumes: `--slc-accent`, `--slc-text`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document. Don't put an aurora element under an ancestor that clips (`overflow` other than `visible`, `contain: paint`, `clip-path`): the bloom reaches ~22px outside the box, and a glow cut at a container's edge is a defect — wrap the table in the scroll container, not the card beside it.
 
 ### Liquid — `sl-fx-liquid` (`--calm`)
-The element itself gives under the pointer — a smooth dent that follows it with a little lag, springs back and settles when it leaves (an SVG displacement filter, driven by `mount()`). Non-destructive: the filter is present only while the pointer shapes the element, and nothing is changed afterwards. Substrate: **A** App/Page.
+The element's outline gives under the pointer — a small outward swell that follows it with a little lag, springs back and settles when it leaves. It is a skin drawn below the content in the element's own fill and border colours (driven by `mount()`); the text is never filtered and the radius is never rewritten. Non-destructive: the skin exists only while the pointer shapes the element, and nothing is changed afterwards. Substrate: **A** App/Page.
 ```html
 <button class="sl-btn sl-btn--primary sl-fx-liquid">Save changes</button>
 <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm">…</article>
 ```
-`--calm` takes a fraction of the dent's depth — a container is not a button.
-Consumes: nothing — it moves pixels, it paints none. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle.
+`--calm` takes a fraction of the swell — a container is not a button.
+Consumes: nothing of its own — the skin is painted in the host's computed background and border colours. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle.
 
 ### Glitch — `sl-fx-glitch` (`--shatter`)
 Something re-resolved. A finite burst, fired from JavaScript on a discrete event. Always a child span, never the component itself. Substrate: **A** App/Page.

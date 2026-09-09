@@ -269,12 +269,12 @@
     <section id="liquid">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
-        <p class="cap">You are recognised. The element itself gives under the pointer: an SVG <b>feDisplacementMap</b> on the host, fed a Gaussian push away from the cursor and driven by a critically-underdamped spring, dents the outline a few pixels deep and lets the text near the pointer flee it. The dent trails the pointer with its own lag, a released shape overshoots and settles, and the filter is removed once the spring is still — non-destructive. Only one element deforms at a time, and under Tier 2 the chrome ring bends with the same field, so the edge and the surface never disagree. The radius is never rewritten: the filter distorts whatever the component declared.</p>
+        <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. Only one element deforms at a time, and under Tier 2 the chrome welds the same drop onto the same box, so the edge and the surface never disagree. The radius is never rewritten: the skin traces whatever the component declared.</p>
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">the edge gives under the pointer</span>
             <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
-            <p class="cap">Move the pointer across the button. The outline gives where the cursor is, the chrome bends with it, and the text nearest the pointer moves out of its way.</p>
+            <p class="cap">Move the pointer across the button. The outline swells where the cursor is and the chrome follows it; the label does not move, and is never filtered.</p>
           </div>
           <div class="g-cell" style="padding:0">
             <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm" style="padding:1.4rem">
