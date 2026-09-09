@@ -306,7 +306,7 @@
     <section id="liquid" data-back="LIQUID">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
-        <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. The gooey belongs to a round silhouette: only a round icon-only button takes the swell, through <b>.sl-fx-liquid--drop</b> — a modifier written in the markup, never inferred from a measured radius — and a container takes a fraction of it through <b>--calm</b>; a bare <b>.sl-fx-liquid</b> is inert, and a text button is glass instead (§04). Only one element deforms at a time, and under Tier 2 the chrome welds the same drop onto the same box, so the edge and the surface never disagree. The radius is never rewritten: the skin traces whatever the component declared.</p>
+        <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. The gooey belongs to a round silhouette: only a round icon-only button takes the swell, through <b>.sl-fx-liquid--drop</b> — a modifier written in the markup, never inferred from a measured radius — and nothing else takes it — a container yielding under the pointer reads as a toy; a bare <b>.sl-fx-liquid</b> is inert, and a text button is glass instead (§04). Only one element deforms at a time, and under Tier 2 the chrome The radius is never rewritten: the skin traces whatever the component declared.</p>
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">round, icon-only — the edge gives under the pointer</span>
@@ -321,9 +321,9 @@
             <p class="cap">Move the pointer across either. The outline swells where the cursor is and the chrome follows it; the icon does not move, and is never filtered. <b>--drop</b> is the contract: on a text button the drop read as a blister on a box, so it is welded onto round buttons alone.</p>
           </div>
           <div class="g-cell" style="padding:0">
-            <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm" style="padding:1.4rem">
+            <article class="sl-card sl-fx-glass" style="padding:1.4rem">
               <h3 class="sl-card__title">Deterministic resolve</h3>
-              <p class="sl-card__body">A container is not a button: <b>.sl-fx-liquid--calm</b> takes a fraction of the depth, so the surface reads as material, not as a toy.</p>
+              <p class="sl-card__body">A container is not a button and takes no swell at all: the gooey belongs to a round silhouette, and a card that yielded under the pointer would read as a toy. Its glass is the whole of its answer.</p>
             </article>
           </div>
         </div>
@@ -437,11 +437,11 @@
             </div>
             <div class="g-cell">
               <span class="g-label">card</span>
-              <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm sl-fx-aurora">
+              <article class="sl-card sl-fx-glass sl-fx-aurora">
                 <h3 class="sl-card__title">daos</h3>
-                <p class="sl-card__body">Focus it, or scroll §03 for the granted sweep — hover for the calm sheen.</p>
+                <p class="sl-card__body">Focus it, or scroll §03 for the granted sweep — hover for the glass.</p>
               </article>
-              <p class="cap">● glass always; ○ calm liquid, no tilt; ● aurora only on focus, busy or a granted sweep.</p>
+              <p class="cap">● glass always; ○ no liquid — a card is not a round button; ● aurora only on focus, busy or a granted sweep.</p>
             </div>
             <div class="g-cell">
               <span class="g-label">field</span>
@@ -496,8 +496,8 @@
                 <table class="sl-table sl-table--numeric">
                   <thead><tr><th>Probe</th><th>Result</th><th>Latency</th></tr></thead>
                   <tbody>
-                    <tr class="sl-fx-liquid sl-fx-liquid--calm"><td>q-8f2a</td><td>cached</td><td>0ms</td></tr>
-                    <tr class="sl-fx-liquid sl-fx-liquid--calm"><td>q-11c7</td><td>miss</td><td>340ms</td></tr>
+                    <tr><td>q-8f2a</td><td>cached</td><td>0ms</td></tr>
+                    <tr><td>q-11c7</td><td>miss</td><td>340ms</td></tr>
                   </tbody>
                 </table>
               </div>

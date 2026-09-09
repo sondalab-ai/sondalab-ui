@@ -28,7 +28,7 @@
            filter (blur + alpha contrast) and painted in the host's own fill
            and border colours. Content is never filtered. No pseudo-element.
            Gated behind a modifier in the markup: --drop (a round icon-only
-           button) or --calm (a container); a bare .sl-fx-liquid is inert.
+           button); a bare .sl-fx-liquid, and any container, is inert.
    glitch  a child <span>, never the host, so the host's two paint layers stay
            free for the edge.
 

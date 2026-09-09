@@ -77,11 +77,11 @@ const NS = "http://www.w3.org/2000/svg";
  *  welded onto the long side of a text button the drop reads as a blister on
  *  a box, and the owner said so. The gate is an explicit modifier written in
  *  the markup — `--drop` for a round icon-only button (the full swell),
- *  `--calm` for a container (a fraction of it) — never a measured radius: a
+ *  and nothing else — never a measured radius: a
  *  geometric heuristic misfires the moment a component re-parametrises its
  *  own --sl-radius-*, and not breaking under that is a promise this layer
  *  has made twice. A bare .sl-fx-liquid is inert at this tier. */
-const LIQUID_HOSTS = ".sl-fx-liquid:is(.sl-fx-liquid--drop, .sl-fx-liquid--calm)";
+const LIQUID_HOSTS = ".sl-fx-liquid.sl-fx-liquid--drop";
 /** The goo: blur sigma and alpha slope. liquid-gooey's defaults are 6 and
  *  18; the sigma is smaller here because the swell is a few pixels and its
  *  neck has to stay in proportion — "molto leggero". The intercept places
@@ -139,13 +139,27 @@ function buildSkin() {
   };
 }
 
-/** A corner radius from its computed string, resolved against the box the
- *  way CSS does: a percentage is of the shorter side (right for a pill or a
- *  circle, the two shapes a percentage is written for). */
+/** A corner radius from its computed string, resolved against the box the way
+ *  CSS does: a percentage is of the shorter side (right for a pill or a
+ *  circle, the two shapes a percentage is written for), and the result is
+ *  CLAMPED to half that side.
+ *
+ *  The clamp is not a safety net, it is the rule. CSS reduces every radius
+ *  proportionally when two on the same side would overlap, so a uniform
+ *  `border-radius: 9999px` on a 40px button paints a 20px circle. Without the
+ *  clamp the skin traced its outline against 9999px, `nearestEdge` returned a
+ *  point on that imaginary shape, and the drop was written thousands of pixels
+ *  from the element — which is why the gooey read as absent on exactly the
+ *  round buttons it is meant for: `--sl-radius-pill` is 9999px.
+ *  @param {string} raw the computed border-*-radius string
+ *  @param {number} w the box width in CSS pixels
+ *  @param {number} h the box height in CSS pixels
+ *  @returns {number} the radius the browser actually paints, in CSS pixels */
 function cornerPx(raw, w, h) {
   const v = parseFloat(raw);
   if (!Number.isFinite(v)) return 0;
-  return raw.trimEnd().endsWith("%") ? (v / 100) * Math.min(w, h) : v;
+  const shortest = Math.min(w, h);
+  return Math.min(raw.trimEnd().endsWith("%") ? (v / 100) * shortest : v, shortest / 2);
 }
 
 /** The rounded box as a path, radii scaled down together when they would
@@ -195,13 +209,19 @@ const LIQUID_SETTLE_EPS = 0.002;
  *  at full amplitude, as a share of that radius (≈3px on a 40px button);
  *  how far from an edge the pointer is felt, as a multiple of the radius —
  *  a Gaussian, so a card's edge answers the pointer approaching it and is
- *  still across the middle. A calm element takes a fraction of the swell. */
+ *  still across the middle.
+ *
+ *  The owner called the swell "quasi inesistente" on round buttons. The cause
+ *  was not the amplitude but cornerPx: --sl-radius-pill is 9999px, and without
+ *  the clamp the drop was placed thousands of pixels away. With the outline
+ *  correct, 0.24 was still slight and 0.5 read as a blob rather than a button
+ *  giving; 0.34 gives 4.8px on a 2.5rem button — the shape yields, and stays a
+ *  shape. Checked in Chrome at all three. */
 const DROP_K = 0.35;
 const DROP_MIN = 10;
 const DROP_MAX = 16;
-const BULGE_K = 0.24;
+const BULGE_K = 0.34;
 const REACH_K = 1.5;
-const DROP_CALM = 0.4;
 
 let amp = 0, ampV = 0, target = 0;
 let lagX = 0, lagY = 0;              // CSS px, within the live element's own box
@@ -231,7 +251,7 @@ function setLiquidLive(el) {
     .map((raw) => cornerPx(raw, w, h));
   const border = Math.max(parseFloat(cs.borderTopWidth) || 0, 0);
   const drop = Math.max(DROP_MIN, Math.min(DROP_MAX, Math.min(w, h) * DROP_K));
-  const bulge = drop * BULGE_K * (el.classList.contains("sl-fx-liquid--calm") ? DROP_CALM : 1);
+  const bulge = drop * BULGE_K;
   liquidBox = { w, h, radii, border, drop, bulge, reach: drop * REACH_K };
 
   const d = roundedRectPath(w, h, radii);

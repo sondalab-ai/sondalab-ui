@@ -229,8 +229,7 @@
       "kind": "effect",
       "classes": [
         "sl-fx-liquid",
-        "sl-fx-liquid--drop",
-        "sl-fx-liquid--calm"
+        "sl-fx-liquid--drop"
       ],
       "roleVars": []
     },

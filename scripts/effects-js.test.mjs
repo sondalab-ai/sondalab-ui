@@ -206,13 +206,33 @@ test("the coordinator never touches the busy value", () => {
   assert.doesNotMatch(fnBody("revokeLive"), /busy/);
 });
 
+test("a pill radius is clamped to what the browser actually paints", () => {
+  // --sl-radius-pill is 9999px. CSS reduces a radius that cannot fit to half
+  // the shorter side, so a 40px round button paints a 20px circle. Without the
+  // clamp the skin traced its outline against 9999px and nearestEdge answered
+  // with a point on that imaginary shape: the drop was written thousands of
+  // pixels from the element. The gooey was not faint on round buttons — the
+  // one silhouette it exists for — it was somewhere else entirely.
+  const from = js.indexOf("function cornerPx(");
+  assert.ok(from > 0, "the helper must be findable");
+  const body = js.slice(from, js.indexOf("\n}\n", from) + 3);
+  const cornerPx = new Function(`${body}; return cornerPx;`)();
+  assert.equal(cornerPx("9999px", 40, 40), 20, "a pill on a 40px box paints a circle");
+  assert.equal(cornerPx("9999px", 200, 40), 20, "and is bounded by the SHORTER side");
+  assert.equal(cornerPx("6px", 200, 40), 6, "a radius that fits is untouched");
+  assert.equal(cornerPx("50%", 40, 60), 20, "a percentage is of the shorter side");
+  assert.equal(cornerPx("auto", 40, 40), 0, "an unparseable radius is none");
+});
+
 test("the gooey engages only behind a modifier written in the markup", () => {
-  // The owner: the gooey works on round buttons alone. The gate is a class
-  // the consumer writes — --drop on a round icon-only button, --calm on a
-  // container — and never a measured radius: a geometric heuristic misfires
+  // The owner: the gooey works on round buttons alone, and is not applied to
+  // other elements such as cards. The gate is one class the consumer writes —
+  // --drop on a round icon-only button — and never a measured radius: a
+  // geometric heuristic misfires
   // the moment a component re-parametrises --sl-radius-*, which this layer
   // has twice promised not to break under. A bare .sl-fx-liquid is inert.
-  assert.match(js, /const LIQUID_HOSTS = "\.sl-fx-liquid:is\(\.sl-fx-liquid--drop, \.sl-fx-liquid--calm\)"/);
+  assert.match(js, /const LIQUID_HOSTS = "\.sl-fx-liquid\.sl-fx-liquid--drop";/);
+  assert.doesNotMatch(js, /sl-fx-liquid--calm/, "a container takes no swell at all");
   assert.doesNotMatch(js, /closest\("\.sl-fx-liquid"\)/, "the pointer path must not match a bare .sl-fx-liquid");
   assert.match(js.slice(js.indexOf("function onPointerMove(")), /closest\(LIQUID_HOSTS\)/);
   // Bounded at onPanePointer, not at onPaneLeave: the pane driver in between
