@@ -91,10 +91,14 @@ test("exactly one canvas exists, and it is moved rather than multiplied", () => 
   // is created at boot and re-parented, the same single-instance discipline
   // the liquid's skin has — so the device, the surface and the pipeline are
   // built once and never per element.
+  // One canvas in the DOM per lit element, not one canvas in the file: the
+  // refraction map is drawn on an offscreen canvas, and the captured plate and
+  // each pane's lens are canvases of their own with unrelated jobs.
   assert.equal(
-    (js.match(/createElement\("canvas"\)/g) || []).length, 1,
-    "effects.js may create the light canvas once and only once",
+    (js.match(/className = "sl-fx-glass__lit"/g) || []).length, 1,
+    "exactly one element is ever made the light canvas",
   );
+  assert.doesNotMatch(js, /body\.appendChild\(canvas\)/, "the light canvas is never parented to the page");
   assert.doesNotMatch(gpu, /createElement/, "the GPU module creates no element of its own");
   const release = js.slice(js.indexOf("function setPaneLive("), js.indexOf("function onPanePointer("));
   assert.match(release, /lightCanvas\?\.remove\(\);/, "leaving a host must detach the canvas");

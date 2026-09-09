@@ -180,9 +180,17 @@ test("the liquid never filters, re-radiuses or re-colours the host", () => {
   // writes them — a rewritten radius would break a component's own
   // --sl-radius-* contract, and a rewritten border-color would freeze the
   // hover state the skin is supposed to follow.
-  assert.doesNotMatch(js, /\.style\.filter\s*=|setProperty\(\s*["']filter["']/, "no filter may be written onto an element's style");
+  // Scoped to hosts. The lens is a canvas this layer owns, holding a copy of
+  // the page, and filtering THAT is the whole mechanism; filtering a host
+  // would warp its own content, which is the lens the owner refused.
+  const writes = [...js.matchAll(/(\w+)\.style\.filter\s*=/g)].map((m) => m[1]);
+  assert.deepEqual(writes, ["lens"], `only the lens may be filtered, got ${JSON.stringify(writes)}`);
+  assert.doesNotMatch(js, /setProperty\(\s*["']filter["']/, "and never through a custom property on a host");
   assert.doesNotMatch(js, /\.style\.border(?:Radius|Color|TopColor|Image)\s*=|setProperty\(\s*["']border-/, "no border property may be written onto an element");
-  assert.doesNotMatch(js, /feDisplacementMap|feImage/, "the displacement filter is gone; the skin is a shape, not a lens");
+  // Scoped to the skin's own builder: glass displaces a copy of the page, but
+  // the skin must stay a shape.
+  const skin = js.slice(js.indexOf("function buildSkin("), js.indexOf("function cornerPx("));
+  assert.doesNotMatch(skin, /feDisplacementMap|feImage/, "the skin is a shape, not a lens");
   assert.match(js, /<g filter="url\(#slfx-goo\)">/, "the goo filter sits on the skin's own group");
 });
 

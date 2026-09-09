@@ -525,6 +525,325 @@ function randomizeGhosts(el) {
    a consumer who never calls mount() keeps the CSS-only ring and never sees
    an element it did not write; aria-hidden, and CSS makes it inert to the
    pointer and to selection. A linear aurora has no ring and gets none. */
+/* ── the lens: real page content, bent at the rim ────────────────────────────
+   What separates a frosted panel from a lens, and the Liquid Glass hallmark
+   the owner asked for. Reaching it took ruling three routes out by
+   experiment, and every one of those rulings is load-bearing here:
+
+   1. `backdrop-filter: url(#f)` runs COLOUR primitives on the backdrop — an
+      feColorMatrix inverts it visibly — but feDisplacementMap has no effect
+      there at any scale, in Chrome 152. The same filter as a plain `filter:`
+      shreds a striped test element, so the definition is fine and the
+      backdrop path is simply not implemented.
+   2. html2canvas cannot parse the CSS Color 4 colour function, which this kit
+      emits everywhere after the gamut fitting, so it throws before it draws.
+   3. An SVG `foreignObject` rasterises the live DOM correctly and fast (30ms
+      for a section) because it is Chrome's own renderer — but Chrome marks
+      the result origin-unclean for good. Proven against a single variable:
+      the same blob-URL SVG uploads as a GPU texture WITHOUT foreignObject and
+      throws SecurityError WITH it. So it can never be read back or become a
+      WebGPU texture.
+
+   What survives is the useful part: a tainted canvas cannot be READ, but it
+   can be drawn and it can be FILTERED. So the page is captured once into a
+   plate, each pane crops its own piece of it into a canvas of its own, and
+   the displacement runs on that canvas as an ordinary filter. Real page
+   content, really refracted, in the one arrangement the browser allows.
+
+   The map encodes a refraction vector field: red carries x, green carries y,
+   128 is no displacement, and feDisplacementMap samples at
+   P + scale x (channel - 0.5). The field points OUTWARD along the silhouette's
+   own normal and is strongest at the rim, falling to nothing a bevel's depth
+   inside — which is where a real bevel bends light and where a flat pane
+   bends none. Chromatic aberration is three passes of the same map at
+   slightly different scales, recombined one channel each: blue refracts more
+   than red, which is what puts the colour fringe on a glass edge.
+
+   CHROME ONLY. No other engine accepts an SVG filter as a backdrop-filter, so
+   this is strictly additive: the property is written as a custom property with
+   an empty fallback, and everywhere else the blur and the veil stand alone
+   and remain correct. */
+const REFRACT_HOSTS = ".sl-fx-glass";
+/** The map is smooth, so it costs nothing to generate it below the element's
+ *  own resolution and let feImage scale it back up. */
+const REFRACT_MAX = 192;
+/** How far in from the rim the bevel reaches, and how far the backdrop is
+ *  pulled at the rim, both in CSS pixels. A pane is mostly flat: the bend
+ *  belongs to its edge. */
+const REFRACT_BEVEL = 14;
+const REFRACT_PX = 12;
+/** How much further blue is bent than red — the dispersion. */
+const REFRACT_DISPERSE = 0.14;
+
+let refractDefs = null;
+/** One filter per distinct geometry, not per element: a row of identical
+ *  keycaps is one map. Keyed by the box and radius it was built for. */
+const refractCache = new Map();
+let refractSeq = 0;
+let refractSizes = null;
+
+/** Whether this engine can rasterise a foreignObject into an image at all.
+ *  Asked by trying, not by sniffing: Safari and Firefox both support the
+ *  primitive to varying degrees, and the honest test is whether a capture
+ *  comes back. Until one does, no lens is created and the blur and the veil
+ *  stand alone, which is correct without it. */
+function refractSupported() {
+  return typeof document !== "undefined" && typeof XMLSerializer !== "undefined";
+}
+
+/** The refraction vector field for one rounded box, as a PNG data URL.
+ *  @param {number} w box width in CSS pixels
+ *  @param {number} h box height in CSS pixels
+ *  @param {number} r corner radius in CSS pixels, already clamped
+ *  @returns {string} a data URL whose R/G channels carry the field
+ */
+function refractionMap(w, h, r) {
+  const k = Math.min(1, REFRACT_MAX / Math.max(w, h));
+  const mw = Math.max(2, Math.round(w * k));
+  const mh = Math.max(2, Math.round(h * k));
+  const cv = document.createElement("canvas");
+  cv.width = mw;
+  cv.height = mh;
+  const ctx = cv.getContext("2d", { willReadFrequently: false });
+  const img = ctx.createImageData(mw, mh);
+  const hw = mw / 2;
+  const hh = mh / 2;
+  const rr = Math.min(r * k, Math.min(hw, hh));
+  const bevel = Math.max(REFRACT_BEVEL * k, 1);
+  // Signed distance to the rounded box, negative inside — the same field the
+  // shader uses, so the bend and the rim highlight agree about where the edge is.
+  const sdf = (x, y) => {
+    const qx = Math.abs(x - hw) - hw + rr;
+    const qy = Math.abs(y - hh) - hh + rr;
+    return Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - rr;
+  };
+  for (let y = 0; y < mh; y++) {
+    for (let x = 0; x < mw; x++) {
+      const px = x + 0.5;
+      const py = y + 0.5;
+      const d = sdf(px, py);
+      // 1 at the rim, 0 a bevel's depth inside, and nothing at all outside.
+      const s = d >= 0 ? 0 : Math.max(0, 1 + d / bevel);
+      // Raised rather than linear: a bevel's slope steepens toward its lip,
+      // so the bend is concentrated in the last few pixels the way glass does
+      // it, instead of smearing evenly across the band.
+      const mag = s * s * Math.sqrt(s);
+      const gx = sdf(px + 1, py) - sdf(px - 1, py);
+      const gy = sdf(px, py + 1) - sdf(px, py - 1);
+      const gl = Math.hypot(gx, gy) || 1;
+      const i = (y * mw + x) * 4;
+      img.data[i] = Math.round(128 + (gx / gl) * mag * 127);
+      img.data[i + 1] = Math.round(128 + (gy / gl) * mag * 127);
+      img.data[i + 2] = 128;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return cv.toDataURL("image/png");
+}
+
+/** The filter that carries one geometry's map, created once and referenced by
+ *  every element of that size. */
+function refractionFilter(w, h, r) {
+  const key = `${w}x${h}r${r}`;
+  const known = refractCache.get(key);
+  if (known) return known;
+  if (!refractDefs) {
+    refractDefs = document.createElementNS(NS, "svg");
+    refractDefs.setAttribute("aria-hidden", "true");
+    refractDefs.setAttribute("width", "0");
+    refractDefs.setAttribute("height", "0");
+    refractDefs.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+    document.body.appendChild(refractDefs);
+  }
+  const id = `slfx-refract-${++refractSeq}`;
+  // sRGB, not linearRGB: the map's 128 must mean "no displacement" as an
+  // 8-bit value, and a linear conversion would move it.
+  const chan = (name, s) =>
+    `<feDisplacementMap in="SourceGraphic" in2="map" scale="${s.toFixed(2)}" ` +
+    `xChannelSelector="R" yChannelSelector="G" result="${name}"/>`;
+  const only = (input, row, out) =>
+    `<feColorMatrix in="${input}" type="matrix" values="${row}" result="${out}"/>`;
+  refractDefs.insertAdjacentHTML(
+    "beforeend",
+    `<filter id="${id}" filterUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}" color-interpolation-filters="sRGB">
+       <feImage href="${refractionMap(w, h, r)}" x="0" y="0" width="${w}" height="${h}" result="map"/>
+       ${chan("dr", REFRACT_PX * (1 - REFRACT_DISPERSE))}
+       ${chan("dg", REFRACT_PX)}
+       ${chan("db", REFRACT_PX * (1 + REFRACT_DISPERSE))}
+       ${only("dr", "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0", "rc")}
+       ${only("dg", "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0", "gc")}
+       ${only("db", "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0", "bc")}
+       <feBlend in="rc" in2="gc" mode="screen" result="rg"/>
+       <feBlend in="rg" in2="bc" mode="screen"/>
+     </filter>`,
+  );
+  refractCache.set(key, id);
+  return id;
+}
+
+/** The captured page, one plate for the whole viewport. Every lens crops its
+ *  own piece out of this, so the expensive step happens once rather than per
+ *  element. Tainted by foreignObject and therefore never read — only drawn. */
+let plate = null;
+let plateW = 0;
+let plateH = 0;
+let plateWaiting = false;
+/** Where the page was scrolled when the plate was taken. The plate is a
+ *  photograph, and a photograph does not scroll: every crop has to be shifted
+ *  by however far the page has moved since. Without this the lens showed real
+ *  content from the wrong part of the page. */
+let plateScrollY = 0;
+let plateScrollX = 0;
+
+/** Rasterise what is behind the glass. The clone drops every glass element,
+ *  so a pane never captures itself or its neighbours: the plate is the page
+ *  the glass sits ON, which is what a lens has behind it.
+ *  @returns {Promise<boolean>} whether a usable plate now exists */
+async function capturePlate() {
+  const w = Math.max(1, document.documentElement.clientWidth);
+  const h = Math.max(1, window.innerHeight);
+  let css = "";
+  for (const sheet of document.styleSheets) {
+    // A cross-origin sheet throws on .cssRules; the page still paints without
+    // it, and there is nothing to be done about it here.
+    try { for (const rule of sheet.cssRules) css += `${rule.cssText}\n`; } catch { /* opaque */ }
+  }
+  const clone = document.body.cloneNode(true);
+  for (const el of clone.querySelectorAll(`${REFRACT_HOSTS}, canvas, .sl-fx-glass__lens`)) el.remove();
+  // XMLSerializer, not outerHTML: foreignObject content must be well-formed
+  // XML, and the page's markup is not.
+  const body = new XMLSerializer().serializeToString(clone);
+  // The scroll offset moves the CONTENT, not the frame. Putting it on the
+  // outer div walked the frame itself out of the SVG's viewport and captured
+  // a blank plate — the frame is the window, and the page slides behind it.
+  const doc = `<div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:${w}px;height:${h}px;overflow:hidden">` +
+    `<style><![CDATA[${css}]]></style>` +
+    `<div style="position:absolute;left:0;top:${-Math.round(window.scrollY)}px;width:${w}px">${body}</div>` +
+    `</div>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
+    `<foreignObject width="100%" height="100%">${doc}</foreignObject></svg>`;
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("plate"));
+      i.src = url;
+    });
+    if (!plate) plate = document.createElement("canvas");
+    plate.width = w;
+    plate.height = h;
+    plateW = w;
+    plateH = h;
+    plateScrollY = Math.round(window.scrollY);
+    plateScrollX = Math.round(window.scrollX);
+    plate.getContext("2d").drawImage(img, 0, 0);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Crop the plate into one pane's own lens and point the displacement at it.
+ *  Rounded to whole pixels: the lens must land on the same grid as the
+ *  element, or the page shows through offset from where it really is. */
+function paintLens(el) {
+  if (!plate || !plateW) return;
+  const lens = el.querySelector(":scope > .sl-fx-glass__lens");
+  if (!lens) return;
+  const r = el.getBoundingClientRect();
+  const w = Math.round(r.width);
+  const h = Math.round(r.height);
+  if (w < 8 || h < 8) return;
+  if (lens.width !== w || lens.height !== h) {
+    lens.width = w;
+    lens.height = h;
+  }
+  const ctx = lens.getContext("2d");
+  ctx.clearRect(0, 0, w, h);
+  // The plate is in the viewport coordinates OF ITS OWN MOMENT, so the crop is
+  // the element's rect shifted by however far the page has scrolled since.
+  const sx = Math.round(r.left) + (Math.round(window.scrollX) - plateScrollX);
+  const sy = Math.round(r.top) + (Math.round(window.scrollY) - plateScrollY);
+  ctx.drawImage(plate, sx, sy, w, h, 0, 0, w, h);
+}
+
+/** Give one element a lens, sized and filtered for its own geometry.
+ *  Quantised, not merely rounded, so boxes that differ only by a pixel of
+ *  text metrics share one displacement map. */
+const REFRACT_STEP = 4;
+function applyRefraction(el) {
+  const rect = el.getBoundingClientRect();
+  if (rect.width < 8 || rect.height < 8) return;
+  const q = (v) => Math.max(REFRACT_STEP, Math.round(v / REFRACT_STEP) * REFRACT_STEP);
+  const w = q(rect.width);
+  const h = q(rect.height);
+  const r = Math.round(cornerPx(getComputedStyle(el).borderTopLeftRadius, w, h));
+  let lens = el.querySelector(":scope > .sl-fx-glass__lens");
+  if (!lens) {
+    lens = document.createElement("canvas");
+    lens.className = "sl-fx-glass__lens";
+    lens.setAttribute("aria-hidden", "true");
+    el.insertBefore(lens, el.firstChild);
+  }
+  lens.style.filter = `url(#${refractionFilter(w, h, r)})`;
+  paintLens(el);
+}
+
+/** Recapture the plate and repaint every lens. Coalesced: a burst of scrolls,
+ *  a resize and a theme change together cost one capture, not three. */
+function refreshLenses() {
+  if (plateWaiting) return;
+  plateWaiting = true;
+  // A timer, not requestAnimationFrame. rAF is frozen while the document is
+  // hidden, and a pane whose lens is blank until the tab is looked at is a
+  // pane that has no lens at all on a background load — the capture is not
+  // animation, it is content, and it must not wait for a frame that may never
+  // come.
+  setTimeout(async () => {
+    plateWaiting = false;
+    if (!(await capturePlate())) return;
+    for (const el of document.querySelectorAll(REFRACT_HOSTS)) paintLens(el);
+  }, 0);
+}
+
+/** Arm the lens across a subtree and keep it in step with layout.
+ *  The plate is a COPY, so it is only ever as fresh as its last capture: a
+ *  scroll repaints it on the next idle frame rather than per frame, which is
+ *  the honest limit of this technique. */
+function armRefraction(root) {
+  if (!refractSupported()) return;
+  if (!refractSizes && typeof ResizeObserver !== "undefined") {
+    // A pane that changes size needs the map for its NEW box; the old one
+    // would bend the wrong geometry along an edge that has moved.
+    refractSizes = new ResizeObserver((entries) => {
+      for (const e of entries) applyRefraction(e.target);
+    });
+  }
+  // Create each lens outright rather than waiting for the observer's first
+  // callback: that callback is a promise for a LATER frame, and a pane with no
+  // lens until then is a pane that flashes in.
+  const arm = (el) => {
+    applyRefraction(el);
+    refractSizes?.observe(el);
+  };
+  if (root instanceof Element && root.matches?.(REFRACT_HOSTS)) arm(root);
+  for (const el of root.querySelectorAll?.(REFRACT_HOSTS) ?? []) arm(el);
+  if (!plate) {
+    let idle = 0;
+    const restamp = () => {
+      clearTimeout(idle);
+      idle = setTimeout(refreshLenses, 120);
+    };
+    addEventListener("scroll", restamp, { passive: true });
+    addEventListener("resize", restamp, { passive: true });
+  }
+  refreshLenses();
+}
+
 const GLOW_HOSTS = ".sl-fx-aurora:not(.sl-fx-aurora--linear)";
 
 function injectGlow(el) {
@@ -581,8 +900,12 @@ export function mount(root = document) {
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
   injectGlows(root);
+  armRefraction(root);
   new MutationObserver((records) => {
-    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) injectGlows(n);
+    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
+      injectGlows(n);
+      armRefraction(n);
+    }
   }).observe(root, { childList: true, subtree: true });
 
   // One delegated listener for the whole subtree, not one per element.
