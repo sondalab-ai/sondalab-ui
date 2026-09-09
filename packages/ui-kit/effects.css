@@ -513,7 +513,11 @@
        canonical recipe; a filled button ends up as its brand colour LIFTED
        rather than darkened. */
     background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), var(--slfx-veil));
-    backdrop-filter: blur(var(--slfx-back)) saturate(var(--slfx-back-sat));
+    /* The refraction is appended, never substituted: effects.js writes
+       --slfx-refract only where an SVG filter is accepted as a backdrop-filter
+       (Chrome alone today), and everywhere else the empty fallback leaves the
+       blur and the veil standing on their own, which is correct without it. */
+    backdrop-filter: blur(var(--slfx-back)) saturate(var(--slfx-back-sat)) var(--slfx-refract, );
     /* Glass has a rim, and the component already declares one: it is lifted
        into the material rather than a second edge being added on top. */
     border-color: color-mix(in srgb, var(--slfx-veil) 60%, var(--slc-border));
