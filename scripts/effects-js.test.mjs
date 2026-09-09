@@ -205,3 +205,42 @@ test("the coordinator never touches the busy value", () => {
   assert.doesNotMatch(fnBody("grantLive"), /busy/);
   assert.doesNotMatch(fnBody("revokeLive"), /busy/);
 });
+
+test("the gooey engages only behind a modifier written in the markup", () => {
+  // The owner: the gooey works on round buttons alone. The gate is a class
+  // the consumer writes — --drop on a round icon-only button, --calm on a
+  // container — and never a measured radius: a geometric heuristic misfires
+  // the moment a component re-parametrises --sl-radius-*, which this layer
+  // has twice promised not to break under. A bare .sl-fx-liquid is inert.
+  assert.match(js, /const LIQUID_HOSTS = "\.sl-fx-liquid:is\(\.sl-fx-liquid--drop, \.sl-fx-liquid--calm\)"/);
+  assert.doesNotMatch(js, /closest\("\.sl-fx-liquid"\)/, "the pointer path must not match a bare .sl-fx-liquid");
+  assert.match(js.slice(js.indexOf("function onPointerMove(")), /closest\(LIQUID_HOSTS\)/);
+  const pointer = js.slice(js.indexOf("function onPointerMove("), js.indexOf("function onPaneLeave("));
+  assert.doesNotMatch(pointer, /borderRadius|borderTopLeftRadius|Radius/, "no radius may be measured to decide who goes gooey");
+});
+
+test("a pointer leaving a child of the host does not release the host", () => {
+  // pointerleave does not bubble, but the listener is delegated in the
+  // capture phase, so it fires for every child the pointer leaves — the
+  // icon inside a round button, the glitch span inside a text button. The
+  // liquid dipped to zero on every one of those before the next move.
+  for (const name of ["onPointerLeave", "onPaneLeave"]) {
+    const body = js.slice(js.indexOf(`function ${name}(`));
+    assert.match(body.slice(0, 500), /ev\.target !== el\) return/, `${name} must release only on the host's own leave`);
+  }
+});
+
+test("the pane writes nothing onto the host but custom properties", () => {
+  // The pane is CSS drawing from three numbers; the driver may write where
+  // the pointer is, its bearing and how lit the pane is, and nothing else —
+  // no colour, no filter, no background, no geometry — so a pane the pointer
+  // has left is exactly what it was.
+  const pane = js.slice(js.indexOf("const PANE_HOSTS"), js.indexOf("/* ── glitch"));
+  const writes = [...pane.matchAll(/style\.setProperty\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
+  assert.ok(writes.length >= 3, "the pane driver must write its properties");
+  for (const w of writes) assert.match(w, /^--slfx-/, `the pane may only write --slfx-* properties, wrote ${w}`);
+  assert.doesNotMatch(pane, /\.style\.(?:background|filter|color|border|transform)/, "no real property may be written by the pane");
+  const cleared = pane.match(/removeProperty\(k\)/);
+  assert.ok(cleared, "the properties must be removed when the pane goes dark");
+  assert.match(pane, /paneTarget === 0 && paneLit < PANE_SETTLE[\s\S]*?paneRafId = 0;[\s\S]*?setPaneLive\(null\);\s*return;/, "the loop must stop itself once dark");
+});

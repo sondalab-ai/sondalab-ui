@@ -80,3 +80,25 @@ test("the showcase reports which tier actually resolved", () => {
     "the MutationObserver must watch data-sl-fx-gpu, not only data-sl-theme",
   );
 });
+
+test("every text button is a glass pane; only a round icon-only button goes gooey", () => {
+  // The owner's rule, held mechanically on the reference page: the gooey
+  // belongs to round icon-only buttons (--drop, an aria-label because there
+  // is no text), and every other button is made of glass (--pane), whatever
+  // its variant. A bare .sl-fx-liquid on a button is a mistake either way.
+  const buttons = [...html.matchAll(/<button class="([^"]*\bsl-btn\b[^"]*)"([^>]*)>/g)];
+  assert.ok(buttons.length >= 8, "the showcase must show its buttons");
+  let drops = 0;
+  for (const [tag, cls, attrs] of buttons) {
+    if (/\bsl-fx-liquid\b/.test(cls)) {
+      assert.match(cls, /\bsl-fx-liquid--drop\b/, `a liquid button must be --drop: ${tag}`);
+      assert.match(attrs, /aria-label=/, `a --drop button is icon-only and needs an aria-label: ${tag}`);
+      assert.doesNotMatch(cls, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
+      drops++;
+    } else {
+      assert.match(cls, /\bsl-fx-glass--pane\b/, `a text button must be a glass pane: ${tag}`);
+      assert.match(cls, /\bsl-fx-glass\b/, `--pane requires .sl-fx-glass: ${tag}`);
+    }
+  }
+  assert.ok(drops >= 1, "the gooey must have somewhere to demonstrate: a round icon-only button");
+});

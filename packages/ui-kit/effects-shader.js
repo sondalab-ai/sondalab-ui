@@ -5,7 +5,8 @@
    WHAT THIS DRAWS — the glass family only. One thing, at the scale of the
    reference (libraries.dev/metal): a CHROME HAIRLINE exactly on the element's
    own border, a wandering HALO of soft light outside it, a bright CURSOR
-   REFLECTION where the pointer is, and — on liquid elements — the same SWELL
+   REFLECTION where the pointer is (on a glass pane, wider and dispersed into
+   colour at its ends), and — on liquid elements — the same SWELL
    the liquid's skin gives the silhouette, so the ring follows the surface
    instead of sitting rigid around a deforming shape.
 
@@ -62,6 +63,8 @@ struct Look {
 @group(0) @binding(4) var<uniform> drop : vec4f;
 // x: 1 when the element carries the chrome; 0 when it is only a surface the
 // chrome's environment falls onto — every registered element is one.
+// y: 1 on a glass PANE (effects.css, .sl-fx-glass--pane): the cursor's
+//    reflection reaches further and disperses into colour at its ends.
 @group(0) @binding(5) var<uniform> kinds : array<vec4f, 16>;
 
 // ── tuning ──────────────────────────────────────────────────────────────────
@@ -85,6 +88,18 @@ const HALO_WANDER: f32 = 0.22; // radians per second the halo drifts around the 
 
 const CUR_REACH : f32 = 34.0;  // radius of the cursor's reflection, CSS px
 const CUR_GAIN  : f32 = 0.85;  // how far toward the bright pole it pushes the chrome
+
+// On a pane the cursor's reflection is the glass answering the hand: wider
+// (the reference's cursor "spill" is 48px), a little stronger, and DISPERSED —
+// red and blue sample the environment either side of green, by an angle that
+// grows with the cursor's presence. That is the reference's shiftRed /
+// shiftBlue (0.3, 0.75 in its chromatic preset), the one colour-separation
+// knob its material has, and it is what refraction looks like on an edge:
+// the hot spot fringes into colour at its ends. Only on the hairline, only
+// near the cursor; the content under the ring is never touched.
+const PANE_REACH: f32 = 48.0;  // radius of the reflection on a pane, CSS px
+const PANE_GAIN : f32 = 0.95;
+const DISPERSE  : f32 = 0.45;  // channel split at the cursor, radians of perimeter angle
 
 // Reflections on neighbours: the chrome's environment falling onto the
 // near edge of another element, the way the reference reflects its ring
@@ -322,8 +337,23 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
     let gy = edgeAt(hit, p + vec2f(0.0, e)) - edgeAt(hit, p - vec2f(0.0, e));
     let g = normalize(vec2f(gx, gy) + vec2f(1.0e-6, 0.0));
 
+    // The cursor's presence on this pixel, and — on a pane — the dispersion
+    // it brings: outside its reach the split is zero and the three channels
+    // are one sample of the environment.
+    let ptr = pointer.xy * look.res;
+    let pane = kinds[hit].y;
+    let reach = mix(CUR_REACH, PANE_REACH, pane);
+    let cur = exp(-0.5 * pow(distance(p, ptr) / reach, 2.0)) * pointer.z * motion;
+    let split = DISPERSE * cur * pane;
+    var env = palette(environment(a, p, t));
+    if (split > 0.001) {
+      env = vec3f(
+        palette(environment(a + split, p, t)).r,
+        env.g,
+        palette(environment(a - split, p, t)).b);
+    }
     // The environment, gamma-punched for the contrast that makes it chrome.
-    var m = pow(palette(environment(a, p, t)), vec3f(CONTRAST));
+    var m = pow(env, vec3f(CONTRAST));
 
     // A directional key: brighter where the ring faces up-left. A multiplier
     // on the environment, not a light/dark split of the ring.
@@ -335,10 +365,8 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
 
     // The cursor's reflection: the ring goes bright and slightly coloured
     // where the pointer is, and only there.
-    let ptr = pointer.xy * look.res;
-    let cur = exp(-0.5 * pow(distance(p, ptr) / CUR_REACH, 2.0)) * pointer.z * motion;
     let hot = mix(poleHi(), look.accent.rgb, 0.18 + 0.22 * (0.5 + 0.5 * sin(a * 9.0 + t * 2.0)));
-    m = mix(m, hot, cur * CUR_GAIN);
+    m = mix(m, hot, cur * mix(CUR_GAIN, PANE_GAIN, pane));
 
     let o = over(clamp(m, vec3f(0.0), vec3f(1.0)), cover, col, alpha);
     col = o.xyz;

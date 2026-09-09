@@ -73,6 +73,15 @@ function readTokens(root = document.documentElement) {
    never written, and the skin is removed the moment the spring settles. */
 
 const NS = "http://www.w3.org/2000/svg";
+/** What the pointer may shape. The gooey belongs to a ROUND silhouette:
+ *  welded onto the long side of a text button the drop reads as a blister on
+ *  a box, and the owner said so. The gate is an explicit modifier written in
+ *  the markup — `--drop` for a round icon-only button (the full swell),
+ *  `--calm` for a container (a fraction of it) — never a measured radius: a
+ *  geometric heuristic misfires the moment a component re-parametrises its
+ *  own --sl-radius-*, and not breaking under that is a promise this layer
+ *  has made twice. A bare .sl-fx-liquid is inert at this tier. */
+const LIQUID_HOSTS = ".sl-fx-liquid:is(.sl-fx-liquid--drop, .sl-fx-liquid--calm)";
 /** The goo: blur sigma and alpha slope. liquid-gooey's defaults are 6 and
  *  18; the sigma is smaller here because the swell is a few pixels and its
  *  neck has to stay in proportion — "molto leggero". The intercept places
@@ -321,7 +330,9 @@ function ensureLiquidLoop() {
 }
 
 function onPointerMove(ev) {
-  const el = ev.target instanceof Element ? ev.target.closest(".sl-fx-liquid") : null;
+  if (!(ev.target instanceof Element)) return;
+  onPanePointer(ev);
+  const el = ev.target.closest(LIQUID_HOSTS);
   if (!el || el.closest('[data-sl-fx="off"]')) return;
   const r = el.getBoundingClientRect();
   pointerX = ev.clientX - r.left;
@@ -338,10 +349,114 @@ function onPointerMove(ev) {
 }
 
 function onPointerLeave(ev) {
-  const el = ev.target instanceof Element ? ev.target.closest(".sl-fx-liquid") : null;
-  if (!el || el !== liquidLiveEl) return;
+  if (!(ev.target instanceof Element)) return;
+  onPaneLeave(ev);
+  const el = ev.target.closest(LIQUID_HOSTS);
+  // pointerleave does not bubble, but the listener is on the root in the
+  // capture phase, so it also fires for every CHILD the pointer leaves — an
+  // icon inside the button. Only the host's own leave releases the host.
+  if (!el || el !== liquidLiveEl || ev.target !== el) return;
   target = 0;
   ensureLiquidLoop(); // keep the loop running so the overshoot plays out
+}
+
+/* ── glass pane: the light answers the pointer ──────────────────────────────
+   The glass family's pointer-reactive mode (effects.css, .sl-fx-glass--pane):
+   the button is made of glass, and the interaction is light. This driver
+   writes NOTHING but custom properties onto the host — where the pointer is,
+   its bearing from the centre, and how lit the pane is — and the CSS draws
+   from them: a radial glint on the body at the pointer (the reference's
+   cursor "spill": 48px radius, peak 0.55), and the hairline's hot stop turned
+   to face the pointer with a fringe of colour either side of it. No filter,
+   no colour, no geometry is ever written; a pane the pointer has left is
+   left exactly as it was. The lit amount eases, so the light arrives and
+   goes the way light does (the reference fades its cursor light over 200ms
+   and its bend out over 350ms), and the loop stops itself once dark. */
+const PANE_HOSTS = ".sl-fx-glass--pane";
+/** Where the pane's conic puts its hot stop (effects.css, the lit ring):
+ *  the bearing written to the host is the pointer's bearing minus this, so
+ *  the hot stop lands under the pointer. */
+const PANE_HOT_DEG = 20;
+const PANE_TAU_IN = 0.08;
+const PANE_TAU_OUT = 0.14;
+const PANE_SETTLE = 0.005;
+let paneEl = null;
+let paneLit = 0;
+let paneTarget = 0;
+let paneBearing = 0;      // degrees, continuous — never wrapped, so it never turns the long way
+let paneRafId = 0;
+let panePrevT = 0;
+
+function setPaneLive(el) {
+  if (paneEl === el) return;
+  if (paneEl) {
+    paneEl.classList.remove("is-glass-lit");
+    for (const k of ["--slfx-px", "--slfx-py", "--slfx-ptr", "--slfx-lit"]) paneEl.style.removeProperty(k);
+    // Leave no empty style="" behind on an element that had none.
+    if (!paneEl.getAttribute("style")) paneEl.removeAttribute("style");
+  }
+  paneEl = el;
+  paneLit = 0;
+  if (el) el.classList.add("is-glass-lit");
+}
+
+function onPanePointer(ev) {
+  const el = ev.target.closest(PANE_HOSTS);
+  if (!el || el.closest('[data-sl-fx="off"]')) return;
+  if (paneEl !== el) {
+    setPaneLive(el);
+    paneBearing = 0;
+  }
+  const r = el.getBoundingClientRect();
+  const cs = getComputedStyle(el);
+  // The body (::before) is inset: 0, which resolves against the padding
+  // box; the pointer is measured from the same origin.
+  const bl = parseFloat(cs.borderLeftWidth) || 0;
+  const bt = parseFloat(cs.borderTopWidth) || 0;
+  el.style.setProperty("--slfx-px", `${(ev.clientX - r.left - bl).toFixed(1)}px`);
+  el.style.setProperty("--slfx-py", `${(ev.clientY - r.top - bt).toFixed(1)}px`);
+  // Bearing as a conic angle: 0 straight up, clockwise. Unwrapped against
+  // the previous value so a pointer crossing the top goes 359 → 361, not
+  // 359 → 1 — the CSS transition on the angle would otherwise spin the ring
+  // the long way round.
+  const dx = ev.clientX - (r.left + r.width / 2);
+  const dy = ev.clientY - (r.top + r.height / 2);
+  const raw = (Math.atan2(dx, -dy) * 180) / Math.PI - PANE_HOT_DEG;
+  let d = (raw - paneBearing) % 360;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  paneBearing += d;
+  el.style.setProperty("--slfx-ptr", `${paneBearing.toFixed(1)}deg`);
+  paneTarget = 1;
+  ensurePaneLoop();
+}
+
+function onPaneLeave(ev) {
+  const el = ev.target.closest(PANE_HOSTS);
+  if (!el || el !== paneEl || ev.target !== el) return;
+  paneTarget = 0;
+  ensurePaneLoop();
+}
+
+function integratePane(now) {
+  if (paneEl && !paneEl.isConnected) paneTarget = 0;
+  const dt = Math.min((now - panePrevT) / 1000 || 0, 1 / 30);
+  panePrevT = now;
+  const tau = paneTarget > paneLit ? PANE_TAU_IN : PANE_TAU_OUT;
+  paneLit += (paneTarget - paneLit) * (1 - Math.exp(-dt / tau));
+  if (paneTarget === 0 && paneLit < PANE_SETTLE) {
+    paneRafId = 0;
+    setPaneLive(null);
+    return;
+  }
+  paneEl?.style.setProperty("--slfx-lit", paneLit.toFixed(3));
+  paneRafId = requestAnimationFrame(integratePane);
+}
+
+function ensurePaneLoop() {
+  if (paneRafId) return;
+  panePrevT = performance.now();
+  paneRafId = requestAnimationFrame(integratePane);
 }
 
 /* ── glitch ──────────────────────────────────────────────────────────────────

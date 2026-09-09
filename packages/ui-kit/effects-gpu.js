@@ -102,7 +102,7 @@ function radiusPx(raw, rect) {
  *   radius of the drop its skin draws, where the drop sits and how wide the
  *   goo's neck is — the SAME circle effects.js welds onto the box, so the
  *   chrome follows exactly the silhouette the skin has.
- * @returns {{rects: () => {rect: DOMRect, radius: string, border: string, metal: number, blend: number, dropR: number, dropX: number, dropY: number}[], refresh(): void, stop(): void}}
+ * @returns {{rects: () => {rect: DOMRect, radius: string, border: string, metal: number, pane: number, blend: number, dropR: number, dropX: number, dropY: number}[], refresh(): void, stop(): void}}
  */
 export function trackEdges({ liquid } = {}) {
   const onScreen = new Set();
@@ -154,6 +154,9 @@ export function trackEdges({ liquid } = {}) {
         // While the aurora holds an element's edge the chrome stands down
         // there, but the element still catches its neighbours' reflections.
         const metal = el.classList.contains("sl-fx-glass") && !auroraLit(el) ? 1 : 0;
+        // A pane's cursor reflection reaches further and disperses
+        // (effects-shader.js, PANE_REACH / DISPERSE).
+        const pane = el.classList.contains("sl-fx-glass--pane") ? 1 : 0;
         const sh = shape.get(el) || { radius: "0px", border: "0px" };
         const swelling = live && live.el === el;
         out.push({
@@ -161,6 +164,7 @@ export function trackEdges({ liquid } = {}) {
           radius: sh.radius,
           border: sh.border,
           metal,
+          pane,
           blend: swelling ? live.blend : 0,
           dropR: swelling ? live.radius : 0,
           dropX: swelling ? live.x : 0,
@@ -305,7 +309,7 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
     const rectsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
     const paramsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
     // x: 1 when the element carries the chrome, 0 when it only catches
-    // reflections of its neighbours' chrome.
+    // reflections of its neighbours' chrome. y: 1 on a glass pane.
     const kindsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
     // xy: position, normalised. z: the pointer's PRESENCE, eased toward 1
     // while it is on the page and toward 0 after it left — the cursor
@@ -448,6 +452,7 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
           continue;
         }
         k[0] = e.metal || 0;
+        k[1] = e.pane || 0;
         r[0] = e.rect.left / view[0];
         r[1] = e.rect.top / view[1];
         r[2] = e.rect.width / view[0];

@@ -171,6 +171,14 @@
        layer's `position: relative` and detach the ring from the dialog. */
     dialog.sl-dialog[open] { position: relative; margin: 0; max-width: none; width: auto; }
 
+    /* -- round icon-only button: the one silhouette the gooey belongs to.
+       components.css has no icon-button class yet; the page sizes a .sl-btn
+       square and re-parametrises its radius to the pill — which is exactly
+       the case the liquid's markup gate protects (a measured radius would
+       have to guess). ---------------------------------------------------- */
+    .round { width: 2.5rem; height: 2.5rem; padding: 0; border-radius: var(--sl-radius-pill); }
+    .round svg { width: 1rem; height: 1rem; display: block; }
+
     /* -- subtree opt-out demonstration --------------------------------------- */
     .fx-off { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--sl-border-subtle); }
     .fx-off .g-demo { margin-top: 0.8rem; gap: 1rem; }
@@ -224,10 +232,10 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">child span, never the host</span>
-            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora sl-fx-aurora--rim" id="delete-branch">
+            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim" id="delete-branch">
               <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
             </button>
-            <p class="cap">Click to re-resolve. The button itself carries the liquid sheen and the aurora ring; the glitch sits on its child, never on <b>.sl-btn</b> directly.</p>
+            <p class="cap">Click to re-resolve. The button itself is a glass pane with the aurora's rim; the glitch sits on its child, never on <b>.sl-btn</b> directly.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">shatter — bands jump sideways</span>
@@ -241,14 +249,14 @@
                 <span class="sl-fx-glitch__shard" style="--slfx-i:4; --slfx-n:5">No signal</span>
               </span>
             </span>
-            <button class="sl-btn sl-btn--ghost sl-btn--sm" id="simulate-loss">Simulate signal loss</button>
+            <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane" id="simulate-loss">Simulate signal loss</button>
             <p class="cap">Five bands, each carrying <b>--slfx-i</b> (0…4) and <b>--slfx-n</b> (5) inline — the <b>clip-path</b> divides by them. A shard missing either variable has an invalid <b>clip-path</b> and silently does not render.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">scramble — decode readout</span>
             <div class="g-demo">
               <span class="sl-tag" id="probe-tag" data-num="8f2a">8f2a</span>
-              <button class="sl-btn sl-btn--ghost sl-btn--sm" id="rerun-probe">Re-run</button>
+              <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane" id="rerun-probe">Re-run</button>
             </div>
             <p class="cap"><b>scramble()</b> cycles random glyphs and locks the real characters left to right, terminal-readout style — a text change, not motion, so it is safe under reduced motion.</p>
           </div>
@@ -269,12 +277,19 @@
     <section id="liquid">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
-        <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. Only one element deforms at a time, and under Tier 2 the chrome welds the same drop onto the same box, so the edge and the surface never disagree. The radius is never rewritten: the skin traces whatever the component declared.</p>
+        <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. The gooey belongs to a round silhouette: only a round icon-only button takes the swell, through <b>.sl-fx-liquid--drop</b> — a modifier written in the markup, never inferred from a measured radius — and a container takes a fraction of it through <b>--calm</b>; a bare <b>.sl-fx-liquid</b> is inert, and a text button is glass instead (§04). Only one element deforms at a time, and under Tier 2 the chrome welds the same drop onto the same box, so the edge and the surface never disagree. The radius is never rewritten: the skin traces whatever the component declared.</p>
         <div class="gallery">
           <div class="g-cell">
-            <span class="g-label">the edge gives under the pointer</span>
-            <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
-            <p class="cap">Move the pointer across the button. The outline swells where the cursor is and the chrome follows it; the label does not move, and is never filtered.</p>
+            <span class="g-label">round, icon-only — the edge gives under the pointer</span>
+            <div class="g-demo">
+              <button class="sl-btn sl-btn--ghost round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="sl-btn sl-btn--primary round sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora sl-fx-aurora--rim" aria-label="Add">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <p class="cap">Move the pointer across either. The outline swells where the cursor is and the chrome follows it; the icon does not move, and is never filtered. <b>--drop</b> is the contract: on a text button the drop read as a blister on a box, so it is welded onto round buttons alone.</p>
           </div>
           <div class="g-cell" style="padding:0">
             <article class="sl-card sl-fx-glass sl-fx-liquid sl-fx-liquid--calm" style="padding:1.4rem">
@@ -310,7 +325,7 @@
           </div>
           <div class="g-cell">
             <span class="g-label">busy button</span>
-            <button class="sl-btn sl-btn--primary sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
+            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
             <p class="cap">A filled button has only a transparent border, which its fill paints under — so <b>--rim</b> steps the ring outside the box, hugging the fill, and swaps the beam to the depth companion: the accent is what the fill is made of. While busy the button keeps full opacity; it is working, not unavailable.</p>
           </div>
           <div class="g-cell" style="padding:0">
@@ -332,12 +347,15 @@
     <section id="glass">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">04</span><h2>Glass</h2></div>
-        <p class="cap">This is a physical surface. Under Tier 2 the element’s own border becomes chrome: its <b>border-radius</b> and <b>border-width</b> are read into a signed distance field, and a hairline exactly that wide reflects a moving environment — bright and dark bands, the product’s hue as pastel flecks between them, never a tint over the whole ring — with one soft halo wandering around the edge and a bright spot under the cursor. The chrome’s two poles sit around the page’s own ground, on ink and on paper alike. Without a GPU the same border carries a static conic hairline; glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives an edge, and while the aurora is lit it owns that edge.</p>
+        <p class="cap">This is a physical surface. Under Tier 2 the element’s own border becomes chrome: its <b>border-radius</b> and <b>border-width</b> are read into a signed distance field, and a hairline exactly that wide reflects a moving environment — bright and dark bands, the product’s hue as pastel flecks between them, never a tint over the whole ring — with one soft halo wandering around the edge and a bright spot under the cursor. The chrome’s two poles sit around the page’s own ground, on ink and on paper alike. Without a GPU the same border carries a static conic hairline; glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives an edge, and while the aurora is lit it owns that edge. Every text button, primary or ghost, is a <b>pane</b> — made of glass, not merely edged with it: a slab of light on <b>::before</b> under the label, a glint that follows the pointer, and a hairline that turns to face it fringed with the accent on one side and the depth companion on the other, which is what refraction looks like on an edge. The label is never refracted.</p>
         <div class="gallery">
           <div class="g-cell">
-            <span class="g-label">border-as-edge</span>
-            <button class="sl-btn sl-btn--ghost sl-fx-glass">Cancel</button>
-            <p class="cap">A ghost button's 1px border <b>is</b> the glass edge — no second ring is added on top of it.</p>
+            <span class="g-label">pane — the button is made of glass</span>
+            <div class="g-demo">
+              <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
+              <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+            </div>
+            <p class="cap">Move the pointer over either. A ghost button's 1px border <b>is</b> the glass edge — no second ring is added on top of it — and while the pointer is on the pane the hairline's hot stop faces it, a fringe of colour either side. A primary is the harder case: translucency over an opaque fill is light that sits <b>on</b> the fill — the glint along the top, the shade along the bottom, the 1px rim inside the edge, the spot under the pointer — while its <b>::after</b> belongs to the rim aurora; under Tier 2 the chrome takes the fill's outer pixel.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">keycap</span>
@@ -378,12 +396,15 @@
           </nav>
           <div class="gallery">
             <div class="g-cell">
-              <span class="g-label">button — primary · ghost</span>
+              <span class="g-label">button — primary · ghost · round icon-only</span>
               <div class="g-demo">
-                <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
-                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-aurora">Cancel</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
+                <button class="sl-btn sl-btn--ghost round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
               </div>
-              <p class="cap">Primary: ● liquid, ● aurora, — glass (filled, no edge to cut). Ghost: its border doubles as ● glass, plus ○ liquid and ● aurora.</p>
+              <p class="cap">Primary: ● glass <b>--pane</b> over the fill, ● aurora <b>--rim</b>, — liquid. Ghost: ● glass <b>--pane</b>, its border the edge, ● aurora, — liquid. Round icon-only: ● liquid <b>--drop</b>, ● glass, ● aurora — the one button that goes gooey.</p>
             </div>
             <div class="g-cell">
               <span class="g-label">card</span>
@@ -434,8 +455,8 @@
                 </span></h3>
                 <p class="sl-dialog__body">This clears the cached probe answer. The next call re-runs the tool.</p>
                 <div class="sl-dialog__actions">
-                  <button class="sl-btn sl-btn--ghost sl-btn--sm">Keep</button>
-                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
+                  <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane">Keep</button>
+                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
                 </div>
               </dialog>
               <p class="cap">Shatters in once on open — fired here on mount. Per the table its rim stays lit for as long as the dialog is open; this page keeps its one ambient <b>grantLive()</b> grant on the card in §03, so this dialog shows its resting and busy states only, not the sweep.</p>
@@ -493,9 +514,9 @@
         <div class="fx-off">
           <p class="sl-eyebrow">data-sl-fx="off" — subtree opt-out</p>
           <div data-sl-fx="off" class="g-demo">
-            <button class="sl-btn sl-btn--primary sl-fx-liquid sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
             <article class="sl-card sl-fx-glass sl-fx-aurora" data-sl-fx-live="on" style="padding:1rem;max-width:20rem">
-              <p class="sl-card__body">Inert inside this region — no sheen, no ring, no glitch, regardless of the classes present.</p>
+              <p class="sl-card__body">Inert inside this region — no pane, no ring, no glitch, regardless of the classes present.</p>
             </article>
           </div>
           <p class="cap">A dense data region inside an expressive page — a table of probe results, say — declines the whole layer at the subtree boundary without touching a single component class.</p>

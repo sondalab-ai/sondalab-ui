@@ -12,7 +12,11 @@
    ── Who draws what (spec §Decision 2) ───────────────────────────────────────
    glass   the element's border, as chrome. Here: a static conic hairline on
            ::after. Under the GPU tier (effects-gpu.js) a shader replaces it
-           with a hairline that reflects a moving environment.
+           with a hairline that reflects a moving environment. --pane: the
+           element is MADE of glass — a slab of light on ::before under the
+           label, a glint that follows the pointer, a hairline that turns to
+           face it with a fringe of colour either side (dispersion). Every
+           text button, whatever its variant.
    aurora  light riding the border — the border-beam recipe: a thin arc on
            ::after that rotates, and its bloom: a thicker copy of the arc,
            Gaussian-blurred, on a child effects.js injects at mount()
@@ -23,12 +27,15 @@
            the host's own box plus a drop at the pointer, welded by a goo
            filter (blur + alpha contrast) and painted in the host's own fill
            and border colours. Content is never filtered. No pseudo-element.
+           Gated behind a modifier in the markup: --drop (a round icon-only
+           button) or --calm (a container); a bare .sl-fx-liquid is inert.
    glitch  a child <span>, never the host, so the host's two paint layers stay
            free for the edge.
 
    ── Paint layers ────────────────────────────────────────────────────────────
    ::after is the edge (glass at rest, the aurora's arc when lit). ::before is
-   free. The aurora's bloom is a CHILD, not a pseudo-element, because CSS
+   the pane's body (glass --pane), and free on everything else. The aurora's
+   bloom is a CHILD, not a pseudo-element, because CSS
    applies a filter before a mask: a ring masked on one box can only be
    blurred by a box around it. effects.js injects the child at mount(); it
    is the one layer that leaves the box, so a glow is truncated by any
@@ -108,12 +115,14 @@
    :is(.sl-fx-glass, .sl-fx-aurora)::after so this text never collides with
    the shared ring rule's own selector further down the file — a test locates
    that rule by its first occurrence of that exact substring. */
+:root[data-sl-theme="high-contrast"] .sl-fx-glass::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora__glow,
 :root[data-sl-theme="high-contrast"] .sl-fx-liquid__skin,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora__glow,
@@ -121,6 +130,7 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
 :is(.sl-fx-glass, .sl-fx-aurora):is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
+.sl-fx-glass:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
 .sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
 .sl-fx-glitch:is([data-sl-fx="off"], [data-sl-fx="off"] *)::after {
   display: none !important;
@@ -232,6 +242,132 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--slfx-sheen) 7%, transparent);
 }
 .sl-fx-glass::after { opacity: 1; }
+
+/* A filled element's ::after is the rim aurora's, stepped OUTSIDE the fill
+   (--rim, below): a resting chrome conic there would be a 2px bezel around
+   the button, not an edge on it. So on a filled element the glass hairline
+   stands down at rest — its edge is the pane's inner rim (--pane) at Tiers
+   0/1 and the chrome on the fill's outer pixel at Tier 2 — and the aurora's
+   rules, later in the file at equal specificity, still light it. */
+.sl-fx-glass.sl-fx-aurora--rim::after { opacity: 0; }
+
+/* ══ GLASS PANE — the element is made of glass ═══════════════════════════════
+   The glass family's pointer-reactive mode, for every text button whatever
+   its variant — the owner: buttons are made of glass, and the interaction is
+   light, translucency, refraction. Three layers, none of them a filter, and
+   the label sits on top of all of them untouched.
+
+   BODY  ::before, z-index -1 — above the host's own fill (the host is a
+         stacking context), below its label. A slab: the glint along the top
+         inside edge and the shade along the bottom (the reference's
+         innerShadow — white 90%, offset 1px, blur 0.5 — is the same light
+         from above), a 1px inner rim of the glint just inside the border,
+         which is the thickness of the pane, and a wash that lightens toward
+         the top. Over a filled control the fill shows through all of it:
+         translucency over an opaque brand fill is light that sits ON the
+         fill, not a fill that lets the page through.
+   SPOT  the same layer carries a radial glint at the pointer — the
+         reference's cursor "spill" (48px radius, 1 → 0.35 at 45% → 0, peak
+         0.55), placed by effects.js through --slfx-px/--slfx-py and eased in
+         and out through --slfx-lit. On paper it is not white: the
+         reference's light preset composites its light with multiply and
+         saturate(5.4), and a near-white glint on cream is invisible — so the
+         spot is two colours whose ALPHA carries the theme, and only one of
+         them is ever visible (--slfx-spot-cool / --slfx-spot-warm).
+   EDGE  the hairline turns to face the pointer: while lit, the conic's hot
+         stop sits at the pointer's bearing with a fringe of the accent on
+         one side and of the depth companion on the other — dispersion,
+         which is what refraction looks like on an edge (the reference's
+         material has one colour-separation knob, its R/B channel shift).
+         Under Tier 2 the chrome does the same in the cursor's reflection
+         (effects-shader.js, DISPERSE). Refraction lives on the edge band and
+         nowhere else: the content is never filtered, and nothing here is a
+         backdrop-filter — a lens over the label is the effect the owner
+         refused, and a blur on a 1px band would show nothing anyway.
+
+   Requires .sl-fx-glass on the same element (the vivid tier and the glint
+   are declared there). A filled element carries --rim, the marker the
+   aurora already needs on a fill: its ::after is the rim's, so its resting
+   edge is the body's inner rim, its spot is always the white glint (a warm
+   spot on an accent fill is accent on accent), and under Tier 2 the chrome
+   takes the fill's outer pixel. */
+.sl-fx-glass--pane {
+  --slfx-px: 50%;
+  --slfx-py: 50%;
+  --slfx-lit: 0;
+  --slfx-spot-r: 3rem;
+  /* The dark pole of the neutral pair, the way --slfx-glint is the light
+     one: the sheen where it is dark (paper, L 0.24), its lightness mirrored
+     below where it is bright (ink: 1 − 0.91 = 0.09, under the surface). */
+  --slfx-shade: oklch(from var(--slfx-sheen) min(l, 1 - l) c h);
+  /* The spot's two colours. Cool: the glint, with alpha 1 where the sheen
+     is the light pole (ink, L 0.91 → (0.91 − 0.45) × 4, clamped to 1) and 0
+     where it is the dark one (paper, L 0.24). Warm: the accent's hue at the
+     vivid tier with the opposite alpha, read off a 30/70 mix of the accent
+     and the sheen in oklab — the near-neutral sheen leaves the accent's hue
+     alone and scales its chroma by 0.3 (restored ×3.3) while the lightness
+     is 0.3 accent + 0.7 sheen: paper 0.3 × 0.66 + 0.7 × 0.24 = 0.36 → alpha
+     1 (still 0.97 with an ink accent of L 0.80 pinned onto paper, which the
+     showcase does); ink 0.3 × 0.80 + 0.7 × 0.91 = 0.88 → alpha 0. The sheen
+     decides, as it does for the glint and for the chrome's poles, so an
+     inversion band's remapped sheen flips the spot. */
+  --slfx-spot-cool: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h / clamp(0, (l - 0.45) * 4, 1));
+  --slfx-spot-warm: oklch(from color-mix(in oklab, var(--slfx-accent-vivid) 30%, var(--slfx-sheen)) var(--slfx-vivid-l) calc(c * 3.3) h / clamp(0, (0.6 - l) * 5, 1));
+  /* The dispersion fringes either side of the hot stop. */
+  --slfx-edge-warm: color-mix(in srgb, var(--slfx-accent-vivid) 70%, var(--slfx-edge-hi));
+  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth-vivid) 70%, var(--slfx-edge-hi));
+}
+.sl-fx-glass--pane.sl-fx-aurora--rim {
+  --slfx-spot-cool: var(--slfx-glint);
+  --slfx-spot-warm: transparent;
+}
+.sl-fx-glass--pane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle var(--slfx-spot-r) at var(--slfx-px) var(--slfx-py),
+      color-mix(in srgb, var(--slfx-spot-cool) calc(var(--slfx-lit) * 26%), transparent) 0%,
+      color-mix(in srgb, var(--slfx-spot-cool) calc(var(--slfx-lit) * 9%), transparent) 45%,
+      transparent 100%),
+    radial-gradient(circle var(--slfx-spot-r) at var(--slfx-px) var(--slfx-py),
+      color-mix(in srgb, var(--slfx-spot-warm) calc(var(--slfx-lit) * 34%), transparent) 0%,
+      color-mix(in srgb, var(--slfx-spot-warm) calc(var(--slfx-lit) * 12%), transparent) 45%,
+      transparent 100%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--slfx-glint) 9%, transparent),
+      transparent 45%,
+      color-mix(in srgb, var(--slfx-shade) 9%, transparent));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--slfx-glint) 40%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--slfx-shade) 20%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--slfx-glint) 10%, transparent);
+}
+/* The edge faces the pointer. Only once Tier 1 is armed (effects.js writes
+   the bearing), only on an element whose ::after is the glass's own (not a
+   --rim), and never over a lit aurora, which owns the edge. The hot stop
+   sits at 20deg (effects.js, PANE_HOT_DEG) between a cool fringe and a warm
+   one; the bearing is written unwrapped, so the transition on the angle —
+   a registered property, so it interpolates — never turns the long way. */
+[data-sl-fx="on"] .sl-fx-glass--pane.is-glass-lit:not(.sl-fx-aurora--rim, :focus-visible, :focus-within, [data-sl-fx-live])::after {
+  --slfx-angle: var(--slfx-ptr, 210deg);
+  background: conic-gradient(from var(--slfx-angle),
+    var(--slfx-edge-cool) 0deg,
+    var(--slfx-edge-hi) 20deg,
+    var(--slfx-edge-warm) 40deg,
+    var(--slfx-edge-lo) 100deg,
+    var(--slfx-edge-lo) 180deg,
+    var(--slfx-edge-lo) 260deg,
+    var(--slfx-edge-cool) 340deg,
+    var(--slfx-edge-cool) 360deg);
+  transition:
+    opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+    background var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+    --slfx-angle var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
 
 /* Container-scale edges. Width is emphasis, not separation — HANDOFF check 4
    classes an emphasis edge as a blessed category, so this is not an L2 breach. */

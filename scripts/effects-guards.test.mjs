@@ -130,10 +130,15 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 4,
-    `exactly four edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 6,
+    `exactly six edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
   assert.ok(declaring.some((s) => s.startsWith(":is(")), "the shared ring must be one");
+  assert.ok(declaring.some((s) => s === ".sl-fx-glass--pane::before"), "the pane's body must be one");
+  assert.ok(
+    declaring.some((s) => s.startsWith('[data-sl-fx="on"] .sl-fx-glass--pane.is-glass-lit') && s.endsWith("::after")),
+    "the pane's lit edge must be one, and only once Tier 1 is armed",
+  );
   assert.ok(
     declaring.some((s) => s.includes('[data-sl-fx-live="busy"]') && s.endsWith("::after")),
     "the aurora's arc must be one, and it must cover busy",
@@ -232,4 +237,43 @@ test("the glitch never claims the host's paint layers", () => {
     .filter((r) => /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/.test(r.selector))
     .map((r) => r.selector);
   assert.deepEqual(nested, [], "the glitch must not nest an edge or liquid class");
+});
+
+test("the pane's body sits below the label, never filters, and both kill switches hide it", () => {
+  // The owner's rule on a new surface: refraction lives on the edge band,
+  // the label stays flat. The body is ::before at a negative z-index (above
+  // the host's own fill, below its content); no rule scoped to the pane may
+  // filter anything or reach for a backdrop-filter — a lens over the label
+  // is the effect the owner refused; and the body goes with the paint
+  // layers under both kill switches.
+  const body = RULES.find((r) => r.selector === ".sl-fx-glass--pane::before");
+  assert.ok(body, "the pane's body must be its own rule");
+  assert.match(body.body, /z-index:\s*-\d/, "the body must paint below the host's label");
+  assert.match(body.body, /pointer-events:\s*none/);
+  const filtered = RULES
+    .filter((r) => /--pane/.test(r.selector) && /(?:^|;)\s*(?:backdrop-)?filter\s*:/.test(r.body))
+    .map((r) => r.selector);
+  assert.deepEqual(filtered, [], "no pane rule may filter — the content is never refracted");
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    const killed = RULES.some(
+      (r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-glass::before") && /display:\s*none/.test(r.body),
+    );
+    assert.ok(killed, `[${attr}] must hide the pane's body, the way it hides every other paint layer`);
+  }
+});
+
+test("the pane's lit edge yields to the aurora and stays off a filled element", () => {
+  // While attention lives on the element the edge belongs to the light; on a
+  // --rim the ::after is the rim aurora's, outside the fill. The lit ring
+  // rewrites --slfx-angle from the bearing effects.js writes, and nothing
+  // else may set the registered angle outside an animation.
+  const lit = RULES.find((r) => /\.sl-fx-glass--pane\.is-glass-lit/.test(r.selector) && r.selector.endsWith("::after"));
+  assert.ok(lit, "the lit edge must be its own rule");
+  assert.match(lit.selector, /^\[data-sl-fx="on"\]/, "the lit edge needs Tier 1 armed");
+  assert.match(lit.selector, /:not\([^)]*\.sl-fx-aurora--rim[^)]*\)/, "never on a --rim");
+  assert.match(lit.selector, /:not\([^)]*:focus-visible[^)]*\[data-sl-fx-live\][^)]*\)/, "never over a lit aurora");
+  assert.match(lit.body, /--slfx-angle:\s*var\(--slfx-ptr/, "the angle comes from the bearing the driver writes");
+  assert.doesNotMatch(lit.body, /(?:^|;)\s*opacity\s*:/, "the lit edge must not force the ring visible under Tier 2");
+  const rim = RULES.find((r) => r.selector === ".sl-fx-glass.sl-fx-aurora--rim::after");
+  assert.ok(rim && /opacity:\s*0/.test(rim.body), "the resting glass conic must stand down on a --rim");
 });

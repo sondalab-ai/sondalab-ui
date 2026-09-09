@@ -99,3 +99,21 @@ test("every WGSL array length and sentinel agrees with MAX_RECTS", async () => {
   for (const n of sentinels) assert.equal(n, MAX_RECTS, `sentinel ${n} != MAX_RECTS`);
   assert.equal(SHADER.match(/rectCount/g).length > 0, true);
 });
+
+test("a pane's cursor reflection disperses on the hairline, and only there", () => {
+  // The owner's refraction lives on the edge band: the chrome's cursor
+  // reflection on a pane splits its channels either side of the environment
+  // sample (the reference's shiftRed / shiftBlue), scaled by the cursor's
+  // presence so it is zero away from the pointer. The packer flags a pane in
+  // kinds.y; the shader reads it from the hit element. Nothing samples the
+  // page — the canvas has no backdrop, and a lens over the label is refused.
+  assert.match(gpu, /const pane = el\.classList\.contains\("sl-fx-glass--pane"\) \? 1 : 0;/);
+  assert.match(gpu, /k\[1\] = e\.pane \|\| 0;/, "kinds.y must carry the pane flag");
+  assert.match(shader, /let pane = kinds\[hit\]\.y;/);
+  assert.match(shader, /let split = DISPERSE \* cur \* pane;/, "the split must scale with the cursor's presence on a pane");
+  const hairline = shader.slice(shader.indexOf("if (cover > 0.0)"), shader.indexOf("if (alpha <= 0.0)"));
+  assert.match(hairline, /environment\(a \+ split, p, t\)\)\.r/, "red samples one side");
+  assert.match(hairline, /environment\(a - split, p, t\)\)\.b/, "blue samples the other");
+  const outside = shader.replace(hairline, "").replace(/\/\/.*$/gm, "");
+  assert.doesNotMatch(outside, /\bsplit\b/, "dispersion must stay inside the hairline branch");
+});
