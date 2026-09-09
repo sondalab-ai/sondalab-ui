@@ -153,10 +153,38 @@
    references resolve using the declaring element's cascaded values, so a
    :root declaration could never pick up an .invert ancestor's remap. */
 :is(.sl-fx-glass, .sl-fx-aurora) {
-  --slfx-edge-hi: color-mix(in srgb, var(--slfx-sheen) 55%, var(--slc-border-strong, var(--sl-border-strong)));
+  /* ── The vivid tier ─────────────────────────────────────────────────────
+     Light on a light page cannot take its contrast from luminance. The beam
+     is the accent, and its tails, bloom and rim are the depth companion; on
+     paper those are a dark amber (L 0.60) and a dark teal (L 0.45, C 0.07),
+     and a dark line on cream reads as pigment, not as light — while lifting
+     it toward white only makes it pale. So every hue an effect emits is
+     first brought to the palette's own vivid tier, where --sl-status-*
+     already sit on both themes (paper: L 0.58–0.67, C 0.14–0.22; ink: L
+     0.71–0.84, C 0.14–0.18): a FLOOR on lightness, and the lift is paid for
+     in chroma, 0.45 per unit of lift — which is what keeps a lifted hue a
+     colour instead of a tint. Paper: depth L 0.45 / C 0.07 → 0.66 / 0.17,
+     accent 0.60 / 0.13 → 0.66 / 0.16. Ink: both tokens already sit above
+     the floor and pass through (the depth companion moves by 0.003). One
+     rule for both themes, and an inversion band's remapped tokens follow
+     it — which is why this is a derivation, not a [data-sl-theme] branch. */
+  --slfx-vivid-l: 0.66;
+  --slfx-vivid-k: 0.45;
+  --slfx-accent-vivid: oklch(from var(--slc-accent, var(--sl-accent-default)) max(l, var(--slfx-vivid-l)) calc(c + max(0, var(--slfx-vivid-l) - l) * var(--slfx-vivid-k)) h);
+  --slfx-depth-vivid: oklch(from var(--slfx-depth) max(l, var(--slfx-vivid-l)) calc(c + max(0, var(--slfx-vivid-l) - l) * var(--slfx-vivid-k)) h);
+  /* The glint: the light pole of the neutral pair, which the hairline's
+     bright stop and the arc's hot core are made of. On ink that is the sheen
+     itself (the text token, L 0.91). On paper the sheen is the DARK pole
+     (L 0.24), and a highlight made of it is a grey line — so the glint is
+     its lightness mirrored: 1.2 − l lands at 0.96, the chrome's own paper
+     pole (effects-shader.js puts it at 0.985), and max() leaves a bright
+     sheen alone. The same criterion the shader applies at runtime: whichever
+     of the neutral pair is the brighter is the pole. */
+  --slfx-glint: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h);
+  --slfx-edge-hi: color-mix(in srgb, var(--slfx-glint) 55%, var(--slc-border-strong, var(--sl-border-strong)));
   --slfx-edge-lo: var(--slc-border-subtle, var(--sl-border-subtle));
   --slfx-edge-mid: var(--slc-border-strong, var(--sl-border-strong));
-  --slfx-edge-tint: color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 40%, var(--slfx-edge-hi));
+  --slfx-edge-tint: color-mix(in srgb, var(--slfx-accent-vivid) 40%, var(--slfx-edge-hi));
   position: relative;
   isolation: isolate;
 }
@@ -256,7 +284,7 @@
     transparent 0deg,
     var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.14),
     var(--slfx-beam) calc(var(--slfx-arc) * 0.32),
-    color-mix(in srgb, var(--slfx-sheen) var(--slfx-core), var(--slfx-beam)) calc(var(--slfx-arc) * 0.5),
+    color-mix(in srgb, var(--slfx-glint) var(--slfx-core), var(--slfx-beam)) calc(var(--slfx-arc) * 0.5),
     var(--slfx-beam) calc(var(--slfx-arc) * 0.68),
     var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.86),
     transparent var(--slfx-arc),
@@ -266,19 +294,20 @@
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */
-  --slfx-beam: var(--slc-accent, var(--sl-accent-default));
-  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth) 75%, transparent);
+  --slfx-beam: var(--slfx-accent-vivid);
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth-vivid) 75%, transparent);
   --slfx-core: 86%;
-  /* The bloom's two colours are the beam and the depth companion LIFTED
-     toward white and pushed a little in chroma, then made translucent:
-     light is lighter than what it falls on. Without the lift, on paper the
-     depth companion (a dark teal) at half alpha is a grey-teal smear around
-     the element — dirt, not light — and on ink the lift only turns the glow
-     pastel, which is what the reference's bloom is. Relative colour syntax
-     is already the kit's own vocabulary (themes/*.css derive the accent
-     steps with it); l and c are channels, not a literal. */
+  /* The bloom's two colours are the vivid beam and the vivid depth companion
+     LIFTED toward white and pushed a little in chroma, then made translucent:
+     light is lighter than what it falls on. Lifted from the raw tokens, on
+     paper the depth companion (a dark teal) came out as a grey-teal haze
+     around the element — dirt, not light; lifted from the vivid tier it is a
+     saturated haze, and on ink the lift only turns the glow pastel, which is
+     what the reference's bloom is. Relative colour syntax is already the
+     kit's own vocabulary (themes/*.css derive the accent steps with it); l
+     and c are channels, not a literal. */
   --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-beam) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 78%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 66%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 66%, transparent);
   /* Where the ring's outer edge sits, measured from the padding box
      outward: 0 on a bordered element (the ring is on the border), the
      ring's own width on --rim, which steps the ring out past the fill. */
@@ -312,14 +341,15 @@
      depth companion against the page is below the threshold of notice; the
      ring has to carry its own weight out here, with nothing behind it. */
   --slfx-ring-w: 2px;
-  /* The depth companion, lifted a quarter of the way toward white: on paper
-     it is a dark teal, and a dark line hugging a dark-amber fill reads as a
-     shadow rather than as light. */
-  --slfx-beam: oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.25) calc(c * 1.15) h);
+  /* The vivid depth companion, lifted a quarter of the way toward white: a
+     line at the same lightness as the amber fill it hugs reads as a shadow
+     rather than as light, on paper especially, where the two tokens sit
+     within 0.06 of each other. */
+  --slfx-beam: oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.25) calc(c * 1.15) h);
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
   --slfx-core: 40%;
-  --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 90%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 78%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 90%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 78%, transparent);
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
