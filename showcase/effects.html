@@ -128,9 +128,38 @@
     .sec-head h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
 
     /* -- hairline-grid gallery (shared by every section on this page) ------ */
-    .gallery { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--sl-border-subtle); border: 1px solid var(--sl-border-subtle); margin-top: 1.5rem; }
+    /* -- what the glass has to look through ---------------------------------
+       A pane blurs its backdrop, so the page has to put something behind the
+       panes worth blurring. An oversized display word per section, set flush
+       right and bled off the edge, at a few per cent of the text colour: it
+       reads as a watermark in the paper rather than as decoration, and it is
+       the one thing on the page that shows a backdrop-filter is running.
+       The gallery and its cells go translucent so the word carries through
+       them — an opaque cell would give every glass element a flat colour to
+       blur, which looks identical to no blur at all.
+       No `overflow` anywhere on the section: the aurora's bloom reaches 55px
+       past its element, and clipping it here is the truncation the owner
+       objected to. The word is placed to stay inside instead. */
+    section[data-back]::after {
+      content: attr(data-back);
+      position: absolute;
+      z-index: -1;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -42%);
+      font-family: var(--sl-font-display);
+      font-weight: 700;
+      font-size: clamp(6rem, 17vw, 15rem);
+      line-height: 0.8;
+      letter-spacing: -0.045em;
+      color: color-mix(in srgb, var(--sl-text-primary) 12%, transparent);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .gallery { display: grid; grid-template-columns: 1fr; gap: 1px; background: color-mix(in srgb, var(--sl-border-subtle) 55%, transparent); border: 1px solid var(--sl-border-subtle); margin-top: 1.5rem; }
     @media (min-width: 720px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
-    .g-cell { background: var(--sl-bg-surface); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.9rem; }
+    .g-cell { background: color-mix(in srgb, var(--sl-bg-surface) 62%, transparent); padding: clamp(1.2rem, 2.5vw, 1.7rem); display: flex; flex-direction: column; gap: 0.9rem; }
     .g-cell > .g-label { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
     .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
     .g-demo--col { flex-direction: column; align-items: stretch; }
@@ -225,7 +254,7 @@
       </div>
     </section>
 
-    <section id="glitch">
+    <section id="glitch" data-back="GLITCH">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">01</span><h2>Glitch</h2></div>
         <p class="cap">Something re-resolved. Two ghost channels off <b>--slc-accent</b> and <b>--slfx-depth</b>, blended with <b>mix-blend-mode: screen</b>. JS owns timing only — <b>burst()</b> runs one finite, randomised pulse (200–500ms, capped at 1500ms); a burst requested while another runs is dropped, not queued, because a queue reads as breakage rather than signal. The glitch never uses its host's <b>::before</b>/<b>::after</b> — it lives on a required child <b>&lt;span class="sl-fx-glitch"&gt;</b>, so a button can glitch, sheen and ring all at once without one effect winning by accident.</p>
@@ -274,7 +303,7 @@
       </div>
     </section>
 
-    <section id="liquid">
+    <section id="liquid" data-back="LIQUID">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
         <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. The gooey belongs to a round silhouette: only a round icon-only button takes the swell, through <b>.sl-fx-liquid--drop</b> — a modifier written in the markup, never inferred from a measured radius — and a container takes a fraction of it through <b>--calm</b>; a bare <b>.sl-fx-liquid</b> is inert, and a text button is glass instead (§04). Only one element deforms at a time, and under Tier 2 the chrome welds the same drop onto the same box, so the edge and the surface never disagree. The radius is never rewritten: the skin traces whatever the component declared.</p>
@@ -301,7 +330,7 @@
       </div>
     </section>
 
-    <section id="aurora">
+    <section id="aurora" data-back="AURORA">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">03</span><h2>Aurora</h2></div>
         <p class="cap">Attention lives here. The border beam, in CSS at every tier: a 1px arc of light riding the border — the depth companion at its tails, the accent along it, a white-hot core — with a bloom that follows the arc’s own shape and a wash of the same light just inside the edge, its hue drifting a little while it sweeps. Four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed. Where the light is on, the chrome stands down: the edge belongs to attention.</p>
@@ -344,7 +373,7 @@
       </div>
     </section>
 
-    <section id="glass">
+    <section id="glass" data-back="GLASS">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">04</span><h2>Glass</h2></div>
         <p class="cap">This is a physical surface. Under Tier 2 the element’s own border becomes chrome: its <b>border-radius</b> and <b>border-width</b> are read into a signed distance field, and a hairline exactly that wide reflects a moving environment — bright and dark bands, the product’s hue as pastel flecks between them, never a tint over the whole ring — with one soft halo wandering around the edge and a bright spot under the cursor. The chrome’s two poles sit around the page’s own ground, on ink and on paper alike. Without a GPU the same border carries a static conic hairline; glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives an edge, and while the aurora is lit it owns that edge. Every text button, primary or ghost, is a <b>pane</b> — made of glass, not merely edged with it: a slab of light on <b>::before</b> under the label, a glint that follows the pointer, and a hairline that turns to face it fringed with the accent on one side and the depth companion on the other, which is what refraction looks like on an edge. The label is never refracted.</p>
@@ -379,7 +408,7 @@
       </div>
     </section>
 
-    <section id="declension">
+    <section id="declension" data-back="FORM">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">05</span><h2>Declension</h2></div>
         <p class="cap">Every family, applied to the shipped <b>.sl-*</b> classes from <b>@sondalab/ui-kit/components.css</b> — never all four per component, and never one because it was available. The mapping is <b>docs/specs/2026-09-08-effects-layer-design.md</b> §Per-component declension; <b>sl-audit</b> checks colour, not this.</p>

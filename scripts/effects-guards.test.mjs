@@ -127,7 +127,7 @@ test("every animation sits inside a reduced-motion guard", () => {
 
 test("only shape re-declares the ring background; states rebind the stops", () => {
   const declaring = RULES
-    .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && PAINTS.test(r.body))
+    .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
     declaring.length, 6,
@@ -145,6 +145,18 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   );
   assert.ok(declaring.some((s) => s.endsWith("::before")), "the aurora's inner wash must be one");
   assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
+
+  // The one background an effect may put on a HOST is the translucency mix,
+  // which is the component's own fill with some of it taken away — not light.
+  const onHost = RULES.filter(
+    (r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && !/::(?:before|after)/.test(r.selector) && PAINTS.test(r.body),
+  );
+  for (const r of onHost) {
+    assert.match(
+      r.body, /background-color:\s*color-mix\(in srgb, var\(--slfx-fill\)/,
+      `${r.selector} paints the host something other than its own fill`,
+    );
+  }
 });
 
 // The owner's ruling: a mark burning on every element at all times is not
@@ -160,11 +172,15 @@ test("a glass element at rest is quiet: light arrives with the pointer", () => {
   assert.ok(glass.length > 0, "the parser must find the glass rules");
 
   for (const r of glass) {
-    if (LIT_STATE.test(r.selector)) continue;
+    // One selector at a time: a list whose other half carries :hover must not
+    // excuse the half that does not.
+    if (r.selector.split(",").every((sel) => LIT_STATE.test(sel))) continue;
     assert.ok(
       !/(?:^|;)\s*opacity\s*:\s*1\b/.test(r.body),
       `${r.selector} reveals a paint layer at rest`,
     );
+    // background-color is exempt by kind, not by luck: a flat fill is the
+    // component's own colour, and the translucency mix is checked above.
     for (const decl of r.body.split(";")) {
       const at = decl.indexOf(":");
       if (at < 0) continue;

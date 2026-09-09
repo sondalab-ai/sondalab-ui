@@ -74,6 +74,14 @@
   --slfx-soft: 14px;
   --slfx-glow: calc(var(--slfx-soft) * 3 + var(--slfx-bloom-w));
 
+  /* translucency — how much of the component's own fill survives, and how
+     hard the page behind it is blurred. The saturate() is the reference's:
+     its light preset composites light with saturate(5.4), because a blur
+     alone washes the colour out of what it blurs. */
+  --slfx-fill-a: 76%;
+  --slfx-back: 12px;
+  --slfx-back-sat: 1.4;
+
   /* glass stops — rebound per state; transparent means "no ring" */
   --slfx-s0: transparent;
   --slfx-s1: transparent;
@@ -100,6 +108,10 @@
   box-shadow: none !important;
   filter: none !important;
   border-image: none !important;
+  backdrop-filter: none !important;
+  /* Not `background: revert` — the mix below IS the component's own fill, so
+     restoring it is a matter of keeping all of it. */
+  --slfx-fill-a: 100% !important;
 }
 
 /* The shatter variant replaces the label with jumping bands, so restoring the
@@ -398,6 +410,42 @@
    rules, later in the file at equal specificity, still light it. */
 .sl-fx-glass.sl-fx-aurora--rim::after { opacity: 0; }
 
+/* ── Translucency ───────────────────────────────────────────────────────────
+   The owner: the elements have a transparent background and blur what is
+   behind them. The fill becomes a mix of the component's own role colour with
+   nothing, and the host carries a backdrop-filter — which is the one thing the
+   GPU tier cannot do for it, a canvas having no way to read the DOM beneath.
+
+   The fill has to be NAMED. CSS has no way to say "my own background, at a
+   lower alpha", so --slfx-fill binds the role-var the shipped component used,
+   and a consumer whose component fills itself some other way rebinds it.
+   `transparent` is a legitimate binding: a ghost button has no fill, and the
+   blur alone is what makes it glass.
+
+   The only shipped component whose fill changes with state is the primary
+   button, so its two states are matched again below — a plain
+   `background-color` here would lose to their 0-3-0 shorthand. A consumer
+   component that changes its own fill on a state must do the same.
+
+   @supports: with no backdrop-filter there is nothing behind the element to
+   see, and a translucent fill over an unblurred page reads as a weakened
+   colour rather than as glass. So the whole thing stands down together and
+   the component keeps the fill it shipped with. */
+.sl-fx-glass { --slfx-fill: var(--slc-surface); }
+.sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
+.sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
+.sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
+.sl-btn--ghost.sl-fx-glass,
+.sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
+
+@supports (backdrop-filter: blur(1px)) {
+  .sl-fx-glass,
+  .sl-btn--primary.sl-fx-glass:hover:not(:disabled),
+  .sl-btn--primary.sl-fx-glass:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), transparent);
+    backdrop-filter: blur(var(--slfx-back)) saturate(var(--slfx-back-sat));
+  }
+}
 /* ══ GLASS PANE — the element is made of glass ═══════════════════════════════
    The glass family's pointer-reactive mode, for every text button whatever
    its variant — the owner: buttons are made of glass, and the interaction is
