@@ -14,9 +14,9 @@
            ::after. Under the GPU tier (effects-gpu.js) a shader replaces it
            with a hairline that reflects a moving environment.
    aurora  light riding the border — the border-beam recipe: a thin arc on
-           ::after that rotates, its bloom (a drop-shadow of the arc), and a
-           wash of the same light on the surface inside the edge (::before).
-           CSS at EVERY tier; there is no GPU aurora.
+           ::after that rotates, and on ::before its bloom — the same arc,
+           blurred, reaching --slfx-glow outside the element and --slfx-wash
+           inside it. CSS at EVERY tier; there is no GPU aurora.
    liquid  the element itself deforms: effects.js applies an SVG displacement
            filter to the host while the pointer shapes it. No paint layer.
    glitch  a child <span>, never the host, so the host's two paint layers stay
@@ -24,8 +24,11 @@
 
    ── Paint layers ────────────────────────────────────────────────────────────
    ::after is the edge (glass at rest, the aurora's arc when lit). ::before is
-   the aurora's inner wash. Replaced form controls render no pseudo-element at
-   all — wrap them in .sl-field__control.
+   the aurora's bloom, and it is the one layer that leaves the box: a glow
+   is truncated by any ancestor that clips (overflow other than visible,
+   contain: paint, clip-path), so the consumer must give an effect element
+   room — that rule is in the spec, not only here. Replaced form controls
+   render no pseudo-element at all — wrap them in .sl-field__control.
 
    ── Colour contract ─────────────────────────────────────────────────────────
    No literal, ever. Every hue is a color-mix() over a role-var. Role-vars carry
@@ -49,6 +52,11 @@
   --slfx-ring-w: 1px;
   --slfx-arc: 250deg;
   --slfx-wash: min(28px, 42%);
+  /* the bloom: how far the light reaches outside the edge, and how blurred
+     its arc is. Measured against the reference's border beam: its bloom is a
+     ~22px blur at ~0.4 opacity, felt more than seen. */
+  --slfx-glow: 22px;
+  --slfx-soft: 14px;
 
   /* glass stops — rebound per state; transparent means "no ring" */
   --slfx-s0: transparent;
@@ -166,7 +174,13 @@
   mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
   -webkit-mask-composite: xor;   /* Safari below 15.4 */
   mask-composite: exclude;
-  transition: opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+  /* Light never snaps on: the swap from chrome to arc is a background
+     transition (both conics carry eight stops, so Chrome interpolates them),
+     and the lit state fades over the slow beat, as the reference's beam does
+     (600ms in, 500ms out). */
+  transition:
+    opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+    background var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease);
 }
 
 /* ══ GLASS — this is a physical surface ══════════════════════════════════════ */
@@ -210,31 +224,44 @@
    aria-busy="true"; a determinate one role="progressbar" + aria-valuenow. That
    is what keeps reduced-motion and high-contrast visitors fully informed. */
 
-/* The arc: depth at the tails, the accent along it, a white-hot core at the
-   centre — light, not a stroke. Its bloom is a drop-shadow of its own alpha
-   shape, so it follows the arc rather than re-blurring the box. */
+/* The arc: depth at the tails, the accent along it, a hot core at the
+   centre — light, not a stroke. No filter here: this layer is masked to the
+   ring band, and CSS applies a filter BEFORE the mask, so a drop-shadow on
+   it can never leave the band — that is where four rounds of "the glow is
+   truncated" came from. The bloom lives on ::before, below. */
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
   opacity: 1;
   background: conic-gradient(from var(--slfx-angle),
     transparent 0deg,
     var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.14),
     var(--slfx-beam) calc(var(--slfx-arc) * 0.32),
-    color-mix(in srgb, var(--slfx-sheen) 86%, var(--slfx-beam)) calc(var(--slfx-arc) * 0.5),
+    color-mix(in srgb, var(--slfx-sheen) var(--slfx-core), var(--slfx-beam)) calc(var(--slfx-arc) * 0.5),
     var(--slfx-beam) calc(var(--slfx-arc) * 0.68),
     var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.86),
     transparent var(--slfx-arc),
     transparent 360deg);
-  filter: var(--slfx-bloom);
 }
 .sl-fx-aurora {
-  /* The beam's own hue and its tails. Rebound by --rim below, where the
-     accent would vanish against an accent fill. */
+  /* The beam's own hue, its tails, how white its core goes, and the two
+     colours of its bloom. Rebound by --rim below, where the accent would
+     vanish against an accent fill. */
   --slfx-beam: var(--slc-accent, var(--sl-accent-default));
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth) 75%, transparent);
-  --slfx-bloom:
-    drop-shadow(0 0 2px color-mix(in srgb, var(--slfx-sheen) 70%, transparent))
-    drop-shadow(0 0 6px color-mix(in srgb, var(--slfx-beam) 75%, transparent))
-    drop-shadow(0 0 16px color-mix(in srgb, var(--slfx-depth) 60%, transparent));
+  --slfx-core: 86%;
+  /* The bloom's two colours are the beam and the depth companion LIFTED
+     toward white and pushed a little in chroma, then made translucent:
+     light is lighter than what it falls on. Without the lift, on paper the
+     depth companion (a dark teal) at half alpha is a grey-teal smear around
+     the element — dirt, not light — and on ink the lift only turns the glow
+     pastel, which is what the reference's bloom is. Relative colour syntax
+     is already the kit's own vocabulary (themes/*.css derive the accent
+     steps with it); l and c are channels, not a literal. */
+  --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-beam) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 50%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 44%, transparent);
+  /* Where ::before's peak sits, measured from the padding box outward: 0
+     on a bordered element (the ring is on the border), the ring's own width
+     on --rim, which steps the ring out past the fill. */
+  --slfx-rim-out: 0px;
 }
 
 /* ── Filled elements: the rim ──────────────────────────────────────────────
@@ -245,8 +272,11 @@
    ring steps one border-width further out, hugging the fill, in the 2px the
    focus outline (outline-offset: 2px) leaves free, and never past it. Its
    hue is the depth companion, because the accent is what the fill is made
-   of — contrast against the page, not against the button. No inner wash: the
-   inside is the fill.
+   of — contrast against the page, not against the button — and it has to
+   read as ITS OWN colour beside the fill, so the core stays coloured rather
+   than going white, and the bloom is the depth companion at its strongest.
+   No inner wash: the inside is the fill, so --slfx-wash is 0 and the bloom
+   is all outside.
    A busy filled control is working, not unavailable: components.css dims a
    :disabled control to half opacity, which would dim the very ring that
    says work is in progress, so while busy the host keeps full opacity. The
@@ -257,51 +287,86 @@
      depth companion against the page is below the threshold of notice; the
      ring has to carry its own weight out here, with nothing behind it. */
   --slfx-ring-w: 2px;
-  --slfx-beam: var(--slfx-depth);
-  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth) 85%, transparent);
-  --slfx-bloom:
-    drop-shadow(0 0 2px color-mix(in srgb, var(--slfx-sheen) 80%, transparent))
-    drop-shadow(0 0 6px color-mix(in srgb, var(--slfx-depth) 90%, transparent))
-    drop-shadow(0 0 14px color-mix(in srgb, var(--slfx-depth) 70%, transparent));
+  /* The depth companion, lifted a quarter of the way toward white: on paper
+     it is a dark teal, and a dark line hugging a dark-amber fill reads as a
+     shadow rather than as light. */
+  --slfx-beam: oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.25) calc(c * 1.15) h);
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
+  --slfx-core: 40%;
+  --slfx-bloom-hi: color-mix(in srgb, oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 78%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, oklch(from var(--slfx-depth) calc(l + (1 - l) * 0.55) calc(c * 1.25) h) 60%, transparent);
+  --slfx-wash: 0px;
+  --slfx-rim-out: var(--slfx-ring-w);
 }
 .sl-fx-aurora--rim::after {
   inset: calc(-1px - var(--slfx-ring-w));
 }
-.sl-fx-aurora--rim::before { display: none; }
 :root:not([data-sl-theme="high-contrast"]) .sl-fx-aurora--rim[data-sl-fx-live="busy"]:disabled:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   opacity: 1;
 }
 
-/* The wash: the same arc, wide and faint, confined to a band just inside the
-   edge, under the content. z-index: -1 lands above the host's own background
-   because the host is a stacking context (isolation: isolate, above). */
+/* The bloom: the same arc, wide and faint, peaking on the edge and falling
+   away on both sides of it — --slfx-glow outward, past the box, and
+   --slfx-wash inward under the content. This layer's box is the element's
+   plus the glow, so the light has somewhere to be; the falloff is the
+   mask's own ramp, shaped like a Gaussian by its stops, because the blur —
+   which runs before the mask — can only soften the arc along its length,
+   never across the ring. Two axis ramps, unioned: at a corner the light of
+   both edges meets, which is what leaves the corners a little squarer than
+   the ring — the reference's bloom does the same.
+   z-index: -1 lands above the host's own background because the host is a
+   stacking context (isolation: isolate, above), and below its content.
+   Composited normally, not screened: on ink a translucent light over near-
+   black is the same either way, on paper screen would vanish into the white
+   and a normal tint is what a coloured glow on paper looks like. */
 .sl-fx-aurora:not(.sl-fx-aurora--linear)::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: calc(-1px - var(--slfx-rim-out) - var(--slfx-glow));
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
+  /* the distance from the peak to where the light dies inside the element */
+  --slfx-in: calc(var(--slfx-rim-out) + var(--slfx-ring-w) + var(--slfx-wash));
   background: conic-gradient(from var(--slfx-angle),
     transparent 0deg,
-    color-mix(in srgb, var(--slfx-depth) 34%, transparent) calc(var(--slfx-arc) * 0.16),
-    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 36%, transparent) calc(var(--slfx-arc) * 0.5),
-    color-mix(in srgb, var(--slfx-depth) 34%, transparent) calc(var(--slfx-arc) * 0.84),
+    var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.16),
+    var(--slfx-bloom-hi) calc(var(--slfx-arc) * 0.5),
+    var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.84),
     transparent var(--slfx-arc),
     transparent 360deg);
-  mask:
-    linear-gradient(black, transparent var(--slfx-wash), transparent calc(100% - var(--slfx-wash)), black),
-    linear-gradient(90deg, black, transparent var(--slfx-wash), transparent calc(100% - var(--slfx-wash)), black);
+  /* `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
+  --slfx-ramp:
+    transparent 0,
+    color-mix(in srgb, black 20%, transparent) calc(var(--slfx-glow) * 0.45),
+    color-mix(in srgb, black 60%, transparent) calc(var(--slfx-glow) * 0.78),
+    black var(--slfx-glow),
+    color-mix(in srgb, black 50%, transparent) calc(var(--slfx-glow) + var(--slfx-in) * 0.3),
+    color-mix(in srgb, black 16%, transparent) calc(var(--slfx-glow) + var(--slfx-in) * 0.62),
+    transparent calc(var(--slfx-glow) + var(--slfx-in)),
+    transparent calc(100% - var(--slfx-glow) - var(--slfx-in)),
+    color-mix(in srgb, black 16%, transparent) calc(100% - var(--slfx-glow) - var(--slfx-in) * 0.62),
+    color-mix(in srgb, black 50%, transparent) calc(100% - var(--slfx-glow) - var(--slfx-in) * 0.3),
+    black calc(100% - var(--slfx-glow)),
+    color-mix(in srgb, black 60%, transparent) calc(100% - var(--slfx-glow) * 0.78),
+    color-mix(in srgb, black 20%, transparent) calc(100% - var(--slfx-glow) * 0.45),
+    transparent 100%;
+  mask: linear-gradient(var(--slfx-ramp)), linear-gradient(90deg, var(--slfx-ramp));
+  /* Each ramp is trimmed by half the glow along the OTHER axis: a ramp that
+     spanned the whole enlarged box ran past the corners as arms, and a small
+     element's bloom read as a soft plus sign. Trimmed by the full glow the
+     corners went dark instead; half is where the two bands meet in a soft,
+     slightly square corner — judged on a 96px button and a card. */
+  mask-size: calc(100% - var(--slfx-glow)) 100%, 100% calc(100% - var(--slfx-glow));
+  mask-position: center;
+  mask-repeat: no-repeat;
   -webkit-mask-composite: source-over;
   mask-composite: add;
-  /* Blurred before it is masked (filter runs before mask), so the light has
-     no hard edges of its own and only the band's inner edge stays crisp.
-     Screened, because light can only brighten: on ink it adds glow, on paper
-     it stays a faint tint instead of painting a grey shadow onto the card. */
-  filter: blur(8px);
-  mix-blend-mode: screen;
-  transition: opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+  filter: blur(var(--slfx-soft));
+  transition:
+    opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+    filter var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease);
 }
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"]):not(.sl-fx-aurora--linear)::before {
   opacity: 1;
@@ -415,12 +480,12 @@
   /* The light's hue drifts either side of the accent, as an aurora's does. A
      narrow range on purpose: the product's hue must stay recognisable. */
   @keyframes slfx-drift {
-    0%, 100% { filter: hue-rotate(-16deg) var(--slfx-bloom); }
-    50%      { filter: hue-rotate(16deg) var(--slfx-bloom); }
+    0%, 100% { filter: hue-rotate(-16deg); }
+    50%      { filter: hue-rotate(16deg); }
   }
   @keyframes slfx-drift-wash {
-    0%, 100% { filter: blur(8px) hue-rotate(-16deg); }
-    50%      { filter: blur(8px) hue-rotate(16deg); }
+    0%, 100% { filter: blur(var(--slfx-soft)) hue-rotate(-16deg); }
+    50%      { filter: blur(var(--slfx-soft)) hue-rotate(16deg); }
   }
 
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]::after {

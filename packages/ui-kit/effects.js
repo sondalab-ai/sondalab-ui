@@ -49,11 +49,16 @@ function readTokens(root = document.documentElement) {
    antialiasing; the kit's surfaces already set that, and it is what the
    reference does.)
 
-   THE DENT. A Gaussian push AWAY from the pointer: points between the pointer
-   and the edge sample from beyond the edge, so the edge recedes toward the
-   pointer, and text near the pointer flees it. The map covers the whole
-   filter region and is re-rasterised each frame at a quarter of the
-   resolution — the reference's own approach. A static map moved under the
+   THE SWELL. A Gaussian displacement of the content AWAY from the pointer:
+   a point between the pointer and the edge shows what lay closer to the
+   pointer — inside — so the edge bulges OUTWARD where the cursor is, and
+   text near the pointer moves off it. That is the reference's own liquid
+   term (useMetalBend: `(p − c) · f/blob · exp(−r²/2blob²)`, encoded as
+   `127.5 − Z·255/scale`, i.e. the sample is taken at x − Z), and the
+   direction was got wrong once: the same Gaussian with the opposite sign
+   pulls everything toward the cursor and reads as the element imploding.
+   The map covers the whole filter region and is re-rasterised each frame at
+   a quarter of the resolution — the reference's own approach. A static map moved under the
    pointer with feImage's x/y was tried first and abandoned: Chrome placed the
    raster unpredictably and read the area it covered as a constant offset,
    translating everything under it. A map that IS the region has nothing to
@@ -119,9 +124,15 @@ function sizeDentRegion(width, height, depth) {
   liquidMap = liquidMapCanvas.getContext("2d").createImageData(tw, th);
 }
 
-/** Rasterise the push for this frame: 128 everywhere, the Gaussian within
- *  three sigma of the dent's centre. R and G hold the x and y push,
- *  normalised so the peak (one sigma out) is exactly ±127. */
+/** Rasterise the swell for this frame: 128 everywhere, the Gaussian within
+ *  three sigma of its centre. R and G hold the x and y sample offset,
+ *  normalised so the peak (one sigma out) is exactly ±127. The offset is
+ *  128 − v·g, not 128 + v·g: feDisplacementMap samples at scale·(map − ½),
+ *  so a value BELOW 128 on the far side of the pointer fetches from nearer
+ *  the pointer, and the content moves outward. Measured on the rendered map
+ *  (scripts and the task report): whole-map mean 128.03 / 128.18, so the
+ *  neutral is 0.502 and the bias it leaves is 0.02px at scale 10 — nothing.
+ *  Direction is a sign, not a mean. */
 function renderDentMap(cx, cy, sigma) {
   if (!liquidMap || !liquidImageEl) return;
   const { x: rx, y: ry } = liquidRegion;
@@ -140,8 +151,8 @@ function renderDentMap(cx, cy, sigma) {
       const vx = (rx + (tx + 0.5) / MAP_RES - cx) / sigma;
       const g = Math.exp(-0.5 * (vx * vx + vy * vy)) / 0.60653;
       const i = (ty * tw + tx) * 4;
-      d[i] = Math.round(128 + 127 * Math.max(-1, Math.min(1, vx * g)));
-      d[i + 1] = Math.round(128 + 127 * Math.max(-1, Math.min(1, vy * g)));
+      d[i] = Math.round(128 - 127 * Math.max(-1, Math.min(1, vx * g)));
+      d[i + 1] = Math.round(128 - 127 * Math.max(-1, Math.min(1, vy * g)));
     }
   }
   liquidMapCanvas.getContext("2d").putImageData(liquidMap, 0, 0);
@@ -155,14 +166,17 @@ function renderDentMap(cx, cy, sigma) {
 const LIQUID_K = 170;
 const LIQUID_DAMP = 14;
 const LIQUID_SETTLE_EPS = 0.002;
-/** Dent radius and depth, from the element's own size: sigma is a share of
- *  its short side, clamped so a keycap still dents visibly and a card does
+/** Swell radius and depth, from the element's own size: sigma is a share of
+ *  its short side, clamped so a keycap still moves visibly and a card does
  *  not swallow the pointer; depth is a share of sigma. A calm element takes
- *  a fraction of the depth — a card is not a button. */
-const DENT_SIGMA_K = 0.42;
+ *  a fraction of the depth — a card is not a button.
+ *  Scaled against the reference (blob 10–13px, liquid 7.5 × strength 0.74,
+ *  peak 0.61·5.5 ≈ 3.4px): a 40px button now gets σ 14.4 / depth 3.2px
+ *  where it had σ 16.8 / depth 5.0px — the owner's "too marked". */
+const DENT_SIGMA_K = 0.36;
 const DENT_SIGMA_MIN = 12;
-const DENT_SIGMA_MAX = 30;
-const DENT_DEPTH_K = 0.30;
+const DENT_SIGMA_MAX = 24;
+const DENT_DEPTH_K = 0.22;
 const DENT_CALM = 0.4;
 
 let amp = 0, ampV = 0, target = 0;
@@ -219,7 +233,7 @@ function integrateLiquid(now) {
     // feDisplacementMap samples at scale·(map − 0.5), and the map's peak is
     // 0.5 out, so a scale of twice the depth moves the edge by exactly the
     // depth. Left unclamped: a negative scale is valid SVG and IS the release
-    // overshoot — the surface bulging back past rest before it settles.
+    // overshoot — the surface sinking back past rest before it settles.
     liquidDisplacementEl.setAttribute("scale", (2 * liquidDepth * amp).toFixed(2));
   }
 

@@ -306,9 +306,14 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
     // x: 1 when the element carries the chrome, 0 when it only catches
     // reflections of its neighbours' chrome.
     const kindsUniform = Array.from({ length: MAX_RECTS }, () => [0, 0, 0, 0]);
-    // xy: position, normalised. z: 1 while the pointer is on the page — the
-    // cursor reflection must not sit at a stale spot after the pointer left.
+    // xy: position, normalised. z: the pointer's PRESENCE, eased toward 1
+    // while it is on the page and toward 0 after it left — the cursor
+    // reflection must neither sit at a stale spot nor pop in and out; a
+    // reflection arrives the way light does. ~160ms time constant.
     const pointer = [0.5, 0.5, 0, 0];
+    let presence = 0;
+    let presenceT = -1;
+    const PRESENCE_TAU = 0.16;
     // xy: where the liquid's dent is centred, normalised — the lagged centre
     // effects.js's own displacement map uses, not the raw pointer.
     const dent = [0, 0, 0, 0];
@@ -459,9 +464,12 @@ export async function bootField({ canvas, rects, refresh, stopTracking, tokens }
       look.rectCount = list.length;
       look.res = view;
 
+      const dt = presenceT < 0 ? 0 : Math.min(Math.max(clock.time - presenceT, 0), 0.05);
+      presenceT = clock.time;
+      presence += (onPage - presence) * (1 - Math.exp(-dt / PRESENCE_TAU));
       pointer[0] = px;
       pointer[1] = py;
-      pointer[2] = onPage;
+      pointer[2] = presence;
       pointer[3] = 0;
 
       fx.set({ look, rects: rectsUniform, pointer, params: paramsUniform, dent, kinds: kindsUniform });

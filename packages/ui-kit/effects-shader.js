@@ -108,12 +108,13 @@ fn halfOf(i: u32) -> vec2f { return rects[i].zw * look.res * 0.5; }
 fn centreOf(i: u32) -> vec2f { return rects[i].xy * look.res + halfOf(i); }
 
 /**
- * The dent, as a displacement of the sampling position — the same field
- * effects.js paints into its feDisplacementMap. A Gaussian push AWAY from the
- * pointer: points between the pointer and the edge sample from beyond the
- * edge, so the edge recedes toward the pointer. Its peak sits one sigma from
+ * The swell, as a displacement of the sampling position — the same field
+ * effects.js paints into its feDisplacementMap. The content moves AWAY from
+ * the pointer, so a point past the edge samples from inside it and the edge
+ * bulges outward where the cursor is; the sampling position therefore moves
+ * TOWARD the pointer, which is the minus sign. Its peak sits one sigma from
  * the pointer and is normalised to exactly \`depth\` pixels there; a negative
- * depth (the spring overshooting on release) bulges outward instead.
+ * depth (the spring overshooting on release) sinks inward instead.
  * Anything that changes here must change in effects.js's map too, or the ring
  * and the surface disagree about where the edge is.
  */
@@ -122,7 +123,7 @@ fn dentAt(p: vec2f, depth: f32, sigma: f32) -> vec2f {
   let ptr = dent.xy * look.res;
   let v = (p - ptr) / sigma;
   let g = exp(-0.5 * dot(v, v)) / 0.60653;
-  return v * g * depth * look.flags.x;
+  return -(v * g * depth * look.flags.x);
 }
 
 /** Signed distance to element i's edge, through its dent. */

@@ -152,7 +152,7 @@ The element's own border, as chrome: a hairline reflecting a moving environment,
 Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px.
 
 ### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
-Attention lives here: a 1px arc of light riding the border with its bloom and a wash inside the edge — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. A filled element (`sl-btn--primary`) takes `--rim`: the arc steps just outside the fill, in the depth companion. Substrate: **R** Page, **A** App.
+Attention lives here: a 1px arc of light riding the border with its bloom, which reaches ~22px outside the box and ~28px inside it — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. A filled element (`sl-btn--primary`) takes `--rim`: the arc steps just outside the fill, in the depth companion. Substrate: **R** Page, **A** App.
 ```html
 <button class="sl-btn sl-btn--ghost sl-fx-aurora">Run audit</button>
 <button class="sl-btn sl-btn--primary sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Saving…</button>
@@ -163,7 +163,7 @@ Attention lives here: a 1px arc of light riding the border with its bloom and a 
          style="--slfx-progress: .62">…</article>
 ```
 `--wide` widens the arc to 2px on containers, `--field` on a field's wrapper; `--linear` sweeps a segment (a tab's or link's underline; add `--top` for an inversion band's rule) instead of a perimeter and has no busy mode; `--rim` is for filled elements. **On a replaced control the `sl-field__control` wrapper is mandatory** — the control itself hosts no pseudo-element, and `:focus-within` on the wrapper is what lights the arc.
-Consumes: `--slc-accent`, `--slc-text`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document.
+Consumes: `--slc-accent`, `--slc-text`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document. Don't put an aurora element under an ancestor that clips (`overflow` other than `visible`, `contain: paint`, `clip-path`): the bloom reaches ~22px outside the box, and a glow cut at a container's edge is a defect — wrap the table in the scroll container, not the card beside it.
 
 ### Liquid — `sl-fx-liquid` (`--calm`)
 The element itself gives under the pointer — a smooth dent that follows it with a little lag, springs back and settles when it leaves (an SVG displacement filter, driven by `mount()`). Non-destructive: the filter is present only while the pointer shapes the element, and nothing is changed afterwards. Substrate: **A** App/Page.
