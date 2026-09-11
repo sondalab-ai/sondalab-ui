@@ -616,6 +616,20 @@ function glowSpread(el) {
  *  @param {Element} el the aurora host
  *  @param {HTMLElement} glow the glow to place
  *  @returns {void} */
+/** Everything the glow's ring is made of, and every one of them is declared on
+ *  the AURORA HOST. As a child the glow inherited them; as a sibling it
+ *  inherits from the host's parent instead, where none of them exist — so the
+ *  ::before that paints the ring collapsed and the glow rendered nothing at
+ *  all. Measured: one differing pixel in 404 096 between the glow shown and
+ *  the glow display:none'd. Copied across explicitly rather than re-declared,
+ *  so the values still come from the host and a component that re-parametrises
+ *  its own aurora is still followed. */
+const GLOW_VARS = [
+  "--slfx-angle", "--slfx-arc", "--slfx-bloom-hi", "--slfx-bloom-lo",
+  "--slfx-bloom-out", "--slfx-bloom-w", "--slfx-glow", "--slfx-rim-out",
+  "--slfx-soft",
+];
+
 function seatGlow(el, glow) {
   const parent = glow.parentElement;
   if (!parent) return;
@@ -627,7 +641,12 @@ function seatGlow(el, glow) {
   glow.style.top = `${r.top - p.top - spread}px`;
   glow.style.width = `${r.width + spread * 2}px`;
   glow.style.height = `${r.height + spread * 2}px`;
-  glow.style.setProperty("--slfx-seat-radius", getComputedStyle(el).borderTopLeftRadius);
+  const hostStyle = getComputedStyle(el);
+  glow.style.setProperty("--slfx-seat-radius", hostStyle.borderTopLeftRadius);
+  for (const name of GLOW_VARS) {
+    const v = hostStyle.getPropertyValue(name);
+    if (v) glow.style.setProperty(name, v);
+  }
 }
 
 function injectGlow(el) {
