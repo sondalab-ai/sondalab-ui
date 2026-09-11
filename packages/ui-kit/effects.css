@@ -486,7 +486,14 @@
    tints toward it, so a tag stays ITS OWN colour lifted rather than the page's
    ground laid over it. The name is the contract: a consumer whose component
    fills itself some other way rebinds this one property. */
-.sl-fx-glass { --slfx-fill: var(--slc-surface); --slg-tint-color: var(--slc-surface); }
+.sl-fx-glass {
+  --slfx-fill: var(--slc-surface);
+  --slg-tint-color: var(--slc-surface);
+  /* glass.css derives the same pole on its own so it can be imported alone;
+     binding it here keeps ONE source wherever both are loaded, and carries an
+     inversion band's remapped sheen into the material with it. */
+  --slg-spec: var(--slfx-glint);
+}
 /* A transparent fill is not a tint colour: color-mix would give transparent
    and the pane would have no tint at all. These carry the page's own ground
    instead, which is what glass over nothing should look like. */

@@ -523,7 +523,24 @@ number. Final state:
 | bottom | −14.3 | −8.3 | +6.0 |
 
 Shipped values: `--slg-tint-a: 18%`, `--slg-spec-a: 72%` falling to nothing at
-26 % of the height, `--slg-spec-lo-a: 0`.
+26 % of the height, `--slg-spec-lo-a: 0`, `--slg-rim-lo` at 5 %.
+
+**Every highlight is made of a derived light POLE, not of `--sl-text-primary`.**
+On ink that token is the bright end of the neutral pair (L 0.91); on paper it is
+the dark end (L 0.24), and a highlight made of it paints a black band where the
+reference has a white one. `glass.css` mirrors its lightness — `max(l, 1.2 - l)`
+— which is the same criterion `effects.css` already applies to `--slfx-glint`
+and the shader applies at runtime. Written out in `glass.css` so the stylesheet
+stands alone, and bound to `--slfx-glint` from `effects.css` so there is one
+source wherever both are loaded. Verified on the light theme: the band stays
+light and the label stays ink.
+
+**The light theme is NOT comparable against this capture, and the numbers were
+not chased.** Profiled on the same bed it reads roughly +35 across the whole
+pane — correctly. The tint follows the page's own ground, the probe's bed is a
+fixed mid-blue, and a cream veil over blue can only lighten; the reference's
+capture sits on its own light page. Judging the light theme needs either a light
+Sondalab surface under the pane or its own reference capture. Left open.
 
 **Three of the readings that produced this were wrong, and the instrument is
 the finding.** A column three pixels inside the left edge reported `__shine`'s
