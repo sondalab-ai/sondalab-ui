@@ -52,12 +52,41 @@ struct Look {
   // z:  presence, eased 0..1 — light arrives and leaves, it never snaps
   // w:  unused
   ptr    : vec4f,
+  // The glass parameters, every one of them a CSS custom property the surface
+  // can rebind per variant rather than a constant in here.
+  // x: thickness, as a FRACTION of the pane's short side. glass-studio's own
+  //    value is 20 on a 200x200 shape, so 0.10 — a ratio is the only unit that
+  //    survives a 34px button, a 400px card and a 2x display unretuned.
+  // y: the accent's share of the pane, 0..1.
+  // z: the Fresnel factor on the card's own 0..100 scale.
+  // w: 1 when a backdrop has been declared and bound, 0 otherwise. At 0 this
+  //    shader behaves exactly as it did before refraction existed.
+  glass  : vec4f,
 };
 @group(0) @binding(0) var<uniform> look : Look;
+// The declared backdrop. A surface says what lies behind a region with
+// --slfx-backdrop and the pane bends THAT; this layer never reads the document.
+// Always bound, so the pipeline layout does not change with the mode — a 1x1
+// transparent texture stands in when nothing is declared.
+@group(0) @binding(1) var backSampler : sampler;
+@group(0) @binding(2) var backTex : texture_2d<f32>;
+
+// Index of refraction per channel, from the glass-studio card: blue bends more
+// than red, which is what puts a colour fringe on a glass edge.
+const N_R : f32 = 0.98;
+const N_G : f32 = 1.00;
+const N_B : f32 = 1.02;
 
 // How far the pool of light reaches, as a share of the element's short side,
 // and the floor under it so a tall thin control is still lit end to end.
 const REACH_K   : f32 = 0.85;
+
+// Refraction, from the glass-studio card: its refraction factor is 1.4, its
+// glare angle -45 degrees and its opposite-side lobe 80% of the near one.
+const REFRACT_FACTOR : f32 = 1.4;
+const GLARE_ANGLE    : f32 = -0.7853981634;
+const GLARE_OPPOSITE : f32 = 0.8;
+const GLARE_GAIN     : f32 = 0.5;
 const REACH_MIN : f32 = 44.0;
 // The specular band, in multiples of the element's own border width. Read
 // from the border rather than fixed, so a control that re-parametrises its
@@ -157,6 +186,57 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let paper = look.flags.y;
   let cool = mix(look.sheen.rgb, look.depth.rgb, paper);
   let hue = mix(cool, look.accent.rgb, 0.22 + 0.30 * clamp(lg, 0.0, 1.0));
+
+  // ── refraction, only where a backdrop was declared ─────────────────────────
+  // Without one this whole block is skipped and the shader emits light alone,
+  // exactly as it did before. The pane is opaque in this mode because it is now
+  // drawing the backdrop itself rather than compositing over the host's blur.
+  if (look.glass.w > 0.5 && inside > 0.001) {
+    let thick = max(look.glass.x * min(size.x, size.y), 1.0);
+
+    // How deep inside the rim, 0 at the edge and 1 once past the thickness.
+    let t = clamp(-d / thick, 0.0, 1.0);
+    // The slope of a lens section. Its vertical tangent at the rim bends a
+    // straight line into a curve; pushing along the normal by a flat amount
+    // instead gives four faces meeting on a diagonal, which is a bevel.
+    let u = 1.0 - t;
+    let slope = u / sqrt(max(1.0 - u * u, 1e-4));
+    let bendAmt = clamp(slope, 0.0, 6.0) / 6.0;
+
+    let push = grad * bendAmt * thick * REFRACT_FACTOR;
+    let fringe = grad * bendAmt * DISPERSE;
+
+    let texel = 1.0 / size;
+    let base = uv;
+    let cr = textureSample(backTex, backSampler, base + (push * (2.0 - N_R) + fringe) * texel).r;
+    let cg = textureSample(backTex, backSampler, base + (push * (2.0 - N_G)) * texel).g;
+    let cb = textureSample(backTex, backSampler, base + (push * (2.0 - N_B) - fringe) * texel).b;
+
+    var glass = vec3f(cr, cg, cb);
+    glass = mix(glass, look.accent.rgb, clamp(look.glass.y, 0.0, 1.0));
+
+    // Fresnel: grazing angles reflect, so the rim brightens and the middle does
+    // not. Lifted toward the light pole by a share of the remaining headroom
+    // rather than added, so a bright backdrop cannot clip — which is what
+    // working in LCH and clamping buys the reference.
+    let pole = mix(look.sheen.rgb, look.depth.rgb, paper);
+    let fres = pow(1.0 - t, 3.0) * clamp(look.glass.z / 100.0, 0.0, 1.0);
+    glass = mix(glass, pole, clamp(fres * 0.55, 0.0, 1.0));
+
+    // Glare: a fixed light direction, not the pointer. In the reference the
+    // angle is a setting; the pointer moves the specular spot, never the
+    // direction the light comes from, and a light that chases the cursor is
+    // what reads as unreal.
+    let lightDir = vec2f(cos(GLARE_ANGLE), sin(GLARE_ANGLE));
+    let face = dot(grad, lightDir);
+    let lobe = pow(max(face, 0.0), 8.0) + GLARE_OPPOSITE * pow(max(-face, 0.0), 14.0);
+    glass = mix(glass, pole, clamp(lobe * pow(1.0 - t, 1.6) * GLARE_GAIN, 0.0, 1.0));
+
+    // The pointer's own light rides on top, unchanged.
+    let over = clamp(hue * lit, vec3f(0.0), vec3f(1.0));
+    let out = clamp(glass + over, vec3f(0.0), vec3f(1.0));
+    return vec4f(out * inside, inside);
+  }
 
   let alpha = clamp(max(lit.r, max(lit.g, lit.b)), 0.0, 1.0);
   if (alpha <= 0.001) { return vec4f(0.0); }

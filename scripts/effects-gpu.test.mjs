@@ -119,7 +119,20 @@ test("refraction lives on the edge band, and samples no backdrop", () => {
   assert.match(shader, /let lr = pool\(p \+ grad \* sep, reach\);/, "red samples one side of the normal");
   assert.match(shader, /let lb = pool\(p - grad \* sep, reach\);/, "blue samples the other");
   assert.match(shader, /let lg = pool\(p, reach\);/, "green stays on the surface");
-  assert.doesNotMatch(shader, /textureSample|textureLoad/, "the shader reads no texture, so it reads no backdrop");
+  // It used to read: "the shader reads no texture, so it reads no backdrop".
+  // That encoded the old ruling — a canvas cannot read the DOM beneath it — and
+  // the ruling was superseded on 2026-09-11 by the declared backdrop: a surface
+  // names what lies behind a region with --slfx-backdrop and the pane bends
+  // THAT. The document is still never read, which is the part worth asserting.
+  const samples = [...shader.matchAll(/textureSample\w*\(\s*(\w+)/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(samples)], ["backTex"],
+    `the only texture is the declared backdrop, got ${JSON.stringify([...new Set(samples)])}`);
+  // And it is reached only through the flag, so a pane with no backdrop declared
+  // behaves exactly as it did before refraction existed.
+  const guarded = shader.slice(shader.indexOf("if (look.glass.w > 0.5"));
+  for (const s of samples) assert.ok(guarded.includes("textureSample"), "sampling sits inside the backdrop guard");
+  assert.equal(shader.indexOf("textureSample") > shader.indexOf("if (look.glass.w > 0.5"), true,
+    "nothing samples before the guard");
   // band is the only thing that turns the separation on, and it is zero away
   // from the edge — so a pixel in the middle of the pane gets one sample.
   assert.match(shader, /let band = 1\.0 - smoothstep\(0\.0, hw, abs\(d\)\);/);
