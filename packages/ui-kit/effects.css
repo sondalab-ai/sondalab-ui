@@ -1095,10 +1095,11 @@
      width or padding would invalidate it on every frame and rebuild a canvas
      each time.
 
-     5% is the movement, settled by the owner between 0.5% (which read as
-     nothing) and 10% (which broke a row's alignment). On a 96px button that is
-     about 2.5px at each edge. The label scales with the box, so at a
-     fractional scale its glyphs resample — a reason not to go further.
+     3% is the movement, and the walk to it is worth recording because the first
+     reading was of a broken effect: 0.5% read as nothing, 10% broke a row's
+     alignment, 5% was still too much once the animation actually ran, 0.25% was
+     below a device pixel. On a 96px button 3% is about 1.5px at each edge — a
+     lift that is seen without the row around it moving.
 
      SOFT, not snappy. The first pass used 120ms with a hard overshoot and read
      as a tick. Glass is heavy: it takes its time both ways, and the rebound is
@@ -1118,7 +1119,7 @@
   }
   .sl-fx-glass--pane:hover:not(:disabled),
   .sl-fx-glass--pane:focus-visible {
-    transform: scale(1.05);
+    transform: scale(1.03);
     /* In: one small rebound past the target, then settle. */
     transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
     transition-duration: 320ms;
@@ -1126,7 +1127,7 @@
   /* Pressed, the mass goes the other way and the bounce is gone: a press is
      an arrival, not a launch. */
   .sl-fx-glass--pane:active:not(:disabled) {
-    transform: scale(0.985);
+    transform: scale(0.99);
     transition-duration: 140ms;
     transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }
