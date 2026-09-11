@@ -41,6 +41,34 @@ wrong thousands of pixels down.
 **Confirm it in one step:** `.sl-fx-glass__lens { display: none !important }`.
 The spurious text disappears and the panes read correctly.
 
+## What a fix has to get past (probed 2026-09-11)
+
+The obvious repair — inline the faces as data URIs in the plate's CSS — needs the
+font bytes, and a page cannot discover them on its own:
+
+- **The Google Fonts CSS endpoint is not fetchable.** `fetch()` on the
+  `fonts.googleapis.com/css2?...` href throws `TypeError: Failed to fetch`; it is
+  also unreadable through `sheet.cssRules`, being cross-origin. So the `@font-face`
+  rules and their `url()`s cannot be read at all.
+- **The faces are not enumerable either.** `[...document.fonts]` on the showcase
+  lists only unrelated browser/extension faces, all `unloaded`, even though
+  `document.fonts.status` is `loaded` — CSS-connected faces from a cross-origin
+  sheet are not exposed as `FontFace` objects.
+- **The font FILES are reachable.** A deliberately wrong `fonts.gstatic.com` URL
+  returned `404` with `response.type === "cors"`, so the request was not opaque:
+  given a URL, the bytes can be fetched and base64'd.
+
+So the missing piece is the URL list, and only the surface knows it. The workable
+shape of a fix is therefore **the surface self-hosts or declares its fonts** and
+the kit inlines them as data URIs — not something the kit can solve alone.
+
+Not verified: whether a `foreignObject` raster can load an external font URL at
+all (it is widely held that subresources do not load in that context). The test
+for it awaits `Image.onload` inside `javascript_tool`, which froze the renderer
+and timed out CDP — the same throttling as
+[[claude-in-chrome-the-mcp-tab-reports-visibilitystate-hidden]]. Run it in a real
+tab, not through the extension.
+
 Consequences worth knowing before touching this:
 
 - Any fix has to get the fonts into the plate (embed the faces as data URIs in
