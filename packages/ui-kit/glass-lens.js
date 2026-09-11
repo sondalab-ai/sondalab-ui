@@ -125,8 +125,10 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 /**
  * Give an element a lens: what is behind it bends, what is inside it does not.
  *
- * @param {Element} el the element to filter — its own background is cleared,
- *   because the lens IS its surface; its content is untouched.
+ * @param {Element} el the element to filter. Its content is untouched. Its
+ *   own background is cleared by glass.css's `.sl-glass.is-lensed` rule, not
+ *   here — a stylesheet the consumer can read and override beats an inline
+ *   style they cannot.
  * @param {{blur?: number, saturate?: number, brightness?: number}} [look]
  *   the rest of the backdrop-filter chain, in his own proportions.
  * @returns {{refresh(): void, destroy(): void}|null} null where the browser

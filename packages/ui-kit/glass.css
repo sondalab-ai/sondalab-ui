@@ -175,6 +175,21 @@
    existing markup and the injected layer list do not have to change. */
 .sl-glass__specular { z-index: -1; }
 
+/* While a real lens is bound, the GROUND tint stands down: the lens IS the
+   surface, and a veil of the page's own colour over it is a veil over a window.
+   Only the ground share goes to zero — the ACCENT share stays, or a lensed
+   primary would be indistinguishable from a lensed ghost. The frost stays too,
+   and so does the rim, which is what gives the edge its thickness.
+
+   The host's own fill goes with it, and this stylesheet is where that belongs:
+   glass-lens.js used to claim it cleared the background and did not, which
+   showed only on a page without effects.css — every lensed card and every
+   lensed primary stayed opaque, a working lens under a solid fill. (An earlier
+   version of this rule was cut by accident along with the specular block; it
+   never shipped, so the showcase had tint under every lens as well.) */
+.sl-glass.is-lensed { background-color: transparent; }
+.sl-glass.is-lensed .sl-glass__tint { --slg-tint-a: 0%; --slg-tint-deep-a: 0%; }
+
 /* Honoured for a consumer who wraps their content the way the original does.
    Unnecessary otherwise: the layers above already sit below inline content.
    Either way the text is never filtered — AC-25. */

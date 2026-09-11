@@ -438,6 +438,40 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
 
+### The aurora is a lighthouse, and no parameter fixes that — 2026-09-11, late
+
+*Owner: "sembra più che altro una sirena o un faro… nulla a che vedere con
+bagliori di luce che interagiscono con vetro e si deformano."* Correct, and it
+is structural: `border-beam`'s recipe is a conic arc **travelling around a
+border**. That is a beam on a rim, and it stays a beam whatever its width,
+blur or speed. The card's *Take: the recipe entire* is therefore superseded for
+the glass family — it was verified before a real lens existed to compare it
+with.
+
+**What light in glass actually is:** a soft SOURCE with a hot core, sitting
+behind the pane, moving **across** it rather than around it. The lens bends the
+whole source and CONCENTRATES the core — the pile-up of brightness along a
+pane's edge is a caustic, and it is the one thing a rotating arc can never
+produce. `lab/1s-light-source-behind-glass.html`: stage A is a wandering
+source on a 14 s path through a row of lensed panes; stage B is the same source
+following the pointer with a 900 ms lag. Verified on a still with the source
+parked behind a ghost button: the pane lights from within, the core banks up
+against the pane's right edge, and the primary beside it stays its own colour.
+
+**Two kit defects found on the way, both fixed in `glass.css`:** the rule that
+stands the ground tint down under a lens had been cut by accident with the
+specular block and never shipped; and `glass-lens.js` claimed to clear the
+host's background and did not, which only showed on a page without
+`effects.css` — every lensed card and primary stayed opaque over a working
+lens. Under a lens the host fill and the GROUND tint now go to zero; the ACCENT
+share stays, or a lensed primary is indistinguishable from a lensed ghost.
+
+**Not done: retiring the sweep from the kit.** The aurora's `data-sl-fx-live`
+contract — busy, determinate, granted-live — is state the surface reports, and
+replacing its renderer is a change to that contract, not a tuning. The source
+model is proven in the lab; moving it into `effects.js` in place of the conic
+sweep is the next slice's first task.
+
 ### The light has to move behind the glass — 2026-09-11, measured on `lab/1r`
 
 The lens is a `backdrop-filter`, so it bends what is painted BEFORE the element.
