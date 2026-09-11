@@ -321,7 +321,7 @@ Contact sheets live in `docs/slices/<n>-<element>/` — a new directory, kept ap
 | `contact-1h-dark-islands.jpg` | the dark theme's two viable regions, edge to edge | share 0.42 + light label vs 0.72 + the shipped dark label |
 | `contact-1i-rim-shape.jpg` | why the lit rim reads old-school, and the corner shape | `bevel`, `ring`, `ring-round`, `soft`, `squircle`, `superellipse(4)` |
 | `contact-1j-refraction.jpg` | **real refraction of a declared backdrop, no GPU** | `flat`, `bend` (scale 14), `dispersion` (IOR 0.98/1.00/1.02), `thick` (scale 20) |
-| `contact-1k-gpu-glass.png` | refraction **plus Fresnel and glare**, on the GPU | one pane, every term switchable, every default from the `glass-studio` card |
+| `contact-1k-gpu-glass.jpg` | refraction **plus Fresnel and glare**, on the GPU | one pane, every term switchable, every default from the `glass-studio` card |
 | `promoted-showcase-dark.png` · `promoted-showcase-light.png` | **the promoted material on the showcase**, after the pane cell was given a substrate | both themes, `.sl-fx-glass__lens` hidden — see below |
 
 The two showcase captures are taken with `.sl-fx-glass__lens` hidden, because the lens paints the wrong page content into every pane (its own defect, recorded under *Found on the way*). Everything else in them is the shipped material.
@@ -368,13 +368,25 @@ directional glare, every default read from the `glass-studio` card. `vgpu` is
 **not** added: a probe has no rules, and whether the promotion goes through the
 kit's existing tier-2 wrapper is a question for the promotion.
 
-It renders and every term switches independently, but it currently reads as a
-**bevelled frame rather than glass**: the bend covers too much of the pane and
-the four edges meet in a visible diagonal seam at the corners. Two suspects, both
-unit problems rather than physics — `glass-studio`'s thickness of 20 is in its own
-units on a 200 × 200 shape, and the probe's corner radius is 42 % of the pane's
-short side, which puts most of the surface inside the corner region. The sliders
-are there to settle both by eye.
+**The bevel was physics, not units.** The first pass pushed the sample point
+along the normal by a flat amount, which is exactly what a bevel is: four faces,
+each pushing one way, meeting on a diagonal at every corner. Glass does not have
+faces — it refracts through a **thickness profile**, steep at the rim and flat
+almost at once. Taking the push from the slope of a lens section
+(`u / sqrt(1 - u²)`, the vertical tangent at the edge) removes the seams
+entirely and bends a straight line into a curve instead of creasing it.
+
+**Does `vgpu` help?** No, and it is worth writing down so it is not asked again.
+It is a setup wrapper — `init`, `surface`, `effect`, `clock`, `frame` — and the
+pixel is decided by the fragment stage, which is the same maths on either
+backend. What it buys is at **promotion**: it is already the tier-2 contract, so
+going through it inherits AC-15's dynamic import inside the guard, the kill
+switches and the device-loss teardown, none of which is worth rewriting by hand.
+So the order is: settle the look in the probe, then promote through `vgpu`.
+
+Still open: whether the tint at 0.72 leaves enough of the refraction visible —
+the probe opens at 0.40 — and the thickness, which is in the probe's own pixels
+rather than `glass-studio`'s units on its 200 × 200 shape.
 
 ## Slice 1 rulings (AC-6)
 
