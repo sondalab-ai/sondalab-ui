@@ -469,12 +469,16 @@ to be true before a single refracted pixel existed, and each cost a measurement:
    from the same custom property — one source of truth — at
    `background-size: 100% 100%`, because any other size lies to the mapping.
 
-**Open, and for the owner's eye: the tint.** `lab/1l-tint-ladder.html` puts the
+**Settled: tint 0.50.** *Owner, 2026-09-11, on `lab/1l-tint-ladder.html`* — the
 same two panes over the same declared backdrop at tint 0, 0.20, 0.35, 0.50 and
-0.70. The 0.70 chosen earlier was chosen with no backdrop behind the glass; with
-one, it buries the refraction under a slab of accent. The grid lines are the
-instrument — the question is the highest tint at which their bend is still
-legible.
+0.70, with the grid lines as the instrument. The 0.70 chosen earlier was chosen
+with nothing behind the glass; with a real backdrop it buries the bend under a
+slab of accent. 0.50 is the highest tint at which the displacement of a grid
+line crossing the pane's edge is still legible.
+
+Judged on `lab/1l`, which forces `lit: 1` — see the at-rest gap below. If the
+kit gains a persistent per-pane canvas the reading holds, since the ladder shows
+exactly what an at-rest pane would render.
 
 **Open, and structural: refraction is a material, not a light.** The shader
 returns early on `presence`, so today a pane bends its backdrop only while the
