@@ -85,27 +85,59 @@ test("the light is confined to the element it is drawn in", () => {
   assert.match(js, /el\.appendChild\(lightCanvas\)/, "the canvas is a child of the lit host");
 });
 
-test("exactly one canvas exists, and it is moved rather than multiplied", () => {
+test("one shared canvas is moved; only a pane with a backdrop gets its own", () => {
   // A WebGPU device plus surface per pointer entry is far heavier than moving
-  // an element, and a leaked context per host would exhaust them. One canvas
-  // is created at boot and re-parented, the same single-instance discipline
-  // the liquid's skin has — so the device, the surface and the pipeline are
-  // built once and never per element.
-  // One canvas in the DOM per lit element, not one canvas in the file: the
-  // refraction map is drawn on an offscreen canvas, and the captured plate and
-  // each pane's lens are canvases of their own with unrelated jobs.
+  // an element, so the pointer light still rides ONE canvas, re-parented as it
+  // goes — the same single-instance discipline the liquid's skin has, with the
+  // device, the surface and the pipeline built once.
+  //
+  // The exception, added 2026-09-11: a pane that declares a backdrop has a
+  // MATERIAL — the bend, the Fresnel rim, the glare — which exists whether or
+  // not a pointer is on it, and a canvas that visits one element at a time
+  // cannot hold thirty of those at rest. Such a pane gets a canvas of its own,
+  // painted once and repainted only when its box or the theme moves. A pane
+  // with nothing declared still gets none: the shader leaves its canvas empty,
+  // so a surface there would cost a swapchain to paint nothing.
   assert.equal(
     (js.match(/className = "sl-fx-glass__lit"/g) || []).length, 1,
-    "exactly one element is ever made the light canvas",
+    "effects.js makes exactly one shared light canvas",
   );
   assert.doesNotMatch(js, /body\.appendChild\(canvas\)/, "the light canvas is never parented to the page");
-  assert.doesNotMatch(gpu, /createElement/, "the GPU module creates no element of its own");
+  assert.equal(
+    (gpu.match(/createElement\(/g) || []).length, 1,
+    "the GPU module creates elements in one place only — track()",
+  );
+  assert.match(gpu, /cv\.className = "sl-fx-glass__lit";/,
+    "a pane's own canvas is the same kind of element as the shared one");
+  assert.match(gpu, /if \(!anchor \|\| tex === blankTex\) return false;/,
+    "track refuses a pane with no backdrop to bend");
   const release = js.slice(js.indexOf("function setPaneLive("), js.indexOf("function onPanePointer("));
-  assert.match(release, /lightCanvas\?\.remove\(\);/, "leaving a host must detach the canvas");
-  assert.match(release, /if \(lightCanvas\) el\.appendChild\(lightCanvas\);/, "entering one must attach it");
+  assert.match(release, /if \(lightCanvas\?\.parentElement === paneEl\) lightCanvas\.remove\(\);/,
+    "leaving a host must detach the shared canvas, and only if it held it");
+  assert.match(release, /if \(lightCanvas && !ownsLight\.has\(el\)\) el\.appendChild\(lightCanvas\);/,
+    "a pane that owns a canvas is never handed the shared one as well");
   // Tier 2 rides the pane's self-stopping loop, so an idle page runs no frames.
   assert.doesNotMatch(gpu, /frameLoop/, "the GPU module must not run a loop of its own");
   assert.match(js, /paneGeom\.lit = paneLit;\s*light\?\.draw\(\);/, "one GPU frame per pane tick");
+  // The material is static: nothing may repaint a tracked pane per frame.
+  const draw = gpu.slice(gpu.indexOf("function draw() {"));
+  assert.doesNotMatch(draw.slice(0, draw.indexOf("\n    }")), /repaint\(\)/,
+    "the pointer frame must not sweep every tracked pane");
+});
+
+test("a pane at rest keeps its material and loses its light", () => {
+  // AC-33 asks an element at rest to carry no LIGHT. A refraction is not
+  // light — it is what the glass is made of — so presence gates the pointer
+  // terms and not the glass branch. A pane with nothing declared has no
+  // material either, and still returns nothing at all.
+  assert.match(shader, /if \(presence <= 0\.001 && has < 0\.5\) \{ return vec4f\(0\.0\); \}/,
+    "presence alone no longer kills the frame; it kills it only with no backdrop");
+  assert.match(shader, /let lit = \(surface \+ specular \+ rim\) \* inside \* presence \* breath;/,
+    "every light term is scaled by presence, so at rest they contribute nothing");
+  // And the rest paint puts the pointer outside the pane, so even the pool's
+  // Gaussian tail cannot reach in.
+  assert.match(js, /x: -r\.width,\s*\n\s*y: -r\.height,\s*\n\s*lit: 0,/,
+    "the rest geometry parks the pointer outside the box");
 });
 
 test("refraction lives on the edge band, and samples no backdrop", () => {

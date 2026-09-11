@@ -480,12 +480,25 @@ Judged on `lab/1l`, which forces `lit: 1` — see the at-rest gap below. If the
 kit gains a persistent per-pane canvas the reading holds, since the ladder shows
 exactly what an at-rest pane would render.
 
-**Open, and structural: refraction is a material, not a light.** The shader
-returns early on `presence`, so today a pane bends its backdrop only while the
-pointer is on it. AC-33 asks an element at rest to carry no *light*; a bend is
-not light. Delivering that means every pane needs a persistent canvas, not the
-single canvas the kit moves between hosts — a real change of shape, not a
-parameter. `lab/1l` forces `lit: 1` to show what at-rest would look like.
+**Closed: refraction is a material, not a light.** *2026-09-11.* The shader used
+to return early on `presence`, so a pane bent its backdrop only under the
+pointer. AC-33 asks an element at rest to carry no *light*, and a bend is not
+light. Two changes:
+
+- `presence` now gates the light terms alone — every one of them is already
+  multiplied by it — and only kills the frame outright when no backdrop is
+  declared, where there is no material to show either.
+- A pane that resolves a backdrop anchor gets a canvas **of its own**, painted
+  once and repainted only when its box or the theme moves. Every other pane
+  keeps the single shared canvas the pointer carries between them.
+
+The split is what makes it affordable. A sweep of thirty surfaces measured about
+0.6 s in one go, so nothing sweeps: a static refraction has nothing to animate,
+and panes are tracked lazily as they scroll into view. A pane with nothing
+declared still gets no canvas, because the shader would leave it empty.
+
+`lab/1l` no longer forges this with a forced `lit: 1` — it runs `mount()` +
+`mountGpu()`, so the tint was chosen on the shipped rendering.
 
 ## Slice 1 rulings (AC-6)
 

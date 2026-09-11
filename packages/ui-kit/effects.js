@@ -408,6 +408,9 @@ const paneGeom = { w: 0, h: 0, radius: 0, border: 0, x: 0, y: 0, lit: 0, host: n
  *  created once in mountGpu() and never per element. */
 let light = null;
 let lightCanvas = null;
+/** The panes the GPU tier gave a canvas of their own, so setPaneLive knows not
+ *  to hand them the shared one as well. */
+const ownsLight = new Set();
 
 function setPaneLive(el) {
   if (paneEl === el) return;
@@ -416,15 +419,19 @@ function setPaneLive(el) {
     for (const k of ["--slfx-px", "--slfx-py", "--slfx-ptr", "--slfx-lit"]) paneEl.style.removeProperty(k);
     // Leave no empty style="" behind on an element that had none.
     if (!paneEl.getAttribute("style")) paneEl.removeAttribute("style");
-    // Detach the light before it can be attached anywhere else: exactly one
-    // canvas exists, so moving it IS the release.
-    lightCanvas?.remove();
+    // Detach the shared light before it can be attached anywhere else: exactly
+    // one of it exists, so moving it IS the release. A pane that owns a canvas
+    // never held this one.
+    if (lightCanvas?.parentElement === paneEl) lightCanvas.remove();
   }
   paneEl = el;
   paneLit = 0;
   if (el) {
     el.classList.add("is-glass-lit");
-    if (lightCanvas) el.appendChild(lightCanvas);
+    // A pane with a declared backdrop has a canvas of its own, holding a
+    // material that exists at rest; handing it the shared one too would stack
+    // two lights on one element.
+    if (lightCanvas && !ownsLight.has(el)) el.appendChild(lightCanvas);
   }
 }
 
@@ -467,6 +474,24 @@ function onPanePointer(ev) {
   paneGeom.y = ev.clientY - r.top;
   paneTarget = 1;
   ensurePaneLoop();
+}
+
+/** One pane's border box at rest, in the shape the GPU tier draws from. The
+ *  pointer is put far outside the pane, so nothing but the material is left.
+ *  @param {Element} el the pane
+ *  @returns {{w: number, h: number, radius: number, border: number, x: number, y: number, lit: number}} */
+function paneRestGeom(el) {
+  const r = el.getBoundingClientRect();
+  const cs = getComputedStyle(el);
+  return {
+    w: r.width,
+    h: r.height,
+    radius: cornerPx(cs.borderTopLeftRadius, r.width, r.height),
+    border: parseFloat(cs.borderTopWidth) || 0,
+    x: -r.width,
+    y: -r.height,
+    lit: 0,
+  };
 }
 
 function onPaneLeave(ev) {
@@ -755,16 +780,45 @@ export async function mountGpu() {
   lightCanvas.className = "sl-fx-glass__lit";
   lightCanvas.setAttribute("aria-hidden", "true");
 
-  const handle = await bootLight({ canvas: lightCanvas, state: () => paneGeom, tokens });
+  const handle = await bootLight({ canvas: lightCanvas, state: () => paneGeom, geom: paneRestGeom, tokens });
   if (!handle) {
     lightCanvas.remove();
     lightCanvas = null;
     return false;
   }
   light = handle;
+
+  // Every pane that sits inside a declared backdrop gets a canvas of its own,
+  // because its material — the bend, the Fresnel rim, the glare — is there
+  // whether or not a pointer is. The rest keep the single shared canvas: with
+  // nothing declared they have nothing to refract, so a canvas at rest would
+  // hold an empty frame. track() refuses those on its own; the set below
+  // records only the ones it took.
+  //
+  // Painted lazily, as each pane comes into view. A sweep of every pane at
+  // mount is a measurable stall — 30 surfaces took roughly 0.6s in one go —
+  // and most of them are below the fold at the time.
+  const backdropPanes = [...document.querySelectorAll(PANE_HOSTS)]
+    .filter((el) => el.closest("[data-sl-fx-backdrop]") && !el.closest('[data-sl-fx="off"]'));
+  if (backdropPanes.length && typeof IntersectionObserver === "function") {
+    const seen = new IntersectionObserver((entries, obs) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        obs.unobserve(e.target);
+        light?.track(e.target).then((took) => { if (took) ownsLight.add(e.target); });
+      }
+    }, { rootMargin: "200px" });
+    for (const el of backdropPanes) seen.observe(el);
+  } else {
+    for (const el of backdropPanes) {
+      // eslint-disable-next-line no-await-in-loop -- one upload at a time is
+      // the point: a parallel burst is the stall this avoids.
+      if (await handle.track(el)) ownsLight.add(el);
+    }
+  }
+
   // data-sl-fx-gpu="on" is set inside the GPU module itself, on the first
-  // frame it actually draws — which, for a per-element light, is the first
-  // time a pointer lands on a pane. This function only reports that the
-  // device and pipeline came up.
+  // frame it actually draws. This function only reports that the device and
+  // pipeline came up.
   return true;
 }

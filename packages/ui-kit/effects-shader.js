@@ -208,8 +208,14 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let inside = 1.0 - smoothstep(-1.0, 0.0, d);
   if (inside <= 0.001) { return vec4f(0.0); }
 
+  // Presence gates the LIGHT, not the material. A refraction is a property of
+  // the glass and is there whether or not a pointer is: AC-33 asks an element
+  // at rest to carry no light, and a bend is not light. So a pane with a
+  // declared backdrop keeps rendering at presence 0 — the light terms below
+  // are all multiplied by it and contribute nothing — while a pane with
+  // nothing declared has no material to show and leaves the canvas empty.
   let presence = clamp(look.ptr.z, 0.0, 1.0);
-  if (presence <= 0.001) { return vec4f(0.0); }
+  if (presence <= 0.001 && has < 0.5) { return vec4f(0.0); }
 
   // A slow breath, so a pane held under the cursor is alive rather than
   // frozen. Off under reduced motion, where the light is simply steady.

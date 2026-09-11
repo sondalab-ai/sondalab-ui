@@ -15,11 +15,19 @@
    a backdrop root, and only a child of it composites over the blurred result.
    Confirmed in Chrome by hiding that canvas, which left both themes quiet.
 
-   ONE canvas exists, ever. It is moved between hosts the way effects.js moves
-   the liquid's single skin, so the device, the surface and the pipeline are
-   created once at boot and never per element. The canvas is CSS-sized to its
-   host, and vgpu's layout-backed surface picks up the new size on the next
-   frame clock advance by itself.
+   ONE SHARED CANVAS, plus one per pane that declares a backdrop. The shared
+   one is moved between hosts the way effects.js moves the liquid's single
+   skin; the device, the surface and the pipeline are created once at boot
+   whatever happens. The exception exists because a pane over a declared
+   backdrop has a MATERIAL — the bend, the Fresnel rim, the fixed glare — and a
+   material is there whether or not a pointer is, which a canvas that visits
+   one element at a time cannot deliver. Those panes are painted once and
+   repainted only when their box or the theme moves, never per frame: there is
+   nothing in a static refraction to animate. A pane with nothing declared
+   still gets no canvas of its own, because the shader leaves it empty.
+
+   Every canvas is CSS-sized to its host, and vgpu's layout-backed surface
+   picks up the new size on the next frame clock advance by itself.
 
    The CSS pane is the genuine fallback, not a lesser version of the intent: a
    browser without WebGPU, a visitor under reduced motion and a visitor in
@@ -74,25 +82,46 @@ function isPaper(value) {
  *   read once per frame: the host's border box and corner radius in CSS
  *   pixels, the pointer in the host's own coordinates, and the eased presence
  *   effects.js already integrates for the CSS spot.
+ * @param {(host: Element) => {w: number, h: number, radius: number, border: number, x: number, y: number, lit: number}} opts.geom
+ *   one pane's border box at REST, measured by effects.js — which owns the
+ *   border-radius clamp the browser actually paints, and should stay the only
+ *   place that reads layout.
  * @param {{accent: string, depth: string, text: string, canvas: string}} opts.tokens
  *   the live token object effects.js keeps current across theme changes.
  * @returns {Promise<{draw(): void, stop(): void}|null>} null when the GPU path
  *   is unavailable; `draw` is called from effects.js's own pane loop, which
  *   already runs only while an element is lit and stops itself on settle.
  */
-export async function bootLight({ canvas, state, tokens }) {
+export async function bootLight({ canvas, state, geom, tokens }) {
   let gpu = null;
   let loopStopped = false;
   let motionQuery = null;
   let onMotion = null;
   let themeObserver = null;
   let attributeSet = false;
+  /** Panes that own a canvas of their own: host -> its canvas, its vgpu
+   *  surface, its backdrop texture and the numbers read off its CSS.
+   *
+   *  Only panes that resolve a backdrop anchor get one. A pane with nothing
+   *  declared has no material to show at rest — the shader leaves its canvas
+   *  empty — so a persistent surface there would cost a swapchain to paint
+   *  nothing. Those panes keep the single shared canvas, which the pointer
+   *  moves between them exactly as before.
+   *
+   *  Declared out here, with the observer watching their boxes, because stop()
+   *  unwinds both and also runs when the try below throws before either
+   *  exists. */
+  const owned = new Map();
+  let sizeWatch = null;
 
   function stop() {
     if (loopStopped) return;
     loopStopped = true;
     themeObserver?.disconnect();
     if (motionQuery && onMotion) motionQuery.removeEventListener?.("change", onMotion);
+    sizeWatch?.disconnect();
+    for (const rec of owned.values()) rec.canvas.remove();
+    owned.clear();
     gpu?.destroy?.();
     canvas?.remove?.();
     if (attributeSet && typeof document !== "undefined") {
@@ -167,20 +196,20 @@ export async function bootLight({ canvas, state, tokens }) {
       label: "sl-fx-glass backdrop placeholder",
     });
     gpu.gpu.queue.writeTexture({ texture: blankTex }, new Uint8Array([0, 0, 0, 0]), {}, [1, 1]);
+    /** The texture currently bound into the pipeline. One binding, rebound as
+     *  each pane is painted — panes are painted one at a time, never batched
+     *  into a single pass, so a single slot is enough. */
     let backTex = blankTex;
     /** The URLs already turned into textures, so a row of panes over one image
-     *  pays for it once. Keyed by the resolved URL, as --slfx-backdrop gives it. */
+     *  pays for it once. Keyed by the RESOLVED href, not the spelling. */
     const backCache = new Map();
-    /** The host the bindings currently describe, so a pointer crossing between
-     *  two panes over the same image does not re-upload it. */
+    /** The host the shared canvas currently describes. */
     let litHost = null;
-    /** The element whose box the declared image covers. */
-    let backAnchor = null;
 
-    /** Bind whatever the host's backdrop ANCHOR declares.
+    /** Resolve what the host's backdrop ANCHOR declares, as a texture.
      *
      *  The anchor, not the host: --slfx-backdrop is a custom property and
-     *  therefore inherits, so a button cannot tell which ancestor set it — and
+     *  therefore inherits, so a pane cannot tell which ancestor set it — and
      *  the rect of that ancestor is exactly what the shader needs, because the
      *  image covers the ANCHOR's box and the pane samples the part of it that
      *  happens to sit behind the pane. Sampling at the pane's own uv instead
@@ -191,29 +220,21 @@ export async function bootLight({ canvas, state, tokens }) {
      *  A url() becomes a texture; anything else — none, a gradient, a keyword
      *  — leaves the pane as it was, because a gradient cannot be sampled and
      *  guessing at one would put an invented backdrop behind the glass.
-     *  @returns {Promise<void>} */
-    async function bindBackdrop(host) {
-      const clear = () => {
-        backTex = blankTex;
-        backAnchor = null;
-        look.glass = [look.glass[0], look.glass[1], look.glass[2], 0];
-      };
+     *  @param {Element} host the pane
+     *  @returns {Promise<{tex: GPUTexture, anchor: Element|null}>} */
+    async function resolveBackdrop(host) {
+      const none = { tex: blankTex, anchor: null };
       const anchor = host.closest("[data-sl-fx-backdrop]");
-      if (!anchor) return clear();
+      if (!anchor) return none;
       const raw = getComputedStyle(anchor).getPropertyValue("--slfx-backdrop").trim();
       const url = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(raw)?.[1];
-      if (!url) return clear();
-      backAnchor = anchor;
+      if (!url) return none;
       // Keyed on the RESOLVED href, never on the spelling: two anchors naming
       // one image by different relative paths would otherwise upload it twice,
       // and two different images spelled the same way from different bases
       // would collide on one texture.
       const href = new URL(url, document.baseURI).href;
-      if (backCache.has(href)) {
-        backTex = backCache.get(href);
-        look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
-        return;
-      }
+      if (backCache.has(href)) return { tex: backCache.get(href), anchor };
       try {
         // An <img>, not fetch + createImageBitmap: createImageBitmap REFUSES
         // an SVG blob outright ("The source image could not be decoded"), and
@@ -235,8 +256,7 @@ export async function bootLight({ canvas, state, tokens }) {
         });
         gpu.gpu.queue.copyExternalImageToTexture({ source: img }, { texture: tex }, [w, h]);
         backCache.set(href, tex);
-        backTex = tex;
-        look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
+        return { tex, anchor };
       } catch (err) {
         // A backdrop that will not load is a pane without refraction, never a
         // pane that throws — the blur and the rim are correct on their own. It
@@ -244,26 +264,22 @@ export async function bootLight({ canvas, state, tokens }) {
         // silence, and the glass branch went a full session without ever
         // executing while every test stayed green.
         console.warn("[sondalab] backdrop did not load, pane stays unrefracted:", url, err);
-        clear();
+        return none;
       }
     }
 
     /** Where the host sits inside its backdrop anchor, as an origin and a
      *  scale in the anchor's own 0..1 space — which is the image's space,
      *  since the image covers the anchor's box.
-     *
-     *  Measured every frame, not once per host. Scrolling moves both rects
-     *  together and would survive a cached value, but a resize or a reflow can
-     *  change the anchor's width without changing the host's, and a stale
-     *  mapping then samples the wrong part of the image until the pointer
-     *  happens to leave and come back. Two rect reads, only while a pane is
-     *  actually lit, against the one effects.js already takes per pointermove. */
-    function measureBackRect(host) {
-      if (!backAnchor) { look.backRect = [0, 0, 1, 1]; return; }
-      const a = backAnchor.getBoundingClientRect();
+     *  @param {Element} host the pane
+     *  @param {Element|null} anchor the element the image covers
+     *  @returns {number[]} origin x, origin y, scale x, scale y */
+    function measureBackRect(host, anchor) {
+      if (!anchor) return [0, 0, 1, 1];
+      const a = anchor.getBoundingClientRect();
       const h = host.getBoundingClientRect();
-      if (a.width <= 0 || a.height <= 0) { look.backRect = [0, 0, 1, 1]; return; }
-      look.backRect = [
+      if (a.width <= 0 || a.height <= 0) return [0, 0, 1, 1];
+      return [
         (h.left - a.left) / a.width,
         (h.top - a.top) / a.height,
         h.width / a.width,
@@ -273,23 +289,30 @@ export async function bootLight({ canvas, state, tokens }) {
 
     /** Read the three glass parameters off the host. They are CSS custom
      *  properties so a component can rebind them per variant — a primary
-     *  asking for a thicker pane than a ghost — without a second shader. */
-    function readGlass(host) {
+     *  asking for a thicker pane than a ghost — without a second shader.
+     *  @param {Element} host the pane
+     *  @param {number} has 1 when a backdrop is bound, 0 otherwise
+     *  @returns {number[]} thickness, tint, fresnel, has */
+    function readGlass(host, has) {
       const cs = getComputedStyle(host);
       const num = (name, fallback) => {
         const v = parseFloat(cs.getPropertyValue(name));
         return Number.isFinite(v) ? v : fallback;
       };
-      look.glass = [
+      return [
         num("--slfx-glass-thickness", 0.1),
         num("--slfx-glass-tint", 0),
         num("--slfx-glass-fresnel", 20),
-        look.glass[3],
+        has,
       ];
     }
 
     const fx = vgpu.effect(gpu, SHADER, { set: { look, backSampler, backTex: backTex.createView() } });
     const clock = vgpu.clock(gpu);
+
+    /** The one canvas effects.js moves between panes, described the same way a
+     *  tracked pane is, so paint() has a single shape to draw. */
+    const shared = { surf, tex: blankTex, anchor: null, rect: [0, 0, 1, 1], glass: [0.1, 0, 20, 0] };
 
     // Reduced motion reaches Tier 2 as well: the light still renders — it is a
     // property of the surface, not motion — but it stops breathing. Read live,
@@ -317,6 +340,9 @@ export async function bootLight({ canvas, state, tokens }) {
         return;
       }
       applyTokens();
+      // The hues are in the material as well as in the light, so a tracked
+      // pane has to be redrawn — nothing else would ever redraw it.
+      repaint();
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,
@@ -326,36 +352,134 @@ export async function bootLight({ canvas, state, tokens }) {
     /** One frame, from whatever effects.js's pane loop last measured. No
      *  layout is forced here: the caller already has the host's rect, because
      *  it needs it to place the pointer for the CSS spot. */
-    function draw() {
-      if (loopStopped) return;
-      const s = state();
-      if (!s || s.w <= 0 || s.h <= 0) return;
-      // The host changes as the pointer moves between panes, and each one
-      // declares its own backdrop and its own parameters.
-      if (s.host && s.host !== litHost) {
-        litHost = s.host;
-        readGlass(litHost);
-        bindBackdrop(litHost).then(() => { fx.set({ backTex: backTex.createView() }); });
+    /** Paint one pane into one surface, with the pointer wherever the caller
+     *  puts it. The only place a frame is submitted.
+     *  @param {{surf: object, glass: number[], rect: number[], tex: object}} rec
+     *  @param {{w: number, h: number, radius: number, border: number, x: number, y: number, lit: number}} box
+     *  @returns {void} */
+    function paint(rec, box) {
+      if (backTex !== rec.tex) {
+        backTex = rec.tex;
+        fx.set({ backTex: backTex.createView() });
       }
-      if (s.host) {
-        measureBackRect(s.host);
-      }
-      look.box = [s.w, s.h, s.radius, s.border];
-      look.ptr = [s.x, s.y, s.lit, 0];
+      look.glass = rec.glass;
+      look.backRect = rec.rect;
+      look.box = [box.w, box.h, box.radius, box.border];
+      look.ptr = [box.x, box.y, box.lit, 0];
       look.flags = [look.flags[0], look.flags[1], clock.time, 0];
       fx.set({ look });
-      vgpu.frame(gpu, (f) => f.pass(surf, fx));
+      vgpu.frame(gpu, (f) => f.pass(rec.surf, fx));
       // Ownership of data-sl-fx-gpu lives entirely in this module, set the
-      // moment a frame that justifies it exists — which, for a per-element
-      // light, is the first time a pointer actually lands on a pane, not
-      // boot. The attribute means "the GPU tier is available"; WHICH element
-      // is lit is carried by the canvas being a child of it, and effects.css
-      // reads that with :has(), so one lit element never stands the CSS pane
-      // down on the others.
+      // moment a frame that justifies it exists. The attribute means "the GPU
+      // tier is available"; WHICH element is lit is carried by the canvas
+      // being a child of it, and effects.css reads that with :has(), so one
+      // lit element never stands the CSS pane down on the others.
       if (!attributeSet) {
         document.documentElement.setAttribute("data-sl-fx-gpu", "on");
         attributeSet = true;
       }
+    }
+
+    /** Re-read a tracked pane's CSS and rect and repaint it. Called when the
+     *  pane is first tracked, when it resizes, and when the theme changes —
+     *  never per frame. The material is static: it has no reason to redraw
+     *  until something it is made of moves.
+     *  @param {Element} host a tracked pane
+     *  @returns {void} */
+    function refresh(host) {
+      const rec = owned.get(host);
+      if (!rec || !host.isConnected) return;
+      rec.rect = measureBackRect(host, rec.anchor);
+      rec.glass = readGlass(host, rec.tex === blankTex ? 0 : 1);
+      paint(rec, geom(host));
+    }
+
+    /** Give a pane a canvas of its own, so its material exists at rest.
+     *  Refuses a pane with no backdrop anchor: there is nothing for it to
+     *  refract, and the shared canvas already gives it its pointer light.
+     *  @param {Element} host the pane
+     *  @returns {Promise<boolean>} whether the pane now owns a canvas */
+    async function track(host) {
+      if (loopStopped || owned.has(host)) return owned.has(host);
+      const { tex, anchor } = await resolveBackdrop(host);
+      if (!anchor || tex === blankTex) return false;
+      const cv = document.createElement("canvas");
+      cv.className = "sl-fx-glass__lit";
+      cv.setAttribute("aria-hidden", "true");
+      host.append(cv);
+      const rec = {
+        canvas: cv,
+        surf: vgpu.surface(gpu, cv, { dpr: [1, Math.min(devicePixelRatio || 1, 2)], clearColor: [0, 0, 0, 0] }),
+        tex,
+        anchor,
+        rect: [0, 0, 1, 1],
+        glass: [0.1, 0, 20, 1],
+      };
+      owned.set(host, rec);
+      // Twice: a layout-backed surface picks up its real size on a frame, so
+      // the first paint sizes it and the second fills it.
+      refresh(host);
+      refresh(host);
+      sizeWatch?.observe(host);
+      if (anchor) sizeWatch?.observe(anchor);
+      return true;
+    }
+
+    /** Take a pane's canvas away — it left the document, or the tier is
+     *  going down.
+     *  @param {Element} host a tracked pane
+     *  @returns {void} */
+    function untrack(host) {
+      const rec = owned.get(host);
+      if (!rec) return;
+      rec.canvas.remove();
+      owned.delete(host);
+      sizeWatch?.unobserve(host);
+    }
+
+    /** Repaint every tracked pane. The theme observer's hook, and the resize
+     *  observer's. @returns {void} */
+    function repaint() {
+      for (const host of [...owned.keys()]) {
+        if (host.isConnected) refresh(host);
+        else untrack(host);
+      }
+    }
+
+    // A pane's rect inside its anchor is what the shader samples with, and a
+    // reflow can change either box without the pointer ever moving. Cheaper
+    // and more honest than measuring per frame, which is what this replaced.
+    sizeWatch = typeof ResizeObserver === "function"
+      ? new ResizeObserver(() => repaint())
+      : null;
+
+    /** One frame for the pane under the pointer, from whatever effects.js's
+     *  pane loop last measured. A pane that owns a canvas is drawn into its
+     *  own; every other pane is drawn into the shared one, which effects.js
+     *  has already moved into it.
+     *  @returns {void} */
+    function draw() {
+      if (loopStopped) return;
+      const s = state();
+      if (!s || s.w <= 0 || s.h <= 0) return;
+      const own = s.host ? owned.get(s.host) : null;
+      if (own) {
+        own.rect = measureBackRect(s.host, own.anchor);
+        paint(own, s);
+        return;
+      }
+      // The shared canvas: the host changes as the pointer moves between
+      // panes, and each one declares its own backdrop and its own parameters.
+      if (s.host && s.host !== litHost) {
+        litHost = s.host;
+        resolveBackdrop(litHost).then(({ tex, anchor }) => {
+          shared.tex = tex;
+          shared.anchor = anchor;
+          shared.glass = readGlass(litHost, tex === blankTex ? 0 : 1);
+        });
+      }
+      if (s.host) shared.rect = measureBackRect(s.host, shared.anchor);
+      paint(shared, s);
     }
 
     // Validation and WGSL compilation errors are delivered asynchronously and
@@ -378,7 +502,7 @@ export async function bootLight({ canvas, state, tokens }) {
     // standard WebGPU signal and always resolves, never rejects.
     gpu.gpu.lost.then(stop);
 
-    return { draw, stop };
+    return { draw, track, untrack, repaint, stop };
   } catch {
     // One teardown path, not a second hand-rolled one: whatever ran before the
     // throw — nothing, the theme observer, the attribute — stop() unwinds all
