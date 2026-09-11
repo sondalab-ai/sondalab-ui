@@ -321,6 +321,7 @@ Contact sheets live in `docs/slices/<n>-<element>/` — a new directory, kept ap
 | `contact-1h-dark-islands.jpg` | the dark theme's two viable regions, edge to edge | share 0.42 + light label vs 0.72 + the shipped dark label |
 | `contact-1i-rim-shape.jpg` | why the lit rim reads old-school, and the corner shape | `bevel`, `ring`, `ring-round`, `soft`, `squircle`, `superellipse(4)` |
 | `contact-1j-refraction.jpg` | **real refraction of a declared backdrop, no GPU** | `flat`, `bend` (scale 14), `dispersion` (IOR 0.98/1.00/1.02), `thick` (scale 20) |
+| `contact-1k-gpu-glass.png` | refraction **plus Fresnel and glare**, on the GPU | one pane, every term switchable, every default from the `glass-studio` card |
 | `promoted-showcase-dark.png` · `promoted-showcase-light.png` | **the promoted material on the showcase**, after the pane cell was given a substrate | both themes, `.sl-fx-glass__lens` hidden — see below |
 
 The two showcase captures are taken with `.sl-fx-glass__lens` hidden, because the lens paints the wrong page content into every pane (its own defect, recorded under *Found on the way*). Everything else in them is the shipped material.
@@ -356,7 +357,24 @@ proof of the data-URI point.
 
 Not yet chosen: which of the four the button takes, and whether the tint at 0.72
 leaves enough of the bend visible — the probe runs at 0.35 precisely because the
-settled tint hides what it is measuring. That is the next thing to look at.
+settled tint hides what it is measuring.
+
+**Fresnel and glare need the GPU, and `lab/1k-glass-gpu.html` has them.** Both are
+per-pixel functions of the surface normal, and CSS has no normal — that is the
+honest boundary between the two routes, not a preference. The probe is raw WebGL2
+with a superellipse SDF, the normal taken from the field's own gradient,
+refraction pushed once per channel at the IOR triple, Fresnel on the rim and a
+directional glare, every default read from the `glass-studio` card. `vgpu` is
+**not** added: a probe has no rules, and whether the promotion goes through the
+kit's existing tier-2 wrapper is a question for the promotion.
+
+It renders and every term switches independently, but it currently reads as a
+**bevelled frame rather than glass**: the bend covers too much of the pane and
+the four edges meet in a visible diagonal seam at the corners. Two suspects, both
+unit problems rather than physics — `glass-studio`'s thickness of 20 is in its own
+units on a 200 × 200 shape, and the probe's corner radius is 42 % of the pane's
+short side, which puts most of the surface inside the corner region. The sliders
+are there to settle both by eye.
 
 ## Slice 1 rulings (AC-6)
 
