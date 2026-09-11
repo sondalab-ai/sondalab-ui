@@ -438,6 +438,39 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
 
+### The light has to move behind the glass — 2026-09-11, measured on `lab/1r`
+
+The lens is a `backdrop-filter`, so it bends what is painted BEFORE the element.
+`.sl-fx-aurora__glow` is a CHILD of the host: a child is painted as part of its
+element, after the backdrop has been sampled, so the lens cannot see it. Today's
+aurora is therefore light laid ON the glass, not light caught IN it.
+
+One light, one lens, two placements, side by side:
+
+| | placement | what the lens does to it |
+|---|---|---|
+| A | glow inside the pane (today) | nothing — a flat, uniform wash |
+| B | same glow as a sibling before the pane | it pools and bends at the edges |
+
+In B the light gathers along the inner edges and squeezes into a bright band at
+the bottom, which is what light does in a glass edge. That is the effect the
+owner asked for, and it costs no new code at all — only a different place in
+the DOM.
+
+**The open fork, and it is a real one.** A sibling needs geometry from
+somewhere:
+
+- *Coordinates* — position the glow absolutely against the host's box and
+  track it with a ResizeObserver. No markup change for consumers, but it is
+  the same viewport-versus-offset-parent trap that made shuding's panel jump,
+  and it breaks if the host's offset parent is not positioned.
+- *A seat* — inject a wrapper around the host, `position: relative`, with the
+  glow inside it before the host. No coordinate arithmetic at all and it cannot
+  drift, but it changes a consumer's DOM around an element they wrote, and an
+  inline-flex seat around a button can move layout.
+
+The seat is the more robust of the two and the more invasive. Not chosen yet.
+
 ### The route that works — 2026-09-11, late
 
 **`shuding/liquid-glass`** (MIT, © 2025 Shu Ding, 292 lines, copy-paste, no npm
