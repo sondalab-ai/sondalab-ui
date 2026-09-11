@@ -1095,10 +1095,16 @@
      width or padding would invalidate it on every frame and rebuild a canvas
      each time.
 
-     0.5% is the whole movement. On a 96px button that is half a pixel at the
-     edge, which is felt rather than seen; anything more and a row of buttons
-     visibly breathes out of alignment. A glass pane is heavy, and heavy things
-     move a little.
+     5% is the movement, settled by the owner between 0.5% (which read as
+     nothing) and 10% (which broke a row's alignment). On a 96px button that is
+     about 2.5px at each edge. The label scales with the box, so at a
+     fractional scale its glyphs resample — a reason not to go further.
+
+     SOFT, not snappy. The first pass used 120ms with a hard overshoot and read
+     as a tick. Glass is heavy: it takes its time both ways, and the rebound is
+     small and late rather than sharp. 320ms in on a curve whose overshoot is
+     gentle, 420ms out with none at all — a mass settles more lazily than it is
+     pushed, and never bounces back past rest.
 
      THE BOUNCE IS IN THE EASING, not in a keyframe. An overshooting cubic
      — the last control point past 1 — gives one small rebound and settles,
@@ -1108,21 +1114,21 @@
      lazily than it is pushed. */
   .sl-fx-glass--pane {
     /* Out: no overshoot. Coming back to rest should not bounce past it. */
-    transition: transform var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+    transition: transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
   }
   .sl-fx-glass--pane:hover:not(:disabled),
   .sl-fx-glass--pane:focus-visible {
-    transform: scale(1.005);
+    transform: scale(1.05);
     /* In: one small rebound past the target, then settle. */
-    transition-timing-function: cubic-bezier(0.2, 1.6, 0.3, 1);
-    transition-duration: var(--sl-motion-fast, 120ms);
+    transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
+    transition-duration: 320ms;
   }
   /* Pressed, the mass goes the other way and the bounce is gone: a press is
      an arrival, not a launch. */
   .sl-fx-glass--pane:active:not(:disabled) {
-    transform: scale(0.997);
-    transition-duration: 60ms;
-    transition-timing-function: var(--sl-motion-ease, ease);
+    transform: scale(0.985);
+    transition-duration: 140ms;
+    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }
 
   /* Sweep: 210deg → 570deg rather than 0 → 360, so the rotation is continuous

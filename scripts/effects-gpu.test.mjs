@@ -299,12 +299,14 @@ test("the pane's hover has mass, and does not invalidate the lens", () => {
   // displacement map stays valid. Animating width or padding would rebuild a
   // canvas every frame.
   assert.match(css2, /\.sl-fx-glass--pane:hover:not\(:disabled\),/);
-  assert.match(css2, /transform: scale\(1\.005\);/, "half a percent: felt, not seen");
-  assert.match(css2, /cubic-bezier\(0\.2, 1\.6, 0\.3, 1\)/,
-    "the bounce is an overshooting curve, not a keyframe that would restart on a re-entry");
-  assert.match(css2, /\.sl-fx-glass--pane:active:not\(:disabled\) \{\s*transform: scale\(0\.997\);/,
+  assert.match(css2, /transform: scale\(1\.05\);/, "five percent: 0.5% read as nothing, 10% broke a row's alignment");
+  assert.match(css2, /cubic-bezier\(0\.34, 1\.12, 0\.36, 1\)/,
+    "the bounce is a gentle overshooting curve, not a keyframe that would restart on a re-entry");
+  assert.match(css2, /transition: transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
+    "and the way out is slower still, with no overshoot at all");
+  assert.match(css2, /\.sl-fx-glass--pane:active:not\(:disabled\) \{\s*transform: scale\(0\.985\);/,
     "a press goes the other way, and without the overshoot");
-  const guard = css2.slice(0, css2.indexOf("transform: scale(1.005)"));
+  const guard = css2.slice(0, css2.indexOf("transform: scale(1.05)"));
   assert.ok(guard.lastIndexOf("@media (prefers-reduced-motion: no-preference)") >
             guard.lastIndexOf("@media (prefers-reduced-motion: reduce)"),
     "and all of it sits inside the no-preference guard");
