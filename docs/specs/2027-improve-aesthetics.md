@@ -481,7 +481,19 @@ reference this slice is modelled on does not displace anything. A full day went
 into building a working lens, which the kit now has and the reference does not,
 and none of that day went into the four things the reference actually does.
 
-Three of the four are now corrected, and each traces to a card:
+**The material is now adopted, not re-derived.** `packages/ui-kit/glass.css` is
+liqui-glass's own anatomy (MIT, © 2026 Fan Li) with every colour moved onto a
+Sondalab token, `__refract` dropped (0.04 % of pixels, and it needs JS), and
+`__specular` dropped (a pre-baked PNG cannot follow a token through a theme
+change — AC-18). 141 lines, no script, no dependency.
+
+**Settled: tint density 0.14.** *Owner, 2026-09-11, on `lab/1n-css-material.html`
+against the reference capture.* The card's own figure is 0.5125, and the
+departure is required rather than preferred: that alpha sits on a dark blue-grey
+in the original, while `--sl-bg-canvas` is nearly black, so the same number
+covers far more. AC-6 recorded.
+
+Three of the four deltas are corrected, and each traces to a card:
 
 1. **The tint was one knob doing two jobs.** `glass = mix(glass, accent, tint)`
    made the pane a slab of coloured plastic at any value worth seeing. The card

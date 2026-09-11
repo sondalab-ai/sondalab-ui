@@ -40,12 +40,22 @@
      a raster highlight cannot follow a token through a theme change, which
      AC-18 forbids. The shine's inset triple carries the rim on its own, and a
      face highlight is the GPU tier's business.
+   - The layers sit BELOW the host's own inline content, at negative z-index,
+     instead of above it with the label wrapped in a __content element. The
+     original wraps, which is natural for a component that owns its children;
+     this kit decorates buttons a consumer already wrote, and wrapping their
+     label would change their DOM. Verified in lab/1n: backdrop-filter still
+     has a backdrop to read when it paints in the negative z-index step, and
+     the two shapes render alike. __content is still honoured for a consumer
+     who does wrap.
    - No @layer. The original wraps its defaults in Tailwind's `base` layer so
      utilities win; this kit ships no layers and no Tailwind, and an unlayered
      rule here is what a consumer's own CSS should be able to beat.
    - Tint densities are one custom property, --slg-tint-a, so a variant rebinds
-     a number rather than restating a gradient. The card's own figure for the
-     resting tint is 0.5125.
+     a number rather than restating a gradient. The card's figure is 0.5125 and
+     this ships 0.14: that alpha sits on a dark blue-grey in the original,
+     while Sondalab's ground is nearly black, so the same number covers far
+     more. Chosen by the owner on lab/1n against the reference capture.
    ------------------------------------------------------------------------- */
 
 .sl-glass {
@@ -75,8 +85,12 @@
 /* The whole frost, and the card keeps it UNDER 6px: a blur wide enough to
    read as a material and narrow enough that the text behind it stays a shape
    rather than a smear. saturate lifts what the blur washes out. */
+/* Negative z-index, so the host's own text paints over all three without a
+   wrapper: inside a stacking context, negative children paint after the
+   element's background and before its inline content. isolation: isolate above
+   is what makes the host that context, so these never escape it. */
 .sl-glass__backdrop {
-  z-index: 0;
+  z-index: -3;
   backdrop-filter: blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7));
 }
 
@@ -85,11 +99,11 @@
    separates that from generic glassmorphism is the density and the frost under
    it, not the direction. */
 .sl-glass__tint {
-  z-index: 1;
+  z-index: -2;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 51.25%), transparent),
-    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 40%), transparent)
+    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 14%), transparent),
+    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 10.9%), transparent)
   );
 }
 
@@ -105,15 +119,15 @@
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 51.25%), transparent),
-      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 40%), transparent)
+      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 14%), transparent),
+      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 10.9%), transparent)
     );
 }
 
 /* The rim is an INSET shadow, so it cannot fatten the box the way a border
    would, and it is asymmetric on purpose. */
 .sl-glass__shine {
-  z-index: 2;
+  z-index: -1;
   /* Bright along the top, a softer edge down the left, barely anything at the
      bottom — light arriving from above, which is why an even ring round the
      perimeter reads as a border instead. */
@@ -124,8 +138,10 @@
     inset -1px -1px 1px var(--slg-rim-lo, color-mix(in srgb, var(--sl-text-primary) 12%, transparent));
 }
 
-/* Content rides crisp on top of all of it. AC-25: text is never filtered. */
+/* Honoured for a consumer who wraps their content the way the original does.
+   Unnecessary otherwise: the layers above already sit below inline content.
+   Either way the text is never filtered — AC-25. */
 .sl-glass__content {
   position: relative;
-  z-index: 3;
+  z-index: 1;
 }
