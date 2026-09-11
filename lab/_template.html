@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_harness.css">
+<style>
+  /* The probe's own CSS. Hardcode freely — nothing here is a design decision,
+     and nothing here is going to be copied into the kit. */
+  .probe {
+    display: grid;
+    place-items: center;
+    width: 180px;
+    height: 52px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--lab-ink) 8%, transparent);
+    border: var(--w) solid color-mix(in oklab, var(--lab-ink) calc(var(--a) * 100%), transparent);
+    letter-spacing: .04em;
+  }
+</style>
+</head>
+<body>
+<script src="_harness.js"></script>
+<script>
+/* ── Copy this file to <slice>-<probe>.html and replace the three blocks below.
+   Everything above is chrome; everything below is the probe. ──────────────── */
+
+// 1. What this probe is measured against. The path is the capture named in the
+//    reference card; a missing file shows a loud placeholder, on purpose.
+const REFERENCE = {
+  src: "../docs/references/assets/<slug>.png",
+  caption: "<slug> — what the crop shows, at what size",
+};
+
+// 2. One object per cell. The keys are the parameters under test and they are
+//    printed on the cell, so name them the way the card names them.
+const VARIANTS = [
+  { name: "hairline", w: "1px", a: 0.18 },
+  { name: "hairline+", w: "1px", a: 0.32 },
+  { name: "two", w: "2px", a: 0.18 },
+  { name: "two+", w: "2px", a: 0.32 },
+];
+
+// 3. Draw one variant into one cell. `ground` is "dark" or "light" if the
+//    variant has to know which one it is sitting on.
+function render(stage, v, ground) {
+  const box = document.createElement("div");
+  box.className = "probe";
+  box.style.setProperty("--w", v.w);
+  box.style.setProperty("--a", v.a);
+  box.textContent = v.name;
+  stage.append(box);
+}
+
+mountProbe({
+  title: "template — replace me",
+  note: "placeholder variants; this file exists to be copied",
+  reference: REFERENCE,
+  variants: VARIANTS,
+  render,
+  cell: { w: 280, h: 200 },
+});
+</script>
+</body>
+</html>
