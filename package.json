@@ -11,5 +11,9 @@
     "gen:agent-docs": "node scripts/gen-agent-docs.mjs",
     "test": "node --test scripts/*.test.mjs",
     "audit": "node packages/ui-kit/agent/sl-audit.mjs"
+  },
+  "dependencies": {
+    "@liqui-design/glass": "^0.3.0",
+    "@ybouane/liquidglass": "^1.0.3"
   }
 }
