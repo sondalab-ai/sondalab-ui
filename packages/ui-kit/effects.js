@@ -584,6 +584,7 @@ function randomizeGhosts(el) {
    all of it. */
 
 const GLOW_HOSTS = ".sl-fx-aurora:not(.sl-fx-aurora--linear)";
+const GLASS_HOSTS = ".sl-fx-glass";
 
 function injectGlow(el) {
   for (const child of el.children) {
@@ -593,6 +594,36 @@ function injectGlow(el) {
   glow.className = "sl-fx-aurora__glow";
   glow.setAttribute("aria-hidden", "true");
   el.appendChild(glow);
+}
+
+/* ── the glass anatomy ──────────────────────────────────────────────────────
+   glass.css paints the material in three stacked layers — frost, tint, rim —
+   and they have to be elements: a host has two pseudo-elements and the aurora
+   already owns ::after. They are injected rather than written by the consumer
+   for the same reason the aurora's glow is: a surface asks for glass with one
+   class, and forgetting a span is not a failure mode a design system should
+   have. The layers sit at negative z-index, so the element's own label paints
+   over them and nothing wraps the consumer's content. */
+const GLASS_LAYERS = ["backdrop", "tint", "shine"];
+
+function injectGlass(el) {
+  for (const child of el.children) {
+    if (child.classList.contains("sl-glass__backdrop")) return;
+  }
+  // Prepended in reverse, so the three land ahead of any content in DOM order
+  // while keeping their own order among themselves. Among negative z-indexes
+  // the declared value orders them anyway; DOM order only decides ties.
+  for (const name of [...GLASS_LAYERS].reverse()) {
+    const layer = document.createElement("span");
+    layer.className = `sl-glass__${name}`;
+    layer.setAttribute("aria-hidden", "true");
+    el.prepend(layer);
+  }
+}
+
+function injectGlassLayers(root) {
+  if (root instanceof Element && root.matches(GLASS_HOSTS)) injectGlass(root);
+  for (const el of root.querySelectorAll(GLASS_HOSTS)) injectGlass(el);
 }
 
 function injectGlows(root) {
@@ -638,9 +669,11 @@ export function mount(root = document) {
   // Before data-sl-fx="on" goes up: the arc's sweep and its bloom's sweep
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
+  injectGlassLayers(root);
   injectGlows(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
+      injectGlassLayers(n);
       injectGlows(n);
     }
   }).observe(root, { childList: true, subtree: true });

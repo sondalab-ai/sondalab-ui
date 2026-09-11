@@ -146,15 +146,18 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   assert.ok(declaring.some((s) => s.endsWith("::before")), "the aurora's inner wash must be one");
   assert.ok(declaring.some((s) => s.includes("sl-fx-aurora--linear")), "the linear segment must be one");
 
-  // The one background an effect may put on a HOST is the translucency mix,
-  // which is the component's own fill with some of it taken away — not light.
+  // An effect may CLEAR a host's background and never paint one. It used to be
+  // allowed to paint the translucency mix — the component's own fill with some
+  // of it taken away — but that mix moved into glass.css's tint layer on
+  // 2026-09-11, and the host now only stands down so the anatomy can carry it.
+  // The rule is stronger for it: light belongs on a layer, never on the host.
   const onHost = RULES.filter(
     (r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && !/::(?:before|after)/.test(r.selector) && PAINTS.test(r.body),
   );
   for (const r of onHost) {
     assert.match(
-      r.body, /background-color:\s*color-mix\(in srgb, var\(--slfx-fill\)/,
-      `${r.selector} paints the host something other than its own fill`,
+      r.body, /background-color:\s*transparent/,
+      `${r.selector} paints the host instead of standing its background down`,
     );
   }
 });

@@ -11,6 +11,7 @@ const gpu = readFileSync(GPU, "utf8");
 const shader = readFileSync(resolve(KIT, "effects-shader.js"), "utf8");
 const pkg = JSON.parse(readFileSync(resolve(KIT, "package.json"), "utf8"));
 const js = readFileSync(resolve(KIT, "effects.js"), "utf8");
+const css = readFileSync(resolve(KIT, "glass.css"), "utf8");
 
 const COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
 
@@ -180,7 +181,7 @@ test("refraction lives on the edge band, and samples no backdrop", () => {
   assert.match(shader, /let band = 1\.0 - smoothstep\(0\.0, hw, abs\(d\)\);/);
 });
 
-test("the material's tint is dark; the accent is the variant's small share", () => {
+test("the tint has one home, and the GPU only perturbs what CSS paints", () => {
   // The gap to the references was never refraction — liqui-glass's own
   // __refract layer changes 45 pixels of 114 704 and does not displace the
   // backdrop at all, measured in this repo on 2026-09-11. What it does have is
@@ -188,18 +189,24 @@ test("the material's tint is dark; the accent is the variant's small share", () 
   // transparent one), and a variant rule that overrides the tint rather than
   // painting over the glass. One knob mixing straight to the accent gave a
   // slab of coloured plastic, which is what the owner was seeing.
-  assert.match(shader, /glass = mix\(glass, look\.ground\.rgb, clamp\(look\.glass\.y, 0\.0, 1\.0\)\);/,
-    "the material tints toward the page's own ground, in both themes");
-  assert.match(shader, /glass = mix\(glass, look\.accent\.rgb, clamp\(look\.tone\.x, 0\.0, 1\.0\)\);/,
-    "the accent is a separate, smaller share");
+  // ONE material, and it is CSS's. The shader tinted too until 2026-09-11,
+  // which meant two knobs for one quantity: a primary rendered grey with its
+  // accent tint fully computed in a layer the shader painted over.
+  assert.doesNotMatch(shader, /mix\(glass, look\.ground\.rgb/, "the shader does not tint the material");
+  assert.doesNotMatch(shader, /mix\(glass, look\.accent\.rgb/, "nor does it paint the variant's accent");
+  assert.match(css, /--slg-tint-a, 14%/, "the tint density lives in glass.css");
+  assert.match(css, /--slg-accent-a, 0%/, "and so does the variant's accent share");
   // An earlier version of this test asserted the opposite — that nothing may
   // tint toward the canvas, because a light theme would turn into a white
   // frost. That rule was invented here, not read off a card: liqui-glass's own
   // LIGHT tint is a white wash at 0.48. What separates it from the
   // od-glassmorphism negative reference is density and the frost beneath it,
   // and those are what the gates below measure.
-  assert.match(gpu, /num\("--slfx-glass-shade", 0\.5125\)/, "the card's own figure is the default");
-  assert.match(gpu, /num\("--slfx-glass-tint", 0\)/, "a pane is glass until a variant says otherwise");
+  // What the GPU layer emits is the DIFFERENCE the bend makes, so a pane whose
+  // backdrop is flat behind it emits nothing and the CSS material shows through.
+  assert.match(shader, /let delta = glass - straight\.rgb;/, "the output is a perturbation");
+  assert.match(shader, /let straight = textureSample\(backTex, backSampler, base\);/,
+    "which needs the unbent sample as well");
 });
 
 test("the rim is top-weighted, not a ring round the perimeter", () => {

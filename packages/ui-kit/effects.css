@@ -482,12 +482,19 @@
    the component keeps the fill it shipped with. */
 /* Base classes first, then their variants: a variant binding is 0-2-0 like the
    base's, so only source order separates them. */
-.sl-fx-glass { --slfx-fill: var(--slc-surface); }
+/* --slfx-fill names the colour the component fills itself with; glass.css
+   tints toward it, so a tag stays ITS OWN colour lifted rather than the page's
+   ground laid over it. The name is the contract: a consumer whose component
+   fills itself some other way rebinds this one property. */
+.sl-fx-glass { --slfx-fill: var(--slc-surface); --slg-tint-color: var(--slc-surface); }
+/* A transparent fill is not a tint colour: color-mix would give transparent
+   and the pane would have no tint at all. These carry the page's own ground
+   instead, which is what glass over nothing should look like. */
 .sl-btn.sl-fx-glass,
 .sl-badge.sl-fx-glass,
-.sl-field__control.sl-fx-glass { --slfx-fill: transparent; }
-.sl-tag.sl-fx-glass { --slfx-fill: var(--slc-accent-subtle); }
-.sl-dialog.sl-fx-glass { --slfx-fill: var(--slc-raised); }
+.sl-field__control.sl-fx-glass { --slfx-fill: transparent; --slg-tint-color: var(--sl-bg-canvas); }
+.sl-tag.sl-fx-glass { --slfx-fill: var(--slc-accent-subtle); --slg-tint-color: var(--slc-accent-subtle); }
+.sl-dialog.sl-fx-glass { --slfx-fill: var(--slc-raised); --slg-tint-color: var(--slc-raised); }
 .sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
@@ -522,22 +529,37 @@
   --slfx-fill-a: 80%;
 }
 
+/* The frost and the fill used to be painted HERE, on the host: a
+   background-color mixing the component's colour with a veil, and a
+   backdrop-filter beside it. Both moved into glass.css's layers on
+   2026-09-11, and the move is the whole point of adopting that file — one
+   material, in one place, in the shape the reference measured. What the host
+   keeps is the naming: --slfx-fill says what colour the component fills itself
+   with and --slg-tint-color carries it into the anatomy, so a consumer still
+   rebinds one property and a tag is still its own colour lifted rather than
+   the page's ground laid over it.
+
+   The rim the old block lifted into the material (border-color mixed with the
+   veil) is now __shine's inset triple, which cannot fatten the box the way a
+   border can — the reference's own reason for using an inset shadow. */
 @supports (backdrop-filter: blur(1px)) {
-  .sl-fx-glass,
-  .sl-btn--primary.sl-fx-glass:hover:not(:disabled),
-  .sl-btn--primary.sl-fx-glass:active:not(:disabled) {
-    /* The component's own colour at its share, and the veil for the rest —
-       not transparency for the rest. A ghost button, whose fill IS
-       transparent, therefore ends up as the veil alone, which is exactly the
-       canonical recipe; a filled button ends up as its brand colour LIFTED
-       rather than darkened. */
-    background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), var(--slfx-veil));
-    backdrop-filter: blur(var(--slfx-back)) saturate(var(--slfx-back-sat));
-    /* Glass has a rim, and the component already declares one: it is lifted
-       into the material rather than a second edge being added on top. */
-    border-color: color-mix(in srgb, var(--slfx-veil) 60%, var(--slc-border));
-  }
+  /* The host stops painting its own fill: the anatomy carries it, and a solid
+     background under the layers would leave a filled control opaque with glass
+     drawn on top of nothing. The fill is not lost — --slg-tint-color and
+     --slg-accent-a put the component's own colour into the tint at the share
+     the contrast gate measured. */
+  .sl-fx-glass { background-color: transparent; }
 }
+
+@supports not (backdrop-filter: blur(1px)) {
+  /* No frost means no glass: a translucent fill over an unblurred page reads
+     as a weakened colour, so the whole thing stands down together and the
+     component keeps the fill it shipped with. The anatomy's layers paint
+     nothing on their own — the tint is the only one with a colour, and it is
+     held off here rather than left to tint a page it cannot blur. */
+  .sl-glass__tint { background-image: none; }
+}
+
 /* ══ GLASS PANE — the element is made of glass ═══════════════════════════════
    The glass family's pointer-reactive mode, for every text button whatever
    its variant — the owner: buttons are made of glass, and the interaction is
@@ -692,15 +714,10 @@
    the dark pole clears it from 0.65 up, and between 0.50 and 0.58 neither does.
    0.72 sits inside the high region on BOTH themes — 5.48:1 on ink, 5.67:1 on
    paper — so the share does not branch on the theme. */
-.sl-btn--primary.sl-fx-glass { --slfx-fill-a: 72%; }
-
-@supports (backdrop-filter: blur(1px)) {
-  .sl-btn.sl-fx-glass,
-  .sl-btn--primary.sl-fx-glass:hover:not(:disabled),
-  .sl-btn--primary.sl-fx-glass:active:not(:disabled) {
-    background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), transparent);
-  }
-}
+/* 0.72 is a CONTRAST result, so it is the share the accent layer carries too —
+   the pane it measured is the one the anatomy now composites. It supersedes the
+   0.80 the general rule above still names for non-button surfaces. */
+.sl-btn--primary.sl-fx-glass { --slfx-fill-a: 72%; --slg-accent-a: 72%; }
 
 /* Ruling 8 — the label is the pole that contrasts with the composited pane, and
    at 0.72 that is the DARK pole on both themes, because the composited pane

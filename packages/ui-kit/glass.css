@@ -94,40 +94,50 @@
   backdrop-filter: blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7));
 }
 
-/* The tint is the page's own ground at a density, in BOTH themes: near-black
-   on ink, and the card's own light value is a wash of its light canvas. What
-   separates that from generic glassmorphism is the density and the frost under
-   it, not the direction. */
+/* TWO gradients, always both present, each a density a component rebinds as a
+   number — never a restated gradient, so a variant is one line.
+ *
+ * Under: the tint. The page's own ground at a density, in both themes:
+ * near-black on ink, and the card's own light value is a wash of its light
+ * canvas. What separates that from generic glassmorphism is the density and
+ * the frost beneath it, not the direction. A component that fills itself with
+ * a role colour names it through --slg-tint-color, so a tag or a dialog stays
+ * ITS OWN colour lifted rather than the page's ground over it.
+ *
+ * Over: the accent, at 0% by default, so a plain pane pays nothing for it and
+ * a variant says which control it is by raising one number. ONE colour at two
+ * densities, like the reference's own tint pair — a gradient running from the
+ * accent to its depth companion turns a brand button into an amber-to-teal
+ * wash the moment the share is high enough to read as a fill. The reference's
+ * own rule is that variants override the tint rather than painting over the
+ * glass — and how far they may go is a measured question, not a preference:
+ * a saturated brand fill thinned far over a dark page stops being its hue. */
 .sl-glass__tint {
   z-index: -2;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 14%), transparent),
-    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 10.9%), transparent)
-  );
-}
-
-/* A variant says which control it is by compositing its accent OVER the tint,
-   at a share small enough that the glass still shows through. The reference's
-   own rule: variants override the tint, they do not paint over the glass. */
-.sl-glass--accent .sl-glass__tint {
   background-image:
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--sl-accent-default) var(--slg-accent-a, 16%), transparent),
-      color-mix(in srgb, var(--sl-accent-depth) var(--slg-accent-a, 16%), transparent)
+      color-mix(in srgb, var(--slg-accent, var(--sl-accent-default)) var(--slg-accent-a, 0%), transparent),
+      color-mix(in srgb, var(--slg-accent, var(--sl-accent-default)) var(--slg-accent-deep-a, var(--slg-accent-a, 0%)), transparent)
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 14%), transparent),
-      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 10.9%), transparent)
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-a, 14%), transparent),
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-deep-a, 10.9%), transparent)
     );
 }
 
 /* The rim is an INSET shadow, so it cannot fatten the box the way a border
    would, and it is asymmetric on purpose. */
+/* The rim is LIGHT, and AC-33 says an element at rest carries no light. Both
+   the `metal` and `liqui-glass` cards make the same Leave ruling, the latter
+   naming its always-on layers as the thing not to take. So the shine is scaled
+   by --slfx-lit, which effects.js eases in and out with the pointer, and is
+   simply absent at rest. The frost and the tint above are material and stay.
+   Default 1 so glass.css alone, with no script, still shows the full surface. */
 .sl-glass__shine {
   z-index: -1;
+  opacity: var(--slfx-lit, 1);
   /* Bright along the top, a softer edge down the left, barely anything at the
      bottom — light arriving from above, which is why an even ring round the
      perimeter reads as a border instead. */

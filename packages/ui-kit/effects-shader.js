@@ -98,6 +98,10 @@ const REFRACT_FACTOR : f32 = 1.4;
 const GLARE_ANGLE    : f32 = -0.7853981634;
 const GLARE_OPPOSITE : f32 = 0.8;
 const GLARE_GAIN     : f32 = 0.5;
+// How strongly a difference between the bent and the straight backdrop turns
+// into opacity. The refraction is a perturbation of the CSS material, so this
+// is the only knob that decides how much of it survives the composite.
+const REFRACT_SHOW   : f32 = 2.2;
 const REACH_MIN : f32 = 44.0;
 // The specular band, in multiples of the element's own border width. Read
 // from the border rather than fixed, so a control that re-parametrises its
@@ -189,25 +193,19 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let cr = textureSample(backTex, backSampler, base + (push * (2.0 - N_R) + fringe) * texel).r;
   let cg = textureSample(backTex, backSampler, base + (push * (2.0 - N_G)) * texel).g;
   let cb = textureSample(backTex, backSampler, base + (push * (2.0 - N_B) - fringe) * texel).b;
+  // The same point with nothing bent, so what this layer emits can be the
+  // DIFFERENCE the refraction makes rather than a finished surface.
+  let straight = textureSample(backTex, backSampler, base);
 
   var glass = vec3f(cr, cg, cb);
 
-  // TWO tints, because they are two different quantities and one knob doing
-  // both is what made this read as coloured plastic.
-  //
-  //  - The MATERIAL's tint is dark and desaturated, near the page's own ink:
-  //    liqui-glass uses a near-black blue-grey at 0.5125 and glass-studio
-  //    defaults its tint to fully transparent. Glass darkens what is behind it; a tint
-  //    toward the accent paints over it. The dark pole is the mirror of the
-  //    light pole below — the ground on ink, the text colour on paper, so a
-  //    light theme darkens too instead of turning into a white frost, which
-  //    is the od-glassmorphism look the non-goals reject by name.
-  //  - The VARIANT's tint is the accent, and it is SMALL. liqui's own rule:
-  //    "Variants don't paint over the glass — they override --lg-tint, so the
-  //    lens keeps refracting the background through the accent colour instead
-  //    of hiding it."
-  glass = mix(glass, look.ground.rgb, clamp(look.glass.y, 0.0, 1.0));
-  glass = mix(glass, look.accent.rgb, clamp(look.tone.x, 0.0, 1.0));
+  // NO TINT HERE. The tint is the material's, and the material is glass.css's
+  // --slg-tint-a and --slg-accent-a. It lived here too until 2026-09-11, and
+  // two knobs for one quantity is how a primary button ended up tinted twice —
+  // once in a layer the shader could not see, once in a shader the layer could
+  // not see. What is left below is what CSS has no way to express: a bend that
+  // varies across the pane, a Fresnel that follows the surface normal, and a
+  // glare with a direction.
 
   // Fresnel: grazing angles reflect, so the rim brightens and the middle does
   // not. Lifted toward the page's own light pole by a share of the remaining
@@ -280,9 +278,23 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let hue = mix(cool, look.accent.rgb, 0.22 + 0.30 * clamp(lg, 0.0, 1.0));
 
   if (has > 0.5 && inside > 0.001) {
+    // ONE MATERIAL, and it is glass.css's. This layer used to return the
+    // finished surface — the bent backdrop, tinted, with Fresnel and glare —
+    // and it painted straight over the CSS anatomy beneath it, which is how a
+    // primary button rendered grey with its accent tint fully computed and
+    // fully hidden. What it emits now is only what CSS cannot: the DIFFERENCE
+    // between the backdrop bent and the backdrop straight, laid over the
+    // material rather than in place of it.
+    //
+    // Premultiplied, and the alpha is the strength of the difference itself,
+    // so a pane whose backdrop is flat behind it emits nothing at all and the
+    // CSS material shows through untouched.
+    let delta = glass - straight.rgb;
+    let strength = clamp(max(abs(delta.r), max(abs(delta.g), abs(delta.b))) * REFRACT_SHOW, 0.0, 1.0);
     let over = clamp(hue * lit, vec3f(0.0), vec3f(1.0));
-    let out = clamp(glass + over, vec3f(0.0), vec3f(1.0));
-    return vec4f(out * inside, inside);
+    let tinted = clamp(straight.rgb + delta + over, vec3f(0.0), vec3f(1.0));
+    let a = clamp(max(strength, max(over.r, max(over.g, over.b))) * inside, 0.0, 1.0);
+    return vec4f(tinted * a, a);
   }
 
   let alpha = clamp(max(lit.r, max(lit.g, lit.b)), 0.0, 1.0);
