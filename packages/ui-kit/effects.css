@@ -827,7 +827,10 @@
    it can never leave the band — that is where four rounds of "the glow is
    truncated" came from. The bloom is the injected child, below. */
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
-  opacity: 1;
+  /* The hairline all but goes: the reference's composer has NO bright line at
+     its edge, the bloom is the edge. Kept faint so a focus ring is still a
+     ring; the light is the glow's job now. */
+  opacity: var(--slfx-ring-lit, 0.28);
   /* BORDER-BEAM'S PROFILE, not a peak. Read off its md variant: soft ramps in
      and out and a long PLATEAU between (mask 30→52 up, 52→80 full, 80→95
      down), and a body that changes colour along the arc instead of one hue
@@ -873,8 +876,11 @@
      for. Relative colour syntax is already the kit's own vocabulary
      (themes/*.css derive the accent steps with it); l and c are channels,
      not a literal. --rim's own blooms are the depth's. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 78%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 66%, transparent);
+  /* 78/66 read as a ring of neon. Profiled, the reference's edge pixel is a
+     dark saturated green lifting a near-black ground by about 48 luminance —
+     a saturated hue at roughly a third alpha, then softened. */
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 46%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 34%, transparent);
   /* Where the ring's outer edge sits, measured from the padding box
      outward: 0 on a bordered element (the ring is on the border), the
      ring's own width on --rim, which steps the ring out past the fill. */
@@ -986,8 +992,13 @@
 .sl-fx-aurora__glow::before {
   content: "";
   position: absolute;
-  inset: calc(var(--slfx-glow) - var(--slfx-bloom-out));
-  padding: var(--slfx-bloom-w);
+  /* INWARD, from the reference (docs/references/assets/border-beam-composer-
+     search-dark.png, profiled 2026-09-11): the glow is +48 L at the card's
+     edge, +16 at 30px in, gone by 60px, and nothing outside the box at all.
+     So the band starts ON the host's border and reaches --slfx-bleed inward,
+     instead of straddling the edge as a 12px ring. */
+  inset: calc(1px + var(--slfx-rim-out) + var(--slfx-glow));
+  padding: var(--slfx-bleed, 44px);
   border-radius: inherit;
   /* the bloom follows the same plateau, so the glow is a long soft band under
      the arc and not a halo round one bright point */

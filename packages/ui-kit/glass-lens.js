@@ -129,10 +129,11 @@ const SVG_NS = "http://www.w3.org/2000/svg";
  *   own background is cleared by glass.css's `.sl-glass.is-lensed` rule, not
  *   here — a stylesheet the consumer can read and override beats an inline
  *   style they cannot.
- * @param {{blur?: number, saturate?: number, brightness?: number, disperse?: number}} [look]
+ * @param {{blur?: number, saturate?: number, brightness?: number, disperse?: number, reach?: number}} [look]
  *   the rest of the backdrop-filter chain, in his own proportions; `disperse`
  *   amplifies the IOR triple's ±0.02 — 18 puts a visible fringe on a button,
- *   0 is a lens with no glass in it.
+ *   0 is a lens with no glass in it; `reach` caps the bend in CSS pixels, so a
+ *   card does not bend six times harder than a button just for being wider.
  * @returns {{refresh(): void, destroy(): void}|null} null where the browser
  *   cannot do it, in which case the element keeps the material glass.css gives
  *   it and nothing else changes.
@@ -143,7 +144,7 @@ export function lens(el, look = {}) {
   // SVG filter reference in one, and must fall through to the CSS material.
   if (!CSS.supports("backdrop-filter", "url(#x)")) return null;
 
-  const { blur = 0.25, saturate = 1.1, brightness = 1.05, disperse = 18 } = look;
+  const { blur = 0.25, saturate = 1.1, brightness = 1.05, disperse = 18, reach = 6 } = look;
   const id = `sl-lens-${serial++}`;
 
   const svg = document.createElementNS(SVG_NS, "svg");
@@ -241,10 +242,18 @@ export function lens(el, look = {}) {
     feImage.setAttribute("width", String(w));
     feImage.setAttribute("height", String(h));
     feImage.setAttribute("href", href);
+    // THE SCALE IS CAPPED. His map's displacement is a fraction of the box, so
+    // it grows with the element: about 5px on a 96px button and about 30px on
+    // a 500px card. A prism on a button is a wave on a card — the showcase's
+    // live card bent the letters behind it as if under water, and nothing
+    // about the light could be judged through that. Glass does not bend
+    // more because the pane is larger; a real slab bends at its edge by a
+    // fixed few pixels whatever its width. `reach` is that cap, in pixels.
+    const capped = Math.min(scale, reach);
     // N_R 0.98 / N_G 1.00 / N_B 1.02, with the ±0.02 scaled up by `disperse`.
-    dispR.setAttribute("scale", String(scale * (1 - 0.02 * disperse)));
-    dispG.setAttribute("scale", String(scale));
-    dispB.setAttribute("scale", String(scale * (1 + 0.02 * disperse)));
+    dispR.setAttribute("scale", String(capped * (1 - 0.02 * disperse)));
+    dispG.setAttribute("scale", String(capped));
+    dispB.setAttribute("scale", String(capped * (1 + 0.02 * disperse)));
   }
 
   refresh();

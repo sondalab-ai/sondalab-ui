@@ -469,6 +469,39 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### The light goes INSIDE, and the lens gets a ceiling — 2026-09-11, late
+
+*Owner, with a screenshot of libraries.dev's own page: "confermo, non è quello
+che mi aspetto."* Banked as `docs/references/assets/border-beam-composer-
+search-dark.png` and profiled. Against a card ground of L 29 the glow is
+**+48** (green) and **+36** (rose) at the very edge, +16 at 30 px in, +3 at
+45 px, gone by 60 px — and there is NOTHING outside the box, and NO bright line
+at the edge: the edge pixel is the bloom itself (L 77), not a hairline (which
+would read L 150+). The only bright core in the picture is the search bar's
+beam (L 207).
+
+Three numbers followed from that, all in `effects.css`:
+
+- the bloom band now starts ON the host's border and reaches **44 px inward**
+  (`--slfx-bleed`), instead of a 12 px ring straddling the edge;
+- its alphas drop from 78/66 % to **46/34 %** — the reference's edge pixel is a
+  saturated hue at roughly a third alpha, softened;
+- the lit hairline drops to **0.28** opacity (`--slfx-ring-lit`): the light is
+  the glow's job, and a focus ring is still a ring.
+
+**And the lens gets a ceiling.** The map's displacement is a fraction of the
+box, so a 500 px card bent about 30 px where a 96 px button bends 5 — the wave
+under the live card that made nothing about its light judgeable. Glass does not
+bend more for being wider; a slab bends at its edge by a fixed few pixels.
+`lens()` now caps the scale at `reach` (default **6 px**); on the showcase every
+lens reads 6, card and button alike, and the card's backdrop lies still.
+
+**Not measured, and why.** The showcase's live card sits on a giant typographic
+wordmark, and a profile through it reads the letters, not the glow (+90 at 30
+px in is a white "R" through the glass). The reference's card sits on flat
+near-black. Matching the aurora to the reference's curve the way the glass was
+matched (`lab/1n`) needs its own bed on a flat ground — `lab/1w`, next.
+
 ### The sweep, in border-beam's image — 2026-09-11, late
 
 *Owner, pasting border-beam's README: "prendi spunto, non usare la libreria di
