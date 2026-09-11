@@ -607,6 +607,12 @@ function injectGlow(el) {
 const GLASS_LAYERS = ["backdrop", "tint", "specular", "shine"];
 
 function injectGlass(el) {
+  // The host joins the anatomy too, not just its layers. glass.css declares the
+  // stacking context, the radius and the derived light pole on .sl-glass, and
+  // an element carrying only .sl-fx-glass got the layers with none of that —
+  // which read as a material that had lost its highlight colour. One class is
+  // what makes .sl-fx-glass and .sl-glass the same road rather than two.
+  el.classList.add("sl-glass");
   for (const child of el.children) {
     if (child.classList.contains("sl-glass__backdrop")) return;
   }

@@ -51,6 +51,16 @@ def profile(path):
         raise SystemExit(f"{path}: no pane edge found")
     top, bot = min(edges), max(edges)
     ground = col[max(0, top - 8)]
+    # A pane must sit on a UNIFORM ground with margin around it, which is what
+    # lab/1n's measuring bed is for. Pointed at a real surface — a substrate
+    # with a grid and text under it — the edge search latches onto the surface's
+    # own edges instead and reports the page as the ground, which looks like a
+    # material that has lost its highlight. Refuse rather than answer.
+    if bot - top > h * 0.75:
+        raise SystemExit(
+            f"{path}: found a {bot - top}px span in a {h}px image — this is not a pane on a "
+            "uniform ground. Measure on lab/1n's bed, not on a live surface."
+        )
     return ground, bot - top, [round(col[min(int(top + (bot - top) * f), h - 1)] - ground, 1) for f, _ in MARKS]
 
 
