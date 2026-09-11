@@ -469,16 +469,45 @@ to be true before a single refracted pixel existed, and each cost a measurement:
    from the same custom property — one source of truth — at
    `background-size: 100% 100%`, because any other size lies to the mapping.
 
-**Settled: tint 0.50.** *Owner, 2026-09-11, on `lab/1l-tint-ladder.html`* — the
-same two panes over the same declared backdrop at tint 0, 0.20, 0.35, 0.50 and
-0.70, with the grid lines as the instrument. The 0.70 chosen earlier was chosen
-with nothing behind the glass; with a real backdrop it buries the bend under a
-slab of accent. 0.50 is the highest tint at which the displacement of a grid
-line crossing the pane's edge is still legible.
+**Withdrawn: the tint ruling at 0.50.** It measured the wrong quantity, and the
+owner's verdict on the day — *"il risultato mi sembra sempre mediocre comparato
+alle librerie"* — is what sent us back to the cards to find out why.
 
-Judged on `lab/1l`, which forces `lit: 1` — see the at-rest gap below. If the
-kit gains a persistent per-pane canvas the reading holds, since the ladder shows
-exactly what an at-rest pane would render.
+**The gap to the references was never refraction.** This file already contains
+the measurement, taken 2026-09-11 and recorded under the `liqui-glass` card:
+toggling only its `__refract` layer changes **45 pixels of 114 704**, and the
+backdrop's own hairline behind the button has **zero** differing pixels. The
+reference this slice is modelled on does not displace anything. A full day went
+into building a working lens, which the kit now has and the reference does not,
+and none of that day went into the four things the reference actually does.
+
+Three of the four are now corrected, and each traces to a card:
+
+1. **The tint was one knob doing two jobs.** `glass = mix(glass, accent, tint)`
+   made the pane a slab of coloured plastic at any value worth seeing. The card
+   says a material's tint is *dark and desaturated* — `liqui-glass` tints
+   near-black at 0.5125, `glass-studio` ships one that is fully transparent —
+   and that a variant *"overrides `--lg-tint`… instead of hiding"* the glass.
+   Split in two: `--slfx-glass-shade` (default **0.5125**, the card's figure)
+   darkens toward the page's own ink, and `--slfx-glass-tint` (default **0**)
+   is the variant's small accent share. The dark pole mirrors the light pole —
+   the ground on ink, the text colour on paper — so a light theme darkens
+   rather than turning into the white frost `od-glassmorphism` is kept to name.
+2. **The rim was a ring.** `liqui-glass`'s is an inset shadow on the **top**
+   edge plus a weaker 1 px side pair and nothing along the bottom: light from
+   above. A Fresnel term applied evenly round the perimeter reads as a border.
+   Now weighted by how far the outward normal points at the sky
+   (`--slfx-glass-rim-up`, default 1).
+3. **Still missing: the specular.** `liqui-glass` has a dedicated `__specular`
+   layer at 0.7 — a broad soft highlight on the face, not only on the edge. The
+   kit has a glare lobe on the rim and nothing on the face.
+
+**And the limit that remains structural.** `liqui-glass` frosts the *real page*
+with `backdrop-filter`; the kit bends a **declared image**, because a canvas
+cannot read the DOM beneath it and `backdrop-filter: url()` displacement is
+inert in Chrome 152. So the refraction only exists where a surface marks a box
+with `data-sl-fx-backdrop`. Everywhere else the pane is the CSS tier, which is
+correct on its own but is not the reference's material.
 
 **Closed: refraction is a material, not a light.** *2026-09-11.* The shader used
 to return early on `presence`, so a pane bent its backdrop only under the

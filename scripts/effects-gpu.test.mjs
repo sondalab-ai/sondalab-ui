@@ -179,3 +179,38 @@ test("refraction lives on the edge band, and samples no backdrop", () => {
   // from the edge — so a pixel in the middle of the pane gets one sample.
   assert.match(shader, /let band = 1\.0 - smoothstep\(0\.0, hw, abs\(d\)\);/);
 });
+
+test("the material's tint is dark; the accent is the variant's small share", () => {
+  // The gap to the references was never refraction — liqui-glass's own
+  // __refract layer changes 45 pixels of 114 704 and does not displace the
+  // backdrop at all, measured in this repo on 2026-09-11. What it does have is
+  // a tint that is DARK and near the page's ink (glass-studio ships a fully
+  // transparent one), and a variant rule that overrides the tint rather than
+  // painting over the glass. One knob mixing straight to the accent gave a
+  // slab of coloured plastic, which is what the owner was seeing.
+  assert.match(shader, /let shade = mix\(look\.ground\.rgb, look\.sheen\.rgb, paper\);/,
+    "the dark pole mirrors the light pole: the ground on ink, the text colour on paper");
+  assert.match(shader, /glass = mix\(glass, shade, clamp\(look\.glass\.y, 0\.0, 1\.0\)\);/,
+    "the material darkens toward that pole");
+  assert.match(shader, /glass = mix\(glass, look\.accent\.rgb, clamp\(look\.tone\.x, 0\.0, 1\.0\)\);/,
+    "the accent is a separate, smaller share");
+  // A light theme must darken too. Tinting toward its cream canvas would give
+  // a white frost, which is the od-glassmorphism negative reference by name.
+  assert.doesNotMatch(shader, /mix\(glass, look\.ground\.rgb/,
+    "nothing tints straight to the canvas, which would whiten the light theme");
+  assert.match(gpu, /num\("--slfx-glass-shade", 0\.5125\)/, "the card's own figure is the default");
+  assert.match(gpu, /num\("--slfx-glass-tint", 0\)/, "a pane is glass until a variant says otherwise");
+});
+
+test("the rim is top-weighted, not a ring round the perimeter", () => {
+  // liqui-glass's rim is an inset shadow on the TOP edge plus a weaker 1px
+  // side pair and nothing along the bottom: light arriving from above. The
+  // same Fresnel term applied evenly reads as a border, which is what this
+  // did before.
+  assert.match(shader, /let up = clamp\(-grad\.y, 0\.0, 1\.0\);/,
+    "up is where the outward normal points at the sky");
+  assert.match(shader, /let facing_up = mix\(1\.0, up, clamp\(look\.tone\.y, 0\.0, 1\.0\)\);/,
+    "the weighting is a parameter, so a uniform ring is still reachable");
+  assert.match(shader, /let fres = pow\(1\.0 - t, 3\.0\) \* clamp\(look\.glass\.z \/ 100\.0, 0\.0, 1\.0\) \* facing_up;/,
+    "the Fresnel term carries the weighting");
+});

@@ -57,11 +57,17 @@ struct Look {
   // x: thickness, as a FRACTION of the pane's short side. glass-studio's own
   //    value is 20 on a 200x200 shape, so 0.10 — a ratio is the only unit that
   //    survives a 34px button, a 400px card and a 2x display unretuned.
-  // y: the accent's share of the pane, 0..1.
+  // y: the MATERIAL's share of the pane, 0..1, toward the dark pole. The
+  //    card's own figure is 0.5125.
   // z: the Fresnel factor on the card's own 0..100 scale.
   // w: 1 when a backdrop has been declared and bound, 0 otherwise. At 0 this
   //    shader behaves exactly as it did before refraction existed.
   glass  : vec4f,
+  // x: the VARIANT's accent share, 0..1 and small — a primary says which
+  //    button it is without hiding what is behind it.
+  // y: how top-weighted the rim highlight is, 0 uniform and 1 only at the top.
+  // zw: unused.
+  tone   : vec4f,
   // Where this pane sits inside its backdrop anchor, in the anchor's own 0..1
   // space — which is the image's space, because the image covers the anchor's
   // box. xy is the origin, zw the scale. Without it the whole image is
@@ -185,14 +191,38 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let cb = textureSample(backTex, backSampler, base + (push * (2.0 - N_B) - fringe) * texel).b;
 
   var glass = vec3f(cr, cg, cb);
-  glass = mix(glass, look.accent.rgb, clamp(look.glass.y, 0.0, 1.0));
+
+  // TWO tints, because they are two different quantities and one knob doing
+  // both is what made this read as coloured plastic.
+  //
+  //  - The MATERIAL's tint is dark and desaturated, near the page's own ink:
+  //    liqui-glass uses a near-black blue-grey at 0.5125 and glass-studio
+  //    defaults its tint to fully transparent. Glass darkens what is behind it; a tint
+  //    toward the accent paints over it. The dark pole is the mirror of the
+  //    light pole below — the ground on ink, the text colour on paper, so a
+  //    light theme darkens too instead of turning into a white frost, which
+  //    is the od-glassmorphism look the non-goals reject by name.
+  //  - The VARIANT's tint is the accent, and it is SMALL. liqui's own rule:
+  //    "Variants don't paint over the glass — they override --lg-tint, so the
+  //    lens keeps refracting the background through the accent colour instead
+  //    of hiding it."
+  let shade = mix(look.ground.rgb, look.sheen.rgb, paper);
+  glass = mix(glass, shade, clamp(look.glass.y, 0.0, 1.0));
+  glass = mix(glass, look.accent.rgb, clamp(look.tone.x, 0.0, 1.0));
 
   // Fresnel: grazing angles reflect, so the rim brightens and the middle does
   // not. Lifted toward the page's own light pole by a share of the remaining
   // headroom rather than added, so a bright backdrop cannot clip — which is
   // what working in LCH and clamping buys the reference.
   let pole = mix(look.sheen.rgb, look.depth.rgb, paper);
-  let fres = pow(1.0 - t, 3.0) * clamp(look.glass.z / 100.0, 0.0, 1.0);
+  // Top-weighted, not a ring. liqui-glass's rim is an inset shadow, white at
+  // half alpha, on the TOP edge plus a weaker 1px side pair, and nothing
+  // along the bottom — light arriving from above. A Fresnel term
+  // applied evenly round the perimeter reads as a border instead, which is
+  // what this used to do.
+  let up = clamp(-grad.y, 0.0, 1.0);
+  let facing_up = mix(1.0, up, clamp(look.tone.y, 0.0, 1.0));
+  let fres = pow(1.0 - t, 3.0) * clamp(look.glass.z / 100.0, 0.0, 1.0) * facing_up;
   glass = mix(glass, pole, clamp(fres * 0.55, 0.0, 1.0));
 
   // Glare: a fixed light direction, never the pointer. In the reference the

@@ -158,6 +158,7 @@ export async function bootLight({ canvas, state, geom, tokens }) {
       // whether a backdrop is bound. Read from CSS, never held here: a number
       // cached in two places is the first thing to drift.
       glass: [0.1, 0, 0, 0],
+      tone: [0, 1, 0, 0],
       backRect: [0, 0, 1, 1],
     };
 
@@ -292,19 +293,31 @@ export async function bootLight({ canvas, state, geom, tokens }) {
      *  asking for a thicker pane than a ghost — without a second shader.
      *  @param {Element} host the pane
      *  @param {number} has 1 when a backdrop is bound, 0 otherwise
-     *  @returns {number[]} thickness, tint, fresnel, has */
+     *  @returns {{glass: number[], tone: number[]}} the two uniform vectors */
     function readGlass(host, has) {
       const cs = getComputedStyle(host);
       const num = (name, fallback) => {
         const v = parseFloat(cs.getPropertyValue(name));
         return Number.isFinite(v) ? v : fallback;
       };
-      return [
-        num("--slfx-glass-thickness", 0.1),
-        num("--slfx-glass-tint", 0),
-        num("--slfx-glass-fresnel", 20),
-        has,
-      ];
+      return {
+        glass: [
+          num("--slfx-glass-thickness", 0.1),
+          // The card's own figure for the material's tint.
+          num("--slfx-glass-shade", 0.5125),
+          num("--slfx-glass-fresnel", 20),
+          has,
+        ],
+        tone: [
+          // The variant's accent share. Zero by default: a ghost is glass and
+          // nothing else, and a primary says so with a small share, never by
+          // painting over what it is made of.
+          num("--slfx-glass-tint", 0),
+          num("--slfx-glass-rim-up", 1),
+          0,
+          0,
+        ],
+      };
     }
 
     const fx = vgpu.effect(gpu, SHADER, { set: { look, backSampler, backTex: backTex.createView() } });
@@ -312,7 +325,7 @@ export async function bootLight({ canvas, state, geom, tokens }) {
 
     /** The one canvas effects.js moves between panes, described the same way a
      *  tracked pane is, so paint() has a single shape to draw. */
-    const shared = { surf, tex: blankTex, anchor: null, rect: [0, 0, 1, 1], glass: [0.1, 0, 20, 0] };
+    const shared = { surf, tex: blankTex, anchor: null, rect: [0, 0, 1, 1], glass: [0.1, 0.5125, 20, 0], tone: [0, 1, 0, 0] };
 
     // Reduced motion reaches Tier 2 as well: the light still renders — it is a
     // property of the surface, not motion — but it stops breathing. Read live,
@@ -363,6 +376,7 @@ export async function bootLight({ canvas, state, geom, tokens }) {
         fx.set({ backTex: backTex.createView() });
       }
       look.glass = rec.glass;
+      look.tone = rec.tone;
       look.backRect = rec.rect;
       look.box = [box.w, box.h, box.radius, box.border];
       look.ptr = [box.x, box.y, box.lit, 0];
@@ -390,7 +404,7 @@ export async function bootLight({ canvas, state, geom, tokens }) {
       const rec = owned.get(host);
       if (!rec || !host.isConnected) return;
       rec.rect = measureBackRect(host, rec.anchor);
-      rec.glass = readGlass(host, rec.tex === blankTex ? 0 : 1);
+      Object.assign(rec, readGlass(host, rec.tex === blankTex ? 0 : 1));
       paint(rec, geom(host));
     }
 
@@ -413,7 +427,8 @@ export async function bootLight({ canvas, state, geom, tokens }) {
         tex,
         anchor,
         rect: [0, 0, 1, 1],
-        glass: [0.1, 0, 20, 1],
+        glass: [0.1, 0.5125, 20, 1],
+        tone: [0, 1, 0, 0],
       };
       owned.set(host, rec);
       // Twice: a layout-backed surface picks up its real size on a frame, so
@@ -475,7 +490,7 @@ export async function bootLight({ canvas, state, geom, tokens }) {
         resolveBackdrop(litHost).then(({ tex, anchor }) => {
           shared.tex = tex;
           shared.anchor = anchor;
-          shared.glass = readGlass(litHost, tex === blankTex ? 0 : 1);
+          Object.assign(shared, readGlass(litHost, tex === blankTex ? 0 : 1));
         });
       }
       if (s.host) shared.rect = measureBackRect(s.host, shared.anchor);
