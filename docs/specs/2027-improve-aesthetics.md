@@ -438,6 +438,49 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
 
+### The route that works — 2026-09-11, late
+
+**`shuding/liquid-glass`** (MIT, © 2025 Shu Ding, 292 lines, copy-paste, no npm
+package). It builds an feImage displacement map on a canvas from a rounded-rect
+SDF, hands it to `feDisplacementMap` as a `data:` URI, and puts
+`backdrop-filter: url(#id)` on an element. **Nothing rasterises the DOM**, which
+is what makes it usable: every hang in the `@ybouane/liquidglass` attempt came
+from DOM rasterisation, and that dependency is now removed.
+
+**It overturns this repo's own ruling.** `backdrop-filter: url(#f)` displacement
+is NOT inert in Chrome 152 — his script bends a page's grid lines visibly, in
+this browser, unmodified. The 45-pixels-of-114 704 measurement was a fact about
+*liqui.design's* filter, not about the browser, and the capture-plate lens was
+never the only route. `docs/memory/backdrop-filter-url-svg-displacement-is-
+applied-but-inert-ch152.md` carries the correction.
+
+**What to bind, and what not to.** His file builds one fixed draggable panel.
+Aimed at a design system, the useful part is his `Shader` class; the panel is
+not. Tested as five cases on one page (`lab/1q-shuding-variants.html`), his code
+unchanged and only the container's size and placement varying:
+
+| | case | bends? |
+|---|---|---|
+| A | his own 300 × 200, fixed | yes |
+| B | 96 × 40, fixed | yes |
+| C | 96 × 40, absolute in a holder | yes |
+| D | 96 × 40, absolute over a real `.sl-btn` | yes — but the LABEL refracts too |
+| E | his filter put **on** the `.sl-btn` itself | **yes, and the label stays crisp** |
+
+**E is the shape to ship.** Construct his `Shader` at the element's size, append
+only its `svg` (never its `container`), clear the element's own background and
+set `backdrop-filter: url(#<id>_filter) …` on the element. The label is then
+untouched by construction — `backdrop-filter` reaches only what is behind an
+element, never its content — which satisfies AC-25 without a rule.
+
+**A rewrite of the same idea does not work.** `lab/1p` re-implemented the SDF,
+the normalisation and the scale by hand and never displaced at any `scale`, with
+`href` or `xlink:href`, while `blur`/`saturate`/`brightness` in the same chain
+all took effect. Use his code; do not paraphrase it. The differences that matter
+and were got wrong are his `maxScale *= 0.5` normalisation, deriving the
+filter's `scale` from the measured maximum displacement, and his SDF's own
+half-extents (0.3, 0.2) and radius (0.6).
+
 ### Direction change — 2026-09-11: USE the knowledge base, do not reproduce it
 
 *Owner: "voglio riusare quello che sta nel KB con leggere differenze. ESATTAMENTE
