@@ -187,6 +187,11 @@
    lensed primary stayed opaque, a working lens under a solid fill. (An earlier
    version of this rule was cut by accident along with the specular block; it
    never shipped, so the showcase had tint under every lens as well.) */
+/* Registered so they interpolate: an unregistered custom property inside a
+   filter snaps between keyframes instead of tweening. Inherit, so a container
+   can breathe every pane in it at once. */
+@property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 0.25px; }
+@property --slg-lens-sat  { syntax: "<number>"; inherits: true; initial-value: 1.1; }
 .sl-glass.is-lensed { background-color: transparent; }
 .sl-glass.is-lensed .sl-glass__tint { --slg-tint-a: 0%; --slg-tint-deep-a: 0%; }
 

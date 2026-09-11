@@ -469,6 +469,39 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### The prism proper — 2026-09-11, late
+
+*Owner, with the reference picture: a white beam enters one face of the prism,
+the spectrum leaves the opposite face as a widening fan; "disperse 60 però con
+blur variabile, deve essere tutto molto dinamico."*
+
+Two different things are in that picture, and the kit does one of them:
+
+- **The entry is real.** The beam sits behind the pane; the lens bends it where
+  it crosses the face and dispersion parts it there — at 60, blue/green/orange
+  fully apart at the entry face and a cyan fringe at the exit. That is
+  `backdrop-filter`, and it costs nothing per frame.
+- **The exit is emitted light, and no filter can paint it.** A displacement
+  map moves pixels inside the pane; it cannot put a spectrum on the page
+  outside it. The fan is a DRAWN element: a band anchored at the exit point on
+  the far face, rotated to the exit angle, clipped to a wedge, filled across
+  its width with the spectrum (red on the side nearest the incoming line —
+  red is bent least), fading with distance. It shares one custom property
+  with the beam (`--dy`), so the two drift together and the fan stays glued
+  to the beam without a line of script.
+
+**Dynamic, by three clocks that never lock step.** The frost on the pane
+breathes (`--slg-lens-blur` 0.2 → 3.2 px, `--slg-lens-sat` 1.05 → 1.5, 4.2 s),
+so the beam inside sharpens and softens; the fan's blur breathes on its own
+(0.8 → 7 px, 6.5 s) and its reach on a third (×0.82 → ×1.12, 9 s, offset); the
+whole assembly drifts (12 s). `lab/1v-prism-fan.html`.
+
+**Kit change to make it possible:** `glass-lens.js` no longer writes blur and
+saturation as literals into the filter chain. They are `var(--slg-lens-blur,
+<fallback>)` and `var(--slg-lens-sat, <fallback>)`, and `glass.css` registers
+both with `@property` so a keyframe interpolates them. Verified: half-way
+through the frost keyframe the computed chain reads `blur(1.7px)`.
+
 ### The beam — 2026-09-11, late
 
 *Owner: "immagino un fascio di luce che entra nel vetro e si scompone."* That is

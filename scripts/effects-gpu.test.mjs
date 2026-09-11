@@ -317,3 +317,15 @@ test("the pane's hover has mass, and does not invalidate the lens", () => {
             guard.lastIndexOf("@media (prefers-reduced-motion: reduce)"),
     "and all of it sits inside the no-preference guard");
 });
+
+test("the lens's frost is animatable, so glass can breathe", () => {
+  // The owner: disperse 60 but with a VARIABLE blur, everything very dynamic.
+  // A literal in the backdrop-filter chain cannot be animated from CSS; a
+  // var() with the literal as its fallback can, once @property registers it so
+  // a keyframe interpolates instead of snapping. Measured on lab/1v: the
+  // computed chain reads blur(1.7px) half-way through a 0.2px..3.2px keyframe.
+  assert.match(lensSrc, /blur\(var\(--slg-lens-blur, \$\{blur\}px\)\)/, "blur is a var with the number as fallback");
+  assert.match(lensSrc, /saturate\(var\(--slg-lens-sat, \$\{saturate\}\)\)/, "and so is saturation");
+  assert.match(css, /@property --slg-lens-blur \{ syntax: "<length>"; inherits: true;/, "registered, inheriting");
+  assert.match(css, /@property --slg-lens-sat\s+\{ syntax: "<number>"; inherits: true;/);
+});

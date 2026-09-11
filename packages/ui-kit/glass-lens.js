@@ -252,8 +252,13 @@ export function lens(el, look = {}) {
   watch?.observe(el);
 
   el.classList.add("is-lensed");
+  // The chain's numbers are var() fallbacks, not literals, so a surface can
+  // ANIMATE them — a lens whose frost breathes is the difference between glass
+  // and a photograph of glass. glass.css registers both with @property so a
+  // transition or keyframe interpolates them instead of snapping.
   el.style.backdropFilter =
-    `url(#${id}_filter) blur(${blur}px) saturate(${saturate}) brightness(${brightness})`;
+    `url(#${id}_filter) blur(var(--slg-lens-blur, ${blur}px)) ` +
+    `saturate(var(--slg-lens-sat, ${saturate})) brightness(${brightness})`;
 
   return {
     refresh,
