@@ -733,25 +733,11 @@
 .sl-fx-glass:has(> .sl-fx-glass__lit)::after { opacity: 0; }
 .sl-fx-glass--pane:has(> .sl-fx-glass__lit)::before { opacity: 0; }
 
-/* The lens: a crop of the page behind this element, refracted. It sits under
-   everything the element paints — under the pane's slab, under the Tier 2
-   light, under the label — and the host's own translucent fill is composited
-   over it, so the blur and the veil still read as the material while the lens
-   supplies the bend the blur cannot. Clipped to the corner the component
-   declared; the filter's own field already stops at the same outline.
-   effects.js creates it only where a capture actually succeeds, so a browser
-   that cannot rasterise a foreignObject simply never has one. */
-.sl-fx-glass__lens {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -2;
-  display: block;
-  border-radius: inherit;
-  pointer-events: none;
-  user-select: none;
-}
+/* The lens is gone (2026-09-11): the declared-backdrop route replaces it, and
+   effects.js carries the full record of why. Nothing selects .sl-fx-glass__lens
+   any more; the two kill-switch rules below are left because they are harmless
+   and a consumer may still have one in an old build. */
+
 
 /* The Tier 2 canvas. Its box is the host's BORDER box — the shader is handed
    that rect and reads the pointer against the same origin — and it sits in the

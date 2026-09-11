@@ -180,11 +180,13 @@ test("the liquid never filters, re-radiuses or re-colours the host", () => {
   // writes them — a rewritten radius would break a component's own
   // --sl-radius-* contract, and a rewritten border-color would freeze the
   // hover state the skin is supposed to follow.
-  // Scoped to hosts. The lens is a canvas this layer owns, holding a copy of
-  // the page, and filtering THAT is the whole mechanism; filtering a host
-  // would warp its own content, which is the lens the owner refused.
+  // Nothing in this layer writes a filter onto anything. This used to allow one
+  // exception — the lens, a canvas holding a copy of the page, where filtering
+  // was the whole mechanism. The lens was removed on 2026-09-11 in favour of a
+  // declared backdrop, so the rule is now the stronger one it always wanted to
+  // be: no element is filtered by this layer at all.
   const writes = [...js.matchAll(/(\w+)\.style\.filter\s*=/g)].map((m) => m[1]);
-  assert.deepEqual(writes, ["lens"], `only the lens may be filtered, got ${JSON.stringify(writes)}`);
+  assert.deepEqual(writes, [], `this layer filters nothing, got ${JSON.stringify(writes)}`);
   assert.doesNotMatch(js, /setProperty\(\s*["']filter["']/, "and never through a custom property on a host");
   assert.doesNotMatch(js, /\.style\.border(?:Radius|Color|TopColor|Image)\s*=|setProperty\(\s*["']border-/, "no border property may be written onto an element");
   // Scoped to the skin's own builder: glass displaces a copy of the page, but
