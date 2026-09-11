@@ -1,0 +1,449 @@
+---
+slug: 2027-improve-aesthetics
+title: Improve aesthetics
+status: draft
+createdAt: 2026-09-10
+---
+
+> **What this file is:** the hub for the aesthetic effort of `@sondalab/ui-kit` after the 2026-09-11 pivot. It holds four things and nothing else: the bar (**Goal**, **Non-goals**), the working method that replaces iterate-until-it-convinces (**Method**), the curated visual ground truth everything is measured against (**Reference knowledge base** — owner-filled), and what has to be true before the ambition counts as met (**Acceptance Criteria**). It does **not** decide mechanism, and it is not an implementation plan.
+> **Audience:** the owner setting the bar and curating the references; engineers and agents working a slice; reviewers deciding whether a slice is done.
+> **Owner:** marcellobarile.
+> **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
+> **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
+
+## Goal
+
+We should strengthen the aesthetics of the design system, and make it appear unique. We should add lighting, and kinetics effects depending by the element we are considering. It is a must to use webgpu whenever possible, and always provide a fallback when that's not available because not supported by the client.
+
+While looking for gradients, effects, and animations, we should rely on the state-of-the-art of UX and design, searching the web if necessary.
+
+## Non-goals
+
+- Cheap and mediocre solutions
+- Bland UI and effects
+- Common AI-generated solutions
+- **Exploration that costs as much as delivery** — a direction probe built inside the published package, at production quality, that someone then has to defend (added by the pivot; see below)
+
+## Why this file changed shape — the 2026-09-11 pivot
+
+Three iterations of the effects layer were run on model-led judgement (Opus, then Fable), each producing a result the owner was not convinced by. The diagnosis is **not** that the specification was too thin: `2026-09-08-effects-layer-design.md` measures its reference from the reference's own source, fixes a semantic grammar, a budget, three tiers and a per-component declension, and it still records — in its own §Decision 2 — that *"This decision has been wrong twice"*, and in `620b7b7` that a report *"claimed a result it did not have"*.
+
+Two failure modes were running at once, and the owner confirms both: **fidelity** (the render never reached the reference he had in mind) and **direction** (the render did what the spec said, and the spec pointed at the wrong thing). They need loops with opposite economics, and until now they shared one loop. Every direction probe was built inside the published package, under the audit, the colour gates and the tests — so trying a direction cost a full implementation and discarding one meant overturning a written Decision. When exploring costs what delivering costs, you explore once and marry the first result.
+
+The spec's own confession is the other half: *"Nothing in this repository renders a frame. Every real defect in this layer was found by looking at the rendered page beside the reference, and none by reading."* The only aesthetic instrument in the loop was the owner's eye, one round trip at a time, on four families across fifteen components.
+
+## Method — two loops, three artifacts
+
+| Artifact | Loop | Lives in | Rules that apply | Disposable |
+|---|---|---|---|---|
+| **Reference cards** | — (input to both) | `docs/references/` + the index below | curated by the owner; every value read from the reference, never inferred | no — they outlive every slice |
+| **Direction probes** | **divergence** — many cheap variants, looked at together, one chosen | `lab/` (outside `packages/`) | none. No tokens, no `sl-audit`, no tests, no kit imports, no review | **yes, by construction** — a probe is never merged into the package |
+| **The promoted variant** | **convergence** — measured against the card until it lands | `packages/ui-kit/` | all of them: the AC-18 – AC-25 gates, colour contract, tiers, kill switches, tests | no |
+
+The rule that makes the split work: **a direction probe never enters the published package.** It is the only thing that makes ten probes cost less than one implementation.
+
+Order of work in a slice: (1) the owner fills the reference cards for **one element**; (2) probes are built in `lab/` and rendered side by side; (3) the owner picks, and the rejected ones are recorded, not kept; (4) the winner is promoted into the kit under the AC-18 – AC-25 gates, carrying rendered evidence beside the card; (5) the ruling is written down — chosen, rejected, why. The spec entry is written **last and thin**: a minute of the decision, not a plan.
+
+## Reference knowledge base
+
+**Owner-filled. This is the ground truth of the whole effort, and the part no model can supply.**
+Governing rule for anyone implementing: **no value is invented where a reference can supply one.**
+
+Glassmorphism design system principles:
+- https://open-design.ai/plugins/design-system-glassmorphism/
+- https://www.designmonks.co/blog/liquid-glass-vs-glassmorphism
+- _(slot — source to add)_
+
+Glassmorphism and liquid glass implementations:
+- Liquid Glass Vue WebGL implementation https://liquidglassdesign.com/resources/liquid-glass-vue (see if we can port it to our webgpu based solution)
+- Liquid glass components https://liqui.design/docs/components
+- STRONG CODE HINTS HERE: https://github.com/iyinchao/liquid-glass-studio
+
+### Index
+
+`carried over` = extracted from `2026-09-08-effects-layer-design.md`, where it was measured from the reference's own source.
+
+**All eight cards were verified by the owner on 2026-09-11**, which closes AC-1 for slice 1. The *State* column records two independent things: whether the owner has signed the card, and whether the element the card describes has been **captured to disk** — four cards have captures, four are measured from source or carry no measurable values at all, and that is a property of the reference, not a gap in the card.
+
+| Slug | Governs | Source | State |
+|---|---|---|---|
+| `metal` | glass — ring, cursor light, dispersion | https://libraries.dev/metal · https://github.com/Jakubantalik/Libraries.dev (`packages/metal-fx/src`) | verified 2026-09-11 · captured |
+| `border-beam` | aurora — the arc and its bloom | https://libraries.dev/beam | verified 2026-09-11 · captured |
+| `gooey` | liquid — the skin below the content | https://libraries.dev/gooey | verified 2026-09-11 · captured |
+| `liqui-glass` | glass — **the text button**, and the layer architecture | https://liqui.design/docs/components/button | verified 2026-09-11 · captured · measured from the rendered component |
+| `glass-studio` | glass — parameter set, backend policy, LCH lighting | https://github.com/iyinchao/liquid-glass-studio | verified 2026-09-11 · no capture — measured from source at `HEAD` |
+| `glass-vue` | glass — a second WebGL-only implementation | https://liquidglassdesign.com/resources/liquid-glass-vue · https://github.com/Muggleee/liquid-glass | verified 2026-09-11 · no capture — demo only, supplies no values |
+| `liquid-vs-glass` | vocabulary — what separates liquid glass from glassmorphism | https://www.designmonks.co/blog/liquid-glass-vs-glassmorphism | verified 2026-09-11 · no capture — definitional, supplies no values |
+| `od-glassmorphism` | **negative reference** — the generic look the non-goals reject | https://open-design.ai/plugins/design-system-glassmorphism/ | verified 2026-09-11 · no capture — the values are the point |
+
+Every source the owner put in the knowledge base above is now a card, which is what AC-35 asks for. Three of them (`glass-vue`, `liquid-vs-glass`, `od-glassmorphism`) turned out to carry no measurable parameters; they are kept as short cards saying exactly that, because "we looked and it had nothing" is worth recording once rather than re-discovering.
+
+Slice 1's assignment, after the 2026-09-11 pass: **`liqui-glass` governs the text button**, `gooey` the round icon-only one, `border-beam` the focus state of both, with `metal` and `glass-studio` supplying the glass parameter grammar across both silhouettes. It **did** need a new slug — the original line here assigned the text button to `metal`, which has no text button (Note 8).
+
+Every card below reads `Verified by owner: yes — 2026-09-11`. That field means *a person looked at this*, and it was the owner who set it; nothing else in this file may set it.
+
+### Capture protocol
+
+Captures live in `docs/references/assets/` as `<slug>-<variant>-<state>-<ground>.png`. One rule, so two captures can be laid side by side: **a 320 × 200 CSS-px region of the viewport, centred on the element, at the page's own zoom** — the crop size is fixed, the centre moves with the element. A second, optional **160 × 100 detail crop** carries pixel-level claims (a rim, a hairline) and is named `-detail`. The `<ground>` segment is `dark` or `light` where the reference has themes, and **`fixedbg`** where the demo sits on its own backdrop and does not follow the page theme — asserting `-dark` on such a file would claim something the file does not carry.
+
+The twelve captures now on disk total 248 KB, which settles Note 6's weight question for a repository of this size.
+
+**Glass has no light-ground reference, on either source.** libraries.dev is dark-only: `data-theme="dark"` is hard on `<html>`, the menu offers no switch, forcing the attribute to `light` changes nothing. liqui.design *does* have a theme toggle and it works on the page chrome — but the component tiles keep their own fixed colourful backdrop, and the proof is measured rather than eyeballed: the same crop taken in dark and in light differs by **0 pixels of 114 704**. So no reference in this knowledge base shows glass on a light ground; `metal`'s light-mode numbers (`multiply` at 0.27 under `saturate(5.4)`) come from `metal-fx`'s source, not from anything rendered. See Note 7 for what follows for AC-3 and AC-4.
+
+That 0-pixel control is also what makes the other measurements here trustworthy: the capture pipeline adds no noise, so a non-zero diff elsewhere is signal.
+
+### Cards
+
+#### `metal` — Libraries.dev "Metal" *(carried over; captured and verified 2026-09-11)*
+
+- **Source:** https://libraries.dev/metal · **Code:** https://github.com/Jakubantalik/Libraries.dev, `packages/metal-fx/src`
+- **Capture:** `docs/references/assets/metal-circle-pointer-off-dark.png` and `metal-circle-pointer-on-dark.png` (v2, chromatic, circle button) · `metal-text-hover-dark.png` (the playground's **Text** type, cursor visible on the glyph). Captured 2026-09-11 from the page's own playground, dark only, per the capture protocol above. **What they evidence, and what they do not:** both circle frames show the always-on ring and a wandering halo — that is the *Leave* line's subject, and it is well evidenced. They are otherwise **indistinguishable**, and neither renders a cursor (the text frame does), so **the cursor light and the ring bend are not captured here**; the card's numbers for them still rest on `metal-fx`'s source, and the reading is the owner's to take in the interactive pass
+- **Technology:** 2D-canvas hairline + a WebGL "plasma" environment texture + SVG `feDisplacementMap` for the bend; halo as blurred SVG strokes
+- **Measured:** ring **1–2 px, exactly on the element's border**; seven-stop moving environment (mostly white and black, pastel flecks `#aae8ff`, `#c5fe9e`, `#f7888d`, `#fffdc3`, `#007cff` in the chromatic preset); bend `applyTo: 'ring'` — strength **0.74**, reach **36 px**, cap **9 px**, fade **200/350 ms**; cursor light reach **56 px**, spill a **48 px** glint at peak **0.55** tinted by the ring; light mode composites the glow with `multiply` at **0.27** under `saturate(5.4)`; colour separation is one knob — `shiftRed`/`shiftBlue` **0.3** (**0.75** chromatic)
+- **Take:** the pixel restraint (one to two pixels on an edge, never more); dispersion as the single colour-separation knob; "content and glow stay rigid" — the bend is a vector outline, not a filter over the label
+- **Leave:** the always-on ring (owner ruling: an element at rest carries no light); reflections cast onto neighbouring elements (needs a page-level surface, rejected)
+- **Governs:** glass — the edge, the pointer light, the dispersion
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `border-beam` — Libraries.dev "Border beam" *(carried over; captured and verified 2026-09-11)*
+
+- **Source:** https://libraries.dev/beam · **Code:** as above
+- **Capture:** `docs/references/assets/border-beam-large-rotate-colorful-dark.png` (Rotate · Large · Colorful, read off the control panel) · `border-beam-rotate-colorful-a-dark.png` and `border-beam-rotate-colorful-b-dark.png` (same, after clicking Type toward **Line** — **the toggle was not confirmed in a screenshot, so treat the Type as unknown on these two**). Captured 2026-09-11, same protocol; the two are ~8 s apart, roughly four full turns, not two phases of one. **What they evidence:** the bloom and the ~28 px inner wash, both very quiet, which is consistent with the *Measured* line's 0.24–0.42. **No crisp 1 px arc is visible in any of the three** — a still cannot carry a travelling arc, so that half of the card is the owner's interactive pass, not these files
+- **Technology:** CSS only — `@property` angle, `conic-gradient` masked to a 1 px ring, radial colour blobs, a blurred copy for the glow, `hue-rotate` drifting
+- **Measured:** **1 px** arc of light travelling the border, **1.96 s** per turn; hue drift **±30°**; every layer at **0.24–0.42** opacity; inner wash confined to a **~28 px** band inside the edge
+- **Take:** the recipe entire — this is the look the owner pointed at, and it is CSS at every tier
+- **Leave:** any attempt to redo it on the GPU — a shader aurora was built first and read as marbling, not as light
+- **Governs:** aurora — arc, bloom, wash
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `gooey` — Libraries.dev "Gooey" *(carried over; captured and verified 2026-09-11)*
+
+- **Source:** https://libraries.dev/gooey · **Code:** as above
+- **Capture:** `docs/references/assets/gooey-rest-dark.png` (closed) · `gooey-open-dark.png` (open — the silhouette below the content is visible as a blob behind the four pieces, which is the *Take* line's evidence) · `gooey-partially-closed-dark.png` (pieces part-way back). Captured 2026-09-11, same protocol. The last two were taken with the page's transitions slowed to 6 s by an injected `transition-duration` override — timing only, the geometry is the reference's. **The merging neck is not legible in the part-way frame**; it forms at a separation these captures missed, so the blur-then-contrast chain's actual reading is still the owner's interactive pass
+- **Technology:** SVG filter — `feGaussianBlur` then an `feColorMatrix` alpha slope — applied to a **silhouette layer below the content**; the real DOM rides crisp on top
+- **Measured:** `blur = 6`, `contrast = 18`; nothing in the UI itself is filtered — **both numbers re-read from the playground's own controls on 2026-09-11** ("Goo blur 6", "Contrast 18"), so this card's *Measured* line no longer rests on the carried-over reading
+- **Take:** the silhouette-below-content architecture; the blur-then-alpha-contrast chain
+- **Leave:** filtering the host (text refracts, the border re-rasterises at DPR 2, and it reads as a lens); applying it to anything but a round silhouette
+- **Governs:** liquid — the skin
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `liqui-glass` — Liqui Design "Button" *(captured, measured and verified 2026-09-11)*
+
+**This is the card slice 1's text button was missing.** It is the only reference in this knowledge base that shows a *text* button as a glass surface; `metal`'s only button is round (see Note 8).
+
+- **Source:** https://liqui.design/docs/components/button · **Distribution:** `npx shadcn add https://liqui.design/r/button.json`, kernel package `@liqui-design/glass`
+- **Capture:** `docs/references/assets/liqui-button-text-glass-fixedbg.png` (the 76 × 35 button on the doc tile's backdrop) · `liqui-button-text-glass-detail-fixedbg.png` (160 × 100 detail on the rim) · `liqui-button-text-glass-refract-off-fixedbg.png` (the A/B control described under *Measured*)
+- **Technology:** six stacked layers under one host, read off the live DOM — `__backdrop`, `__refract`, `__tint`, `__specular`, `__shine`, then `__content` on top. The host itself paints nothing: no background, no border, no shadow, `border-radius: 12px`, and its only transition is `transform` and `box-shadow` over **0.15 s** `cubic-bezier(0.4, 0, 0.2, 1)`
+- **Measured**, per layer:
+  - `__backdrop` — `backdrop-filter: blur(5.9px) saturate(1.7)`. This is the whole frost, and it is **under 6 px**
+  - `__refract` — `backdrop-filter: url(#lq-refract-0)`, a filter chain of `feImage` (a data-URI displacement map sized to the element, `userSpaceOnUse`, 76 × 35) then `feDisplacementMap in="SourceGraphic" in2="map" scale="45" xChannelSelector="R" yChannelSelector="B"`, at `color-interpolation-filters="sRGB"`. Note the **B** channel for Y, not the usual G
+  - `__tint` — `linear-gradient(135deg, rgba(30,32,46,.62), rgba(18,20,32,.4))` at opacity **0.5125**. The tint is **dark**, not a white wash
+  - `__specular` — a **pre-baked PNG** (data URI) at opacity **0.7**; the highlight is an image, not a gradient
+  - `__shine` — inset box-shadows only: `rgba(255,255,255,0.5) 0 1px 1px 0 inset` plus a 1 px side pair. **The bright rim is an inset shadow, not a border**
+- **Measured — what `__refract` actually does in Chrome 152.** Toggling only that layer's `backdrop-filter` to `none` and diffing the identical crop changes **45 pixels of 114 704 (0.04 %), max channel delta 13/255**, confined to rows 118–125 and 143–151 — the top and bottom rim bands. The backdrop's own horizontal hairline is row **135** (luminance 184.4, the brightest row in the frame) and it has **zero** differing pixels. So the filter is applied and composites at the rim, and it does **not** displace the backdrop: at `scale=45` on a 76 × 35 element a working displacement would be unmissable. This **refines** `620b7b7` rather than overturning it — see Note 3
+- **Take:** the layer architecture — one host that paints nothing, named single-purpose layers, content crisp on top (the same shape `gooey` arrives at from the SVG side); the frost kept **under 6 px**; the rim as an **inset** shadow so it cannot fatten the box; the documented variant rule — *"Variants don't paint over the glass — they override `--lg-tint`, so the lens keeps refracting the background through the accent colour instead of hiding it"*, which is the same instinct as this repo's colour contract, where an accent is a token the effect reads and never a paint
+- **Leave:** **its resting state.** Every layer is on at rest — tint at 0.5125, a specular PNG at 0.7, the shine shadows always painted — and AC-33 says an element at rest carries no light. This is the same ruling `metal`'s *Leave* line already makes about the always-on ring, and it applies here in full. Also leave the pre-baked specular PNG: a raster highlight cannot follow a token through a theme change, which AC-18 forbids
+- **Governs:** glass — the text button's architecture and its edge
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `glass-studio` — Liquid Glass Studio *(measured from source and verified 2026-09-11)*
+
+- **Source / code:** https://github.com/iyinchao/liquid-glass-studio · demo https://liquid-glass-studio.vercel.app/ · read at `HEAD` of the default branch
+- **Capture:** _none — this card is measured from source, not from a render; the demo's own screenshots are in the repository at `.github/assets/`_
+- **Technology:** one shader set maintained in **two ports** — GLSL (`src/shaders/`) and WGSL (`src/shaders-wgsl/`) — behind a renderer switch; shapes are SDFs (`roundedRectSDF` with a superellipse exponent, merged by `smin`), blur is multipass
+- **Measured — the default parameter set** (`src/Controls.tsx`): refraction thickness **20** (range 1–80), distance **0.05** (0–0.2), factor **1.4** (1–4), dispersion **7** (0–50); Fresnel range **30**, hardness **20**, factor **20**; glare range **30**, hardness **20**, factor **90**, convergence **50**, opposite-side factor **80**, angle **−45°**; blur radius **1** (range 1–200); **tint `rgba(255,255,255,0)` — fully transparent by default**; shadow expand **25**, factor **15**; shape 200 × 200, corner radius **80**, superellipse roundness **5** (2–7), merge rate **0.05**; spring size factor **10**
+- **Measured — dispersion is an index-of-refraction triple**, not a pixel offset: `N_R = 0.98`, `N_G = 1.0`, `N_B = 1.02` (`fragment-main.wgsl`) — ±0.02 around 1.0
+- **Measured — lighting is computed in LCH, not sRGB.** Fresnel and glare both convert with `SRGB_TO_LCH`, add to lightness and chroma (`L += 20 · fresnelFactor · factor`; `L += 150 · glareAngleFactor · geoFactor`, `C += 30 · …`), clamp (`L` to 0–100, and to 0–120 for glare), then convert back with `LCH_TO_SRGB`. The clamp is a clamp, not a gamut map
+- **Measured — the backend policy.** WebGPU is **not** the default and **not** required: the renderer control ships `selected: ['webgl']`, `App.tsx` holds `useState<'webgl' | 'webgpu'>('webgl')`, and the WebGPU option is rendered `disabled` with a human-readable `reason` string from `detectWebGPU()` when the adapter or device is missing. Detection is cached, promise-deduplicated, and every failure path returns `{ supported: false, reason }` rather than throwing
+- **Take:** the two-port discipline — the same look expressed on the cheaper backend first, the GPU as an opt-in second path, which is what AC-15 already asks of `mountGpu()`; **lighting arithmetic in a perceptual space**, which is what this repo's own oklch lightness floor and gamut fit already do, now with a second source behind it; dispersion as a per-channel IOR triple rather than a pixel shift; one SDF covering both silhouettes, where a circle is just a rounded rect at a large radius — which is directly the question slice 1 is scoped to answer
+- **Leave:** the clamp-instead-of-fit on the LCH result — `scripts/effects-gamut.test.mjs` exists precisely because Chrome clips in sRGB and moves hue silently, and this reference takes the shortcut this repo already rejected. Leave the 25/15 drop shadow (AC-32's bloom limit) and the video backdrops
+- **Governs:** glass — the parameter set, the backend policy, the colour space of the lighting
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `glass-vue` — Liquid Glass Vue *(read and verified 2026-09-11)*
+
+- **Source:** https://liquidglassdesign.com/resources/liquid-glass-vue · **Code:** https://github.com/Muggleee/liquid-glass
+- **Capture:** _none — nothing measurable to capture_
+- **What it is:** a Vue 3 + Vite demo, not a library. WebGL2 with GLSL ES 3.0, shapes defined by SDF
+- **Measured:** **nothing.** The page states no parameter names and no numeric defaults; the values would have to come from the linked repository, which has not been read
+- **Take:** one corroborating data point and no more — a second independent liquid-glass implementation that is **WebGL2-only, with no WebGPU path at all**. Read alongside `glass-studio`, the knowledge base now contains zero implementations that require WebGPU
+- **Leave:** treating this as a source of values. It has none, and the KB rule is that no value is invented where a reference can supply one — this one cannot
+- **Governs:** nothing on its own; evidence for Note 2
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `liquid-vs-glass` — "Liquid Glass vs Glassmorphism" *(read and verified 2026-09-11)*
+
+- **Source:** https://www.designmonks.co/blog/liquid-glass-vs-glassmorphism
+- **Capture:** _none — definitional, nothing to measure_
+- **Measured:** **nothing.** The article gives no blur radii, no opacities, no contrast ratios
+- **Take:** the distinction, as vocabulary this file can use precisely: liquid glass *"reacts to light, depth, and motion"* and refracts in real time, where glassmorphism is a *"static frosted blur"* whose *"opacity stays fixed after you set it once"* and whose *"one consistent Gaussian blur value covers the entire card background"*. That is a usable operational test for the "not generic glassmorphism" non-goal — if the effect has one blur and one opacity and never responds, it is the thing the non-goals reject
+- **Also worth carrying:** the article flags both styles as struggling with WCAG contrast and text readability, rating liquid glass the higher risk. AC-25 (text is never filtered) and the repo's existing contrast gates are the answer, and they should not be relaxed on a glass surface
+- **Leave:** everything else; there is nothing else
+- **Governs:** the wording of the non-goals
+- **Verified by owner:** **yes** — 2026-09-11
+
+#### `od-glassmorphism` — OpenDesign glassmorphism tokens *(read and verified 2026-09-11 — **negative reference**)*
+
+**Kept as the thing to steer away from.** A reference card usually says what to reach for; this one records what the non-goals mean concretely, so "generic" stops being an unfalsifiable adjective.
+
+- **Source:** https://open-design.ai/plugins/design-system-glassmorphism/ — a token collection for the OpenDesign tool
+- **Capture:** _none — the values are the point_
+- **Measured:** surfaces `rgba(255,255,255,0.74)` and `rgba(255,255,255,0.72)`; borders `rgba(255,255,255,0.64)` and `rgba(255,255,255,0.38)`; raised shadow `0 24px 80px rgba(79,140,255,0.18)`; focus ring `0 0 0 4px rgba(79,140,255,0.28)`; corner radii 16 px to 9999 px. It states **no blur radius at all**
+- **Take:** nothing to take. Its value is the contrast: a white fill at 0.74 over a 24/80 blue-tinted drop shadow is the generic look, and every number in it runs the opposite way from `liqui-glass` (a *dark* tint at 0.5125, frost under 6 px, the rim an inset shadow) and from `glass-studio` (tint alpha **0**, blur radius **1**). A design system that ships a glassmorphism token set without a blur value is describing a style, not a material
+- **Leave:** the whole set. Named here so that "bland" and "common AI-generated solutions" in the non-goals have an address
+- **Governs:** the non-goals, by counter-example
+- **Verified by owner:** **yes** — 2026-09-11
+
+## Acceptance Criteria
+
+The three aesthetic non-goals are unfalsifiable as written: no test fails because a surface is bland. So the criteria come in **two registers**, and the split is the one the effects-layer spec already lives by ("Nothing in this repository renders a frame…").
+
+The first register is **AC-1 – AC-29, mechanically asserted or procedurally checkable**: each criterion there names the command, test file or artifact that decides it. The second is **AC-30 – AC-35, judgment-gated**: each criterion there names a referee and a procedure, not a threshold — this is where "unique" and "not generic" live, honestly, instead of being dressed up as assertions.
+
+Criteria are numbered `AC-1` … `AC-35` continuously, in document order, across the six groups below. The two sentences above define the registers; they are not criteria and take no id.
+
+Status vocabulary follows the effects-layer legend: **Shipped / Delivered** = merged and available to users; **PoC implemented (not delivered)** = prototype only.
+
+### The method holds (new; this is what the pivot buys) — AC-1 – AC-7
+
+- **AC-1** A slice does not start until its reference cards exist, are verified by the owner, and carry both a *Take* and a *Leave* line — *Decided by:* the Reference knowledge base above
+- **AC-2** Every direction probe lives outside `packages/`; no probe is merged into the published package, at any quality — *Decided by:* `git log --stat` on `packages/` for the slice's branch
+- **AC-3** A direction is chosen only after **at least three** variants have been rendered side by side, in dark and light — *Decided by:* the slice's contact sheet
+- **AC-4** The promoted variant carries rendered evidence beside its reference card — same crop size, same ground, both themes — *Decided by:* the slice's pull request
+- **AC-5** Rejected directions are recorded with the reason, in one line each, and their code is deleted rather than parked — *Decided by:* the slice's spec entry; `lab/` carries no dead variant
+- **AC-6** No value in shipped code that a card supplies is different from the card's, unless a recorded ruling says so — *Decided by:* review against the card
+- **AC-7** A slice covers **one element** until the method has produced one result the owner accepts; only then does it widen. A slice covering two silhouettes of the same component is allowed **only when the contrast between them is the question**, and the slice log has to say so — *Decided by:* this file's slice log
+
+### Delivery: the layer stops being a prototype — AC-8 – AC-11
+
+- **AC-8** The version of `@sondalab/ui-kit` carrying the four effects files (`files` and `exports` already list them at `0.8.1`) is **live on the npm registry**, and the effects-layer spec's status line reads **Shipped**, not *PoC implemented (not delivered)* — *Decided by:* `curl -fsS https://registry.npmjs.org/@sondalab%2Fui-kit/<version>` returns 200; `scripts/effects-showcase.test.mjs` ("the package ships the layer")
+- **AC-9** `npm test` is green on `main` with every `scripts/effects-*.test.mjs` present and running — *Decided by:* `node --test scripts/*.test.mjs`
+- **AC-10** At least one surface outside this repo consumes the published layer from npm, not from a checkout — *Decided by:* the consuming repo's lockfile + a rendered page
+- **AC-11** `packages/palette-py/` is untouched by the whole effort; no entry is added to `sondalab.tokens.json` — *Decided by:* `git diff` on the two paths; `scripts/*.test.mjs` drift checks
+
+### Technology choice, and the fallback that is the default state — AC-12 – AC-17
+
+`sondalab-site/docs/webgpu-surfaces.md` §"The fallback is the default state" is the governing wording; these criteria restate it for this group rather than re-inventing it.
+
+- **AC-12** Every family's mechanism and tier is written down before it is built, and the shipped code matches that table; the GPU is used **where per-pixel work is the only way to get the reading**, and every other family stays on the cheapest technology that produces the look — *Decided by:* the effects-layer spec §Decision 2 vs the shipped files; `scripts/effects-gpu.test.mjs`
+- **AC-13** Tier 0 renders correctly with JavaScript disabled: the glass hairline and the static aurora arc are present, in dark **and** light — *Decided by:* rendered showcase, scripts blocked
+- **AC-14** Tier 1 renders at full quality with no WebGPU: aurora, liquid and glitch depend on the GPU tier for nothing — *Decided by:* rendered showcase in a browser without WebGPU; `scripts/effects-guards.test.mjs`
+- **AC-15** WebGPU boot is guarded and optional — `vgpu` an optional **peer** dependency, dynamically imported inside the guard; `mountGpu()` resolves `false` when WebGPU is missing and never throws — *Decided by:* `scripts/effects-gpu.test.mjs`
+- **AC-16** A lost device, a shader error or a theme switch to high contrast tears the GPU tier down and restores the CSS reading **without a reload**; the attribute and the canvas go together — *Decided by:* `scripts/effects-gpu.test.mjs` + one manual device-loss probe
+- **AC-17** No criterion anywhere in this document requires the GPU for a family the design contract puts on CSS or SVG — *Decided by:* review of this file against §Decision 2
+
+### The gates the repo already owns (must stay green, none may be relaxed) — AC-18 – AC-25
+
+- **AC-18** No colour literal in `effects.css`, the three JavaScript files, or the WGSL; every hue the GPU uses traces to a token read with `getComputedStyle` and re-read on theme change — *Decided by:* `scripts/effects-audit.test.mjs`, `effects-js.test.mjs`, `effects-gpu.test.mjs`; `sl-audit --fail-on R`
+- **AC-19** Every emitted colour is inside sRGB at its derived lightness and hue, on both themes, over a hue sweep — *Decided by:* `scripts/effects-gamut.test.mjs`
+- **AC-20** All three kill switches hold: `prefers-reduced-motion: reduce`, `[data-sl-theme="high-contrast"]`, `data-sl-fx="off"` on any subtree — *Decided by:* `scripts/effects-guards.test.mjs`, `effects-js.test.mjs`
+- **AC-21** The budget singletons hold: one ambient aurora per document, one glitch burst at a time (dropped, never queued), one deforming element, one shared canvas moved rather than multiplied — *Decided by:* `scripts/effects-js.test.mjs`, `effects-gpu.test.mjs`
+- **AC-22** No effect replaces or removes the focus `outline`; edge effects grow inward and never reach `outline-offset: 2px` — *Decided by:* `scripts/effects-guards.test.mjs`
+- **AC-23** Aurora renders state without being it: `aria-busy="true"` for busy, `role="progressbar"` + `aria-valuenow` for determinate — *Decided by:* `scripts/effects-showcase.test.mjs`
+- **AC-24** No component carries a family the per-component declension table does not assign it — the table is exhaustive, and a new pairing is a spec change first — *Decided by:* `scripts/effects-showcase.test.mjs` + review against the table
+- **AC-25** The text is never filtered, on any family, at any tier — *Decided by:* `scripts/effects-guards.test.mjs`, `effects-js.test.mjs`
+
+### Cost (thresholds are open — see Notes 4) — AC-26 – AC-29
+
+- **AC-26** A pointer move over a lit pane costs no more than **_TBD_ ms** of style + script per frame, measured in Chrome on **_TBD_ reference machine** — *Decided by:* performance trace on the showcase
+- **AC-27** The lens's page capture is idle-scheduled, never per frame; scroll and resize trigger at most one recapture per idle callback — *Decided by:* `scripts/effects-js.test.mjs` + a trace
+- **AC-28** The layer adds no more than **_TBD_ KB** gzipped to `@sondalab/ui-kit`, and importing the module has no side effects — *Decided by:* package size report; `scripts/effects-js.test.mjs`
+- **AC-29** With every family active on the showcase, the page holds 60 fps at rest and during one interaction — *Decided by:* performance trace, dark and light
+
+### The bar itself (judgment-gated; the referee is named) — AC-30 – AC-35
+
+- **AC-30** No change to a shipped effects file is done until it has been **looked at rendered, in dark and in light, beside its reference card** — *Referee:* the implementer, before opening the PR
+- **AC-31** Every family is measured against a **named, owner-verified** card. A family with neither a card nor an explicit owner ruling is not shipped — *Referee:* the owner, at review
+- **AC-32** **Restraint at the pixel level holds:** a structural separator stays `1px` whatever an effect does to it; an edge effect stays within the border band; bloom reaches no further than `--slfx-glow` — *Referee:* the owner, at review, on the rendered page
+- **AC-33** **An element at rest carries no light.** Glass at rest is translucency only; aurora appears only where attention actually lives; glitch is never ambient on a control — *Referee:* the owner, at review — the operational form of "not generic glassmorphism"
+- **AC-34** The showcase is signed off by the owner in **both** themes, with a screenshot set per family attached to the PR — *Referee:* the owner
+- **AC-35** Where the state of the art was searched for a gradient, effect or animation, the source **becomes a card** — an uncited effect is not evidence of the state of the art — *Referee:* reviewer, at review
+## Slice log
+
+Order set by the owner on 2026-09-11: **buttons → input fields → cards and layout.** It is the right order for the method, not only for the product — the button is where three families meet on one small silhouette, so the first pass through the loop exercises the whole machine on the cheapest possible surface, and cards and layout come last because they are the ones a wrong ruling is most expensive to undo.
+
+One row per slice, written when the slice closes: chosen direction, rejected directions with the reason, and the card it was measured against.
+
+| # | Element | Cards | Chosen | Rejected (and why) | Closed |
+|---|---|---|---|---|---|
+| 1 | buttons — text and round icon-only | `liqui-glass` (text), `gooey` (round), `border-beam` (focus), `metal` + `glass-studio` (glass grammar) | **inset-rim** — tint **0.14**, blur **2px**, saturate **1.7**, `__backdrop` and `__tint` on separate layers, no blend mode; light rim and glow `oklch(0.86 0.17 82)` | `veil` (edge only, no material); `arc` (border-beam's beam read as decoration on a control at this size); `dispersion` (the R/B split is invisible at 84×36); on light, `white` (goes pale, as `metal` measured) and `dark` (reads as dark glass) | direction and values chosen 2026-09-11 — **not yet promoted** |
+| 2 | input fields — the common ones (text, select, textarea) | _TBD_ | | | not started |
+| 3 | cards and layout | _TBD_ | | | not started |
+
+**Slice 1 deliberately carries two silhouettes**, under the carve-out AC-7 already grants ("allowed **only when** the contrast between them is the question, and the slice log has to say so") — this paragraph is that saying-so. The whole open question about buttons is a *contrast* — the previous effort ruled that the drop belongs to a round silhouette and reads as a blister on a box, and that ruling can only be re-examined with the two side by side in the same probe. One page, two rows, one decision. If slice 1 starts sprawling past that, it is a sign the ruling was right and the round button should be split off into `1b`.
+
+Slice 2 and 3 have no cards yet, and picking them is the owner's first task when each opens — a field and a card are not the same design problem as a button, and `metal` is unlikely to be the right reference for either.
+
+## Slice 1 is clear to start
+
+AC-1 is the gate: *"a slice does not start until its reference cards exist, are verified by the owner, and carry both a Take and a Leave line."* **All three conditions hold as of 2026-09-11.** Eight cards exist, each carries a *Take* and a *Leave*, and each is signed by the owner. The *Take*/*Leave* lines are therefore rulings now, not proposals — including the two that take a position rather than report a measurement: `metal`'s rejection of the always-on ring, and `liqui-glass`'s rejection of the reference's resting-state luminance under AC-33.
+
+Two open items remain, and **neither blocks the divergence loop**, because `lab/` has no rules and a probe can be built and looked at while they are open:
+
+1. **One sentence of the Goal** — *"It is a must to use webgpu whenever possible"* — is contradicted by the references it was meant to be served by, and is the owner's to reword (Note 2). Everything else in this file is already consistent with AC-12's reconciled rule.
+2. **The cost numbers are unset** (Note 4), so AC-26 – AC-29 are not a gate for slice 1.
+
+What the cards do **not** settle, and the probe therefore has to answer with its own eyes:
+
+- The **cursor light and the ring bend** on `metal` — the two circle captures are indistinguishable, so those live only in `metal-fx`'s source numbers.
+- The **travelling 1 px arc** on `border-beam` — no still carries it; the captures hold the bloom and the inner wash only.
+- The **merging neck** on `gooey` — not legible at the separation the captures caught.
+- **Glass on a light ground** — unreferenced anywhere in the knowledge base (Note 7), so the light theme is original work, not reproduction.
+
+The next artifact is a `lab/` probe page for slice 1: one element, at least three variants, both themes, rendered side by side (AC-3).
+
+## Slice 1 evidence (AC-3, AC-4)
+
+Contact sheets live in `docs/slices/<n>-<element>/` — a new directory, kept apart from `docs/references/assets/` on purpose: those are ground truth measured off someone else's work, these are our own renders, and mixing the two would let an artifact we made drift into the knowledge base. Each sheet carries both grounds, every variant, and the parameters printed on the cell.
+
+| Sheet | Question it settles | Variants |
+|---|---|---|
+| `contact-1-directions.jpg` | which direction | `veil`, `inset-rim`, `arc`, `dispersion` |
+| `contact-1b-tint-x-blur.jpg` | how much material | tint 0.5125 / 0.30 / 0.14 × blur 5.9 / 2 / 1 px |
+| `contact-1c-light-rim.jpg` | what light is made of on a light ground | `white`, `sun-clipped`, `sun-fitted`, `dark` |
+| `contact-1d-variant-hierarchy.jpg` | where primary / ghost / base stay distinguishable | `tint-carries`, `light-carries`, `both`, `flat-today` |
+| `contact-1e-primary-transparency.jpg` | how transparent primary can get, with the label's contrast measured per cell | tint 0.28 / 0.42 / 0.58 / 0.92 |
+| `contact-1f-two-layers.jpg` | that the settled design fits Decision 3b's two paint layers | the three variants in `::before` / `::after` form |
+| `contact-1g-real-ground.jpg` | the fill construction and then the primary's share, on real Sondalab surfaces rather than a decorative wash | `mix to transparent` vs `mix to veil`; then share 0.34 / 0.42 / 0.50 |
+| `contact-1h-dark-islands.jpg` | the dark theme's two viable regions, edge to edge | share 0.42 + light label vs 0.72 + the shipped dark label |
+| `contact-1i-rim-shape.jpg` | why the lit rim reads old-school, and the corner shape | `bevel`, `ring`, `ring-round`, `soft`, `squircle`, `superellipse(4)` |
+
+AC-3's floor is three variants rendered side by side in dark and light; all three sheets clear it. The 1c sheet is captured with the light pinned on every cell, since a rim that only exists under the pointer cannot otherwise be compared across four cells at once.
+
+## Slice 1 rulings (AC-6)
+
+AC-6: *"No value in shipped code that a card supplies is different from the card's, unless a recorded ruling says so."* Slice 1 diverges from `liqui-glass` on both of its material numbers, and on one mechanism. The rulings:
+
+1. **Tint 0.14, not the card's 0.5125.** *Owner, 2026-09-11, on the rendered ladder.* The card's pair was measured on a demo tile sitting on a saturated, high-contrast backdrop, which is what makes a heavy tint survivable there. On a Sondalab surface the same tint reads as an opaque slab and leaves the blur nothing to do.
+2. **Blur 2px, not the card's 5.9px.** *Owner, same pass.* Between `glass-studio`'s default of 1 and the card's 5.9; with the tint down, 2px is enough to register as material without erasing what is behind the control.
+3. **No `mix-blend-mode`, though the card's light mode composites with `multiply`.** *Forced, and measured.* A descendant carrying a blend mode other than `normal` makes its stacking context a backdrop root, which leaves a sibling's `backdrop-filter` with nothing behind it: toggling blur on the light panel changed **0 px** with the blend present and **2847 px (9.88 %, max delta 103/255)** with it removed. `metal`'s light-mode ruling — the glow darkens and never adds white — is therefore taken as a *result* and carried by already-dark colours, not by the reference's mechanism. Any promotion that reintroduces a blend mode inside a glass element loses the material entirely.
+
+4. **On the light theme the rim and the pointer glow are not dark — they are light, and take their contrast from chroma.** *Owner, 2026-09-11, overruling a verified card.* `metal`'s measured light preset composites the glow with `multiply` at 0.27 under `saturate(5.4)` and so *darkens*; rendered on a Sondalab ground that reads as dark glass, which the owner rejects — the light theme has to be solar. The ruling keeps the **saturates** and drops the **darkens**, which is not an invention: `effects.css` already solved this shape on 2026-09-09 — a light effect on a light page cannot take contrast from luminance, because a dark token reads as pigment and lifting it toward white goes pale, so the recipe floors the oklch lightness and pays the lift in chroma. `metal`'s *Leave* line gains this clause. **Chosen 2026-09-11: `oklch(0.86 0.17 82)`** — a warm hue kept high in lightness with the contrast paid in chroma; the sides and the specular are the same hue one step down (`0.84 0.16 78` and `0.87 0.15 84`). The deeper alternative at `0.78 0.20 70` was rejected as heavier than the ground wants.
+
+   **How it is expressed in the kit, since AC-18 forbids a colour literal and AC-11 forbids a new token.** The house accent is already warm — `--sl-accent-default` is `#B56A0C` on light (`L .595 C .133 h 62.8`) and `#F5A83C` on dark (`L .789 C .148 h 71.0`) — so the rim derives from it, with the hue carried by a **fixed rotation of +19°**: that is exactly the gap between the light accent's hue and the hue chosen on the render, and writing it as a rotation keeps the hue traceable to the token instead of stamped as a constant. The rotation applies to the **light theme only**; the dark rim stays neutral and comes from the existing sheen-derived glint, so `h + 19` is never evaluated there.
+
+   ```css
+   /* asked for; the existing seven-step bisection fits it to sRGB */
+   oklch(from var(--slc-accent, var(--sl-accent-default)) 0.86 0.17 calc(h + 19))
+   ```
+
+   **And the chosen colour is outside sRGB, which matters.** `oklch(0.86 0.17 82)` puts red at **1.035**; Chrome does not gamut-map, it clips, so what was on screen during the pick was `#FFC425` — the clipped colour, not the one asked for. AC-19 and `scripts/effects-gamut.test.mjs` forbid shipping that, and `effects.css` already carries the fit that solves it: chroma reduced at constant lightness and hue until inside. Fitted, chroma goes **0.170 → 0.141 (83 % of asked)** and the colour is **`#FFC759`**, a touch creamier — the sides fit at 92 % (`#FFBD4A`) and the specular at 92 % (`#FFCC5F`). The owner confirmed the **fitted** colour against the clipped one on `lab/1c-buttons-light-rim.html`. The kit asks for 0.17 and lets the bisection fit it, rather than hardcoding 0.141, so the result stays correct if the accent token ever moves. The tint gradient also goes warm-neutral rather than slate on light, since a slate tint carries the dark-glass reading on its own.
+
+5. **Variant hierarchy lives in the tint. The light never carries it.** *Owner's doubt, 2026-09-11, answered on the render.* The concern was real: the kit puts the whole primary/ghost/base distinction in the **fill** (`.sl-btn--primary` is a solid `--slc-accent`, `.sl-btn--ghost` is a border, `.sl-btn` is bare), and glass replaces exactly that. `lab/1d-buttons-variant-hierarchy.html` put three arrangements beside the flat components as they ship:
+
+   - **the light carries it** (one tint for all, the variant in how much light each takes) — **rejected**: with the light armed, Save, Cancel and Skip are barely separable, which is the failure the doubt predicted;
+   - **the tint carries it** — holds, and reads in the same order as the flat components do today;
+   - **both** — holds, but buys nothing the tint does not already buy, and makes the light semantic, which Decision 1 reserves for state.
+
+   So the ruling follows `liqui-glass`'s measured line — *"Variants don't paint over the glass — they override `--lg-tint`"* — and it has a consequence that corrects ruling 1: **tint 0.14 is the tint of the neutral button, not a global constant.** Primary carries the accent at near-full alpha and keeps its `--slc-on-accent` label; ghost carries a faint accent tint plus the 1 px border; base carries none and is glass and rim only. The **pointer light is identical on all three**, because it is the material responding to a pointer, not a signal about rank.
+
+6. **Primary is glass too, at tint ≈ 0.42, and its label flips with the theme.** *Owner, 2026-09-11: primary has to keep an appreciable transparency and its own play of light.* Ruling 5 had left primary at a near-opaque accent, which is not glass at all. `lab/1e-buttons-primary-glass.html` ladders it and computes, per cell, the worst WCAG ratio of the label against the accent composited over each of the four backdrop stops:
+
+   | tint | dark theme | light theme |
+   |---|---|---|
+   | 0.28 | 6.67:1 (light label) | 9.75:1 (dark label) |
+   | **0.42** | **5.07:1 (light label)** | **8.29:1 (dark label)** |
+   | 0.58 | **4.42:1 — fails** | 6.84:1 |
+   | 0.92 | 8.19:1 (dark label) | **4.43:1 — fails** |
+
+   Two things follow, and neither is what intuition suggests. **Transparency helps contrast rather than hurting it**: the failures are at 0.58 on dark and at 0.92 on light, not at the transparent end. And there is a **dead band in the middle on dark**, around 0.58, where the composite sits at mid-luminance and neither a light nor a dark label clears 4.5 — a primary must not be tuned into it. 0.42 clears both themes with margin and is transparent enough to read as glass, so that is the value; the label takes the light `on-accent` on dark and the dark one on light.
+
+   The measurement is analytic over the four wash stops rather than sampled off the rendered pixels, and it ignores the blur and the saturate — both pull the backdrop toward its local average, which cannot make a stop more extreme than the stop itself, so the figures are the pessimistic end. The repo's own contrast gate at promotion remains the authority.
+
+7. **Primary is glass — tint 0.42 on light, 0.34 on dark — and the label is `--slc-text`, not `--slc-on-accent`.** *Owner, 2026-09-11.* Appreciable transparency with its own play of light, not a solid fill.
+
+   The first pass of this ruling said 0.42 on both themes, on a probe figure of 5.07:1. **That figure was wrong and the error was the method's own:** the probe used `#FFF6E8` as the dark label, which is not a token — it was invented, which the knowledge base's governing rule forbids. Against the real `--sl-text-primary` (`#DAE3E4`) the same cell measures **4.16:1 and fails**. On dark the ceiling is between 0.34 (4.86:1) and 0.38 (4.50:1, already under), so dark takes **0.34**; light is unaffected and keeps **0.42** at 8.21:1.
+
+   **The label token changes too, on both themes.** `--slc-on-accent` is built for an opaque accent and goes the wrong way under a translucent pane — `#0A0A0B` on dark gives 3.39:1, `#FFFFFF` on light gives 1.92:1, both failing. `--slc-text` clears every variant on both themes: primary 4.86 / 8.21, ghost 6.66 / 10.80, base 9.25 / 13.10. This is a change to the component contract, not only to the effect, and the promotion has to carry it.
+
+## The design, as it goes to promotion
+
+Settled across 1–1f, in the form the kit has to take:
+
+| | |
+|---|---|
+| **Material** | `backdrop-filter: blur(2px) saturate(1.7)` |
+| **Layers** | `::before` the pane's body — the filter **and** the variant tint; `::after` the edge and the pointer's light. Two, as Decision 3b requires |
+| **Tint alpha lives in the colour**, never in `opacity` | `opacity` on the filter's own element scales the filtered backdrop and throttles the blur; a background with alpha composites over it and does not |
+| **Tint per variant** | primary `color-mix(in srgb, var(--slc-accent) 72%, transparent)` on **both** themes; ghost 18 % plus the 1 px border; base none. The remainder is the page, never a veil |
+| **Label** | the pole that contrasts with the composited pane: `--slc-on-accent` on the primary's dark pane, `--slc-text` everywhere else |
+| **Edge** | one continuous 1 px conic ring on `::after`, masked to the border band, static, `opacity: 0` at rest — AC-33 as one number |
+| **Spot** | the radial glint rides `::before` with the pane, since the ring's mask would clip it |
+| **Light theme's hue** | `oklch(from var(--slc-accent, var(--sl-accent-default)) 0.86 0.17 calc(h + 19))`, through the existing bisection fit |
+| **Dark theme's hue** | neutral, from the existing sheen-derived glint |
+| **Never** | a `mix-blend-mode` anywhere inside the element; a pre-baked raster for the specular; a third paint layer |
+
+Three things the reference has that this does not, each with a recorded reason: `__refract` (measured inert in Chrome 152), the pre-baked specular PNG (a raster cannot follow a token through a theme, AC-18), and the resting-state light (AC-33).
+
+8. **The primary's share is 0.72 on both themes, and the label is the pole that contrasts with the composite.** *Owner, 2026-09-11, on `lab/1h-dark-two-islands.html`.* Ruling 7's 0.42 left the dark primary at `#705328`, a muted brown that keeps only 47 % of the accent's chroma and does not read as the brand. The dark theme turned out to have **two islands, not a continuum**: `--slc-text` clears 4.5 up to 0.42, `--slc-on-accent` clears it from 0.65 up, and between 0.50 and 0.58 neither does. The high island is the one the theme is already equipped for — `--sl-text-on-accent` `#0A0A0B` has shipped since `2e224b6`.
+
+   At 0.72: dark `#B57F32` at **5.48:1** with the shipped dark label; light `#C79049` at **5.67:1** with `--slc-text`. One share for both themes, so nothing branches on the theme. What differs is the label, and it differs for a measured reason rather than a switch: the two accents sit on opposite sides of mid-lightness (`#F5A83C` at L 0.789, `#B56A0C` at L 0.595), so the rule is one sentence — **the label is whichever pole contrasts with the composited pane** — and it holds without a `[data-sl-theme]` branch.
+
+   *Withdrawn by this ruling:* ruling 7's 0.42, and the claim that `--slc-on-accent` is wrong on both themes. It is wrong at a low share and right at a high one.
+
+9. **The lit rim is one continuous 1 px conic ring, masked to the border band; radius stays 9 px.** *Owner, 2026-09-11: the rim "looks very old-school and not much like real glass".*
+
+   The cause was mechanical, not tonal. The rim was three `inset box-shadow`s — a top band and two side bands — which is the 3D bevel of twenty years ago: straight runs that **stop at the corners** instead of passing through them, with a hard step rather than a falloff. The replacement is `border-beam`'s own recipe, whose *Take* line already grants it ("the recipe entire, and it is CSS at every tier"), with the conic **static and positioned** rather than travelling — the motion belongs to the aurora, not to glass at rest.
+
+   Two consequences worth carrying:
+
+   - **The specular cannot share the ring's layer.** `mask-composite: exclude` clips the ring to the 1 px band and would eat a radial gradient painted beside it. In the kit this needs no third layer: the effects-layer spec's §Glass already puts the pointer spot on `::before` with the pane and leaves `::after` to the edge alone, which is exactly the split this ruling needs.
+   - **`corner-shape` is available and is not taken here.** `glass-studio` defines its shape with a superellipse SDF (`superellipseCornerSDF`, roundness 2–7, default 5) rather than a radius, and CSS shipped `corner-shape` in Chrome 139 — verified supported, `squircle` and `superellipse(4)` both true. The owner chose the plain 9 px arc, so the squircle is **not** adopted for slice 1. It is recorded because it is a system-level primitive, available at tier 0 with no GPU, and the next slice that wants it does not have to rediscover it.
+
+10. **The remainder is the page, not a veil — and the probes' ground was wrong.** *Owner, 2026-09-11: "the page shows through".*
+
+   Probes 1b–1f stood the buttons on a decorative gradient. Real surfaces are `--sl-bg-canvas` `#070A0D` / `--sl-bg-surface` `#0F151A` on ink and `#ECE4D4` / `#F6F1E6` on paper; the decorative ground was supplying brightness and hue a page does not, so every look approved on it had to be re-checked. **This is the method's own failure mode, caught by the method**: `lab/README.md` requires the reference's own ground, and nothing said the *probe* had to stand on the product's.
+
+   Re-checked on the real surfaces, two things changed and one did not:
+
+   - **The construction.** `effects.css` mixes the fill with `--slfx-veil` for the remainder, never with transparency, precisely because diluting amber toward a near-black page reads as dark olive — which my numbers confirm at 0.34 (`#5D4726`). But measured on paper the veil's own alpha is 0.854 by construction and the pane resolves to **0.915** — effectively solid, which is the opposite of this slice's purpose. The owner chose the transparent construction on the rendered page: the remainder is the page.
+   - **The share, and the per-theme split.** Ruling 7 set dark to 0.34 from a figure taken on the decorative wash. That wash is *brighter* than a real surface and therefore the harder case: on the real ground the ceiling is between **0.42 (5.17:1, passes)** and 0.50 (4.27:1, fails), so **0.42 holds on both themes and the asymmetry introduced in ruling 7 is withdrawn.**
+   - **The label.** `--slc-text` on every variant, unchanged — it clears everything on the real ground with more margin than on the wash.
+
+   The rejection of the veil is an explicit ruling overruling the companion spec's §Translucency on mechanism, which the hub's own header requires before that file can be departed from. It is recorded here for that reason, and the reason is measured: 0.915.
+
+A final point is architecture rather than a value, and belongs in the promotion: **`__backdrop` and `__tint` must stay separate elements.** An element's own `opacity` scales what its `backdrop-filter` produced, so a tint sharing the element with the filter throttles it — at tint 0.14, to 14 %. The card already lists them as separate layers; collapsing them is what hid the blur through two rounds of this slice.
+
+## Found on the way, outside this slice
+
+**The effects-layer spec's contrast premise is wrong.** `2026-09-08-effects-layer-design.md` states that *"`--sl-text-on-accent` is white on both themes, and white on the amber accent measures 1.99:1"*, and builds the label's `text-shadow` legibility aid on that number. The dark theme has shipped `#0A0A0B` since the initial commit `2e224b6`, not white; 1.99:1 is white on the **dark** accent, a pairing the kit never ships. What it does ship is white on the light accent, at 4.17:1. The aid may still be wanted, but its stated justification does not hold and should be re-derived before anyone relies on it.
+
+**`.sl-btn--primary` fails WCAG AA on the light theme today, before any effect is added.** `--sl-accent-default` `#B56A0C` with `--sl-text-on-accent` `#FFFFFF` measures **4.17:1**, against a 4.5 floor for normal text — and `.sl-btn` is `0.875rem` at weight 600, which is normal text, not large. The dark theme is fine at 9.94:1. This is a pre-existing defect in `themes/light.css` + `components.css`, not something slice 1 introduces, and it is recorded here rather than fixed because it belongs to the component contract and wants its own change. Note the direction of travel: the glass primary at tint 0.42 measures **8.29:1** on light, so this slice improves the number it inherits.
+
+## Notes
+
+Open questions, and the record of the ones now closed. Each open item blocks the criteria named beside it.
+
+1. **Scope — settled by the pivot.** This file is the hub for the aesthetic effort as a whole; the effects layer is the first area the method is applied to, not the boundary of the effort. The delivery group (AC-8 – AC-11) therefore stays in scope (that layer still has to stop being a prototype), and later slices may touch typography, layout or motion beyond L6 without a new hub.
+
+2. **"It is a must to use webgpu whenever possible" — the knowledge base answers this, and it answers against the literal reading.** *No longer blocking; one sentence of the Goal is the owner's to rewrite.*
+
+   The effects-layer spec §Decision 2 puts the aurora on **CSS at every tier** ("There is no GPU aurora") and the liquid on an SVG goo chain, records that a shader aurora *was built first and rejected* — "it read as marbling, not as light" — and that the GPU is "necessary for glass and only for glass". AC-12 is the reconciled rule: *GPU where per-pixel work is the only way to get the reading; every other family on the cheapest technology that produces the look; the choice recorded per family.*
+
+   Both liquid-glass implementations in the owner's own knowledge base now corroborate that rule rather than the Goal's wording. `glass-studio` is the strongest possible case — it maintains the same shader in **both** GLSL and WGSL, and still ships `selected: ['webgl']` as the default, with WebGPU an opt-in option that renders `disabled` and carries a reason string when the adapter is missing. `glass-vue` has no WebGPU path at all. **The knowledge base contains zero implementations that require WebGPU**, including the one the owner flagged as the strong code hint.
+
+   So: Decision 2 and AC-12 stand, now with sources behind them. What needs changing is the Goal's sentence *"It is a must to use webgpu whenever possible"*, which as written is contradicted by the references it was meant to be served by. Suggested replacement, for the owner to accept or reword — *"Use the GPU where per-pixel work is the only way to get the reading, and always provide a fallback; every other family stays on the cheapest technology that produces the look."* That is AC-12's wording, moved up into the Goal so the two stop disagreeing.
+
+3. **The effects-layer spec's Known-gaps section was stale — corrected 2026-09-11.** It stated "**Refraction of the backdrop.** Nothing bends what lies behind a pane: the canvas has no backdrop to sample" while HEAD of `feat/effects-layer` is `e33ea31` *"the lens — real page content, captured and bent at the rim"*, which captures the page into a plate and crops it per pane (`packages/ui-kit/effects.js:703`). That entry now records the lens and narrows the remaining gap to live content between captures. Nothing else in that section was re-checked against the code, so the other four entries carry the same risk and are unverified.
+
+   **The `620b7b7` ruling behind the lens route is confirmed, and sharpened.** `liqui-glass` ships exactly the technique that ruling rejected — `backdrop-filter: url(#f)` over `feDisplacementMap` — so it was worth re-testing rather than trusting. Measured in Chrome 152 by toggling only that layer and diffing the identical crop: **45 pixels of 114 704 change (0.04 %), max delta 13/255, all of it in the rim bands (rows 118–125 and 143–151)**, while the backdrop's own hairline at row 135 is **bit-identical**. The filter is therefore applied and composites at the rim, but performs no usable displacement of the backdrop. "Does not work" was the right call for the purpose; the precise statement is *"applied, but yields no backdrop displacement"*, and the capture-plate lens stays the route.
+
+4. **The cost group (AC-26 – AC-29) has no numbers.** Frame budget, package weight and the reference machine are the owner's to set. Until they are set, that group is not a gate.
+
+5. **Filename convention.** Every other spec here is `YYYY-MM-DD-<topic>-design.md`; this one is `2027-<topic>.md` with `createdAt: 2026-09-10`. If `2027` is a sequence number rather than a year, it reads as a future date to anyone scanning the directory. Cosmetic; rename in a follow-up.
+
+6. **Where cards live, and how big `lab/` gets.** Cards are inline here while they are few; the move to `docs/references/<slug>.md` + `docs/references/assets/` happens when this file stops being readable, and captures are binary in a private repo, so their weight is worth a thought before the first one lands. AC-3's floor of three variants is a proposal, not a measured number. **Partly settled 2026-09-11:** `docs/references/assets/` now exists and holds twelve captures at 248 KB total; the cards themselves stay inline, though at eight of them this file is close to the point the note anticipates.
+
+7. **"Dark and light" applies to our artifacts, not to reference captures.** *Resolved 2026-09-11; AC-3 and AC-4 unchanged.*
+
+   No glass reference in this knowledge base has a light ground, and that is now measured rather than assumed: libraries.dev is dark-only at the `<html>` attribute, and liqui.design has a working theme toggle whose effect on a component tile is **0 pixels of 114 704**. Reading (b) — manufacture a light reference by running `metal-fx` under its light preset — would put an artifact *we made* inside the ground truth, which is the one thing the knowledge base must not contain.
+
+   So AC-3 and AC-4 are read as their own wording already implies — they name *"the slice's contact sheet"* and *"the slice's pull request"*, both of which are ours: **probes and promoted variants owe both themes; reference captures carry whatever themes the reference has, and the filename says which** (`-dark`, `-light`, or `-fixedbg`). Neither criterion needs rewording.
+
+   This leaves one real consequence, and it is worth naming rather than burying: **glass on a light ground is unreferenced**, so the light theme is the half of slice 1 where the probe is doing original work, not reproducing a reference. `metal`'s light-mode numbers (`multiply` at 0.27 under `saturate(5.4)`) are the only guidance in the knowledge base, and they come from source, not from a render.
+
+8. **`metal` was assigned to the text button with no reference behind it.** *Resolved 2026-09-11 by a new card.*
+
+   The problem was real: `metal`'s only button is round, and its **Text** type is `MetalText` — metallic *type* ("Plan **Pro**"), not a bordered button. The knowledge base the owner had already written supplied the missing reference: **`liqui-glass` is a text button rendered as glass**, with its whole layer architecture readable off the live DOM, and it is now a card with measured values and its own *Take*/*Leave*.
+
+   Slice 1's card assignment therefore reads: **`liqui-glass` governs the text button** (architecture and edge), **`gooey` the round icon-only one** (the skin), **`border-beam` the focus state of both**, with `metal` and `glass-studio` supplying the glass parameter grammar across both silhouettes. `glass-studio`'s `roundedRectSDF` is worth noting here — one SDF covers both silhouettes, a circle being a rounded rect at a large radius, which is a concrete way to put slice 1's contrast question to a probe.
