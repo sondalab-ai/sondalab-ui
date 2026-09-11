@@ -628,8 +628,22 @@ function injectGlass(el) {
 }
 
 /** The lenses currently bound, so mount() can be called twice without giving
- *  an element two filters. */
-const lensed = new WeakMap();
+ *  an element two filters, and so a theme change can take them all away. */
+const lensed = new Map();
+
+/** High contrast, and ONLY high contrast.
+ *
+ *  Not suppressed(): that also refuses under prefers-reduced-motion, and a lens
+ *  is not motion — it is a static property of a surface, it does not animate,
+ *  and it does not redraw on scroll. A visitor who asked for less movement did
+ *  not ask for less material. High contrast is different in kind: it exists so
+ *  that what is behind a surface does not interfere with what is on it, and a
+ *  lens deforming the text behind a button is exactly that interference.
+ *  @returns {boolean} whether a lens may not run */
+function lensRefused() {
+  if (typeof document === "undefined") return true;
+  return document.documentElement.getAttribute("data-sl-theme") === "high-contrast";
+}
 
 /** Give every glass host a real refraction of whatever is behind it.
  *
@@ -639,6 +653,7 @@ const lensed = new WeakMap();
  *  @param {ParentNode} root the subtree to arm
  *  @returns {Promise<void>} */
 async function armLenses(root) {
+  if (lensRefused()) return;
   let lens;
   try { ({ lens } = await import("./glass-lens.js")); } catch { return; }
   const hosts = [];
@@ -649,6 +664,26 @@ async function armLenses(root) {
     const handle = lens(el);
     if (handle) lensed.set(el, handle);
   }
+}
+
+/** Take every lens away, leaving the CSS material that glass.css paints.
+ *  @returns {void} */
+function dropLenses() {
+  for (const handle of lensed.values()) handle.destroy();
+  lensed.clear();
+}
+
+/** Follow the theme for as long as the page lives: a visitor can switch to
+ *  high contrast — or away from it — long after mount() ran, and a kill switch
+ *  that only reads its condition once is not a kill switch.
+ *  @param {ParentNode} root the subtree mount() armed
+ *  @returns {void} */
+function watchLensTheme(root) {
+  if (typeof MutationObserver !== "function") return;
+  new MutationObserver(() => {
+    if (lensRefused()) dropLenses();
+    else armLenses(root);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-sl-theme"] });
 }
 
 function injectGlassLayers(root) {
@@ -701,6 +736,7 @@ export function mount(root = document) {
   // later get theirs as they arrive.
   injectGlassLayers(root);
   armLenses(root);
+  watchLensTheme(root);
   injectGlows(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {

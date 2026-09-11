@@ -12,6 +12,7 @@ const shader = readFileSync(resolve(KIT, "effects-shader.js"), "utf8");
 const pkg = JSON.parse(readFileSync(resolve(KIT, "package.json"), "utf8"));
 const js = readFileSync(resolve(KIT, "effects.js"), "utf8");
 const css = readFileSync(resolve(KIT, "glass.css"), "utf8");
+const css2 = readFileSync(resolve(KIT, "effects.css"), "utf8");
 
 const COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
 
@@ -198,7 +199,9 @@ test("the tint has one home, and the GPU only perturbs what CSS paints", () => {
   // reads the reference capture and ours down the pane's padding band, and
   // these are the values that put the two within ~2 luminance of each other.
   assert.match(css, /--slg-tint-a, 18%/, "the tint density lives in glass.css");
-  assert.match(css, /--slg-spec-a, 72%/, "so does the highlight's peak");
+  // The specular's own alphas are gone with it: a linear white wash from the
+  // top edge down is the glossy button of 2004, whatever a profile says.
+  assert.doesNotMatch(css, /--slg-spec-a/, "no gloss band survives");
   assert.match(css, /--slg-accent-a, 0%/, "and so does the variant's accent share");
   // An earlier version of this test asserted the opposite — that nothing may
   // tint toward the canvas, because a light theme would turn into a white
@@ -268,4 +271,41 @@ test("the lens costs nothing per frame, and refuses where it cannot work", () =>
   assert.match(lensSrc, /CSS\.supports\("backdrop-filter", "url\(#x\)"\)/,
     "feature-detected, so Safari falls through to the CSS material");
   assert.match(lensSrc, /Copyright \(c\) 2025 Shu Ding/, "MIT attribution travels with the code");
+});
+
+test("high contrast takes the lens away, and reduced motion does not", () => {
+  // Two different refusals, and conflating them would be wrong in both
+  // directions. High contrast exists so what is behind a surface does not
+  // interfere with what is on it, and a lens deforming the text behind a
+  // button is exactly that. Reduced motion is about movement: a lens does not
+  // animate, does not redraw on scroll and is a static property of a surface,
+  // so a visitor who asked for less movement has not asked for less material.
+  assert.match(js, /function lensRefused\(\)/, "the lens has its own condition");
+  assert.match(js, /data-sl-theme"\) === "high-contrast"/, "which is high contrast");
+  const body = js.slice(js.indexOf("function lensRefused()"), js.indexOf("function armLenses"));
+  assert.doesNotMatch(body, /REDUCE|reduced-motion/, "and is not the shared suppressed() test");
+  assert.match(js, /if \(lensRefused\(\)\) return;/, "arming refuses under it");
+  // A kill switch that reads its condition once is not a kill switch: a visitor
+  // can switch theme long after mount ran. Verified live on the showcase --
+  // 28 lenses, 0 under high contrast, 28 again on the way back.
+  assert.match(js, /attributeFilter: \["data-sl-theme"\]/, "and it follows the theme");
+  assert.match(js, /function dropLenses\(\)/, "with a way to take them all back");
+});
+
+test("the pane's hover has mass, and does not invalidate the lens", () => {
+  // The owner: a button should swell slightly under the pointer with a light
+  // bounce, and settle back the same way. It is a TRANSFORM: no layout, and --
+  // the part that matters -- the border box does not change, so the lens's
+  // displacement map stays valid. Animating width or padding would rebuild a
+  // canvas every frame.
+  assert.match(css2, /\.sl-fx-glass--pane:hover:not\(:disabled\),/);
+  assert.match(css2, /transform: scale\(1\.005\);/, "half a percent: felt, not seen");
+  assert.match(css2, /cubic-bezier\(0\.2, 1\.6, 0\.3, 1\)/,
+    "the bounce is an overshooting curve, not a keyframe that would restart on a re-entry");
+  assert.match(css2, /\.sl-fx-glass--pane:active:not\(:disabled\) \{\s*transform: scale\(0\.997\);/,
+    "a press goes the other way, and without the overshoot");
+  const guard = css2.slice(0, css2.indexOf("transform: scale(1.005)"));
+  assert.ok(guard.lastIndexOf("@media (prefers-reduced-motion: no-preference)") >
+            guard.lastIndexOf("@media (prefers-reduced-motion: reduce)"),
+    "and all of it sits inside the no-preference guard");
 });
