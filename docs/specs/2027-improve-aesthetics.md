@@ -438,6 +438,51 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
 
+### It runs — 2026-09-11, in the kit, on the showcase and on `lab/1l`
+
+The GPU route is no longer code that has only seen static tests. Four things had
+to be true before a single refracted pixel existed, and each cost a measurement:
+
+1. **`vgpu`'s reflection is usage-based.** A binding reached only from inside a
+   branch is not in the pipeline at all, and `effect()` refuses with
+   `Binding 'backSampler' does not exist in 'effect'` before anything draws.
+   The backdrop is therefore sampled **unconditionally** and mixed by the flag.
+   WGSL wants this anyway: `textureSample` in non-uniform control flow is
+   undefined, which also forces the sampling *above* the `inside` early return.
+   Cost of an undeclared backdrop: three reads of a 1 × 1 transparent texel.
+2. **`createImageBitmap` refuses an SVG** — *"The source image could not be
+   decoded"* — and a declared backdrop is most naturally an SVG. The route that
+   works is `new Image()` + `await img.decode()` +
+   `copyExternalImageToTexture`, which takes the element directly. The first
+   version swallowed this failure in silence, so the glass branch went a whole
+   session without ever executing while all 173 tests stayed green; the catch
+   now says so out loud.
+3. **The backdrop needs an anchor, not just a declaration.** `--slfx-backdrop`
+   inherits, so a pane cannot tell which ancestor set it — and it is that
+   ancestor's box the image covers. Sampling at the pane's own `uv` squeezes the
+   whole image into every button. The surface marks the box with
+   `data-sl-fx-backdrop`; the kit measures the pane inside it and passes the
+   rect as `look.backRect`.
+4. **A surface must PAINT what it declares.** The showcase declared
+   `backdrop.svg` over a cell that painted DOM telemetry text instead, so the
+   glass would have bent an image nobody could see. The anchor now paints it
+   from the same custom property — one source of truth — at
+   `background-size: 100% 100%`, because any other size lies to the mapping.
+
+**Open, and for the owner's eye: the tint.** `lab/1l-tint-ladder.html` puts the
+same two panes over the same declared backdrop at tint 0, 0.20, 0.35, 0.50 and
+0.70. The 0.70 chosen earlier was chosen with no backdrop behind the glass; with
+one, it buries the refraction under a slab of accent. The grid lines are the
+instrument — the question is the highest tint at which their bend is still
+legible.
+
+**Open, and structural: refraction is a material, not a light.** The shader
+returns early on `presence`, so today a pane bends its backdrop only while the
+pointer is on it. AC-33 asks an element at rest to carry no *light*; a bend is
+not light. Delivering that means every pane needs a persistent canvas, not the
+single canvas the kit moves between hosts — a real change of shape, not a
+parameter. `lab/1l` forces `lit: 1` to show what at-rest would look like.
+
 ## Slice 1 rulings (AC-6)
 
 AC-6: *"No value in shipped code that a card supplies is different from the card's, unless a recorded ruling says so."* Slice 1 diverges from `liqui-glass` on both of its material numbers, and on one mechanism. The rulings:

@@ -129,6 +129,7 @@ export async function bootLight({ canvas, state, tokens }) {
       // whether a backdrop is bound. Read from CSS, never held here: a number
       // cached in two places is the first thing to drift.
       glass: [0.1, 0, 0, 0],
+      backRect: [0, 0, 1, 1],
     };
 
     function applyTokens() {
@@ -173,41 +174,91 @@ export async function bootLight({ canvas, state, tokens }) {
     /** The host the bindings currently describe, so a pointer crossing between
      *  two panes over the same image does not re-upload it. */
     let litHost = null;
+    /** The element whose box the declared image covers. */
+    let backAnchor = null;
 
-    /** Bind whatever --slfx-backdrop names on this host. A url() becomes a
-     *  texture; anything else — none, a gradient, a keyword — leaves the pane
-     *  as it was, because a gradient cannot be sampled and guessing at one
-     *  would put an invented backdrop behind the glass.
+    /** Bind whatever the host's backdrop ANCHOR declares.
+     *
+     *  The anchor, not the host: --slfx-backdrop is a custom property and
+     *  therefore inherits, so a button cannot tell which ancestor set it — and
+     *  the rect of that ancestor is exactly what the shader needs, because the
+     *  image covers the ANCHOR's box and the pane samples the part of it that
+     *  happens to sit behind the pane. Sampling at the pane's own uv instead
+     *  squeezes the whole image into every button. So the surface marks the
+     *  box with data-sl-fx-backdrop and declares the image on the same
+     *  element; an unmarked pane simply has no declared backdrop.
+     *
+     *  A url() becomes a texture; anything else — none, a gradient, a keyword
+     *  — leaves the pane as it was, because a gradient cannot be sampled and
+     *  guessing at one would put an invented backdrop behind the glass.
      *  @returns {Promise<void>} */
     async function bindBackdrop(host) {
-      const raw = getComputedStyle(host).getPropertyValue("--slfx-backdrop").trim();
+      const clear = () => {
+        backTex = blankTex;
+        backAnchor = null;
+        look.glass = [look.glass[0], look.glass[1], look.glass[2], 0];
+      };
+      const anchor = host.closest("[data-sl-fx-backdrop]");
+      if (!anchor) return clear();
+      const raw = getComputedStyle(anchor).getPropertyValue("--slfx-backdrop").trim();
       const url = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(raw)?.[1];
-      if (!url) { backTex = blankTex; look.glass = [look.glass[0], look.glass[1], look.glass[2], 0]; return; }
+      if (!url) return clear();
+      backAnchor = anchor;
       if (backCache.has(url)) {
         backTex = backCache.get(url);
         look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
         return;
       }
       try {
-        // createImageBitmap, not an <img>: copyExternalImageToTexture takes it
-        // directly and it decodes off the main thread.
-        const bmp = await createImageBitmap(await (await fetch(url, { mode: "cors" })).blob());
+        // An <img>, not fetch + createImageBitmap: createImageBitmap REFUSES
+        // an SVG blob outright ("The source image could not be decoded"), and
+        // a declared backdrop is most naturally an SVG. decode() resolves once
+        // the vector is rasterised at its intrinsic size, and
+        // copyExternalImageToTexture takes the element directly.
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = new URL(url, document.baseURI).href;
+        await img.decode();
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        if (!w || !h) throw new Error("backdrop has no intrinsic size");
         const tex = gpu.gpu.createTexture({
-          size: [bmp.width, bmp.height],
+          size: [w, h],
           format: "rgba8unorm",
           usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
           label: "sl-fx-glass backdrop",
         });
-        gpu.gpu.queue.copyExternalImageToTexture({ source: bmp }, { texture: tex }, [bmp.width, bmp.height]);
+        gpu.gpu.queue.copyExternalImageToTexture({ source: img }, { texture: tex }, [w, h]);
         backCache.set(url, tex);
         backTex = tex;
         look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
-      } catch {
+      } catch (err) {
         // A backdrop that will not load is a pane without refraction, never a
-        // pane that throws. The blur and the rim are correct on their own.
-        backTex = blankTex;
-        look.glass = [look.glass[0], look.glass[1], look.glass[2], 0];
+        // pane that throws — the blur and the rim are correct on their own. It
+        // says so out loud: the first version swallowed the decode failure in
+        // silence, and the glass branch went a full session without ever
+        // executing while every test stayed green.
+        console.warn("[sondalab] backdrop did not load, pane stays unrefracted:", url, err);
+        clear();
       }
+    }
+
+    /** Where the host sits inside its backdrop anchor, as an origin and a
+     *  scale in the anchor's own 0..1 space — which is the image's space,
+     *  since the image covers the anchor's box. Both rects move together, so
+     *  this only changes when the layout does; it is measured on host change
+     *  rather than per frame. */
+    function measureBackRect(host) {
+      if (!backAnchor) { look.backRect = [0, 0, 1, 1]; return; }
+      const a = backAnchor.getBoundingClientRect();
+      const h = host.getBoundingClientRect();
+      if (a.width <= 0 || a.height <= 0) { look.backRect = [0, 0, 1, 1]; return; }
+      look.backRect = [
+        (h.left - a.left) / a.width,
+        (h.top - a.top) / a.height,
+        h.width / a.width,
+        h.height / a.height,
+      ];
     }
 
     /** Read the three glass parameters off the host. They are CSS custom
@@ -274,7 +325,10 @@ export async function bootLight({ canvas, state, tokens }) {
       if (s.host && s.host !== litHost) {
         litHost = s.host;
         readGlass(litHost);
-        bindBackdrop(litHost).then(() => { fx.set({ backTex: backTex.createView() }); });
+        bindBackdrop(litHost).then(() => {
+          measureBackRect(litHost);
+          fx.set({ backTex: backTex.createView() });
+        });
       }
       look.box = [s.w, s.h, s.radius, s.border];
       look.ptr = [s.x, s.y, s.lit, 0];

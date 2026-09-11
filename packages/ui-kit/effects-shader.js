@@ -62,6 +62,11 @@ struct Look {
   // w: 1 when a backdrop has been declared and bound, 0 otherwise. At 0 this
   //    shader behaves exactly as it did before refraction existed.
   glass  : vec4f,
+  // Where this pane sits inside its backdrop anchor, in the anchor's own 0..1
+  // space — which is the image's space, because the image covers the anchor's
+  // box. xy is the origin, zw the scale. Without it the whole image is
+  // squeezed into every pane, which reads as a texture rather than as glass.
+  backRect : vec4f,
 };
 @group(0) @binding(0) var<uniform> look : Look;
 // The declared backdrop. A surface says what lies behind a region with
@@ -137,6 +142,67 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let radius = clamp(look.box.z, 0.0, min(half.x, half.y));
   let d = sdRoundBox(p - half, half, radius);
 
+  // The inner edge, and the direction that leaves it. The SDF's gradient is
+  // the surface normal of the silhouette; the light picks out the part of the
+  // edge it faces, the way a bevel catches a lamp.
+  let e = vec2f(0.75, 0.0);
+  let grad = normalize(vec2f(
+    sdRoundBox(p - half + e.xy, half, radius) - sdRoundBox(p - half - e.xy, half, radius),
+    sdRoundBox(p - half + e.yx, half, radius) - sdRoundBox(p - half - e.yx, half, radius),
+  ) + vec2f(1e-6, 0.0));
+
+  // ── refraction of the declared backdrop ────────────────────────────────────
+  // Sampled UNCONDITIONALLY and mixed by the flag, never inside a branch. Two
+  // reasons, and both matter: textureSample in non-uniform control flow is
+  // undefined in WGSL, and vgpu's reflection is usage-based — a binding only
+  // reached from inside a branch is not seen at all, which fails as
+  // "Binding 'backSampler' does not exist" long before any pixel is drawn.
+  // With nothing declared the placeholder texel is transparent and the flag is 0,
+  // so the cost is three reads of a 1x1 texture and the result is unchanged.
+  let paper = look.flags.y;
+  let has = clamp(look.glass.w, 0.0, 1.0);
+  let thick = max(look.glass.x * min(size.x, size.y), 1.0);
+
+  // How deep inside the rim, 0 at the edge and 1 once past the thickness.
+  let t = clamp(-d / thick, 0.0, 1.0);
+  // The slope of a lens section. Its vertical tangent at the rim bends a
+  // straight line into a curve; pushing along the normal by a flat amount
+  // instead gives four faces meeting on a diagonal, which is a bevel.
+  let u = 1.0 - t;
+  let slope = u / sqrt(max(1.0 - u * u, 1e-4));
+  let bendAmt = clamp(slope, 0.0, 6.0) / 6.0;
+
+  let push = grad * bendAmt * thick * REFRACT_FACTOR;
+  let fringe = grad * bendAmt * DISPERSE;
+  // The pane's uv, carried into the image's space, and one host pixel
+  // expressed there too — so the same bend in CSS pixels displaces the same
+  // distance whatever the anchor's size.
+  let base = look.backRect.xy + uv * look.backRect.zw;
+  let texel = look.backRect.zw / size;
+
+  let cr = textureSample(backTex, backSampler, base + (push * (2.0 - N_R) + fringe) * texel).r;
+  let cg = textureSample(backTex, backSampler, base + (push * (2.0 - N_G)) * texel).g;
+  let cb = textureSample(backTex, backSampler, base + (push * (2.0 - N_B) - fringe) * texel).b;
+
+  var glass = vec3f(cr, cg, cb);
+  glass = mix(glass, look.accent.rgb, clamp(look.glass.y, 0.0, 1.0));
+
+  // Fresnel: grazing angles reflect, so the rim brightens and the middle does
+  // not. Lifted toward the page's own light pole by a share of the remaining
+  // headroom rather than added, so a bright backdrop cannot clip — which is
+  // what working in LCH and clamping buys the reference.
+  let pole = mix(look.sheen.rgb, look.depth.rgb, paper);
+  let fres = pow(1.0 - t, 3.0) * clamp(look.glass.z / 100.0, 0.0, 1.0);
+  glass = mix(glass, pole, clamp(fres * 0.55, 0.0, 1.0));
+
+  // Glare: a fixed light direction, never the pointer. In the reference the
+  // angle is a setting; the pointer moves the specular spot, not the direction
+  // the light comes from, and a light that chases the cursor reads as unreal.
+  let lightDir = vec2f(cos(GLARE_ANGLE), sin(GLARE_ANGLE));
+  let face = dot(grad, lightDir);
+  let lobe = pow(max(face, 0.0), 8.0) + GLARE_OPPOSITE * pow(max(-face, 0.0), 14.0);
+  glass = mix(glass, pole, clamp(lobe * pow(1.0 - t, 1.6) * GLARE_GAIN, 0.0, 1.0));
+
   // The silhouette is the mask. One expression gives the corners their curve
   // AND stops the light at the edge, so nothing has to clip this canvas.
   let inside = 1.0 - smoothstep(-1.0, 0.0, d);
@@ -152,14 +218,6 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   let reach = max(min(size.x, size.y) * REACH_K, REACH_MIN);
   let hw = max(look.box.w * EDGE_K, EDGE_MIN);
 
-  // The inner edge, and the direction that leaves it. The SDF's gradient is
-  // the surface normal of the silhouette; the light picks out the part of the
-  // edge it faces, the way a bevel catches a lamp.
-  let e = vec2f(0.75, 0.0);
-  let grad = normalize(vec2f(
-    sdRoundBox(p - half + e.xy, half, radius) - sdRoundBox(p - half - e.xy, half, radius),
-    sdRoundBox(p - half + e.yx, half, radius) - sdRoundBox(p - half - e.yx, half, radius),
-  ) + vec2f(1e-6, 0.0));
   let band = 1.0 - smoothstep(0.0, hw, abs(d));
   let facing = clamp(dot(normalize(look.ptr.xy - p + vec2f(1e-6, 0.0)), -grad), 0.0, 1.0);
   let toward = pow(facing, EDGE_TIGHT);
@@ -183,56 +241,10 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   // so the pool has a hue and does not read as grey haze. On paper white is
   // invisible, so the same light is carried by the depth companion instead
   // and composited as a tint rather than as a glow.
-  let paper = look.flags.y;
   let cool = mix(look.sheen.rgb, look.depth.rgb, paper);
   let hue = mix(cool, look.accent.rgb, 0.22 + 0.30 * clamp(lg, 0.0, 1.0));
 
-  // ── refraction, only where a backdrop was declared ─────────────────────────
-  // Without one this whole block is skipped and the shader emits light alone,
-  // exactly as it did before. The pane is opaque in this mode because it is now
-  // drawing the backdrop itself rather than compositing over the host's blur.
-  if (look.glass.w > 0.5 && inside > 0.001) {
-    let thick = max(look.glass.x * min(size.x, size.y), 1.0);
-
-    // How deep inside the rim, 0 at the edge and 1 once past the thickness.
-    let t = clamp(-d / thick, 0.0, 1.0);
-    // The slope of a lens section. Its vertical tangent at the rim bends a
-    // straight line into a curve; pushing along the normal by a flat amount
-    // instead gives four faces meeting on a diagonal, which is a bevel.
-    let u = 1.0 - t;
-    let slope = u / sqrt(max(1.0 - u * u, 1e-4));
-    let bendAmt = clamp(slope, 0.0, 6.0) / 6.0;
-
-    let push = grad * bendAmt * thick * REFRACT_FACTOR;
-    let fringe = grad * bendAmt * DISPERSE;
-
-    let texel = 1.0 / size;
-    let base = uv;
-    let cr = textureSample(backTex, backSampler, base + (push * (2.0 - N_R) + fringe) * texel).r;
-    let cg = textureSample(backTex, backSampler, base + (push * (2.0 - N_G)) * texel).g;
-    let cb = textureSample(backTex, backSampler, base + (push * (2.0 - N_B) - fringe) * texel).b;
-
-    var glass = vec3f(cr, cg, cb);
-    glass = mix(glass, look.accent.rgb, clamp(look.glass.y, 0.0, 1.0));
-
-    // Fresnel: grazing angles reflect, so the rim brightens and the middle does
-    // not. Lifted toward the light pole by a share of the remaining headroom
-    // rather than added, so a bright backdrop cannot clip — which is what
-    // working in LCH and clamping buys the reference.
-    let pole = mix(look.sheen.rgb, look.depth.rgb, paper);
-    let fres = pow(1.0 - t, 3.0) * clamp(look.glass.z / 100.0, 0.0, 1.0);
-    glass = mix(glass, pole, clamp(fres * 0.55, 0.0, 1.0));
-
-    // Glare: a fixed light direction, not the pointer. In the reference the
-    // angle is a setting; the pointer moves the specular spot, never the
-    // direction the light comes from, and a light that chases the cursor is
-    // what reads as unreal.
-    let lightDir = vec2f(cos(GLARE_ANGLE), sin(GLARE_ANGLE));
-    let face = dot(grad, lightDir);
-    let lobe = pow(max(face, 0.0), 8.0) + GLARE_OPPOSITE * pow(max(-face, 0.0), 14.0);
-    glass = mix(glass, pole, clamp(lobe * pow(1.0 - t, 1.6) * GLARE_GAIN, 0.0, 1.0));
-
-    // The pointer's own light rides on top, unchanged.
+  if (has > 0.5 && inside > 0.001) {
     let over = clamp(hue * lit, vec3f(0.0), vec3f(1.0));
     let out = clamp(glass + over, vec3f(0.0), vec3f(1.0));
     return vec4f(out * inside, inside);

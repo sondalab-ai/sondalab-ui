@@ -127,12 +127,22 @@ test("refraction lives on the edge band, and samples no backdrop", () => {
   const samples = [...shader.matchAll(/textureSample\w*\(\s*(\w+)/g)].map((m) => m[1]);
   assert.deepEqual([...new Set(samples)], ["backTex"],
     `the only texture is the declared backdrop, got ${JSON.stringify([...new Set(samples)])}`);
-  // And it is reached only through the flag, so a pane with no backdrop declared
-  // behaves exactly as it did before refraction existed.
-  const guarded = shader.slice(shader.indexOf("if (look.glass.w > 0.5"));
-  for (const s of samples) assert.ok(guarded.includes("textureSample"), "sampling sits inside the backdrop guard");
-  assert.equal(shader.indexOf("textureSample") > shader.indexOf("if (look.glass.w > 0.5"), true,
-    "nothing samples before the guard");
+  // And it is sampled UNCONDITIONALLY, then mixed by the flag — the opposite of
+  // where this started. Sampling from inside `if (look.glass.w > 0.5)` cost a
+  // day: vgpu's reflection is usage-based, so a binding reached only from a
+  // branch is not in the pipeline at all and effect() throws "Binding
+  // 'backSampler' does not exist in 'effect'" before a pixel is ever drawn.
+  // textureSample in non-uniform control flow is also undefined in WGSL, which
+  // is why the sampling has to sit above the uv-dependent early returns too.
+  const fs = shader.slice(shader.indexOf("fn fs("));
+  const firstSample = fs.indexOf("textureSample");
+  const firstUvReturn = fs.indexOf("if (inside <= 0.001)");
+  assert.ok(firstSample > 0 && firstUvReturn > 0, "both landmarks are present");
+  assert.ok(firstSample < firstUvReturn,
+    "the backdrop is sampled before any return that depends on uv");
+  assert.equal(/if \([^)]*glass\.w[^)]*\)\s*\{[^}]*textureSample/s.test(fs), false,
+    "no textureSample sits inside the backdrop flag's branch");
+
   // band is the only thing that turns the separation on, and it is zero away
   // from the edge — so a pixel in the middle of the pane gets one sample.
   assert.match(shader, /let band = 1\.0 - smoothstep\(0\.0, hw, abs\(d\)\);/);

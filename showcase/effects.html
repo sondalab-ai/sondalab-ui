@@ -195,6 +195,16 @@
        strokes are too large-scale for a hairline blur to alter. Only this
        cell gets it; the rest of the gallery is unchanged. -------------- */
     .g-demo--substrate { position: relative; display: block; padding-block: 0.45rem; }
+    /* The anchor paints the image it declares, from the same custom property
+       the kit reads: a declared backdrop that the surface does not actually
+       paint would have the glass bending something nobody can see. 100% 100%,
+       not cover — the shader maps the anchor box onto the whole image. */
+    .g-demo--substrate[data-sl-fx-backdrop] {
+      background-image: var(--slfx-backdrop);
+      background-size: 100% 100%;
+      min-height: 8.5rem;
+      display: grid; align-content: end; padding: 0.9rem;
+    }
     .g-demo--substrate .substrate {
       position: absolute; inset: 0; display: grid; align-content: center; gap: 0.32rem;
       font-family: var(--sl-font-mono); font-size: 0.7rem; line-height: 1.35;
@@ -420,12 +430,7 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">pane — the button is made of glass</span>
-            <div class="g-demo g-demo--substrate">
-              <div class="substrate" aria-hidden="true">
-                <p>processInstanceKey 4251 · active · elementId Gateway_1v8qk2 · last retry 12s</p>
-                <p>worker sondalab-runner-03 has not acknowledged the job · incident open</p>
-                <p>bpmnProcessId probe-collection · version 7 · tenant default</p>
-              </div>
+            <div class="g-demo g-demo--substrate" data-sl-fx-backdrop style="--slfx-backdrop: url(&quot;backdrop.svg&quot;); --slfx-glass-tint: 0.7; --slfx-glass-thickness: 0.12">
               <div class="substrate__row">
                 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
                 <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
