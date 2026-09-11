@@ -689,6 +689,8 @@ let plate = null;
 let plateW = 0;
 let plateH = 0;
 let plateWaiting = false;
+/** Whether the scroll/resize listeners that refresh the plate are attached. */
+let plateListening = false;
 /** Where the page was scrolled when the plate was taken. The plate is a
  *  photograph, and a photograph does not scroll: every crop has to be shifted
  *  by however far the page has moved since. Without this the lens showed real
@@ -919,7 +921,15 @@ function armRefraction(root) {
   };
   if (root instanceof Element && root.matches?.(REFRACT_HOSTS)) arm(root);
   for (const el of root.querySelectorAll?.(REFRACT_HOSTS) ?? []) arm(el);
-  if (!plate) {
+  // Once, not "while there is no plate yet". The old guard keyed the listeners
+  // on `!plate`, which reads as "do not attach twice" but is not what it says:
+  // any arm that happens after a successful capture skips them, and a page whose
+  // first capture lands before the last host is armed ends up with no scroll
+  // listener at all. The plate then never refreshes, every pane below the first
+  // viewport crops from outside it, and the lens shows content from wherever the
+  // page happened to be at load.
+  if (!plateListening) {
+    plateListening = true;
     let idle = 0;
     const restamp = () => {
       clearTimeout(idle);

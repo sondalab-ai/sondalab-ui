@@ -126,6 +126,20 @@ when reconstructed by hand.
 **Stripping the glass classes from the clone does not fix it either** (attempt
 eight), so it is not simply "an element carrying backdrop-filter rasterises black".
 
+**The plate is captured once and never again.** Intercepting
+`URL.createObjectURL` shows no SVG blob created on any scroll or resize after the
+first capture — so the plate is always the first viewport, and every pane below
+it crops from outside. One cause is in `armRefraction`: the scroll/resize
+listeners sat behind `if (!plate)`, which reads as "do not attach twice" but
+actually means "never attach once a capture has landed". Replaced with an
+explicit `plateListening` flag. **That did not restore refreshing on its own**, so
+there is at least one more reason captures stop.
+
+Net effect today: the lens hides itself wherever its crop falls outside the plate
+(the guard above), which is everywhere below the first viewport. The black
+rectangle is gone and the glass reads correctly — but the lens is **inert**, not
+working. That is graceful degradation, not the feature.
+
 Where that leaves it, after eight measurements that each removed a candidate:
 an opaque black rectangle drawn by the lens, from a plate that looks right when
 rebuilt by hand, on a `--rim` pane only, with every layer of the element
