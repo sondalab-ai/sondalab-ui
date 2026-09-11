@@ -997,6 +997,40 @@
   opacity: 1;
 }
 
+/* ══ AURORA --beam — a beam through the glass, not a ring around it ═════════
+   The conic sweep is a lighthouse by construction: an arc travelling AROUND a
+   border stays a beam on a rim whatever its width, blur or speed. This is the
+   other model, proven on lab/1u and lab/1v: a thin white line, angled off the
+   axis, sitting BEHIND the pane and drifting ACROSS it. The pane's lens bends
+   it where it crosses an edge and dispersion parts it into its colours there —
+   a prism — and none of that is drawn here: it is what the glass does to a
+   light that passes behind it. Additive: --beam swaps the seated glow's
+   painting, the sweep stays for every host that does not ask for this. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam] {
+  filter: none;
+  overflow: visible;
+}
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]::before {
+  /* the line: a soft white core with a halo, long enough to enter one face
+     and leave the other whatever the host's width */
+  inset: auto;
+  padding: 0;
+  mask: none;
+  -webkit-mask: none;
+  left: -40%;
+  top: 50%;
+  width: 180%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--slfx-glint);
+  box-shadow:
+    0 0 6px 2px color-mix(in srgb, var(--slfx-glint) 75%, transparent),
+    0 0 24px 8px color-mix(in srgb, var(--slfx-glint) 28%, transparent);
+  transform-origin: 50% 50%;
+  rotate: -18deg;
+  translate: 0 var(--slfx-beam-dy, 0px);
+}
+
 /* Busy — a short travelling marker: the same arc, a fraction of the length.
    --linear is excluded from busy below: a conic arc painted into a 2px strip
    renders as a smear. A linear aurora has no busy mode — report work on a
@@ -1183,6 +1217,13 @@
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"] > .sl-fx-aurora__glow::before,
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
     animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
+  }
+  /* A beam drifts ACROSS the pane, slowly, and never rotates: the prism is in
+     the glass, not in the light. Registered so it interpolates. */
+  @property --slfx-beam-dy { syntax: "<length>"; inherits: false; initial-value: 0px; }
+  @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
+  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
+    animation: slfx-beam-drift 11s ease-in-out infinite alternate;
   }
   /* Determinate never orbits — its arc length carries the value. */
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {

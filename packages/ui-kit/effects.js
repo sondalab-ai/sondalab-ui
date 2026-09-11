@@ -628,6 +628,10 @@ const GLOW_VARS = [
   "--slfx-angle", "--slfx-arc", "--slfx-bloom-hi", "--slfx-bloom-lo",
   "--slfx-bloom-out", "--slfx-bloom-w", "--slfx-glow", "--slfx-rim-out",
   "--slfx-soft",
+  // and the light pole itself: the beam is MADE of it, and a background of an
+  // undefined var() is no background at all — the beam was lit, drifting,
+  // rotated and invisible until this line existed
+  "--slfx-glint",
 ];
 
 function seatGlow(el, glow) {
@@ -667,6 +671,10 @@ function injectGlow(el) {
   el.dataset.slFxId = el.dataset.slFxId || `g${glowSerial++}`;
   glow.dataset.slFxFor = el.dataset.slFxId;
   glow.setAttribute("data-sl-fx-seated", "");
+  // --beam: the glow paints a beam through the pane instead of a ring around
+  // it. Carried as an attribute on the glow, since the CSS that draws it
+  // cannot see the host's class from a previous sibling.
+  if (el.classList.contains("sl-fx-aurora--beam")) glow.setAttribute("data-sl-fx-beam", "");
   parent.insertBefore(glow, el);
   seatGlow(el, glow);
   // Again once the page has settled. A ResizeObserver fires when a box CHANGES

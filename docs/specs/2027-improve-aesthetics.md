@@ -469,6 +469,29 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### The beam is in the kit — 2026-09-11, late
+
+`.sl-fx-aurora--beam`: the aurora's seated glow paints a thin white line
+through the pane instead of a ring around it. Additive — the conic sweep stays
+for every host that does not ask for this — so it is reversible with one class.
+The line is `--slfx-glint`, 3 px, angled −18°, long enough to enter one face
+and leave the other whatever the host's width, drifting across the pane on an
+11 s alternate (registered `--slfx-beam-dy`, inside the motion guard). Nothing
+else is drawn: the bend at each face and the colours parting there are what
+the pane's lens does to a light passing behind it.
+
+On the showcase's Glass cell, "Run probe" carries it. Verified: the glow is
+seated, lit, drifting, rotated, and — after one more variable — visible. The
+beam is MADE of `--slfx-glint`, which was not among the nine variables copied
+onto the seated glow, and a background of an undefined `var()` is no background
+at all. Same class of defect as the ring's earlier disappearance, found the
+same way: computed style, not a screenshot.
+
+Two guards were extended rather than bypassed: the count of edge rules allowed
+to declare a background goes from six to seven, naming the beam; and the
+radius guard exempts the beam's 2 px end-cap, which is a line's own shape and
+not a host corner.
+
 ### The prism proper — 2026-09-11, late
 
 *Owner, with the reference picture: a white beam enters one face of the prism,
