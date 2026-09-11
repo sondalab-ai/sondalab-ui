@@ -266,7 +266,7 @@ One row per slice, written when the slice closes: chosen direction, rejected dir
 
 | # | Element | Cards | Chosen | Rejected (and why) | Closed |
 |---|---|---|---|---|---|
-| 1 | buttons — text and round icon-only | `liqui-glass` (text), `gooey` (round), `border-beam` (focus), `metal` + `glass-studio` (glass grammar) | **inset-rim** — tint **0.14**, blur **2px**, saturate **1.7**, `__backdrop` and `__tint` on separate layers, no blend mode; light rim and glow `oklch(0.86 0.17 82)` | `veil` (edge only, no material); `arc` (border-beam's beam read as decoration on a control at this size); `dispersion` (the R/B split is invisible at 84×36); on light, `white` (goes pale, as `metal` measured) and `dark` (reads as dark glass) | direction and values chosen 2026-09-11 — **not yet promoted** |
+| 1 | buttons — text and round icon-only | `liqui-glass` (text), `gooey` (round), `border-beam` (focus), `metal` + `glass-studio` (glass grammar) | **inset-rim** — tint **0.14**, blur **2px**, saturate **1.7**, `__backdrop` and `__tint` on separate layers, no blend mode; light rim and glow `oklch(0.86 0.17 82)` | `veil` (edge only, no material); `arc` (border-beam's beam read as decoration on a control at this size); `dispersion` (the R/B split is invisible at 84×36); on light, `white` (goes pale, as `metal` measured) and `dark` (reads as dark glass) | promoted 2026-09-11; **open** — see below |
 | 2 | input fields — the common ones (text, select, textarea) | _TBD_ | | | not started |
 | 3 | cards and layout | _TBD_ | | | not started |
 
@@ -291,6 +291,19 @@ What the cards do **not** settle, and the probe therefore has to answer with its
 - **Glass on a light ground** — unreferenced anywhere in the knowledge base (Note 7), so the light theme is original work, not reproduction.
 
 The next artifact is a `lab/` probe page for slice 1: one element, at least three variants, both themes, rendered side by side (AC-3).
+
+## Why slice 1 is still open
+
+Owner, 2026-09-11: *slice 1 does not close until the effects are decent.* The
+material is promoted and every gate is green, but a filled pane still carries a
+black rectangle from the lens, and a button that looks broken is not a delivered
+effect whatever the tests say. So AC-34's sign-off is deliberately withheld
+rather than waived, and the slice stays open with the lens on the critical path —
+it is `e33ea31`'s defect, but it is slice 1's blocker.
+
+The alternative was offered and declined: switching the lens off by default would
+make the slice signable today, at the cost of shipping glass that is only blur
+and rim. The ruling is that the bar comes first.
 
 ## Slice 1 evidence (AC-3, AC-4)
 
