@@ -399,13 +399,21 @@ that matters:
    move the direction the light comes from. A light source that chases the cursor
    is the thing that reads as unreal, and no amount of easing fixes it.
 
-So the probe now eases and unwraps — both worth having — but `follow` defaults
-**off**, and the reference's fixed `-45°` is the resting state. The toggle stays
-so the two can be compared rather than argued about.
+So the probe now eases and unwraps — both worth having — but `follow` is **off**,
+and the reference's fixed `-45°` is the resting state. *Owner, 2026-09-11:
+settled that way, with the note that a future slice may let the light respond to
+other elements on the page rather than to the cursor.* The toggle stays so the
+two can be compared rather than argued about.
 
-Still open: whether the tint at 0.72 leaves enough of the refraction visible —
-the probe opens at 0.40 — and the thickness, which is in the probe's own pixels
-rather than `glass-studio`'s units on its 200 × 200 shape.
+**Tint 70 on the GPU pane.** *Owner, same pass.* Which lines up with slice 1's
+CSS pane at 0.72 — the two routes land on the same translucency rather than
+needing to be reconciled later. The refraction survives at that tint but goes
+quiet: it reads as a bend in the grid rather than as a lens, and anything wanting
+more has to come from the Fresnel and the glare, not from thinning the tint.
+
+Still open: the thickness, which is in the probe's own pixels rather than
+`glass-studio`'s units on its 200 × 200 shape, so the value 10 here is not the
+card's 20 under another name.
 
 ## Slice 1 rulings (AC-6)
 
