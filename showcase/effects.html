@@ -200,8 +200,11 @@
        the kit reads: a declared backdrop that the surface does not actually
        paint would have the glass bending something nobody can see. 100% 100%,
        not cover — the shader maps the anchor box onto the whole image. */
-    .g-demo--substrate[data-sl-fx-backdrop] {
-      background-image: var(--slfx-backdrop);
+    /* Plain content behind the panes, nothing declared: the lens refracts the
+       real page. The declared-backdrop route (data-sl-fx-backdrop and the
+       --slfx-glass-* knobs) fed the GPU shader and is retired from this page. */
+    .g-demo--substrate {
+      background-image: url("backdrop.svg");
       background-size: 100% 100%;
       min-height: 8.5rem;
       display: grid; align-content: end; padding: 0.9rem;
@@ -431,7 +434,7 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">pane — the button is made of glass</span>
-            <div class="g-demo g-demo--substrate" data-sl-fx-backdrop style="--slfx-backdrop: url(&quot;backdrop.svg&quot;); --slfx-glass-tint: 0.16; --slfx-glass-shade: 0.5125; --slfx-glass-thickness: 0.12">
+            <div class="g-demo g-demo--substrate">
               <div class="substrate__row">
                 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
                 <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
