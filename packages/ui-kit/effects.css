@@ -960,6 +960,13 @@
 .sl-fx-aurora__glow[data-sl-fx-seated] {
   inset: auto;
   border-radius: var(--slfx-seat-radius);
+  /* AUTO, not -1. As a child of the host that -1 meant "behind the content,
+     above the host's own background", because the host is a stacking context
+     (isolation: isolate). As a child of the PARENT, which is not one, -1 sends
+     it behind the nearest stacking context's background — off the page
+     entirely. It was lit, sized and adjacent, and invisible. In DOM order it
+     already comes before the host, which is all the ordering it needs. */
+  z-index: auto;
 }
 
 .sl-fx-aurora__glow::before {
