@@ -69,11 +69,22 @@ and with thirty panes the accumulated shift is hundreds of pixels. `opacity: 0`
 keeps the box, paints nothing, and aligns the plate. (`visibility: hidden` also
 aligns it; `opacity: 0` is the one that shipped.)
 
-**What is left after both fixes:** the lens paints a black rectangle on `--rim`
-panes — a filled primary — while a ghost pane in the same row is correct. Hiding
-`.sl-fx-glass__lens` leaves both clean, so it is the lens, not the material. This
-was previously masked by the misalignment and is now the only thing between the
-lens and working.
+**What is left after both fixes, narrowed as far as it went:** a `--rim` pane —
+a filled primary — crops a **black rectangle** out of the plate, while a ghost
+pane in the same row is correct. It is the plate's own pixels, not the
+displacement: forcing `filter: none` on the lens leaves the black exactly where it
+was. Four things did *not* clear it —
+
+1. `visibility: hidden` on the clone's glass elements instead of `opacity: 0`;
+2. also forcing `background`, `box-shadow` and `filter` to none on them;
+3. also forcing `backdrop-filter: none` on them;
+4. hiding a lens whose crop falls outside the plate, so an empty canvas never
+   paints its filter (kept — it is right on its own terms, and fixes panes below
+   the fold, but it is not this bug).
+
+So whatever writes that black is upstream of all four. The next person should
+render the plate and look at the primary's own band — the same one-screenshot
+method that found the flow bug — rather than reasoning about the lens.
 
 **Superseded note —** what follows was written before the plate was rendered: With the fonts embedded the crop still lands
 wrong — the text under the pane changed, so the plate's layout did change, but it

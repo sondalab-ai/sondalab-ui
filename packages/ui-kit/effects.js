@@ -777,6 +777,13 @@ async function capturePlate() {
   for (const el of clone.querySelectorAll(`${REFRACT_HOSTS}, canvas, .sl-fx-glass__lens`)) {
     el.style.setProperty("opacity", "0", "important");
   }
+  // STILL OPEN: a --rim pane (a filled primary) crops a black rectangle out of
+  // the plate, while a ghost pane beside it is correct. It is the plate's own
+  // pixels, not the displacement — forcing `filter: none` on the lens leaves the
+  // black in place. Four attempts failed to clear it: visibility:hidden instead
+  // of opacity, stripping background/box-shadow/filter from the clone, forcing
+  // backdrop-filter off in the clone, and hiding a lens that has nothing to
+  // crop. Whatever writes that black is upstream of all four.
   // XMLSerializer, not outerHTML: foreignObject content must be well-formed
   // XML, and the page's markup is not.
   const body = new XMLSerializer().serializeToString(clone);
@@ -834,7 +841,18 @@ function paintLens(el) {
   // the element's rect shifted by however far the page has scrolled since.
   const sx = Math.round(r.left) + (Math.round(window.scrollX) - plateScrollX);
   const sy = Math.round(r.top) + (Math.round(window.scrollY) - plateScrollY);
+  // A pane below the fold when the plate was taken crops from outside it, and
+  // drawImage then paints nothing. An EMPTY canvas is not harmless here: the
+  // displacement filter still runs and paints its own map, which reads as a
+  // black rectangle over the control. So the lens only shows once it holds
+  // something — hidden is the resting state, not an error state.
+  const inside = sx < plateW && sy < plateH && sx + w > 0 && sy + h > 0;
+  if (!inside) {
+    lens.style.visibility = "hidden";
+    return;
+  }
   ctx.drawImage(plate, sx, sy, w, h, 0, 0, w, h);
+  lens.style.visibility = "visible";
 }
 
 /** Give one element a lens, sized and filtered for its own geometry.
@@ -853,6 +871,9 @@ function applyRefraction(el) {
     lens = document.createElement("canvas");
     lens.className = "sl-fx-glass__lens";
     lens.setAttribute("aria-hidden", "true");
+    // Born hidden. Until paintLens has something to crop, the filter would
+    // paint its own displacement map over the control; paintLens shows it.
+    lens.style.visibility = "hidden";
     el.insertBefore(lens, el.firstChild);
   }
   lens.style.filter = `url(#${refractionFilter(w, h, r)})`;
