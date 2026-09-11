@@ -399,7 +399,10 @@ let panePrevT = 0;
  *  move and read once per frame by the Tier 2 light. It exists so the GPU
  *  module forces no layout of its own: onPanePointer already has the rect and
  *  the computed style, because it needs both to place the CSS spot. */
-const paneGeom = { w: 0, h: 0, radius: 0, border: 0, x: 0, y: 0, lit: 0 };
+// `host` rides along with the geometry so the GPU tier can read the element's
+// own --slfx-backdrop and glass parameters. It is the only reference this
+// module hands over; the shader still never touches the document.
+const paneGeom = { w: 0, h: 0, radius: 0, border: 0, x: 0, y: 0, lit: 0, host: null };
 /** The Tier 2 handle and its single canvas, moved between hosts exactly the
  *  way the liquid's single skin is. One device, one surface, one pipeline,
  *  created once in mountGpu() and never per element. */
@@ -455,6 +458,7 @@ function onPanePointer(ev) {
   // The same measurement, in the host's own pixels, for the Tier 2 light.
   // The light is drawn on the BORDER box — the canvas is inset: 0 against it —
   // so the pointer is measured from that origin, not the padding box's.
+  paneGeom.host = el;
   paneGeom.w = r.width;
   paneGeom.h = r.height;
   paneGeom.radius = cornerPx(cs.borderTopLeftRadius, r.width, r.height);

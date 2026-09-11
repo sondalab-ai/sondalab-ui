@@ -94,6 +94,23 @@
      makes it worse (1.63:1 at 58%). That is a token decision, not one this
      layer may take on its own; it is recorded rather than worked around. */
   --slfx-fill-a: 30%;
+  /* ── the glass parameters, and the backdrop it bends ─────────────────────
+     A surface names what lies behind a region and the pane refracts THAT;
+     nothing reads the document. Declare it on the glass element or any
+     ancestor:  --slfx-backdrop: url("hero.avif");
+     Without one the pane is blur and rim exactly as before — refraction is
+     additive and never a requirement, which is also why a browser with no
+     WebGPU loses nothing it had.
+
+     Thickness is a FRACTION of the pane's short side, not pixels: the
+     reference's own value is 20 on a 200x200 shape, so 0.10, and a ratio is
+     the only unit that survives a 34px button and a 400px card unretuned.
+     A component rebinds any of these per variant the way it rebinds
+     --slfx-fill, which is what keeps one shader serving every silhouette. */
+  --slfx-backdrop: none;
+  --slfx-glass-thickness: 0.1;
+  --slfx-glass-tint: 0;
+  --slfx-glass-fresnel: 20;
   --slfx-back: 26px;
   --slfx-back-sat: 1.8;
   /* THE VEIL — the correction that took three passes to find. Glassmorphism

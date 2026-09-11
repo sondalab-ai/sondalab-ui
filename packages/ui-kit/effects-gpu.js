@@ -70,7 +70,7 @@ function isPaper(value) {
  * @param {HTMLCanvasElement} opts.canvas the one canvas, moved between hosts
  *   by effects.js; CSS-sized to its current host, never given width/height
  *   attributes, so vgpu treats the surface as layout-backed and resizes it.
- * @param {() => {w: number, h: number, radius: number, border: number, x: number, y: number, lit: number}} opts.state
+ * @param {() => {w: number, h: number, radius: number, border: number, x: number, y: number, lit: number, host: Element|null}} opts.state
  *   read once per frame: the host's border box and corner radius in CSS
  *   pixels, the pointer in the host's own coordinates, and the eased presence
  *   effects.js already integrates for the CSS spot.
@@ -125,6 +125,10 @@ export async function bootLight({ canvas, state, tokens }) {
       flags: [1, 0, 0, 0],
       box: [0, 0, 0, 0],
       ptr: [0, 0, 0, 0],
+      // thickness (a fraction of the pane's short side), tint, fresnel, and
+      // whether a backdrop is bound. Read from CSS, never held here: a number
+      // cached in two places is the first thing to drift.
+      glass: [0.1, 0, 0, 0],
     };
 
     function applyTokens() {
@@ -140,7 +144,90 @@ export async function bootLight({ canvas, state, tokens }) {
     }
     applyTokens();
 
-    const fx = vgpu.effect(gpu, SHADER, { set: { look } });
+    /* ── the declared backdrop ─────────────────────────────────────────────
+       A surface names what lies behind a region with --slfx-backdrop, and the
+       pane bends THAT. Nothing here reads the document: the lens that tried to
+       was removed on 2026-09-11, and the deciding fact is that a foreignObject
+       raster is origin-unclean for good and can never become a GPU texture.
+
+       Always bound, even with nothing declared, so the pipeline layout does not
+       change with the mode — a 1x1 transparent texel stands in, and the shader
+       skips the whole branch on look.glass.w. */
+    const backSampler = vgpu.sampler(gpu, {
+      magFilter: "linear",
+      minFilter: "linear",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge",
+    });
+    const blankTex = gpu.gpu.createTexture({
+      size: [1, 1],
+      format: "rgba8unorm",
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+      label: "sl-fx-glass backdrop placeholder",
+    });
+    gpu.gpu.queue.writeTexture({ texture: blankTex }, new Uint8Array([0, 0, 0, 0]), {}, [1, 1]);
+    let backTex = blankTex;
+    /** The URLs already turned into textures, so a row of panes over one image
+     *  pays for it once. Keyed by the resolved URL, as --slfx-backdrop gives it. */
+    const backCache = new Map();
+    /** The host the bindings currently describe, so a pointer crossing between
+     *  two panes over the same image does not re-upload it. */
+    let litHost = null;
+
+    /** Bind whatever --slfx-backdrop names on this host. A url() becomes a
+     *  texture; anything else — none, a gradient, a keyword — leaves the pane
+     *  as it was, because a gradient cannot be sampled and guessing at one
+     *  would put an invented backdrop behind the glass.
+     *  @returns {Promise<void>} */
+    async function bindBackdrop(host) {
+      const raw = getComputedStyle(host).getPropertyValue("--slfx-backdrop").trim();
+      const url = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(raw)?.[1];
+      if (!url) { backTex = blankTex; look.glass = [look.glass[0], look.glass[1], look.glass[2], 0]; return; }
+      if (backCache.has(url)) {
+        backTex = backCache.get(url);
+        look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
+        return;
+      }
+      try {
+        // createImageBitmap, not an <img>: copyExternalImageToTexture takes it
+        // directly and it decodes off the main thread.
+        const bmp = await createImageBitmap(await (await fetch(url, { mode: "cors" })).blob());
+        const tex = gpu.gpu.createTexture({
+          size: [bmp.width, bmp.height],
+          format: "rgba8unorm",
+          usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+          label: "sl-fx-glass backdrop",
+        });
+        gpu.gpu.queue.copyExternalImageToTexture({ source: bmp }, { texture: tex }, [bmp.width, bmp.height]);
+        backCache.set(url, tex);
+        backTex = tex;
+        look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
+      } catch {
+        // A backdrop that will not load is a pane without refraction, never a
+        // pane that throws. The blur and the rim are correct on their own.
+        backTex = blankTex;
+        look.glass = [look.glass[0], look.glass[1], look.glass[2], 0];
+      }
+    }
+
+    /** Read the three glass parameters off the host. They are CSS custom
+     *  properties so a component can rebind them per variant — a primary
+     *  asking for a thicker pane than a ghost — without a second shader. */
+    function readGlass(host) {
+      const cs = getComputedStyle(host);
+      const num = (name, fallback) => {
+        const v = parseFloat(cs.getPropertyValue(name));
+        return Number.isFinite(v) ? v : fallback;
+      };
+      look.glass = [
+        num("--slfx-glass-thickness", 0.1),
+        num("--slfx-glass-tint", 0),
+        num("--slfx-glass-fresnel", 20),
+        look.glass[3],
+      ];
+    }
+
+    const fx = vgpu.effect(gpu, SHADER, { set: { look, backSampler, backTex: backTex.createView() } });
     const clock = vgpu.clock(gpu);
 
     // Reduced motion reaches Tier 2 as well: the light still renders — it is a
@@ -182,6 +269,13 @@ export async function bootLight({ canvas, state, tokens }) {
       if (loopStopped) return;
       const s = state();
       if (!s || s.w <= 0 || s.h <= 0) return;
+      // The host changes as the pointer moves between panes, and each one
+      // declares its own backdrop and its own parameters.
+      if (s.host && s.host !== litHost) {
+        litHost = s.host;
+        readGlass(litHost);
+        bindBackdrop(litHost).then(() => { fx.set({ backTex: backTex.createView() }); });
+      }
       look.box = [s.w, s.h, s.radius, s.border];
       look.ptr = [s.x, s.y, s.lit, 0];
       look.flags = [look.flags[0], look.flags[1], clock.time, 0];
