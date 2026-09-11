@@ -1,0 +1,131 @@
+/* @sondalab/ui-kit — glass.css
+   The glass surface's anatomy: stacked layers under one host, content on top.
+
+   ADAPTED FROM liqui-glass, and deliberately so. The reference card for this
+   material measures a six-layer CSS stack, and this repo spent a day building a
+   WGSL shader that approximated it — while the same measurement, recorded under
+   the `liqui-glass` card, shows the reference's own refraction layer moving 45
+   pixels of 114 704 and never displacing the backdrop. The material is CSS. The
+   GPU tier's job is what CSS cannot do: the pointer's light, and bending a
+   declared backdrop.
+
+     liqui glass — https://liqui.design · MIT License · Copyright (c) 2026 Fan Li
+     Permission is hereby granted, free of charge, to any person obtaining a
+     copy of this software and associated documentation files (the "Software"),
+     to deal in the Software without restriction, including without limitation
+     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+     and/or sell copies of the Software, and to permit persons to whom the
+     Software is furnished to do so, subject to the following conditions:
+     The above copyright notice and this permission notice shall be included in
+     all copies or substantial portions of the Software.
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     DEALINGS IN THE SOFTWARE.
+
+   WHAT WAS CHANGED, and why each change was needed rather than preferred:
+
+   - Every colour is a Sondalab token. The original carries an rgba() fallback
+     on each var so a surface renders with no token layer present; here the
+     token layer is not optional, AC-18 bans a hue that does not trace to one,
+     and `sl-audit` reads comments too. So the fallbacks are gone and the
+     densities they encoded are expressed as color-mix over --sl-bg-canvas.
+   - The `__refract` layer is DROPPED. It needs JS to build a per-element
+     feImage displacement map, and this repo measured what it buys: 0.04 % of
+     pixels, none of them on the backdrop behind the element.
+   - The `__specular` layer is DROPPED. The original is a pre-baked PNG at 0.7;
+     a raster highlight cannot follow a token through a theme change, which
+     AC-18 forbids. The shine's inset triple carries the rim on its own, and a
+     face highlight is the GPU tier's business.
+   - No @layer. The original wraps its defaults in Tailwind's `base` layer so
+     utilities win; this kit ships no layers and no Tailwind, and an unlayered
+     rule here is what a consumer's own CSS should be able to beat.
+   - Tint densities are one custom property, --slg-tint-a, so a variant rebinds
+     a number rather than restating a gradient. The card's own figure for the
+     resting tint is 0.5125.
+   ------------------------------------------------------------------------- */
+
+.sl-glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--slg-radius, var(--sl-radius-md));
+  color: var(--slg-text, inherit);
+}
+
+/* EVERY default below is a var() fallback at the point of use, never a
+   declaration on .sl-glass. A custom property declared on the element itself
+   beats the same property inherited from an ancestor, so defaults written as
+   declarations here would silently ignore a container that rebinds them —
+   which is exactly what happened the first time this file was written, and it
+   read as "the material is wrong" rather than as a cascade mistake. The
+   original avoids it the same way. */
+
+.sl-glass__backdrop,
+.sl-glass__tint,
+.sl-glass__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* The whole frost, and the card keeps it UNDER 6px: a blur wide enough to
+   read as a material and narrow enough that the text behind it stays a shape
+   rather than a smear. saturate lifts what the blur washes out. */
+.sl-glass__backdrop {
+  z-index: 0;
+  backdrop-filter: blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7));
+}
+
+/* The tint is the page's own ground at a density, in BOTH themes: near-black
+   on ink, and the card's own light value is a wash of its light canvas. What
+   separates that from generic glassmorphism is the density and the frost under
+   it, not the direction. */
+.sl-glass__tint {
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 51.25%), transparent),
+    color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 40%), transparent)
+  );
+}
+
+/* A variant says which control it is by compositing its accent OVER the tint,
+   at a share small enough that the glass still shows through. The reference's
+   own rule: variants override the tint, they do not paint over the glass. */
+.sl-glass--accent .sl-glass__tint {
+  background-image:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--sl-accent-default) var(--slg-accent-a, 16%), transparent),
+      color-mix(in srgb, var(--sl-accent-depth) var(--slg-accent-a, 16%), transparent)
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-a, 51.25%), transparent),
+      color-mix(in srgb, var(--sl-bg-canvas) var(--slg-tint-deep-a, 40%), transparent)
+    );
+}
+
+/* The rim is an INSET shadow, so it cannot fatten the box the way a border
+   would, and it is asymmetric on purpose. */
+.sl-glass__shine {
+  z-index: 2;
+  /* Bright along the top, a softer edge down the left, barely anything at the
+     bottom — light arriving from above, which is why an even ring round the
+     perimeter reads as a border instead. */
+  box-shadow:
+    inset 0 1px 1px var(--slg-rim-hi, color-mix(in srgb, var(--sl-text-primary) 50%, transparent)),
+    inset 1px 0 1px 0.5px
+      color-mix(in srgb, var(--slg-rim-hi, var(--sl-text-primary)) 30%, transparent),
+    inset -1px -1px 1px var(--slg-rim-lo, color-mix(in srgb, var(--sl-text-primary) 12%, transparent));
+}
+
+/* Content rides crisp on top of all of it. AC-25: text is never filtered. */
+.sl-glass__content {
+  position: relative;
+  z-index: 3;
+}

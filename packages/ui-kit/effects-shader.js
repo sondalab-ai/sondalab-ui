@@ -206,8 +206,7 @@ fn fs(@location(0) uv: vec2f) -> @location(0) vec4f {
   //    "Variants don't paint over the glass — they override --lg-tint, so the
   //    lens keeps refracting the background through the accent colour instead
   //    of hiding it."
-  let shade = mix(look.ground.rgb, look.sheen.rgb, paper);
-  glass = mix(glass, shade, clamp(look.glass.y, 0.0, 1.0));
+  glass = mix(glass, look.ground.rgb, clamp(look.glass.y, 0.0, 1.0));
   glass = mix(glass, look.accent.rgb, clamp(look.tone.x, 0.0, 1.0));
 
   // Fresnel: grazing angles reflect, so the rim brightens and the middle does

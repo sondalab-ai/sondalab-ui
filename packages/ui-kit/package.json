@@ -30,6 +30,7 @@
   "exports": {
     "./tokens.css": "./tokens.css",
     "./components.css": "./components.css",
+    "./glass.css": "./glass.css",
     "./effects.css": "./effects.css",
     "./fonts.css": "./fonts.css",
     "./effects.js": "./effects.js",
@@ -52,6 +53,7 @@
   "files": [
     "tokens.css",
     "components.css",
+    "glass.css",
     "effects.css",
     "fonts.css",
     "effects.js",
