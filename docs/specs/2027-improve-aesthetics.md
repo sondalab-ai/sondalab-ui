@@ -467,6 +467,20 @@ unchanged and only the container's size and placement varying:
 | D | 96 × 40, absolute over a real `.sl-btn` | yes — but the LABEL refracts too |
 | E | his filter put **on** the `.sl-btn` itself | **yes, and the label stays crisp** |
 
+**What scroll does, and what it should do.** A lensed button that scrolls WITH
+the page shows an unchanging refracted image — measured at `scrollY` 421 and
+438, the view through the lens is identical — and that is correct, not a frozen
+effect: the element and its backdrop move together, so nothing new passes
+behind it. Scroll becomes visible motion only under an element that stays put
+while the page moves — a sticky toolbar, a fixed command bar — which is the
+place to reach for this next. Dragging changes the image for the same reason in
+reverse: the panel moves relative to the page.
+
+**It costs nothing per frame.** The displacement map is built once for an
+element's size; `backdrop-filter` is continuous and the browser reapplies it
+itself. No render loop, no rAF, no per-frame canvas — the opposite of the GPU
+route this slice spent a day on.
+
 **E is the shape to ship.** Construct his `Shader` at the element's size, append
 only its `svg` (never its `container`), clear the element's own background and
 set `backdrop-filter: url(#<id>_filter) …` on the element. The label is then
