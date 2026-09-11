@@ -41,7 +41,33 @@ wrong thousands of pixels down.
 **Confirm it in one step:** `.sl-fx-glass__lens { display: none !important }`.
 The spurious text disappears and the panes read correctly.
 
-## What a fix has to get past (probed 2026-09-11)
+## Answered 2026-09-11 — and there are TWO causes, not one
+
+`lab/z-plate-fonts.html` settles the mechanism, in one look:
+
+| in a foreignObject raster | result |
+|---|---|
+| `@font-face` with an external URL, even same-origin and absolute | **does not load** |
+| `@font-face` with the bytes as a `data:` URI | **loads** — matches the live line |
+
+So the fonts must travel as bytes inside the CSS. `effects.js` now does that
+(`inlineFaces()`), and the kit vendors the three faces so they are readable and
+fetchable at all. Write the probe's rasters into `<img>` elements, never into
+`Image()` + canvas: the first version awaited `Image.onload` and hung with no
+error in every browser, which taught nothing.
+
+**A second cause survives the fix.** With the fonts embedded the crop still lands
+wrong — the text under the pane changed, so the plate's layout did change, but it
+is still not the page's. The remaining offset is `capturePlate` **removing** every
+glass element from the clone: a removal takes the box out of flow, so everything
+after it moves up, and with thirty panes on a page the accumulated shift is
+hundreds of pixels. `visibility: hidden` keeps the box, but leaves a **black
+rectangle** in the raster — still there with `backdrop-filter`, `background`,
+`box-shadow` and `filter` all forced off. Three attempts, none clean; left as a
+removal. Whoever takes it next needs a way to reserve a box without painting it
+that survives the rasteriser.
+
+## What a fix had to get past (probed 2026-09-11)
 
 The obvious repair — inline the faces as data URIs in the plate's CSS — needs the
 font bytes, and a page cannot discover them on its own:

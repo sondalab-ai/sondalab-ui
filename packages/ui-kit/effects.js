@@ -766,6 +766,14 @@ async function capturePlate() {
   // the bytes, and come last so they win.
   css += await inlineFaces();
   const clone = document.body.cloneNode(true);
+  // Glass elements must not appear in the plate — a pane would capture itself
+  // and its neighbours. NOTE: removing them takes their boxes out of flow, so
+  // everything after them shifts up and the crop drifts; with thirty panes the
+  // text under the last one is off by hundreds of pixels. `visibility: hidden`
+  // keeps the box but leaves a black rectangle in the raster, even with
+  // backdrop-filter, background, box-shadow and filter all forced off — three
+  // attempts, none clean. Left as a removal until someone finds the right way
+  // to keep a box without painting it; see docs/memory/the-lens-plate-*.
   for (const el of clone.querySelectorAll(`${REFRACT_HOSTS}, canvas, .sl-fx-glass__lens`)) el.remove();
   // XMLSerializer, not outerHTML: foreignObject content must be well-formed
   // XML, and the page's markup is not.
