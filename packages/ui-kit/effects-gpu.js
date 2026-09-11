@@ -204,8 +204,13 @@ export async function bootLight({ canvas, state, tokens }) {
       const url = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(raw)?.[1];
       if (!url) return clear();
       backAnchor = anchor;
-      if (backCache.has(url)) {
-        backTex = backCache.get(url);
+      // Keyed on the RESOLVED href, never on the spelling: two anchors naming
+      // one image by different relative paths would otherwise upload it twice,
+      // and two different images spelled the same way from different bases
+      // would collide on one texture.
+      const href = new URL(url, document.baseURI).href;
+      if (backCache.has(href)) {
+        backTex = backCache.get(href);
         look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
         return;
       }
@@ -217,7 +222,7 @@ export async function bootLight({ canvas, state, tokens }) {
         // copyExternalImageToTexture takes the element directly.
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = new URL(url, document.baseURI).href;
+        img.src = href;
         await img.decode();
         const w = img.naturalWidth;
         const h = img.naturalHeight;
@@ -229,7 +234,7 @@ export async function bootLight({ canvas, state, tokens }) {
           label: "sl-fx-glass backdrop",
         });
         gpu.gpu.queue.copyExternalImageToTexture({ source: img }, { texture: tex }, [w, h]);
-        backCache.set(url, tex);
+        backCache.set(href, tex);
         backTex = tex;
         look.glass = [look.glass[0], look.glass[1], look.glass[2], 1];
       } catch (err) {
@@ -245,9 +250,14 @@ export async function bootLight({ canvas, state, tokens }) {
 
     /** Where the host sits inside its backdrop anchor, as an origin and a
      *  scale in the anchor's own 0..1 space — which is the image's space,
-     *  since the image covers the anchor's box. Both rects move together, so
-     *  this only changes when the layout does; it is measured on host change
-     *  rather than per frame. */
+     *  since the image covers the anchor's box.
+     *
+     *  Measured every frame, not once per host. Scrolling moves both rects
+     *  together and would survive a cached value, but a resize or a reflow can
+     *  change the anchor's width without changing the host's, and a stale
+     *  mapping then samples the wrong part of the image until the pointer
+     *  happens to leave and come back. Two rect reads, only while a pane is
+     *  actually lit, against the one effects.js already takes per pointermove. */
     function measureBackRect(host) {
       if (!backAnchor) { look.backRect = [0, 0, 1, 1]; return; }
       const a = backAnchor.getBoundingClientRect();
@@ -325,10 +335,10 @@ export async function bootLight({ canvas, state, tokens }) {
       if (s.host && s.host !== litHost) {
         litHost = s.host;
         readGlass(litHost);
-        bindBackdrop(litHost).then(() => {
-          measureBackRect(litHost);
-          fx.set({ backTex: backTex.createView() });
-        });
+        bindBackdrop(litHost).then(() => { fx.set({ backTex: backTex.createView() }); });
+      }
+      if (s.host) {
+        measureBackRect(s.host);
       }
       look.box = [s.w, s.h, s.radius, s.border];
       look.ptr = [s.x, s.y, s.lit, 0];
