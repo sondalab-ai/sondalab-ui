@@ -469,6 +469,30 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### Pillars — 2026-09-11, late
+
+*Owner: "la verità è che non so nemmeno io cosa voglio… proviamo con un glow a
+pilastri di luce tipo aurora, che non deve uscire dall'elemento ma vedersi solo
+al suo interno, e scomporsi come abbiamo fatto adesso."* That is what probes
+are for, and the beam stays as a mode rather than being torn out.
+
+`.sl-fx-aurora--pillars`: aurora borealis rather than a lighthouse — vertical
+curtains of light hanging INSIDE the pane, brighter at the foot and fading
+upward, drifting sideways on one clock (13 s) and breathing their softness on
+another (5.5 s) so the shimmer never repeats. Two curtains at different pitches
+beat against each other. They never leave the element: the seated glow has no
+spread for this mode, and is clipped to the host's own box and radius. They
+sit behind the pane, so the lens bends them at the faces and dispersion parts
+them — the same prism as the beam, on a softer light.
+
+On the showcase's Glass cell both buttons carry it. Measured, pillars on
+against pillars `display:none`: 34 223 differing pixels (12 %), max channel
+delta 207/255, confined to rows 171–282 of the capture — the button row and
+nothing outside it. So they paint, they are strong, and the clip holds.
+
+The guards now allow eight edge rules to declare a background, the eighth named
+as the pillars, and the radius exemption covers both light modes.
+
 ### The beam is in the kit — 2026-09-11, late
 
 `.sl-fx-aurora--beam`: the aurora's seated glow paints a thin white line

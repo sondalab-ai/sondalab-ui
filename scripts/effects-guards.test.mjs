@@ -130,9 +130,12 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 7,
-    `exactly seven edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 8,
+    `exactly eight edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
+  // The eighth is --pillars (2026-09-11): curtains of light clipped inside the
+  // pane; its background IS the light, like the beam's.
+  assert.ok(declaring.some((s) => s.includes("[data-sl-fx-pillars]::before")), "the pillars must be one");
   // The seventh is the beam (2026-09-11): the aurora's --beam mode paints a
   // thin line of light through the pane instead of a ring around it. Its
   // background IS the light, so it has to be one of the declaring rules.
@@ -325,7 +328,7 @@ test("no effect rewrites a host's border-radius", () => {
   // The beam is exempt: its 2px radius is the END-CAP of a line of light, not
   // a host's corner, and there is no component radius for it to inherit.
   const rewriting = RULES
-    .filter((r) => /\.sl-fx-/.test(r.selector) && !/data-sl-fx-beam/.test(r.selector)
+    .filter((r) => /\.sl-fx-/.test(r.selector) && !/data-sl-fx-(?:beam|pillars)/.test(r.selector)
       && /(?:^|;)\s*border-radius\s*:(?!\s*(?:inherit\b|var\(--slfx-seat-radius\)))/.test(r.body))
     .map((r) => r.selector);
   assert.deepEqual(rewriting, [], "border-radius may only ever be inherited by a paint layer");

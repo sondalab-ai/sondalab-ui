@@ -1031,6 +1031,41 @@
   translate: 0 var(--slfx-beam-dy, 0px);
 }
 
+/* ══ AURORA --pillars — curtains of light INSIDE the glass ═══════════════════
+   Aurora borealis, not a lighthouse: vertical pillars of light that hang
+   inside the pane, brighter at the foot and fading upward, drifting sideways
+   and shimmering against each other. They never leave the element: the seated
+   glow is clipped to the host's own box and radius. They sit BEHIND the pane,
+   so the lens bends them at the faces and dispersion parts them into their
+   colours there — the same prism as --beam, on a softer light. Additive. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars] {
+  overflow: hidden;
+  border-radius: var(--slfx-seat-radius);
+  filter: blur(var(--slfx-pillar-soft, 3px));
+}
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]::before {
+  inset: -20% -40%;
+  padding: 0;
+  mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
+  -webkit-mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
+  border-radius: 0;
+  /* two curtains at different pitches and speeds, so the pillars beat
+     against each other instead of scrolling as one sheet; the light pole
+     for the bright ribs, the bloom colour for the body */
+  background:
+    repeating-linear-gradient(90deg,
+      transparent 0 14px,
+      color-mix(in srgb, var(--slfx-glint) 55%, transparent) 20px,
+      transparent 26px 44px),
+    repeating-linear-gradient(90deg,
+      color-mix(in srgb, var(--slfx-bloom-hi) 42%, transparent) 0 10px,
+      transparent 22px 58px,
+      color-mix(in srgb, var(--slfx-bloom-hi) 30%, transparent) 70px,
+      transparent 80px 96px);
+  background-size: 160px 100%, 240px 100%;
+  background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
+}
+
 /* Busy — a short travelling marker: the same arc, a fraction of the length.
    --linear is excluded from busy below: a conic arc painted into a 2px strip
    renders as a smear. A linear aurora has no busy mode — report work on a
@@ -1221,6 +1256,18 @@
   /* A beam drifts ACROSS the pane, slowly, and never rotates: the prism is in
      the glass, not in the light. Registered so it interpolates. */
   @property --slfx-beam-dy { syntax: "<length>"; inherits: false; initial-value: 0px; }
+  /* The curtains drift and breathe: position on one clock, softness on another,
+     so the shimmer never repeats exactly. */
+  @property --slfx-pillar-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
+  @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 3px; }
+  @keyframes slfx-pillars-drift { from { --slfx-pillar-x: 0px; } to { --slfx-pillar-x: 160px; } }
+  @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 2px; } to { --slfx-pillar-soft: 7px; } }
+  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
+    animation: slfx-pillars-breathe 5.5s ease-in-out infinite alternate;
+  }
+  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
+    animation: slfx-pillars-drift 13s linear infinite;
+  }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
     animation: slfx-beam-drift 11s ease-in-out infinite alternate;
