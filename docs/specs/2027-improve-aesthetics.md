@@ -481,13 +481,59 @@ reference this slice is modelled on does not displace anything. A full day went
 into building a working lens, which the kit now has and the reference does not,
 and none of that day went into the four things the reference actually does.
 
+**AC-33 is overridden for the glass family.** *Owner, 2026-09-11: "il risultato
+finale deve essere COME IL KNOWLEDGE BASE".* AC-33 reads "an element at rest
+carries no light", and both the `metal` and `liqui-glass` cards carry a *Leave*
+line saying the same — the latter naming the reference's always-on layers as the
+thing not to take. The owner's newer ruling supersedes all three: the rim and
+the polish are what the surface IS, and a pane with them switched off at rest is
+not the material the knowledge base shows. What stays pointer-gated is the light
+the pointer actually brings — the pool, the specular that tracks it, and the
+edge that turns to face it.
+
+**The specular is not optional, and dropping it is why an earlier pass read as
+flat.** Profiled down the middle of the reference capture, against a backdrop at
+luminance 102: the top edge peaks at **197** and is still at **148** six pixels
+in, the interior sits at **85**, and the bottom edge returns to **163**. The
+bright top is a BAND about eight pixels deep — not the 1 px inset shadow the
+card records for `__shine`, which is a second, harder thing. It is rebuilt here
+as two gradients over the page's light pole rather than the original's
+pre-baked PNG, so it follows a theme and AC-18 holds.
+
 **The material is now adopted, not re-derived.** `packages/ui-kit/glass.css` is
 liqui-glass's own anatomy (MIT, © 2026 Fan Li) with every colour moved onto a
 Sondalab token, `__refract` dropped (0.04 % of pixels, and it needs JS), and
 `__specular` dropped (a pre-baked PNG cannot follow a token through a theme
 change — AC-18). 141 lines, no script, no dependency.
 
-**Settled: tint density 0.14.** *Owner, 2026-09-11, on `lab/1n-css-material.html`
+**Settled by measurement, not by eye: the profile matches the reference within
+±2 luminance.** *2026-09-11.* `lab/_profile.py` reads the reference capture and
+a capture of ours down the pane's PADDING band — inside the rim, outside the
+label, the only part of a text button that is nothing but glass — and reports
+luminance at fixed fractions of the pane's height relative to the ground just
+outside it, so a 34 px reference and a 66 px screenshot compare number for
+number. Final state:
+
+| | reference | ours | delta |
+|---|---|---|---|
+| top +6% | +78.5 | +79.6 | **+1.1** |
+| +18% | +23.7 | +22.4 | −1.3 |
+| middle | −14.6 | −16.5 | −1.9 |
+| +88% | −14.6 | −15.5 | −0.9 |
+| bottom | −14.3 | −8.3 | +6.0 |
+
+Shipped values: `--slg-tint-a: 18%`, `--slg-spec-a: 72%` falling to nothing at
+26 % of the height, `--slg-spec-lo-a: 0`.
+
+**Three of the readings that produced this were wrong, and the instrument is
+the finding.** A column three pixels inside the left edge reported `__shine`'s
+inset shadow as the interior, and sent the tint to 0.37. A column a quarter
+across ran through the label and reported white text as the glass, and sent it
+to 0.46. A median across the full width was still pulled up by both. The
+owner's 0.14, picked by eye, was closer than either correction. Do not profile
+a text button on a column you chose by hand.
+
+**Superseded: tint density 0.14.** *Owner, 2026-09-11, on `lab/1n-css-material.html`
 against the reference capture.* The card's own figure is 0.5125, and the
 departure is required rather than preferred: that alpha sits on a dark blue-grey
 in the original, while `--sl-bg-canvas` is nearly black, so the same number

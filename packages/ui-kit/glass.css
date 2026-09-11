@@ -36,10 +36,15 @@
    - The `__refract` layer is DROPPED. It needs JS to build a per-element
      feImage displacement map, and this repo measured what it buys: 0.04 % of
      pixels, none of them on the backdrop behind the element.
-   - The `__specular` layer is DROPPED. The original is a pre-baked PNG at 0.7;
-     a raster highlight cannot follow a token through a theme change, which
-     AC-18 forbids. The shine's inset triple carries the rim on its own, and a
-     face highlight is the GPU tier's business.
+   - The `__specular` layer is a pair of GRADIENTS, not the original's
+     pre-baked PNG: a raster highlight cannot follow a token through a theme
+     change, which AC-18 forbids. It is not optional. Profiling the reference
+     capture down the middle of its button, against a backdrop at luminance
+     102: the top edge peaks at 197 and is still at 148 six pixels in, the
+     interior sits at 85, and the bottom edge comes back to 163. The bright
+     top is a BAND about eight pixels deep, not the 1px inset shadow, and it
+     is what makes the surface read as polished. Dropping it was the reason an
+     earlier pass looked flat beside the reference.
    - The layers sit BELOW the host's own inline content, at negative z-index,
      instead of above it with the label wrapped in a __content element. The
      original wraps, which is natural for a component that owns its children;
@@ -53,9 +58,11 @@
      rule here is what a consumer's own CSS should be able to beat.
    - Tint densities are one custom property, --slg-tint-a, so a variant rebinds
      a number rather than restating a gradient. The card's figure is 0.5125 and
-     this ships 0.14: that alpha sits on a dark blue-grey in the original,
+     this ships 0.18: that alpha sits on a dark blue-grey in the original,
      while Sondalab's ground is nearly black, so the same number covers far
-     more. Chosen by the owner on lab/1n against the reference capture.
+     more. The owner picked 0.14 by eye on lab/1n and the profile says 0.18 —
+     two rounds of "correction" in between, to 0.37 and 0.46, were both read
+     off a contaminated column and were both wrong.
    ------------------------------------------------------------------------- */
 
 .sl-glass {
@@ -75,6 +82,7 @@
 
 .sl-glass__backdrop,
 .sl-glass__tint,
+.sl-glass__specular,
 .sl-glass__shine {
   position: absolute;
   inset: 0;
@@ -122,22 +130,23 @@
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-a, 14%), transparent),
-      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-deep-a, 10.9%), transparent)
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-a, 18%), transparent),
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-deep-a, 15%), transparent)
     );
 }
 
 /* The rim is an INSET shadow, so it cannot fatten the box the way a border
    would, and it is asymmetric on purpose. */
-/* The rim is LIGHT, and AC-33 says an element at rest carries no light. Both
-   the `metal` and `liqui-glass` cards make the same Leave ruling, the latter
-   naming its always-on layers as the thing not to take. So the shine is scaled
-   by --slfx-lit, which effects.js eases in and out with the pointer, and is
-   simply absent at rest. The frost and the tint above are material and stay.
-   Default 1 so glass.css alone, with no script, still shows the full surface. */
+/* AC-33 — "an element at rest carries no light" — is OVERRIDDEN here, by the
+   owner, on 2026-09-11: "il risultato finale deve essere COME IL KNOWLEDGE
+   BASE". The `liqui-glass` card's Leave line rejects the reference's resting
+   state, and that ruling does not survive the owner's newer one. Every layer
+   is on at rest, the way the reference's are, because the rim and the polish
+   are what the surface is; what the pointer still adds is the pool, the
+   specular that tracks it and the edge that turns to face it, all of which
+   remain scaled by --slfx-lit on the host's own pseudo-element. */
 .sl-glass__shine {
   z-index: -1;
-  opacity: var(--slfx-lit, 1);
   /* Bright along the top, a softer edge down the left, barely anything at the
      bottom — light arriving from above, which is why an even ring round the
      perimeter reads as a border instead. */
@@ -146,6 +155,30 @@
     inset 1px 0 1px 0.5px
       color-mix(in srgb, var(--slg-rim-hi, var(--sl-text-primary)) 30%, transparent),
     inset -1px -1px 1px var(--slg-rim-lo, color-mix(in srgb, var(--sl-text-primary) 12%, transparent));
+}
+
+/* The polish. Two bands read straight off the reference capture, expressed as
+   alphas over the page's light pole so they follow a theme. Profiled down the
+   middle of that capture against a backdrop at luminance 102: the top edge
+   peaks at 197 and is still at 148 six pixels in, the interior sits at 85, and
+   the bottom edge returns to 163.
+
+   A BAND, not a line: __shine's 1px inset gives the rim its hardness, this
+   gives the face its curve, and the reference needs both. The alphas are
+   solved from the profile rather than chosen — 0.715 at 6% of the height and
+   0.294 at 18%, which is a straight line from 0.93 at the edge to nothing at
+   26%. An earlier version held the peak flat for the first tenth and measured
+   +84 where the reference reads +24. */
+.sl-glass__specular {
+  z-index: -1;
+  background-image:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--slg-spec, var(--sl-text-primary)) var(--slg-spec-a, 72%), transparent) 0%,
+      transparent var(--slg-spec-fall, 26%)),
+    linear-gradient(0deg,
+      color-mix(in srgb, var(--slg-spec, var(--sl-text-primary)) var(--slg-spec-lo-a, 0%), transparent) 0%,
+      color-mix(in srgb, var(--slg-spec, var(--sl-text-primary)) var(--slg-spec-lo-a, 0%), transparent) 3%,
+      transparent var(--slg-spec-lo-fall, 12%));
 }
 
 /* Honoured for a consumer who wraps their content the way the original does.

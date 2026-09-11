@@ -194,7 +194,11 @@ test("the tint has one home, and the GPU only perturbs what CSS paints", () => {
   // accent tint fully computed in a layer the shader painted over.
   assert.doesNotMatch(shader, /mix\(glass, look\.ground\.rgb/, "the shader does not tint the material");
   assert.doesNotMatch(shader, /mix\(glass, look\.accent\.rgb/, "nor does it paint the variant's accent");
-  assert.match(css, /--slg-tint-a, 14%/, "the tint density lives in glass.css");
+  // The densities live in glass.css and are SOLVED, not chosen: lab/_profile.py
+  // reads the reference capture and ours down the pane's padding band, and
+  // these are the values that put the two within ~2 luminance of each other.
+  assert.match(css, /--slg-tint-a, 18%/, "the tint density lives in glass.css");
+  assert.match(css, /--slg-spec-a, 72%/, "so does the highlight's peak");
   assert.match(css, /--slg-accent-a, 0%/, "and so does the variant's accent share");
   // An earlier version of this test asserted the opposite — that nothing may
   // tint toward the canvas, because a light theme would turn into a white

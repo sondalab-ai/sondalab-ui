@@ -604,7 +604,7 @@ function injectGlow(el) {
    class, and forgetting a span is not a failure mode a design system should
    have. The layers sit at negative z-index, so the element's own label paints
    over them and nothing wraps the consumer's content. */
-const GLASS_LAYERS = ["backdrop", "tint", "shine"];
+const GLASS_LAYERS = ["backdrop", "tint", "specular", "shine"];
 
 function injectGlass(el) {
   for (const child of el.children) {
