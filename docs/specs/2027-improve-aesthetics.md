@@ -438,6 +438,61 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
 
+### Direction change — 2026-09-11: USE the knowledge base, do not reproduce it
+
+*Owner: "voglio riusare quello che sta nel KB con leggere differenze. ESATTAMENTE
+COME SONO, non devi replicarli, devi usarli."*
+
+Measuring a reference capture and re-tuning the kit's own CSS until the profile
+matches within ±2 luminance — which the section below records — **is**
+reproducing it. Everything after this heading is the route the owner asked for:
+install the library and drive the kit's own elements with it.
+
+**`@ybouane/liquidglass` 1.0.3** — MIT, **zero dependencies**, zero peer
+dependencies, vanilla ESM, WebGL refraction with chromatic aberration, Fresnel
+and a specular. Chosen over `dashersw/liquid-glass-js`, which is the other
+library the owner pointed at and is not usable here: no npm package, script tags
+only, and an API that CONSTRUCTS its buttons (`new Button({text, onClick})`)
+rather than decorating ones a design system already ships.
+
+**Four conditions it needs, none of them in its README, all found by
+experiment.** They are integration constraints on any surface that uses it:
+
+1. Glass elements must be **direct children** of the root passed to `init()`.
+   Anything nested is dropped with a console warning.
+2. The backdrop must be a **child** of the root, never the root's own
+   `background`. The library rasterises the root's non-glass children, so a
+   background painted on the root itself is invisible to it and every pane
+   renders solid white.
+3. A glass host must **not paint its own fill** — the library puts its canvas
+   INSIDE the element, and an opaque background covers it.
+4. A glass host must be a **stacking context**; that canvas sits at
+   `z-index: -1` and otherwise falls behind the page entirely.
+
+**The settled configuration**, on `lab/1o-liquidglass-real.html`, 121 fps from a
+cold load:
+
+```json
+{"cornerRadius":22,"button":true,"blurAmount":0.06,"refraction":0.80,
+ "chromAberration":0.07,"edgeHighlight":0.14,"specular":0.18,"fresnel":1,
+ "saturation":0.10,"tintStrength":0.04,"shadowOpacity":0.28,"shadowSpread":12}
+```
+
+The library's own defaults ship `blurAmount`, `specular`, `saturation` and
+`tintStrength` all at 0, which reads as a bare lens; the first pass upward
+(`specular: 0.55`, `edgeHighlight: 0.35`) washed the labels out. These are the
+values between the two.
+
+**Still open.** An earlier build of the same probe hung in `init()` — the
+canvases were created, so `_setupGlassElements` ran, and the first
+`captureToCanvas` never settled. Rebuilding from a minimal case and growing back
+up reached a working page, but the cause was never found: it is not the webfont,
+not `color-mix` in the backdrop, not the `<button>` tag, not the kit's
+stylesheets, not `button: true`, not two panes and not the paragraphs — each was
+added to the working baseline in turn and none reproduced it. A design system
+cannot ship an integration whose failure mode is unknown, so this has to be
+understood before the kit depends on it.
+
 ### It runs — 2026-09-11, in the kit, on the showcase and on `lab/1l`
 
 The GPU route is no longer code that has only seen static tests. Four things had
