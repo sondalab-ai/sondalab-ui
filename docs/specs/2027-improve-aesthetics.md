@@ -11,6 +11,65 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
+## Start here — handoff, 2026-09-11 23:55
+
+**If you are the next agent, read this block and the Reference knowledge base;
+the rest of this file is a chronological record and reads best from here
+downward, not from the bottom up.**
+
+**State.** Branch `feat/effects-layer` (137 commits ahead of `main`; the site
+still installs kit 0.7.2 — nothing here is released). 182 tests green
+(`node --test scripts/*.test.mjs`), `npm run audit -- --surface
+"packages/ui-kit/<file>" --product effects` clean. The kit ships:
+
+- `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
+  its capture within ±3 luminance on `lab/1n`; tint 0.18; layers sit at
+  negative z-index under the host's own label; `__specular` paints nothing.
+- `glass-lens.js` — a REAL refraction, adopted from shuding/liquid-glass (MIT):
+  `backdrop-filter: url(#…)` with a data-URI displacement map; per-channel
+  dispersion (`disperse`, default 18); bend capped at `reach` = 6 px; frost
+  and saturation animatable via `--slg-lens-blur` / `--slg-lens-sat`.
+- `effects.css` / `effects.js` — the aurora: bloom INSIDE the box (44 px,
+  46/34 % alpha), hairline at 0.28, arc with border-beam's plateau profile and
+  a derived accent → complement → split palette; `--beam` and `--pillars` as
+  optional modes; the glow is a SIBLING seated before the host (so the lens
+  can bend it), with nine `--slfx-*` variables copied across.
+- the showcase is back to defaults; every experiment lives in `lab/` (gitignored).
+
+**The one next task.** `lab/1w`: one aurora card on a FLAT near-black ground
+beside a crop of `docs/references/assets/border-beam-composer-search-dark.png`;
+profile the edge inward with `lab/_profile.py`'s method (median across a band,
+never a single column) and solve `--slfx-bleed`, the two bloom alphas and
+`--slfx-ring-lit` from the curve — target **+48 at the edge, +16 at 30 px,
++3 at 45 px, 0 by 60 px** over a ground of L 29 — until within ±3, the way the
+glass was done. Do not judge on the showcase: its aurora cell sits on a giant
+wordmark and a profile there reads the letters.
+
+**Traps that cost hours today, in order of cost:**
+
+1. **Do not eyeball.** Three "it's there now" readings were wrong. Diff a
+   capture against the same capture with the layer `display:none`
+   (`lab/_pixdiff.py`), and read computed style for variables — a `::before`
+   with an undefined `var()` renders nothing while looking healthy.
+2. **The extension's tab is `visibilityState: hidden`.** rAF, IntersectionObserver
+   and CSS transitions never settle there. Drive things by hand and say so;
+   only the owner's real browser judges motion.
+3. **Serve with `python3 lab/_serve.py`**, never `python3 -m http.server`: the
+   latter sends no cache headers and a stale stylesheet beside fresh JS
+   produced false readings twice. Kill any other server on other ports first.
+4. **A sibling inherits nothing from the host.** Anything moved out of the host
+   needs its variables copied (`GLOW_VARS` in `effects.js`) and its own
+   `z-index: auto` — `-1` under a non-stacking parent falls behind the page.
+5. **`sl-audit` reads comments.** No hex, no `rgb()`, in prose either.
+6. **The guards are contracts, not obstacles.** Eight edge rules may declare a
+   background, each named; the radius guard exempts only `--beam`/`--pillars`.
+   Extend them with the reason, never bypass.
+
+**Owner's standing rulings today:** use the knowledge base, do not reproduce it
+("prendi spunto, non usare la libreria"); AC-33 overridden for glass (every
+layer on at rest); tint 0.18; hover lift 3 % with a soft settle; button radius
+`--sl-radius-lg`; the aurora's model is border-beam's page, not its README.
+
 ## Goal
 
 We should strengthen the aesthetics of the design system, and make it appear unique. We should add lighting, and kinetics effects depending by the element we are considering. It is a must to use webgpu whenever possible, and always provide a fallback when that's not available because not supported by the client.
