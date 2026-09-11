@@ -320,11 +320,43 @@ Contact sheets live in `docs/slices/<n>-<element>/` — a new directory, kept ap
 | `contact-1g-real-ground.jpg` | the fill construction and then the primary's share, on real Sondalab surfaces rather than a decorative wash | `mix to transparent` vs `mix to veil`; then share 0.34 / 0.42 / 0.50 |
 | `contact-1h-dark-islands.jpg` | the dark theme's two viable regions, edge to edge | share 0.42 + light label vs 0.72 + the shipped dark label |
 | `contact-1i-rim-shape.jpg` | why the lit rim reads old-school, and the corner shape | `bevel`, `ring`, `ring-round`, `soft`, `squircle`, `superellipse(4)` |
+| `contact-1j-refraction.jpg` | **real refraction of a declared backdrop, no GPU** | `flat`, `bend` (scale 14), `dispersion` (IOR 0.98/1.00/1.02), `thick` (scale 20) |
 | `promoted-showcase-dark.png` · `promoted-showcase-light.png` | **the promoted material on the showcase**, after the pane cell was given a substrate | both themes, `.sl-fx-glass__lens` hidden — see below |
 
 The two showcase captures are taken with `.sl-fx-glass__lens` hidden, because the lens paints the wrong page content into every pane (its own defect, recorded under *Found on the way*). Everything else in them is the shipped material.
 
 AC-3's floor is three variants rendered side by side in dark and light; all three sheets clear it. The 1c sheet is captured with the light pinned on every cell, since a rim that only exists under the pointer cannot otherwise be compared across four cells at once.
+
+## Refraction — the route that works, found 2026-09-11
+
+Owner's choice between three routes was the **declared backdrop**: the surface says
+what lies behind a region and the pane bends *that*, rather than trying to bend
+arbitrary DOM. Both implementations in the knowledge base work this way —
+`glass-studio`'s background options are images and videos handed to the shader,
+`glass-vue` is a demo over a backdrop — and **neither ever refracts a live
+document**, which is the problem the lens has been losing to.
+
+It needs no GPU. Two things together make it work, and the second is the one that
+was missing:
+
+1. **A copy of the backdrop inside the pane**, displaced with an ordinary
+   `filter:`. `backdrop-filter: url(#f)` is inert for displacement in Chrome 152
+   (Note 3), but an ordinary `filter:` is not — the effects-layer spec's own probe
+   list already said so and it was never acted on.
+2. **The map as a `data:` URI.** `feImage href="#anElement"` is *silently ignored*
+   — no error, the element simply renders unbent. That single detail is the
+   difference between "refraction is impossible here" and "refraction is one data
+   URI away", and it is why the first version of this probe rendered nothing.
+
+`lab/1j-refraction-declared-backdrop.html` shows it working at tier 0 with the
+`glass-studio` card's own numbers: one bend at scale 14, the same at its measured
+thickness of 20, and the IOR triple 0.98 / 1.00 / 1.02 as three displacements
+recombined one channel each. `lab/z-displacement-minimal.html` is the one-look
+proof of the data-URI point.
+
+Not yet chosen: which of the four the button takes, and whether the tint at 0.72
+leaves enough of the bend visible — the probe runs at 0.35 precisely because the
+settled tint hides what it is measuring. That is the next thing to look at.
 
 ## Slice 1 rulings (AC-6)
 
