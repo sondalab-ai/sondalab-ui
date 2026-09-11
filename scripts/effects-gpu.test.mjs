@@ -225,3 +225,47 @@ test("the rim is top-weighted, not a ring round the perimeter", () => {
   assert.match(shader, /let fres = pow\(1\.0 - t, 3\.0\) \* clamp\(look\.glass\.z \/ 100\.0, 0\.0, 1\.0\) \* facing_up;/,
     "the Fresnel term carries the weighting");
 });
+
+const lensSrc = readFileSync(resolve(KIT, "glass-lens.js"), "utf8");
+
+test("the lens filters the element itself, never a panel over it", () => {
+  // The whole point of the shape: backdrop-filter reaches only what is BEHIND
+  // an element, so filtering the element leaves its own label untouched and
+  // AC-25 holds by construction. The reference implementation puts the filter
+  // on a panel it creates and drags; a panel over a button refracts the
+  // button's label along with the backdrop, and re-parenting that panel makes
+  // it jump on the first pointer move, because its drag code mixes viewport
+  // coordinates with offset-parent ones.
+  assert.match(lensSrc, /el\.style\.backdropFilter =/, "the filter goes on the element");
+  // Read the CODE, not the prose: this file explains at length why it does not
+  // take the reference's panel, and an earlier version of this assertion failed
+  // on the word "drag" inside that explanation.
+  const code = lensSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  assert.doesNotMatch(code, /\.container\b/, "no panel of our own is ever created");
+  assert.doesNotMatch(code, /addEventListener\(\s*["'](?:mouse|pointer)/,
+    "and no drag comes with it");
+});
+
+test("the displacement map is a data URI, and the numbers are not re-derived", () => {
+  // feImage href="#id" is silently ignored in Chrome; only the inline form
+  // displaces, which is why an earlier attempt rendered nothing at all.
+  assert.match(lensSrc, /feImage\.setAttribute\("href", href\)/, "the map is inlined");
+  assert.match(lensSrc, /canvas\.toDataURL\(\)/, "built on a canvas, handed over as a data URI");
+  // A hand rewrite of the same idea applied but never displaced. These three
+  // are the parts that were got wrong, so they are pinned.
+  assert.match(lensSrc, /maxScale \*= 0\.5;/, "his normalisation");
+  assert.match(lensSrc, /feDisplacementMap\.setAttribute\("scale", String\(scale\)\)/,
+    "scale derived from the measured maximum displacement");
+  assert.match(lensSrc, /roundedRectSDF\(ix, iy, 0\.3, 0\.2, 0\.6\)/, "his SDF, his numbers");
+});
+
+test("the lens costs nothing per frame, and refuses where it cannot work", () => {
+  // An element and its backdrop scroll together, so nothing new passes behind
+  // it and there is nothing to recompute. The map is rebuilt only when the box
+  // changes size.
+  assert.doesNotMatch(lensSrc, /requestAnimationFrame|setInterval/, "no loop of any kind");
+  assert.match(lensSrc, /if \(key === last\) return;/, "a rebuild is skipped unless the box changed");
+  assert.match(lensSrc, /CSS\.supports\("backdrop-filter", "url\(#x\)"\)/,
+    "feature-detected, so Safari falls through to the CSS material");
+  assert.match(lensSrc, /Copyright \(c\) 2025 Shu Ding/, "MIT attribution travels with the code");
+});

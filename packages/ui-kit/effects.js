@@ -627,6 +627,30 @@ function injectGlass(el) {
   }
 }
 
+/** The lenses currently bound, so mount() can be called twice without giving
+ *  an element two filters. */
+const lensed = new WeakMap();
+
+/** Give every glass host a real refraction of whatever is behind it.
+ *
+ *  Dynamically imported, like the GPU tier was, so a consumer who never mounts
+ *  pays nothing for it — and so a browser that cannot do it degrades to the CSS
+ *  material in glass.css with no branch here.
+ *  @param {ParentNode} root the subtree to arm
+ *  @returns {Promise<void>} */
+async function armLenses(root) {
+  let lens;
+  try { ({ lens } = await import("./glass-lens.js")); } catch { return; }
+  const hosts = [];
+  if (root instanceof Element && root.matches(GLASS_HOSTS)) hosts.push(root);
+  hosts.push(...root.querySelectorAll(GLASS_HOSTS));
+  for (const el of hosts) {
+    if (lensed.has(el) || el.closest('[data-sl-fx="off"]')) continue;
+    const handle = lens(el);
+    if (handle) lensed.set(el, handle);
+  }
+}
+
 function injectGlassLayers(root) {
   if (root instanceof Element && root.matches(GLASS_HOSTS)) injectGlass(root);
   for (const el of root.querySelectorAll(GLASS_HOSTS)) injectGlass(el);
@@ -676,10 +700,12 @@ export function mount(root = document) {
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
   injectGlassLayers(root);
+  armLenses(root);
   injectGlows(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
+      armLenses(n);
       injectGlows(n);
     }
   }).observe(root, { childList: true, subtree: true });
