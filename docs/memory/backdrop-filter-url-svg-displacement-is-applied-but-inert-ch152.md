@@ -1,11 +1,34 @@
 ---
 name: backdrop-filter-url-svg-displacement-is-applied-but-inert-ch152
-description: Chrome 152 applies `backdrop-filter: url(#svgfilter)` over feDisplacementMap but yields NO backdrop displacement — measured on liqui.design, scale=45 on a 76x35 element moved 45px of 114704 (0.04%, max delta 13/255) confined to the rim bands, with the backdrop's own hairline bit-identical. Confirms 620b7b7 and keeps the capture-plate lens as the only route.
+description: PARTLY OVERTURNED 2026-09-11. Chrome 152 DOES displace a backdrop through `backdrop-filter: url(#f)` — shuding/liquid-glass does it visibly in this very browser. What fails is liqui.design's own filter, and a re-implementation of the same idea aimed at a small existing element — measured on liqui.design, scale=45 on a 76x35 element moved 45px of 114704 (0.04%, max delta 13/255) confined to the rim bands, with the backdrop's own hairline bit-identical. Confirms 620b7b7 and keeps the capture-plate lens as the only route.
 metadata:
   node_type: memory
   loadout_kind: memory
   scope: repo
   created: 2026-09-11
+---
+
+## PARTLY OVERTURNED — 2026-09-11, same day
+
+**Chrome 152 does displace a backdrop this way.** `shuding/liquid-glass` (MIT,
+292 lines, no npm package — copy `liquid-glass.js` in) builds an feImage
+displacement map on a canvas, hands it to `feDisplacementMap` as a `data:` URI,
+and puts `backdrop-filter: url(#id)` on a fixed panel. Run unmodified in this
+browser it bends a page's grid lines around the panel, unmistakably. So the
+mechanism is NOT inert, and the capture-plate lens was never the only route.
+
+What the measurement below still holds for: liqui.design's own `__refract`
+layer, which really does move only 45 px of 114 704. That is a fact about their
+filter, not about the browser.
+
+**Not yet working:** the same technique re-implemented here and aimed at an
+existing `.sl-btn` (`lab/1p-shuding-on-buttons.html`). The filter is applied —
+`blur`, `saturate` and `brightness` in the same chain all take effect — but the
+displacement does nothing, at any `scale`, with `href` or `xlink:href`. The
+difference from his working case is not yet found; his panel is a large fixed
+`<div>`, ours a small in-flow `<button>`. Use HIS file rather than a rewrite
+until that is understood.
+
 ---
 
 `620b7b7` recorded that `backdrop-filter: url(#f)` displacement "does not work in Chrome 152",
