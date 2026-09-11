@@ -646,6 +646,70 @@
     --slfx-angle var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 
+/* ══ SLICE 1 — BUTTONS ════════════════════════════════════════════════════════
+   The material settled on lab/1-1i and recorded in
+   docs/specs/2027-improve-aesthetics.md §"Slice 1 rulings (AC-6)". Every rule
+   here is scoped to .sl-btn on purpose: AC-7 puts ONE element in a slice, so
+   cards, dialogs, tags, keycaps and the field wrapper keep the material they
+   ship with until their own slice reaches them. Nothing above this block is
+   edited; this block only narrows it for buttons.
+
+   Ruling 10 — the remainder is the PAGE, not the veil. The shared rule mixes the
+   fill with --slfx-veil so a filled control is lifted rather than darkened, and
+   that reasoning holds on ink. It does not hold on paper: the veil's alpha is
+   0.854 there by construction and the pane resolves to 0.915 — effectively
+   solid, which is the opposite of what a glass button is for. Measured on
+   lab/1g. So on a button the remainder is transparency and the page shows
+   through, which is the owner's ruling of 2026-09-11 overruling §Translucency
+   on mechanism, for buttons only. */
+.sl-btn.sl-fx-glass {
+  /* Ruling: blur 2px, saturate 1.7. The shared 26px erases what is behind the
+     control entirely, and a blur you cannot see past is a tint with extra cost.
+     2px still smears a hairline and a line of text — verified by toggling it and
+     diffing the crop: 3918 px of 28676 change, max delta 29/255. */
+  --slfx-back: 2px;
+  --slfx-back-sat: 1.7;
+}
+/* Ruling 8 — the filled share is 72%, not the shared 80%. The dark theme has two
+   viable regions and one dead band: --slc-text clears 4.5:1 up to share 0.42,
+   the dark pole clears it from 0.65 up, and between 0.50 and 0.58 neither does.
+   0.72 sits inside the high region on BOTH themes — 5.48:1 on ink, 5.67:1 on
+   paper — so the share does not branch on the theme. */
+.sl-btn--primary.sl-fx-glass { --slfx-fill-a: 72%; }
+
+@supports (backdrop-filter: blur(1px)) {
+  .sl-btn.sl-fx-glass,
+  .sl-btn--primary.sl-fx-glass:hover:not(:disabled),
+  .sl-btn--primary.sl-fx-glass:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--slfx-fill) var(--slfx-fill-a), transparent);
+  }
+}
+
+/* Ruling 8 — the label is the pole that contrasts with the composited pane, and
+   at 0.72 that is the DARK pole on both themes, because the composited pane
+   lands mid-light either way. --slfx-shade is already exactly that
+   derivation — oklch(from sheen min(l, 1 - l) c h) — so this needs no new token
+   (AC-11), no literal (AC-18) and no [data-sl-theme] branch. Measured against
+   the pane over canvas, surface and raised: 5.72:1 on ink, 5.67:1 on paper.
+
+   It replaces --slc-on-accent, which is built for an OPAQUE accent and goes the
+   wrong way under a translucent one: #FFFFFF on paper measures 1.92:1. */
+.sl-btn--primary.sl-fx-glass--pane { color: var(--slfx-shade); }
+
+/* Ruling 9 — the lit rim is one continuous hairline, never a bevel. The pane's
+   body shipped three inset shadows: a top band, a bottom shade and a full ring.
+   The two bands are the 3D bevel of twenty years ago — straight runs that stop
+   at the corners instead of passing through them — and they are what the owner
+   read as "old-school, not much like real glass". They go; the ring stays and
+   takes their weight, so the pane keeps its thickness without the bevel.
+
+   The travelling part of the edge is not added here: ::after already carries the
+   conic that faces the pointer, which is border-beam's recipe and is what the
+   ruling asks for. This only stops ::before from fighting it. */
+.sl-btn.sl-fx-glass--pane::before {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--slfx-glint) calc(var(--slfx-lit) * 34%), transparent);
+}
+
 /* Container-scale edges. Width is emphasis, not separation — HANDOFF check 4
    classes an emphasis edge as a blessed category, so this is not an L2 breach. */
 .sl-fx-glass--wide,
