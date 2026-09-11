@@ -106,9 +106,23 @@ lens holds an empty canvas. That sits badly beside the fact that hiding
 the most useful thing here: the two layers are interacting, rather than one of
 them being wrong on its own.
 
+**Painting order was a good theory and it is wrong.** A child with a negative
+`z-index` paints *above* its element's background, so the lens at `z-index: -2`
+sits over the host's fill rather than behind it — which would explain a dark crop
+covering the amber, and why a transparent-filled ghost looks fine. Tested by
+forcing `background-color: transparent` on the primary: the substrate text does
+now read through the pane, **and the opaque black rectangle is still there**. So
+the fill is not what it covers.
+
+Where that leaves it: something paints an **opaque black rectangle** inside a
+`--rim` pane, and it is not the fill, not the aurora, not the displacement filter,
+not the lens's cropped content, and not anchored to the page. Every cheap
+hypothesis is spent; the next move is a paint-order walk in devtools on the live
+element, not another toggle.
+
 A plate that is right, a canvas that is right, no filter involved, the aurora
-ruled out, and an artefact anchored to the element rather than to the page: the
-remaining candidates are what composites BETWEEN them — the lens's `z-index: -2` under the
+ruled out, the fill ruled out, and an artefact anchored to the element rather
+than to the page: the remaining candidates are what composites BETWEEN them — the lens's `z-index: -2` under the
 host's own background, the host's `isolation: isolate`, and `--rim`'s extra
 layers, which the ghost does not have.
 
