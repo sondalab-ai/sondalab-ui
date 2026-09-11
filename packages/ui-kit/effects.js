@@ -586,15 +586,84 @@ function randomizeGhosts(el) {
 const GLOW_HOSTS = ".sl-fx-aurora:not(.sl-fx-aurora--linear)";
 const GLASS_HOSTS = ".sl-fx-glass";
 
+/** How far the glow reaches past its host, in CSS pixels. Read once from the
+ *  host rather than hard-coded: --slfx-glow and --slfx-rim-out are the two
+ *  properties the glow's own inset used before it became a sibling.
+ *  @param {Element} el the aurora host
+ *  @returns {number} the spread in pixels */
+function glowSpread(el) {
+  const cs = getComputedStyle(el);
+  const px = (name) => parseFloat(cs.getPropertyValue(name)) || 0;
+  return 1 + px("--slfx-rim-out") + px("--slfx-glow");
+}
+
+/** Put the glow where the lens can see it.
+ *
+ *  A child is painted as part of its element, AFTER backdrop-filter has
+ *  sampled what is behind it — so a lensed pane cannot refract its own aurora,
+ *  and the light lies on the glass rather than in it. As a sibling painted
+ *  just before the host it is part of the backdrop, and the lens bends it:
+ *  measured on lab/1r, it pools along the inner edges and squeezes into a band
+ *  at the bottom.
+ *
+ *  The host's PARENT is the seat, not an injected wrapper. A wrapper around an
+ *  element a consumer wrote is the more robust shape on paper and the more
+ *  invasive one in practice — an inline-flex box around a button moves layout.
+ *  The parent is already there; it only has to be positioned, which is one
+ *  reversible declaration, and then the glow's box is a single rect
+ *  subtraction rather than the viewport-versus-offset-parent arithmetic that
+ *  made the reference implementation's panel jump on its first drag.
+ *  @param {Element} el the aurora host
+ *  @param {HTMLElement} glow the glow to place
+ *  @returns {void} */
+function seatGlow(el, glow) {
+  const parent = glow.parentElement;
+  if (!parent) return;
+  if (getComputedStyle(parent).position === "static") parent.style.position = "relative";
+  const r = el.getBoundingClientRect();
+  const p = parent.getBoundingClientRect();
+  const spread = glowSpread(el);
+  glow.style.left = `${r.left - p.left - spread}px`;
+  glow.style.top = `${r.top - p.top - spread}px`;
+  glow.style.width = `${r.width + spread * 2}px`;
+  glow.style.height = `${r.height + spread * 2}px`;
+  glow.style.setProperty("--slfx-seat-radius", getComputedStyle(el).borderTopLeftRadius);
+}
+
 function injectGlow(el) {
-  for (const child of el.children) {
-    if (child.classList.contains("sl-fx-aurora__glow")) return;
+  const parent = el.parentElement;
+  // Without a parent there is nowhere to seat it, and a host that is its own
+  // root keeps the old shape rather than losing its aurora entirely.
+  const seat = parent || el;
+  for (const child of seat.children) {
+    if (child.classList.contains("sl-fx-aurora__glow") && child.dataset.slFxFor === el.dataset.slFxId) return;
   }
   const glow = document.createElement("span");
   glow.className = "sl-fx-aurora__glow";
   glow.setAttribute("aria-hidden", "true");
-  el.appendChild(glow);
+  if (!parent) {
+    el.appendChild(glow);
+    return;
+  }
+  el.dataset.slFxId = el.dataset.slFxId || `g${glowSerial++}`;
+  glow.dataset.slFxFor = el.dataset.slFxId;
+  glow.setAttribute("data-sl-fx-seated", "");
+  parent.insertBefore(glow, el);
+  seatGlow(el, glow);
+  // Again once the page has settled. A ResizeObserver fires when a box CHANGES
+  // size, not when it moves, so a host pushed sideways by a webfont arriving
+  // above it leaves its glow a couple of pixels behind — measured at up to 2px
+  // on the showcase before this second pass.
+  document.fonts?.ready.then(() => seatGlow(el, glow));
+  if (typeof ResizeObserver === "function") {
+    const watch = new ResizeObserver(() => seatGlow(el, glow));
+    watch.observe(el);
+    watch.observe(parent);
+  }
 }
+
+/** @type {number} pairs a seated glow with the host it belongs to */
+let glowSerial = 0;
 
 /* ── the glass anatomy ──────────────────────────────────────────────────────
    glass.css paints the material in three stacked layers — frost, tint, rim —

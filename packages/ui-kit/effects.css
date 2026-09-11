@@ -935,6 +935,9 @@
   position: absolute;
   inset: calc(-1px - var(--slfx-rim-out) - var(--slfx-glow));
   z-index: -1;
+  /* The glow also inherits the host's radius, and as a sibling it no longer
+     can: --slfx-seat-radius carries it across. */
+  --slfx-seat-radius: inherit;
   border-radius: inherit;
   pointer-events: none;
   user-select: none;
@@ -942,6 +945,23 @@
   filter: blur(var(--slfx-soft));
   transition: opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease);
 }
+/* ── THE GLOW BEHIND THE GLASS ──────────────────────────────────────────────
+   A glow that is a CHILD of its host is painted as part of that host, after
+   backdrop-filter has already sampled what is behind it — so a lensed pane
+   cannot see its own aurora, and the light reads as a flat wash laid ON the
+   glass instead of caught IN it. Measured on lab/1r: the same glow moved to a
+   sibling painted BEFORE the pane pools along the inner edges and squeezes
+   into a bright band at the bottom, which is what light does in a glass edge.
+
+   So effects.js moves it out of the host and puts it in the host's parent,
+   just before it. That costs the inset shorthand, which resolved against the
+   host's own box: as a sibling the box is written from script instead, and
+   `inset` must not fight it. Everything else about the glow is unchanged. */
+.sl-fx-aurora__glow[data-sl-fx-seated] {
+  inset: auto;
+  border-radius: var(--slfx-seat-radius);
+}
+
 .sl-fx-aurora__glow::before {
   content: "";
   position: absolute;

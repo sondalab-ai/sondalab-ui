@@ -310,9 +310,17 @@ test("one element deforms at a time, and its border hides without touching borde
 test("no effect rewrites a host's border-radius", () => {
   // The skin traces the radii the component declared; a component stays free
   // to re-parametrise its own --sl-radius-* without this layer noticing.
-  // Paint layers inherit the radius; nothing may set one.
+  // Paint layers inherit the radius; nothing may INVENT one.
+  //
+  // --slfx-seat-radius is the one exception and it is not a loophole: the
+  // aurora's glow moved out of its host on 2026-09-11, so that a lensed pane
+  // can refract it, and a sibling cannot inherit. effects.js reads the host's
+  // own computed border-top-left-radius and writes it into that property, so
+  // the value still comes from the component and from nowhere else. Anything
+  // that is neither `inherit` nor that property is a rewrite.
   const rewriting = RULES
-    .filter((r) => /\.sl-fx-/.test(r.selector) && /(?:^|;)\s*border-radius\s*:(?!\s*inherit\b)/.test(r.body))
+    .filter((r) => /\.sl-fx-/.test(r.selector)
+      && /(?:^|;)\s*border-radius\s*:(?!\s*(?:inherit\b|var\(--slfx-seat-radius\)))/.test(r.body))
     .map((r) => r.selector);
   assert.deepEqual(rewriting, [], "border-radius may only ever be inherited by a paint layer");
 });
