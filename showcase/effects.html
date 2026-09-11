@@ -185,6 +185,23 @@
     .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
     .g-demo--col { flex-direction: column; align-items: stretch; }
 
+    /* -- a substrate for the pane demo. A blur over a flat tint IS the tint:
+       measured, 2px and 26px behind these buttons differed by 933 px of
+       148 456 at a max delta of 6/255, so the cell could not show what the
+       glass was doing. Panes need something with FINE detail behind them —
+       lines of type at a real size — not an oversized display word, whose
+       strokes are too large-scale for a hairline blur to alter. Only this
+       cell gets it; the rest of the gallery is unchanged. -------------- */
+    .g-demo--substrate { position: relative; display: block; padding-block: 0.45rem; }
+    .g-demo--substrate .substrate {
+      position: absolute; inset: 0; display: grid; align-content: center; gap: 0.32rem;
+      font-family: var(--sl-font-mono); font-size: 0.7rem; line-height: 1.35;
+      color: color-mix(in srgb, var(--sl-text-primary) 42%, transparent);
+      overflow: hidden; white-space: nowrap;
+    }
+    .g-demo--substrate .substrate p { margin: 0; }
+    .g-demo--substrate .substrate__row { position: relative; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+
     /* -- inversion band: the Tier-B remap components.css already documents,
        extended to all three border roles — the glass fallback reads the strong/
        subtle pair to build --slfx-edge-hi/lo/mid/tint, so a remap of --slc-border
@@ -401,9 +418,16 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">pane — the button is made of glass</span>
-            <div class="g-demo">
-              <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
-              <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+            <div class="g-demo g-demo--substrate">
+              <div class="substrate" aria-hidden="true">
+                <p>processInstanceKey 4251 · active · elementId Gateway_1v8qk2 · last retry 12s</p>
+                <p>worker sondalab-runner-03 has not acknowledged the job · incident open</p>
+                <p>bpmnProcessId probe-collection · version 7 · tenant default</p>
+              </div>
+              <div class="substrate__row">
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+              </div>
             </div>
             <p class="cap">Move the pointer over either. A ghost button's 1px border <b>is</b> the glass edge — no second ring is added on top of it — and while the pointer is on the pane the hairline's hot stop faces it, a fringe of colour either side. A primary is the harder case: translucency over an opaque fill is light that sits <b>on</b> the fill — the glint along the top, the shade along the bottom, the 1px rim inside the edge, the spot under the pointer — while its <b>::after</b> belongs to the rim aurora; under Tier 2 the chrome takes the fill's outer pixel.</p>
           </div>
