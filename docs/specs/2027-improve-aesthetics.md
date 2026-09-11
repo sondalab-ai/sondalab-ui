@@ -384,6 +384,25 @@ going through it inherits AC-15's dynamic import inside the guard, the kill
 switches and the device-loss teardown, none of which is worth rewriting by hand.
 So the order is: settle the look in the probe, then promote through `vgpu`.
 
+**The glare does not follow the pointer, and that is the ruling.** *Owner, on the
+render: it moves too abruptly.* Three separate causes, and the third is the one
+that matters:
+
+1. the angle was written straight from each `pointermove` with no easing — the
+   effects-layer spec eases the pane's own bearing on a time constant of 80 ms in
+   and 140 ms out, and this had none;
+2. `atan2` wraps at ±π, so crossing the left of the pane swung the highlight the
+   long way round — the spec's own word for the fix is *"unwrapped against the
+   previous value"*, and it was not being done here;
+3. **in `glass-studio` the glare angle is a constant.** It is a setting, `-45°`,
+   not a function of anything. The pointer moves the specular *spot*; it does not
+   move the direction the light comes from. A light source that chases the cursor
+   is the thing that reads as unreal, and no amount of easing fixes it.
+
+So the probe now eases and unwraps — both worth having — but `follow` defaults
+**off**, and the reference's fixed `-45°` is the resting state. The toggle stays
+so the two can be compared rather than argued about.
+
 Still open: whether the tint at 0.72 leaves enough of the refraction visible —
 the probe opens at 0.40 — and the thickness, which is in the probe's own pixels
 rather than `glass-studio`'s units on its 200 × 200 shape.
