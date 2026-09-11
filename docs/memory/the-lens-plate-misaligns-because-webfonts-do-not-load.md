@@ -114,11 +114,25 @@ forcing `background-color: transparent` on the primary: the substrate text does
 now read through the pane, **and the opaque black rectangle is still there**. So
 the fill is not what it covers.
 
-Where that leaves it: something paints an **opaque black rectangle** inside a
-`--rim` pane, and it is not the fill, not the aurora, not the displacement filter,
-not the lens's cropped content, and not anchored to the page. Every cheap
-hypothesis is spent; the next move is a paint-order walk in devtools on the live
-element, not another toggle.
+**The element itself is innocent.** Enumerated every layer of the primary while
+the black box was on screen: host background is the amber at 0.72, `::before` is
+transparent gradients at `--slfx-lit: 0`, `::after` is `opacity: 0`, and the only
+two children are the lens and the aurora glow at `opacity: 0`.
+`document.elementsFromPoint` across the box returns nothing but the button and
+its ancestors. Nothing in the DOM should paint it — yet it paints, and hiding the
+lens removes it. So the lens is drawing black, from a plate that reads correct
+when reconstructed by hand.
+
+**Stripping the glass classes from the clone does not fix it either** (attempt
+eight), so it is not simply "an element carrying backdrop-filter rasterises black".
+
+Where that leaves it, after eight measurements that each removed a candidate:
+an opaque black rectangle drawn by the lens, from a plate that looks right when
+rebuilt by hand, on a `--rim` pane only, with every layer of the element
+accounted for. The next move is not another toggle from script — it is the
+devtools Layers panel on the live element, or rendering the SHIPPED plate rather
+than a reconstruction of it. The reconstruction matching is the weakest link in
+the chain above and the first thing to distrust.
 
 A plate that is right, a canvas that is right, no filter involved, the aurora
 ruled out, the fill ruled out, and an artefact anchored to the element rather
