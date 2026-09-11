@@ -82,9 +82,26 @@ was. Four things did *not* clear it —
    paints its filter (kept — it is right on its own terms, and fixes panes below
    the fold, but it is not this bug).
 
-So whatever writes that black is upstream of all four. The next person should
-render the plate and look at the primary's own band — the same one-screenshot
-method that found the flow bug — rather than reasoning about the lens.
+Four more observations narrow it, all made by rendering things rather than
+reasoning about them:
+
+- **The plate is correct at the primary's own band.** Rendered and cropped to it:
+  the substrate line that belongs behind the button, no black.
+- **The lens canvas is correct too.** Drawn into a fresh canvas at 3x with no
+  filter: real page content across its whole width, no black region.
+- **It is not the filter.** Forcing `filter: none` on the lens leaves the dark
+  area exactly where it was.
+- **It does not follow the page.** Translating the primary 360 px sideways, over
+  a completely different part of the section, leaves the dark area on the same
+  *left portion of the button*. So it is fixed to the pane, not to what is behind
+  it — which rules out "the section's display word showing through", the most
+  attractive explanation.
+
+A plate that is right, a canvas that is right, no filter involved, and an
+artefact anchored to the element rather than to the page: the remaining
+candidates are what composites BETWEEN them — the lens's `z-index: -2` under the
+host's own background, the host's `isolation: isolate`, and `--rim`'s extra
+layers, which the ghost does not have.
 
 **Superseded note —** what follows was written before the plate was rendered: With the fonts embedded the crop still lands
 wrong — the text under the pane changed, so the plate's layout did change, but it
