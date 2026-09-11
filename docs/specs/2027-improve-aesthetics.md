@@ -469,6 +469,25 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### The beam — 2026-09-11, late
+
+*Owner: "immagino un fascio di luce che entra nel vetro e si scompone."* That is
+the prism proper, and the lens now does it with no further code: a narrow white
+line, angled, sitting behind the pane. Where it crosses the pane's edge the lens
+bends it and dispersion parts it — red bent least, blue most — so the beam
+enters at one edge as orange/green/blue and leaves at the other as
+blue/green/red. `lab/1u-beam.html`, two cells: `disperse` 18 (the kit default:
+a coloured fringe on the beam at each edge) and 60 (the three colours fully
+apart, the schoolbook prism).
+
+What this settles about the light model: the aurora's light source should be a
+BEAM, not a blob and not an arc. A blob (`lab/1s`) makes a pane glow; a beam
+makes a pane *do* something — bend and split it — which is the whole reason to
+have glass rather than a tint. The beam wants to be thin (3 px, a soft halo),
+white, angled off the axis, and to drift slowly across the pane rather than
+around it. Next slice: this beam is what replaces the conic sweep in
+`effects.js`.
+
 ### The aurora is a lighthouse, and no parameter fixes that — 2026-09-11, late
 
 *Owner: "sembra più che altro una sirena o un faro… nulla a che vedere con
