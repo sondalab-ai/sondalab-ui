@@ -469,6 +469,39 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### Pillars are the aurora — 2026-09-11, late
+
+*Owner: "sfruttiamo lo stesso concetto per le aurore che ruotano lungo i bordi…
+sostituiti dai pilastri, che però in questo caso hanno tonalità che si basano
+sul colore accent + suoi colori complementari."*
+
+The pillars are now the aurora's light by DEFAULT on every host: the rotating
+sweep on the edge is opt-in (`--sweep`), `--beam` is the line through the
+glass, and everything else gets the curtains. Nothing torn out — one class
+brings the lighthouse back. The busy orbit is untouched: it reports state and
+is not the sweep.
+
+**The palette is derived, never declared.** Curtain A is `--slfx-accent-vivid`
+— the accent lifted to the vivid tier and gamut-fitted, which is already how the
+edge's warm fringe is made. Curtain B is the same colour turned 180° in oklch:
+`oklch(from var(--slfx-accent-vivid) l c calc(h + 180))`, so it keeps the
+accent's lightness and chroma and changes only hue — which is what
+"complementary" means in a perceptual space, and what keeps it inside the gamut
+the accent was fitted to. The ribs stay the light pole. A product that
+re-registers its accent gets its own pair (AC-18 holds; no new token, AC-11).
+Measured on the showcase: A resolves to oklch h 71 (amber), B to h 251 (blue).
+
+Verified on the busy card: amber and blue curtains inside the card, each one
+parted by the lens into a coloured fringe at its edges, the title and body text
+crisp on top. Eighteen seated glows carry it.
+
+**What to expect, and the two levers.** On a 320 px card the map's own scale is
+large, so dispersion is visible across the whole interior, not only at the
+pane's faces — every pillar edge fringes. It is a lot. The levers are
+`disperse` on the lens and the two curtain alphas (62 % / 58 %); neither has
+been tuned, because the owner said he does not yet know what he wants, and a
+strong first cut is easier to bring down than a faint one is to find.
+
 ### Pillars — 2026-09-11, late
 
 *Owner: "la verità è che non so nemmeno io cosa voglio… proviamo con un glow a

@@ -1052,16 +1052,25 @@
   /* two curtains at different pitches and speeds, so the pillars beat
      against each other instead of scrolling as one sheet; the light pole
      for the bright ribs, the bloom colour for the body */
+  /* THE PALETTE is the accent and its complement. --slfx-accent-vivid is the
+     accent lifted to the vivid tier and gamut-fitted (it is already how the
+     edge's warm fringe is made); the complement is the same colour turned
+     180° in oklch, so it keeps the accent's lightness and chroma and only
+     changes hue — which is what "complementary" means in a perceptual space,
+     and what keeps it inside the gamut the accent was fitted to. Derived, not
+     declared: a product that re-registers its accent gets its own pair (AC-18). */
+  --slfx-pillar-a: var(--slfx-accent-vivid);
+  --slfx-pillar-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
   background:
     repeating-linear-gradient(90deg,
       transparent 0 14px,
-      color-mix(in srgb, var(--slfx-glint) 55%, transparent) 20px,
+      color-mix(in srgb, var(--slfx-glint) 42%, transparent) 20px,
       transparent 26px 44px),
     repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--slfx-bloom-hi) 42%, transparent) 0 10px,
-      transparent 22px 58px,
-      color-mix(in srgb, var(--slfx-bloom-hi) 30%, transparent) 70px,
-      transparent 80px 96px);
+      color-mix(in srgb, var(--slfx-pillar-a) 62%, transparent) 0 12px,
+      transparent 26px 54px,
+      color-mix(in srgb, var(--slfx-pillar-b) 58%, transparent) 66px,
+      transparent 82px 104px);
   background-size: 160px 100%, 240px 100%;
   background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
 }
@@ -1245,7 +1254,10 @@
     50%      { filter: hue-rotate(16deg); }
   }
 
-  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]::after {
+  /* The rotating sweep on the edge is OPT-IN now (--sweep): the owner named it
+     a lighthouse, and the aurora's light is the pillars by default. Kept, not
+     torn out — one class brings it back. */
+  [data-sl-fx="on"] .sl-fx-aurora--sweep[data-sl-fx-live="on"]::after {
     animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
     will-change: background;
   }

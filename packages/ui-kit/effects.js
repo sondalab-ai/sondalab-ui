@@ -633,6 +633,8 @@ const GLOW_VARS = [
   // rotated and invisible until this line existed
   "--slfx-glint",
   "--slfx-bloom-hi",
+  // the pillars' palette root: accent, vivid tier, gamut-fitted
+  "--slfx-accent-vivid",
 ];
 
 function seatGlow(el, glow) {
@@ -677,8 +679,12 @@ function injectGlow(el) {
   // it. Carried as an attribute on the glow, since the CSS that draws it
   // cannot see the host's class from a previous sibling.
   if (el.classList.contains("sl-fx-aurora--beam")) glow.setAttribute("data-sl-fx-beam", "");
-  // --pillars: curtains of light clipped to the host's own box, never past it.
-  if (el.classList.contains("sl-fx-aurora--pillars")) glow.setAttribute("data-sl-fx-pillars", "");
+  // Pillars are the aurora's light by DEFAULT: curtains clipped to the host's
+  // own box, in the accent and its complement. The rotating sweep is --sweep,
+  // opt-in, and --beam is the line through the glass; anything else gets the
+  // pillars. --pillars is still honoured so existing markup keeps meaning.
+  const wantsOther = el.classList.contains("sl-fx-aurora--beam") || el.classList.contains("sl-fx-aurora--sweep");
+  if (!wantsOther) glow.setAttribute("data-sl-fx-pillars", "");
   parent.insertBefore(glow, el);
   seatGlow(el, glow);
   // Again once the page has settled. A ResizeObserver fires when a box CHANGES
