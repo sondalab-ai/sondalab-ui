@@ -481,6 +481,15 @@ element's size; `backdrop-filter` is continuous and the browser reapplies it
 itself. No render loop, no rAF, no per-frame canvas — the opposite of the GPU
 route this slice spent a day on.
 
+**Do not move his container.** His drag code reads the start position from
+`getBoundingClientRect()` — viewport coordinates — and writes it back into
+`style.left/top`, which on an absolutely positioned element are relative to its
+offset parent. Re-parenting his panel into a holder therefore makes it jump by
+the distance between those two frames on the first pointer movement: a large,
+arbitrary-looking offset on click. His code is correct for the fixed panel it
+was written for; the defect was in moving it. This is a second reason case E is
+the right shape — it uses his filter and never his container at all.
+
 **E is the shape to ship.** Construct his `Shader` at the element's size, append
 only its `svg` (never its `container`), clear the element's own background and
 set `backdrop-filter: url(#<id>_filter) …` on the element. The label is then
