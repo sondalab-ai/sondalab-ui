@@ -322,6 +322,7 @@ Contact sheets live in `docs/slices/<n>-<element>/` — a new directory, kept ap
 | `contact-1i-rim-shape.jpg` | why the lit rim reads old-school, and the corner shape | `bevel`, `ring`, `ring-round`, `soft`, `squircle`, `superellipse(4)` |
 | `contact-1j-refraction.jpg` | **real refraction of a declared backdrop, no GPU** | `flat`, `bend` (scale 14), `dispersion` (IOR 0.98/1.00/1.02), `thick` (scale 20) |
 | `contact-1k-gpu-glass.jpg` | refraction **plus Fresnel and glare**, on the GPU | one pane, every term switchable, every default from the `glass-studio` card |
+| `contact-1k-parametric.png` | the same pane driven from CSS alone — thickness 30, fresnel 70, no slider touched | proof the three parameters are custom properties, not shader constants |
 | `promoted-showcase-dark.png` · `promoted-showcase-light.png` | **the promoted material on the showcase**, after the pane cell was given a substrate | both themes, `.sl-fx-glass__lens` hidden — see below |
 
 The two showcase captures are taken with `.sl-fx-glass__lens` hidden, because the lens paints the wrong page content into every pane (its own defect, recorded under *Found on the way*). Everything else in them is the shipped material.
@@ -411,9 +412,31 @@ needing to be reconciled later. The refraction survives at that tint but goes
 quiet: it reads as a bend in the grid rather than as a lens, and anything wanting
 more has to come from the Fresnel and the glare, not from thinning the tint.
 
-Still open: the thickness, which is in the probe's own pixels rather than
+**Thickness, tint and Fresnel are CSS custom properties, not shader constants.**
+*Owner, 2026-09-11.* `--glass-thickness`, `--glass-tint` and `--glass-fresnel`
+are declared on the element and read every frame with `getComputedStyle`, which
+is exactly how `effects-gpu.js` already feeds design tokens into `vgpu`'s `look`
+object field by field. Verified by setting two of them from CSS alone, with no
+slider touched, and watching the pane answer. Nothing is cached in a JavaScript
+variable: a number held in two places is the first thing to drift.
+
+This is what makes a per-variant declension possible without a second shader —
+`.sl-btn--primary` can ask for a thicker pane than `.sl-btn--ghost` by rebinding
+a property, the same way the fill already rebinds `--slfx-fill`. Dispersion and
+glare are deliberately *not* parametric yet: they are still probe-only numbers,
+and promoting a knob nobody has asked to turn is how a contract grows by
+accident.
+
+**`vgpu` can carry this.** Installed and inspected at 0.3.1: it exports
+`sampler`, `storage` and `target` alongside `init` / `surface` / `effect` /
+`clock` / `frame`, so a declared backdrop can reach the shader as a texture —
+which was the open question, since the kit's current tier-2 shader states plainly
+that "a canvas cannot read the DOM beneath it" and has no texture binding at all.
+
+Still open: the thickness unit. It is in the probe's own pixels rather than
 `glass-studio`'s units on its 200 × 200 shape, so the value 10 here is not the
-card's 20 under another name.
+card's 20 under another name, and the conversion should be settled before it
+becomes a token.
 
 ## Slice 1 rulings (AC-6)
 
