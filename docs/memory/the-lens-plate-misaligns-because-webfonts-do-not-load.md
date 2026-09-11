@@ -56,7 +56,26 @@ fetchable at all. Write the probe's rasters into `<img>` elements, never into
 `Image()` + canvas: the first version awaited `Image.onload` and hung with no
 error in every browser, which taught nothing.
 
-**A second cause survives the fix.** With the fonts embedded the crop still lands
+**The second cause, found by LOOKING at the plate.** Render the plate into an
+`<img>` pinned over the page, cropped to a pane's own band, one copy per clone
+strategy. At the button's band the `el.remove()` plate carried a heading from two
+sections away; the `opacity: 0` plate carried the line that is actually behind the
+button. That is the whole diagnosis, and it took one screenshot after three
+rounds of guessing — **render the plate before theorising about the crop.**
+
+`capturePlate` removes every glass element from the clone so a pane does not
+capture itself. A removal takes the box out of flow: everything after it moves up,
+and with thirty panes the accumulated shift is hundreds of pixels. `opacity: 0`
+keeps the box, paints nothing, and aligns the plate. (`visibility: hidden` also
+aligns it; `opacity: 0` is the one that shipped.)
+
+**What is left after both fixes:** the lens paints a black rectangle on `--rim`
+panes — a filled primary — while a ghost pane in the same row is correct. Hiding
+`.sl-fx-glass__lens` leaves both clean, so it is the lens, not the material. This
+was previously masked by the misalignment and is now the only thing between the
+lens and working.
+
+**Superseded note —** what follows was written before the plate was rendered: With the fonts embedded the crop still lands
 wrong — the text under the pane changed, so the plate's layout did change, but it
 is still not the page's. The remaining offset is `capturePlate` **removing** every
 glass element from the clone: a removal takes the box out of flow, so everything

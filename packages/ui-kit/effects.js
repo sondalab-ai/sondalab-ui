@@ -767,14 +767,16 @@ async function capturePlate() {
   css += await inlineFaces();
   const clone = document.body.cloneNode(true);
   // Glass elements must not appear in the plate — a pane would capture itself
-  // and its neighbours. NOTE: removing them takes their boxes out of flow, so
-  // everything after them shifts up and the crop drifts; with thirty panes the
-  // text under the last one is off by hundreds of pixels. `visibility: hidden`
-  // keeps the box but leaves a black rectangle in the raster, even with
-  // backdrop-filter, background, box-shadow and filter all forced off — three
-  // attempts, none clean. Left as a removal until someone finds the right way
-  // to keep a box without painting it; see docs/memory/the-lens-plate-*.
-  for (const el of clone.querySelectorAll(`${REFRACT_HOSTS}, canvas, .sl-fx-glass__lens`)) el.remove();
+  // and its neighbours — but they must still OCCUPY their boxes. Removing them
+  // takes the boxes out of flow, so everything after shifts up and the crop
+  // drifts; with thirty panes on a page the text under the last one comes from
+  // a different section entirely. Seen directly by rendering the plate: at a
+  // button's own band the removed-clone plate carried a heading from two
+  // sections away, and the zeroed-clone plate carried the line that is actually
+  // behind the button. `opacity: 0` keeps the box and paints nothing.
+  for (const el of clone.querySelectorAll(`${REFRACT_HOSTS}, canvas, .sl-fx-glass__lens`)) {
+    el.style.setProperty("opacity", "0", "important");
+  }
   // XMLSerializer, not outerHTML: foreignObject content must be well-formed
   // XML, and the page's markup is not.
   const body = new XMLSerializer().serializeToString(clone);
