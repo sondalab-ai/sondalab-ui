@@ -700,6 +700,59 @@ let plateScrollX = 0;
  *  so a pane never captures itself or its neighbours: the plate is the page
  *  the glass sits ON, which is what a lens has behind it.
  *  @returns {Promise<boolean>} whether a usable plate now exists */
+/** The faces, as data URIs, keyed by the rule text they came from. Built once:
+ *  fonts do not change, and a plate is recaptured on every idle scroll. */
+let faceCache = null;
+
+/** Re-emit every @font-face with its source inlined.
+ *
+ *  A plate is rasterised from a blob-URL SVG, and nothing in that context can
+ *  fetch a subresource — a `url()` pointing at a font file resolves to nothing,
+ *  and relative ones have no base to resolve against in the first place. So the
+ *  clone renders every string in a fallback face, the text reflows, blocks shift,
+ *  and each pane crops the wrong part of the page. The drift accumulates
+ *  downward, which is why the crop looks plausible at the top of a document and
+ *  is badly wrong a few thousand pixels down.
+ *
+ *  The bytes have to travel inside the CSS. That is only possible for faces the
+ *  page can actually read: a cross-origin stylesheet throws on `.cssRules`, so
+ *  its @font-face rules and their URLs are invisible, and a surface that loads
+ *  its fonts from a third-party CDN cannot have a working lens. Ship the faces
+ *  from your own origin — `@sondalab/ui-kit/fonts.css` does — or accept that the
+ *  lens will crop the wrong content.
+ *  @returns {Promise<string>} the @font-face blocks, or "" if none are readable */
+async function inlineFaces() {
+  if (faceCache !== null) return faceCache;
+  const blocks = [];
+  for (const sheet of document.styleSheets) {
+    let rules;
+    try { rules = sheet.cssRules; } catch { continue; }
+    for (const rule of rules) {
+      if (rule.constructor.name !== "CSSFontFaceRule") continue;
+      const src = rule.style.getPropertyValue("src");
+      const ref = /url\(["']?([^"')]+)["']?\)/.exec(src);
+      if (!ref || ref[1].startsWith("data:")) { blocks.push(rule.cssText); continue; }
+      try {
+        // Relative to the sheet, not to the document: a stylesheet in a
+        // subdirectory names its files relative to itself.
+        const url = new URL(ref[1], sheet.href || document.baseURI);
+        const buf = await (await fetch(url, { mode: "cors" })).arrayBuffer();
+        let bin = "";
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const data = `url("data:font/woff2;base64,${btoa(bin)}")`;
+        blocks.push(rule.cssText.replace(/url\(["']?[^"')]+["']?\)/, data));
+      } catch {
+        // A face we cannot fetch is a face the plate renders as a fallback, and
+        // that pane's crop will drift. Better than dropping the rule entirely.
+        blocks.push(rule.cssText);
+      }
+    }
+  }
+  faceCache = blocks.join("\n");
+  return faceCache;
+}
+
 async function capturePlate() {
   const w = Math.max(1, document.documentElement.clientWidth);
   const h = Math.max(1, window.innerHeight);
@@ -709,6 +762,9 @@ async function capturePlate() {
     // it, and there is nothing to be done about it here.
     try { for (const rule of sheet.cssRules) css += `${rule.cssText}\n`; } catch { /* opaque */ }
   }
+  // The @font-face rules above carry URLs the raster cannot fetch. These carry
+  // the bytes, and come last so they win.
+  css += await inlineFaces();
   const clone = document.body.cloneNode(true);
   for (const el of clone.querySelectorAll(`${REFRACT_HOSTS}, canvas, .sl-fx-glass__lens`)) el.remove();
   // XMLSerializer, not outerHTML: foreignObject content must be well-formed

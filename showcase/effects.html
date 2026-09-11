@@ -23,9 +23,11 @@
   <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500;600&display=swap">
+  <!-- The faces now ship with the kit. Same-origin is not a preference here:
+       a page cannot read @font-face rules out of a cross-origin stylesheet, so
+       the glass lens rasterised every string in a fallback face and cropped the
+       wrong part of the page. See assets/fonts/README.md. -->
+  <link rel="stylesheet" href="../packages/ui-kit/fonts.css">
 
   <style>
     /* -- page-local conventions (per spec: not tokens) -------------------- */

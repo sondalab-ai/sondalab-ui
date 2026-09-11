@@ -31,6 +31,7 @@
     "./tokens.css": "./tokens.css",
     "./components.css": "./components.css",
     "./effects.css": "./effects.css",
+    "./fonts.css": "./fonts.css",
     "./effects.js": "./effects.js",
     "./effects-gpu.js": "./effects-gpu.js",
     "./effects-shader.js": "./effects-shader.js",
@@ -45,12 +46,14 @@
     "./agent/catalog.json": "./agent/catalog.json",
     "./agent/accent-registry.json": "./agent/accent-registry.json",
     "./agent/substrate-matrix.json": "./agent/substrate-matrix.json",
-    "./agent/*": "./agent/*"
+    "./agent/*": "./agent/*",
+    "./assets/fonts/*": "./assets/fonts/*"
   },
   "files": [
     "tokens.css",
     "components.css",
     "effects.css",
+    "fonts.css",
     "effects.js",
     "effects-gpu.js",
     "effects-shader.js",
@@ -63,12 +66,21 @@
     "assets/app-icon.svg",
     "assets/README.md",
     "README.md",
-    "agent/"
+    "agent/",
+    "assets/fonts/fraunces-latin.woff2",
+    "assets/fonts/instrument-sans-latin.woff2",
+    "assets/fonts/martian-mono-latin.woff2",
+    "assets/fonts/OFL-Fraunces.txt",
+    "assets/fonts/OFL-InstrumentSans.txt",
+    "assets/fonts/OFL-MartianMono.txt",
+    "assets/fonts/README.md"
   ],
   "peerDependencies": {
     "vgpu": "^0.3.1"
   },
   "peerDependenciesMeta": {
-    "vgpu": { "optional": true }
+    "vgpu": {
+      "optional": true
+    }
   }
 }
