@@ -828,13 +828,20 @@
    truncated" came from. The bloom is the injected child, below. */
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
   opacity: 1;
+  /* BORDER-BEAM'S PROFILE, not a peak. Read off its md variant: soft ramps in
+     and out and a long PLATEAU between (mask 30→52 up, 52→80 full, 80→95
+     down), and a body that changes colour along the arc instead of one hue
+     with a white core — which is what made ours read as a lighthouse: a hard
+     bright point sweeping a ring. The white core is gone; the colours are
+     the accent, its complement and a split, all derived (see .sl-fx-aurora). */
   background: conic-gradient(from var(--slfx-angle),
     transparent 0deg,
-    var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.14),
-    var(--slfx-beam) calc(var(--slfx-arc) * 0.32),
-    color-mix(in srgb, var(--slfx-glint) var(--slfx-core), var(--slfx-beam)) calc(var(--slfx-arc) * 0.5),
-    var(--slfx-beam) calc(var(--slfx-arc) * 0.68),
-    var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.86),
+    var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.09),
+    var(--slfx-beam) calc(var(--slfx-arc) * 0.22),
+    var(--slfx-beam-b) calc(var(--slfx-arc) * 0.50),
+    var(--slfx-beam-c) calc(var(--slfx-arc) * 0.72),
+    var(--slfx-beam) calc(var(--slfx-arc) * 0.80),
+    var(--slfx-beam-tail) calc(var(--slfx-arc) * 0.91),
     transparent var(--slfx-arc),
     transparent 360deg);
 }
@@ -843,8 +850,15 @@
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */
   --slfx-beam: var(--slfx-accent-vivid);
+  /* The beam's companions, border-beam's "colorful" read in our own terms:
+     the complement (180°) and a split (150°) of the vivid accent, turned in
+     oklch so lightness and chroma are the accent's own — a product that
+     re-registers its accent gets its own trio (AC-18). */
+  --slfx-beam-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
+  --slfx-beam-c: oklch(from var(--slfx-accent-vivid) l c calc(h + 150));
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth-vivid) 75%, transparent);
-  --slfx-core: 86%;
+  /* was 86%: the white core is the lighthouse's lamp, and it is gone */
+  --slfx-core: 0%;
   /* The bloom's two colours are the vivid beam and the vivid depth companion
      LIFTED toward white and pushed a little in chroma, then made translucent:
      light is lighter than what it falls on. Lifted from the raw tokens, on
@@ -975,11 +989,14 @@
   inset: calc(var(--slfx-glow) - var(--slfx-bloom-out));
   padding: var(--slfx-bloom-w);
   border-radius: inherit;
+  /* the bloom follows the same plateau, so the glow is a long soft band under
+     the arc and not a halo round one bright point */
   background: conic-gradient(from var(--slfx-angle),
     transparent 0deg,
-    var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.16),
-    var(--slfx-bloom-hi) calc(var(--slfx-arc) * 0.5),
-    var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.84),
+    var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.10),
+    var(--slfx-bloom-hi) calc(var(--slfx-arc) * 0.24),
+    var(--slfx-bloom-hi) calc(var(--slfx-arc) * 0.78),
+    var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.90),
     transparent var(--slfx-arc),
     transparent 360deg);
   /* `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
@@ -1254,10 +1271,10 @@
     50%      { filter: hue-rotate(16deg); }
   }
 
-  /* The rotating sweep on the edge is OPT-IN now (--sweep): the owner named it
-     a lighthouse, and the aurora's light is the pillars by default. Kept, not
-     torn out — one class brings it back. */
-  [data-sl-fx="on"] .sl-fx-aurora--sweep[data-sl-fx-live="on"]::after {
+  /* The sweep is the default again (2026-09-11, late): what read as a
+     lighthouse was its PROFILE — one hue with a white core — and that is what
+     changed above, in border-beam's image. Pillars remain as --pillars. */
+  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]::after {
     animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
     will-change: background;
   }

@@ -683,8 +683,7 @@ function injectGlow(el) {
   // own box, in the accent and its complement. The rotating sweep is --sweep,
   // opt-in, and --beam is the line through the glass; anything else gets the
   // pillars. --pillars is still honoured so existing markup keeps meaning.
-  const wantsOther = el.classList.contains("sl-fx-aurora--beam") || el.classList.contains("sl-fx-aurora--sweep");
-  if (!wantsOther) glow.setAttribute("data-sl-fx-pillars", "");
+  if (el.classList.contains("sl-fx-aurora--pillars")) glow.setAttribute("data-sl-fx-pillars", "");
   parent.insertBefore(glow, el);
   seatGlow(el, glow);
   // Again once the page has settled. A ResizeObserver fires when a box CHANGES

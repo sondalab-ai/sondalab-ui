@@ -469,6 +469,40 @@ reads R > B everywhere and proves nothing:
 Still static, still nothing per frame: three displacements of one map, built
 once per size.
 
+### The sweep, in border-beam's image — 2026-09-11, late
+
+*Owner, pasting border-beam's README: "prendi spunto, non usare la libreria di
+per sé… è per darti idea dell'effetto che ho in mente per l'aurora e il
+loading."* The library needs React 18 and inlines its stylesheet in its JS;
+the site is Astro without React and the kit is vanilla, so it is a source to
+read, not a dependency to take. Read from its 1.3.0 bundle:
+
+- the `md` beam's mask spans 30 → 95 % of the ring with a full plateau from
+  52 → 80 %: a LONG soft band, not a point;
+- its body is several radial colour blobs under that mask — multi-hue along
+  the arc — with a `hue-rotate` drift of ±range over 12 s;
+- opacities are low (stroke 0.46, bloom 0.38 on dark) and `mono` halves them;
+- `strength` scales the opacities; `active` pauses the spin.
+
+Our arc was already 250° (69 % of the ring), so the width was never the
+difference. What read as a lighthouse was the PROFILE: one hue with a white
+core (`--slfx-core: 86%`) — a hard bright point sweeping a rim. Changed:
+
+- the ring's stops now ramp 0 → 22 %, hold to 80 %, ramp out to 91 % of the
+  arc, and the colour CHANGES along it — accent at 22 %, its complement
+  (oklch h + 180) at 50 %, a split (h + 150) at 72 % — all derived from
+  `--slfx-accent-vivid`; the white core is 0 %;
+- the bloom follows the same plateau, so the glow is a long soft band under
+  the arc and not a halo round one point;
+- the sweep is the default again; `--pillars` and `--beam` stay as classes.
+
+**Found while looking, and larger than the sweep:** on a 400 px card the lens
+warps the whole interior — the backdrop's letters bend as if under water. The
+displacement map's scale grows with the element's size, so the same `lens()`
+that is a prism on a button is a wave on a card. `disperse` and the map's own
+scale need to fall with size, or cards need a lower-scale mode. Untuned; it is
+the next thing.
+
 ### Pillars are the aurora — 2026-09-11, late
 
 *Owner: "sfruttiamo lo stesso concetto per le aurore che ruotano lungo i bordi…
