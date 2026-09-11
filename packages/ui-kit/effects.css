@@ -652,15 +652,13 @@
     radial-gradient(circle var(--slfx-spot-r) at var(--slfx-px) var(--slfx-py),
       color-mix(in srgb, var(--slfx-spot-warm) calc(var(--slfx-lit) * 34%), transparent) 0%,
       color-mix(in srgb, var(--slfx-spot-warm) calc(var(--slfx-lit) * 12%), transparent) 45%,
-      transparent 100%),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--slfx-glint) calc(var(--slfx-lit) * 9%), transparent),
-      transparent 45%,
-      color-mix(in srgb, var(--slfx-shade) calc(var(--slfx-lit) * 9%), transparent));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--slfx-glint) calc(var(--slfx-lit) * 40%), transparent),
-    inset 0 -1px 0 color-mix(in srgb, var(--slfx-shade) calc(var(--slfx-lit) * 20%), transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--slfx-glint) calc(var(--slfx-lit) * 10%), transparent);
+      transparent 100%);
+  /* The slab used to live here too — a wash lightening toward the top and an
+     inset triple for the thickness, both scaled by --slfx-lit. They were the
+     same thing glass.css's __tint and __shine now paint, in the shape the
+     reference measured, and __shine carries the same --slfx-lit scaling so the
+     AC-33 ruling survives the move. What is left on this pseudo-element is the
+     pointer's own light and nothing else. */
 }
 /* The edge faces the pointer. Only once Tier 1 is armed (effects.js writes
    the bearing), only on an element whose ::after is the glass's own (not a
@@ -740,9 +738,9 @@
    The travelling part of the edge is not added here: ::after already carries the
    conic that faces the pointer, which is border-beam's recipe and is what the
    ruling asks for. This only stops ::before from fighting it. */
-.sl-btn.sl-fx-glass--pane::before {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--slfx-glint) calc(var(--slfx-lit) * 34%), transparent);
-}
+/* Ruling 4's rounder inner rim is __shine's now: an inset shadow on the top
+   edge with a softer side pair, which is the reference's own asymmetry and the
+   thing a single even ring could not give. */
 
 /* Container-scale edges. Width is emphasis, not separation — HANDOFF check 4
    classes an emphasis edge as a blessed category, so this is not an L2 breach. */
