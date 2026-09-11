@@ -438,6 +438,37 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
 
+### The prism — 2026-09-11, late
+
+*Owner: "hai presente l'effetto di luce di un prisma? quello è ciò che ho in
+mente."* Dispersion: glass bends red less than blue, so white light crossing an
+edge opens into a spectrum. One displacement moves every colour the same
+distance, which is a lens with no glass in it — and that is what the lens was
+until now.
+
+`glass-lens.js` now splits the backdrop into its three channels
+(`feColorMatrix`), displaces each with the **same** map at a **different**
+scale, and adds them back (`feComposite arithmetic`). The ratio is
+`glass-studio`'s IOR triple — N_R 0.98 / N_G 1.00 / N_B 1.02 — amplified by a
+`disperse` parameter, because on a 96 × 40 button the map's own scale is four or
+five pixels and ±2 % of that is a tenth of a pixel: physically faithful and
+invisible. `disperse` is a parameter rather than a constant for the same reason
+glass-studio's own "dispersion" is a knob — the right amount depends on the
+pane's size.
+
+Measured on `lab/1t-prism.html` — a WHITE source on a NEUTRAL ground, the only
+setup in which a spectrum can be told from a tint; the amber source in `lab/1s`
+reads R > B everywhere and proves nothing:
+
+| disperse | the grid line at a pane's edge |
+|---|---|
+| 0 | grey |
+| 18 (kit default) | a thin warm/cool fringe, one side each |
+| 45 | red, green and blue lines fully separated |
+
+Still static, still nothing per frame: three displacements of one map, built
+once per size.
+
 ### The aurora is a lighthouse, and no parameter fixes that — 2026-09-11, late
 
 *Owner: "sembra più che altro una sirena o un faro… nulla a che vedere con

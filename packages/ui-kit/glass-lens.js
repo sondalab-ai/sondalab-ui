@@ -129,8 +129,10 @@ const SVG_NS = "http://www.w3.org/2000/svg";
  *   own background is cleared by glass.css's `.sl-glass.is-lensed` rule, not
  *   here — a stylesheet the consumer can read and override beats an inline
  *   style they cannot.
- * @param {{blur?: number, saturate?: number, brightness?: number}} [look]
- *   the rest of the backdrop-filter chain, in his own proportions.
+ * @param {{blur?: number, saturate?: number, brightness?: number, disperse?: number}} [look]
+ *   the rest of the backdrop-filter chain, in his own proportions; `disperse`
+ *   amplifies the IOR triple's ±0.02 — 18 puts a visible fringe on a button,
+ *   0 is a lens with no glass in it.
  * @returns {{refresh(): void, destroy(): void}|null} null where the browser
  *   cannot do it, in which case the element keeps the material glass.css gives
  *   it and nothing else changes.
@@ -141,7 +143,7 @@ export function lens(el, look = {}) {
   // SVG filter reference in one, and must fall through to the CSS material.
   if (!CSS.supports("backdrop-filter", "url(#x)")) return null;
 
-  const { blur = 0.25, saturate = 1.1, brightness = 1.05 } = look;
+  const { blur = 0.25, saturate = 1.1, brightness = 1.05, disperse = 18 } = look;
   const id = `sl-lens-${serial++}`;
 
   const svg = document.createElementNS(SVG_NS, "svg");
@@ -159,13 +161,59 @@ export function lens(el, look = {}) {
 
   const feImage = document.createElementNS(SVG_NS, "feImage");
   feImage.setAttribute("id", `${id}_map`);
-  const feDisplacementMap = document.createElementNS(SVG_NS, "feDisplacementMap");
-  feDisplacementMap.setAttribute("in", "SourceGraphic");
-  feDisplacementMap.setAttribute("in2", `${id}_map`);
-  feDisplacementMap.setAttribute("xChannelSelector", "R");
-  feDisplacementMap.setAttribute("yChannelSelector", "G");
+  feImage.setAttribute("result", "map");
 
-  filter.append(feImage, feDisplacementMap);
+  /* ── DISPERSION: the prism ─────────────────────────────────────────────────
+     One displacement moves every colour by the same amount, and that is a
+     lens with no glass in it. Glass bends red less than blue, so a white light
+     crossing an edge opens into a spectrum — the fringe the owner means when
+     he says "prism". So: split the backdrop into its three channels, displace
+     each with the SAME map at a DIFFERENT scale, and add them back.
+
+     The ratio is glass-studio's IOR triple, N_R 0.98 / N_G 1.00 / N_B 1.02 —
+     but amplified. On a 96x40 button the map's own scale is four or five
+     pixels, and ±2% of that is a tenth of a pixel: physically faithful and
+     invisible. `disperse` is the amplification, and it is a parameter rather
+     than a constant because the right amount depends on how large the pane
+     is, the way glass-studio's own "dispersion" knob does. */
+  const channel = (name, r, g, b) => {
+    const m = document.createElementNS(SVG_NS, "feColorMatrix");
+    m.setAttribute("in", "SourceGraphic");
+    m.setAttribute("type", "matrix");
+    m.setAttribute("values", `${r} 0 0 0 0  0 ${g} 0 0 0  0 0 ${b} 0 0  0 0 0 1 0`);
+    m.setAttribute("result", name);
+    return m;
+  };
+  const displace = (input, result) => {
+    const d = document.createElementNS(SVG_NS, "feDisplacementMap");
+    d.setAttribute("in", input);
+    d.setAttribute("in2", "map");
+    d.setAttribute("xChannelSelector", "R");
+    d.setAttribute("yChannelSelector", "G");
+    d.setAttribute("result", result);
+    return d;
+  };
+  const add = (a, b, result) => {
+    const c = document.createElementNS(SVG_NS, "feComposite");
+    c.setAttribute("in", a);
+    c.setAttribute("in2", b);
+    c.setAttribute("operator", "arithmetic");
+    c.setAttribute("k1", "0"); c.setAttribute("k2", "1"); c.setAttribute("k3", "1"); c.setAttribute("k4", "0");
+    c.setAttribute("result", result);
+    return c;
+  };
+  const dispR = displace("chR", "dR");
+  const dispG = displace("chG", "dG");
+  const dispB = displace("chB", "dB");
+
+  filter.append(
+    feImage,
+    channel("chR", 1, 0, 0), dispR,
+    channel("chG", 0, 1, 0), dispG,
+    channel("chB", 0, 0, 1), dispB,
+    add("dR", "dG", "dRG"),
+    add("dRG", "dB", "out"),
+  );
   const defs = document.createElementNS(SVG_NS, "defs");
   defs.append(filter);
   svg.append(defs);
@@ -193,7 +241,10 @@ export function lens(el, look = {}) {
     feImage.setAttribute("width", String(w));
     feImage.setAttribute("height", String(h));
     feImage.setAttribute("href", href);
-    feDisplacementMap.setAttribute("scale", String(scale));
+    // N_R 0.98 / N_G 1.00 / N_B 1.02, with the ±0.02 scaled up by `disperse`.
+    dispR.setAttribute("scale", String(scale * (1 - 0.02 * disperse)));
+    dispG.setAttribute("scale", String(scale));
+    dispB.setAttribute("scale", String(scale * (1 + 0.02 * disperse)));
   }
 
   refresh();

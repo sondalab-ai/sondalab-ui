@@ -257,8 +257,14 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // A hand rewrite of the same idea applied but never displaced. These three
   // are the parts that were got wrong, so they are pinned.
   assert.match(lensSrc, /maxScale \*= 0\.5;/, "his normalisation");
-  assert.match(lensSrc, /feDisplacementMap\.setAttribute\("scale", String\(scale\)\)/,
+  assert.match(lensSrc, /dispG\.setAttribute\("scale", String\(scale\)\)/,
     "scale derived from the measured maximum displacement");
+  // The prism: three displacements of the same map at different scales, in the
+  // ratio of glass-studio's IOR triple, added back together. One displacement
+  // moves every colour the same distance, which is a lens with no glass in it.
+  assert.match(lensSrc, /scale \* \(1 - 0\.02 \* disperse\)/, "red bends less");
+  assert.match(lensSrc, /scale \* \(1 \+ 0\.02 \* disperse\)/, "blue bends more");
+  assert.match(lensSrc, /operator", "arithmetic"/, "and the channels are added, not blended");
   assert.match(lensSrc, /roundedRectSDF\(ix, iy, 0\.3, 0\.2, 0\.6\)/, "his SDF, his numbers");
 });
 
