@@ -97,9 +97,18 @@ reasoning about them:
   it — which rules out "the section's display word showing through", the most
   attractive explanation.
 
-A plate that is right, a canvas that is right, no filter involved, and an
-artefact anchored to the element rather than to the page: the remaining
-candidates are what composites BETWEEN them — the lens's `z-index: -2` under the
+**The aurora is not it either.** Four clones of the primary in one strip — as
+shipped, without `.sl-fx-aurora__glow`, without `--rim`, without the aurora
+entirely — all render the same: a dark interior inside an amber ring. Which also
+says the dark reading reproduces **with no lens crop at all**, since a cloned
+lens holds an empty canvas. That sits badly beside the fact that hiding
+`.sl-fx-glass__lens` on the live button makes it clean, and the contradiction is
+the most useful thing here: the two layers are interacting, rather than one of
+them being wrong on its own.
+
+A plate that is right, a canvas that is right, no filter involved, the aurora
+ruled out, and an artefact anchored to the element rather than to the page: the
+remaining candidates are what composites BETWEEN them — the lens's `z-index: -2` under the
 host's own background, the host's `isolation: isolate`, and `--rim`'s extra
 layers, which the ghost does not have.
 
