@@ -11,7 +11,7 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 09:40
+## Start here — handoff, 2026-09-12 09:35
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
@@ -51,11 +51,11 @@ luminance: the kit now reads +42.9 / +34.2 / +27.9 / +19.8 / +11.8 / +4.0 /
 +27 / +20 / +13 / +4 / 0, with the same rgb spread (36 → 3 against 32 → 3),
 nothing outside the box, and a quarter-ring arc.
 
-**No next task is assigned.** Two things stay the owner's: the 1 px line on
+**No next task is assigned.** One thing stays the owner's: the 1 px line on
 the reference's border where the beam passes (ours is the glass rim plus a
-0.28 ring; see 1w's list), and whether a card is glass at all — the composer
-is not, and its edge has no inset shine. The kit's release and the GPU tier's
-cut are the owner's decisions.
+0.28 ring; see 1w's list). Whether a card is glass is **ruled** (2026-09-12,
+below): it is. The kit's release and the GPU tier's cut are the owner's
+decisions.
 
 **Traps that cost hours, in order of cost:**
 
@@ -93,7 +93,10 @@ cut are the owner's decisions.
 ("prendi spunto, non usare la libreria"); AC-33 overridden for glass (every
 layer on at rest); tint 0.18; hover lift 3 % with a soft settle; button radius
 `--sl-radius-lg`; the aurora's model is border-beam's page, not its README;
-the reference is read at its own zoom (2026-09-12, after 1w).
+the reference is read at its own zoom (2026-09-12, after 1w); **a card is
+glass, with distortion and refraction** (2026-09-12, on 1x: "deve essere
+vetro con effetti di distorsione, rifrazione, etc.") — the composer's plain
+edge is not taken, and the material's inset rim stays on cards.
 
 ## Goal
 
@@ -566,8 +569,10 @@ soft 6–7; alpha 35–55). The pale lift read as milk at every alpha, the
 vivid accent unlifted read too dark for its spread; a quarter is where the
 two ratios meet.
 
-**Still the owner's:** the border line (1w's item 2) and the rim of the glass
-on a card. Everything else in 1w's list is closed by this section.
+**Still the owner's:** the border line (1w's item 2). The rim of the glass on
+a card is ruled: a card is glass, with distortion and refraction (owner,
+2026-09-12), so the inset shine stays and the first two profiled pixels are
+the material's by design. Everything else in 1w's list is closed.
 
 ### 1w — the curve is hooked — 2026-09-12
 
