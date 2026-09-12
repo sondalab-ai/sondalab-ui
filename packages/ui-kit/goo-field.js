@@ -246,12 +246,18 @@ export function gooField(container) {
   /** Write each member's substance and face. Geometry is untouched, so this is
    *  what a hover or an active state costs.
    *  @param {string} fallback the field's declared substance */
-  function paint(fallback) {
+  function paint(fallback, restore) {
     const ground = opaque(fallback);
     for (let i = 0; i < members.length; i++) {
       const el = members[i];
       paths[i * 2].setAttribute("fill", ground);
       const face = paths[i * 2 + 1];
+      // A member that came into this frame already welded has handed its
+      // background to the substance, so it reports no colour of its own. Its
+      // face already holds the colour it had when it welded — the frame it
+      // welded on read it, because the class goes on at the END of measure().
+      // Reading it again would write the fallback over a coloured chip.
+      if (!restore && el.classList.contains("is-goo-welded")) continue;
       if (el instanceof HTMLImageElement && lastShapes[i]) {
         face.setAttribute("fill", imageFill(el, lastShapes[i], i));
         continue;
@@ -266,24 +272,26 @@ export function gooField(container) {
   /** Re-read the layout and rebuild every silhouette. Called on mount, on a
    *  resize of the container or any member, and whenever members are added or
    *  removed. Not called per frame: a laid-out field is static. */
-  function measure() {
+  function measure(restore = false) {
     if (!alive) return;
     members = [...container.querySelectorAll(MEMBERS)];
     resize(members.length);
     if (!members.length) return;
 
-    // Hand every member its own paint back before reading it. A welded member
-    // has given its background to the substance (effects.css), so it reports a
-    // clear background-color for as long as the class is on it — and reading
-    // that would fall back to --slfx-goo-fill and turn a coloured chip grey
-    // the moment it touched a neighbour. Caching the last colour instead was
-    // built first and is subtly wrong: a theme change repaints the field, and
-    // the cache would hand back the previous theme's colour. Restoring and
-    // re-taking costs a second style recalculation on a handful of elements,
-    // which is what a correct read is worth. Nothing is painted in between —
-    // the browser renders the state this function leaves behind, not the ones
-    // it passes through.
-    unweld();
+    // Hand every member its own paint back before reading it, when the caller
+    // asked for a true read: a welded member has given its background to the
+    // substance (effects.css), so it reports a clear background-color for as
+    // long as the class is on it.
+    //
+    // NOT on every frame. Doing it unconditionally was the first version and
+    // it made hover feel broken: .sl-btn transitions `background`, so removing
+    // and re-adding the class each frame restarted a 120ms transition forever,
+    // and the button's own hover and leave never arrived. The frame loop
+    // therefore leaves welded members alone — their face already holds the
+    // colour they had when they welded, read on the frame they welded, because
+    // the class goes on at the END of this function. A theme change, a resize
+    // or a new member calls measure(true) and gets the true read.
+    if (restore) unweld();
 
     const cs = getComputedStyle(container);
     const fallback = cs.getPropertyValue("--slfx-goo-fill").trim() || cs.backgroundColor;
@@ -329,7 +337,7 @@ export function gooField(container) {
     filter.setAttribute("width", region.width.toFixed(2));
     filter.setAttribute("height", region.height.toFixed(2));
 
-    paint(fallback);
+    paint(fallback, restore);
 
     // Last, once every colour has been read: the welded members hand their
     // border and their background back to the substance.
@@ -368,7 +376,7 @@ export function gooField(container) {
   const onDown = () => { held = true; start(); };
   const onUp = () => {
     held = false;
-    measure();                                    // land the released position
+    measure(true);                                // land the released position
     if (!container.matches(":hover")) stop();     // the pointer left during the drag
   };
   const onBlur = () => { if (!held) stop(); };
@@ -398,7 +406,7 @@ export function gooField(container) {
   window.addEventListener("pointerup", onUp, { passive: true });
   window.addEventListener("pointercancel", onUp, { passive: true });
 
-  const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => measure()) : null;
+  const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => measure(true)) : null;
   // measure() adds and removes <path> elements, which are themselves childList
   // mutations inside the container — so a callback that did not exclude the
   // field's own subtree would re-enter itself forever. The field is the one
@@ -407,7 +415,7 @@ export function gooField(container) {
     ? new MutationObserver((records) => {
         if (!records.some((r) => r.target !== svg && !svg.contains(r.target))) return;
         observeMembers();
-        measure();
+        measure(true);
         awaitImages();
       })
     : null;
@@ -434,12 +442,12 @@ export function gooField(container) {
     const pending = members
       .filter((el) => el instanceof HTMLImageElement && !el.complete)
       .map((el) => el.decode().catch(() => {}));
-    if (pending.length) Promise.all(pending).then(() => measure());
+    if (pending.length) Promise.all(pending).then(() => measure(true));
   }
 
   observeMembers();
   mo?.observe(container, { childList: true, subtree: true });
-  measure();
+  measure(true);
   awaitImages();
   container.classList.add("is-goo-live");
 

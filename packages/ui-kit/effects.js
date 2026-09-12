@@ -861,7 +861,7 @@ function mountGoo(root) {
  *  one read, every consumer of a token value updated from it.
  *  @returns {void} */
 function repaintGooFields() {
-  for (const handle of gooFields.values()) handle.measure();
+  for (const handle of gooFields.values()) handle.measure(true);
 }
 
 /** Take every lens away, leaving the CSS material that glass.css paints.

@@ -516,12 +516,12 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">a toolbar is one control, not three</span>
-            <div class="sl-fx-goo g-demo">
+            <div class="sl-fx-goo g-demo" style="--slfx-goo-weld: 22px">
               <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Run probe</button>
               <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Cancel</button>
               <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Reset</button>
             </div>
-            <p class="cap">Three buttons laid out on the gallery's own <b>0.7rem</b> gap, inside the default <b>--slfx-goo-weld</b> of 14px, so the substance necks between them and the row reads as one object. Each button keeps its own glass and its own label. Once it has <b>welded</b> it gives up two things, and the substance paints them instead: its <b>border</b>, whose outline would otherwise draw a line across the merged mass, and its <b>background</b>, whose opaque rectangle would cover a neighbour's substance with a hard corner — boxes stepped over one another rather than drops merging. Handing the paint over moves that colour boundary inside the filter, where the blur softens it. A member standing on its own keeps both: it is still a button, and the substance behind it is a rim, not a replacement.</p>
+            <p class="cap">Three buttons laid out on the gallery's own <b>0.7rem</b> gap — 9.8px between their boxes — under a <b>--slfx-goo-weld</b> of 22px, so the substance is continuous beneath them and the row reads as one tray. At the default 14px the same row still welds, but only just: the neck narrows to a waist and three trays read where one was meant. The weld is the knob for that, and a gap you can measure is what it is expressed in. Each button keeps its own glass and its own label. Once it has <b>welded</b> it gives up two things, and the substance paints them instead: its <b>border</b>, whose outline would otherwise draw a line across the merged mass, and its <b>background</b>, whose opaque rectangle would cover a neighbour's substance with a hard corner — boxes stepped over one another rather than drops merging. Handing the paint over moves that colour boundary inside the filter, where the blur softens it. A member standing on its own keeps both: it is still a button, and the substance behind it is a rim, not a replacement.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">the weld is a distance you bind, not a blur you tune</span>

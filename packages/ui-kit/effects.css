@@ -1506,6 +1506,15 @@
   background-color: transparent;
 }
 
+/* A welded member that is ALSO glass gives up its hairline. border-image
+   reaches the element's own border and nothing else, so the pane's ring —
+   which lives on ::after and lights on :hover — went on drawing the outline
+   the rule above exists to remove, and a hovered button in a welded toolbar
+   kept a visible edge. Same instrument and same reason as the liquid's, three
+   rules down: where a silhouette holds the edge, a rigid ring around it reads
+   as broken. */
+.sl-fx-goo .sl-fx-glass.sl-fx-goo__member.is-goo-welded::after { opacity: 0; }
+
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand
    pair (accent + its depth companion), blended with mix-blend-mode: screen so

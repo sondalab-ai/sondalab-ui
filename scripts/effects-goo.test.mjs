@@ -198,7 +198,8 @@ test("a theme change repaints every field", () => {
     effectsJs.slice(at, at + 220), /attributeFilter:\s*\[\s*"data-sl-theme"/,
     "and it must key on data-sl-theme",
   );
-  assert.match(effectsJs, /function repaintGooFields\(\)[\s\S]{0,200}handle\.measure\(\)/, "the repaint re-reads each field");
+  assert.match(effectsJs, /function repaintGooFields\(\)[\s\S]{0,300}handle\.measure\(true\)/,
+    "the repaint must ask for a TRUE read: a welded member reports no colour of its own until its paint is handed back");
 });
 
 test("an image member's picture is placed in the tile's space, not in user space", () => {
@@ -221,7 +222,7 @@ test("an image member is measured again once it has decoded", () => {
   // ResizeObserver never fires and an undecoded picture would stay a hole.
   assert.match(js, /function awaitImages\(\)/, "there must be a decode gate");
   assert.match(js, /\.decode\(\)\s*\.catch\(/, "a picture that fails to load keeps the fallback fill, it does not throw");
-  assert.match(js, /Promise\.all\(pending\)\.then\(\(\) => measure\(\)\)/, "the gate re-measures");
+  assert.match(js, /Promise\.all\(pending\)\.then\(\(\) => measure\(true\)\)/, "the gate re-measures, with a true read");
 });
 
 test("focus tracks a member's colour as well as the pointer", () => {
@@ -334,7 +335,7 @@ test("a captured drag does not stop the loop when the container sees a pointerle
   // claims cannot happen.
   assert.match(js, /if \(e\.target !== container \|\| held\) return;/, "a live drag must survive the container's own pointerleave");
   assert.match(js, /const onBlur = \(\) => \{ if \(!held\) stop\(\); \};/, "nor may losing focus end a drag");
-  assert.match(js, /const onUp = \(\) => \{[\s\S]*?measure\(\);/, "the release must land the final position");
+  assert.match(js, /const onUp = \(\) => \{[\s\S]*?measure\(true\);/, "the release must land the final position");
   assert.match(js, /container\.matches\(":hover"\)/, "and stop only if the pointer actually left");
   for (const ev of ["pointerup", "pointercancel"]) {
     assert.ok(js.includes(`window.addEventListener("${ev}", onUp`), `${ev} must be caught on the window: a drag can end anywhere`);
@@ -428,12 +429,31 @@ test("a welded member hands over its background as well as its border", () => {
   // Caching the last colour instead was built first and is subtly wrong: a
   // theme change repaints the field, and the cache hands back the previous
   // theme's colour.
-  const body = js.slice(js.indexOf("function measure()"), js.indexOf("// The substance is static"));
-  const atUnweld = body.indexOf("unweld();");
-  const atPaint = body.indexOf("paint(fallback);");
+  const body = js.slice(js.indexOf("function measure(restore"), js.indexOf("// The substance is static"));
+  const atUnweld = body.indexOf("if (restore) unweld();");
+  const atPaint = body.indexOf("paint(fallback, restore);");
   const atToggle = body.indexOf('classList.toggle("is-goo-welded"');
   assert.ok(atUnweld > -1 && atPaint > -1 && atToggle > -1, "measure() must restore, read, then re-take");
   assert.ok(atUnweld < atPaint, "the paint must be handed back before the colours are read");
   assert.ok(atPaint < atToggle, "and taken again only after");
   assert.doesNotMatch(js, /restingFill|WeakMap/, "no cache: a theme change would make it stale");
+
+  // …and NOT on every frame. .sl-btn transitions `background`, so removing and
+  // re-adding the class per frame restarted a 120ms transition forever and the
+  // button's own hover and leave never arrived.
+  const tick = js.slice(js.indexOf("const tick = () =>"), js.indexOf("const start = "));
+  assert.match(tick, /\bmeasure\(\);/, "the frame loop must NOT ask for a restore");
+  assert.doesNotMatch(tick, /measure\(true\)/);
+  assert.match(js, /if \(!restore && el\.classList\.contains\("is-goo-welded"\)\) continue;/,
+    "a member that came into the frame welded keeps the face it had when it welded");
+});
+
+test("a welded member that is also glass gives up its hairline", () => {
+  // border-image reaches the element's own border and nothing else, so the
+  // glass pane's ring — which lives on ::after and lights on :hover — went on
+  // drawing the outline the border rule exists to remove, and a hovered button
+  // in a welded toolbar kept a visible edge.
+  const rule = css.match(/\.sl-fx-goo \.sl-fx-glass\.sl-fx-goo__member\.is-goo-welded::after\s*\{([^}]*)\}/);
+  assert.ok(rule, "the welded glass member must stand its ring down");
+  assert.match(rule[1], /opacity:\s*0/, "the same instrument the liquid's live host uses");
 });
