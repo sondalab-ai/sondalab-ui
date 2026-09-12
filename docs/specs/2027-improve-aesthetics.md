@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 12:10
+## Start here — handoff, 2026-09-12 12:20
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (156 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (158 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -40,7 +40,7 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   320 / 480 px. **Loading and busy are an aurora that runs the whole border, in
   the accent**: the curtains stand down and the glow paints the conic band on
   the element's own edge, turning once per 5.5 s, with **filaments** falling
-  from it into the pane, breathing on a 7.3 s clock — cut across the lens's pull, so they bend where the
+  from it into the pane on the side runs only, breathing on a 7.3 s clock — cut across the lens's pull, so they bend where the
   band cannot. Determinate keeps its arc, whose length is the value. The
   glow is a SIBLING seated before the host, so it is in the backdrop and the
   lens bends it — which is the whole reason the curtains are the default: a
@@ -686,6 +686,20 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **The filaments keep to the side runs.** *Owner, after the sway fix: "in
+  minima parte le bande si estendono ancora verso il centro dando l'effetto
+  radar."* They did, and on two of the four runs only: the filaments are
+  vertical, so along the **top and bottom** they hang straight at the middle of
+  the element — spokes pointing at the centre, turning with the band, which is
+  what a radar is. Along the sides they run parallel to the edge and read as
+  curtains. The mask keeps the left and right strips and drops the other two.
+  **It costs some bend, and the first version of this claim said it would not.**
+  Measured on one frozen phase, control 0 px: band alone **1.63 %**, filaments
+  on all four runs **2.76 %**, on the sides only **1.93 %** — so the top and
+  bottom ones were worth about two fifths of it, because a vertical line on the
+  bottom run is parallel to the pull at its middle but not near the corners,
+  where the pull turns. The trade is deliberate.
 
 - **The curtains sway; they do not scan.** *Owner: "si puo evitare l'effetto
   radar sui pilastri?"* Read off the page rather than guessed: the drift ran
