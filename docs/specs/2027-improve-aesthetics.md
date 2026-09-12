@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 11:30
+## Start here — handoff, 2026-09-12 11:45
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (147 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (151 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -37,10 +37,11 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   page's derived light pole, so the only colour in a pane is the colour the
   glass makes of it (rgb spread 3 in the middle, 46 at the faces). Fitted on
   `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
-  320 / 480 px. **Loading and busy are an aurora that runs the whole border**:
-  the curtains stand down and the glow paints the conic band on the element's
-  own edge, turning once per 1.1 s; determinate keeps its arc, whose length is
-  the value. The
+  320 / 480 px. **Loading and busy are an aurora that runs the whole border, in
+  the accent**: the curtains stand down and the glow paints the conic band on
+  the element's own edge, turning once per 1.1 s, with **filaments** falling
+  from it into the pane — cut across the lens's pull, so they bend where the
+  band cannot. Determinate keeps its arc, whose length is the value. The
   glow is a SIBLING seated before the host, so it is in the backdrop and the
   lens bends it — which is the whole reason the curtains are the default: a
   wash that follows the edge moves 0.93 % of its pixels under the lens, the
@@ -670,8 +671,30 @@ loading dovrebbe essere un loading beam"*.
   that hugs the border maps onto very nearly itself. A lobed variant (a
   repeating conic comb intersected into the mask) was built and measured: it
   renders, and bends **1.43 %**. Not shipped — it costs a mask layer and buys
-  nothing. **To make loading visibly refract, its light would have to leave the
-  border**, which is the shape the owner rejected.
+  nothing.
+
+- **Filaments, and the geometry that decides everything here.** *Owner: "si
+  prova, e usa il colore di accento."* The middle path: the light stays on the
+  border and hangs spokes into the pane. The first cut of them was **radial** —
+  a conic comb from the centre — and it moved the bend from 1.63 % to
+  **1.83 %**, which is nothing, because **the displacement is radial**: it pulls
+  every sample toward the middle, so anything radially symmetric is invariant
+  under it, a band along the border and a comb of spokes alike. Cut the
+  curtains' way instead — vertical, meeting the left and right faces side-on —
+  the same filaments take it to **2.76 %** (control 0 px; the ambient curtains
+  are 5.00 %). **This is the rule the whole slice turns on, stated once: a lens
+  with a radial map can only be seen to bend structure that runs across the
+  radius.** The filaments hang five times deeper than the band, fade out, are
+  cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **Loading is the accent.** The ambient light is white, so the one colour a
+  surface shows while working is the product's own — which is what tells a
+  loading card from a resting one at a glance. Band and filaments are one hue
+  at three strengths. Both are declared **on the pseudo-elements that paint
+  them**, and that is not a style choice: `seatGlow()` copies the host's values
+  onto the glow as **inline** style, and no rule beats an inline declaration.
+  The first version put them on the glow and they were silently ignored — the
+  same trap as a sibling's missing variables, one level down.
 
 - **Loading runs the border.** *Owner, on the first attempt at it: "deve
   essere un effetto aurora ma che percorre tutto il bordo, da usare per il
