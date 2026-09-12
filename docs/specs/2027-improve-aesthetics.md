@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 11:15
+## Start here — handoff, 2026-09-12 11:30
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (146 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (147 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -37,9 +37,10 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   page's derived light pole, so the only colour in a pane is the colour the
   glass makes of it (rgb spread 3 in the middle, 46 at the faces). Fitted on
   `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
-  320 / 480 px. **Indeterminate busy is a travelling beam** clipped to its own
-  box, 1.4 s per crossing, with the curtains standing down; determinate keeps
-  its arc, whose length is the value. The
+  320 / 480 px. **Loading and busy are an aurora that runs the whole border**:
+  the curtains stand down and the glow paints the conic band on the element's
+  own edge, turning once per 1.1 s; determinate keeps its arc, whose length is
+  the value. The
   glow is a SIBLING seated before the host, so it is in the backdrop and the
   lens bends it — which is the whole reason the curtains are the default: a
   wash that follows the edge moves 0.93 % of its pixels under the lens, the
@@ -656,14 +657,21 @@ loading dovrebbe essere un loading beam"*.
   320 / 480 px. The two move together by necessity: a rib narrower than about
   twice its blur is erased by that blur, and an erased rib is nothing for the
   lens to bend.
-- **Loading is a beam.** Indeterminate busy paints `--beam`'s own line,
-  travelling once per 1.4 s, linear and never reversing — a beam that swings
-  back reads as scanning, not as progress. One difference from `--beam`, and it
-  is the point: that mode's light carries on past the pane, while a control
-  that is loading has to say so about **itself**, so this one is clipped to its
-  own box (unclipped, a card's loading beam reached the full width of the bed).
-  The curtains stand down while it runs. Determinate is excluded throughout:
-  there the arc's length is the value.
+- **Loading runs the border.** *Owner, on the first attempt at it: "deve
+  essere un effetto aurora ma che percorre tutto il bordo, da usare per il
+  loading" — e il busy.* A line crossing the pane was built first and
+  withdrawn; `--beam` keeps it as its own mode. While an element is working the
+  curtains stand down and the glow paints the **band** — the conic bloom,
+  masked to four strips on the element's own border — and the orbit already in
+  the file turns it once per 1.1 s. Nothing is re-declared: it is the base
+  bloom, and only where it sits changes. A curtains glow is seated with **no**
+  spread, so the band's usual inset — written for a box 32.5 px larger than the
+  host on every side — pushed it a third of the way into a card;
+  `--slfx-bloom-inset` puts it back on the border. Verified on the showcase's
+  busy card: inset 1 px, the four strips at 10 px, blur 6.5 px, clipped to the
+  box, orbiting. Determinate is excluded throughout: there the arc's length is
+  the value. A filled control (`--rim`) is untouched — its ring steps outside
+  the fill by the declension and already orbits.
 
 **Open, and the owner's: how far the white light should decompose.** The colour
 at the faces is the lens's `disperse`, an amplification of the IOR triple, and
