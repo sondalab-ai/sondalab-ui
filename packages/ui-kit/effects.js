@@ -646,6 +646,9 @@ function seatGlow(el, glow) {
   const r = el.getBoundingClientRect();
   const p = parent.getBoundingClientRect();
   // Pillars stay inside the element: no spread, the box IS the host's box.
+  // effects.css depends on exactly this — it excludes the pillars from the
+  // clip written from --slfx-glow (which would eat a box that never had that
+  // spread) and gives them their own at inset 0. One decision, two files.
   const spread = glow.hasAttribute("data-sl-fx-pillars") ? 0 : glowSpread(el);
   glow.style.left = `${r.left - p.left - spread}px`;
   glow.style.top = `${r.top - p.top - spread}px`;

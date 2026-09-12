@@ -1052,8 +1052,8 @@
      --pillars seated with NO spread at all (the box IS the host's box), so
                this inset would eat it from every side — measured on a 40px
                button, 32.5px of inset on a 40px box left nothing: 11 297
-               pixels of curtain, max delta 149, simply gone. It needs no clip
-               anyway: overflow:hidden and the seat radius already hold it. */
+               pixels of curtain, max delta 149, simply gone. It carries its
+               own clip at inset 0 instead, below. */
 .sl-fx-aurora__glow[data-sl-fx-seated]:not([data-sl-fx-beam], [data-sl-fx-pillars]):not(:has(+ .sl-fx-aurora--rim)) {
   clip-path: inset(calc(1px + var(--slfx-rim-out) + var(--slfx-glow)) round var(--slfx-seat-radius));
 }
@@ -1150,6 +1150,13 @@
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
   filter: blur(var(--slfx-pillar-soft, 4px));
+  /* overflow:hidden clips the PATTERN; the blur is applied to the result and
+     spills past the box anyway — measured on the showcase's 43px field, where
+     the curtains smudged above and below the control. clip-path runs after
+     the filter, so it is the one that holds. Inset 0, not the seated glow's
+     spread: a pillars glow is seated with no spread at all, its box IS the
+     host's. The two are one decision — see seatGlow() in effects.js. */
+  clip-path: inset(0 round var(--slfx-seat-radius));
 }
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]::before {
   inset: -20% -40%;

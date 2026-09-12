@@ -112,6 +112,15 @@ test("the glow's clip excludes every mode that is not seated with the spread", (
     assert.match(rule.selector, new RegExp(`:not\\([^)]*\\[${mode}\\]`), `${mode} must be excluded from the clip`);
   }
   assert.match(rule.selector, /:not\(:has\(\+ \.sl-fx-aurora--rim\)\)/, "--rim must be excluded from the clip");
+
+  // ...but the curtains still need a clip of their own, at the geometry they
+  // DO have. overflow:hidden clips the pattern and not the blur applied after
+  // it: measured on the showcase's 43px field, the light smudged above and
+  // below the control until this existed.
+  const pillars = RULES.find((r) => /\[data-sl-fx-pillars\]$/.test(r.selector));
+  assert.ok(pillars, "the pillars' own rule must exist");
+  assert.match(pillars.body, /clip-path:\s*inset\(0 round var\(--slfx-seat-radius\)\)/,
+    "a pillars glow is seated with no spread, so its clip is the host's own box");
 });
 
 // Regression, 2026-09-12 (lab/1w): the bloom band was a padding ring cut out
