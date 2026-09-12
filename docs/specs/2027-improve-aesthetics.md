@@ -611,6 +611,15 @@ behind, measured with the page's animations frozen against a 0-pixel control:
 **1.80 %** on the pane cell over dense telemetry text, both confined to the
 host's own rim band, where the glass already fringed at 6.
 
+**And one the default flip reached that the bed never would have.** Making the
+curtains the default put them on every aurora host, including the showcase's
+43 px text field — where they smudged above and below the control. `overflow:
+hidden` clips the ::before that paints them, but `filter: blur()` is applied to
+the result and spills past the box anyway; `clip-path` runs after the filter,
+so it is the one that holds, at `inset(0)` because a pillars glow is seated
+with no spread. Fixed in `3b1693f` with a test. The lesson generalises: a
+default is not a mode, and the surfaces it newly reaches are where to look.
+
 **A regression the bed caught, and it was `12367ef`'s.** That commit clipped the
 seated glow to the host's box using `--slfx-glow`, the spread `seatGlow()` gives
 a normal glow. A `--pillars` glow is seated with **no** spread — its box is the
