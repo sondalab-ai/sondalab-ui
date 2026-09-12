@@ -687,6 +687,16 @@ loading dovrebbe essere un loading beam"*.
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
 
+- **A light with no clock is parked, not slow.** *Owner, on the first render of
+  the filaments: "oltre la luce che ruota, ce n'è altra che però è limitata
+  all'angolo inferiore sx, non mi piace."* The filaments are cut from
+  `--slfx-angle` like the band, but the orbit rule named only `::before`, so
+  nothing turned them and they sat wherever that property's initial value
+  points — **210deg, the bottom-left corner**. Read off the page rather than
+  guessed: the band's pseudo-element carried the orbit, the filaments' carried
+  `none`, both at 210deg a second apart. The guard now requires every light cut
+  from that angle to appear in the selector that turns it.
+
 - **Loading is the accent.** The ambient light is white, so the one colour a
   surface shows while working is the product's own — which is what tells a
   loading card from a resting one at a glance. Band and filaments are one hue
