@@ -403,3 +403,37 @@ test("an image member's href is written only when it changed", () => {
   assert.doesNotMatch(fn.replace(/if \(picture\.getAttribute[^\n]*\n/, ""), /setAttribute\("href"/,
     "and written nowhere else");
 });
+
+test("a welded member hands over its background as well as its border", () => {
+  // A member's box is opaque and RECTANGULAR: where two overlap, the one on
+  // top covers its neighbour's substance with a hard-cornered rectangle, and
+  // the mass reads as boxes stepped over one another rather than as drops
+  // merging. Handing the paint to the substance moves that colour boundary
+  // inside the filter, where the blur softens it.
+  const rule = css.match(/\.sl-fx-goo \.sl-fx-goo__member\.is-goo-welded\s*\{([^}]*)\}/);
+  assert.ok(rule, "the rule must be scoped through the container, so it is 0-3-0");
+  assert.match(rule[1], /border-image:/, "the border still goes");
+  assert.match(rule[1], /background-color:\s*transparent/, "and so does the background");
+  assert.doesNotMatch(rule[1], /border-color|border-width|border-radius|display|opacity/,
+    "nothing else may be taken from the member");
+  assert.doesNotMatch(rule[1], /(?:^|;)\s*color\s*:/, "its text colour is its own");
+
+  // And the colour must survive being handed over: a welded member's computed
+  // background-color reads clear from the next frame on, so a naive re-read
+  // would fall back to --slfx-goo-fill and turn a coloured chip grey the
+  // moment it touched a neighbour.
+  // …and the colour must survive being handed over. A welded member reports a
+  // clear background-color for as long as the class is on it, so measure()
+  // gives every member its paint back BEFORE reading, and re-takes it after.
+  // Caching the last colour instead was built first and is subtly wrong: a
+  // theme change repaints the field, and the cache hands back the previous
+  // theme's colour.
+  const body = js.slice(js.indexOf("function measure()"), js.indexOf("// The substance is static"));
+  const atUnweld = body.indexOf("unweld();");
+  const atPaint = body.indexOf("paint(fallback);");
+  const atToggle = body.indexOf('classList.toggle("is-goo-welded"');
+  assert.ok(atUnweld > -1 && atPaint > -1 && atToggle > -1, "measure() must restore, read, then re-take");
+  assert.ok(atUnweld < atPaint, "the paint must be handed back before the colours are read");
+  assert.ok(atPaint < atToggle, "and taken again only after");
+  assert.doesNotMatch(js, /restingFill|WeakMap/, "no cache: a theme change would make it stale");
+});

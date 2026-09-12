@@ -1477,20 +1477,34 @@
    no offsets moves nothing; it only buys the z-index. */
 .sl-fx-goo__member { position: relative; z-index: 1; }
 
-/* A member that has WELDED to a neighbour gives up its own border, and the
-   mass carries the edge. Without this a merged shape is crossed by the
-   outlines of the elements inside it — three chips dragged together read as
-   three cards stacked on a blob rather than as one substance, which is the
-   opposite of what the family claims. A member standing on its own keeps its
-   border: it is still a button, and the substance behind it is a rim, not a
-   replacement, so goo-field.js sets the class per member and per measure.
+/* A member that has WELDED to a neighbour gives up its own BORDER and its own
+   BACKGROUND, and the substance paints it instead.
 
-   A transparent border-image, never border-color — the same instrument the
-   liquid uses on its live host, and for the same reason: the computed border
-   colour has to stay readable, both for the author's own hover states and
-   because the substance reads its member's computed paint every frame. The
-   box does not move either: border-image occupies the border's own box. */
-.sl-fx-goo__member.is-goo-welded { border-image: linear-gradient(transparent 0 0) 1; }
+   The border first: without this a merged shape is crossed by the outlines of
+   the elements inside it, and three chips dragged together read as three cards
+   stacked on a blob. A transparent border-image, never border-color — the same
+   instrument the liquid uses on its live host, and for the same reason: the
+   computed border colour stays readable, and border-image occupies the
+   border's own box, so nothing moves.
+
+   The background is the second half, and without it the first is not enough.
+   A member's box is opaque and RECTANGULAR: where two members overlap, the one
+   on top covers its neighbour's substance with a hard-cornered rectangle, and
+   the mass reads as boxes stepped over one another rather than as drops
+   merging. Handing the paint to the substance moves that colour boundary
+   INSIDE the filter, where the blur softens it — the goo's colour matrix is
+   identity on RGB, so a hard edge between two faces comes out as a gradient
+   the width of the blur. The member keeps its text, which rides crisp on top
+   of its own colour, because the substance under a member is that member's
+   own fill.
+
+   Scoped through the container so this is 0-3-0 and lands after
+   components.css: a component's own `:hover:not(:disabled)` fill rule is
+   0-3-0 too, and the substance — not the box — is what carries the state. */
+.sl-fx-goo .sl-fx-goo__member.is-goo-welded {
+  border-image: linear-gradient(transparent 0 0) 1;
+  background-color: transparent;
+}
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand

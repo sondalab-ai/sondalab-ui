@@ -272,6 +272,19 @@ export function gooField(container) {
     resize(members.length);
     if (!members.length) return;
 
+    // Hand every member its own paint back before reading it. A welded member
+    // has given its background to the substance (effects.css), so it reports a
+    // clear background-color for as long as the class is on it — and reading
+    // that would fall back to --slfx-goo-fill and turn a coloured chip grey
+    // the moment it touched a neighbour. Caching the last colour instead was
+    // built first and is subtly wrong: a theme change repaints the field, and
+    // the cache would hand back the previous theme's colour. Restoring and
+    // re-taking costs a second style recalculation on a handful of elements,
+    // which is what a correct read is worth. Nothing is painted in between —
+    // the browser renders the state this function leaves behind, not the ones
+    // it passes through.
+    unweld();
+
     const cs = getComputedStyle(container);
     const fallback = cs.getPropertyValue("--slfx-goo-fill").trim() || cs.backgroundColor;
     // Dilation preserves the shape and blur melts it, so the weld distance is
@@ -307,7 +320,6 @@ export function gooField(container) {
       const d = roundedRectPathAt(s.x, s.y, s.w, s.h, s.radii);
       paths[i * 2].setAttribute("d", d);
       paths[i * 2 + 1].setAttribute("d", d);
-      members[i].classList.toggle("is-goo-welded", welded[i]);
     }
     blur.setAttribute("stdDeviation", sigma.toFixed(3));
 
@@ -318,6 +330,10 @@ export function gooField(container) {
     filter.setAttribute("height", region.height.toFixed(2));
 
     paint(fallback);
+
+    // Last, once every colour has been read: the welded members hand their
+    // border and their background back to the substance.
+    for (let i = 0; i < members.length; i++) members[i].classList.toggle("is-goo-welded", welded[i]);
   }
 
   // The substance is static once laid out, so there is no animation frame at
