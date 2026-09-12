@@ -216,10 +216,35 @@ test("every animation sits inside a reduced-motion guard", () => {
   // after the colon is never "none", it's a space) and the exemption never
   // actually fires — `animation: none` still matches. Folding the optional
   // whitespace into the lookahead itself closes that.
-  for (const m of effects.matchAll(/\banimation:(?!\s*none\b)/g)) {
-    const inside = guards.some(([a, b]) => m.index > a && m.index < b);
-    assert.ok(inside, `animation at index ${m.index} is outside a reduced-motion guard`);
+  // The glitch's four are DELIBERATELY outside (2026-09-12). They sit in the
+  // open and a `prefers-reduced-motion: reduce` block takes them away — the
+  // same reading, with one difference: a document can decline the removal with
+  // data-sl-fx-motion="always". A product may have a documented reason to
+  // animate for a visitor reporting the preference; sondalab.eu is one. The
+  // escape reaches the glitch alone, and never high contrast.
+  const escape = effects.slice(effects.indexOf('[data-sl-fx="on"] .sl-fx-glitch.is-glitching {'));
+  const glitchOutside = [...effects.matchAll(/\banimation:(?!\s*none\b)/g)]
+    .filter((m) => !guards.some(([a, b]) => m.index > a && m.index < b));
+  assert.equal(glitchOutside.length, 4, `only the glitch's four animations may sit outside the guard, got ${glitchOutside.length}`);
+  for (const m of glitchOutside) {
+    const line = effects.slice(effects.lastIndexOf("\n", m.index), m.index + 60);
+    assert.match(line, /slfx-(?:glitch-jit|glitch-a|glitch-b|shatter)/, `not a glitch animation: ${line.trim()}`);
   }
+
+  // …and `reduce` must actually take them away, unless the document declined.
+  const kill = RULES.filter(
+    (r) => /data-sl-fx-motion="always"/.test(r.selector) && /animation:\s*none/.test(r.body),
+  );
+  assert.equal(kill.length, 1, "one rule removes the glitch's motion under reduce");
+  assert.match(kill[0].selector, /:root:not\(\[data-sl-fx-motion="always"\]\)/, "and it is the document that declines, not the element");
+  for (const sel of ["is-glitching", "is-glitching::before", "is-glitching::after", "sl-fx-glitch__shard"]) {
+    assert.ok(kill[0].selector.includes(sel), `the kill must reach ${sel}`);
+  }
+  // The escape is narrow: it may not reach the high-contrast refusal.
+  assert.doesNotMatch(
+    escape, /data-sl-fx-motion="always"[^{]*high-contrast|high-contrast[^{]*data-sl-fx-motion="always"/,
+    "a motion derogation may not stand down high contrast, which is a different requirement",
+  );
 });
 
 test("only shape re-declares the ring background; states rebind the stops", () => {

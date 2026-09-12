@@ -865,10 +865,30 @@ function injectGlows(root) {
 /** The conditions under which no effect may run, re-read at call time rather
  *  than sampled at mount: a visitor can switch theme, or turn on reduced
  *  motion, long after the page loaded. */
+/** Whether this document has taken the reduced-motion derogation.
+ *
+ *  A product may have a documented reason to animate for a visitor reporting
+ *  the preference. sondalab.eu is the case this exists for: Windows reports
+ *  `reduce` by default under "adjust for best performance", and that site's
+ *  owner ruled its glitch is brand rather than decoration. The derogation is
+ *  the consumer's to take and to justify — mount() only takes it when asked,
+ *  by a name a reader cannot mistake for anything else.
+ *
+ *  It reaches the GLITCH alone (effects.css keeps every other family's motion
+ *  inside the media query, where nothing can overrule it), and it never
+ *  reaches high contrast, which is a different requirement with a different
+ *  reason: there the point is that what is behind a surface must not interfere
+ *  with what is on it.
+ *  @returns {boolean} */
+function motionDerogated() {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.getAttribute("data-sl-fx-motion") === "always";
+}
+
 function suppressed() {
   if (typeof document === "undefined") return true;
   if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return true;
-  return window.matchMedia(REDUCE).matches;
+  return window.matchMedia(REDUCE).matches && !motionDerogated();
 }
 
 /* ── public API ──────────────────────────────────────────────────────────────*/
@@ -877,19 +897,34 @@ function suppressed() {
  * Arm Tier 1: pointer-driven liquid, finite glitch bursts, animated aurora.
  * Refuses under reduced motion and under high contrast — Tier 0 is the default
  * state and stays correct on its own.
+ *
+ * `ignoreReducedMotion` is a derogation, not a convenience, and a consumer
+ * takes it on their own evidence. It arms Tier 1 for a visitor reporting
+ * `prefers-reduced-motion: reduce` and lets the GLITCH animate for them; every
+ * other family's motion stays inside the media query in effects.css, where
+ * nothing can overrule it. It has no effect on high contrast, which refuses
+ * regardless. The case it exists for: sondalab.eu, where Windows reports the
+ * preference by default under "adjust for best performance" and the owner
+ * ruled the glitch is brand rather than decoration.
+ *
  * @param {Document|Element} root
+ * @param {{ignoreReducedMotion?: boolean}} [options]
  * @returns {boolean} whether Tier 1 was armed
  */
-export function mount(root = document) {
+export function mount(root = document, { ignoreReducedMotion = false } = {}) {
   if (armed) return true;
   if (typeof window === "undefined") return false;
   const html = document.documentElement;
   if (html.getAttribute("data-sl-theme") === "high-contrast") return false;
+  // Written before anything reads it, and written by the caller's request
+  // alone: effects.css keys the glitch's reduced-motion removal off this
+  // attribute, so the CSS and the JavaScript decline together or not at all.
+  if (ignoreReducedMotion) html.setAttribute("data-sl-fx-motion", "always");
   // Before the motion guard, and deliberately: the goo animates nothing, so
   // refusing it for a motion preference would take away material rather than
   // movement. mountGoo() owns its own observers and its own armed flag.
   mountGoo(root);
-  if (window.matchMedia(REDUCE).matches) return false;
+  if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;
 
   readTokens(html);
   // data-sl-theme and style both matter: a theme switch changes the former,

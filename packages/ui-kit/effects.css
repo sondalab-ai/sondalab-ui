@@ -1723,21 +1723,6 @@
     100% { transform: translateX(0); }
   }
 
-  [data-sl-fx="on"] .sl-fx-glitch.is-glitching {
-    animation: slfx-glitch-jit var(--slfx-gdj, 0.16s) steps(2) infinite;
-  }
-  [data-sl-fx="on"] .sl-fx-glitch.is-glitching::before {
-    animation: slfx-glitch-a var(--slfx-gda, 0.16s) steps(2) infinite;
-    animation-delay: var(--slfx-gpha, 0s);
-  }
-  [data-sl-fx="on"] .sl-fx-glitch.is-glitching::after {
-    animation: slfx-glitch-b var(--slfx-gdb, 0.16s) steps(2) infinite;
-    animation-delay: var(--slfx-gphb, 0s);
-  }
-  [data-sl-fx="on"] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard {
-    animation: slfx-shatter var(--slfx-gda, 0.16s) steps(2) infinite;
-    animation-delay: calc(var(--slfx-i) * -0.028s);
-  }
 
 }
 
@@ -1749,6 +1734,55 @@
    value, and looked at on the page at 0.55 the end of the arc — the thing
    that carries the value — loses the crispness it needs. It stays at full
    opacity, static as it always was. */
+/* ══ GLITCH MOTION — outside the reduced-motion guard, killed by it ══════════
+   The other families' animations live inside `prefers-reduced-motion:
+   no-preference`, so the query decides and nothing can overrule it. The
+   glitch's four are here instead, unguarded, and the block below takes them
+   away under `reduce` — which is the same reading, with one difference: a
+   surface can decline the removal.
+
+   Why only the glitch has the escape. A product may have a documented reason
+   to animate for a visitor reporting `reduce` — sondalab.eu is one: Windows
+   reports the preference by default under "adjust for best performance", and
+   that site's owner ruled its glitch is brand rather than decoration. The
+   escape is deliberately NARROW: it is opt-in per document, it is written as
+   a word a reader cannot mistake, and it reaches the glitch alone. It does not
+   touch high contrast, which is a different requirement with a different
+   reason, and it is not a general "ignore accessibility preferences" switch.
+
+   effects.js writes the attribute; mount() takes ignoreReducedMotion, and a
+   consumer who has not asked for it gets the preference honoured. */
+[data-sl-fx="on"] .sl-fx-glitch.is-glitching {
+  animation: slfx-glitch-jit var(--slfx-gdj, 0.16s) steps(2) infinite;
+}
+[data-sl-fx="on"] .sl-fx-glitch.is-glitching::before {
+  animation: slfx-glitch-a var(--slfx-gda, 0.16s) steps(2) infinite;
+  animation-delay: var(--slfx-gpha, 0s);
+}
+[data-sl-fx="on"] .sl-fx-glitch.is-glitching::after {
+  animation: slfx-glitch-b var(--slfx-gdb, 0.16s) steps(2) infinite;
+  animation-delay: var(--slfx-gphb, 0s);
+}
+[data-sl-fx="on"] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard {
+  animation: slfx-shatter var(--slfx-gda, 0.16s) steps(2) infinite;
+  animation-delay: calc(var(--slfx-i) * -0.028s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-sl-fx-motion="always"]) :is(
+    .sl-fx-glitch.is-glitching,
+    .sl-fx-glitch.is-glitching::before,
+    .sl-fx-glitch.is-glitching::after,
+    .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard) {
+    animation: none !important;
+  }
+  /* And the shatter gives the label back: its bands are the animation, so a
+     static shard stack over a hidden label is not a quieter glitch, it is a
+     missing word. */
+  :root:not([data-sl-fx-motion="always"]) .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__text { opacity: 1 !important; }
+  :root:not([data-sl-fx-motion="always"]) .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 0 !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
   .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"])::after { opacity: 0.55; }

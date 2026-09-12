@@ -266,7 +266,7 @@ test("the goo survives a motion preference, and only high contrast refuses it", 
   // for less material. Its CSS is not gated on data-sl-fx="on" either.
   const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
   const goo = effectsJs.indexOf("mountGoo(root);");
-  const guard = effectsJs.indexOf("if (window.matchMedia(REDUCE).matches) return false;");
+  const guard = effectsJs.indexOf("if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;");
   assert.ok(goo > -1 && guard > -1, "mount() must call mountGoo() and still guard on motion");
   assert.ok(goo < guard, "the goo must be armed before the motion guard, not after it");
 
