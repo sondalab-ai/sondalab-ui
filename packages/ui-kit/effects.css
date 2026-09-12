@@ -1260,8 +1260,19 @@
      corners, where the pull turns. The trade is deliberate: the owner asked
      for the radar to go, and 1.93% is still half again what the band manages
      on its own. */
+  /* THE COMB TURNS, the layer does not (owner: "man mano che seguono il bordo
+     dovrebbero anche ruotare, adesso sembrano delle bande che si allungano e
+     basta solo su asse y"). Rotating the whole layer was tried first and is
+     the wrong shape: a rotated rectangle uncovers its own corners, so it has
+     to be grown past the box, and `inset: -30%` on a 494px-wide card pushes
+     the side strips 148px OUTSIDE it — the filaments left the element
+     entirely and the bend fell from 1.93% back to 1.60%, which is the band on
+     its own. Turning the gradient's own angle instead keeps the strips on the
+     border where they belong, and the filaments sweep through their
+     orientations as the light travels: parallel to the edge for half the
+     turn, leaning across it for the rest. */
   mask:
-    repeating-linear-gradient(90deg,
+    repeating-linear-gradient(var(--slfx-comb, 90deg),
       black 0 6px, transparent 12px 21px,
       black 25px 29px, transparent 34px 44px,
       black 47px 52px, transparent 58px),
@@ -1555,6 +1566,11 @@
   /* How deep the loading filaments hang into the pane. Registered so a
      keyframe interpolates it rather than swapping it. */
   @property --slfx-filament-depth { syntax: "<length>"; inherits: false; initial-value: 50px; }
+  /* The filaments' own direction. Registered so a keyframe turns it smoothly
+     rather than stepping; 90deg is a vertical comb, and a full turn brings it
+     back to itself. */
+  @property --slfx-comb { syntax: "<angle>"; inherits: false; initial-value: 90deg; }
+  @keyframes slfx-comb-turn { from { --slfx-comb: 90deg; } to { --slfx-comb: 450deg; } }
   @keyframes slfx-filament-breathe {
     from { --slfx-filament-depth: 28px; }
     to   { --slfx-filament-depth: 96px; }
@@ -1606,7 +1622,8 @@
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::after {
     animation:
       slfx-orbit var(--slfx-load-turn, 5.5s) linear infinite,
-      slfx-filament-breathe 7.3s ease-in-out infinite alternate;
+      slfx-filament-breathe 7.3s ease-in-out infinite alternate,
+      slfx-comb-turn var(--slfx-load-turn, 5.5s) linear infinite;
   }
 
   /* Base jitter on the real text plus a third colour halo via text-shadow. */

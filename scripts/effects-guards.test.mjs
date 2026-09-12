@@ -128,7 +128,13 @@ test("the loading light and the curtains' stand-down are one condition", () => {
   // spokes pointing at the centre is as invariant as the band itself — measured,
   // the spokes moved the bend from 1.63% to 1.83%. Vertical lines meet the left
   // and right faces side-on, which is the whole reason the curtains bend.
-  assert.match(paints[0].body, /repeating-linear-gradient\(90deg/, "cut across the pull, or there is nothing for the lens to bend");
+  // Cut ACROSS the pull, not along it. The displacement is radial, so a comb of
+  // spokes pointing at the centre is as invariant as the band itself — measured,
+  // the spokes moved the bend from 1.63% to 1.83%. A straight comb meets the
+  // left and right faces side-on, which is the whole reason the curtains bend;
+  // its angle turns with the light (--slfx-comb) so the filaments follow the
+  // border instead of always lying on one axis.
+  assert.match(paints[0].body, /repeating-linear-gradient\(var\(--slfx-comb/, "cut across the pull, or there is nothing for the lens to bend");
   // What is left is the turning itself, and it has to stay inside the guard.
   const turns = busy.filter((r) => /animation:/.test(r.body));
   assert.ok(turns.length >= 1, "the band has to travel, or it is not loading");
