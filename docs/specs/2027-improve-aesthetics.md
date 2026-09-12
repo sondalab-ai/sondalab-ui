@@ -11,16 +11,16 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 16:00
+## Start here — handoff, 2026-09-12 16:15
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (173 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (175 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/effects.css" --product effects` clean. 189 tests green. The kit ships:
+"packages/ui-kit/effects.css" --product effects` clean. 190 tests green. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
   its capture within ±3 luminance on `lab/1n`; tint 0.18, floored at 0.34 under
@@ -693,17 +693,29 @@ loading dovrebbe essere un loading beam"*.
 screenshots: "ritengo questi dei difetti."* Two were the lens, one was a
 strength, one was mine from an hour earlier.
 
-- **The lens on a small pane.** A 55 × 30 button rendered a flat **grey slab**
-  where its own material renders a clean pane, and a 96 × 40 one **shredded the
-  text behind it** into red/green/blue copies; a 494 × 139 card is correct. So
-  it is a size boundary, and everything else was ruled out first, each by
-  capture and diff: the displacement (grey at scale 0), `reach` (6 and 18
-  identical), the filter region (grown 24 px a side), the ground tint (lens off
-  is correct at the same tint), the frost, and finally the `url()` alone
-  (removed from the chain, the pane is correct). The lens now answers `null`
-  below **six times its own cap** — 108 px at the aurora's reach — and the
-  element keeps `glass.css`'s material. Which is what the reference's own
-  button has: liqui-glass's refract layer moves 0.04 % of its pixels.
+- **The grey pane was TWO things, and the first answer to it was wrong.** The
+  first attempt dropped the lens on any pane under six times its cap — most of
+  the kit's controls. *Owner: "ma chi ti ha detto di togliere l'effetto lente
+  dai bottoni? Quello era fondamentale per liquid glass!"* Right on both
+  counts: that is a decision about what liquid glass **is**, and it was not the
+  implementer's to take. Reverted, and the two real causes separated:
+  - **The cap has to be proportionate, not a gate.** `reach` says a slab bends
+    at its edge by a fixed few pixels, but "a few" must stay few *relative to
+    the pane*: 18 px is a tenth of a card's height and most of a button's, and
+    at that share the filter samples outside its own region. The cap is now
+    `min(asked, shorter side / 6)` — the card keeps 18, a 40 px button gets
+    6.7, a 30 px one 5, all near the material's fitted 6. **The lens stays
+    bound on every pane.**
+  - **A lens cannot see through a glass ancestor, and that is the browser's
+    rule.** A glass host carries `isolation: isolate` so its layers sit under
+    its own label, and that alone makes it a Backdrop Root; a backdrop-filter
+    inside one gets an **empty** backdrop and renders whatever its material
+    makes of nothing — the grey slab. Isolated by subtraction on the dialog,
+    each step a capture: still grey at displacement 0, at cap 5, with the
+    region grown 24 px a side, at 44 px tall, and with the ancestor's own lens
+    removed; correct only when the ancestor dropped its lens **and** its
+    isolation together, which is not available. So the innermost lens refuses
+    there and only there.
 - **The colour split.** It was a fraction of the bend, right only while the
   bend is physical; ours is capped for looks. At 6 px the red-to-blue
   separation was 4.3 px, the fringe the prism was fitted at; at the aurora's
