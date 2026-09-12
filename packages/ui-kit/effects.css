@@ -801,7 +801,6 @@
    any more; the two kill-switch rules below are left because they are harmless
    and a consumer may still have one in an old build. */
 
-
 /* The Tier 2 canvas. Its box is the host's BORDER box — the shader is handed
    that rect and reads the pointer against the same origin — and it sits in the
    same layer as the pane's own slab: above the host's fill, below the label.
@@ -1203,92 +1202,21 @@
      the light would simply stop. */
   --slfx-load-turn: 5.5s;
 }
-/* ── THE FILAMENTS ──────────────────────────────────────────────────────────
-   Owner: the band on the border cannot be seen to bend — measured, 1.63% of
-   its pixels against the curtains' 5.00% — because the lens pulls radially
-   inward and light that hugs the border maps onto itself. So this hangs
-   something INTO the pane from it: fine spokes, dropping inward from under the
-   travelling band, five times deeper than the band itself and fading out. They
-   have structure across the direction the lens pulls, which is the whole
-   condition for a bend to be visible, and they belong to the band because they
-   are cut from the same angle and carry the same accent.
-
-   The glow's ::after was free — ::before is the band — so this costs no new
-   element. It sits above the band and under the host's own content, like
-   everything else the glow paints. */
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::after {
-  /* Same hue as the band it falls from, at half strength. Declared here for
-     the same reason: the host's own declarations never reach a sibling. */
-  --slfx-filament: color-mix(in srgb, var(--slfx-accent-vivid) 50%, transparent);
-  content: "";
-  position: absolute;
-  inset: var(--slfx-bloom-inset, 1px);
-  border-radius: inherit;
-  pointer-events: none;
-  background: conic-gradient(from var(--slfx-angle),
-    transparent 0deg,
-    var(--slfx-filament) calc(var(--slfx-arc) * 0.18),
-    var(--slfx-filament) calc(var(--slfx-arc) * 0.82),
-    transparent var(--slfx-arc),
-    transparent 360deg);
-  /* VERTICAL, not spokes. The displacement is radial — it pulls every sample
-     toward the middle — so anything radially symmetric is invariant under it:
-     a band along the border, and equally a comb of spokes pointing at the
-     centre. Measured, the spokes took the bend from 1.63% to 1.83%, which is
-     nothing. What bends is structure running ACROSS the pull, which is exactly
-     why the curtains bend: vertical lines meet the left and right faces
-     side-on. So the filaments are cut the curtains' way and inherit their
-     property — one light, two depths.
-     THE COMB IS UNEVEN on purpose: three stripes of different widths in a
-     58px period rather than one stripe repeated, so the filaments do not read
-     as a ruler. Their DEPTH is --slfx-filament-depth, which breathes on a
-     clock that shares no factor with the turn (below), and the band's own
-     ramps shorten them at its two ends — between the three, no two passes of
-     the light look the same without anything being random. */
-  /* THE SIDES ONLY. The filaments are vertical, so on the TOP and BOTTOM runs
-     they hang straight at the middle of the element — spokes pointing at the
-     centre, sweeping round with the band, which is a radar and was seen as one
-     twice. Dropping those two strips removes the sweep entirely: what is left
-     is light running the border and dragging curtains inward as it passes the
-     sides, with nothing pointing anywhere.
-     IT DOES COST SOME BEND, and the first version of this comment claimed
-     otherwise. Measured on the same frozen phase, bend on against bend off:
-     the band alone moves 1.63% of the crop's pixels, with filaments on all
-     four runs 2.76%, with filaments on the sides only 1.93%. So the top and
-     bottom ones were contributing about two fifths of it — a vertical line on
-     the bottom run is parallel to the pull at its middle, but not near the
-     corners, where the pull turns. The trade is deliberate: the owner asked
-     for the radar to go, and 1.93% is still half again what the band manages
-     on its own. */
-  /* TANGENT TO THE BORDER, and that one choice settles three complaints at
-     once. The comb's angle IS --slfx-angle — the very property that carries
-     the light, read straight, with no second clock and nothing to keep in
-     phase. In a linear gradient that angle puts the stripes ACROSS it, so
-     where the light is at the top the filaments lie horizontal, at the right
-     they stand vertical: always parallel to the edge they are under.
-
-     - IN SYNC. They exist on all four runs now, so the curtain travels with
-       the light instead of appearing only when it passes a side, which is what
-       read as the two being out of step.
-     - NO RADAR. A filament parallel to its edge never points at the middle of
-       the element, at any position. That is what the sweep was.
-     - AND IT IS WHERE THE BEND IS. The displacement pulls toward the centre,
-       so near the left edge it pulls sideways and only a pattern that VARIES
-       sideways can be seen to move; near the top edge it pulls downward and
-       only one that varies downward can. Tangent stripes vary along the pull
-       on every run — perpendicular ones would be invariant on all four, which
-       is the same rule that killed the radial spokes. */
-  mask:
-    repeating-linear-gradient(var(--slfx-angle),
-      black 0 6px, transparent 12px 21px,
-      black 25px 29px, transparent 34px 44px,
-      black 47px 52px, transparent 58px),
-    linear-gradient(to bottom, black, transparent) top / 100% var(--slfx-filament-depth) no-repeat,
-    linear-gradient(to top, black, transparent) bottom / 100% var(--slfx-filament-depth) no-repeat,
-    linear-gradient(to right, black, transparent) left / var(--slfx-filament-depth) 100% no-repeat,
-    linear-gradient(to left, black, transparent) right / var(--slfx-filament-depth) 100% no-repeat;
-  mask-composite: intersect, add, add, add, add;
-}
+/* NOT SHIPPED: the filaments. Five rounds went into a fringe hanging off this
+   band so that the LENS would have something to bend — the band itself cannot
+   be seen to bend (1.63% of pixels move under the displacement, against the
+   curtains' 5.00%), because the pull is radial and light hugging a border maps
+   onto very nearly itself. Every version failed on looks, never on the
+   measurement: radial spokes read as a radar and bent nothing (1.83%);
+   vertical ones on all four runs bent best (2.76%) and read as a radar too; on
+   the side runs only they were out of step with the light (1.93%); rotating
+   the whole layer put them outside a wide card (1.60%); tangent and long read
+   as a flamethrower; tangent and short (2.64%) still did not convince.
+   Owner, 2026-09-12: removed. The band alone is the loading light. What it
+   costs is only the refraction, which was never visible enough to be the
+   point; what it buys back is a light that plainly runs the border. The record
+   is in docs/specs/2027-improve-aesthetics.md if anyone retries this, and the
+   thing to know first is that the GEOMETRY decides it, not the parameters. */
 /* ROUND, not a strip. The band's mask is four hard-edged strips — the shape
    that survives a host shorter than twice the band, which a padding ring does
    not — and a hard inner edge under a 6.5px blur still reads as a bar of light
@@ -1572,14 +1500,6 @@
      so the shimmer never repeats exactly. */
   @property --slfx-pillar-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
   @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 8px; }
-  /* How deep the loading filaments hang into the pane. Registered so a
-     keyframe interpolates it rather than swapping it. */
-  @property --slfx-filament-depth { syntax: "<length>"; inherits: false; initial-value: 18px; }
-
-  @keyframes slfx-filament-breathe {
-    from { --slfx-filament-depth: 11px; }
-    to   { --slfx-filament-depth: 27px; }
-  }
   /* A SWAY, NOT A SCAN (owner: "si puo evitare l'effetto radar sui pilastri?").
      This used to run one way at a constant rate and restart — 0 to 160px,
      linear, forever — and a comb of light sliding steadily in one direction is
@@ -1610,24 +1530,13 @@
     animation: slfx-orbit 1.1s linear infinite;
     will-change: background;
   }
-  /* The band AND the filaments that fall from it. Both are cut from
-     --slfx-angle, and a light cut from an angle nothing turns sits wherever
-     that angle's initial value points — which is 210deg, the bottom-left
-     corner. That is exactly what the owner saw: "oltre la luce che ruota, ce
-     n'e' altra che pero' e' limitata all'angolo inferiore sx". The filaments
-     belong to the band; they travel with it. */
+  /* Whatever is cut from --slfx-angle belongs in this selector: a light cut
+     from an angle nothing turns sits wherever that angle's initial value
+     points, which is 210deg — the bottom-left corner. That was seen once, on
+     the filaments, before they were removed. */
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]) > .sl-fx-aurora__glow::before,
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
     animation: slfx-orbit var(--slfx-load-turn, 5.5s) linear infinite;
-  }
-  /* The filaments turn with the band and breathe on a second clock. 5.5 and
-     7.3 share no factor, so the pair does not return to the same arrangement
-     for over four minutes: dynamic without anything being random, which is the
-     same thing the curtains' two pitches do. */
-  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::after {
-    animation:
-      slfx-orbit var(--slfx-load-turn, 5.5s) linear infinite,
-      slfx-filament-breathe 7.3s ease-in-out infinite alternate;
   }
 
   /* Base jitter on the real text plus a third colour halo via text-shadow. */

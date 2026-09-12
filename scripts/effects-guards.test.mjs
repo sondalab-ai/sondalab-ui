@@ -109,51 +109,39 @@ test("--slfx-glow is registered as a <length>, so effects.js can read it in px",
 test("the loading light and the curtains' stand-down are one condition", () => {
   const BUSY = ':has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))';
   const busy = RULES.filter((r) => r.selector.includes(BUSY) && !r.selector.includes(":not(" + BUSY));
-  // The DECLARATION, not a mention: the filaments read the same property to
-  // sit where the band sits, and reading it is not moving it.
+
+  // The band is MOVED onto the border, not re-declared there: it is the base
+  // bloom, and a copy of it would be a second thing to keep in step.
   const moves = busy.filter((r) => /--slfx-bloom-inset\s*:/.test(r.body));
   assert.equal(moves.length, 1, `one rule moves the band onto the border, got ${moves.length}`);
   assert.match(moves[0].body, /--slfx-bloom-inset:\s*1px/, "the band goes back onto the element's own border");
-  // The BAND must be moved, not re-declared: it is the base bloom, and a copy
-  // would be a second thing to keep in step. Exactly one rule under this
-  // condition may paint, and it is the filaments on ::after — a different
-  // light, hanging into the pane, which is why it exists (2026-09-12: the band
-  // alone cannot be seen to bend, 1.63% of its pixels against the curtains'
-  // 5.00%, because the lens pulls radially and the band hugs the border).
-  const paints = busy.filter((r) => /background(?:-image)?\s*:/.test(r.body));
-  assert.equal(paints.length, 1, `only the filaments may paint here, got ${paints.length}`);
-  assert.match(paints[0].selector, /::after$/, "and they are on ::after, since ::before is the band");
-  assert.match(paints[0].body, /--slfx-filament/, "made of their own derived colour, not a literal");
-  // Cut ACROSS the pull, not along it. The displacement is radial, so a comb of
-  // spokes pointing at the centre is as invariant as the band itself — measured,
-  // the spokes moved the bend from 1.63% to 1.83%. Vertical lines meet the left
-  // and right faces side-on, which is the whole reason the curtains bend.
-  // TANGENT to the border, which is the same thing as "across the pull": the
-  // displacement is radial, so near the left edge it pulls sideways and only a
-  // pattern varying sideways moves, near the top edge it pulls down and only
-  // one varying downward does. Reading --slfx-angle straight into the comb
-  // gives exactly that on every run, with no second clock — and a filament
-  // parallel to its own edge never points at the centre, which is what the
-  // radar was. A fixed angle here would put it back.
-  assert.match(
-    paints[0].body, /repeating-linear-gradient\(var\(--slfx-angle\)/,
-    "the comb is tangent to the border: --slfx-angle read straight, no second clock",
-  );
-  // What is left is the turning itself, and it has to stay inside the guard.
+
+  // And NOTHING here paints a second light. A fringe of filaments hanging off
+  // the band was built five ways so the lens would have something to bend, and
+  // was removed the same day — the note in effects.css carries the geometries
+  // and their numbers. A second light coming back needs its own ruling, not a
+  // quiet re-entry through this rule.
+  for (const r of busy) {
+    assert.doesNotMatch(r.body, /background(?:-image)?\s*:/, `${r.selector} paints a second light while loading`);
+  }
+
+  // The band travels, and the animation that turns it stays inside the
+  // reduced-motion guard (the sweep test above covers where).
   const turns = busy.filter((r) => /animation:/.test(r.body));
   assert.ok(turns.length >= 1, "the band has to travel, or it is not loading");
-  // EVERY light cut from --slfx-angle must be in that rule's selector. One cut
-  // from an angle nothing turns sits wherever the property's initial value
-  // points — 210deg, the bottom-left corner — which is what the filaments did
-  // on the day they were added, and it reads as a second light stuck in a
-  // corner beside the one that travels.
   const turning = turns.map((r) => r.selector).join(",");
-  for (const part of ["::before", "::after"]) {
-    assert.ok(turning.includes(part), `the loading light on ${part} must travel with the rest`);
+  assert.ok(turning.includes("::before"), "and it is the band's own pseudo-element that turns");
+
+  // Anything else cut from --slfx-angle has to join that selector. A light cut
+  // from an angle nothing turns sits wherever the property's initial value
+  // points — 210deg, the bottom-left corner — which is exactly where the
+  // filaments parked themselves on the day they were added.
+  for (const r of RULES) {
+    if (!r.selector.includes(BUSY) || !/var\(--slfx-angle\)/.test(r.body)) continue;
+    const cut = r.selector.match(/::(?:before|after)/)?.[0];
+    if (cut) assert.ok(turning.includes(cut), `the loading light on ${cut} must travel with the rest`);
   }
-  const stood = RULES.filter((r) => r.selector.includes(":not(" + BUSY + ")"));
-  assert.equal(stood.length, 1, `the curtains' painting must stand down, got ${stood.length}`);
-  assert.match(stood[0].selector, /\[data-sl-fx-pillars\][^,]*::before/, "and it is the curtains' paint that stands down");
+
   // Determinate keeps its arc: its length IS the value, and a light running the
   // border says nothing about how far along the work is.
   assert.ok(BUSY.includes("--slfx-progress"), "determinate is excluded by the progress property");
@@ -239,17 +227,12 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 9,
-    `exactly nine edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 8,
+    `exactly eight edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
-  // The ninth is the loading filaments (2026-09-12): spokes hanging into the
-  // pane from the travelling band, in the accent. They are a light of their
-  // own — the band they fall from cannot be seen to bend, and they can — so
-  // their background IS the light, like the beam's and the pillars'.
-  assert.ok(
-    declaring.some((s) => /data-sl-fx-live="busy"[^,]*::after$/.test(s)),
-    "the loading filaments must be one",
-  );
+  // It was nine for part of 2026-09-12, the ninth a fringe of filaments hanging
+  // into the pane from the loading band. Removed the same day: five geometries
+  // built and measured, none of them convincing. effects.css keeps the numbers.
   // The eighth is --pillars (2026-09-11): curtains of light clipped inside the
   // pane; its background IS the light, like the beam's.
   assert.ok(declaring.some((s) => /\[data-sl-fx-pillars\][^,]*::before/.test(s)), "the pillars must be one");
