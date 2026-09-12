@@ -1546,16 +1546,26 @@
     from { --slfx-filament-depth: 28px; }
     to   { --slfx-filament-depth: 96px; }
   }
-  @keyframes slfx-pillars-drift { from { --slfx-pillar-x: 0px; } to { --slfx-pillar-x: 160px; } }
+  /* A SWAY, NOT A SCAN (owner: "si puo evitare l'effetto radar sui pilastri?").
+     This used to run one way at a constant rate and restart — 0 to 160px,
+     linear, forever — and a comb of light sliding steadily in one direction is
+     what a radar sweep is, whatever it is made of. The lens curving it at the
+     faces only sharpened the reading. An aurora does not scroll: it leans one
+     way and comes back, slowly, and never quite arrives. So the travel is
+     halved, the clock nearly doubled, the curve eased at both ends, and it
+     ALTERNATES — the moment it turns around is the moment it stops being a
+     sweep. The second comb still moves at -0.6 of this, so the two cross
+     rather than march. */
+  @keyframes slfx-pillars-drift { from { --slfx-pillar-x: -38px; } to { --slfx-pillar-x: 44px; } }
   /* 3 -> 5.5px, so the fitted 4px sits in the middle of the breath rather
      than at the bottom of a 2 -> 7 swing that softened the ribs away at its
      top end. */
   @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 7px; } to { --slfx-pillar-soft: 10px; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
-    animation: slfx-pillars-breathe 5.5s ease-in-out infinite alternate;
+    animation: slfx-pillars-breathe 8.7s ease-in-out infinite alternate;
   }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
-    animation: slfx-pillars-drift 13s linear infinite;
+    animation: slfx-pillars-drift 23s cubic-bezier(0.42, 0, 0.58, 1) infinite alternate;
   }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
