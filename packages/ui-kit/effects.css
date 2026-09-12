@@ -1245,16 +1245,29 @@
      clock that shares no factor with the turn (below), and the band's own
      ramps shorten them at its two ends — between the three, no two passes of
      the light look the same without anything being random. */
+  /* THE SIDES ONLY. The filaments are vertical, so on the TOP and BOTTOM runs
+     they hang straight at the middle of the element — spokes pointing at the
+     centre, sweeping round with the band, which is a radar and was seen as one
+     twice. Dropping those two strips removes the sweep entirely: what is left
+     is light running the border and dragging curtains inward as it passes the
+     sides, with nothing pointing anywhere.
+     IT DOES COST SOME BEND, and the first version of this comment claimed
+     otherwise. Measured on the same frozen phase, bend on against bend off:
+     the band alone moves 1.63% of the crop's pixels, with filaments on all
+     four runs 2.76%, with filaments on the sides only 1.93%. So the top and
+     bottom ones were contributing about two fifths of it — a vertical line on
+     the bottom run is parallel to the pull at its middle, but not near the
+     corners, where the pull turns. The trade is deliberate: the owner asked
+     for the radar to go, and 1.93% is still half again what the band manages
+     on its own. */
   mask:
     repeating-linear-gradient(90deg,
       black 0 6px, transparent 12px 21px,
       black 25px 29px, transparent 34px 44px,
       black 47px 52px, transparent 58px),
-    linear-gradient(to bottom, black, transparent) top / 100% var(--slfx-filament-depth) no-repeat,
-    linear-gradient(to top, black, transparent) bottom / 100% var(--slfx-filament-depth) no-repeat,
     linear-gradient(to right, black, transparent) left / var(--slfx-filament-depth) 100% no-repeat,
     linear-gradient(to left, black, transparent) right / var(--slfx-filament-depth) 100% no-repeat;
-  mask-composite: intersect, add, add, add, add;
+  mask-composite: intersect, add, add;
 }
 /* ROUND, not a strip. The band's mask is four hard-edged strips — the shape
    that survives a host shorter than twice the band, which a padding ring does
