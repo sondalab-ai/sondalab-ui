@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 12:50
+## Start here — handoff, 2026-09-12 15:25
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (166 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (168 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -39,8 +39,7 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
   320 / 480 px. **Loading and busy are an aurora that runs the whole border, in
   the accent**: the curtains stand down and the glow paints the conic band on
-  the element's own edge, turning once per 5.5 s, with **filaments** falling
-  from it into the pane on the side runs only, breathing on a 7.3 s clock — cut across the lens's pull, so they bend where the
+  the element's own edge, turning once per 5.5 s — cut across the lens's pull, so they bend where the
   band cannot. Determinate keeps its arc, whose length is the value. The
   glow is a SIBLING seated before the host, so it is in the backdrop and the
   lens bends it — which is the whole reason the curtains are the default: a
@@ -686,6 +685,27 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **The filaments are OUT.** *Owner, 2026-09-12: "si infatti non mi
+  convince."* Five geometries, all of them aimed at giving the lens something
+  to bend, none of them failing on its number and all of them failing on looks:
+
+  | geometry | bend | how it read |
+  |---|---|---|
+  | radial spokes | 1.83 % | a radar, and bent nothing |
+  | vertical, all four runs | 2.76 % | bent best, still a radar |
+  | vertical, side runs only | 1.93 % | out of step with the light |
+  | whole layer rotated | 1.60 % | outside the box on a wide card |
+  | tangent, long | — | a flamethrower |
+  | tangent, short | 2.64 % | still not convincing |
+
+  **The band alone is the loading light.** What the removal costs is only the
+  refraction, which was never visible enough to be the point; what it buys back
+  is a light that plainly runs the border — which is what was asked for and
+  accepted before any of this. The numbers stay in `effects.css` where the code
+  was, and a guard now refuses any second light under the loading condition, so
+  one cannot return without its own ruling. **If you reach for this again, the
+  thing to know is that the geometry decides it, not the parameters.**
 
 - **Short, or it is a flame.** *Owner, on the tangent version: "non solo adesso
   non segue il bordo ma sembra anche uno sputafuoco."* Both halves had one
