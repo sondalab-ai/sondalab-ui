@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 12:40
+## Start here — handoff, 2026-09-12 12:50
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (164 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (166 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -686,6 +686,21 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **Short, or it is a flame.** *Owner, on the tangent version: "non solo adesso
+  non segue il bordo ma sembra anche uno sputafuoco."* Both halves had one
+  cause: the filaments reached up to **96 px** in, and at that length a tangent
+  comb stacks into a plume leaving the edge rather than a curtain hanging off
+  it. **Long and perpendicular is a radar; long and tangent is a flame.** They
+  are now 11 → 27 px. At that depth the striation reads as a fringe hugging the
+  border, and the light stays on the edge at every phase — checked at three,
+  driven rather than waited for. Still refracts: 2.64 % on a tighter crop
+  (120 rows, so not comparable to the numbers above it).
+
+  **Five rounds went into this fringe** and the bar for a sixth should be high:
+  the band alone was already accepted, and everything since has been buying
+  refraction the band cannot have. Removing the filaments entirely is one line,
+  and is the right move if they cost another round.
 
 - **Tangent to the border, and three complaints close at once.** *Owner: "adesso
   la luce che segue il bordo e' fuori sync con la tenda."* It was: the filaments
