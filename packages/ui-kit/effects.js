@@ -628,6 +628,8 @@ const GLOW_VARS = [
   "--slfx-angle", "--slfx-arc", "--slfx-bloom-hi", "--slfx-bloom-lo",
   "--slfx-bloom-out", "--slfx-bloom-w", "--slfx-glow", "--slfx-rim-out",
   "--slfx-soft",
+  // the band's inward reach: read on the glow's ::before, declared on the host
+  "--slfx-bleed",
   // and the light pole itself: the beam is MADE of it, and a background of an
   // undefined var() is no background at all — the beam was lit, drifting,
   // rotated and invisible until this line existed

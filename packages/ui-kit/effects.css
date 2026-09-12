@@ -220,6 +220,19 @@
   initial-value: 210deg;
 }
 
+/* The glow's headroom is a calc() of two other lengths, and an unregistered
+   custom property computes to its calc() TEXT, not to a length — so
+   effects.js, which reads it to size the seated glow, parsed "calc(14px * 3
+   + 12px)" as nothing and seated every glow at its host's own box plus one
+   pixel. Measured on lab/1w: a 321px host, a 323px glow, and a bloom band
+   with no room to exist. Registered, it computes to pixels wherever it is
+   read. */
+@property --slfx-glow {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 /* The six fitted colours are registered, so each computes once where it is
    declared and reaches its consumers as a colour, not as a token stream that
    every gradient stop expands and parses again. Inherited: they are declared
@@ -827,9 +840,14 @@
    it can never leave the band — that is where four rounds of "the glow is
    truncated" came from. The bloom is the injected child, below. */
 .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
-  /* The hairline all but goes: the reference's composer has NO bright line at
-     its edge, the bloom is the edge. Kept faint so a focus ring is still a
-     ring; the light is the glow's job now. */
+  /* Faint: the light is the glow's job, and a focus ring is still a ring.
+     Measured on lab/1w against the reference's border pixel, both read as
+     the median across the card's middle rows: the composer's 1px border
+     carries +83 to +88 over its interior where the beam passes, ours +85 at
+     this opacity (+60 of it is the glass rim, the ring adds the rest). On
+     the beam's brightest rows the reference reads +93 to +98, which would
+     ask for about 0.37; the band reading is the one this file's other
+     numbers use, so this stays. */
   opacity: var(--slfx-ring-lit, 0.28);
   /* BORDER-BEAM'S PROFILE, not a peak. Read off its md variant: soft ramps in
      and out and a long PLATEAU between (mask 30→52 up, 52→80 full, 80→95
@@ -876,11 +894,23 @@
      for. Relative colour syntax is already the kit's own vocabulary
      (themes/*.css derive the accent steps with it); l and c are channels,
      not a literal. --rim's own blooms are the depth's. */
-  /* 78/66 read as a ring of neon. Profiled, the reference's edge pixel is a
-     dark saturated green lifting a near-black ground by about 48 luminance —
-     a saturated hue at roughly a third alpha, then softened. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 46%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 34%, transparent);
+  /* SOLVED FROM THE REFERENCE'S CURVE on lab/1w (2026-09-12): one card on a
+     flat ground, the plateau pinned on its left edge, profiled inward as the
+     median across the card's middle rows, against border-beam's composer
+     (docs/references/assets/border-beam-composer-search-dark.png) read the
+     same way. Target +48 at the edge, +16 at 30px, +3 at 45px, 0 at 60px
+     over an interior of L 29; measured +48, +18.6, +2.7, 0. The two alphas
+     keep their 0.75 ratio, which is the reference's own rose-to-green ratio
+     at the edge (+36 against +48); only the plateau's colour is on the
+     profiled edge, so the tail's alpha follows rather than being fitted. */
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 51%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 38%, transparent);
+  /* How far the bloom's band reaches INWARD from the host's border, before
+     the 14px blur. Declared here, on the host, so a component can rebind it
+     and the seated glow follows (effects.js copies it across). 20px is what
+     puts the curve's knee at 30px; 44px, the first reading, had the glow
+     still at +30 there. */
+  --slfx-bleed: 20px;
   /* Where the ring's outer edge sits, measured from the padding box
      outward: 0 on a bordered element (the ring is on the border), the
      ring's own width on --rim, which steps the ring out past the fill. */
@@ -994,11 +1024,13 @@
   position: absolute;
   /* INWARD, from the reference (docs/references/assets/border-beam-composer-
      search-dark.png, profiled 2026-09-11): the glow is +48 L at the card's
-     edge, +16 at 30px in, gone by 60px, and nothing outside the box at all.
-     So the band starts ON the host's border and reaches --slfx-bleed inward,
-     instead of straddling the edge as a 12px ring. */
+     edge, +16 at 30px in, gone by 60px. So the band starts ON the host's
+     border and reaches --slfx-bleed inward, instead of straddling the edge
+     as a 12px ring. The blur still spills OUTSIDE the box — measured +33 at
+     3px out and +26 at 6px on lab/1w, where the reference has nothing — left
+     as it is: clipping the seated glow is a ruling, not a fit. */
   inset: calc(1px + var(--slfx-rim-out) + var(--slfx-glow));
-  padding: var(--slfx-bleed, 44px);
+  padding: 0;
   border-radius: inherit;
   /* the bloom follows the same plateau, so the glow is a long soft band under
      the arc and not a halo round one bright point */
@@ -1010,10 +1042,20 @@
     var(--slfx-bloom-lo) calc(var(--slfx-arc) * 0.90),
     transparent var(--slfx-arc),
     transparent 360deg);
-  /* `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
-  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  /* The band is FOUR STRIPS, one per edge, each --slfx-bleed deep, rather
+     than the padding-ring the arc uses (content-box cut out of the box).
+     A padding cannot be less than itself: on a host shorter than twice the
+     bleed the content box collapses to nothing and the padding pushes the
+     box out past the host's bottom — measured on lab/1w, a 111px card got a
+     213 x 88 rectangle starting at its own midline and reaching 29px below
+     it, and every button is shorter still. Strips overlap harmlessly when the
+     host is small: the union is the whole box, which is the right answer.
+     `black` not `#000`: sl-audit extracts 3-digit hex as a design colour. */
+  mask:
+    linear-gradient(black 0 0) top / 100% var(--slfx-bleed) no-repeat,
+    linear-gradient(black 0 0) bottom / 100% var(--slfx-bleed) no-repeat,
+    linear-gradient(black 0 0) left / var(--slfx-bleed) 100% no-repeat,
+    linear-gradient(black 0 0) right / var(--slfx-bleed) 100% no-repeat;
 }
 /* Lit — in both shapes the glow can take. It used to be a CHILD and the
    descendant selector was enough; a seated glow is the host's PREVIOUS SIBLING,

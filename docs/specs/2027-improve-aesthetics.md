@@ -11,16 +11,16 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-11 23:55
+## Start here — handoff, 2026-09-12 09:30
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (137 commits ahead of `main`; the site
-still installs kit 0.7.2 — nothing here is released). 182 tests green
+**State.** Branch `feat/effects-layer` (139 commits ahead of `main`; the site
+still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/<file>" --product effects` clean. The kit ships:
+"packages/ui-kit/effects.css" --product effects` clean. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
   its capture within ±3 luminance on `lab/1n`; tint 0.18; layers sit at
@@ -29,23 +29,29 @@ still installs kit 0.7.2 — nothing here is released). 182 tests green
   `backdrop-filter: url(#…)` with a data-URI displacement map; per-channel
   dispersion (`disperse`, default 18); bend capped at `reach` = 6 px; frost
   and saturation animatable via `--slg-lens-blur` / `--slg-lens-sat`.
-- `effects.css` / `effects.js` — the aurora: bloom INSIDE the box (44 px,
-  46/34 % alpha), hairline at 0.28, arc with border-beam's plateau profile and
-  a derived accent → complement → split palette; `--beam` and `--pillars` as
-  optional modes; the glow is a SIBLING seated before the host (so the lens
-  can bend it), with nine `--slfx-*` variables copied across.
+- `effects.css` / `effects.js` — the aurora: bloom INSIDE the box, **solved
+  against border-beam's composer on `lab/1w` (2026-09-12)**: `--slfx-bleed`
+  20 px, bloom alphas 51 / 38 %, hairline `--slfx-ring-lit` 0.28, blur 14 px;
+  arc with border-beam's plateau profile and a derived accent → complement →
+  split palette; `--beam` and `--pillars` as optional modes; the glow is a
+  SIBLING seated before the host (so the lens can bend it), with twelve
+  `--slfx-*` variables copied across.
 - the showcase is back to defaults; every experiment lives in `lab/` (gitignored).
 
-**The one next task.** `lab/1w`: one aurora card on a FLAT near-black ground
-beside a crop of `docs/references/assets/border-beam-composer-search-dark.png`;
-profile the edge inward with `lab/_profile.py`'s method (median across a band,
-never a single column) and solve `--slfx-bleed`, the two bloom alphas and
-`--slfx-ring-lit` from the curve — target **+48 at the edge, +16 at 30 px,
-+3 at 45 px, 0 by 60 px** over a ground of L 29 — until within ±3, the way the
-glass was done. Do not judge on the showcase: its aurora cell sits on a giant
-wordmark and a profile there reads the letters.
+**The 1w task is closed — see "1w — the curve is hooked" below for the
+numbers.** The aurora's profile, read as the median across the card's middle
+rows, is +48 / +18.6 / +2.7 / 0 at the edge / 30 / 45 / 60 px against the
+target +48 / +16 / +3 / 0, every point within ±3. Two kit defects were found
+by the measurement and fixed on the way, each with a regression test: the
+bloom band was a padding ring that could not fit any host shorter than 88 px,
+and the seated glow was sized from a `calc()` that JavaScript read as nothing.
 
-**Traps that cost hours today, in order of cost:**
+**No next task is assigned.** Four things the measurement surfaced are the
+owner's to rule on, not the next agent's; they are listed under "Open, for the
+owner" in the 1w section. Nothing else is queued: the kit's release and the
+GPU tier's cut are the owner's decisions.
+
+**Traps that cost hours, in order of cost:**
 
 1. **Do not eyeball.** Three "it's there now" readings were wrong. Diff a
    capture against the same capture with the layer `display:none`
@@ -54,21 +60,34 @@ wordmark and a profile there reads the letters.
 2. **The extension's tab is `visibilityState: hidden`.** rAF, IntersectionObserver
    and CSS transitions never settle there. Drive things by hand and say so;
    only the owner's real browser judges motion.
-3. **Serve with `python3 lab/_serve.py`**, never `python3 -m http.server`: the
+3. **Capture with the extension's `zoom`, never its `screenshot`.** The full
+   screenshot is a JPEG scaled to 1565 px wide (0.815 of a 1920 viewport) and
+   useless for pixels. `zoom` with `save_to_disk` writes a PNG at DPR 2 — one
+   CSS px is two capture px, measured on a 321 px card — but its `region` is
+   in the screenshot's scaled frame (divide CSS px by 0.815), and passing
+   `scale` shrinks the saved file too. Two identical zooms differ by 0 px, so
+   a non-zero diff is signal.
+4. **Serve with `python3 lab/_serve.py`**, never `python3 -m http.server`: the
    latter sends no cache headers and a stale stylesheet beside fresh JS
    produced false readings twice. Kill any other server on other ports first.
-4. **A sibling inherits nothing from the host.** Anything moved out of the host
+5. **A sibling inherits nothing from the host.** Anything moved out of the host
    needs its variables copied (`GLOW_VARS` in `effects.js`) and its own
    `z-index: auto` — `-1` under a non-stacking parent falls behind the page.
-5. **`sl-audit` reads comments.** No hex, no `rgb()`, in prose either.
-6. **The guards are contracts, not obstacles.** Eight edge rules may declare a
+   And an `@property` with `inherits: false` (`--slfx-angle`) is not seen by
+   the pseudo-element that paints from it: pin it ON the pseudo-element.
+6. **A `calc()` custom property computes to text unless registered.**
+   `parseFloat("calc(14px * 3 + 12px)")` is `NaN`; register lengths JavaScript
+   has to read (`--slfx-glow` is, now).
+7. **`sl-audit` reads comments.** No hex, no `rgb()`, in prose either.
+8. **The guards are contracts, not obstacles.** Eight edge rules may declare a
    background, each named; the radius guard exempts only `--beam`/`--pillars`.
    Extend them with the reason, never bypass.
 
-**Owner's standing rulings today:** use the knowledge base, do not reproduce it
+**Owner's standing rulings:** use the knowledge base, do not reproduce it
 ("prendi spunto, non usare la libreria"); AC-33 overridden for glass (every
 layer on at rest); tint 0.18; hover lift 3 % with a soft settle; button radius
-`--sl-radius-lg`; the aurora's model is border-beam's page, not its README.
+`--sl-radius-lg`; the aurora's model is border-beam's page, not its README;
+the 1w target curve is the one stated on 2026-09-11 and was not moved.
 
 ## Goal
 
@@ -496,6 +515,79 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 `glass-studio`'s units on its 200 × 200 shape, so the value 10 here is not the
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
+
+### 1w — the curve is hooked — 2026-09-12
+
+`lab/1w-aurora-flat.html` (gitignored, like every probe): one `sl-card
+sl-fx-glass sl-fx-aurora` from the kit, 319 × 111 CSS px — the composer's own
+box — on a flat ground, granted the live sweep with its angle pinned at 145°
+so the plateau lies on the LEFT edge, where the beam sits in the reference
+capture. Beside it, the reference crop at the page's own zoom. Transitions
+and the sweep's keyframes are frozen by hand because the extension's tab is
+hidden; the angle is pinned on the pseudo-elements because `--slfx-angle`
+does not inherit.
+
+**The instrument.** `lab/_profile_edge.py`: the left edge inward, each depth
+the median across the card's middle rows (30–70 % of its height), every
+value a delta over the same band 60 px inside, where nothing is lit. The
+reference read the same way: its border pixels carry +83 / +88 and the
+first interior pixel +34 on the band, +48 on the beam's brightest rows — the
+handoff's +48 is the peak-row reading, and the three deeper points agree
+between the two readings within 2.
+
+**Two defects the bed exposed before a single parameter moved.** Both were
+invisible on the showcase and both are fixed with a regression test:
+
+- the bloom band was a padding ring (`padding: 44px` cut out with a
+  content-box mask). A padding cannot shrink below itself, so on any host
+  shorter than 88 px the box grew past the host — measured, a 111 px card got
+  a 213 × 88 rectangle from its own midline to 29 px below it. The band is
+  four edge strips now, which simply overlap on a small host.
+- the seated glow was one pixel larger than its host instead of 55:
+  `--slfx-glow` is a `calc()`, an unregistered property computes to that text,
+  and `parseFloat` read it as nothing. Registered as a `<length>`.
+
+**The fit.** Bleed and the plateau's alpha were varied on the URL, the tail's
+alpha held at the reference's own rose-to-green ratio (0.75), the hairline
+left where it was; three rounds of three captures:
+
+| | edge | 30 px | 45 px | 60 px |
+|---|---|---|---|---|
+| target | +48 | +16 | +3 | 0 |
+| kit before (44 px, 46 / 34 %) | not readable — the 44 px top and bottom strips lit the middle band itself (+53 over the bed) | +30.6 | +13.3 | 0 |
+| **shipped (20 px, 51 / 38 %)** | **+48.0** | **+18.6** | **+2.7** | **0.0** |
+
+"Edge" is the first pixel past the glass rim (the material's own inset shine,
++60 at the border with the aurora off), 2 CSS px in. Verified, not looked at:
+two identical captures differ by 0 px; the glow shown against `display:none`
+differs by 123 230 px (33.6 %), rows 45–367, max delta 74 — the band, its
+blur, nothing else; the hairline at 0.28 against 0 differs by 1 998 px on the
+border rows only, +25 on the border pixel. The committed defaults, loaded
+with no URL override, reproduce the fitted capture to 0 px.
+
+**Open, for the owner — measured, not decided:**
+
+1. **The reference is a DPR-2 capture, and the target reads it as CSS px.**
+   Its border is 2 px, its "1 px arc" is 2 px, the composer is 638 px for a
+   ~320 px card. So "+16 at 30 px" is 15 CSS px at the page's own zoom, and
+   the reference's glow is gone by 30 CSS px where ours is gone by 60. The
+   fit above is to the target as stated. Matching the reference at its own
+   zoom is not reachable with bleed and alpha alone — a 14 px Gaussian cannot
+   fall to a third in 15 px — and would take `--slfx-soft` ≈ 7 px with a
+   bleed near 10 px.
+2. **There IS a bright line on the reference's border where the beam passes:**
+   +83 / +88 on the band, +93 / +98 on its brightest rows, one CSS px wide.
+   The handoff's "no bright line at the edge" read the column after it. At
+   0.28 our border pixel is +85, which matches the band reading; the peak-row
+   reading would ask for about 0.37.
+3. **Our blur spills outside the box** — +33 at 3 px out, +26 at 6, +14 at 12 —
+   where the reference has nothing outside (−5). Clipping the seated glow to
+   the host's box, as `--pillars` already does, is a one-line ruling.
+4. **The sweep lights three edges, the beam one.** A 250° plateau covers the
+   top-left and bottom-left as well as the left edge, and on a 111 px card the
+   top and bottom strips' blur tails lift the middle band by +5 (interior
+   reads 34 where the bed gives 29). A narrower arc would remove it; that is
+   a change to the sweep's shape, not to its light.
 
 ### The prism — 2026-09-11, late
 

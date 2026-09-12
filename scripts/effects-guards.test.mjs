@@ -92,6 +92,28 @@ test("--slfx-angle is registered with @property", () => {
   assert.match(effects, /@property\s+--slfx-angle\s*\{[^}]*syntax:\s*"<angle>"/);
 });
 
+// Regression, 2026-09-12 (lab/1w): --slfx-glow is a calc() of two lengths, and
+// an unregistered custom property computes to its calc() TEXT. effects.js reads
+// it with parseFloat to size the seated glow, got NaN, and seated every glow at
+// its host's box plus one pixel — the bloom band then had no room to exist.
+test("--slfx-glow is registered as a <length>, so effects.js can read it in px", () => {
+  assert.match(effects, /@property\s+--slfx-glow\s*\{[^}]*syntax:\s*"<length>"/);
+});
+
+// Regression, 2026-09-12 (lab/1w): the bloom band was a padding ring cut out
+// with a content-box mask, and a padding cannot shrink below itself — on a host
+// shorter than twice --slfx-bleed the box grew past the host's bottom (a 111px
+// card got a 213 x 88 rectangle from its midline down). The band is four edge
+// strips now, which overlap harmlessly on a small host.
+test("the bloom band is four edge strips, not a padding ring", () => {
+  const rule = RULES.find((r) => r.selector === ".sl-fx-aurora__glow::before");
+  assert.ok(rule, "the glow's ::before rule must exist");
+  assert.doesNotMatch(rule.body, /padding:\s*var\(--slfx-bleed/, "a padding ring cannot fit a host shorter than twice the bleed");
+  const strips = rule.body.match(/linear-gradient\(black 0 0\)\s+(?:top|bottom|left|right)\s*\/\s*[^,;]*var\(--slfx-bleed\)/g) ?? [];
+  assert.equal(strips.length, 4, `four strips, one per edge, each --slfx-bleed deep; got ${strips.length}`);
+  assert.doesNotMatch(rule.body, /mask-composite/, "strips add; no exclude composite is needed or wanted");
+});
+
 test("every animation sits inside a reduced-motion guard", () => {
   // Collect the character ranges covered by `prefers-reduced-motion: no-preference`
   // blocks, then assert no `animation:` declaration falls outside one.

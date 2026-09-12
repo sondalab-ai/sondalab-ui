@@ -35,6 +35,17 @@ function fnBody(name) {
   return js.slice(open + 1, i - 1);
 }
 
+// Regression, 2026-09-12 (lab/1w): the bloom's inward reach is read on the
+// seated glow's ::before, and a seated glow is the host's SIBLING — it inherits
+// nothing from the host. Every variable the glow paints from has to be in the
+// list effects.js copies across at seat time, or a component that rebinds it
+// is silently ignored.
+test("the seated glow copies the bloom's inward reach from its host", () => {
+  const list = js.match(/const GLOW_VARS = \[([^\]]*)\]/);
+  assert.ok(list, "GLOW_VARS must be a literal array");
+  assert.match(list[1], /"--slfx-bleed"/, "--slfx-bleed is painted by the glow's ::before and declared on the host");
+});
+
 // The audit reads CSS only, so a literal here would pass the gate while
 // breaking the contract. Cover every CSS colour function, not just rgb() —
 // `color-mix(` is deliberately not matched, since it takes role-vars.
