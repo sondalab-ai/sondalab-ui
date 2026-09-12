@@ -178,10 +178,14 @@ Nothing auto-mounts on import. `mount()` is explicit, which is what makes the ID
 
 ## Decision 5 — The effect budget (anti-neon-soup)
 
-Four families across a dozen components, unconstrained, is a Christmas tree. `effects.js` acts as a coordinator holding module-level singletons:
+Five families across a dozen components, unconstrained, is a Christmas tree. `effects.js` acts as a coordinator holding module-level singletons:
 
 - **At most one *ambient* aurora is animated per document.** An element requests one via `grantLive(el)` (which sets `data-sl-fx-live="on"`); the coordinator grants it to at most one element at a time — most recent request wins, the previous falls back to its resting edge.
-- **At most one glitch burst runs at a time.** A burst requested while another runs is dropped, not queued — a queue produces a stutter train, which reads as breakage rather than as signal.
+- **At most one *ambient* glitch burst runs at a time, by default.** A burst over the ceiling is dropped, not queued — a queue produces a stutter train, which reads as breakage rather than as signal.
+
+  **The ceiling is the consumer's** (`mount(root, { bursts: n })`, default 1; amended 2026-09-12). It was a boolean while the only consumer was the showcase, where one at a time is plainly right. A real page can want more: sondalab.eu runs an ambient burst on its hero claim, another on each interlude marker and a third on a product name, and at a ceiling of one most of them are simply dropped — the effect thins out rather than reading as restraint. A surface that says nothing behaves exactly as before, and raising it is a decision someone made on purpose.
+
+  **`hoverBurst()` is exempt**, and it is the only path past the ceiling. A hover is a direct answer to the pointer; dropping it because something ambient happens to be mid-burst would make the surface feel unresponsive at exactly the moment the visitor asked it for something. It is bounded by the pointer being there, and it still honours both kill switches.
 - **At most one element deforms at a time.** The liquid's skin is one shared `<svg>`; `effects.js` parents it into the single element the pointer is shaping and marks that element `is-liquid-live`, and the CSS scopes the border hand-off to it.
 - **State-driven auroras are exempt** because they are singular by construction: the platform guarantees a single focused element.
 - **Busy auroras are exempt.** `data-sl-fx-live="busy"` is bound to real work, and several cards can legitimately be loading at once; capping them would make the interface report a false state.

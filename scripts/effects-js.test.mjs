@@ -152,12 +152,16 @@ test("a switch to high contrast tears a live Tier 2 down", () => {
   assert.match(block, /stop\(\)/, "high contrast must tear the field down, not merely re-read tokens");
 });
 
-test("burst drops an overlapping burst rather than queueing it", () => {
+test("burst drops a burst over the budget rather than queueing it", () => {
   const body = fnBody("burst");
   assert.match(
-    body, /if\s*\([^)]*burstActive[^)]*\)\s*return;/,
-    "an in-flight burst must cause an early return",
+    body, /if\s*\([^)]*burstsRunning >= burstBudget[^)]*\)\s*return;/,
+    "a burst over the ceiling must cause an early return",
   );
+  // The ceiling is the consumer's and the DEFAULT IS STILL ONE: a surface that
+  // says nothing behaves exactly as it did when the budget was a boolean.
+  assert.match(js, /let burstBudget = 1;/, "one, until someone decides otherwise");
+  assert.match(js, /burstBudget = Math\.max\(1, Math\.floor\(bursts\)\);/, "and it can never be raised below one");
   assert.doesNotMatch(
     body, /setTimeout\([^)]*\bburst\s*\(/,
     "a dropped burst must not be re-scheduled — a queue reads as breakage, not as signal",
@@ -315,7 +319,7 @@ test("the reduced-motion derogation is narrow, opt-in, and named so a reader can
   // reads (so both decline together or not at all), and it reaches the glitch
   // alone — never high contrast, which is a different requirement.
   const body = fnBody("mount");
-  assert.match(js, /export function mount\(root = document, \{ ignoreReducedMotion = false \} = \{\}\)/,
+  assert.match(js, /export function mount\(root = document, \{ ignoreReducedMotion = false, bursts = 1 \} = \{\}\)/,
     "it must be an explicit, defaulted option");
   assert.match(body, /if \(ignoreReducedMotion\) html\.setAttribute\("data-sl-fx-motion", "always"\);/,
     "and it must publish itself to the stylesheet");
@@ -370,4 +374,24 @@ test("the viewport gate fails open", () => {
   const observed = fn.indexOf("nearObserver.observe(el);");
   assert.ok(marked > -1 && observed > -1, "watchNear must mark and observe");
   assert.ok(marked < observed, "the mark must be written before the observer can contradict it");
+});
+
+test("autoBurst and hoverBurst are the kit's, and each hands back a stop", () => {
+  // Both came from sondalab-site, whose driver is this module's ancestor:
+  // ambient re-resolution and a pointer-driven one are real uses the kit did
+  // not cover, so nine call sites had to keep a parallel implementation.
+  const auto = fnBody("autoBurst");
+  assert.match(auto, /\bburst\(el, \{ burstMin, burstMax \}\)/, "the ambient loop must go through burst(), budget and all");
+  assert.match(auto, /if \(stopped \|\| !el\?\.isConnected\) return;/, "and let itself go when the element leaves the document");
+  assert.match(auto, /return \(\) => \{ stopped = true; clearTimeout\(timer\); \};/, "callers get a stop");
+
+  // hoverBurst is the one path past the budget, and deliberately: a hover is a
+  // direct answer to the pointer, and dropping it because something ambient is
+  // mid-burst would make the surface feel unresponsive exactly when asked.
+  const hover = fnBody("hoverBurst");
+  assert.doesNotMatch(hover, /\bburst\(/, "a hover must not be dropped by the ambient budget");
+  assert.match(hover, /if \(!active \|\| suppressed\(\) \|\| !targetEl\?\.isConnected\) return;/,
+    "…but it still honours the kill switches and a detached target");
+  assert.match(hover, /hoverEl\.removeEventListener\("pointerenter", enter\)/, "its stop releases the listeners");
+  assert.match(hover, /pointerenter|pointerleave/, "pointer events, not mouse events");
 });

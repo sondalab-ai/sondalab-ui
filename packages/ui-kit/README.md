@@ -72,12 +72,19 @@ Five additive families, each carrying one meaning, composed onto a shipped `.sl-
 ```
 
 ```js
-import { mount, mountGpu, burst, scramble, grantLive } from "@sondalab/ui-kit/effects.js";
+import { mount, mountGpu, burst, autoBurst, hoverBurst, scramble, grantLive } from "@sondalab/ui-kit/effects.js";
 mount();                      // Tier 1: the liquid, the goo's fields, glitch bursts, the aurora's sweep. Explicit, never automatic.
 // A product with a documented reason to animate for a visitor reporting
 // prefers-reduced-motion takes the derogation explicitly. It reaches the
 // GLITCH alone; high contrast still refuses.
 // mount(document, { ignoreReducedMotion: true });
+// bursts: the ambient glitch ceiling, default 1. A page with several ambient
+// glitches raises it, or most of them are dropped.
+// mount(document, { bursts: 3 });
+//
+// burst(el)                     — one finite burst
+// autoBurst(el, {waitMin, waitMax})   — ambient: burst, wait, burst again; returns stop
+// hoverBurst(hoverEl, targetEl)       — while the pointer is over one, glitch the other
 mountGpu().then((ok) => {});  // Tier 2: the glass edge as chrome where WebGPU answers; resolves false otherwise.
 ```
 
