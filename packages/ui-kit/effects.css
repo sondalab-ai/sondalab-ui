@@ -1574,11 +1574,11 @@
   @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 8px; }
   /* How deep the loading filaments hang into the pane. Registered so a
      keyframe interpolates it rather than swapping it. */
-  @property --slfx-filament-depth { syntax: "<length>"; inherits: false; initial-value: 50px; }
+  @property --slfx-filament-depth { syntax: "<length>"; inherits: false; initial-value: 18px; }
 
   @keyframes slfx-filament-breathe {
-    from { --slfx-filament-depth: 28px; }
-    to   { --slfx-filament-depth: 96px; }
+    from { --slfx-filament-depth: 11px; }
+    to   { --slfx-filament-depth: 27px; }
   }
   /* A SWAY, NOT A SCAN (owner: "si puo evitare l'effetto radar sui pilastri?").
      This used to run one way at a constant rate and restart — 0 to 160px,
