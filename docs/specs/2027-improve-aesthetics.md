@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 12:00
+## Start here — handoff, 2026-09-12 12:10
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (154 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (156 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -686,6 +686,15 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **The curtains sway; they do not scan.** *Owner: "si puo evitare l'effetto
+  radar sui pilastri?"* Read off the page rather than guessed: the drift ran
+  0 → 160 px, **linear, one way, restarting**. A comb of light sliding steadily
+  in one direction is a radar sweep whatever it is made of, and the lens curving
+  it at the faces sharpened the reading. Now it travels half as far (−38 → 44 px)
+  on nearly twice the clock (23 s), eased at both ends and **alternating** — the
+  turn-around is the moment it stops being a sweep — at about a quarter of the
+  old peak speed. The breath moves to 8.7 s so it shares no factor with 23.
 
 - **Slower, and alive without being random.** *Owner: "il movimento adesso e'
   troppo veloce, rendiamo parecchio piu' lento, molto smooth e soft, e diamo un
