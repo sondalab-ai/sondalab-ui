@@ -334,3 +334,40 @@ test("the reduced-motion derogation is narrow, opt-in, and named so a reader can
   const derogate = js.slice(js.indexOf("function motionDerogated()"), js.indexOf("function suppressed()"));
   assert.doesNotMatch(derogate, /high-contrast/, "the derogation may not know about high contrast");
 });
+
+test("Tier 1 watches what is near the viewport, with a margin", () => {
+  // "near" rather than "visible": the margin arms an element before it
+  // arrives, because a pane that blurs in as it crosses the fold is worse than
+  // one that was always blurred.
+  assert.match(js, /const NEAR_MARGIN = "200px";/, "the margin is what makes it 'near'");
+  assert.match(js, /rootMargin: NEAR_MARGIN/, "and it must reach the observer");
+  assert.match(js, /e\.target\.toggleAttribute\("data-sl-fx-near", e\.isIntersecting\)/,
+    "the attribute tracks intersection in both directions");
+  assert.match(js, /const NEAR_HOSTS = "\.sl-fx-glass, \.sl-fx-aurora";/, "the two families that cost something off-screen");
+
+  // One observer for the document, not one per element, and elements arriving
+  // later are picked up by the same MutationObserver that arms everything else.
+  assert.match(js, /if \(!nearObserver\) \{/, "one observer for the document, built once and reused");
+  // The margin is the house's: the lazy backdrop paint already arms 200px
+  // early for the same reason, and the two must not drift apart.
+  const margins = [...js.matchAll(/rootMargin:\s*([^,}]+)/g)].map((m) => m[1].trim());
+  assert.deepEqual(margins, ["NEAR_MARGIN", "NEAR_MARGIN"], `every observer takes the same margin, got ${margins}`);
+  const mounted = fnBody("mount");
+  assert.match(mounted, /watchNear\(root\)/, "mount() must start it");
+  assert.match(js, /watchNear\(n\);/, "and late arrivals must be picked up too");
+
+  // It must degrade, not throw, where the API is absent.
+  assert.match(js, /if \(typeof IntersectionObserver !== "function"\) return;/, "absent API is a no-op, not a crash");
+});
+
+test("the viewport gate fails open", () => {
+  // An IntersectionObserver that never delivers — a background tab, a headless
+  // capture, a harness that suppresses it — must not leave a page stripped of
+  // its material. Hosts are marked near BEFORE they are observed, so the
+  // observer's only job is to take the mark away.
+  const fn = js.slice(js.indexOf("function watchNear("), js.indexOf("function motionDerogated("));
+  const marked = fn.indexOf('el.toggleAttribute("data-sl-fx-near", true);');
+  const observed = fn.indexOf("nearObserver.observe(el);");
+  assert.ok(marked > -1 && observed > -1, "watchNear must mark and observe");
+  assert.ok(marked < observed, "the mark must be written before the observer can contradict it");
+});

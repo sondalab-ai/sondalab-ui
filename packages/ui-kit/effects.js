@@ -865,6 +865,54 @@ function injectGlows(root) {
 /** The conditions under which no effect may run, re-read at call time rather
  *  than sampled at mount: a visitor can switch theme, or turn on reduced
  *  motion, long after the page loaded. */
+/* ── near the viewport ───────────────────────────────────────────────────────
+   An effect on an element nobody can see is work nobody asked for, and on a
+   long page most elements are that. The expensive ones are the glass's
+   backdrop-filter — a blur of whatever is behind it, recomputed as the page
+   moves — and every running animation, which keeps ticking off-screen.
+
+   So Tier 1 marks what is near enough to matter and effects.css stands the
+   rest down. `near` rather than `visible`: the margin arms an element before
+   it arrives, because a pane that blurs in as it crosses the fold is worse
+   than one that was always blurred.
+
+   SUBTRACTIVE, and that is the whole design. Tier 0 has no JavaScript to write
+   the attribute, so the stand-down rules key on `[data-sl-fx="on"]` too — a
+   page that never mounts keeps its full material, and only a page that armed
+   Tier 1 gets the economy. The alternative (require the attribute to paint)
+   would have turned the glass off entirely wherever this module is absent. */
+const NEAR_MARGIN = "200px";
+const NEAR_HOSTS = ".sl-fx-glass, .sl-fx-aurora";
+let nearObserver = null;
+
+/** Watch an element and mark it while it is near the viewport.
+ *  @param {ParentNode} root the subtree to watch
+ *  @returns {void} */
+function watchNear(root) {
+  if (typeof IntersectionObserver !== "function") return;
+  if (!nearObserver) {
+    nearObserver = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) e.target.toggleAttribute("data-sl-fx-near", e.isIntersecting);
+      },
+      { rootMargin: NEAR_MARGIN },
+    );
+  }
+  const hosts = [];
+  if (root instanceof Element && root.matches(NEAR_HOSTS)) hosts.push(root);
+  hosts.push(...root.querySelectorAll(NEAR_HOSTS));
+  for (const el of hosts) {
+    // FAIL OPEN. Marked near before it is observed, so the observer's job is
+    // only ever to TAKE the mark away. Where the API is absent, or present and
+    // never delivering — a background tab, a headless capture, a harness that
+    // suppresses it — every host keeps its full material, which is the state
+    // this layer promises is correct on its own. The economy is an
+    // improvement on that state, never a precondition for it.
+    el.toggleAttribute("data-sl-fx-near", true);
+    nearObserver.observe(el);
+  }
+}
+
 /** Whether this document has taken the reduced-motion derogation.
  *
  *  A product may have a documented reason to animate for a visitor reporting
@@ -943,11 +991,13 @@ export function mount(root = document, { ignoreReducedMotion = false } = {}) {
   armLenses(root);
   watchLensTheme(root);
   injectGlows(root);
+  watchNear(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
       armLenses(n);
       injectGlows(n);
+      watchNear(n);
     }
   }).observe(root, { childList: true, subtree: true });
 
@@ -1113,7 +1163,7 @@ export async function mountGpu() {
         obs.unobserve(e.target);
         light?.track(e.target).then((took) => { if (took) ownsLight.add(e.target); });
       }
-    }, { rootMargin: "200px" });
+    }, { rootMargin: NEAR_MARGIN });
     for (const el of backdropPanes) seen.observe(el);
   } else {
     for (const el of backdropPanes) {

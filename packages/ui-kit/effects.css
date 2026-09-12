@@ -1171,8 +1171,8 @@
      and leave the other whatever the host's width */
   inset: auto;
   padding: 0;
-  mask: none;
   -webkit-mask: none;
+  mask: none;
   left: -40%;
   top: 50%;
   width: 180%;
@@ -1296,8 +1296,8 @@
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before {
   inset: -20% -40%;
   padding: 0;
-  mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
   -webkit-mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
+  mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
   border-radius: 0;
   /* two curtains at different pitches and speeds, so the pillars beat
      against each other instead of scrolling as one sheet; the light pole
@@ -1413,6 +1413,38 @@
 }
 [data-sl-fx="on"] .sl-fx-liquid.is-liquid-live {
   border-image: linear-gradient(transparent 0 0) 1;
+}
+
+/* ══ OFF-SCREEN — what nobody can see costs nothing ══════════════════════════
+   An effect on an element outside the viewport is work nobody asked for, and
+   on a long page most elements are outside it. Two things cost real money:
+   the glass's backdrop-filter, which blurs whatever is behind it and is
+   recomputed as the page moves, and a running animation, which keeps ticking
+   off-screen for no one.
+
+   effects.js marks what is near enough to matter (an IntersectionObserver with
+   a 200px margin, so a pane is already blurred when it arrives rather than
+   blurring in at the fold). These rules stand down the rest.
+
+   SUBTRACTIVE, and that is the whole design: they key on [data-sl-fx="on"] as
+   well, so a page that never mounts keeps its full material. Requiring the
+   attribute to PAINT would have turned the glass off wherever this module is
+   absent, which is Tier 0 — the state the layer promises is correct on its
+   own. */
+[data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near]) .sl-glass__backdrop {
+  /* Prefixed FIRST, standard last. Written the other way round, Lightning CSS
+     (Astro's minifier) dropped the unprefixed declaration as redundant and
+     kept only -webkit-backdrop-filter — which Chrome does not let override the
+     standard property, so the gate matched 12 elements and blurred all 12
+     anyway. Found in the built bundle, not in source. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-sl-fx="on"] .sl-fx-aurora:not([data-sl-fx-near])::after,
+[data-sl-fx="on"] .sl-fx-aurora:not([data-sl-fx-near]) > .sl-fx-aurora__glow::before,
+[data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near])::before,
+[data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near])::after {
+  animation: none;
 }
 
 /* ══ GOO — these are one substance ═══════════════════════════════════════════

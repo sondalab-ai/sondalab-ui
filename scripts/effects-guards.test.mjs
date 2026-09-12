@@ -522,3 +522,51 @@ test("the pane's lit edge yields to the aurora and stays off a filled element", 
   const rim = RULES.find((r) => r.selector === ".sl-fx-glass.sl-fx-aurora--rim::after");
   assert.ok(rim && /opacity:\s*0/.test(rim.body), "the resting glass conic must stand down on a --rim");
 });
+
+test("an effect off-screen costs nothing, and Tier 0 keeps its material", () => {
+  // The expensive two are the glass's backdrop-filter — a blur of whatever is
+  // behind it, recomputed as the page moves — and a running animation, which
+  // keeps ticking for no one. effects.js marks what is near the viewport;
+  // these rules stand down the rest.
+  const near = RULES.filter((r) => /:not\(\[data-sl-fx-near\]\)/.test(r.selector));
+  assert.ok(near.length >= 2, "the stand-down rules must exist");
+
+  // SUBTRACTIVE. Every one of them must also require Tier 1 to be armed, or a
+  // page that never mounts — which cannot write the attribute — would lose its
+  // material entirely. Tier 0 is the state this layer promises is correct on
+  // its own.
+  for (const r of near) {
+    assert.match(r.selector, /^\[data-sl-fx="on"\]/, `must require Tier 1: ${r.selector}`);
+  }
+  // Nothing may PAINT only when near: that would be the additive form, and it
+  // is the one that breaks Tier 0.
+  const paintsWhenNear = RULES.filter(
+    (r) => /\[data-sl-fx-near\]/.test(r.selector) && !/:not\(\[data-sl-fx-near\]\)/.test(r.selector),
+  );
+  assert.deepEqual(paintsWhenNear.map((r) => r.selector), [], "the gate subtracts, it never adds");
+
+  assert.ok(
+    near.some((r) => /backdrop-filter:\s*none/.test(r.body)),
+    "the glass's backdrop must be the first thing to go",
+  );
+  assert.ok(near.some((r) => /animation:\s*none/.test(r.body)), "and animations the second");
+});
+
+test("a prefixed property never follows its standard form", () => {
+  // REGRESSION: `backdrop-filter: none` written before `-webkit-backdrop-filter:
+  // none` was minified down to the -webkit- one alone, which Chrome does not
+  // let override the standard property. The gate matched its twelve elements
+  // and every one of them went on blurring. Source looked right; the built
+  // bundle did not.
+  for (const r of RULES) {
+    for (const m of r.body.matchAll(/-webkit-([a-z-]+)\s*:/g)) {
+      const std = new RegExp(`(?:^|;)\\s*${m[1]}\\s*:`);
+      const stdAt = r.body.search(std);
+      if (stdAt === -1) continue;
+      assert.ok(
+        stdAt > m.index,
+        `${r.selector}: -webkit-${m[1]} must come BEFORE ${m[1]}, or a minifier may keep only the prefix`,
+      );
+    }
+  }
+});
