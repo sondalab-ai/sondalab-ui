@@ -279,8 +279,10 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // into a wave.
   assert.match(lensSrc, /const capped = Math\.min\(scale, cap\);/,
     "the bend is capped in pixels: a card must not bend six times harder than a button for being wider");
-  assert.match(lensSrc, /const cap = Number\.isFinite\(asked\) \? asked : reach;/,
-    "the cap is the element's own figure where it declares one, the argument otherwise");
+  assert.match(lensSrc, /const asking = Number\.isFinite\(asked\) \? asked : reach;/,
+    "the element's own figure where it declares one, the argument otherwise");
+  assert.match(lensSrc, /const cap = Math\.min\(asking, Math\.min\(w, h\) \/ 6\);/,
+    "and the box caps it too, so a few pixels stay few relative to the pane");
   assert.match(lensSrc, /getComputedStyle\(el\)\.getPropertyValue\("--slg-lens-reach"\)/,
     "the cap is readable from the element, and re-read whenever the box changes");
   assert.ok(
@@ -299,7 +301,10 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // which on a line of text behind a pane reads as a broken render and was
   // reported as one. The cap decides how far light bends, not how far apart its
   // colours land.
-  assert.match(lensSrc, /const split = disperse \* 0\.12;/, "the split is a pixel budget");
+  // 0.24 is the 4.3px separation the prism was fitted at on lab/1t and lab/1v,
+  // back when the cap was 6 and the split was a fraction of it. The first
+  // version of this line used 0.12 and quietly halved the prism.
+  assert.match(lensSrc, /const split = disperse \* 0\.24;/, "the split is a pixel budget, at the fitted fringe");
   assert.match(lensSrc, /capped - split \/ 2/, "red bends less");
   assert.match(lensSrc, /capped \+ split \/ 2/, "blue bends more");
   assert.doesNotMatch(lensSrc, /0\.02 \* disperse/, "and it no longer scales with the cap");
@@ -307,25 +312,34 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   assert.match(lensSrc, /roundedRectSDF\(ix, iy, 0\.3, 0\.2, 0\.6\)/, "his SDF, his numbers");
 });
 
-// 2026-09-12: a lens needs a pane large enough for its own cap to be a small
-// share of it. On a button it is a third of the box and the filter stops
-// behaving like glass — a 55 x 30 control rendered a flat grey slab, a 96 x 40
-// one shredded the text behind it into RGB copies, while a 494 x 139 card is
-// correct. Everything else was ruled out first by capture and diff: the
-// displacement itself (grey at scale 0), `reach` (6 and 18 identical), the
-// filter region (grown 24px a side) and the ground tint.
-test("the lens refuses a pane too small for its own bend", () => {
-  assert.match(lensSrc, /function tooSmall\(\)/, "the boundary is named, not inlined");
-  assert.match(lensSrc, /Math\.min\(r\.width, r\.height\) < cap \* 6/, "six times the cap, on the shorter side");
-  // And refusing means the element keeps glass.css's material rather than a
-  // half-built filter: no is-lensed, no backdrop-filter, no orphan <svg>.
-  const body = lensSrc.slice(lensSrc.indexOf("if (tooSmall())"));
-  const block = body.slice(0, body.indexOf("\n  refresh();"));
-  assert.match(block, /svg\.remove\(\)/, "the filter it built is taken back out of the document");
-  assert.match(block, /return null/, "and it answers null, like every other refusal");
+// 2026-09-12: the BOX caps the bend too, at a sixth of its shorter side. The
+// aurora's hosts ask for 18px, which is a tenth of a card's height and most of
+// a button's: at the latter the filter sampled outside its own region and the
+// pane rendered a flat grey slab, with a wider button shredding the text behind
+// it. An earlier attempt at this removed the lens from small panes instead —
+// that was a design decision, taken without being asked, and reverted.
+test("the box caps the bend, and the lens stays bound whatever the size", () => {
+  assert.match(lensSrc, /Math\.min\(asking, Math\.min\(w, h\) \/ 6\)/, "a sixth of the shorter side");
+  assert.doesNotMatch(lensSrc, /tooSmall/, "no size refuses the lens outright");
+});
+
+// A backdrop-filter inside a Backdrop Root gets an EMPTY backdrop, and a glass
+// host is one — `isolation: isolate` alone is enough, and that isolation is
+// what keeps the material under the host's label, so it cannot be given up.
+// Isolated by subtraction on the showcase's dialog: the button stayed grey at
+// displacement 0, at cap 5, with the region grown 24px a side, at 44px tall,
+// and with the ancestor's own lens removed; it rendered only when the ancestor
+// dropped its lens AND its isolation together. So the inner lens refuses.
+test("a lens refuses inside a glass ancestor, where it could only paint grey", () => {
+  assert.match(
+    lensSrc, /el\.parentElement\?\.closest\("\.sl-glass, \.sl-fx-glass"\)/,
+    "an ancestor glass host is checked, and the element itself is not (it is one)",
+  );
+  // Before anything is built: a refusal that has already appended an <svg> or
+  // marked the element leaks both.
   assert.ok(
-    lensSrc.indexOf("if (tooSmall())") < lensSrc.indexOf('el.classList.add("is-lensed")'),
-    "the refusal comes before the element is marked lensed",
+    lensSrc.indexOf('closest(".sl-glass') < lensSrc.indexOf("const svg ="),
+    "and it refuses before it builds anything",
   );
 });
 

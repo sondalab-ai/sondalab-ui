@@ -149,6 +149,28 @@ export function lens(el, look = {}) {
   // SVG filter reference in one, and must fall through to the CSS material.
   if (!CSS.supports("backdrop-filter", "url(#x)")) return null;
 
+  // A LENS CANNOT SEE THROUGH A GLASS ANCESTOR, and this is the browser's rule,
+  // not a choice. A glass host carries `isolation: isolate` so its own layers
+  // can sit under the host's label, and it usually carries a lens of its own;
+  // either one makes it a Backdrop Root, and a backdrop-filter inside a
+  // Backdrop Root gets an EMPTY backdrop. The pane then renders whatever its
+  // own material makes of nothing, which on the light theme is a flat grey
+  // slab — the defect the owner reported on a dialog's buttons.
+  //
+  // Isolated by subtraction on that dialog, each step a capture: the button
+  // stayed grey with the displacement at 0, with the cap at 5 instead of 18,
+  // with the filter region grown 24px a side, at 44px tall instead of 30, and
+  // with the ANCESTOR's own lens removed. It rendered correctly only when the
+  // ancestor gave up its lens AND its isolation together — which is not
+  // available, since the isolation is what keeps the material under the label.
+  //
+  // So the innermost lens is the one that cannot be served, and it refuses
+  // here rather than painting grey. Everywhere else a button keeps its lens:
+  // an earlier attempt at this defect took the lens off small panes outright,
+  // and that was a design decision about liquid glass which was not mine to
+  // take. This is the narrow case the platform forbids, and nothing more.
+  if (el.parentElement?.closest(".sl-glass, .sl-fx-glass")) return null;
+
   const { blur = 0.25, saturate = 1.1, brightness = 1.05, disperse = 18, reach = 6 } = look;
   const id = `sl-lens-${serial++}`;
 
@@ -259,7 +281,20 @@ export function lens(el, look = {}) {
     // first thing to drift, which is the same rule the GPU tier's thickness,
     // tint and fresnel already follow.
     const asked = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-reach"));
-    const cap = Number.isFinite(asked) ? asked : reach;
+    // AND THE BOX CAPS IT TOO, at a sixth of its shorter side. A slab bends at
+    // its edge by a fixed few pixels, which is what `reach` says; but "a few"
+    // has to stay few RELATIVE TO THE PANE, and the aurora's hosts ask for
+    // 18px. On a 494 x 139 card that is a tenth of the height and reads as
+    // glass. On a 55 x 30 button it is most of the box: the filter samples far
+    // outside its own region, comes back transparent, and the pane renders a
+    // flat GREY slab — which is what the owner saw on the light theme, with a
+    // 96 x 40 button shredding the text behind it for the same reason.
+    // A sixth of the shorter side gives the card its full 18, the 40px button
+    // 6.7 and the 30px one 5, all close to the material's own fitted 6. The
+    // lens stays bound on every pane: taking it off a button was a design
+    // decision, it was not mine to take, and it is not this defect's fix.
+    const asking = Number.isFinite(asked) ? asked : reach;
+    const cap = Math.min(asking, Math.min(w, h) / 6);
     const capped = Math.min(scale, cap);
     // THE COLOUR SPLIT IS A PIXEL BUDGET, not a fraction of the bend. The model
     // is still glass-studio's IOR triple — N_R 0.98 / N_G 1.00 / N_B 1.02, red
@@ -272,42 +307,13 @@ export function lens(el, look = {}) {
     // owner saw it as one. So `disperse` is read as that separation in PIXELS
     // and the cap only decides how far the light bends, not how far apart its
     // colours land.
-    const split = disperse * 0.12;
+    // 0.24: at disperse 18 that is the 4.3px separation the prism was fitted
+    // at on lab/1t and lab/1v, when the cap was 6 and the split was a fraction
+    // of it. The first version of this line used 0.12 and halved the prism.
+    const split = disperse * 0.24;
     dispR.setAttribute("scale", String(capped - split / 2));
     dispG.setAttribute("scale", String(capped));
     dispB.setAttribute("scale", String(capped + split / 2));
-  }
-
-  /** Whether this element is too small to be a slab.
-   *
-   *  A real pane bends at its edge by a fixed few pixels and is flat across the
-   *  rest, which is why the cap exists at all. On a control the size of a
-   *  button that same few pixels is a third of the box, and the filter stops
-   *  behaving like glass: measured on the showcase's light theme, a 55 x 30
-   *  button rendered a flat GREY slab where its own material renders a clean
-   *  pane, and a 96 x 40 one shredded the line of text behind it into
-   *  red/green/blue copies. Ruled out first, each by capture and diff: the
-   *  displacement (grey at scale 0 too), `reach` (6 and 18 identical), the
-   *  filter region (grown 24px each side, no change) and the ground tint. What
-   *  is left is the SVG filter reference itself on a small backdrop, and the
-   *  remedy is not to use it there — a 494 x 139 card is correct, so this is a
-   *  size boundary, not a browser to work around.
-   *
-   *  Six times the cap: at 18px that asks for 108px, which a card clears and a
-   *  button, a field and a tag do not. They keep the material glass.css paints
-   *  — frost, tint and rim — which is what the reference's own button has:
-   *  liqui-glass's refract layer moves 0.04% of its pixels and displaces
-   *  nothing (see the `liqui-glass` card).
-   *  @returns {boolean} whether the bend would be too large a share of the box */
-  function tooSmall() {
-    const r = el.getBoundingClientRect();
-    const asked = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-reach"));
-    const cap = Number.isFinite(asked) ? asked : reach;
-    return Math.min(r.width, r.height) < cap * 6;
-  }
-  if (tooSmall()) {
-    svg.remove();
-    return null;
   }
 
   refresh();
