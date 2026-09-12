@@ -11,16 +11,16 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 15:40
+## Start here — handoff, 2026-09-12 16:00
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (170 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (173 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
+"packages/ui-kit/effects.css" --product effects` clean. 189 tests green. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
   its capture within ±3 luminance on `lab/1n`; tint 0.18, floored at 0.34 under
@@ -29,9 +29,10 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   label; `__specular` paints nothing.
 - `glass-lens.js` — a REAL refraction, adopted from shuding/liquid-glass (MIT):
   `backdrop-filter: url(#…)` with a data-URI displacement map; per-channel
-  dispersion (`disperse`, default 18); bend capped at `reach`, 6 px for the
-  material and **readable from the element as `--slg-lens-reach`**, which the
-  aurora's hosts raise to 18 px; frost and saturation animatable via
+  dispersion (`disperse`, now the red-to-blue separation in PIXELS, default 18);
+  bend capped at `reach`, 6 px for the material and **readable from the element
+  as `--slg-lens-reach`**, which the aurora's hosts raise to 18 px; **the lens
+  refuses a pane shorter than six times that cap** and leaves it the material; frost and saturation animatable via
   `--slg-lens-blur` / `--slg-lens-sat`.
 - `effects.css` / `effects.js` — the aurora's light is **the curtains**
   (`--pillars`), by default on every host that does not ask for another
@@ -687,6 +688,43 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+**Four defects on the light theme — 2026-09-12.** *Owner, with two
+screenshots: "ritengo questi dei difetti."* Two were the lens, one was a
+strength, one was mine from an hour earlier.
+
+- **The lens on a small pane.** A 55 × 30 button rendered a flat **grey slab**
+  where its own material renders a clean pane, and a 96 × 40 one **shredded the
+  text behind it** into red/green/blue copies; a 494 × 139 card is correct. So
+  it is a size boundary, and everything else was ruled out first, each by
+  capture and diff: the displacement (grey at scale 0), `reach` (6 and 18
+  identical), the filter region (grown 24 px a side), the ground tint (lens off
+  is correct at the same tint), the frost, and finally the `url()` alone
+  (removed from the chain, the pane is correct). The lens now answers `null`
+  below **six times its own cap** — 108 px at the aurora's reach — and the
+  element keeps `glass.css`'s material. Which is what the reference's own
+  button has: liqui-glass's refract layer moves 0.04 % of its pixels.
+- **The colour split.** It was a fraction of the bend, right only while the
+  bend is physical; ours is capped for looks. At 6 px the red-to-blue
+  separation was 4.3 px, the fringe the prism was fitted at; at the aurora's
+  18 px cap the same expression gave **13 px**, which on text behind a pane is
+  a broken render. `disperse` is now that separation in **pixels**.
+- **The blue blob.** `--rim`'s bloom was the depth companion at 90/78 % and read
+  as a cyan blob beside a busy button. The hue stays — a ring in the accent
+  would vanish into the accent fill it outlines — at **44/33 %**, the register
+  every other bloom uses.
+- **The fill-less control's label**, which the tint floor an hour earlier had
+  fixed only while lensed. A button, badge or field carries no fill, so its
+  label sits on whatever is behind it: 4.24:1 over a dark region. Their tint
+  goes 18 → **25 %** (4.74:1); the material's fitted 18 % is untouched wherever
+  a surface has a fill of its own.
+
+| light theme, all four in | contrast |
+|---|---|
+| ghost, over the telemetry substrate | 4.74:1 |
+| primary, same substrate | 6.97:1 |
+| ghost, on the white dialog | 14.63:1 |
+| primary, on the white dialog | 9.72:1 |
 
 **The light theme's unreadable label — 2026-09-12.** *Owner: "i pulsanti su
 tema light hanno label nera poco visibile."* Measured off the rendered page,
