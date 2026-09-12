@@ -211,9 +211,9 @@ test("an image member's picture is placed in the tile's space, not in user space
   // weld blends, so three images sat side by side welding into black.
   const fn = js.slice(js.indexOf("function imageFill("), js.indexOf("function paint("));
   assert.ok(fn.length > 0, "imageFill must exist");
-  assert.match(fn, /picture\.setAttribute\("x", "0"\)/, "the picture sits at the tile's own origin");
-  assert.match(fn, /picture\.setAttribute\("y", "0"\)/);
-  assert.match(fn, /pattern\.setAttribute\("x", String\(shape\.x\)\)/, "the TILE carries the user-space offset");
+  assert.match(fn, /setAttr\(picture, "x", "0"\)/, "the picture sits at the tile's own origin");
+  assert.match(fn, /setAttr\(picture, "y", "0"\)/);
+  assert.match(fn, /setAttr\(pattern, "x", String\(shape\.x\)\)/, "the TILE carries the user-space offset");
   assert.match(fn, /preserveAspectRatio", "xMidYMid slice"/, "a letterboxed picture would show the fallback in the bars");
 });
 
@@ -252,8 +252,8 @@ test("a member's silhouette is opaque, whatever the member's own alpha", () => {
   assert.equal(opaque("oklch(0.7 0.15 60 / 50%)"), "oklch(0.7 0.15 60)");
   assert.equal(opaque("rgb(15, 21, 26)"), "rgb(15, 21, 26)", "an opaque colour is untouched");
   assert.match(js, /const ground = opaque\(fallback\);/, "the substance under every member is opaque");
-  assert.match(js, /isClear\(own\) \? ground : own/, "a member's OWN colour is painted as the component painted it, alpha included");
-  assert.match(js, /paths\[i \* 2\]\.setAttribute\("fill", ground\)/, "every member stands on the substance");
+  assert.match(js, /setAttr\(face, "fill", isClear\(own\) \? ground : own\)/, "a member's OWN colour is painted as the component painted it, alpha included");
+  assert.match(js, /setAttr\(paths\[i \* 2\], "fill", ground\)/, "every member stands on the substance");
 });
 
 test("the goo survives a motion preference, and only high contrast refuses it", () => {
@@ -399,10 +399,8 @@ test("an image member's href is written only when it changed", () => {
   // at an observer loop (ResizeObserver and MutationObserver callbacks were
   // counted: 0 and 1).
   const fn = js.slice(js.indexOf("function imageFill("), js.indexOf("function paint("));
-  assert.match(fn, /if \(picture\.getAttribute\("href"\) !== href\) picture\.setAttribute\("href", href\);/,
-    "href must be guarded by a comparison");
-  assert.doesNotMatch(fn.replace(/if \(picture\.getAttribute[^\n]*\n/, ""), /setAttribute\("href"/,
-    "and written nowhere else");
+  assert.match(fn, /setAttr\(picture, "href", img\.currentSrc \|\| img\.src\);/, "href goes through the guard");
+  assert.doesNotMatch(fn, /picture\.setAttribute\("href"/, "and is never written directly");
 });
 
 test("a welded member hands over its background as well as its border", () => {
@@ -456,4 +454,23 @@ test("a welded member that is also glass gives up its hairline", () => {
   const rule = css.match(/\.sl-fx-goo \.sl-fx-glass\.sl-fx-goo__member\.is-goo-welded::after\s*\{([^}]*)\}/);
   assert.ok(rule, "the welded glass member must stand its ring down");
   assert.match(rule[1], /opacity:\s*0/, "the same instrument the liquid's live host uses");
+});
+
+test("the loop writes no attribute it would not change", () => {
+  // Setting an attribute inside an SVG filter marks the filter dirty and the
+  // browser re-rasterises the whole region — 0.1 to 0.6 megapixels of Gaussian
+  // blur at device-pixel-ratio 2, measured across the showcase. The loop
+  // re-derives every value each frame because a member may have moved, but on
+  // a resting hover none of them differ. The JavaScript was never the cost:
+  // measure() is 0.138 ms per call on a three-member field.
+  assert.match(js, /function setAttr\(el, name, value\) \{\s*if \(el\.getAttribute\(name\) !== value\) el\.setAttribute\(name, value\);/,
+    "the guard must compare before writing");
+
+  // Nothing inside measure() or paint() may write directly.
+  const hot = js.slice(js.indexOf("function paint("), js.indexOf("// The substance is static"));
+  assert.doesNotMatch(hot, /\.setAttribute\(/, "every per-frame write goes through setAttr");
+
+  // The one-time build may: it runs once, on an element not yet in a filter.
+  const build = js.slice(js.indexOf("const svg = document.createElementNS"), js.indexOf("function setAttr") + 1 || js.length);
+  assert.ok(js.includes('svg.setAttribute("aria-hidden", "true")'), "the field is still hidden from the accessibility tree");
 });

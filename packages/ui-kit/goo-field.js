@@ -58,6 +58,25 @@ const SOFT_FALLBACK = 5;
 
 let fieldSeq = 0;
 
+/** Write an attribute only when it would change.
+ *
+ *  Not a micro-optimisation. Setting an attribute on an element inside an SVG
+ *  filter marks the filter dirty and the browser re-rasterises the whole filter
+ *  region — a Gaussian blur over 0.1 to 0.6 megapixels at device-pixel-ratio 2,
+ *  measured across the showcase's own fields. The interaction loop re-derives
+ *  every value each frame because a member may have moved, but on a resting
+ *  hover none of them differ, and that re-raster is paid for nothing.
+ *
+ *  The JavaScript was never the cost here, which is why this is the shape the
+ *  fix takes: measure() itself is 0.138 ms per call on a three-member field.
+ *  @param {Element} el
+ *  @param {string} name
+ *  @param {string} value
+ *  @returns {void} */
+function setAttr(el, name, value) {
+  if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+}
+
 /** Read a length binding off the container, in CSS pixels.
  *  @param {CSSStyleDeclaration} cs the container's computed style
  *  @param {string} name the custom property
@@ -225,21 +244,18 @@ export function gooField(container) {
     // absolute x/y as the pattern offsets it twice, so every tile shows the
     // wrapped-around part of the image — the picture still looks present, and
     // its edges, which are the only part the weld blends, are the wrong ones.
-    pattern.setAttribute("x", String(shape.x));
-    pattern.setAttribute("y", String(shape.y));
-    picture.setAttribute("x", "0");
-    picture.setAttribute("y", "0");
+    setAttr(pattern, "x", String(shape.x));
+    setAttr(pattern, "y", String(shape.y));
+    setAttr(picture, "x", "0");
+    setAttr(picture, "y", "0");
     for (const [k, v] of [["width", shape.w], ["height", shape.h]]) {
-      pattern.setAttribute(k, String(v));
-      picture.setAttribute(k, String(v));
+      setAttr(pattern, k, String(v));
+      setAttr(picture, k, String(v));
     }
-    // Only when it CHANGED. Re-setting href to the same value restarts the
-    // load and the decode in Chrome, and paint() runs on every measure — which,
-    // while a pointer is in the field, is every frame. A 220x132 PNG decoded
-    // per frame blocked the main thread for seconds at a time; the JS itself
-    // measured 10ms, which is what sent the search to the rendering side.
-    const href = img.currentSrc || img.src;
-    if (picture.getAttribute("href") !== href) picture.setAttribute("href", href);
+    // href matters more than the rest: re-setting it to the same value does not
+    // merely dirty the filter, it restarts the load and the decode in Chrome. A
+    // 220x132 PNG decoded per frame blocked the main thread for seconds.
+    setAttr(picture, "href", img.currentSrc || img.src);
     return `url(#${patternId})`;
   }
 
@@ -250,7 +266,7 @@ export function gooField(container) {
     const ground = opaque(fallback);
     for (let i = 0; i < members.length; i++) {
       const el = members[i];
-      paths[i * 2].setAttribute("fill", ground);
+      setAttr(paths[i * 2], "fill", ground);
       const face = paths[i * 2 + 1];
       // A member that came into this frame already welded has handed its
       // background to the substance, so it reports no colour of its own. Its
@@ -259,13 +275,13 @@ export function gooField(container) {
       // Reading it again would write the fallback over a coloured chip.
       if (!restore && el.classList.contains("is-goo-welded")) continue;
       if (el instanceof HTMLImageElement && lastShapes[i]) {
-        face.setAttribute("fill", imageFill(el, lastShapes[i], i));
+        setAttr(face, "fill", imageFill(el, lastShapes[i], i));
         continue;
       }
       const own = getComputedStyle(el).backgroundColor;
       // A member with no fill of its own is the substance and nothing else;
       // painting the face too would only double a colour already there.
-      face.setAttribute("fill", isClear(own) ? ground : own);
+      setAttr(face, "fill", isClear(own) ? ground : own);
     }
   }
 
@@ -326,16 +342,16 @@ export function gooField(container) {
     for (let i = 0; i < shapes.length; i++) {
       const s = shapes[i];
       const d = roundedRectPathAt(s.x, s.y, s.w, s.h, s.radii);
-      paths[i * 2].setAttribute("d", d);
-      paths[i * 2 + 1].setAttribute("d", d);
+      setAttr(paths[i * 2], "d", d);
+      setAttr(paths[i * 2 + 1], "d", d);
     }
-    blur.setAttribute("stdDeviation", sigma.toFixed(3));
+    setAttr(blur, "stdDeviation", sigma.toFixed(3));
 
     const region = filterRegion(shapes, sigma);
-    filter.setAttribute("x", region.x.toFixed(2));
-    filter.setAttribute("y", region.y.toFixed(2));
-    filter.setAttribute("width", region.width.toFixed(2));
-    filter.setAttribute("height", region.height.toFixed(2));
+    setAttr(filter, "x", region.x.toFixed(2));
+    setAttr(filter, "y", region.y.toFixed(2));
+    setAttr(filter, "width", region.width.toFixed(2));
+    setAttr(filter, "height", region.height.toFixed(2));
 
     paint(fallback, restore);
 
