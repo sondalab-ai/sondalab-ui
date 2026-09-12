@@ -154,10 +154,10 @@
   --slfx-goo-reach: 3px;
   --slfx-goo-weld: 14px;
   --slfx-goo-soft: 5px;
-  /* What a member with no fill of its own contributes — a ghost button, a
-     field. The substance is the surface the members sit on, one step in from
-     the canvas, so an unfilled member reads as a hole in the substance
-     rather than as a second material. */
+  /* What a member with no fill of its own contributes — a bare wrapper, or
+     anything whose glass paints on a pseudo-element. The substance is the
+     surface the members sit on, one step in from the canvas, so an unfilled
+     member reads as part of the material rather than as a hole in it. */
   --slfx-goo-fill: var(--sl-bg-surface-raised, var(--sl-bg-surface));
 }
 
@@ -1454,6 +1454,15 @@
 
    Tier 0 is the members laid out and unmerged — correct, not beautiful. The
    substance needs goo-field.js to exist at all, so it arrives with Tier 1.
+
+   NEVER A FORM CONTROL. goo-field.js refuses button, input, select, textarea
+   and a[href] outright, marked or not: they paint their own chrome through
+   layers this family does not own — a glass pane's hairline lives on ::after
+   and in the children glass.css injects — so a welded control kept an outline
+   the substance was meant to replace while a welded div beside it lost its
+   edge entirely. Standard elements only; where a member must be operable, an
+   element that paints nothing of its own and carries the semantics through
+   role and a tab stop.
 
    CLIPPING, at container scale (spec §Decision 3b): the goo reaches
    --slfx-goo-reach plus three blur sigmas past the outermost member, so the

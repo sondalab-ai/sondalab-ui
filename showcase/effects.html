@@ -283,7 +283,10 @@
     .goo-chip {
       position: absolute;
       left: var(--x); top: var(--y);
-      margin: 0; padding: 0.5rem 0.9rem;
+      /* A div, not a button — a form control is refused a field outright. So
+         the reset a button came with has to be written out, and the focus ring
+         re-asserted: role and tabindex buy the semantics, not the styling. */
+      margin: 0; padding: 0.5rem 0.9rem; display: inline-block; width: max-content;
       font-family: var(--sl-font-mono); font-size: var(--sl-text-xs);
       letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--sl-text-primary);
@@ -293,9 +296,24 @@
       cursor: grab; touch-action: none; user-select: none;
     }
     .goo-chip:active { cursor: grabbing; }
+    .goo-chip:focus-visible {
+      outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus, var(--sl-accent-default));
+      outline-offset: var(--sl-focus-ring-offset, 2px);
+    }
     .goo-chip--a { background: var(--sl-accent-default); color: var(--sl-text-on-accent); border-color: transparent; }
     .goo-chip--b { background: var(--sl-accent-depth); color: var(--sl-text-on-accent); border-color: transparent; }
     @media (min-width: 720px) { .g-cell--wide { grid-column: 1 / -1; } }
+
+    .goo-strip { display: flex; gap: 0.75rem; padding: 0.4rem 0; align-items: stretch; flex-wrap: wrap; }
+    .goo-panel {
+      flex: 1; min-width: 7rem; display: flex; flex-direction: column; gap: 0.15rem;
+      padding: 0.7rem 0.85rem;
+      background: var(--sl-bg-surface-raised);
+      border: 1px solid var(--sl-border-subtle);
+      border-radius: var(--sl-radius-md, 6px);
+    }
+    .goo-panel b { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.04em; color: var(--sl-text-primary); }
+    .goo-panel span { font-family: var(--sl-font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sl-text-muted); }
 
     .goo-swatches { display: flex; gap: 0.75rem; padding: 0.4rem 0; }
     .goo-swatch { flex: 1; height: 3.6rem; border-radius: var(--sl-radius-lg, 12px); background: var(--sl-bg-surface-raised); }
@@ -515,19 +533,19 @@
         <p class="cap">These are one substance. Where the liquid answers the pointer on one element, the goo answers the <b>layout</b> across several: a container carries <b>.sl-fx-goo</b> and owns one <b>&lt;svg class="sl-fx-goo__field"&gt;</b>, every <b>.sl-fx-goo__member</b> contributes its rounded box to that field in the container's own coordinates, and a single goo filter runs over the group. Two silhouettes can only weld if they share a filter coordinate space — which is why this is a family of its own and not a looser gate on <a class="sl-link" href="#liquid">§02</a>: the liquid's skin is parented <i>into</i> one host and is structurally incapable of merging with a neighbour. The meaning differs too. Not <i>you are recognised</i> but <i>these belong to one another</i>, so it marks a set, never a state. The content is never filtered: the field is a silhouette layer below the members and the real DOM rides crisp on top.</p>
         <div class="gallery">
           <div class="g-cell">
-            <span class="g-label">a toolbar is one control, not three</span>
-            <div class="sl-fx-goo g-demo" style="--slfx-goo-weld: 22px">
-              <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Run probe</button>
-              <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Cancel</button>
-              <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Reset</button>
+            <span class="g-label">a row of panels is one panel</span>
+            <div class="sl-fx-goo goo-strip" style="--slfx-goo-weld: 22px">
+              <div class="goo-panel sl-fx-goo__member"><b>daos</b><span>resolved</span></div>
+              <div class="goo-panel sl-fx-goo__member"><b>introspect</b><span>running</span></div>
+              <div class="goo-panel sl-fx-goo__member"><b>smartctx</b><span>queued</span></div>
             </div>
-            <p class="cap">Three buttons laid out on the gallery's own <b>0.7rem</b> gap — 9.8px between their boxes — under a <b>--slfx-goo-weld</b> of 22px, so the substance is continuous beneath them and the row reads as one tray. At the default 14px the same row still welds, but only just: the neck narrows to a waist and three trays read where one was meant. The weld is the knob for that, and a gap you can measure is what it is expressed in. Each button keeps its own glass and its own label. Once it has <b>welded</b> it gives up two things, and the substance paints them instead: its <b>border</b>, whose outline would otherwise draw a line across the merged mass, and its <b>background</b>, whose opaque rectangle would cover a neighbour's substance with a hard corner — boxes stepped over one another rather than drops merging. Handing the paint over moves that colour boundary inside the filter, where the blur softens it. A member standing on its own keeps both: it is still a button, and the substance behind it is a rim, not a replacement.</p>
+            <p class="cap">Three panels on a <b>0.75rem</b> gap under a <b>--slfx-goo-weld</b> of 22px: the substance is continuous beneath them and the row reads as one object. Once a member has <b>welded</b> it gives up two things and the substance paints them instead — its <b>border</b>, whose outline would otherwise draw a line across the merged mass, and its <b>background</b>, whose opaque rectangle would cover a neighbour's substance with a hard corner. That moves the colour boundary inside the filter, where the blur softens it. A member standing on its own keeps both: the substance behind it is a rim, not a replacement.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">the weld is a distance you bind, not a blur you tune</span>
-            <div class="sl-fx-goo g-demo" style="gap: 2.4rem">
-              <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Run probe</button>
-              <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Cancel</button>
+            <div class="sl-fx-goo goo-strip" style="gap: 2.4rem">
+              <div class="goo-panel sl-fx-goo__member"><b>daos</b><span>resolved</span></div>
+              <div class="goo-panel sl-fx-goo__member"><b>introspect</b><span>running</span></div>
             </div>
             <p class="cap">The same field at a <b>2.4rem</b> gap: past the weld, so the two stand apart and each keeps its own rim. <b>--slfx-goo-weld</b> is the largest gap between two <b>members, as laid out</b>, that still grows a neck — measured edge to edge between facing sides, so a grid's diagonals stand further apart than its <b>gap</b> and stay open. <b>geom.js</b> spends that distance on dilation first and blur only up to <b>--slfx-goo-soft</b>: both close a gap, but dilation preserves the outline while blur melts it, and spending the whole budget on blur put it at 10–16px against a 12px corner — the shapes read as melted rather than as a material.</p>
           </div>
@@ -549,15 +567,12 @@
             <p class="cap">An <b>&lt;img&gt;</b> has no fill of its own, so its silhouette is filled with the picture itself and the goo blurs it like any other paint — the edges run into the neck. The picture on top is untouched and unfiltered; only the substance behind it carries the blur.</p>
           </div>
           <div class="g-cell">
-            <span class="g-label">a field and its action</span>
-            <label class="sl-field sl-fx-goo goo-field-row">
-              <span class="sl-field__label">Product</span>
-              <span class="goo-field-row__line">
-                <input class="sl-field__input sl-fx-goo__member" type="text" placeholder="introspect">
-                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Resolve</button>
-              </span>
-            </label>
-            <p class="cap">The member is whichever element <b>paints the fill</b>, which for a replaced control is the control itself: <b>.sl-field__input</b> carries the background and <b>.sl-field__control</b> is a transparent wrapper. The wrapper rule in <a class="sl-link" href="#glass">§04</a> does not transfer — it exists because an <b>&lt;input&gt;</b> renders no pseudo-element, and this family uses none.</p>
+            <span class="g-label">what a field will not take</span>
+            <div class="sl-fx-goo goo-strip">
+              <div class="goo-panel sl-fx-goo__member"><b>div</b><span>a member</span></div>
+              <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">button</button>
+            </div>
+            <p class="cap">Both carry <b>.sl-fx-goo__member</b>; only the panel is one. A <b>button</b>, an <b>input</b>, a <b>select</b>, a <b>textarea</b> and an <b>a[href]</b> are refused outright, and the element is left completely alone — no class, no silhouette — the way a bare <b>.sl-fx-liquid</b> is inert. They paint their own chrome through layers this family does not own: a glass pane's hairline lives on <b>::after</b> and in the children <b>glass.css</b> injects, so a welded button went on drawing the outline the substance was meant to replace while the panel beside it lost its edge entirely. The two did not look alike, and the control was always the one that looked wrong. Excluding by <b>tag</b> is not the heuristic <b>--drop</b> exists to avoid: a tag name is a stable fact, a measured radius is a value a component may re-parametrise.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">what the substance is made of</span>
@@ -566,16 +581,16 @@
               <span class="sl-tag sl-fx-goo__member">PoC</span>
               <span class="sl-tag sl-fx-goo__member">Placeholder</span>
             </div>
-            <p class="cap">Every member stands on <b>--slfx-goo-fill</b> — the field's declared substance, opaque — and its own fill is composited over that at the alpha the component chose. So a member with none at all (a ghost button, anything whose glass paints on a pseudo-element) is simply the substance, and a member with a tint stays a tint. The pair exists because the goo's slope erases everything below alpha 0.5: forcing a member's own colour opaque instead was tried, and a <b>sl-tag</b> — the accent at low alpha — stopped being a tint and became the accent, three quiet tags rendering as three saturated slabs.</p>
+            <p class="cap">Every member stands on <b>--slfx-goo-fill</b> — the field's declared substance, opaque — and its own fill is composited over that at the alpha the component chose. So a member with none at all (a bare wrapper, anything whose glass paints on a pseudo-element) is simply the substance, and a member with a tint stays a tint. The pair exists because the goo's slope erases everything below alpha 0.5: forcing a member's own colour opaque instead was tried, and a <b>sl-tag</b> — the accent at low alpha — stopped being a tint and became the accent, three quiet tags rendering as three saturated slabs.</p>
           </div>
           <div class="g-cell g-cell--wide">
             <span class="g-label">drag one into another — the substance follows</span>
             <div class="sl-fx-goo goo-board" id="goo-board" style="--slfx-goo-weld: 26px">
-              <button class="goo-chip goo-chip--a sl-fx-goo__member" style="--x: 4%;  --y: 12%">resolve</button>
-              <button class="goo-chip goo-chip--b sl-fx-goo__member" style="--x: 40%; --y: 52%">migrate</button>
-              <button class="goo-chip sl-fx-goo__member"             style="--x: 72%; --y: 16%">introspect</button>
+              <div class="goo-chip goo-chip--a sl-fx-goo__member" role="button" tabindex="0" style="--x: 4%;  --y: 12%">resolve</div>
+              <div class="goo-chip goo-chip--b sl-fx-goo__member" role="button" tabindex="0" style="--x: 40%; --y: 52%">migrate</div>
+              <div class="goo-chip sl-fx-goo__member"             role="button" tabindex="0" style="--x: 72%; --y: 16%">introspect</div>
             </div>
-            <p class="cap">Drag a chip with the pointer, or focus one and move it with the arrow keys (hold <b>Shift</b> for a bigger step). A move is the one change nothing reports — a <b>ResizeObserver</b> sees a box change size, never change place, and an inset write mutates no <b>childList</b> — so the field re-measures per frame while a pointer or the focus is inside it, and not at all otherwise. Bring two within <b>26px</b> and the substance necks between them, carrying both colours into the bridge; pull them apart and it snaps. The chips are placed from <b>--x</b>/<b>--y</b> rather than moved with a <b>transform</b>, which would move the painted element without moving the box <b>getBoundingClientRect()</b> reports — the silhouette would stay behind.</p>
+            <p class="cap">Drag a chip with the pointer, or focus one and move it with the arrow keys (hold <b>Shift</b> for a bigger step). A move is the one change nothing reports — a <b>ResizeObserver</b> sees a box change size, never change place, and an inset write mutates no <b>childList</b> — so the field re-measures per frame while a pointer or the focus is inside it, and not at all otherwise. Bring two within <b>26px</b> and the substance necks between them, carrying both colours into the bridge; pull them apart and it snaps. The chips are <b>div</b>s with <b>role="button"</b> and a tab stop, not <b>&lt;button&gt;</b>s: a form control is refused a field outright, and a div paints nothing of its own, so the substance can be its whole surface. They are placed from <b>--x</b>/<b>--y</b> rather than moved with a <b>transform</b>, which would move the painted element without moving the box <b>getBoundingClientRect()</b> reports — the silhouette would stay behind.</p>
           </div>
         </div>
         <p class="cap">Containers must give the substance room. The goo reaches <b>--slfx-goo-reach</b> plus three blur sigmas past the outermost member — about 34px at the default weld — so an ancestor with <b>overflow</b> other than <b>visible</b>, with <b>contain</b>, or with a <b>clip-path</b> cuts it along a straight line. The rule of <a class="sl-link" href="#glass">§04</a>, one scale up.</p>
@@ -699,7 +714,7 @@
             <div class="g-cell">
               <span class="g-label">eyebrow · section index</span>
               <p class="sl-eyebrow">Section eyebrow</p>
-              <p class="cap">Scrambles once as it enters the viewport — every <b>.sec-idx</b> on this page (<b>01</b>…<b>05</b>) does exactly this; scroll away and back to watch one re-run.</p>
+              <p class="cap">Scrambles once as it enters the viewport — every <b>.sec-idx</b> on this page (<b>01</b>…<b>06</b>) does exactly this; scroll away and back to watch one re-run.</p>
             </div>
             <div class="g-cell" style="padding:0">
               <div class="invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top" style="padding:1.4rem">

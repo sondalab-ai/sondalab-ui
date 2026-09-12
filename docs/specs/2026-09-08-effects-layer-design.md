@@ -94,7 +94,13 @@ Handing the background over means a welded member reports a clear `background-co
 
 `border-image` reaches the element's own border and nothing else, so a welded member that is **also glass** stands its hairline down as well (`::after`, `opacity: 0` — the liquid's own instrument, three rules down): the pane's ring lights on `:hover` and was drawing the outline the border rule exists to remove.
 
-What the glass family paints through its **injected children** (`glass.css`'s backdrop, tint and lens layers) is deliberately left alone. A welded member is still made of glass; the substance is behind it, not instead of it. The consequence is visible and worth stating: in a welded toolbar the chips lose their edge entirely while the glass buttons keep their material, so the two do not look alike. Whether a control inside a mass should keep the affordance of its own edge is a design decision, not a defect, and it is the owner's.
+**A form control or a link is refused a field outright (owner's ruling, 2026-09-12).** The paragraph above used to end by leaving this open, and the owner closed it: `goo-field.js` matches `button, input, select, textarea, a[href]` and skips those members entirely — no class, no silhouette, the element left exactly as it was found, the way a bare `.sl-fx-liquid` is inert.
+
+The reason is the one the open question named. A control paints its own chrome through layers this family does not own — a glass pane's hairline lives on `::after` and in the children `glass.css` injects — so a welded button went on drawing the outline the substance was meant to replace while a welded `<div>` beside it lost its edge entirely. The two did not look alike, and the control was always the one that looked wrong. Removing the case is a smaller change than teaching one family to stand another's layers down, and it keeps a control's affordance where it belongs.
+
+Excluding by **tag** is not the heuristic the liquid's `--drop` gate exists to avoid: a tag name is a stable semantic fact, where a measured `border-radius` is a value a component may re-parametrise at any time. A `div[role="button"][tabindex="0"]` is deliberately still eligible — it paints nothing of its own, so the substance can be its whole surface, and it is what the showcase's drag board is built from.
+
+This also settles what the original request asked for. The owner named "buttons, cards, images and fields" on 2026-09-12 and narrowed it the same day, after seeing it: cards, images and any standard element, never a control.
 
 The class and the stacking order are the only two things written to a member, and `destroy()` removes both.
 
@@ -193,18 +199,18 @@ Four families across a dozen components, unconstrained, is a Christmas tree. `ef
 
 ## Per-component declension
 
-Each component gets the families that match its semantics — never all five, and never one because it was available. Goo is `○` almost everywhere on purpose: it is never a property of a component, only of a **set** an author declared, so the column says "this component may be a member", never "this component carries it".
+Each component gets the families that match its semantics — never all five, and never one because it was available. Goo is `○` where it appears at all, on purpose: it is never a property of a component, only of a **set** an author declared, so the column says "this component may be a member", never "this component carries it". It is `—` on every **form control and link**, which `goo-field.js` refuses outright — see Decision 2b.
 
 ● = required where the substrate requires the family · ○ = adapt (reduced amplitude) · — = never
 
 | Component | Glitch | Liquid | Goo | Aurora | Glass |
 |---|---|---|---|---|---|
-| `sl-btn--primary` | on destructive confirmation | — (a text button is glass, not gooey) | ○ as a member of a declared toolbar | ● `:focus-visible`; ● `busy` while submitting — **`--rim`**: the arc sits outside the box, in the depth companion | ● **`--pane`** over the fill: light that sits on the fill, a rim inside its edge, a glint under the pointer; `--rim` tells the pane its ground is the fill |
-| `sl-btn--ghost` | — | — (a text button is glass, not gooey) | ○ as a member of a declared toolbar | ● `:focus-visible` | ● **`--pane`**: no fill of its own, so the blur alone makes it glass; its `1px` border turns to face the pointer |
-| `sl-btn` round, icon-only (square, `--sl-radius-pill`; no dedicated class in `components.css` yet) | — | ● **`--drop`**: the one button that goes gooey | ○ as a member of a declared toolbar | ● `:focus-visible`; `--rim` on a filled one | ● on a ghost one |
+| `sl-btn--primary` | on destructive confirmation | — (a text button is glass, not gooey) | — a form control is refused a field | ● `:focus-visible`; ● `busy` while submitting — **`--rim`**: the arc sits outside the box, in the depth companion | ● **`--pane`** over the fill: light that sits on the fill, a rim inside its edge, a glint under the pointer; `--rim` tells the pane its ground is the fill |
+| `sl-btn--ghost` | — | — (a text button is glass, not gooey) | — a form control is refused a field | ● `:focus-visible` | ● **`--pane`**: no fill of its own, so the blur alone makes it glass; its `1px` border turns to face the pointer |
+| `sl-btn` round, icon-only (square, `--sl-radius-pill`; no dedicated class in `components.css` yet) | — | ● **`--drop`**: the one button that goes gooey | — a form control is refused a field | ● `:focus-visible`; `--rim` on a filled one | ● on a ghost one |
 | `sl-card` | — | — (a container takes no swell) | ○ as a member of a declared gallery — a card joins a substance, it never yields to a pointer | ● `busy` while loading; `sweep` only when granted | ● |
-| `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | ○ **the control is the member**, not the wrapper: it is what paints the fill | ● `:focus-within` on the wrapper | ● on the wrapper |
-| `sl-tabs__tab` | scramble on label change | — | ○ as a member of the tab list | ● the 2px active underline becomes a linear aurora | — |
+| `sl-field__input` | 1 burst on validation failure | — (typing must not be disturbed) | — a replaced control is refused a field | ● `:focus-within` on the wrapper | ● on the wrapper |
+| `sl-tabs__tab` | scramble on label change | — | — it is a `<button>` | ● the 2px active underline becomes a linear aurora | — |
 | `sl-badge` / `sl-tag` | scramble on value change | — | ○ as a member of a declared row | — | ○ micro-rim |
 | `sl-dialog` | shatter-in on open (1 burst) | — | — | ● rim while open; `busy` while its action runs | ● |
 | `sl-table tbody tr` | — | — | — | — | — |
@@ -212,7 +218,7 @@ Each component gets the families that match its semantics — never all five, an
 | wordmark | rare ambient burst | — | — | — | — |
 | `sl-callout--danger` | 1 burst on mount | — | — | — | ● |
 | `sl-link` | — | — | — | ● underline becomes a linear aurora on hover | — |
-| `sl-kbd` | — | — | ○ as a member of a key row | — | ● the keycap edge |
+| `sl-kbd` | — | — | ○ as a member of a key row (a `<kbd>`, not a control) | — | ● the keycap edge |
 | inversion band | — | — | — | ● along the top edge (`--linear --top`) | — |
 
 Two exclusions are deliberate and load-bearing:

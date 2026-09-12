@@ -24,8 +24,9 @@
    background colour, so hover and active states stay the component's. The goo
    chain blurs premultiplied RGBA and then steepens ONLY the alpha, so where
    two members weld their colours blend across the neck on their own — no GPU,
-   no gradient, no second pass. A member with no fill of its own (a ghost
-   button, a field) falls back to the field's declared --slfx-goo-fill.
+   no gradient, no second pass. A member with no fill of its own (a bare wrapper,
+   anything whose glass paints on a pseudo-element) falls back to the field's
+   declared --slfx-goo-fill.
    sl-audit reads CSS only, so there is no colour literal in this file:
    every value is read from a computed style or from a --slfx-* binding. */
 
@@ -40,6 +41,26 @@ const NS = "http://www.w3.org/2000/svg";
  *  wraps two members in a layout div, and the author loses the ability to keep
  *  one control out of the substance. */
 const MEMBERS = ".sl-fx-goo__member";
+
+/** What may never be a member, however it is marked.
+ *
+ *  A form control and a link paint their own chrome — a border, a focus ring,
+ *  a hover fill, and on a replaced control a box the UA owns outright — and
+ *  they carry it through layers this family does not own: a glass pane's
+ *  hairline lives on `::after` and in the children `glass.css` injects, so a
+ *  welded button went on drawing the outline the substance was supposed to
+ *  replace, while a welded `<div>` next to it lost its edge entirely. The two
+ *  did not look alike, and the one that looked wrong was always the control.
+ *
+ *  The owner's ruling (2026-09-12) is to remove the case rather than paper
+ *  over it: the goo is for standard elements, and a control keeps its own
+ *  affordance. Excluding by TAG is not the heuristic the liquid's `--drop`
+ *  gate exists to avoid — a tag name is a stable semantic fact, where a
+ *  measured `border-radius` is a value a component may re-parametrise at any
+ *  time. A `div[role="button"][tabindex="0"]` is deliberately still eligible:
+ *  it paints nothing of its own, so the substance can be its whole surface,
+ *  and the drag board depends on it. */
+const EXCLUDED = "button, input, select, textarea, a[href]";
 
 /** The goo: the alpha slope's steepness and the intercept that puts its
  *  midpoint at alpha 0.5. libraries.dev/gooey's own numbers, and the same pair
@@ -184,11 +205,19 @@ export function gooField(container) {
   let lastShapes = [];
   let alive = true;
 
+  /** The members this field will draw: marked in the markup, minus the ones a
+   *  field may never hold. A skipped element is left completely alone — no
+   *  class, no silhouette — the way a bare `.sl-fx-liquid` is inert.
+   *  @returns {Element[]} */
+  function collect() {
+    return [...container.querySelectorAll(MEMBERS)].filter((el) => !el.matches(EXCLUDED));
+  }
+
   /** Give every member back its own edge. The class is the only thing this
    *  family writes onto an element it did not create, and a field that is torn
    *  down has to leave no trace of it. */
   function unweld() {
-    for (const el of container.querySelectorAll(MEMBERS)) el.classList.remove("is-goo-welded");
+    for (const el of collect()) el.classList.remove("is-goo-welded");
   }
 
   /** Match the pool of <path> elements to the members: TWO each, the same
@@ -290,7 +319,7 @@ export function gooField(container) {
    *  removed. Not called per frame: a laid-out field is static. */
   function measure(restore = false) {
     if (!alive) return;
-    members = [...container.querySelectorAll(MEMBERS)];
+    members = collect();
     resize(members.length);
     if (!members.length) return;
 
@@ -443,7 +472,7 @@ export function gooField(container) {
     if (!ro) return;
     ro.disconnect();
     ro.observe(container);
-    for (const el of container.querySelectorAll(MEMBERS)) ro.observe(el);
+    for (const el of collect()) ro.observe(el);
   }
 
   /** Re-measure once every image member has decoded.

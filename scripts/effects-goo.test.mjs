@@ -474,3 +474,36 @@ test("the loop writes no attribute it would not change", () => {
   const build = js.slice(js.indexOf("const svg = document.createElementNS"), js.indexOf("function setAttr") + 1 || js.length);
   assert.ok(js.includes('svg.setAttribute("aria-hidden", "true")'), "the field is still hidden from the accessibility tree");
 });
+
+test("a form control or a link is refused a field, whatever it is marked with", () => {
+  // The owner's ruling (2026-09-12). A control paints its own chrome through
+  // layers this family does not own — a glass pane's hairline lives on ::after
+  // and in the children glass.css injects — so a welded button went on drawing
+  // the outline the substance was meant to replace, while a welded div beside
+  // it lost its edge entirely. The two did not look alike, and the control was
+  // always the one that looked wrong. Remove the case, not the symptom.
+  assert.match(js, /const EXCLUDED = "button, input, select, textarea, a\[href\]";/,
+    "the exclusion list is the contract");
+  assert.match(js, /\.filter\(\(el\) => !el\.matches\(EXCLUDED\)\)/, "and it filters membership");
+
+  // Every place that walks the members must go through the same filter, or a
+  // refused element would still be observed, or still be left with a class.
+  const walks = [...js.matchAll(/querySelectorAll\(MEMBERS\)/g)];
+  assert.equal(walks.length, 1, `MEMBERS may be queried in exactly one place, got ${walks.length}`);
+  assert.match(js.slice(js.indexOf("function collect()")), /querySelectorAll\(MEMBERS\)/, "…and that place is collect()");
+  for (const site of ["members = collect();", "for (const el of collect()) el.classList.remove", "for (const el of collect()) ro.observe"]) {
+    assert.ok(js.includes(site), `must go through collect(): ${site}`);
+  }
+});
+
+test("the showcase puts no form control inside a goo field", () => {
+  const html = readFileSync(resolve(HERE, "../showcase/effects.html"), "utf8");
+  // A member that is a control is inert, so one in the showcase would be a
+  // silent no-op the page still claims as a demonstration. The one deliberate
+  // exception is the cell that exists to SHOW the refusal, and it says so.
+  const members = [...html.matchAll(/<(\w+)([^>]*\bclass="[^"]*\bsl-fx-goo__member\b[^"]*"[^>]*)>/g)];
+  assert.ok(members.length >= 8, "the showcase must still demonstrate the family");
+  const controls = members.filter(([, tag]) => ["button", "input", "select", "textarea", "a"].includes(tag));
+  assert.equal(controls.length, 1, `exactly one control, the one demonstrating the refusal; got ${controls.map((m) => m[0]).join(", ")}`);
+  assert.match(html, /what a field will not take/, "and the cell must say what it is showing");
+});
