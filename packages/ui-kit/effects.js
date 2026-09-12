@@ -681,11 +681,22 @@ function injectGlow(el) {
   // it. Carried as an attribute on the glow, since the CSS that draws it
   // cannot see the host's class from a previous sibling.
   if (el.classList.contains("sl-fx-aurora--beam")) glow.setAttribute("data-sl-fx-beam", "");
-  // Pillars are the aurora's light by DEFAULT: curtains clipped to the host's
-  // own box, in the accent and its complement. The rotating sweep is --sweep,
-  // opt-in, and --beam is the line through the glass; anything else gets the
-  // pillars. --pillars is still honoured so existing markup keeps meaning.
-  if (el.classList.contains("sl-fx-aurora--pillars")) glow.setAttribute("data-sl-fx-pillars", "");
+  // PILLARS ARE THE AURORA'S LIGHT BY DEFAULT (2026-09-12). Curtains clipped
+  // to the host's own box, in the accent and its complement, sitting where the
+  // lens can bend them. The reason is a measurement, not a preference: the
+  // conic wash follows the edge it hugs, so displacing it maps it onto very
+  // nearly itself — 0.93% of pixels moved, against 5.00% for the curtains
+  // under the same lens. A light a lens cannot be seen to bend is not light in
+  // glass. The rotation is --sweep, opt-in; --beam is the line through the
+  // pane; --rim's light lies OUTSIDE a filled control, where curtains clipped
+  // to the box would never show. --pillars stays honoured so existing markup
+  // keeps its meaning.
+  // --linear is not in this list because a linear aurora never reaches here:
+  // GLOW_HOSTS excludes it, so it has no seated glow to give curtains to.
+  const OWN_LIGHT = ["sweep", "beam", "rim"];
+  const wantsPillars = el.classList.contains("sl-fx-aurora--pillars")
+    || OWN_LIGHT.every((mode) => !el.classList.contains(`sl-fx-aurora--${mode}`));
+  if (wantsPillars) glow.setAttribute("data-sl-fx-pillars", "");
   parent.insertBefore(glow, el);
   seatGlow(el, glow);
   // Again once the page has settled. A ResizeObserver fires when a box CHANGES

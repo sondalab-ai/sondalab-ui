@@ -257,8 +257,23 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // A hand rewrite of the same idea applied but never displaced. These three
   // are the parts that were got wrong, so they are pinned.
   assert.match(lensSrc, /maxScale \*= 0\.5;/, "his normalisation");
-  assert.match(lensSrc, /const capped = Math\.min\(scale, reach\);/,
+  // The cap itself is what this pins, not the expression that feeds it. Since
+  // 2026-09-12 the number may also come from the element, as --slg-lens-reach,
+  // because how hard a surface bends is a property of that surface: the aurora's
+  // hosts raise it to 18px, where the light behind the pane is visibly gathered
+  // and parted, and a plain pane keeps the material's own 6. What must not come
+  // back is an UNCAPPED scale, which grows with the box and turned a wide card
+  // into a wave.
+  assert.match(lensSrc, /const capped = Math\.min\(scale, cap\);/,
     "the bend is capped in pixels: a card must not bend six times harder than a button for being wider");
+  assert.match(lensSrc, /const cap = Number\.isFinite\(asked\) \? asked : reach;/,
+    "the cap is the element's own figure where it declares one, the argument otherwise");
+  assert.match(lensSrc, /getComputedStyle\(el\)\.getPropertyValue\("--slg-lens-reach"\)/,
+    "the cap is readable from the element, and re-read whenever the box changes");
+  assert.ok(
+    lensSrc.indexOf('getPropertyValue("--slg-lens-reach")') < lensSrc.indexOf("const capped ="),
+    "read the property before capping with it, not after",
+  );
   assert.match(lensSrc, /dispG\.setAttribute\("scale", String\(capped\)\)/,
     "scale derived from the measured maximum displacement, then capped");
   // The prism: three displacements of the same map at different scales, in the

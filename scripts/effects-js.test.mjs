@@ -35,6 +35,25 @@ function fnBody(name) {
   return js.slice(open + 1, i - 1);
 }
 
+// 2026-09-12: the aurora's light is the curtains, and the reason is measured —
+// a wash that follows the edge it hugs is the one shape a lens cannot be seen
+// to bend (0.93% of pixels moved, against 5.00% for the curtains). So a seated
+// glow carries the pillars unless its host asks for one of the lights whose
+// geometry is not the box: the rotation, the beam, the rim, the linear segment.
+test("the seated glow carries the curtains unless the host asks for another light", () => {
+  const body = js.slice(js.indexOf("function injectGlow"));
+  const block = body.slice(0, body.indexOf("\nfunction "));
+  assert.match(block, /wantsPillars/, "the default has to be decided, not assumed");
+  const own = block.match(/const OWN_LIGHT = \[([^\]]*)\]/);
+  assert.ok(own, "the lights that paint their own must be named in one list");
+  for (const mode of ["sweep", "beam", "rim"]) {
+    assert.match(own[1], new RegExp(`"${mode}"`), `--${mode} paints its own light, so it must opt out of the curtains`);
+  }
+  // --linear is deliberately absent: GLOW_HOSTS never gives it a glow at all.
+  assert.match(js, /GLOW_HOSTS = "\.sl-fx-aurora:not\(\.sl-fx-aurora--linear\)"/);
+  assert.match(block, /contains\("sl-fx-aurora--pillars"\)/, "--pillars must keep meaning for markup that already says it");
+});
+
 // Regression, 2026-09-12 (lab/1w): the bloom's inward reach is read on the
 // seated glow's ::before, and a seated glow is the host's SIBLING — it inherits
 // nothing from the host. Every variable the glow paints from has to be in the

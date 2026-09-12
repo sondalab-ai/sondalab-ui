@@ -134,6 +134,11 @@ const SVG_NS = "http://www.w3.org/2000/svg";
  *   amplifies the IOR triple's ±0.02 — 18 puts a visible fringe on a button,
  *   0 is a lens with no glass in it; `reach` caps the bend in CSS pixels, so a
  *   card does not bend six times harder than a button just for being wider.
+ *   `reach` is also readable from CSS as `--slg-lens-reach` on the element,
+ *   which wins when it is declared: how hard a surface bends is a property of
+ *   that surface, and a stylesheet is where a surface says what it is. The
+ *   aurora's own hosts raise it, because there the thing behind the pane is
+ *   light with a shape, and a bend of six pixels on it is not visible.
  * @returns {{refresh(): void, destroy(): void}|null} null where the browser
  *   cannot do it, in which case the element keeps the material glass.css gives
  *   it and nothing else changes.
@@ -249,7 +254,13 @@ export function lens(el, look = {}) {
     // about the light could be judged through that. Glass does not bend
     // more because the pane is larger; a real slab bends at its edge by a
     // fixed few pixels whatever its width. `reach` is that cap, in pixels.
-    const capped = Math.min(scale, reach);
+    // Declared on the element it belongs to, read every time the box changes.
+    // Nothing is cached in a variable here: a number held in two places is the
+    // first thing to drift, which is the same rule the GPU tier's thickness,
+    // tint and fresnel already follow.
+    const asked = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-reach"));
+    const cap = Number.isFinite(asked) ? asked : reach;
+    const capped = Math.min(scale, cap);
     // N_R 0.98 / N_G 1.00 / N_B 1.02, with the ±0.02 scaled up by `disperse`.
     dispR.setAttribute("scale", String(capped * (1 - 0.02 * disperse)));
     dispG.setAttribute("scale", String(capped));

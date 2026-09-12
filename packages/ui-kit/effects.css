@@ -878,6 +878,18 @@
     transparent 360deg);
 }
 .sl-fx-aurora {
+  /* HOW HARD THE GLASS BENDS, where the thing behind it is the aurora's own
+     light. glass-lens.js caps the displacement at this many pixels and reads
+     the property off the element; 6px is the material's own figure, fitted so
+     a wide card does not bend the page behind it into a wave. But a bend of 6
+     is invisible ON LIGHT: measured on lab/1y, the lens moved 4.53% of the
+     pixels of a card lit by curtains at 6px and 7.27% at 12, and only from
+     about 18 does the light visibly gather and part into its colours at the
+     faces. What that costs the page behind is measured too, on the showcase's
+     494px card over the wordmark: 2.44% of pixels, confined to the rim band,
+     against a 0-pixel control. The owner's ruling when the two pull against
+     each other is that the refraction wins. */
+  --slg-lens-reach: 18px;
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */
@@ -1137,7 +1149,7 @@
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars] {
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
-  filter: blur(var(--slfx-pillar-soft, 3px));
+  filter: blur(var(--slfx-pillar-soft, 4px));
 }
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]::before {
   inset: -20% -40%;
@@ -1157,17 +1169,24 @@
      declared: a product that re-registers its accent gets its own pair (AC-18). */
   --slfx-pillar-a: var(--slfx-accent-vivid);
   --slfx-pillar-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
+  /* FITTED ON lab/1y, 2026-09-12. The curtains shipped untuned ("a strong
+     first cut is easier to bring down than a faint one is to find") and they
+     were: measured over the bed, with the glass rim's own band excluded, they
+     peaked at +62 luminance where the reference's light peaks at +48. At
+     30/44/41 the peak is +49.0. The pitch is a quarter wider so the ribs
+     clear twice the blur they sit under — below that the blur erases the very
+     structure the lens needs in order to have something to bend. */
   background:
     repeating-linear-gradient(90deg,
       transparent 0 14px,
-      color-mix(in srgb, var(--slfx-glint) 42%, transparent) 20px,
+      color-mix(in srgb, var(--slfx-glint) 30%, transparent) 20px,
       transparent 26px 44px),
     repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--slfx-pillar-a) 62%, transparent) 0 12px,
+      color-mix(in srgb, var(--slfx-pillar-a) 44%, transparent) 0 12px,
       transparent 26px 54px,
-      color-mix(in srgb, var(--slfx-pillar-b) 58%, transparent) 66px,
+      color-mix(in srgb, var(--slfx-pillar-b) 41%, transparent) 66px,
       transparent 82px 104px);
-  background-size: 160px 100%, 240px 100%;
+  background-size: 200px 100%, 300px 100%;
   background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
 }
 
@@ -1350,15 +1369,18 @@
     50%      { filter: hue-rotate(16deg); }
   }
 
-  /* The sweep is the default again (2026-09-11, late): what read as a
-     lighthouse was its PROFILE — one hue with a white core — and that is what
-     changed above, in border-beam's image. Pillars remain as --pillars. */
-  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"]::after {
+  /* OPT-IN AGAIN (2026-09-12). The sweep was made the default a second time
+     once its profile stopped reading as a lighthouse, and that was right about
+     the profile and wrong about the model: a wash that follows the edge it
+     hugs is the one shape a lens cannot show itself bending — measured, the
+     displacement moves 0.93% of its pixels against 5.00% of the curtains'.
+     The aurora's light is the curtains; --sweep brings the rotation back. */
+  [data-sl-fx="on"] .sl-fx-aurora--sweep[data-sl-fx-live="on"]::after {
     animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
     will-change: background;
   }
-  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="on"] > .sl-fx-aurora__glow::before,
-  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
+  [data-sl-fx="on"] .sl-fx-aurora--sweep[data-sl-fx-live="on"] > .sl-fx-aurora__glow::before,
+  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora--sweep[data-sl-fx-live="on"])::before {
     animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
   }
   /* A beam drifts ACROSS the pane, slowly, and never rotates: the prism is in
@@ -1367,9 +1389,12 @@
   /* The curtains drift and breathe: position on one clock, softness on another,
      so the shimmer never repeats exactly. */
   @property --slfx-pillar-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
-  @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 3px; }
+  @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 4px; }
   @keyframes slfx-pillars-drift { from { --slfx-pillar-x: 0px; } to { --slfx-pillar-x: 160px; } }
-  @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 2px; } to { --slfx-pillar-soft: 7px; } }
+  /* 3 -> 5.5px, so the fitted 4px sits in the middle of the breath rather
+     than at the bottom of a 2 -> 7 swing that softened the ribs away at its
+     top end. */
+  @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 3px; } to { --slfx-pillar-soft: 5.5px; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
     animation: slfx-pillars-breathe 5.5s ease-in-out infinite alternate;
   }
