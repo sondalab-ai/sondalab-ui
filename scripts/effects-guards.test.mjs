@@ -132,6 +132,15 @@ test("the loading light and the curtains' stand-down are one condition", () => {
   // What is left is the turning itself, and it has to stay inside the guard.
   const turns = busy.filter((r) => /animation:/.test(r.body));
   assert.ok(turns.length >= 1, "the band has to travel, or it is not loading");
+  // EVERY light cut from --slfx-angle must be in that rule's selector. One cut
+  // from an angle nothing turns sits wherever the property's initial value
+  // points — 210deg, the bottom-left corner — which is what the filaments did
+  // on the day they were added, and it reads as a second light stuck in a
+  // corner beside the one that travels.
+  const turning = turns.map((r) => r.selector).join(",");
+  for (const part of ["::before", "::after"]) {
+    assert.ok(turning.includes(part), `the loading light on ${part} must travel with the rest`);
+  }
   const stood = RULES.filter((r) => r.selector.includes(":not(" + BUSY + ")"));
   assert.equal(stood.length, 1, `the curtains' painting must stand down, got ${stood.length}`);
   assert.match(stood[0].selector, /\[data-sl-fx-pillars\][^,]*::before/, "and it is the curtains' paint that stands down");
