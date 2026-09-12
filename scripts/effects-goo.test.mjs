@@ -227,3 +227,20 @@ test("focus tracks a member's colour as well as the pointer", () => {
     assert.ok(js.includes(`removeEventListener("${ev}"`), `and drop ${ev} on destroy`);
   }
 });
+
+test("a member's silhouette is opaque, whatever the member's own alpha", () => {
+  // The goo's alpha slope maps everything below 0.5 to nothing, so a member
+  // the component made translucent — a glass pane button sits at 30% —
+  // contributes a silhouette the filter then erases. The substance would
+  // vanish under exactly the components most likely to be in it.
+  const fn = js.slice(js.indexOf("function opaque("), js.indexOf("function radiiOf("));
+  assert.ok(fn.length > 0, "opaque() must exist");
+  // Exercise the surgery itself: it must handle both shapes a computed alpha
+  // takes, and leave an already-opaque colour alone.
+  const opaque = new Function(`${fn}; return opaque;`)();
+  assert.equal(opaque("rgba(15, 21, 26, 0.3)"), "rgba(15, 21, 26)");
+  assert.equal(opaque("color(srgb 0.1 0.2 0.3 / 0.42)"), "color(srgb 0.1 0.2 0.3)");
+  assert.equal(opaque("oklch(0.7 0.15 60 / 50%)"), "oklch(0.7 0.15 60)");
+  assert.equal(opaque("rgb(15, 21, 26)"), "rgb(15, 21, 26)", "an opaque colour is untouched");
+  assert.match(js, /isClear\(own\) \? opaque\(fallback\) : opaque\(own\)/, "both the member's fill and the fallback are forced opaque");
+});

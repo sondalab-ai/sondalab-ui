@@ -78,6 +78,34 @@ function isClear(c) {
   return m ? parseFloat(m[1]) === 0 : false;
 }
 
+/** The same colour with its alpha slot removed, by string surgery rather than
+ *  by naming a colour syntax: the trailing `/ a` of the modern form and the
+ *  trailing `, a` of the legacy one are the only two shapes an alpha takes in
+ *  a computed value, and dropping either leaves a function the parser still
+ *  accepts (rgb() and rgba() take three components or four).
+ *
+ *  The silhouette must be OPAQUE. The goo's alpha slope maps everything below
+ *  alpha 0.5 to nothing, so a member whose own fill is translucent contributes
+ *  a silhouette the filter then erases — the substance thinning or vanishing
+ *  under one member and not its neighbour, which reads as a rendering fault
+ *  rather than as a material. (Measured 2026-09-12: the kit's own glass
+ *  classes report a FULLY transparent background-color — they paint on a
+ *  pseudo-element — so a glass member takes the field's --slfx-goo-fill
+ *  through isClear() and never reaches here. This guards the partial alphas a
+ *  consumer's own component brings.) Translucency belongs to the member's
+ *  crisp box riding on top; the substance underneath is one material, and a
+ *  material is not see-through in places.
+ *  @param {string} c a computed colour string
+ *  @returns {string} the same colour at full alpha */
+function opaque(c) {
+  const slash = c.replace(/\s*\/\s*[\d.]+%?\s*\)\s*$/, ")");
+  if (slash !== c) return slash;
+  // Only a FOURTH comma component is an alpha. Stripping the last one
+  // unconditionally turned an already-opaque rgb(15, 21, 26) into
+  // rgb(15, 21) — every silhouette losing its blue channel.
+  return c.replace(/^([^(]+\([^,()]+,[^,()]+,[^,()]+),\s*[\d.]+%?\s*\)\s*$/, "$1)");
+}
+
 /** The four painted radii of an element, clockwise from top-left.
  *  @param {CSSStyleDeclaration} cs the element's computed style
  *  @param {number} w its border-box width
@@ -200,7 +228,7 @@ export function gooField(container) {
         continue;
       }
       const own = getComputedStyle(el).backgroundColor;
-      paths[i].setAttribute("fill", isClear(own) ? fallback : own);
+      paths[i].setAttribute("fill", isClear(own) ? opaque(fallback) : opaque(own));
     }
   }
 
