@@ -203,6 +203,19 @@ test("the tint has one home, and the GPU only perturbs what CSS paints", () => {
   // top edge down is the glossy button of 2004, whatever a profile says.
   assert.doesNotMatch(css, /--slg-spec-a/, "no gloss band survives");
   assert.match(css, /--slg-accent-a, 0%/, "and so does the variant's accent share");
+  // A LENS STANDS THE GROUND TINT DOWN, NOT AWAY (2026-09-12). It went to zero,
+  // and on paper a ghost pane over a dark region then left the theme's dark ink
+  // on a dark backdrop: measured off the showcase's telemetry substrate, 2.84:1
+  // where WCAG AA asks 4.5. A lensed PRIMARY was fine at 5.98 because its
+  // accent share survives the lens; a ghost has no share, so it had nothing at
+  // all between the page and its label. The floor reads 5.35 on paper and
+  // 10.69 on ink. It is a legibility figure, so it may move, but not to zero:
+  // a surface that wants the bare window back sets --slg-tint-lens itself and
+  // owns the contrast.
+  const lensed = css.match(/\.sl-glass\.is-lensed \.sl-glass__tint \{[^}]*\}/);
+  assert.ok(lensed, "the lensed tint rule must exist");
+  assert.doesNotMatch(lensed[0], /--slg-tint-a:\s*0%/, "a lensed pane may not drop its ground tint to zero");
+  assert.match(lensed[0], /--slg-tint-lens/, "the floor is one named property a surface can rebind");
   // An earlier version of this test asserted the opposite — that nothing may
   // tint toward the canvas, because a light theme would turn into a white
   // frost. That rule was invented here, not read off a card: liqui-glass's own

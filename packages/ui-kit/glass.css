@@ -175,11 +175,25 @@
    existing markup and the injected layer list do not have to change. */
 .sl-glass__specular { z-index: -1; }
 
-/* While a real lens is bound, the GROUND tint stands down: the lens IS the
-   surface, and a veil of the page's own colour over it is a veil over a window.
-   Only the ground share goes to zero — the ACCENT share stays, or a lensed
-   primary would be indistinguishable from a lensed ghost. The frost stays too,
-   and so does the rim, which is what gives the edge its thickness.
+/* While a real lens is bound, the GROUND tint stands DOWN but not away: the
+   lens IS the surface, and a veil of the page's own colour over it is a veil
+   over a window — but a window with nothing in it cannot carry a label.
+   It went to zero until 2026-09-12, and the owner read the result: on paper,
+   a ghost pane over a dark region left the theme's dark ink on a dark
+   backdrop. Measured off the showcase's telemetry substrate, label against
+   the composited pane: 2.84:1, where WCAG AA asks 4.5. A lensed PRIMARY was
+   fine at 5.98 because its accent share survives the lens; a ghost has no
+   share, so it had nothing at all between the page and the label.
+   --slg-tint-lens is that floor, and it is a LEGIBILITY figure, not a taste
+   one: at 34% the same measurement reads 4.94:1, and at 58% it reads 7.09 with
+   very little lens left to see. It is one number on both themes because the
+   tint COLOUR already follows the theme — the veil is the page's own ground
+   either way, so the same alpha mutes a dark backdrop on paper and a light one
+   on ink. A surface that wants the old bare window back sets it to 0 and owns
+   the contrast.
+   Only the ground share is floored — the ACCENT share is untouched, or a
+   lensed primary would be indistinguishable from a lensed ghost. The frost
+   stays too, and so does the rim, which is what gives the edge its thickness.
 
    The host's own fill goes with it, and this stylesheet is where that belongs:
    glass-lens.js used to claim it cleared the background and did not, which
@@ -193,7 +207,10 @@
 @property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 0.25px; }
 @property --slg-lens-sat  { syntax: "<number>"; inherits: true; initial-value: 1.1; }
 .sl-glass.is-lensed { background-color: transparent; }
-.sl-glass.is-lensed .sl-glass__tint { --slg-tint-a: 0%; --slg-tint-deep-a: 0%; }
+.sl-glass.is-lensed .sl-glass__tint {
+  --slg-tint-a: var(--slg-tint-lens, 34%);
+  --slg-tint-deep-a: calc(var(--slg-tint-lens, 34%) - 4%);
+}
 
 /* Honoured for a consumer who wraps their content the way the original does.
    Unnecessary otherwise: the layers above already sit below inline content.
