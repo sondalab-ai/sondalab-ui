@@ -11,20 +11,22 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 15:25
+## Start here — handoff, 2026-09-12 15:40
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (168 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (170 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
-  its capture within ±3 luminance on `lab/1n`; tint 0.18; layers sit at
-  negative z-index under the host's own label; `__specular` paints nothing.
+  its capture within ±3 luminance on `lab/1n`; tint 0.18, floored at 0.34 under
+  a lens so a ghost pane's label always has something to sit on
+  (`--slg-tint-lens`); layers sit at negative z-index under the host's own
+  label; `__specular` paints nothing.
 - `glass-lens.js` — a REAL refraction, adopted from shuding/liquid-glass (MIT):
   `backdrop-filter: url(#…)` with a data-URI displacement map; per-channel
   dispersion (`disperse`, default 18); bend capped at `reach`, 6 px for the
@@ -685,6 +687,33 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+**The light theme's unreadable label — 2026-09-12.** *Owner: "i pulsanti su
+tema light hanno label nera poco visibile."* Measured off the rendered page,
+and it is not the label colour: every button carries the same dark ink, and
+only one case fails.
+
+| | contrast |
+|---|---|
+| primary glass, over the page's own ground | 9.62:1 |
+| ghost glass, over the page's own ground | 14.02:1 |
+| primary glass, over the telemetry substrate | 5.98:1 |
+| **ghost glass, over the telemetry substrate** | **2.28:1** |
+
+The cause is in `glass.css`: a lens sent the **ground tint to zero**, by a rule
+written so the lens reads as a window rather than a tinted panel. A lensed
+primary survives it because its accent share is untouched; a ghost has no
+share, so over a dark region nothing at all stood between the page and the
+theme's dark ink. `--slg-tint-lens` is now a floor at **34 %**, which reads
+**5.35:1** on paper and **10.69:1** on ink; 58 % reads 7.09 with very little
+lens left. One number serves both themes because the tint colour already
+follows the theme. A surface that wants the bare window sets it to 0 and owns
+the contrast. It costs some of the lens everywhere — checked on the ambient
+card in both themes, the wordmark behind is muted but still legible.
+
+**Still the owner's, and unchanged by this:** `--sl-text-on-accent` is white on
+both themes and measures 1.99:1 on the plain filled button with every effect
+off. That is a token decision, recorded since the first pass and still open.
 
 - **The filaments are OUT.** *Owner, 2026-09-12: "si infatti non mi
   convince."* Five geometries, all of them aimed at giving the lens something
