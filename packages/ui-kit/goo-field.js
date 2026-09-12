@@ -65,6 +65,16 @@ const MEMBERS = ".sl-fx-goo__member";
  *  and the drag board depends on it. */
 const EXCLUDED = "button, input, select, textarea, a[href]";
 
+/** A field whose members move on their own. Opt-in, because it is the one
+ *  thing this family does that a laid-out page does not already imply, and
+ *  because it costs a frame loop for as long as it is on screen.
+ *
+ *  The margin is the one watchNear() uses: a field that starts drifting only
+ *  once it is strictly on screen starts from a standing position in view. */
+const DRIFT = ".sl-fx-goo--drift";
+const DRIFT_MARGIN = "200px";
+const REDUCE = "(prefers-reduced-motion: reduce)";
+
 /** Conservative defaults, so a container that opts in without binding anything
  *  renders the most restrained version of the effect rather than a broken one.
  *  effects.css declares both; these exist for a caller that reaches for the
@@ -92,6 +102,22 @@ let fieldSeq = 0;
  *  @returns {void} */
 function setAttr(el, name, value) {
   if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+}
+
+/** Tell a member which member it is, so the drift can give each one its own
+ *  phase and its own period.
+ *
+ *  Written by the field rather than authored, unlike the glitch's shards: the
+ *  order that matters is COLLECTION order — what querySelectorAll returns
+ *  across the whole subtree — and CSS cannot name it. `:nth-child` counts
+ *  against a member's own parent, so the moment a consumer wraps two members
+ *  in a layout div every one of them lands in the same bucket and the field
+ *  marches in lockstep.
+ *  @param {Element} el the member
+ *  @param {number} i its index in collection order */
+function stampIndex(el, i) {
+  const v = String(i);
+  if (el.style.getPropertyValue("--slfx-i") !== v) el.style.setProperty("--slfx-i", v);
 }
 
 /** Read a length binding off the container, in CSS pixels.
@@ -200,6 +226,16 @@ export function gooField(container) {
   let paths = [];
   let lastShapes = [];
   let alive = true;
+  // The CSS animation is gated on prefers-reduced-motion in effects.css, and
+  // this is the same gate on the JS half. It has to be read here and not left
+  // to mount(): mountGoo() runs BEFORE mount()'s motion guard, because the goo
+  // animates nothing and refusing it for a motion preference would take away
+  // material rather than movement. The drift is the exception — it is movement
+  // — so it carries its own refusal. Without this the loop would run forever
+  // re-deriving boxes a suppressed animation never moves: invisible, and a
+  // forced layout every frame.
+  const drifts = container.matches(DRIFT)
+    && !(typeof matchMedia === "function" && matchMedia(REDUCE).matches);
 
   /** The members this field will draw: marked in the markup, minus the ones a
    *  field may never hold. A skipped element is left completely alone — no
@@ -357,6 +393,7 @@ export function gooField(container) {
     });
 
     lastShapes = shapes;
+    if (drifts) for (let i = 0; i < members.length; i++) stampIndex(members[i], i);
     // A member that has joined a mass lets the mass carry the edge. Its own
     // border would otherwise draw a line straight across the merged shape —
     // three chips dragged together read as three cards stacked on a blob
@@ -412,8 +449,13 @@ export function gooField(container) {
   // that stopped there left the silhouette at the position the chip started
   // from while the chip itself went on moving.
   let held = false;
+  // A drifting field that is on screen never comes to rest, so every reason to
+  // stop — the pointer leaving, a drag ending, focus going elsewhere — stops
+  // nothing. Leaving the stage does.
+  let onStage = false;
   const start = () => { if (!raf) raf = requestAnimationFrame(tick); };
-  const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+  const halt = () => { cancelAnimationFrame(raf); raf = 0; };
+  const stop = () => { if (!onStage) halt(); };
   const onDown = () => { held = true; start(); };
   const onUp = () => {
     held = false;
@@ -492,13 +534,37 @@ export function gooField(container) {
   awaitImages();
   container.classList.add("is-goo-live");
 
+  /** The drift's own gate: the loop runs while the field is on screen.
+   *
+   *  FAILS OPEN. The stage is taken to be occupied before the observer is
+   *  asked, so an environment that never delivers an entry — and there is one,
+   *  the automation tab this layer was debugged in — drifts rather than sits
+   *  still. The failure that matters here is a field frozen for a visitor who
+   *  can see it; a loop running for one who cannot is waste, and waste is the
+   *  cheaper of the two to be wrong about. */
+  let io = null;
+  if (drifts) {
+    onStage = true;
+    start();
+    if (typeof IntersectionObserver === "function") {
+      io = new IntersectionObserver((entries) => {
+        onStage = entries[entries.length - 1].isIntersecting;
+        if (onStage) start();
+        else if (!held) halt();
+      }, { rootMargin: DRIFT_MARGIN });
+      io.observe(container);
+    }
+  }
+
   return {
     measure,
     destroy() {
       alive = false;
+      onStage = false;
       cancelAnimationFrame(raf);
       ro?.disconnect();
       mo?.disconnect();
+      io?.disconnect();
       container.removeEventListener("pointerenter", start);
       container.removeEventListener("pointerleave", onLeave, { capture: true });
       container.removeEventListener("focusin", start);
@@ -507,6 +573,7 @@ export function gooField(container) {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       container.classList.remove("is-goo-live");
+      for (const el of collect()) el.style.removeProperty("--slfx-i");
       unweld();
       svg.remove();
     },

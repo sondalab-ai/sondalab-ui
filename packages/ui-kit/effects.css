@@ -159,6 +159,13 @@
      surface the members sit on, one step in from the canvas, so an unfilled
      member reads as part of the material rather than as a hole in it. */
   --slfx-goo-fill: var(--sl-bg-surface-raised, var(--sl-bg-surface));
+  /* How far a drifting member wanders from where it was laid out (--drift,
+     below). Sized against --slfx-goo-weld, not against the member: what the
+     drift is for is carrying a pair ACROSS the weld distance, so a gap laid
+     out near 14px thins to a neck and parts again. Half the weld means the
+     gap between two members swings by a full weld over a cycle. Any larger and
+     members start reading as loose rather than as suspended. */
+  --slfx-goo-drift: 6px;
 }
 
 /* ══ KILL SWITCHES ═══════════════════════════════════════════════════════════
@@ -185,6 +192,16 @@
      restoring it is a matter of keeping all of it. */
   --slfx-fill-a: 100% !important;
 }
+
+/* The goo's drift is the one thing this family animates, and it animates the
+   MEMBER — an ordinary card or wrapper that keeps its own chrome. So the
+   switches reach it with `animation` alone rather than by adding the member to
+   the list above, which would also strip the elevation and the fill the
+   component itself painted. Without this the members would go on wandering
+   over a field goo-field.js refused to build. */
+:root[data-sl-theme="high-contrast"] .sl-fx-goo__member,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *).sl-fx-goo__member,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-goo__member { animation: none !important; }
 
 /* The shatter variant replaces the label with jumping bands, so restoring the
    text is part of switching it off, not a separate concern. */
@@ -1555,6 +1572,50 @@
    rules down: where a silhouette holds the edge, a rigid ring around it reads
    as broken. */
 .sl-fx-goo .sl-fx-glass.sl-fx-goo__member.is-goo-welded::after { opacity: 0; }
+
+/* ── The drift — a field that will not hold still ────────────────────────────
+   Members wander slowly around where they were laid out, so a pair that sits a
+   weld apart grows a neck, thins it, and parts again. It is the one thing this
+   family does that a static page does not already imply: everything else here
+   is a statement about a layout, and this is a statement about a substance.
+
+   `translate`, not `transform`: a member may be a liquid host or a pane, and
+   both put a scale on `transform` under the pointer. The two properties
+   compose, so the drift never has to know.
+
+   Each member gets its own PERIOD as well as its own phase — a shared period
+   with staggered delays walks the same ellipse in formation, which reads as a
+   carousel rather than as suspension. The index comes from goo-field.js, in
+   collection order; see stampIndex() for why CSS cannot work it out itself.
+
+   goo-field.js re-derives every silhouette per frame while a drifting field is
+   on screen. Nothing else here changes: the filter region is recomputed from
+   the live boxes, so it follows the members out and needs no headroom of its
+   own — but the CONTAINER still owes its members the padding §Decision 3b
+   asks for, now plus the drift.
+
+   This sits under a plain no-preference query, and NOT under the glitch's
+   pattern three blocks down, which lets [data-sl-fx-motion="always"] override
+   a reduce preference. That derogation exists for a consumer whose glitch is
+   brand — Windows reports `reduce` by default under "adjust for best
+   performance" — and a drifting decoration is not brand. A visitor who asked
+   for less movement gets a field laid out and welded, which is this family's
+   Tier 0 and is correct on its own. goo-field.js reads the same preference for
+   the loop; see `drifts` there. */
+@media (prefers-reduced-motion: no-preference) {
+  .sl-fx-goo--drift .sl-fx-goo__member {
+    animation: slfx-goo-drift calc(17s + var(--slfx-i, 0) * 2.3s) ease-in-out infinite;
+    animation-delay: calc(var(--slfx-i, 0) * -6.1s);
+  }
+}
+
+@keyframes slfx-goo-drift {
+  0%   { translate: 0 0; }
+  25%  { translate: var(--slfx-goo-drift) calc(var(--slfx-goo-drift) * -0.55); }
+  50%  { translate: calc(var(--slfx-goo-drift) * 0.2) calc(var(--slfx-goo-drift) * -1); }
+  75%  { translate: calc(var(--slfx-goo-drift) * -0.8) calc(var(--slfx-goo-drift) * -0.4); }
+  100% { translate: 0 0; }
+}
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand

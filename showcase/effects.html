@@ -312,6 +312,10 @@
     .goo-swatch { flex: 1; height: 3.6rem; border-radius: var(--sl-radius-lg, 12px); background: var(--sl-bg-surface-raised); }
     .goo-swatch--accent { background: var(--sl-accent-default); }
     .goo-swatch--depth { background: var(--sl-accent-depth); }
+    /* The drift cell is laid out a hair INSIDE its own weld, so the members
+       start joined and the wander is what parts them. A gap well under the
+       weld would never open; one well over it would never close. */
+    .goo-float { display: flex; gap: 1.15rem; padding: 0.9rem 0; }
     .goo-plates { display: flex; gap: 0.75rem; padding: 0.4rem 0; }
     .goo-plates img { width: 50%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; border-radius: var(--sl-radius-lg, 12px); display: block; }
 
@@ -555,7 +559,16 @@
               <div class="goo-chip goo-chip--b sl-fx-goo__member" role="button" tabindex="0" style="--x: 40%; --y: 52%">migrate</div>
               <div class="goo-chip sl-fx-goo__member"             role="button" tabindex="0" style="--x: 72%; --y: 16%">introspect</div>
             </div>
-            <p class="cap">Drag a chip with the pointer, or focus one and move it with the arrow keys (hold <b>Shift</b> for a bigger step). A move is the one change nothing reports — a <b>ResizeObserver</b> sees a box change size, never change place, and an inset write mutates no <b>childList</b> — so the field re-measures per frame while a pointer or the focus is inside it, and not at all otherwise. Bring two within <b>26px</b> and the substance necks between them, carrying both colours into the bridge; pull them apart and it snaps. The chips are <b>div</b>s with <b>role="button"</b> and a tab stop, not <b>&lt;button&gt;</b>s: a form control is refused a field outright, and a div paints nothing of its own, so the substance can be its whole surface. They are placed from <b>--x</b>/<b>--y</b> rather than moved with a <b>transform</b>, which would move the painted element without moving the box <b>getBoundingClientRect()</b> reports — the silhouette would stay behind.</p>
+            <p class="cap">Drag a chip with the pointer, or focus one and move it with the arrow keys (hold <b>Shift</b> for a bigger step). A move is the one change nothing reports — a <b>ResizeObserver</b> sees a box change size, never change place, and an inset write mutates no <b>childList</b> — so the field re-measures per frame while a pointer or the focus is inside it, and otherwise only if it drifts. Bring two within <b>26px</b> and the substance necks between them, carrying both colours into the bridge; pull them apart and it snaps. The chips are <b>div</b>s with <b>role="button"</b> and a tab stop, not <b>&lt;button&gt;</b>s: a form control is refused a field outright, and a div paints nothing of its own, so the substance can be its whole surface. They are placed from <b>--x</b>/<b>--y</b> rather than moved with a <b>transform</b>, which would move the painted element without moving the box <b>getBoundingClientRect()</b> reports — the silhouette would stay behind.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">left alone, it breathes</span>
+            <div class="sl-fx-goo sl-fx-goo--drift goo-float" style="--slfx-goo-weld: 20px">
+              <span class="goo-swatch goo-swatch--accent sl-fx-goo__member"></span>
+              <span class="goo-swatch goo-swatch--depth sl-fx-goo__member"></span>
+              <span class="goo-swatch sl-fx-goo__member"></span>
+            </div>
+            <p class="cap">Add <b>.sl-fx-goo--drift</b> to the container and its members wander slowly around where they were laid out. These three sit a hair inside their own <b>20px</b> weld, so the necks thin, part and re-form without anyone touching them — the one thing this family does that a static page does not already imply. Each member gets its own <b>period</b> as well as its own phase, because a shared period with staggered delays walks the same ellipse in formation and reads as a carousel. The motion is on <b>translate</b>, not <b>transform</b>, so it composes with the scale a liquid host or a pane puts there under the pointer. A drifting field keeps re-deriving its silhouettes while it is on screen, and stops when it leaves; a visitor who asked for less movement gets the field laid out and welded, which is this family's Tier 0 and is correct on its own. The derogation <a class="sl-link" href="#glitch">§01</a> offers does not reach here: that one exists for a consumer whose glitch is brand, and a drift is decoration.</p>
           </div>
         </div>
         <p class="cap">Two knobs and one refusal, for a reader who will not find them above. <b>--slfx-goo-weld</b> is the largest gap between two <b>members, as laid out</b>, that still grows a neck — edge to edge between facing sides, so a grid's diagonals stand further apart than its <b>gap</b> and stay open; <b>geom.js</b> spends it on dilation first and blur only up to <b>--slfx-goo-soft</b>, because dilation preserves an outline where blur melts it. And a <b>button</b>, <b>input</b>, <b>select</b>, <b>textarea</b> or <b>a[href]</b> is refused a field outright, marked or not: a control paints its own chrome through layers this family does not own, and its affordance is worth more than the merge.</p>

@@ -527,3 +527,139 @@ test("both families share one goo chain, and the weld constant is derived from i
   assert.doesNotMatch(effectsJs, /^function cornerPx\(|^function roundedRectPath\(/m,
     "effects.js must not keep its own copy of the radius clamp or the box path");
 });
+
+/* ── the drift ────────────────────────────────────────────────────────────── */
+
+/** The balanced block that follows `at`, braces included. */
+function blockAt(src, at) {
+  const open = src.indexOf("{", at);
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}" && --depth === 0) return src.slice(open, i + 1);
+  }
+  throw new Error("unbalanced block");
+}
+
+test("the filter region follows a member that has moved, so the drift needs no headroom", () => {
+  // The whole argument for adding nothing to filterRegion(): measure() rebuilds
+  // every shape from the live boxes each frame, so a translated member arrives
+  // here already translated. If the region were computed once and padded, a
+  // member drifting past its own edge would have its substance cut off along a
+  // straight line — the defect §Decision 3b exists to prevent.
+  const at = { x: 0, y: 0, w: 100, h: 40 };
+  const moved = { ...at, x: at.x + 6, y: at.y - 6 };
+  const a = filterRegion([at], 4);
+  const b = filterRegion([moved], 4);
+  assert.equal(b.x - a.x, 6, "the region tracks the member sideways");
+  assert.equal(b.y - a.y, -6, "and vertically");
+  assert.equal(b.width, a.width, "without growing");
+  assert.equal(b.height, a.height, "in either axis");
+});
+
+test("the drift's amplitude is declared, and sized against the weld", () => {
+  const drift = css.match(/--slfx-goo-drift:\s*([\d.]+)px/);
+  const weld = css.match(/--slfx-goo-weld:\s*([\d.]+)px/);
+  assert.ok(drift, "--slfx-goo-drift must have a default, like every other binding this family takes");
+  assert.ok(Number(drift[1]) > 0, "a zero amplitude is a drift that does not drift");
+  // What the drift is FOR is carrying a pair across the weld distance: the gap
+  // between two members swings by twice the amplitude over a cycle, so half
+  // the weld is the figure that makes a laid-out neck thin and part.
+  assert.ok(2 * Number(drift[1]) <= Number(weld[1]),
+    "an amplitude past half the weld makes members read as loose rather than suspended");
+});
+
+test("the drift is refused for a motion preference, with no derogation", () => {
+  const at = css.search(/\.sl-fx-goo--drift\s+\.sl-fx-goo__member\s*\{/);
+  assert.ok(at > 0, "the drift must exist");
+
+  // The rule has to sit INSIDE a no-preference query. Walk out from the rule
+  // to the nearest enclosing @media and check it is that one.
+  const before = css.slice(0, at);
+  const guard = before.lastIndexOf("@media");
+  assert.ok(guard > 0, "the drift must be guarded");
+  assert.match(css.slice(guard, css.indexOf("{", guard)), /prefers-reduced-motion:\s*no-preference/,
+    "a plain no-preference query, so a visitor who asked for less movement gets the static field");
+  assert.ok(blockAt(css, guard).includes(".sl-fx-goo--drift"), "and the rule must actually be inside it");
+
+  // NOT the glitch's pattern. That one lets [data-sl-fx-motion="always"] carry
+  // an animation through a reduce preference, which exists for a consumer
+  // whose glitch is brand. A drifting decoration is not brand, and reaching it
+  // would silently widen a derogation its consumer documented as narrow.
+  const reduceBlocks = [...css.matchAll(/@media\s*\(prefers-reduced-motion:\s*reduce\)/g)];
+  for (const m of reduceBlocks) {
+    assert.ok(!blockAt(css, m.index).includes("sl-fx-goo--drift"),
+      "the drift must not be listed in a reduce block, which is where the motion derogation applies");
+  }
+});
+
+test("the drift composes with a transform instead of replacing one", () => {
+  const frames = css.match(/@keyframes\s+slfx-goo-drift\s*\{[\s\S]*?\n\}/);
+  assert.ok(frames, "the drift's keyframes must exist");
+  assert.match(frames[0], /translate:/, "the drift animates the `translate` property");
+  assert.doesNotMatch(frames[0], /transform:/,
+    "a member may be a liquid host or a pane, and both put a scale on `transform` under the pointer");
+});
+
+test("each drifting member gets its own period, not only its own phase", () => {
+  const rule = blockAt(css, css.search(/\.sl-fx-goo--drift\s+\.sl-fx-goo__member\s*\{/));
+  assert.match(rule, /animation:[^;]*var\(--slfx-i/, "the duration varies with the member's index");
+  assert.match(rule, /animation-delay:[^;]*var\(--slfx-i/, "and so does the phase");
+  // A shared period with staggered delays walks the same ellipse in formation,
+  // which reads as a carousel rather than as suspension.
+});
+
+test("both kill switches stop the drift without stripping the member's own chrome", () => {
+  const at = css.search(/\.sl-fx-goo__member\s*\{\s*animation:\s*none\s*!important/);
+  assert.ok(at > 0, "a rule must reach the member, where the drift lives");
+  const selector = css.slice(css.lastIndexOf("}", at) + 1, css.indexOf("{", at));
+  assert.match(selector, /high-contrast/, "high contrast stops it");
+  assert.match(selector, /data-sl-fx="off"/, "and so does the subtree opt-out");
+
+  // The member is an ordinary card or wrapper. Adding it to the list that also
+  // strips box-shadow and filter would take away the elevation the component
+  // painted for itself, which is not an effect this layer owns.
+  const blanket = css.match(/[^}]*\.sl-fx-goo__field[^{]*\{[^}]*box-shadow:\s*none[^}]*\}/);
+  assert.ok(blanket, "the blanket kill rule must still exist");
+  assert.ok(!blanket[0].slice(0, blanket[0].indexOf("{")).includes(".sl-fx-goo__member"),
+    "the member must not be in it");
+});
+
+test("the drift loop carries its own motion refusal, because mountGoo() runs before mount()'s", () => {
+  // mountGoo() is deliberately ahead of the guard: the goo animates nothing and
+  // refusing it for a motion preference takes away material, not movement. The
+  // drift is the exception, so the refusal has to be here. Without it the loop
+  // runs forever re-deriving boxes a suppressed animation never moves — a
+  // forced layout per frame, invisible, and so not caught by looking.
+  const drifts = js.match(/const drifts\s*=[\s\S]{0,200}?;/);
+  assert.ok(drifts, "the field must decide once whether it drifts");
+  assert.match(drifts[0], /container\.matches\(DRIFT\)/, "the class asks for it");
+  assert.match(drifts[0], /matchMedia\(REDUCE\)/, "and the preference can refuse it");
+});
+
+test("a field on stage does not stop, and the viewport gate fails open", () => {
+  assert.match(js, /const stop\s*=\s*\(\)\s*=>\s*\{\s*if\s*\(!onStage\)\s*halt\(\);?\s*\}/,
+    "every reason to stop — a pointer leaving, a drag ending, focus moving — stops nothing while the field is on screen");
+
+  // Marked on stage BEFORE the observer is asked. An IntersectionObserver that
+  // never delivers an entry leaves the field drifting rather than frozen, which
+  // is the cheaper way to be wrong; the automation tab this layer was debugged
+  // in is exactly that environment.
+  const arm = js.slice(js.indexOf("let io = null;"));
+  const marked = arm.indexOf("onStage = true");
+  const observed = arm.indexOf("new IntersectionObserver");
+  assert.ok(marked > -1 && observed > marked, "the stage is taken to be occupied before the observer is asked");
+  assert.match(js, /io\?\.disconnect\(\)/, "and the observer is torn down with the field");
+});
+
+test("the member's index is written by the field, and only where it is read", () => {
+  // :nth-child counts against a member's own parent, while collect() sweeps the
+  // whole subtree — so one consumer wrapping two members in a layout div would
+  // put every member in the same phase bucket and the field would march.
+  assert.match(js, /if \(drifts\) for \(let i = 0; i < members\.length; i\+\+\) stampIndex\(members\[i\], i\);/,
+    "a field that does not drift is not written to at all");
+  assert.match(js, /el\.style\.getPropertyValue\("--slfx-i"\) !== v/,
+    "and an unchanged index is not rewritten, like every other write in this file");
+  assert.match(js, /el\.style\.removeProperty\("--slfx-i"\)/,
+    "a field that is torn down leaves no trace on an element it did not create");
+});
