@@ -1191,6 +1191,50 @@
   --slfx-bloom-inset: 1px;
   filter: blur(var(--slfx-soft));
 }
+/* ── THE FILAMENTS ──────────────────────────────────────────────────────────
+   Owner: the band on the border cannot be seen to bend — measured, 1.63% of
+   its pixels against the curtains' 5.00% — because the lens pulls radially
+   inward and light that hugs the border maps onto itself. So this hangs
+   something INTO the pane from it: fine spokes, dropping inward from under the
+   travelling band, five times deeper than the band itself and fading out. They
+   have structure across the direction the lens pulls, which is the whole
+   condition for a bend to be visible, and they belong to the band because they
+   are cut from the same angle and carry the same accent.
+
+   The glow's ::after was free — ::before is the band — so this costs no new
+   element. It sits above the band and under the host's own content, like
+   everything else the glow paints. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::after {
+  /* Same hue as the band it falls from, at half strength. Declared here for
+     the same reason: the host's own declarations never reach a sibling. */
+  --slfx-filament: color-mix(in srgb, var(--slfx-accent-vivid) 50%, transparent);
+  content: "";
+  position: absolute;
+  inset: var(--slfx-bloom-inset, 1px);
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(from var(--slfx-angle),
+    transparent 0deg,
+    var(--slfx-filament) calc(var(--slfx-arc) * 0.18),
+    var(--slfx-filament) calc(var(--slfx-arc) * 0.82),
+    transparent var(--slfx-arc),
+    transparent 360deg);
+  /* VERTICAL, not spokes. The displacement is radial — it pulls every sample
+     toward the middle — so anything radially symmetric is invariant under it:
+     a band along the border, and equally a comb of spokes pointing at the
+     centre. Measured, the spokes took the bend from 1.63% to 1.83%, which is
+     nothing. What bends is structure running ACROSS the pull, which is exactly
+     why the curtains bend: vertical lines meet the left and right faces
+     side-on. So the filaments are cut the curtains' way and inherit their
+     property — one light, two depths. */
+  mask:
+    repeating-linear-gradient(90deg, black 0 7px, transparent 13px 26px),
+    linear-gradient(to bottom, black, transparent) top / 100% calc(var(--slfx-bleed) * 5) no-repeat,
+    linear-gradient(to top, black, transparent) bottom / 100% calc(var(--slfx-bleed) * 5) no-repeat,
+    linear-gradient(to right, black, transparent) left / calc(var(--slfx-bleed) * 5) 100% no-repeat,
+    linear-gradient(to left, black, transparent) right / calc(var(--slfx-bleed) * 5) 100% no-repeat;
+  mask-composite: intersect, add, add, add, add;
+}
 /* ROUND, not a strip. The band's mask is four hard-edged strips — the shape
    that survives a host shorter than twice the band, which a padding ring does
    not — and a hard inner edge under a 6.5px blur still reads as a bar of light
@@ -1201,6 +1245,19 @@
    bars meeting. Scoped to loading: --sweep's band keeps the profile fitted
    against the reference on lab/1x. */
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
+  /* THE ACCENT, and not the bloom pair. The ambient light is white, so the one
+     colour a surface shows while it is working should be the product's own,
+     which is what tells a loading card from a resting one at a glance. Both
+     stops are the same hue at two strengths: a band that changes colour along
+     its length reads as decoration, where loading is one thing happening.
+     Derived, never declared (AC-18).
+     Declared HERE, on the pseudo-element that paints from them, and not on the
+     glow: seatGlow() copies the host's values onto the glow as INLINE style,
+     and no rule beats an inline declaration. A pseudo-element's own
+     declaration does, because it is not the element that carries the inline
+     one. The same trap as the sibling's missing variables, one level down. */
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-vivid) 52%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-accent-vivid) 30%, transparent);
   mask:
     linear-gradient(to bottom, black, transparent) top / 100% calc(var(--slfx-bleed) * 2) no-repeat,
     linear-gradient(to top, black, transparent) bottom / 100% calc(var(--slfx-bleed) * 2) no-repeat,

@@ -109,14 +109,26 @@ test("--slfx-glow is registered as a <length>, so effects.js can read it in px",
 test("the loading light and the curtains' stand-down are one condition", () => {
   const BUSY = ':has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))';
   const busy = RULES.filter((r) => r.selector.includes(BUSY) && !r.selector.includes(":not(" + BUSY));
-  const moves = busy.filter((r) => /--slfx-bloom-inset/.test(r.body));
+  // The DECLARATION, not a mention: the filaments read the same property to
+  // sit where the band sits, and reading it is not moving it.
+  const moves = busy.filter((r) => /--slfx-bloom-inset\s*:/.test(r.body));
   assert.equal(moves.length, 1, `one rule moves the band onto the border, got ${moves.length}`);
   assert.match(moves[0].body, /--slfx-bloom-inset:\s*1px/, "the band goes back onto the element's own border");
-  // It must MOVE the band, not re-declare it: the light that runs the border is
-  // the base bloom, and a copy of it would be a second thing to keep in step.
-  for (const r of busy) {
-    assert.doesNotMatch(r.body, /background(?:-image)?\s*:/, `${r.selector} re-declares the band instead of moving it`);
-  }
+  // The BAND must be moved, not re-declared: it is the base bloom, and a copy
+  // would be a second thing to keep in step. Exactly one rule under this
+  // condition may paint, and it is the filaments on ::after — a different
+  // light, hanging into the pane, which is why it exists (2026-09-12: the band
+  // alone cannot be seen to bend, 1.63% of its pixels against the curtains'
+  // 5.00%, because the lens pulls radially and the band hugs the border).
+  const paints = busy.filter((r) => /background(?:-image)?\s*:/.test(r.body));
+  assert.equal(paints.length, 1, `only the filaments may paint here, got ${paints.length}`);
+  assert.match(paints[0].selector, /::after$/, "and they are on ::after, since ::before is the band");
+  assert.match(paints[0].body, /--slfx-filament/, "made of their own derived colour, not a literal");
+  // Cut ACROSS the pull, not along it. The displacement is radial, so a comb of
+  // spokes pointing at the centre is as invariant as the band itself — measured,
+  // the spokes moved the bend from 1.63% to 1.83%. Vertical lines meet the left
+  // and right faces side-on, which is the whole reason the curtains bend.
+  assert.match(paints[0].body, /repeating-linear-gradient\(90deg/, "cut across the pull, or there is nothing for the lens to bend");
   // What is left is the turning itself, and it has to stay inside the guard.
   const turns = busy.filter((r) => /animation:/.test(r.body));
   assert.ok(turns.length >= 1, "the band has to travel, or it is not loading");
@@ -208,8 +220,16 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 8,
-    `exactly eight edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 9,
+    `exactly nine edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+  );
+  // The ninth is the loading filaments (2026-09-12): spokes hanging into the
+  // pane from the travelling band, in the accent. They are a light of their
+  // own — the band they fall from cannot be seen to bend, and they can — so
+  // their background IS the light, like the beam's and the pillars'.
+  assert.ok(
+    declaring.some((s) => /data-sl-fx-live="busy"[^,]*::after$/.test(s)),
+    "the loading filaments must be one",
   );
   // The eighth is --pillars (2026-09-11): curtains of light clipped inside the
   // pane; its background IS the light, like the beam's.
