@@ -100,24 +100,33 @@ test("--slfx-glow is registered as a <length>, so effects.js can read it in px",
   assert.match(effects, /@property\s+--slfx-glow\s*\{[^}]*syntax:\s*"<length>"/);
 });
 
-// 2026-09-12: loading is a beam, and the curtains stand down while it runs.
-// Two lights in one pane are two claims about what the element is doing, and
-// the only thing that keeps them apart is that the beam's condition and the
-// curtains' exclusion are the SAME condition. Pin them to each other: a
-// divergence here shows as both lights at once, or as a loading element with
-// no light at all, and neither renders in a test.
-test("the loading beam and the curtains' stand-down are one condition", () => {
+// 2026-09-12: loading is an aurora that runs the element's whole border, and
+// the curtains stand down while it does. Two lights in one pane are two claims
+// about what the element is doing, and the only thing keeping them apart is
+// that the loading light's condition and the curtains' exclusion are the SAME
+// condition. Pin them to each other: a divergence shows as both lights at once,
+// or as a loading element with none, and neither renders in a test.
+test("the loading light and the curtains' stand-down are one condition", () => {
   const BUSY = ':has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))';
-  const beam = RULES.filter((r) => r.selector.includes(BUSY) && !r.selector.includes(":not(" + BUSY));
-  assert.ok(beam.length >= 2, "the busy glow takes the beam's box and its line");
+  const busy = RULES.filter((r) => r.selector.includes(BUSY) && !r.selector.includes(":not(" + BUSY));
+  const moves = busy.filter((r) => /--slfx-bloom-inset/.test(r.body));
+  assert.equal(moves.length, 1, `one rule moves the band onto the border, got ${moves.length}`);
+  assert.match(moves[0].body, /--slfx-bloom-inset:\s*1px/, "the band goes back onto the element's own border");
+  // It must MOVE the band, not re-declare it: the light that runs the border is
+  // the base bloom, and a copy of it would be a second thing to keep in step.
+  for (const r of busy) {
+    assert.doesNotMatch(r.body, /background(?:-image)?\s*:/, `${r.selector} re-declares the band instead of moving it`);
+  }
+  // What is left is the turning itself, and it has to stay inside the guard.
+  const turns = busy.filter((r) => /animation:/.test(r.body));
+  assert.ok(turns.length >= 1, "the band has to travel, or it is not loading");
   const stood = RULES.filter((r) => r.selector.includes(":not(" + BUSY + ")"));
-  assert.equal(stood.length, 2, `the curtains' two rules must both stand down, got ${stood.length}`);
-  for (const r of stood) assert.match(r.selector, /\[data-sl-fx-pillars\]/, "and it is the curtains that stand down");
-  // Determinate keeps its arc: its length IS the value, and a beam says
-  // nothing about how far along the work is.
-  assert.ok(BUSY.includes('--slfx-progress'), "determinate is excluded by the progress property");
+  assert.equal(stood.length, 1, `the curtains' painting must stand down, got ${stood.length}`);
+  assert.match(stood[0].selector, /\[data-sl-fx-pillars\][^,]*::before/, "and it is the curtains' paint that stands down");
+  // Determinate keeps its arc: its length IS the value, and a light running the
+  // border says nothing about how far along the work is.
+  assert.ok(BUSY.includes("--slfx-progress"), "determinate is excluded by the progress property");
 });
-
 // Regression, 2026-09-12: the glow's clip is written from --slfx-glow, which is
 // the spread seatGlow() gives a NORMAL glow. A --pillars glow is seated with no
 // spread — its box is the host's own — so the same inset eats it from every

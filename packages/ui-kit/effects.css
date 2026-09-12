@@ -1067,7 +1067,10 @@
      --slfx-bleed inward, instead of straddling the edge as a 12px ring; the
      seated glow is clipped to the box (below), so the blur cannot spill out
      where the reference has nothing. */
-  inset: calc(1px + var(--slfx-rim-out) + var(--slfx-glow));
+  /* The spread the glow was seated with, and a rebindable name for it: a glow
+     seated WITHOUT spread (the curtains' shape) still has to be able to carry
+     this band, on its own border, when the element is loading. */
+  inset: var(--slfx-bloom-inset, calc(1px + var(--slfx-rim-out) + var(--slfx-glow)));
   padding: 0;
   border-radius: inherit;
   /* the bloom follows the same plateau, so the glow is a long soft band under
@@ -1114,32 +1117,11 @@
    a prism — and none of that is drawn here: it is what the glass does to a
    light that passes behind it. Additive: --beam swaps the seated glow's
    painting, the sweep stays for every host that does not ask for this. */
-/* AND LOADING IS A BEAM (2026-09-12, owner: "il loading dovrebbe essere un
-   loading beam"). Indeterminate busy paints the same line, travelling across
-   the pane instead of drifting: a light that crosses a surface is what reading
-   "working" looks like, where curtains hanging inside it are ambience. It is
-   the same declarations, reached by one more selector rather than a copy.
-   DETERMINATE is excluded by --slfx-progress: there the arc's LENGTH is the
-   value, and a beam would say nothing about how far along it is. The ring on
-   ::after is untouched either way — it is what a reduced-motion or
-   high-contrast visitor reads the state from, and that contract is not a
-   tuning. */
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam] {
   filter: none;
   overflow: visible;
 }
-/* The loading beam is the same line, held INSIDE the element. --beam is a
-   light that crosses a pane and carries on past it, which is what a beam does;
-   a control that is loading has to say so about ITSELF, and a line sailing off
-   across the page says it about the page. Measured on lab/1y: unclipped, the
-   card's loading beam reached the full width of the bed. */
-.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])) {
-  filter: none;
-  overflow: hidden;
-  clip-path: inset(0 round var(--slfx-seat-radius));
-}
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]::before,
-.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]::before {
   /* the line: a soft white core with a halo, long enough to enter one face
      and leave the other whatever the host's width */
   inset: auto;
@@ -1167,10 +1149,10 @@
    glow is clipped to the host's own box and radius. They sit BEHIND the pane,
    so the lens bends them at the faces and dispersion parts them into their
    colours there — the same prism as --beam, on a softer light. Additive. */
-/* The curtains stand down while the beam is loading: two lights in one pane
-   is two claims about what the element is doing. The condition is the beam's
-   own, character for character, so the two can never both be on. */
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))) {
+/* The box is the curtains' whatever the element is doing — it is what the seat
+   gave them, and the clip is what actually holds the blur inside it. Only the
+   PAINTING changes while loading, below. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars] {
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
   filter: blur(var(--slfx-pillar-soft, 8px));
@@ -1182,6 +1164,34 @@
      host's. The two are one decision — see seatGlow() in effects.js. */
   clip-path: inset(0 round var(--slfx-seat-radius));
 }
+/* ══ LOADING IS AN AURORA THAT RUNS THE BORDER ══════════════════════════════
+   Owner, 2026-09-12: "deve essere un effetto aurora ma che percorre tutto il
+   bordo, da usare per il loading" — and the same for busy, which is the one
+   state the kit has for it (`data-sl-fx-live="busy"`).
+
+   So while an element is working, the curtains stand down and the glow paints
+   the BAND — the conic bloom, masked to four strips on the element's own
+   border — and the orbit already in this file turns it once every 1.1s. The
+   light runs the whole perimeter, which is the thing a loading indicator has
+   to do and a curtain hanging inside a pane cannot.
+
+   Two lights in one pane are two claims about what the element is doing, so
+   this and the curtains' stand-down are one condition, written the same way in
+   both places. Nothing here re-declares the band: it is the base ::before, and
+   the only thing that changes is WHERE it sits. A curtains glow is seated with
+   no spread, so the band's usual inset — written for a box 32.5px larger than
+   the host on every side — would push it a third of the way into a card.
+   --slfx-bloom-inset puts it back on the border.
+
+   DETERMINATE is excluded throughout: there the arc's LENGTH is the value, and
+   a light running the border says nothing about how far along the work is. The
+   ring on ::after is untouched either way, being what a reduced-motion or
+   high-contrast visitor reads the state from. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])) {
+  --slfx-bloom-inset: 1px;
+  filter: blur(var(--slfx-soft));
+}
+
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before {
   inset: -20% -40%;
   padding: 0;
@@ -1447,15 +1457,8 @@
     animation: slfx-pillars-drift 13s linear infinite;
   }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
-  /* Loading travels, and it travels at the speed the busy orbit already sets
-     the page's pulse by: one crossing per 1.4s, linear, never reversing — a
-     beam that swings back and forth reads as scanning, not as progress. */
-  @keyframes slfx-beam-sweep { from { --slfx-beam-dy: -95%; } to { --slfx-beam-dy: 95%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
     animation: slfx-beam-drift 11s ease-in-out infinite alternate;
-  }
-  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
-    animation: slfx-beam-sweep 1.4s linear infinite;
   }
   /* Determinate never orbits — its arc length carries the value. */
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
