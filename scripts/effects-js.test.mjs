@@ -307,3 +307,67 @@ test("the pane writes nothing onto the host but custom properties", () => {
   assert.ok(cleared, "the properties must be removed when the pane goes dark");
   assert.match(pane, /paneTarget === 0 && paneLit < PANE_SETTLE[\s\S]*?paneRafId = 0;[\s\S]*?setPaneLive\(null\);\s*return;/, "the loop must stop itself once dark");
 });
+
+test("the reduced-motion derogation is narrow, opt-in, and named so a reader cannot mistake it", async () => {
+  // A product may have a documented reason to animate for a visitor reporting
+  // the preference. The escape is the consumer's to take and to justify, so it
+  // is a named option rather than a default, it writes an attribute the CSS
+  // reads (so both decline together or not at all), and it reaches the glitch
+  // alone — never high contrast, which is a different requirement.
+  const body = fnBody("mount");
+  assert.match(js, /export function mount\(root = document, \{ ignoreReducedMotion = false \} = \{\}\)/,
+    "it must be an explicit, defaulted option");
+  assert.match(body, /if \(ignoreReducedMotion\) html\.setAttribute\("data-sl-fx-motion", "always"\);/,
+    "and it must publish itself to the stylesheet");
+  assert.match(body, /matchMedia\(REDUCE\)\.matches && !ignoreReducedMotion\) return false;/,
+    "only then does the motion guard stand down");
+
+  // High contrast is refused before the derogation is even read.
+  const hc = body.indexOf('"high-contrast"');
+  const derogation = body.indexOf("ignoreReducedMotion");
+  assert.ok(hc > -1 && hc < derogation, "high contrast must refuse first, and unconditionally");
+
+  // suppressed() gates burst()/scramble(); it must honour the same attribute,
+  // or a derogated document would arm Tier 1 and still drop every burst.
+  assert.match(js, /return window\.matchMedia\(REDUCE\)\.matches && !motionDerogated\(\);/,
+    "the burst gate must read the same derogation");
+  const derogate = js.slice(js.indexOf("function motionDerogated()"), js.indexOf("function suppressed()"));
+  assert.doesNotMatch(derogate, /high-contrast/, "the derogation may not know about high contrast");
+});
+
+test("Tier 1 watches what is near the viewport, with a margin", () => {
+  // "near" rather than "visible": the margin arms an element before it
+  // arrives, because a pane that blurs in as it crosses the fold is worse than
+  // one that was always blurred.
+  assert.match(js, /const NEAR_MARGIN = "200px";/, "the margin is what makes it 'near'");
+  assert.match(js, /rootMargin: NEAR_MARGIN/, "and it must reach the observer");
+  assert.match(js, /e\.target\.toggleAttribute\("data-sl-fx-near", e\.isIntersecting\)/,
+    "the attribute tracks intersection in both directions");
+  assert.match(js, /const NEAR_HOSTS = "\.sl-fx-glass, \.sl-fx-aurora";/, "the two families that cost something off-screen");
+
+  // One observer for the document, not one per element, and elements arriving
+  // later are picked up by the same MutationObserver that arms everything else.
+  assert.match(js, /if \(!nearObserver\) \{/, "one observer for the document, built once and reused");
+  // The margin is the house's: the lazy backdrop paint already arms 200px
+  // early for the same reason, and the two must not drift apart.
+  const margins = [...js.matchAll(/rootMargin:\s*([^,}]+)/g)].map((m) => m[1].trim());
+  assert.deepEqual(margins, ["NEAR_MARGIN", "NEAR_MARGIN"], `every observer takes the same margin, got ${margins}`);
+  const mounted = fnBody("mount");
+  assert.match(mounted, /watchNear\(root\)/, "mount() must start it");
+  assert.match(js, /watchNear\(n\);/, "and late arrivals must be picked up too");
+
+  // It must degrade, not throw, where the API is absent.
+  assert.match(js, /if \(typeof IntersectionObserver !== "function"\) return;/, "absent API is a no-op, not a crash");
+});
+
+test("the viewport gate fails open", () => {
+  // An IntersectionObserver that never delivers — a background tab, a headless
+  // capture, a harness that suppresses it — must not leave a page stripped of
+  // its material. Hosts are marked near BEFORE they are observed, so the
+  // observer's only job is to take the mark away.
+  const fn = js.slice(js.indexOf("function watchNear("), js.indexOf("function motionDerogated("));
+  const marked = fn.indexOf('el.toggleAttribute("data-sl-fx-near", true);');
+  const observed = fn.indexOf("nearObserver.observe(el);");
+  assert.ok(marked > -1 && observed > -1, "watchNear must mark and observe");
+  assert.ok(marked < observed, "the mark must be written before the observer can contradict it");
+});

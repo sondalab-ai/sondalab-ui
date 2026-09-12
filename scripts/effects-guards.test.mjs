@@ -216,10 +216,35 @@ test("every animation sits inside a reduced-motion guard", () => {
   // after the colon is never "none", it's a space) and the exemption never
   // actually fires — `animation: none` still matches. Folding the optional
   // whitespace into the lookahead itself closes that.
-  for (const m of effects.matchAll(/\banimation:(?!\s*none\b)/g)) {
-    const inside = guards.some(([a, b]) => m.index > a && m.index < b);
-    assert.ok(inside, `animation at index ${m.index} is outside a reduced-motion guard`);
+  // The glitch's four are DELIBERATELY outside (2026-09-12). They sit in the
+  // open and a `prefers-reduced-motion: reduce` block takes them away — the
+  // same reading, with one difference: a document can decline the removal with
+  // data-sl-fx-motion="always". A product may have a documented reason to
+  // animate for a visitor reporting the preference; sondalab.eu is one. The
+  // escape reaches the glitch alone, and never high contrast.
+  const escape = effects.slice(effects.indexOf('[data-sl-fx="on"] .sl-fx-glitch.is-glitching {'));
+  const glitchOutside = [...effects.matchAll(/\banimation:(?!\s*none\b)/g)]
+    .filter((m) => !guards.some(([a, b]) => m.index > a && m.index < b));
+  assert.equal(glitchOutside.length, 4, `only the glitch's four animations may sit outside the guard, got ${glitchOutside.length}`);
+  for (const m of glitchOutside) {
+    const line = effects.slice(effects.lastIndexOf("\n", m.index), m.index + 60);
+    assert.match(line, /slfx-(?:glitch-jit|glitch-a|glitch-b|shatter)/, `not a glitch animation: ${line.trim()}`);
   }
+
+  // …and `reduce` must actually take them away, unless the document declined.
+  const kill = RULES.filter(
+    (r) => /data-sl-fx-motion="always"/.test(r.selector) && /animation:\s*none/.test(r.body),
+  );
+  assert.equal(kill.length, 1, "one rule removes the glitch's motion under reduce");
+  assert.match(kill[0].selector, /:root:not\(\[data-sl-fx-motion="always"\]\)/, "and it is the document that declines, not the element");
+  for (const sel of ["is-glitching", "is-glitching::before", "is-glitching::after", "sl-fx-glitch__shard"]) {
+    assert.ok(kill[0].selector.includes(sel), `the kill must reach ${sel}`);
+  }
+  // The escape is narrow: it may not reach the high-contrast refusal.
+  assert.doesNotMatch(
+    escape, /data-sl-fx-motion="always"[^{]*high-contrast|high-contrast[^{]*data-sl-fx-motion="always"/,
+    "a motion derogation may not stand down high contrast, which is a different requirement",
+  );
 });
 
 test("only shape re-declares the ring background; states rebind the stops", () => {
@@ -496,4 +521,52 @@ test("the pane's lit edge yields to the aurora and stays off a filled element", 
   assert.doesNotMatch(lit.body, /(?:^|;)\s*opacity\s*:/, "the lit edge must not force the ring visible under Tier 2");
   const rim = RULES.find((r) => r.selector === ".sl-fx-glass.sl-fx-aurora--rim::after");
   assert.ok(rim && /opacity:\s*0/.test(rim.body), "the resting glass conic must stand down on a --rim");
+});
+
+test("an effect off-screen costs nothing, and Tier 0 keeps its material", () => {
+  // The expensive two are the glass's backdrop-filter — a blur of whatever is
+  // behind it, recomputed as the page moves — and a running animation, which
+  // keeps ticking for no one. effects.js marks what is near the viewport;
+  // these rules stand down the rest.
+  const near = RULES.filter((r) => /:not\(\[data-sl-fx-near\]\)/.test(r.selector));
+  assert.ok(near.length >= 2, "the stand-down rules must exist");
+
+  // SUBTRACTIVE. Every one of them must also require Tier 1 to be armed, or a
+  // page that never mounts — which cannot write the attribute — would lose its
+  // material entirely. Tier 0 is the state this layer promises is correct on
+  // its own.
+  for (const r of near) {
+    assert.match(r.selector, /^\[data-sl-fx="on"\]/, `must require Tier 1: ${r.selector}`);
+  }
+  // Nothing may PAINT only when near: that would be the additive form, and it
+  // is the one that breaks Tier 0.
+  const paintsWhenNear = RULES.filter(
+    (r) => /\[data-sl-fx-near\]/.test(r.selector) && !/:not\(\[data-sl-fx-near\]\)/.test(r.selector),
+  );
+  assert.deepEqual(paintsWhenNear.map((r) => r.selector), [], "the gate subtracts, it never adds");
+
+  assert.ok(
+    near.some((r) => /backdrop-filter:\s*none/.test(r.body)),
+    "the glass's backdrop must be the first thing to go",
+  );
+  assert.ok(near.some((r) => /animation:\s*none/.test(r.body)), "and animations the second");
+});
+
+test("a prefixed property never follows its standard form", () => {
+  // REGRESSION: `backdrop-filter: none` written before `-webkit-backdrop-filter:
+  // none` was minified down to the -webkit- one alone, which Chrome does not
+  // let override the standard property. The gate matched its twelve elements
+  // and every one of them went on blurring. Source looked right; the built
+  // bundle did not.
+  for (const r of RULES) {
+    for (const m of r.body.matchAll(/-webkit-([a-z-]+)\s*:/g)) {
+      const std = new RegExp(`(?:^|;)\\s*${m[1]}\\s*:`);
+      const stdAt = r.body.search(std);
+      if (stdAt === -1) continue;
+      assert.ok(
+        stdAt > m.index,
+        `${r.selector}: -webkit-${m[1]} must come BEFORE ${m[1]}, or a minifier may keep only the prefix`,
+      );
+    }
+  }
 });
