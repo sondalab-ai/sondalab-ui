@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 09:30
+## Start here — handoff, 2026-09-12 09:40
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (139 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (140 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. The kit ships:
@@ -30,26 +30,32 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   dispersion (`disperse`, default 18); bend capped at `reach` = 6 px; frost
   and saturation animatable via `--slg-lens-blur` / `--slg-lens-sat`.
 - `effects.css` / `effects.js` — the aurora: bloom INSIDE the box, **solved
-  against border-beam's composer on `lab/1w` (2026-09-12)**: `--slfx-bleed`
-  20 px, bloom alphas 51 / 38 %, hairline `--slfx-ring-lit` 0.28, blur 14 px;
-  arc with border-beam's plateau profile and a derived accent → complement →
-  split palette; `--beam` and `--pillars` as optional modes; the glow is a
-  SIBLING seated before the host (so the lens can bend it), with twelve
-  `--slfx-*` variables copied across.
+  against border-beam's composer at its own zoom on `lab/1x` (2026-09-12)**:
+  `--slfx-bleed` 10 px, blur `--slfx-soft` 6.5 px, bloom alphas 44 / 33 % of
+  the vivid accent lifted a quarter toward white (chroma kept), arc 90°,
+  hairline `--slfx-ring-lit` 0.28, the seated glow clipped to the host's box
+  (except `--beam` and `--rim`); border-beam's plateau profile and a derived
+  accent → complement → split palette; `--beam` and `--pillars` as optional
+  modes; the glow is a SIBLING seated before the host (so the lens can bend
+  it), with twelve `--slfx-*` variables copied across.
 - the showcase is back to defaults; every experiment lives in `lab/` (gitignored).
 
-**The 1w task is closed — see "1w — the curve is hooked" below for the
-numbers.** The aurora's profile, read as the median across the card's middle
-rows, is +48 / +18.6 / +2.7 / 0 at the edge / 30 / 45 / 60 px against the
-target +48 / +16 / +3 / 0, every point within ±3. Two kit defects were found
-by the measurement and fixed on the way, each with a regression test: the
-bloom band was a padding ring that could not fit any host shorter than 88 px,
-and the seated glow was sized from a `calc()` that JavaScript read as nothing.
+**1w and 1x are closed — see the two sections below for the numbers.** 1w
+hooked the handoff's curve as stated and found two kit defects (a padding
+ring that could not fit a host shorter than 88 px; a `calc()` the seat read
+as nothing), each fixed with a regression test. The owner then looked and
+ruled *"non siamo ancora vicini"*, and 1x re-read the reference at its own
+zoom (it is a DPR-2 capture) with the colour's saturation measured beside its
+luminance: the kit now reads +42.9 / +34.2 / +27.9 / +19.8 / +11.8 / +4.0 /
+0 at 4 / 8 / 10 / 12 / 15 / 20 / 30 px against the reference's +43 / +34 /
++27 / +20 / +13 / +4 / 0, with the same rgb spread (36 → 3 against 32 → 3),
+nothing outside the box, and a quarter-ring arc.
 
-**No next task is assigned.** Four things the measurement surfaced are the
-owner's to rule on, not the next agent's; they are listed under "Open, for the
-owner" in the 1w section. Nothing else is queued: the kit's release and the
-GPU tier's cut are the owner's decisions.
+**No next task is assigned.** Two things stay the owner's: the 1 px line on
+the reference's border where the beam passes (ours is the glass rim plus a
+0.28 ring; see 1w's list), and whether a card is glass at all — the composer
+is not, and its edge has no inset shine. The kit's release and the GPU tier's
+cut are the owner's decisions.
 
 **Traps that cost hours, in order of cost:**
 
@@ -87,7 +93,7 @@ GPU tier's cut are the owner's decisions.
 ("prendi spunto, non usare la libreria"); AC-33 overridden for glass (every
 layer on at rest); tint 0.18; hover lift 3 % with a soft settle; button radius
 `--sl-radius-lg`; the aurora's model is border-beam's page, not its README;
-the 1w target curve is the one stated on 2026-09-11 and was not moved.
+the reference is read at its own zoom (2026-09-12, after 1w).
 
 ## Goal
 
@@ -515,6 +521,53 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 `glass-studio`'s units on its 200 × 200 shape, so the value 10 here is not the
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
+
+### 1x — the reference at its own zoom — 2026-09-12
+
+*Owner, on 1w rendered: "non siamo ancora vicini alle risorse di
+riferimento."* Right: 1w hit four numbers that described depth only, and
+three of the four differences it had listed as open were the look. `lab/1x-
+aurora-own-zoom.html` (gitignored) is 1w's bed with the three changed
+together and measured with `lab/_profile_edge.py … own-zoom`, which reads
+the reference as the DPR-2 capture it is and prints the rgb spread (max −
+min, a saturation in the same units) beside each luminance delta.
+
+**What changed, and why each:**
+
+- **Colour.** The reference's bloom pixel is a saturated green: spread 30 for
+  a lift of 48. The kit's bloom was the vivid accent lifted 55 % toward white
+  with chroma pushed 1.25 — spread 17 for the same lift, milk. Now a quarter
+  toward white with chroma kept; the gamut fit is unchanged. The depth
+  companion's bloom takes the rim beam's 1.15 push so a bloom is never paler
+  than its beam (the gamut test says so, and said so).
+- **Scale.** `--slfx-soft` 14 → 6.5 px, `--slfx-bleed` 20 → 10 px: at the
+  page's zoom the reference's glow is gone by 25 CSS px, and a 14 px Gaussian
+  cannot fall to nothing in that distance whatever the band.
+- **Clip.** The seated glow is clipped to the host's border box and radius
+  (`clip-path` runs after `filter`, so only the spill is cut): the reference
+  reads −5 outside, 1w read +33. `--beam` (a line that leaves the pane) and
+  `--rim` (light outside a filled control, by the declension) keep the
+  outside.
+- **Arc.** 250° → 90°: the beam lights ~75 px of one edge of a 320 px card,
+  never three edges. The ring's plateau profile is unchanged.
+
+**Measured, kit defaults on the bed, no override** (peak-row reference; the
+first two pixels are the glass rim, +104 / +76, and belong to the material):
+
+| depth (CSS px) | 4 | 8 | 10 | 12 | 15 | 20 | 25 | 30 | outside |
+|---|---|---|---|---|---|---|---|---|---|
+| reference | +43 | +34 | +27 | +20 | +13 | +4 | +1 | 0 | −5 |
+| kit | +42.9 | +34.2 | +27.9 | +19.8 | +11.8 | +4.0 | +0.4 | 0 | −1 |
+| spread, reference | 32 | — | 22 | — | 11 | 3 | 0 | 0 | 0 |
+| spread, kit | 36 | 29 | 24 | 17 | 11 | 3 | 2 | 0 | 0 |
+
+Eight rounds of captures to get there (lift 0 / 0.25 / 0.55; bleed 8–11;
+soft 6–7; alpha 35–55). The pale lift read as milk at every alpha, the
+vivid accent unlifted read too dark for its spread; a quarter is where the
+two ratios meet.
+
+**Still the owner's:** the border line (1w's item 2) and the rim of the glass
+on a card. Everything else in 1w's list is closed by this section.
 
 ### 1w — the curve is hooked — 2026-09-12
 

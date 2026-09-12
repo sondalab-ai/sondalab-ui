@@ -64,14 +64,18 @@
 
   /* edge geometry — the ring grows INWARD so it never meets the focus outline */
   --slfx-ring-w: 1px;
-  --slfx-arc: 250deg;
-  /* the bloom: a band --slfx-bloom-w wide straddling the ring, blurred by
-     --slfx-soft; --slfx-glow is the headroom the glow box takes around the
-     ring — past three sigma plus the band, so the blur is at zero long
-     before any box edge. Against the reference's beam: a ~22px blur at
-     ~0.4 opacity, felt more than seen. */
+  /* 90deg, not 250: the reference's beam lights about 75px of one edge of a
+     320px card — a quarter of the ring — and never three edges at once.
+     Measured on lab/1x (2026-09-12) against border-beam's composer. */
+  --slfx-arc: 90deg;
+  /* the bloom: a band --slfx-bleed deep inside the ring (see the glow's
+     ::before), blurred by --slfx-soft; --slfx-glow is the headroom the glow
+     box takes around the ring — past three sigma plus the band, so the blur
+     is at zero long before any box edge. 6.5px is the reference's own
+     softness at the page's zoom: its glow is gone by 25 CSS px, and a 14px
+     Gaussian cannot fall to nothing in that distance. */
   --slfx-bloom-w: 12px;
-  --slfx-soft: 14px;
+  --slfx-soft: 6.5px;
   --slfx-glow: calc(var(--slfx-soft) * 3 + var(--slfx-bloom-w));
 
   /* translucency — how much of the component's own fill survives, and how
@@ -360,7 +364,11 @@
   /* The aurora's blooms and the --rim's beam: the vivid pair lifted toward
      white and pushed in chroma, fitted at the lifted lightness — see
      --slfx-bloom-hi and --slfx-aurora--rim. */
-  --slfx-accent-bloom-want: oklch(from var(--slfx-accent-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h);
+  /* A QUARTER of the way toward white, chroma kept: the reference's bloom
+     pixel is a saturated hue (rgb spread 30 for a lift of 48 luminance), and
+     the previous 0.55 lift with chroma pushed 1.25 came out as milk (spread
+     17 for the same lift). Measured on lab/1x, 2026-09-12. */
+  --slfx-accent-bloom-want: oklch(from var(--slfx-accent-vivid) calc(l + (1 - l) * 0.25) c h);
   --slfx-accent-bloom-b1: oklch(from color(from oklch(from var(--slfx-accent-bloom-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
   --slfx-accent-bloom-b2: oklch(from color(from var(--slfx-accent-bloom-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
   --slfx-accent-bloom-b3: oklch(from color(from var(--slfx-accent-bloom-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
@@ -370,7 +378,10 @@
   --slfx-accent-bloom-b7: oklch(from color(from var(--slfx-accent-bloom-b6) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.00125) h);
   --slfx-accent-bloom-fit: oklch(from color(from var(--slfx-accent-bloom-b7) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c - (1 - alpha) * 0.00125) h / 0.001);
   --slfx-accent-bloom: oklch(from color-mix(in oklch, color(from var(--slfx-accent-bloom-want) srgb-linear r g b / var(--slfx-in-gamut)), var(--slfx-accent-bloom-fit)) l c h / 1);
-  --slfx-depth-bloom-want: oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.55) calc(c * 1.25) h);
+  /* The depth companion's bloom is --rim's, under --slfx-rim-beam, which
+     pushes chroma 1.15: a bloom must not be paler than the beam it blooms
+     from (effects-gamut.test.mjs), so it takes the same push. */
+  --slfx-depth-bloom-want: oklch(from var(--slfx-depth-vivid) calc(l + (1 - l) * 0.25) calc(c * 1.15) h);
   --slfx-depth-bloom-b1: oklch(from color(from oklch(from var(--slfx-depth-bloom-want) l 0.16 h) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.08) h);
   --slfx-depth-bloom-b2: oklch(from color(from var(--slfx-depth-bloom-b1) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.04) h);
   --slfx-depth-bloom-b3: oklch(from color(from var(--slfx-depth-bloom-b2) srgb-linear r g b / var(--slfx-in-gamut)) l calc(c + (alpha * 2 - 1) * 0.02) h);
@@ -894,23 +905,22 @@
      for. Relative colour syntax is already the kit's own vocabulary
      (themes/*.css derive the accent steps with it); l and c are channels,
      not a literal. --rim's own blooms are the depth's. */
-  /* SOLVED FROM THE REFERENCE'S CURVE on lab/1w (2026-09-12): one card on a
-     flat ground, the plateau pinned on its left edge, profiled inward as the
-     median across the card's middle rows, against border-beam's composer
-     (docs/references/assets/border-beam-composer-search-dark.png) read the
-     same way. Target +48 at the edge, +16 at 30px, +3 at 45px, 0 at 60px
-     over an interior of L 29; measured +48, +18.6, +2.7, 0. The two alphas
-     keep their 0.75 ratio, which is the reference's own rose-to-green ratio
-     at the edge (+36 against +48); only the plateau's colour is on the
-     profiled edge, so the tail's alpha follows rather than being fitted. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 51%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 38%, transparent);
+  /* SOLVED FROM THE REFERENCE'S CURVE AT ITS OWN ZOOM on lab/1x (2026-09-12):
+     one card on a flat ground, the plateau pinned on its left edge, profiled
+     inward as the median across the card's middle rows, against border-beam's
+     composer (docs/references/assets/border-beam-composer-search-dark.png,
+     a DPR-2 capture, read at 2 px per CSS px). Target over an interior of
+     L 29, on the beam's brightest rows: +43 at 4px, +34 at 8, +27 at 10, +20
+     at 12, +13 at 15, +4 at 20, +1 at 25, 0 at 30; measured +43.2, +34.5,
+     +26.5, +19.9, +11.8, +4.0, +0.4, 0. The tail's alpha keeps the 0.75
+     ratio (the reference's rose against its green at the edge); only the
+     plateau's colour lies on the profiled edge. */
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
   /* How far the bloom's band reaches INWARD from the host's border, before
-     the 14px blur. Declared here, on the host, so a component can rebind it
-     and the seated glow follows (effects.js copies it across). 20px is what
-     puts the curve's knee at 30px; 44px, the first reading, had the glow
-     still at +30 there. */
-  --slfx-bleed: 20px;
+     the blur. Declared here, on the host, so a component can rebind it and
+     the seated glow follows (effects.js copies it across). */
+  --slfx-bleed: 10px;
   /* Where the ring's outer edge sits, measured from the padding box
      outward: 0 on a bordered element (the ring is on the border), the
      ring's own width on --rim, which steps the ring out past the fill. */
@@ -1018,17 +1028,25 @@
      already comes before the host, which is all the ordering it needs. */
   z-index: auto;
 }
+/* NOTHING OUTSIDE THE BOX. The reference reads -5 outside the composer where
+   an unclipped blur read +33 (lab/1w). clip-path is applied after filter, so
+   the blur is cut at the host's border box, in the host's own radius, and the
+   band inside it is untouched. Two lights keep the outside on purpose: the
+   --beam is a line that enters one face and leaves the other, and --rim's
+   ring and light sit outside a filled control by the declension. */
+.sl-fx-aurora__glow[data-sl-fx-seated]:not([data-sl-fx-beam]):not(:has(+ .sl-fx-aurora--rim)) {
+  clip-path: inset(calc(1px + var(--slfx-rim-out) + var(--slfx-glow)) round var(--slfx-seat-radius));
+}
 
 .sl-fx-aurora__glow::before {
   content: "";
   position: absolute;
   /* INWARD, from the reference (docs/references/assets/border-beam-composer-
-     search-dark.png, profiled 2026-09-11): the glow is +48 L at the card's
-     edge, +16 at 30px in, gone by 60px. So the band starts ON the host's
-     border and reaches --slfx-bleed inward, instead of straddling the edge
-     as a 12px ring. The blur still spills OUTSIDE the box — measured +33 at
-     3px out and +26 at 6px on lab/1w, where the reference has nothing — left
-     as it is: clipping the seated glow is a ruling, not a fit. */
+     search-dark.png): the glow is +48 L at the card's edge and gone by 30
+     CSS px in. So the band starts ON the host's border and reaches
+     --slfx-bleed inward, instead of straddling the edge as a 12px ring; the
+     seated glow is clipped to the box (below), so the blur cannot spill out
+     where the reference has nothing. */
   inset: calc(1px + var(--slfx-rim-out) + var(--slfx-glow));
   padding: 0;
   border-radius: inherit;

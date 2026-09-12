@@ -12,8 +12,10 @@ Measured on 2026-09-12 while profiling `lab/1w` against a reference capture.
 
 - **Full screenshot**: 1920 × 962 viewport → 1565 × 784 JPEG. Lossy and
   resampled; never profile it.
-- **Zoom**: `region` given as `[x0, y0, x1, y1]` is read in the screenshot's
-  frame, so a CSS-px rectangle must be multiplied by 0.815 (1565 / 1920) first.
+- **Zoom**: `region` given as `[x0, y0, x1, y1]` is read in the frame of the
+  LAST full screenshot taken in that tab — scaled, so a CSS-px rectangle must
+  be multiplied by 0.815 (1565 / 1920) — and in plain CSS px when no full
+  screenshot has been taken yet in the tab. Take none, and the region is CSS px.
   The saved file is a PNG at exactly 2 px per CSS px — a 321 CSS px card
   measured 642 px border to border — so it compares one-to-one with a retina
   screenshot of a reference at the page's own zoom.
