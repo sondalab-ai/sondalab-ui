@@ -11,16 +11,16 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 10:05
+## Start here — handoff, 2026-09-12 11:15
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (143 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (146 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/effects.css" --product effects` clean. 187 tests green. The kit ships:
+"packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
   its capture within ±3 luminance on `lab/1n`; tint 0.18; layers sit at
@@ -33,8 +33,13 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   `--slg-lens-blur` / `--slg-lens-sat`.
 - `effects.css` / `effects.js` — the aurora's light is **the curtains**
   (`--pillars`), by default on every host that does not ask for another
-  (`--sweep`, `--beam`, `--rim`), fitted on `lab/1y` (2026-09-12): ribs 30 %,
-  curtains 44 / 41 %, blur 4 px, pitch a quarter wider than it shipped. The
+  (`--sweep`, `--beam`, `--rim`), and it is **white**: both curtains are the
+  page's derived light pole, so the only colour in a pane is the colour the
+  glass makes of it (rgb spread 3 in the middle, 46 at the faces). Fitted on
+  `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
+  320 / 480 px. **Indeterminate busy is a travelling beam** clipped to its own
+  box, 1.4 s per crossing, with the curtains standing down; determinate keeps
+  its arc, whose length is the value. The
   glow is a SIBLING seated before the host, so it is in the backdrop and the
   lens bends it — which is the whole reason the curtains are the default: a
   wash that follows the edge moves 0.93 % of its pixels under the lens, the
@@ -67,7 +72,14 @@ before it.
   light** — the conic bloom and its numbers stay for `--sweep`, `--beam` and
   `--rim`.
 
-**No next task is assigned.** One thing stays the owner's: the 1 px line on
+**One open question, measured and NOT decided** — see the end of the 1y
+section: how far the white light should be made to decompose. The colour at
+the faces comes from the lens's `disperse`, which is a fraction of the bend
+and therefore applies to everything behind a pane: at the shipped 18 the faces
+read 46, at 60 they read 63 and the page's own text behind a pane splits into
+visible red/green/blue copies. The owner has the two captures.
+
+**Otherwise no task is assigned.** One thing stays the owner's: the 1 px line on
 the reference's border where the beam passes (ours is the glass rim plus a
 0.28 ring; see 1w's list). Whether a card is glass is **ruled** (2026-09-12,
 below): it is, with distortion and refraction, and the refraction wins where
@@ -626,6 +638,50 @@ a normal glow. A `--pillars` glow is seated with **no** spread — its box is th
 host's own — so the same inset ate it from every side: on a 90 × 40 button,
 11 297 pixels of curtain, max delta 149, simply gone. Fixed in `072d919` with a
 test; nothing on the showcase carried the class, which is why 185 stayed green.
+
+**White light, more blur, and a beam for loading — 2026-09-12, later.** Three
+changes on the owner's reading of the rendered result: *"i pillars generici
+vanno bene, solo non mi convincono i colori — userei luce bianca che si
+scompone, e poi sembrano zebrati, li blurrerei ancora di più"*, and *"il
+loading dovrebbe essere un loading beam"*.
+
+- **White.** Both curtains are now the derived light pole rather than the
+  accent and its complement. Measured with the kit's own defaults on the bed:
+  the interior peaks at **+45.2** (the reference's light peaks at +48), the
+  colour in the middle of the pane is **3** and at the faces **46** — white
+  light, parted by the glass where the glass acts. White carries much less
+  over a near-black ground than the vivid accent did, so the alphas went **up**
+  (44 / 41 → 45 / 42, ribs 30 → 32) to hold the same luminance.
+- **Less zebra.** Blur 4 → 8 px, its breath 3–5.5 → 7–10, pitch 200 / 300 →
+  320 / 480 px. The two move together by necessity: a rib narrower than about
+  twice its blur is erased by that blur, and an erased rib is nothing for the
+  lens to bend.
+- **Loading is a beam.** Indeterminate busy paints `--beam`'s own line,
+  travelling once per 1.4 s, linear and never reversing — a beam that swings
+  back reads as scanning, not as progress. One difference from `--beam`, and it
+  is the point: that mode's light carries on past the pane, while a control
+  that is loading has to say so about **itself**, so this one is clipped to its
+  own box (unclipped, a card's loading beam reached the full width of the bed).
+  The curtains stand down while it runs. Determinate is excluded throughout:
+  there the arc's length is the value.
+
+**Open, and the owner's: how far the white light should decompose.** The colour
+at the faces is the lens's `disperse`, an amplification of the IOR triple, and
+it is a fraction of the bend — so it applies to everything behind a pane, not
+only to the light. Measured on the bed and on the showcase's densest cell:
+
+| `disperse` | colour at the faces | the page's own text behind a pane |
+|---|---|---|
+| 18 (shipped) | 46 | already fringed, as it was at reach 6 |
+| 60 | 63 | each letter splits into red/green/blue copies |
+| 100 | 68 | an oil slick |
+
+Sixty is where the decomposition reads as a prism rather than a tint, and it is
+also where text behind a pane stops being legible. The two cannot be separated
+with one filter: a filter that decomposes the light decomposes the page with
+it. The alternatives, neither built: draw the spectrum into the curtains
+themselves (costs the page nothing, but the colour is then authored rather than
+made by the glass), or accept 18 and a quieter decomposition.
 
 ### 1x — the reference at its own zoom — 2026-09-12
 
