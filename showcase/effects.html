@@ -291,7 +291,12 @@
       letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--sl-text-primary);
       background: var(--sl-bg-surface-raised);
-      border: 1px solid var(--sl-border-subtle);
+      /* No border on any of them. Two of the three carried a fill and declared
+         `border-color: transparent`; the third did not, so at rest — where the
+         chips start far apart and none has welded — it was the only one with a
+         visible edge. Its fill is enough to read it as a chip, and the
+         substance gives it a rim; consistency between the three matters more
+         here than an outline none of the others has. */
       border-radius: var(--sl-radius-md, 6px);
       cursor: grab; touch-action: none; user-select: none;
     }
@@ -300,8 +305,8 @@
       outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus, var(--sl-accent-default));
       outline-offset: var(--sl-focus-ring-offset, 2px);
     }
-    .goo-chip--a { background: var(--sl-accent-default); color: var(--sl-text-on-accent); border-color: transparent; }
-    .goo-chip--b { background: var(--sl-accent-depth); color: var(--sl-text-on-accent); border-color: transparent; }
+    .goo-chip--a { background: var(--sl-accent-default); color: var(--sl-text-on-accent); }
+    .goo-chip--b { background: var(--sl-accent-depth); color: var(--sl-text-on-accent); }
 
     .goo-swatches { display: flex; gap: 0.75rem; padding: 0.4rem 0; }
     .goo-swatch { flex: 1; height: 3.6rem; border-radius: var(--sl-radius-lg, 12px); background: var(--sl-bg-surface-raised); }
