@@ -100,6 +100,24 @@ test("--slfx-glow is registered as a <length>, so effects.js can read it in px",
   assert.match(effects, /@property\s+--slfx-glow\s*\{[^}]*syntax:\s*"<length>"/);
 });
 
+// 2026-09-12: loading is a beam, and the curtains stand down while it runs.
+// Two lights in one pane are two claims about what the element is doing, and
+// the only thing that keeps them apart is that the beam's condition and the
+// curtains' exclusion are the SAME condition. Pin them to each other: a
+// divergence here shows as both lights at once, or as a loading element with
+// no light at all, and neither renders in a test.
+test("the loading beam and the curtains' stand-down are one condition", () => {
+  const BUSY = ':has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))';
+  const beam = RULES.filter((r) => r.selector.includes(BUSY) && !r.selector.includes(":not(" + BUSY));
+  assert.ok(beam.length >= 2, "the busy glow takes the beam's box and its line");
+  const stood = RULES.filter((r) => r.selector.includes(":not(" + BUSY + ")"));
+  assert.equal(stood.length, 2, `the curtains' two rules must both stand down, got ${stood.length}`);
+  for (const r of stood) assert.match(r.selector, /\[data-sl-fx-pillars\]/, "and it is the curtains that stand down");
+  // Determinate keeps its arc: its length IS the value, and a beam says
+  // nothing about how far along the work is.
+  assert.ok(BUSY.includes('--slfx-progress'), "determinate is excluded by the progress property");
+});
+
 // Regression, 2026-09-12: the glow's clip is written from --slfx-glow, which is
 // the spread seatGlow() gives a NORMAL glow. A --pillars glow is seated with no
 // spread — its box is the host's own — so the same inset eats it from every
@@ -117,7 +135,13 @@ test("the glow's clip excludes every mode that is not seated with the spread", (
   // DO have. overflow:hidden clips the pattern and not the blur applied after
   // it: measured on the showcase's 43px field, the light smudged above and
   // below the control until this existed.
-  const pillars = RULES.find((r) => /\[data-sl-fx-pillars\]$/.test(r.selector));
+  // The selector carries a :not() since 2026-09-12 — the curtains stand down
+  // while the beam is loading — so match the attribute, not the end of the line.
+  // Adjacent attributes, so this cannot match the clip rule above, which names
+  // the pillars only inside its :not(). And no ::before: the clip is on the box.
+  const pillars = RULES.find(
+    (r) => /\[data-sl-fx-seated\]\[data-sl-fx-pillars\]/.test(r.selector) && !/::before/.test(r.selector),
+  );
   assert.ok(pillars, "the pillars' own rule must exist");
   assert.match(pillars.body, /clip-path:\s*inset\(0 round var\(--slfx-seat-radius\)\)/,
     "a pillars glow is seated with no spread, so its clip is the host's own box");
@@ -180,7 +204,7 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   );
   // The eighth is --pillars (2026-09-11): curtains of light clipped inside the
   // pane; its background IS the light, like the beam's.
-  assert.ok(declaring.some((s) => s.includes("[data-sl-fx-pillars]::before")), "the pillars must be one");
+  assert.ok(declaring.some((s) => /\[data-sl-fx-pillars\][^,]*::before/.test(s)), "the pillars must be one");
   // The seventh is the beam (2026-09-11): the aurora's --beam mode paints a
   // thin line of light through the pane instead of a ring around it. Its
   // background IS the light, so it has to be one of the declaring rules.

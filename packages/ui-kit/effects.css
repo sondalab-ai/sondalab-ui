@@ -1114,11 +1114,32 @@
    a prism — and none of that is drawn here: it is what the glass does to a
    light that passes behind it. Additive: --beam swaps the seated glow's
    painting, the sweep stays for every host that does not ask for this. */
+/* AND LOADING IS A BEAM (2026-09-12, owner: "il loading dovrebbe essere un
+   loading beam"). Indeterminate busy paints the same line, travelling across
+   the pane instead of drifting: a light that crosses a surface is what reading
+   "working" looks like, where curtains hanging inside it are ambience. It is
+   the same declarations, reached by one more selector rather than a copy.
+   DETERMINATE is excluded by --slfx-progress: there the arc's LENGTH is the
+   value, and a beam would say nothing about how far along it is. The ring on
+   ::after is untouched either way — it is what a reduced-motion or
+   high-contrast visitor reads the state from, and that contract is not a
+   tuning. */
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam] {
   filter: none;
   overflow: visible;
 }
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]::before {
+/* The loading beam is the same line, held INSIDE the element. --beam is a
+   light that crosses a pane and carries on past it, which is what a beam does;
+   a control that is loading has to say so about ITSELF, and a line sailing off
+   across the page says it about the page. Measured on lab/1y: unclipped, the
+   card's loading beam reached the full width of the bed. */
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])) {
+  filter: none;
+  overflow: hidden;
+  clip-path: inset(0 round var(--slfx-seat-radius));
+}
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]::before,
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
   /* the line: a soft white core with a halo, long enough to enter one face
      and leave the other whatever the host's width */
   inset: auto;
@@ -1146,10 +1167,13 @@
    glow is clipped to the host's own box and radius. They sit BEHIND the pane,
    so the lens bends them at the faces and dispersion parts them into their
    colours there — the same prism as --beam, on a softer light. Additive. */
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars] {
+/* The curtains stand down while the beam is loading: two lights in one pane
+   is two claims about what the element is doing. The condition is the beam's
+   own, character for character, so the two can never both be on. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))) {
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
-  filter: blur(var(--slfx-pillar-soft, 4px));
+  filter: blur(var(--slfx-pillar-soft, 8px));
   /* overflow:hidden clips the PATTERN; the blur is applied to the result and
      spills past the box anyway — measured on the showcase's 43px field, where
      the curtains smudged above and below the control. clip-path runs after
@@ -1158,7 +1182,7 @@
      host's. The two are one decision — see seatGlow() in effects.js. */
   clip-path: inset(0 round var(--slfx-seat-radius));
 }
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]::before {
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before {
   inset: -20% -40%;
   padding: 0;
   mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
@@ -1174,8 +1198,16 @@
      changes hue — which is what "complementary" means in a perceptual space,
      and what keeps it inside the gamut the accent was fitted to. Derived, not
      declared: a product that re-registers its accent gets its own pair (AC-18). */
-  --slfx-pillar-a: var(--slfx-accent-vivid);
-  --slfx-pillar-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
+  /* WHITE (2026-09-12, owner: "userei luce bianca che si scompone"). The two
+     curtains were the accent and its complement; they are now both the page's
+     own light pole, the same derived neutral the hairline's bright stop is
+     made of, so the only colour left in the pane is the colour the GLASS makes
+     of it. Measured on lab/1y: across the middle of the pane the light is
+     white (rgb spread 4), at the faces the lens parts it (spread 46). The two
+     names stay, and stay separate, because the pair is what beats — a product
+     that wants coloured curtains rebinds one of them. */
+  --slfx-pillar-a: var(--slfx-glint);
+  --slfx-pillar-b: var(--slfx-glint);
   /* FITTED ON lab/1y, 2026-09-12. The curtains shipped untuned ("a strong
      first cut is easier to bring down than a faint one is to find") and they
      were: measured over the bed, with the glass rim's own band excluded, they
@@ -1186,14 +1218,20 @@
   background:
     repeating-linear-gradient(90deg,
       transparent 0 14px,
-      color-mix(in srgb, var(--slfx-glint) 30%, transparent) 20px,
+      color-mix(in srgb, var(--slfx-glint) 32%, transparent) 20px,
       transparent 26px 44px),
     repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--slfx-pillar-a) 44%, transparent) 0 12px,
+      color-mix(in srgb, var(--slfx-pillar-a) 45%, transparent) 0 12px,
       transparent 26px 54px,
-      color-mix(in srgb, var(--slfx-pillar-b) 41%, transparent) 66px,
+      color-mix(in srgb, var(--slfx-pillar-b) 42%, transparent) 66px,
       transparent 82px 104px);
-  background-size: 200px 100%, 300px 100%;
+  /* Re-fitted for white, 2026-09-12: the light pole carries far less over a
+     near-black ground than the vivid accent did, so the same alphas read
+     dimmer — at 44/41 the interior peaked at +30 where the reference's light
+     peaks at +48. At 45/42 it is +46.4. The pitch is wider again and the blur
+     larger (owner: "sembrano zebrati, li blurrerei ancora di piu'"): at 200px
+     the two combs still read as a comb, at 320 they read as light. */
+  background-size: 320px 100%, 480px 100%;
   background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
 }
 
@@ -1396,12 +1434,12 @@
   /* The curtains drift and breathe: position on one clock, softness on another,
      so the shimmer never repeats exactly. */
   @property --slfx-pillar-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
-  @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 4px; }
+  @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 8px; }
   @keyframes slfx-pillars-drift { from { --slfx-pillar-x: 0px; } to { --slfx-pillar-x: 160px; } }
   /* 3 -> 5.5px, so the fitted 4px sits in the middle of the breath rather
      than at the bottom of a 2 -> 7 swing that softened the ribs away at its
      top end. */
-  @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 3px; } to { --slfx-pillar-soft: 5.5px; } }
+  @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 7px; } to { --slfx-pillar-soft: 10px; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
     animation: slfx-pillars-breathe 5.5s ease-in-out infinite alternate;
   }
@@ -1409,8 +1447,15 @@
     animation: slfx-pillars-drift 13s linear infinite;
   }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
+  /* Loading travels, and it travels at the speed the busy orbit already sets
+     the page's pulse by: one crossing per 1.4s, linear, never reversing — a
+     beam that swings back and forth reads as scanning, not as progress. */
+  @keyframes slfx-beam-sweep { from { --slfx-beam-dy: -95%; } to { --slfx-beam-dy: 95%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
     animation: slfx-beam-drift 11s ease-in-out infinite alternate;
+  }
+  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
+    animation: slfx-beam-sweep 1.4s linear infinite;
   }
   /* Determinate never orbits — its arc length carries the value. */
   [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
