@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 12:30
+## Start here — handoff, 2026-09-12 12:40
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (162 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (164 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -686,6 +686,20 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **Tangent to the border, and three complaints close at once.** *Owner: "adesso
+  la luce che segue il bordo e' fuori sync con la tenda."* It was: the filaments
+  lived on two runs out of four, so the curtain waited at the sides while the
+  light crossed the top. The comb's angle is now **`--slfx-angle` itself**, read
+  straight — no second clock, nothing to keep in phase — and in a linear
+  gradient that angle lays the stripes **across** it, so they are always
+  parallel to the edge they sit under. **In sync** (all four runs again);
+  **no radar** (a filament parallel to its own edge never points at the middle,
+  which is what the sweep was); and **more bend, not less** — **2.25 %** against
+  1.93 % for the sides-only comb and 1.60 % for the rotated layer. Same geometry
+  as the radial spokes, stated positively: the pull is radial, so a pattern has
+  to vary **along** the pull to be seen moving, and tangent stripes do that on
+  every run where perpendicular ones do it on none.
 
 - **The filaments turn with the light.** *Owner: "man mano che seguono il bordo
   dovrebbero anche ruotare, adesso sembrano delle bande che si allungano e
