@@ -1191,6 +1191,22 @@
   --slfx-bloom-inset: 1px;
   filter: blur(var(--slfx-soft));
 }
+/* ROUND, not a strip. The band's mask is four hard-edged strips — the shape
+   that survives a host shorter than twice the band, which a padding ring does
+   not — and a hard inner edge under a 6.5px blur still reads as a bar of light
+   with a cut side. Here each strip FADES inward instead, over twice the depth,
+   so the light has no edge of its own at all and only the element's own corner
+   radius shapes it. The four still overlap at the corners, and now they do it
+   in a falloff, which is what makes a corner read as round rather than as two
+   bars meeting. Scoped to loading: --sweep's band keeps the profile fitted
+   against the reference on lab/1x. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]))::before {
+  mask:
+    linear-gradient(to bottom, black, transparent) top / 100% calc(var(--slfx-bleed) * 2) no-repeat,
+    linear-gradient(to top, black, transparent) bottom / 100% calc(var(--slfx-bleed) * 2) no-repeat,
+    linear-gradient(to right, black, transparent) left / calc(var(--slfx-bleed) * 2) 100% no-repeat,
+    linear-gradient(to left, black, transparent) right / calc(var(--slfx-bleed) * 2) 100% no-repeat;
+}
 
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before {
   inset: -20% -40%;
