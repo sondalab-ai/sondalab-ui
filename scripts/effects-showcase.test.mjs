@@ -16,11 +16,11 @@ test("the package exports and ships the effects layer", () => {
   assert.ok(pkg.files.includes("effects.js"));
 });
 
-test("the showcase applies all four families to real elements", () => {
+test("the showcase applies all five families to real elements", () => {
   // Assert the class is APPLIED, not merely mentioned. The page's own captions
   // name these classes as documentation text, so a bare substring match passes
   // on a page where every class attribute had been deleted.
-  for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"]) {
+  for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-goo", "sl-fx-glitch"]) {
     assert.match(
       html, new RegExp(`class="[^"]*\\b${cls}\\b`),
       `showcase must apply .${cls} to an element, not just name it in prose`,

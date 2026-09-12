@@ -234,6 +234,15 @@
       "roleVars": []
     },
     {
+      "id": "fx-goo",
+      "kind": "effect",
+      "classes": [
+        "sl-fx-goo",
+        "sl-fx-goo__member"
+      ],
+      "roleVars": []
+    },
+    {
       "id": "fx-glitch",
       "kind": "effect",
       "classes": [

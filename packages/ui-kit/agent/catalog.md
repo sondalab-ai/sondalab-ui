@@ -165,14 +165,25 @@ Attention lives here: a 1px arc of light riding the border with its bloom, which
 `--wide` widens the arc to 2px on containers, `--field` on a field's wrapper; `--linear` sweeps a segment (a tab's or link's underline; add `--top` for an inversion band's rule) instead of a perimeter and has no busy mode; `--rim` is for filled elements. **On a replaced control the `sl-field__control` wrapper is mandatory** — the control itself hosts no pseudo-element, and `:focus-within` on the wrapper is what lights the arc.
 Consumes: `--slc-accent`, `--slc-text`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document. Don't put an aurora element under an ancestor that clips (`overflow` other than `visible`, `contain: paint`, `clip-path`): the bloom reaches ~22px outside the box, and a glow cut at a container's edge is a defect — wrap the table in the scroll container, not the card beside it.
 
-### Liquid — `sl-fx-liquid` (`--drop` · `--calm`)
+### Liquid — `sl-fx-liquid` (`--drop`)
 The element's outline gives under the pointer — a small outward swell that follows it with a little lag, springs back and settles when it leaves. It is a skin drawn below the content in the element's own fill and border colours (driven by `mount()`); the text is never filtered and the radius is never rewritten. Non-destructive: the skin exists only while the pointer shapes the element, and nothing is changed afterwards. **The gooey belongs to a round silhouette:** `--drop` goes on a round icon-only button and nowhere else — on a text button the drop reads as a blister on a box, and a text button is a glass pane instead (`sl-fx-glass--pane`). The modifier is the contract, written in the markup; nothing measures a radius to decide. A bare `sl-fx-liquid` is inert. Substrate: **A** App/Page.
 ```html
 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send" style="width:2.5rem;height:2.5rem;padding:0;border-radius:var(--sl-radius-pill)">…</button>
 <article class="sl-card sl-fx-glass">…</article>
 ```
-`--calm` takes a fraction of the swell — a container is not a button.
+A container takes no swell at all — one yielding under the pointer reads as a toy; for several elements that should read as one material, use `sl-fx-goo` below.
 Consumes: nothing of its own — the skin is painted in the host's computed background and border colours. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle. Don't: put `--drop` on a text button — the owner rejected the gooey there; use `sl-fx-glass--pane`.
+
+### Goo — `sl-fx-goo` + `sl-fx-goo__member`
+These are one substance. A container carries `sl-fx-goo` and owns one injected silhouette layer; every `sl-fx-goo__member` inside it contributes its own rounded box, and members within `--slfx-goo-weld` of one another grow a soft neck between them. Static — it answers the layout, not the pointer, so it marks a *set* (a toolbar, a tag row, a gallery, a field and its action) and never a state. Driven by `mount()`; without it the members simply render unmerged, which is the correct Tier 0. The content is never filtered: the members ride crisp on top of the layer. Substrate: **A** App/Page.
+```html
+<div class="sl-fx-goo" style="display:flex; gap:.5rem">
+  <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Run probe</button>
+  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Cancel</button>
+</div>
+```
+Bind `--slfx-goo-weld` (default `14px`) — the largest gap between two silhouettes that still welds, measured **edge to edge between facing sides**, so a grid's diagonals stand further apart than its `gap` and stay open. `--slfx-goo-reach` (default `3px`) is how far the substance peeks out around each member. `--slfx-goo-fill` is what a member with no fill of its own contributes.
+Consumes: each member's own computed `background-color`, and `--slfx-goo-fill` for the members that have none. Do: mark members explicitly — membership is a class, never "every child of the container". Do: make the member whichever element **paints the fill** — on a field that is `sl-field__input` itself, not the `sl-field__control` wrapper, since this family uses no pseudo-element and so does not need one. Do: give the container padding — the substance reaches `--slfx-goo-reach` plus three blur sigmas (~34px at the default weld) past the outermost member, and an ancestor that clips cuts it along a straight line. Don't: expect a neck between members whose own fills are both near the ground's colour — the weld is there, but nothing separates it from the background.
 
 ### Glitch — `sl-fx-glitch` (`--shatter`)
 Something re-resolved. A finite burst, fired from JavaScript on a discrete event. Always a child span, never the component itself. Substrate: **A** App/Page.
