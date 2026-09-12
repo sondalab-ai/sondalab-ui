@@ -657,6 +657,22 @@ loading dovrebbe essere un loading beam"*.
   320 / 480 px. The two move together by necessity: a rib narrower than about
   twice its blur is erased by that blur, and an erased rib is nothing for the
   lens to bend.
+- **The loading band is round, and it does not bend.** *Owner: "si puo' dare un
+  effetto piu' stondato alla luce? Inoltre, si dovrebbe deformare come i
+  pilastri? Perche' non mi sembra ma forse e' subtle."* Both answered by
+  measurement. Round: each of the band's four strips now **fades** inward over
+  twice its depth instead of being cut, so the light has no edge of its own and
+  only the element's corner radius shapes it (15 563 pixels changed, max delta
+  13 — a softening). Subtle: it is not subtle, it is **absent** — bend on
+  against bend off, control 0 px, the band moves **1.63 %** of its pixels where
+  the curtains move **5.00 %**. Same structural fact as the one that made the
+  curtains the ambient light: the displacement pulls radially inward, and light
+  that hugs the border maps onto very nearly itself. A lobed variant (a
+  repeating conic comb intersected into the mask) was built and measured: it
+  renders, and bends **1.43 %**. Not shipped — it costs a mask layer and buys
+  nothing. **To make loading visibly refract, its light would have to leave the
+  border**, which is the shape the owner rejected.
+
 - **Loading runs the border.** *Owner, on the first attempt at it: "deve
   essere un effetto aurora ma che percorre tutto il bordo, da usare per il
   loading" — e il busy.* A line crossing the pane was built first and
