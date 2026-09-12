@@ -273,6 +273,30 @@
        needs separating, so only these take the canvas. Page-local, the way the
        pane's substrate cell is. */
     #goo .g-cell { background: var(--sl-bg-canvas); }
+    /* -- the drag board. A chip is absolutely placed from two custom properties
+       so the drag writes numbers rather than a transform: a transform would
+       move the painted element without moving the box that
+       getBoundingClientRect() reports, and the silhouette would stay behind.
+       role/tabindex come free — they are <button>s, which is also what makes
+       the arrow keys the obvious second way in. --------------------------- */
+    .goo-board { position: relative; height: 15rem; padding: 0; }
+    .goo-chip {
+      position: absolute;
+      left: var(--x); top: var(--y);
+      margin: 0; padding: 0.5rem 0.9rem;
+      font-family: var(--sl-font-mono); font-size: var(--sl-text-xs);
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--sl-text-primary);
+      background: var(--sl-bg-surface-raised);
+      border: 1px solid var(--sl-border-subtle);
+      border-radius: var(--sl-radius-md, 6px);
+      cursor: grab; touch-action: none; user-select: none;
+    }
+    .goo-chip:active { cursor: grabbing; }
+    .goo-chip--a { background: var(--sl-accent-default); color: var(--sl-text-on-accent); border-color: transparent; }
+    .goo-chip--b { background: var(--sl-accent-depth); color: var(--sl-text-on-accent); border-color: transparent; }
+    @media (min-width: 720px) { .g-cell--wide { grid-column: 1 / -1; } }
+
     .goo-swatches { display: flex; gap: 0.75rem; padding: 0.4rem 0; }
     .goo-swatch { flex: 1; height: 3.6rem; border-radius: var(--sl-radius-lg, 12px); background: var(--sl-bg-surface-raised); }
     .goo-swatch--accent { background: var(--sl-accent-default); }
@@ -505,7 +529,7 @@
               <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Run probe</button>
               <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-goo__member">Cancel</button>
             </div>
-            <p class="cap">The same field at a <b>2.4rem</b> gap: past the weld, so the two stand apart and each keeps its own rim. <b>--slfx-goo-weld</b> is the largest gap between two silhouettes that still grows a neck, measured edge to edge between facing sides — an author binds a distance they can read off their own layout, and <b>geom.js</b> converts it through the threshold the filter chain actually implements. Diagonal neighbours in a grid stand further apart than the grid's <b>gap</b>, so rows and columns weld and the diagonals stay open.</p>
+            <p class="cap">The same field at a <b>2.4rem</b> gap: past the weld, so the two stand apart and each keeps its own rim. <b>--slfx-goo-weld</b> is the largest gap between two <b>members, as laid out</b>, that still grows a neck — measured edge to edge between facing sides, so a grid's diagonals stand further apart than its <b>gap</b> and stay open. <b>geom.js</b> spends that distance on dilation first and blur only up to <b>--slfx-goo-soft</b>: both close a gap, but dilation preserves the outline while blur melts it, and spending the whole budget on blur put it at 10–16px against a 12px corner — the shapes read as melted rather than as a material.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">two colours meeting in the neck</span>
@@ -543,6 +567,15 @@
               <span class="sl-tag sl-fx-goo__member">Placeholder</span>
             </div>
             <p class="cap">Every member stands on <b>--slfx-goo-fill</b> — the field's declared substance, opaque — and its own fill is composited over that at the alpha the component chose. So a member with none at all (a ghost button, anything whose glass paints on a pseudo-element) is simply the substance, and a member with a tint stays a tint. The pair exists because the goo's slope erases everything below alpha 0.5: forcing a member's own colour opaque instead was tried, and a <b>sl-tag</b> — the accent at low alpha — stopped being a tint and became the accent, three quiet tags rendering as three saturated slabs.</p>
+          </div>
+          <div class="g-cell g-cell--wide">
+            <span class="g-label">drag one into another — the substance follows</span>
+            <div class="sl-fx-goo goo-board" id="goo-board" style="--slfx-goo-weld: 26px">
+              <button class="goo-chip goo-chip--a sl-fx-goo__member" style="--x: 4%;  --y: 12%">resolve</button>
+              <button class="goo-chip goo-chip--b sl-fx-goo__member" style="--x: 40%; --y: 52%">migrate</button>
+              <button class="goo-chip sl-fx-goo__member"             style="--x: 72%; --y: 16%">introspect</button>
+            </div>
+            <p class="cap">Drag a chip with the pointer, or focus one and move it with the arrow keys (hold <b>Shift</b> for a bigger step). A move is the one change nothing reports — a <b>ResizeObserver</b> sees a box change size, never change place, and an inset write mutates no <b>childList</b> — so the field re-measures per frame while a pointer or the focus is inside it, and not at all otherwise. Bring two within <b>26px</b> and the substance necks between them, carrying both colours into the bridge; pull them apart and it snaps. The chips are placed from <b>--x</b>/<b>--y</b> rather than moved with a <b>transform</b>, which would move the painted element without moving the box <b>getBoundingClientRect()</b> reports — the silhouette would stay behind.</p>
           </div>
         </div>
         <p class="cap">Containers must give the substance room. The goo reaches <b>--slfx-goo-reach</b> plus three blur sigmas past the outermost member — about 34px at the default weld — so an ancestor with <b>overflow</b> other than <b>visible</b>, with <b>contain</b>, or with a <b>clip-path</b> cuts it along a straight line. The rule of <a class="sl-link" href="#glass">§04</a>, one scale up.</p>
@@ -809,6 +842,65 @@
     // the top level — that would hold the demo wiring above until the GPU handshake
     // settles, leaving the page's controls inert for as long as it takes.
     mountGpu().then((ok) => ok && updateTierLabel());
+
+    /* -- §05 drag board -----------------------------------------------------
+       The chips are placed from --x/--y rather than moved with a transform,
+       and that is the whole trick: a transform moves the painted element
+       without moving the box getBoundingClientRect() reports, so the silhouette
+       would stay where the chip started. goo-field.js re-measures per frame
+       while a pointer is down; nothing here tells it to.
+
+       Keyboard is not an afterthought — the chips are <button>s, so focus and
+       the arrow keys cost one listener, and a drag-only demo would be unusable
+       for anyone who cannot drag. ------------------------------------------ */
+    (function dragBoard() {
+      const board = document.getElementById("goo-board");
+      if (!board) return;
+      const STEP = 2;              // % of the board per arrow press
+      const BIG = 10;              // …with shift held
+      const AXES = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+      /** Place a chip, in per-cent of the board, clamped so it cannot be
+       *  dragged out of the field that is drawing it. */
+      function place(chip, xPct, yPct) {
+        const box = board.getBoundingClientRect();
+        const maxX = 100 - (chip.offsetWidth / box.width) * 100;
+        const maxY = 100 - (chip.offsetHeight / box.height) * 100;
+        chip.style.setProperty("--x", `${Math.min(Math.max(xPct, 0), maxX).toFixed(2)}%`);
+        chip.style.setProperty("--y", `${Math.min(Math.max(yPct, 0), maxY).toFixed(2)}%`);
+      }
+
+      let held = null;
+      let grab = { dx: 0, dy: 0 };
+
+      board.addEventListener("pointerdown", (e) => {
+        const chip = e.target.closest(".goo-chip");
+        if (!chip) return;
+        held = chip;
+        const c = chip.getBoundingClientRect();
+        grab = { dx: e.clientX - c.left, dy: e.clientY - c.top };
+        chip.setPointerCapture(e.pointerId);
+      });
+
+      board.addEventListener("pointermove", (e) => {
+        if (!held) return;
+        const box = board.getBoundingClientRect();
+        place(held, ((e.clientX - grab.dx - box.left) / box.width) * 100, ((e.clientY - grab.dy - box.top) / box.height) * 100);
+      });
+
+      for (const ev of ["pointerup", "pointercancel"]) board.addEventListener(ev, () => { held = null; });
+
+      board.addEventListener("keydown", (e) => {
+        const chip = e.target.closest(".goo-chip");
+        const axis = AXES[e.key];
+        if (!chip || !axis) return;
+        e.preventDefault();
+        const box = board.getBoundingClientRect();
+        const c = chip.getBoundingClientRect();
+        const step = e.shiftKey ? BIG : STEP;
+        place(chip, ((c.left - box.left) / box.width) * 100 + axis[0] * step, ((c.top - box.top) / box.height) * 100 + axis[1] * step);
+      });
+    })();
   </script>
 </body>
 </html>

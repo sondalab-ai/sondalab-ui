@@ -137,13 +137,23 @@
   --slfx-s2: transparent;
   --slfx-s3: transparent;
 
-  /* goo — how far a member's silhouette peeks out past the element riding on
-     top of it, and the largest gap between two of those silhouettes that
-     still grows a neck. The author binds the GAP, never the blur's sigma:
-     a gap is a distance they can measure in their own layout. 14px welds a
-     row laid out on --sl-space-3 and leaves --sl-space-5 apart. */
+  /* goo — the largest gap between two MEMBERS, as laid out, that still grows a
+     neck between them; the rim the substance shows past a member with no
+     neighbour; and the most blur allowed to round a corner. The author binds
+     distances they can read off their own layout, never the filter's sigma.
+     14px welds a row laid out on --sl-space-3 and leaves --sl-space-5 apart.
+
+     --slfx-goo-soft is the shape budget, and it is the one that matters for
+     how the substance LOOKS. Dilation and blur both bring two silhouettes
+     together, but dilation preserves the outline (offsetting a rounded box
+     grows its radii by the offset) while blur melts it (the 0.5 iso-contour of
+     a blurred corner is rounded by roughly sigma). Spending the whole weld on
+     sigma put it at 10-16px against a 12px corner and the shapes read as
+     melted. So sigma is capped here and dilation absorbs the remainder; raise
+     it for a softer, more liquid neck, lower it for a crisper one. */
   --slfx-goo-reach: 3px;
   --slfx-goo-weld: 14px;
+  --slfx-goo-soft: 5px;
   /* What a member with no fill of its own contributes — a ghost button, a
      field. The substance is the surface the members sit on, one step in from
      the canvas, so an unfilled member reads as a hole in the substance

@@ -105,12 +105,13 @@ export function memberShape(rect, origin, radii, reach) {
  *  cannot change. */
 const WELD_K = 1.3489795;
 
-/** The blur sigma that welds two silhouettes exactly `weld` pixels apart.
- *  The author binds the gap, not the sigma: a gap is a distance they can
- *  measure in their own layout, and sigma is an implementation detail of the
- *  filter chain.
- *  @param {number} weld the largest gap between two dilated silhouettes that
- *    still grows a neck, in CSS pixels
+/** The blur sigma that welds two SILHOUETTES exactly `weld` pixels apart.
+ *
+ *  Note the distance is between silhouettes, after dilation — not the gap
+ *  between the members as laid out, which is what `--slfx-goo-weld` binds and
+ *  what weldPlan() takes. Callers want weldPlan(); this is the conversion it
+ *  and weldGap() are both expressed in.
+ *  @param {number} weld the gap between two dilated silhouettes, in CSS pixels
  *  @returns {number} stdDeviation for feGaussianBlur */
 export function weldSigma(weld) {
   return weld > 0 ? weld / WELD_K : 0;
@@ -141,4 +142,35 @@ export function filterRegion(shapes, sigma) {
   const right = Math.max(...shapes.map((s) => s.x + s.w));
   const bottom = Math.max(...shapes.map((s) => s.y + s.h));
   return { x: left - pad, y: top - pad, width: right - left + 2 * pad, height: bottom - top + 2 * pad };
+}
+
+/** How to spend a weld distance: as little blur as the neck needs, and
+ *  dilation for the rest.
+ *
+ *  Both mechanisms bring two silhouettes together, and they are not equivalent.
+ *  **Dilation preserves the shape**: offsetting a rounded rectangle outward
+ *  grows each radius by the offset, so a 12px corner stays a 12px corner
+ *  relative to the box it grew from. **Blur melts it**: the 0.5 iso-contour of
+ *  a blurred corner is rounded by roughly sigma, so a sigma near the member's
+ *  own radius turns a card into a lozenge, and one near half its height turns
+ *  it into a pill. Spending the whole budget on sigma — which is what the first
+ *  implementation did — put sigma at 10-16px against a 12px radius, and the
+ *  owner's word for the result was that the edges deform badly.
+ *
+ *  So sigma is CAPPED and dilation absorbs the remainder. The weld distance the
+ *  author bound is still honoured exactly: two silhouettes meet when
+ *  `gap - 2·reach ≤ 1.3489·σ`, so `weld = 2·reach + 1.3489·σ` by construction.
+ *
+ *  @param {number} weld the largest gap between two members, AS LAID OUT, that
+ *    still grows a neck between them
+ *  @param {number} reachMin the rim the author asked for — how far the
+ *    substance peeks out past a member with no neighbour
+ *  @param {number} softMax the most blur allowed to round a corner
+ *  @returns {{sigma: number, reach: number}} */
+export function weldPlan(weld, reachMin, softMax) {
+  const rim = Math.max(0, reachMin);
+  const budget = Math.max(0, weld);
+  // What the blur would have to cover once the rim has taken its share.
+  const sigma = Math.min(Math.max(0, softMax), weldSigma(budget - 2 * rim));
+  return { sigma, reach: Math.max(rim, (budget - WELD_K * sigma) / 2) };
 }

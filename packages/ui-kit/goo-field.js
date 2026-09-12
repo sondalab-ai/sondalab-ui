@@ -29,7 +29,7 @@
    sl-audit reads CSS only, so there is no colour literal in this file:
    every value is read from a computed style or from a --slfx-* binding. */
 
-import { cornerPx, roundedRectPathAt, fieldOrigin, memberShape, weldSigma, filterRegion } from "./geom.js";
+import { cornerPx, roundedRectPathAt, fieldOrigin, memberShape, weldPlan, filterRegion } from "./geom.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -54,6 +54,7 @@ const GOO_INTERCEPT = -(GOO_CONTRAST / 2 - 0.5);
  *  module directly. */
 const REACH_FALLBACK = 3;
 const WELD_FALLBACK = 14;
+const SOFT_FALLBACK = 5;
 
 let fieldSeq = 0;
 
@@ -259,10 +260,14 @@ export function gooField(container) {
     if (!members.length) return;
 
     const cs = getComputedStyle(container);
-    const reach = lengthVar(cs, "--slfx-goo-reach", REACH_FALLBACK);
-    const weld = lengthVar(cs, "--slfx-goo-weld", WELD_FALLBACK);
     const fallback = cs.getPropertyValue("--slfx-goo-fill").trim() || cs.backgroundColor;
-    const sigma = weldSigma(weld);
+    // Dilation preserves the shape and blur melts it, so the weld distance is
+    // spent on the first and only capped amounts of the second. See weldPlan.
+    const { sigma, reach } = weldPlan(
+      lengthVar(cs, "--slfx-goo-weld", WELD_FALLBACK),
+      lengthVar(cs, "--slfx-goo-reach", REACH_FALLBACK),
+      lengthVar(cs, "--slfx-goo-soft", SOFT_FALLBACK),
+    );
 
     const origin = fieldOrigin(
       container.getBoundingClientRect(),
@@ -303,17 +308,38 @@ export function gooField(container) {
   let raf = 0;
   const tick = () => {
     if (!alive) return;
-    const cs = getComputedStyle(container);
-    paint(cs.getPropertyValue("--slfx-goo-fill").trim() || cs.backgroundColor);
+    // measure(), not paint(): a MOVE is the one change nothing reports. A
+    // ResizeObserver sees a box change size, never change place; a transform,
+    // an inset write or a reflow above the field mutates no childList and
+    // fires no resize. Re-reading only the colours was enough for a hover and
+    // wrong for everything else — a dragged chip left its silhouette behind,
+    // and so did one nudged with the arrow keys, which fires no pointer event
+    // at all. "These are one substance" is a claim about where they are, so
+    // the loop re-derives where they are.
+    measure();
     raf = requestAnimationFrame(tick);
   };
+  // A pointer is DOWN somewhere in this field. Not a mode — the loop does the
+  // same work either way — but a reason to keep it running: a drag that uses
+  // setPointerCapture retargets boundary events to the captured element, so
+  // the container sees a pointerleave the instant the drag begins, and a loop
+  // that stopped there left the silhouette at the position the chip started
+  // from while the chip itself went on moving.
+  let held = false;
   const start = () => { if (!raf) raf = requestAnimationFrame(tick); };
   const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+  const onDown = () => { held = true; start(); };
+  const onUp = () => {
+    held = false;
+    measure();                                    // land the released position
+    if (!container.matches(":hover")) stop();     // the pointer left during the drag
+  };
+  const onBlur = () => { if (!held) stop(); };
   const onLeave = (e) => {
     // Delegated: pointerleave fires for every descendant as the pointer moves
-    // between members. Only the container's own leave ends the substance's
-    // colour tracking — the same guard the liquid and the pane both carry.
-    if (e.target !== container) return;
+    // between members. Only the container's own leave ends the loop — the same
+    // guard the liquid and the pane both carry — and not while a drag is live.
+    if (e.target !== container || held) return;
     stop();
   };
   // Focus as well as the pointer. Nothing in components.css changes a
@@ -322,10 +348,18 @@ export function gooField(container) {
   // pointer event is the staleness that made a light-theme label vanish,
   // arriving through the keyboard instead of through the theme. focusin and
   // focusout bubble, so one pair on the container covers every member.
+  // Pointer OR focus: a member can be moved with the arrow keys as readily as
+  // with a drag, and a keyboard move fires no pointer event. Both start the
+  // same loop, and it runs only while one of them is inside the container.
   container.addEventListener("pointerenter", start, { passive: true });
   container.addEventListener("pointerleave", onLeave, { capture: true, passive: true });
   container.addEventListener("focusin", start, { passive: true });
-  container.addEventListener("focusout", stop, { passive: true });
+  container.addEventListener("focusout", onBlur, { passive: true });
+  // The press is caught on the container; the release can happen anywhere —
+  // outside the field, or outside the window — so it is caught on the window.
+  container.addEventListener("pointerdown", onDown, { passive: true });
+  window.addEventListener("pointerup", onUp, { passive: true });
+  window.addEventListener("pointercancel", onUp, { passive: true });
 
   const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => measure()) : null;
   // measure() adds and removes <path> elements, which are themselves childList
@@ -382,7 +416,10 @@ export function gooField(container) {
       container.removeEventListener("pointerenter", start);
       container.removeEventListener("pointerleave", onLeave, { capture: true });
       container.removeEventListener("focusin", start);
-      container.removeEventListener("focusout", stop);
+      container.removeEventListener("focusout", onBlur);
+      container.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       container.classList.remove("is-goo-live");
       svg.remove();
     },

@@ -11,6 +11,7 @@ import {
   memberShape,
   weldSigma,
   weldGap,
+  weldPlan,
   filterRegion,
 } from "../packages/ui-kit/geom.js";
 
@@ -272,5 +273,69 @@ test("the goo survives a motion preference, and only high contrast refuses it", 
   // arming above would be undone by the stylesheet.
   for (const m of css.matchAll(/([^{}]*\.sl-fx-goo[^{}]*)\{/g)) {
     assert.doesNotMatch(m[1], /\[data-sl-fx="on"\]/, `goo rule must not require Tier 1: ${m[1].trim()}`);
+  }
+});
+
+test("weldPlan spends the budget on dilation and caps the blur", () => {
+  // Dilation preserves the shape; blur melts it. The whole weld distance used
+  // to go into sigma, which put it at 10-16px against a 12px corner radius —
+  // "i bordi si deformano male". Sigma is now capped and dilation absorbs the
+  // rest, and the weld distance is still honoured exactly.
+  const K = 1.3489795;
+  for (const [weld, rim, soft] of [[14, 3, 5], [22, 3, 5], [40, 4, 6], [9, 3, 5]]) {
+    const { sigma, reach } = weldPlan(weld, rim, soft);
+    assert.ok(sigma <= soft + 1e-9, `sigma must respect the cap at weld ${weld}`);
+    assert.ok(reach >= rim - 1e-9, `the author's rim is a floor, not a target (weld ${weld})`);
+    assert.ok(Math.abs(2 * reach + K * sigma - weld) < 1e-6, `weld ${weld} must be honoured exactly`);
+  }
+});
+
+test("weldPlan keeps the rim when the weld is smaller than the rim alone", () => {
+  // Two members closer together than the rim are already overlapping: there is
+  // nothing left for the blur to bridge, and the rim must not shrink below what
+  // the author asked for.
+  const { sigma, reach } = weldPlan(4, 3, 5);
+  assert.equal(sigma, 0, "no budget beyond the rim is no blur");
+  assert.equal(reach, 3, "the rim is the floor");
+  const none = weldPlan(0, 0, 5);
+  assert.deepEqual(none, { sigma: 0, reach: 0 }, "no weld at all is no field");
+});
+
+test("a bigger blur cap melts more, and the plan says so", () => {
+  const tight = weldPlan(22, 3, 4);
+  const loose = weldPlan(22, 3, 12);
+  assert.ok(tight.sigma < loose.sigma, "the cap is what bounds the melt");
+  assert.ok(tight.reach > loose.reach, "and dilation pays for what the cap refuses");
+});
+
+test("the interaction loop re-measures, because a move is the one change nothing reports", () => {
+  // ResizeObserver sees a box change SIZE, never change PLACE; a transform, an
+  // inset write or a reflow above the field mutates no childList and fires no
+  // resize. A loop that only re-read colours left a dragged chip's silhouette
+  // behind — and a chip nudged with the arrow keys, which fires no pointer
+  // event at all.
+  const body = js
+    .slice(js.indexOf("const tick = () =>"), js.indexOf("const start = "))
+    .replace(/\/\/.*$/gm, "");   // the comment explains what it does NOT do
+  assert.match(body, /\bmeasure\(\);/, "the loop must re-derive the geometry");
+  assert.doesNotMatch(body, /\bpaint\(/, "and not settle for repainting");
+  // Focus starts it too: a keyboard move is a move.
+  assert.ok(js.includes('container.addEventListener("focusin", start'), "focus must start the loop");
+});
+
+test("a captured drag does not stop the loop when the container sees a pointerleave", () => {
+  // REGRESSION (2026-09-12): setPointerCapture retargets boundary events to the
+  // captured element, so the container gets a pointerleave the instant a drag
+  // begins. The loop stopped there and the silhouette stayed at the position
+  // the chip started from while the chip went on moving — the substance
+  // visibly detaching from its member, which is the one thing this family
+  // claims cannot happen.
+  assert.match(js, /if \(e\.target !== container \|\| held\) return;/, "a live drag must survive the container's own pointerleave");
+  assert.match(js, /const onBlur = \(\) => \{ if \(!held\) stop\(\); \};/, "nor may losing focus end a drag");
+  assert.match(js, /const onUp = \(\) => \{[\s\S]*?measure\(\);/, "the release must land the final position");
+  assert.match(js, /container\.matches\(":hover"\)/, "and stop only if the pointer actually left");
+  for (const ev of ["pointerup", "pointercancel"]) {
+    assert.ok(js.includes(`window.addEventListener("${ev}", onUp`), `${ev} must be caught on the window: a drag can end anywhere`);
+    assert.ok(js.includes(`window.removeEventListener("${ev}", onUp`), `and released on destroy`);
   }
 });
