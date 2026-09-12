@@ -174,3 +174,36 @@ export function weldPlan(weld, reachMin, softMax) {
   const sigma = Math.min(Math.max(0, softMax), weldSigma(budget - 2 * rim));
   return { sigma, reach: Math.max(rim, (budget - WELD_K * sigma) / 2) };
 }
+
+/** The shortest distance between two silhouettes, 0 if they overlap.
+ *
+ *  Axis-aligned: the corner radii would make the true distance slightly larger
+ *  where two shapes approach corner-to-corner, so this errs on the side of
+ *  calling a pair welded. That is the right way to be wrong here — the answer
+ *  decides whether a member's own border stands down, and a border left up
+ *  inside a merged mass is the visible defect, while one taken down a pixel
+ *  early is not.
+ *  @param {{x: number, y: number, w: number, h: number}} a
+ *  @param {{x: number, y: number, w: number, h: number}} b
+ *  @returns {number} the gap in CSS pixels */
+export function shapeGap(a, b) {
+  const dx = Math.max(0, a.x - (b.x + b.w), b.x - (a.x + a.w));
+  const dy = Math.max(0, a.y - (b.y + b.h), b.y - (a.y + a.h));
+  return Math.hypot(dx, dy);
+}
+
+/** Which members have become part of a mass: those whose silhouette welds to
+ *  at least one other.
+ *
+ *  A member standing on its own keeps its own edge — it is still a button, and
+ *  the substance behind it is a rim, not a replacement. A member that has
+ *  joined a mass lets the mass carry the edge, because its own border would
+ *  otherwise draw a line straight across the merged shape: three chips dragged
+ *  together read as three cards stacked on a blob rather than as one substance.
+ *  @param {{x: number, y: number, w: number, h: number}[]} shapes
+ *  @param {number} sigma the blur's stdDeviation
+ *  @returns {boolean[]} one flag per shape, in the same order */
+export function weldedMembers(shapes, sigma) {
+  const reach = weldGap(sigma);
+  return shapes.map((a, i) => shapes.some((b, j) => j !== i && shapeGap(a, b) <= reach));
+}

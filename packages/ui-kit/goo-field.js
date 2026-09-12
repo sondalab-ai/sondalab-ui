@@ -29,7 +29,7 @@
    sl-audit reads CSS only, so there is no colour literal in this file:
    every value is read from a computed style or from a --slfx-* binding. */
 
-import { cornerPx, roundedRectPathAt, fieldOrigin, memberShape, weldPlan, filterRegion } from "./geom.js";
+import { cornerPx, roundedRectPathAt, fieldOrigin, memberShape, weldPlan, weldedMembers, filterRegion } from "./geom.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -165,6 +165,13 @@ export function gooField(container) {
   let lastShapes = [];
   let alive = true;
 
+  /** Give every member back its own edge. The class is the only thing this
+   *  family writes onto an element it did not create, and a field that is torn
+   *  down has to leave no trace of it. */
+  function unweld() {
+    for (const el of container.querySelectorAll(MEMBERS)) el.classList.remove("is-goo-welded");
+  }
+
   /** Match the pool of <path> elements to the members: TWO each, the same
    *  outline drawn twice.
    *
@@ -226,7 +233,13 @@ export function gooField(container) {
       pattern.setAttribute(k, String(v));
       picture.setAttribute(k, String(v));
     }
-    picture.setAttribute("href", img.currentSrc || img.src);
+    // Only when it CHANGED. Re-setting href to the same value restarts the
+    // load and the decode in Chrome, and paint() runs on every measure — which,
+    // while a pointer is in the field, is every frame. A 220x132 PNG decoded
+    // per frame blocked the main thread for seconds at a time; the JS itself
+    // measured 10ms, which is what sent the search to the rendering side.
+    const href = img.currentSrc || img.src;
+    if (picture.getAttribute("href") !== href) picture.setAttribute("href", href);
     return `url(#${patternId})`;
   }
 
@@ -282,11 +295,19 @@ export function gooField(container) {
     });
 
     lastShapes = shapes;
+    // A member that has joined a mass lets the mass carry the edge. Its own
+    // border would otherwise draw a line straight across the merged shape —
+    // three chips dragged together read as three cards stacked on a blob
+    // rather than as one substance, which is the opposite of what this family
+    // claims. A member standing on its own keeps its border: it is still a
+    // button, and the substance behind it is a rim, not a replacement.
+    const welded = weldedMembers(shapes, sigma);
     for (let i = 0; i < shapes.length; i++) {
       const s = shapes[i];
       const d = roundedRectPathAt(s.x, s.y, s.w, s.h, s.radii);
       paths[i * 2].setAttribute("d", d);
       paths[i * 2 + 1].setAttribute("d", d);
+      members[i].classList.toggle("is-goo-welded", welded[i]);
     }
     blur.setAttribute("stdDeviation", sigma.toFixed(3));
 
@@ -421,6 +442,7 @@ export function gooField(container) {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       container.classList.remove("is-goo-live");
+      unweld();
       svg.remove();
     },
   };

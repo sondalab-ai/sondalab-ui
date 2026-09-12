@@ -1447,8 +1447,10 @@
 
    The content is never filtered. The field is a silhouette layer BELOW the
    members, the way libraries.dev/gooey does it and the way this layer has
-   promised twice; the real DOM rides crisp on top, and nothing is written to
-   a member but the stacking order that keeps it there.
+   promised twice; the real DOM rides crisp on top. Two things only are written
+   to a member: the stacking order that keeps it there, and — once it has
+   welded to a neighbour — a transparent border-image, so its own outline stops
+   drawing a line across the merged mass.
 
    Tier 0 is the members laid out and unmerged — correct, not beautiful. The
    substance needs goo-field.js to exist at all, so it arrives with Tier 1.
@@ -1472,9 +1474,23 @@
   user-select: none;
 }
 /* The members ride on top of their own silhouettes. `position: relative` with
-   no offsets moves nothing; it only buys the z-index, which is the whole of
-   what this family writes onto an element it did not create. */
+   no offsets moves nothing; it only buys the z-index. */
 .sl-fx-goo__member { position: relative; z-index: 1; }
+
+/* A member that has WELDED to a neighbour gives up its own border, and the
+   mass carries the edge. Without this a merged shape is crossed by the
+   outlines of the elements inside it — three chips dragged together read as
+   three cards stacked on a blob rather than as one substance, which is the
+   opposite of what the family claims. A member standing on its own keeps its
+   border: it is still a button, and the substance behind it is a rim, not a
+   replacement, so goo-field.js sets the class per member and per measure.
+
+   A transparent border-image, never border-color — the same instrument the
+   liquid uses on its live host, and for the same reason: the computed border
+   colour has to stay readable, both for the author's own hover states and
+   because the substance reads its member's computed paint every frame. The
+   box does not move either: border-image occupies the border's own box. */
+.sl-fx-goo__member.is-goo-welded { border-image: linear-gradient(transparent 0 0) 1; }
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand

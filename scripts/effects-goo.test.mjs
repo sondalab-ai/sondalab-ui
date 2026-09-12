@@ -12,6 +12,8 @@ import {
   weldSigma,
   weldGap,
   weldPlan,
+  shapeGap,
+  weldedMembers,
   filterRegion,
 } from "../packages/ui-kit/geom.js";
 
@@ -338,4 +340,66 @@ test("a captured drag does not stop the loop when the container sees a pointerle
     assert.ok(js.includes(`window.addEventListener("${ev}", onUp`), `${ev} must be caught on the window: a drag can end anywhere`);
     assert.ok(js.includes(`window.removeEventListener("${ev}", onUp`), `and released on destroy`);
   }
+});
+
+test("shapeGap is the distance between two silhouettes, and zero when they overlap", () => {
+  const a = { x: 0, y: 0, w: 40, h: 40 };
+  assert.equal(shapeGap(a, { x: 50, y: 0, w: 40, h: 40 }), 10, "side by side");
+  assert.equal(shapeGap(a, { x: 0, y: 50, w: 40, h: 40 }), 10, "one above the other");
+  assert.equal(shapeGap(a, { x: 30, y: 0, w: 40, h: 40 }), 0, "overlapping is no gap");
+  assert.equal(shapeGap(a, { x: 40, y: 40, w: 40, h: 40 }), 0, "touching at a corner");
+  // Corner to corner is the diagonal, not either axis alone.
+  assert.ok(Math.abs(shapeGap(a, { x: 43, y: 44, w: 10, h: 10 }) - 5) < 1e-9, "3-4-5");
+});
+
+test("weldedMembers marks the ones that joined a mass, and only those", () => {
+  // A member standing on its own keeps its own border; one that has welded
+  // lets the substance carry the edge, because its border would otherwise draw
+  // a line straight across the merged shape.
+  const sigma = 5;                       // welds across 1.3489 * 5 = 6.74px
+  const shapes = [
+    { x: 0, y: 0, w: 40, h: 40 },
+    { x: 45, y: 0, w: 40, h: 40 },       // 5px away — welded to the first
+    { x: 200, y: 0, w: 40, h: 40 },      // alone
+  ];
+  assert.deepEqual(weldedMembers(shapes, sigma), [true, true, false]);
+  assert.deepEqual(weldedMembers([shapes[0]], sigma), [false], "a lone member welds to nothing");
+  assert.deepEqual(weldedMembers([], sigma), []);
+});
+
+test("weldedMembers uses the same threshold the filter does", () => {
+  const shapes = (gap) => [{ x: 0, y: 0, w: 10, h: 10 }, { x: 10 + gap, y: 0, w: 10, h: 10 }];
+  const sigma = 5;
+  const edge = weldGap(sigma);
+  assert.deepEqual(weldedMembers(shapes(edge - 0.01), sigma), [true, true], "just inside the weld");
+  assert.deepEqual(weldedMembers(shapes(edge + 0.01), sigma), [false, false], "just outside it");
+});
+
+test("a welded member gives up its border, and only by border-image", () => {
+  // The liquid's instrument, for the liquid's reason: border-color must stay
+  // readable — the author's hover states depend on it, and the substance reads
+  // its member's computed paint every frame.
+  const rule = css.match(/\.sl-fx-goo__member\.is-goo-welded\s*\{([^}]*)\}/);
+  assert.ok(rule, "the welded member must have its own rule");
+  assert.match(rule[1], /border-image:/, "the border hides under a border-image");
+  assert.doesNotMatch(rule[1], /border-color|border-width|border-style|border-radius|display|opacity/,
+    "and nothing else may be taken from the member");
+  assert.match(js, /classList\.toggle\("is-goo-welded", welded\[i\]\)/, "the class is per member, per measure");
+  assert.match(js, /function unweld\(\)/, "and a torn-down field leaves no trace of it");
+  assert.match(js.slice(js.indexOf("destroy()")), /unweld\(\)/, "destroy() must call it");
+});
+
+test("an image member's href is written only when it changed", () => {
+  // REGRESSION (2026-09-12): paint() runs on every measure(), which while a
+  // pointer is in the field is every frame, and re-setting href to the same
+  // value restarts the load and the decode in Chrome. A 220x132 PNG decoded
+  // per frame froze the renderer for seconds at a time. The JS itself measured
+  // 4-10ms, which is what pointed the search at the rendering side rather than
+  // at an observer loop (ResizeObserver and MutationObserver callbacks were
+  // counted: 0 and 1).
+  const fn = js.slice(js.indexOf("function imageFill("), js.indexOf("function paint("));
+  assert.match(fn, /if \(picture\.getAttribute\("href"\) !== href\) picture\.setAttribute\("href", href\);/,
+    "href must be guarded by a comparison");
+  assert.doesNotMatch(fn.replace(/if \(picture\.getAttribute[^\n]*\n/, ""), /setAttribute\("href"/,
+    "and written nowhere else");
 });
