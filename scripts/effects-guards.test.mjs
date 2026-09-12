@@ -60,7 +60,7 @@ test("both kill switches neutralise host-level effects, not only paint layers", 
     const killed = RULES.filter((r) => r.selector.includes(attr) && HOST_EFFECT.test(r.body));
     assert.ok(killed.length > 0, `no rule neutralises a host-level effect under [${attr}]`);
     const covered = killed.map((r) => r.selector).join(" ");
-    for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-glitch"]) {
+    for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-goo", "sl-fx-glitch"]) {
       assert.ok(covered.includes(cls), `[${attr}] must neutralise host-level .${cls}, not just its pseudo-elements`);
     }
   }

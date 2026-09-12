@@ -136,6 +136,19 @@
   --slfx-s1: transparent;
   --slfx-s2: transparent;
   --slfx-s3: transparent;
+
+  /* goo — how far a member's silhouette peeks out past the element riding on
+     top of it, and the largest gap between two of those silhouettes that
+     still grows a neck. The author binds the GAP, never the blur's sigma:
+     a gap is a distance they can measure in their own layout. 14px welds a
+     row laid out on --sl-space-3 and leaves --sl-space-5 apart. */
+  --slfx-goo-reach: 3px;
+  --slfx-goo-weld: 14px;
+  /* What a member with no fill of its own contributes — a ghost button, a
+     field. The substance is the surface the members sit on, one step in from
+     the canvas, so an unfilled member reads as a hole in the substance
+     rather than as a second material. */
+  --slfx-goo-fill: var(--sl-bg-surface-raised, var(--sl-bg-surface));
 }
 
 /* ══ KILL SWITCHES ═══════════════════════════════════════════════════════════
@@ -151,8 +164,8 @@
    subtree, compounded with the family classes so an unscoped
    `box-shadow: none !important` never strips elevation or focus rings off
    ordinary components.css elements inside the region. */
-:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
   filter: none !important;
@@ -183,6 +196,7 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lens,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lit,
 :root[data-sl-theme="high-contrast"] .sl-fx-liquid__skin,
+:root[data-sl-theme="high-contrast"] .sl-fx-goo__field,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::before,
@@ -192,6 +206,7 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lens,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lit,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid__skin,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-goo__field,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
 :is(.sl-fx-glass, .sl-fx-aurora):is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
@@ -1389,6 +1404,55 @@
 [data-sl-fx="on"] .sl-fx-liquid.is-liquid-live {
   border-image: linear-gradient(transparent 0 0) 1;
 }
+
+/* ══ GOO — these are one substance ═══════════════════════════════════════════
+   Where the liquid answers the pointer on ONE element, the goo answers the
+   LAYOUT across several: members of a declared container stop reading as
+   separate boxes and start reading as one material, welding where they come
+   within --slfx-goo-weld of each other. That is a statement about belonging,
+   not about attention or recognition, and it is the reason this is a family
+   of its own rather than a looser gate on .sl-fx-liquid.
+
+   Two silhouettes can only weld if they share a filter coordinate space, so
+   the container owns ONE <svg class="sl-fx-goo__field"> (goo-field.js) and
+   every .sl-fx-goo__member contributes its rounded box to it, mapped into the
+   container's coordinates and dilated by --slfx-goo-reach so the substance
+   peeks out as a rim. One goo filter runs over the group: a premultiplied
+   Gaussian blur, then an alpha slope. The slope steepens ONLY alpha — RGB
+   passes through as identity — so where two members weld, their own colours
+   blend across the neck by themselves. No GPU tier: the neck is a filter
+   result, not a per-pixel lighting calculation.
+
+   The content is never filtered. The field is a silhouette layer BELOW the
+   members, the way libraries.dev/gooey does it and the way this layer has
+   promised twice; the real DOM rides crisp on top, and nothing is written to
+   a member but the stacking order that keeps it there.
+
+   Tier 0 is the members laid out and unmerged — correct, not beautiful. The
+   substance needs goo-field.js to exist at all, so it arrives with Tier 1.
+
+   CLIPPING, at container scale (spec §Decision 3b): the goo reaches
+   --slfx-goo-reach plus three blur sigmas past the outermost member, so the
+   container gives its members that much padding. A substance cut off along a
+   straight line is the defect the rule exists to prevent. */
+.sl-fx-goo { position: relative; isolation: isolate; }
+.sl-fx-goo__field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  /* The UA hides an inline svg's overflow, and the goo's whole point is that
+     it leaves each member's box. The filter region is set in user space by
+     goo-field.js, so nothing here bounds it. */
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+}
+/* The members ride on top of their own silhouettes. `position: relative` with
+   no offsets moves nothing; it only buys the z-index, which is the whole of
+   what this family writes onto an element it did not create. */
+.sl-fx-goo__member { position: relative; z-index: 1; }
 
 /* ══ GLITCH — something re-resolved ══════════════════════════════════════════
    Short staccato RGB pulses in a finite burst. Two ghost channels off the brand

@@ -787,6 +787,45 @@ async function armLenses(root) {
   }
 }
 
+/** The goo fields currently bound, for the same two reasons as `lensed`:
+ *  mount() may be called twice, and a container may leave the document. */
+const gooFields = new Map();
+const GOO_HOSTS = ".sl-fx-goo";
+
+/** Give every declared container its one shared gooey field.
+ *
+ *  Dynamically imported, like the lens and the GPU tier: a consumer whose
+ *  surface has no field pays nothing for the module existing. Tier 0 — the
+ *  members laid out and unmerged — is what a browser sees if this never runs.
+ *  @param {ParentNode} root the subtree to arm
+ *  @returns {Promise<void>} */
+async function armGooFields(root) {
+  let gooField;
+  try { ({ gooField } = await import("./goo-field.js")); } catch { return; }
+  const hosts = [];
+  if (root instanceof Element && root.matches(GOO_HOSTS)) hosts.push(root);
+  hosts.push(...root.querySelectorAll(GOO_HOSTS));
+  for (const el of hosts) {
+    if (gooFields.has(el)) continue;
+    const handle = gooField(el);
+    if (handle) gooFields.set(el, handle);
+  }
+}
+
+/** Re-read every field's colours after a theme change.
+ *
+ *  A field is static once laid out, so nothing else would ever repaint it: a
+ *  theme switch changes no box, fires no resize and moves no node. Its members'
+ *  fills went on being the previous theme's, and on the light theme that put a
+ *  ghost button's dark label on a substance still painted in the dark theme's
+ *  raised surface — the label vanished. The observer that already watches
+ *  data-sl-theme for the GPU tier's uniforms is the right place: one attribute,
+ *  one read, every consumer of a token value updated from it.
+ *  @returns {void} */
+function repaintGooFields() {
+  for (const handle of gooFields.values()) handle.measure();
+}
+
 /** Take every lens away, leaving the CSS material that glass.css paints.
  *  @returns {void} */
 function dropLenses() {
@@ -847,7 +886,7 @@ export function mount(root = document) {
   // a per-product accent override (root.style.setProperty("--sl-accent-..."))
   // changes only the latter. The GPU tier reads the shared `tokens` object,
   // and this is the one observer that keeps it live.
-  new MutationObserver(() => readTokens(html)).observe(html, {
+  new MutationObserver(() => { readTokens(html); repaintGooFields(); }).observe(html, {
     attributes: true,
     attributeFilter: ["data-sl-theme", "style"],
   });
@@ -859,11 +898,13 @@ export function mount(root = document) {
   armLenses(root);
   watchLensTheme(root);
   injectGlows(root);
+  armGooFields(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
       armLenses(n);
       injectGlows(n);
+      armGooFields(n);
     }
   }).observe(root, { childList: true, subtree: true });
 
