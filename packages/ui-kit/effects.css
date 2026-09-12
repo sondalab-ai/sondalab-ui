@@ -520,10 +520,23 @@
 }
 /* A transparent fill is not a tint colour: color-mix would give transparent
    and the pane would have no tint at all. These carry the page's own ground
-   instead, which is what glass over nothing should look like. */
+   instead, which is what glass over nothing should look like.
+   AND A LITTLE MORE OF IT than the material's own 18%, which is a LEGIBILITY
+   figure. These three have no fill of their own, so their label sits on
+   whatever the page put behind them, and over a dark region the theme's own
+   ink ran out of ground: measured on the showcase's light theme over its
+   telemetry substrate, 4.24:1 where WCAG AA asks 4.5. At 25% the same
+   measurement reads 4.74 and the pane is all but indistinguishable; 32% reads
+   5.19. The material's fitted 18% is untouched for every surface that has a
+   fill to carry its own label. */
 .sl-btn.sl-fx-glass,
 .sl-badge.sl-fx-glass,
-.sl-field__control.sl-fx-glass { --slfx-fill: transparent; --slg-tint-color: var(--sl-bg-canvas); }
+.sl-field__control.sl-fx-glass {
+  --slfx-fill: transparent;
+  --slg-tint-color: var(--sl-bg-canvas);
+  --slg-tint-a: 25%;
+  --slg-tint-deep-a: 22%;
+}
 .sl-tag.sl-fx-glass { --slfx-fill: var(--slc-accent-subtle); --slg-tint-color: var(--slc-accent-subtle); }
 .sl-dialog.sl-fx-glass { --slfx-fill: var(--slc-raised); --slg-tint-color: var(--slc-raised); }
 .sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
@@ -973,8 +986,16 @@
   --slfx-beam: var(--slfx-rim-beam);
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
   --slfx-core: 40%;
-  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-depth-bloom) 90%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 78%, transparent);
+  /* The HUE stays the depth companion, and the declension's reason for it
+     stands: the accent is what the fill is made of, so a ring in the accent
+     would vanish into the button it is meant to outline. What was wrong was
+     the STRENGTH. 90/78% is paint, not light, and on a light dialog it read as
+     a blue blob sitting beside the button rather than as the button's own
+     glow — the owner reported it as a defect on a busy control. 44/33% is the
+     register every other bloom in this file uses since the 2026-09-12 fit, and
+     it is a halo at that strength. */
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-depth-bloom) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
