@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 11:45
+## Start here — handoff, 2026-09-12 12:00
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (151 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (154 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -39,8 +39,8 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
   320 / 480 px. **Loading and busy are an aurora that runs the whole border, in
   the accent**: the curtains stand down and the glow paints the conic band on
-  the element's own edge, turning once per 1.1 s, with **filaments** falling
-  from it into the pane — cut across the lens's pull, so they bend where the
+  the element's own edge, turning once per 5.5 s, with **filaments** falling
+  from it into the pane, breathing on a 7.3 s clock — cut across the lens's pull, so they bend where the
   band cannot. Determinate keeps its arc, whose length is the value. The
   glow is a SIBLING seated before the host, so it is in the backdrop and the
   lens bends it — which is the whole reason the curtains are the default: a
@@ -686,6 +686,21 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **Slower, and alive without being random.** *Owner: "il movimento adesso e'
+  troppo veloce, rendiamo parecchio piu' lento, molto smooth e soft, e diamo un
+  po' di dinamicita' facendo cambiare l'altezza delle bande casualmente."* The
+  turn is **5.5 s** (was 1.1 s), named `--slfx-load-turn`, and stays **linear**:
+  an eased turn on a closed loop slows and speeds at the same two points every
+  pass, which is a stutter you cannot unsee. The filaments' depth breathes
+  **28 → 96 px on 7.3 s** — registered so a keyframe interpolates it — and 5.5
+  against 7.3 share no factor, so the pair does not repeat its arrangement for
+  over four minutes. The comb is uneven too (three stripes of different widths
+  in a 58 px period), and the band's ramps shorten the filaments at its ends.
+  **Nothing is random**, and nothing needs to be: three periods that do not
+  divide each other is the same trick the curtains' two pitches already use.
+  Verified by driving the animations rather than waiting: at 1.2 s the light is
+  at 288° with filaments 31.7 px deep, at 4.0 s at 489° and 71.7 px.
 
 - **A light with no clock is parked, not slow.** *Owner, on the first render of
   the filaments: "oltre la luce che ruota, ce n'è altra che però è limitata
