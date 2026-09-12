@@ -504,6 +504,5 @@ test("the showcase puts no form control inside a goo field", () => {
   const members = [...html.matchAll(/<(\w+)([^>]*\bclass="[^"]*\bsl-fx-goo__member\b[^"]*"[^>]*)>/g)];
   assert.ok(members.length >= 8, "the showcase must still demonstrate the family");
   const controls = members.filter(([, tag]) => ["button", "input", "select", "textarea", "a"].includes(tag));
-  assert.equal(controls.length, 1, `exactly one control, the one demonstrating the refusal; got ${controls.map((m) => m[0]).join(", ")}`);
-  assert.match(html, /what a field will not take/, "and the cell must say what it is showing");
+  assert.deepEqual(controls.map((m) => m[1].trim()), [], "a control member is inert, so one here would be a silent no-op the page still claims as a demonstration");
 });
