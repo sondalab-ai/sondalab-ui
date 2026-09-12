@@ -189,10 +189,12 @@ test("a theme change repaints every field", () => {
   // observer that already watches data-sl-theme for the GPU tier's uniforms is
   // where the repaint belongs.
   const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
-  const at = effectsJs.indexOf('attributeFilter: ["data-sl-theme", "style"]');
-  assert.ok(at > -1, "the theme observer must still key on data-sl-theme");
-  const callback = effectsJs.slice(effectsJs.lastIndexOf("new MutationObserver(", at), at);
-  assert.match(callback, /repaintGooFields\(\)/, "the theme observer must repaint the goo fields");
+  const at = effectsJs.indexOf("new MutationObserver(repaintGooFields)");
+  assert.ok(at > -1, "a theme observer must repaint the goo fields");
+  assert.match(
+    effectsJs.slice(at, at + 220), /attributeFilter:\s*\[\s*"data-sl-theme"/,
+    "and it must key on data-sl-theme",
+  );
   assert.match(effectsJs, /function repaintGooFields\(\)[\s\S]{0,200}handle\.measure\(\)/, "the repaint re-reads each field");
 });
 
@@ -230,9 +232,12 @@ test("focus tracks a member's colour as well as the pointer", () => {
 
 test("a member's silhouette is opaque, whatever the member's own alpha", () => {
   // The goo's alpha slope maps everything below 0.5 to nothing, so a member
-  // the component made translucent — a glass pane button sits at 30% —
-  // contributes a silhouette the filter then erases. The substance would
-  // vanish under exactly the components most likely to be in it.
+  // whose fill is a tint has to stand on something opaque. Forcing its OWN
+  // colour opaque was tried and is worse than the disease: sl-tag is the
+  // accent at low alpha, and at full alpha it is no longer a tint but the
+  // accent itself — a row of quiet tags rendered as three saturated slabs. So
+  // opaque() is for the SUBSTANCE, and the member's face is composited over
+  // it at the alpha the component chose.
   const fn = js.slice(js.indexOf("function opaque("), js.indexOf("function radiiOf("));
   assert.ok(fn.length > 0, "opaque() must exist");
   // Exercise the surgery itself: it must handle both shapes a computed alpha
@@ -242,5 +247,30 @@ test("a member's silhouette is opaque, whatever the member's own alpha", () => {
   assert.equal(opaque("color(srgb 0.1 0.2 0.3 / 0.42)"), "color(srgb 0.1 0.2 0.3)");
   assert.equal(opaque("oklch(0.7 0.15 60 / 50%)"), "oklch(0.7 0.15 60)");
   assert.equal(opaque("rgb(15, 21, 26)"), "rgb(15, 21, 26)", "an opaque colour is untouched");
-  assert.match(js, /isClear\(own\) \? opaque\(fallback\) : opaque\(own\)/, "both the member's fill and the fallback are forced opaque");
+  assert.match(js, /const ground = opaque\(fallback\);/, "the substance under every member is opaque");
+  assert.match(js, /isClear\(own\) \? ground : own/, "a member's OWN colour is painted as the component painted it, alpha included");
+  assert.match(js, /paths\[i \* 2\]\.setAttribute\("fill", ground\)/, "every member stands on the substance");
+});
+
+test("the goo survives a motion preference, and only high contrast refuses it", () => {
+  // The goo ANIMATES NOTHING — it is laid out, not played — and the spec's
+  // reduced-motion clause is "nothing animates; static material survives". So
+  // it is armed BEFORE mount()'s motion guard, on the same reasoning
+  // lensRefused() carries: a visitor who asked for less movement did not ask
+  // for less material. Its CSS is not gated on data-sl-fx="on" either.
+  const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
+  const goo = effectsJs.indexOf("mountGoo(root);");
+  const guard = effectsJs.indexOf("if (window.matchMedia(REDUCE).matches) return false;");
+  assert.ok(goo > -1 && guard > -1, "mount() must call mountGoo() and still guard on motion");
+  assert.ok(goo < guard, "the goo must be armed before the motion guard, not after it");
+
+  const body = effectsJs.slice(effectsJs.indexOf("function mountGoo("), effectsJs.indexOf("function repaintGooFields("));
+  assert.match(body, /high-contrast"\) return false/, "high contrast must still refuse it");
+  assert.doesNotMatch(body, /REDUCE/, "mountGoo may not consult the motion preference");
+
+  // And nothing in the goo's own CSS may key on the Tier 1 attribute, or the
+  // arming above would be undone by the stylesheet.
+  for (const m of css.matchAll(/([^{}]*\.sl-fx-goo[^{}]*)\{/g)) {
+    assert.doesNotMatch(m[1], /\[data-sl-fx="on"\]/, `goo rule must not require Tier 1: ${m[1].trim()}`);
+  }
 });

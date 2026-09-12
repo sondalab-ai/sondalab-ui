@@ -812,6 +812,44 @@ async function armGooFields(root) {
   }
 }
 
+/** Whether the goo has been armed on this document already. Its own flag, not
+ *  `armed`: the goo is armed before Tier 1's motion guard and outlives its
+ *  refusal, so the two are not the same question. */
+let gooArmed = false;
+
+/** Arm the goo, and keep it armed.
+ *
+ *  Separate from the rest of `mount()` because of the motion preference. The
+ *  goo ANIMATES NOTHING — it is laid out, not played, and the spec's own
+ *  reduced-motion clause is "nothing animates; static material survives". So
+ *  it refuses on high contrast (where the point is that nothing behind a
+ *  surface may interfere with what is on it) and runs under
+ *  prefers-reduced-motion, on the same reasoning `lensRefused()` carries: a
+ *  visitor who asked for less movement did not ask for less material. Its CSS
+ *  is not gated on `data-sl-fx="on"` either, so nothing about it depends on
+ *  Tier 1 having armed.
+ *
+ *  Two observers, both owned here so there is one place that keeps a field
+ *  live: containers arriving later get a field, and a theme change repaints
+ *  every field's colours.
+ *  @param {ParentNode} root the subtree to arm
+ *  @returns {boolean} whether the goo is armed on this document */
+function mountGoo(root) {
+  if (typeof window === "undefined") return false;
+  if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return false;
+  if (gooArmed) return true;
+  gooArmed = true;
+  armGooFields(root);
+  new MutationObserver((records) => {
+    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) armGooFields(n);
+  }).observe(root, { childList: true, subtree: true });
+  new MutationObserver(repaintGooFields).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-sl-theme", "style"],
+  });
+  return true;
+}
+
 /** Re-read every field's colours after a theme change.
  *
  *  A field is static once laid out, so nothing else would ever repaint it: a
@@ -877,16 +915,20 @@ function suppressed() {
 export function mount(root = document) {
   if (armed) return true;
   if (typeof window === "undefined") return false;
-  if (window.matchMedia(REDUCE).matches) return false;
   const html = document.documentElement;
   if (html.getAttribute("data-sl-theme") === "high-contrast") return false;
+  // Before the motion guard, and deliberately: the goo animates nothing, so
+  // refusing it for a motion preference would take away material rather than
+  // movement. mountGoo() owns its own observers and its own armed flag.
+  mountGoo(root);
+  if (window.matchMedia(REDUCE).matches) return false;
 
   readTokens(html);
   // data-sl-theme and style both matter: a theme switch changes the former,
   // a per-product accent override (root.style.setProperty("--sl-accent-..."))
   // changes only the latter. The GPU tier reads the shared `tokens` object,
   // and this is the one observer that keeps it live.
-  new MutationObserver(() => { readTokens(html); repaintGooFields(); }).observe(html, {
+  new MutationObserver(() => readTokens(html)).observe(html, {
     attributes: true,
     attributeFilter: ["data-sl-theme", "style"],
   });
@@ -898,13 +940,11 @@ export function mount(root = document) {
   armLenses(root);
   watchLensTheme(root);
   injectGlows(root);
-  armGooFields(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
       armLenses(n);
       injectGlows(n);
-      armGooFields(n);
     }
   }).observe(root, { childList: true, subtree: true });
 

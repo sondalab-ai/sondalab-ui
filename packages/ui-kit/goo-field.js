@@ -164,14 +164,26 @@ export function gooField(container) {
   let lastShapes = [];
   let alive = true;
 
-  /** Match the pool of <path> elements to the number of members. */
+  /** Match the pool of <path> elements to the members: TWO each, the same
+   *  outline drawn twice.
+   *
+   *  The first is the SUBSTANCE — the field's declared fill, opaque — and the
+   *  second is the member's own FACE, painted exactly as the component painted
+   *  it, alpha included. That is compositing, and it is why the pair exists:
+   *  the goo's alpha slope erases everything below 0.5, so a member the
+   *  component tinted rather than filled has to stand on something. Forcing
+   *  its own colour opaque instead was tried and is worse than the disease —
+   *  `sl-tag` is the accent at low alpha, and at full alpha it is no longer a
+   *  tint but the accent itself, so a row of quiet tags rendered as three
+   *  saturated slabs. A translucent face over the substance keeps the colour
+   *  the component chose and gives the filter an opaque silhouette to cut. */
   function resize(n) {
-    while (paths.length < n) {
+    while (paths.length < n * 2) {
       const p = document.createElementNS(NS, "path");
       group.append(p);
       paths.push(p);
     }
-    while (paths.length > n) paths.pop().remove();
+    while (paths.length > n * 2) paths.pop().remove();
   }
 
   /** An image member's paint is its CONTENT, not a background: an <img> has no
@@ -217,18 +229,23 @@ export function gooField(container) {
     return `url(#${patternId})`;
   }
 
-  /** Read every member's own computed background and write it as its
-   *  silhouette's fill. Geometry is untouched, so this is what a hover or an
-   *  active state costs. */
+  /** Write each member's substance and face. Geometry is untouched, so this is
+   *  what a hover or an active state costs.
+   *  @param {string} fallback the field's declared substance */
   function paint(fallback) {
+    const ground = opaque(fallback);
     for (let i = 0; i < members.length; i++) {
       const el = members[i];
+      paths[i * 2].setAttribute("fill", ground);
+      const face = paths[i * 2 + 1];
       if (el instanceof HTMLImageElement && lastShapes[i]) {
-        paths[i].setAttribute("fill", imageFill(el, lastShapes[i], i));
+        face.setAttribute("fill", imageFill(el, lastShapes[i], i));
         continue;
       }
       const own = getComputedStyle(el).backgroundColor;
-      paths[i].setAttribute("fill", isClear(own) ? opaque(fallback) : opaque(own));
+      // A member with no fill of its own is the substance and nothing else;
+      // painting the face too would only double a colour already there.
+      face.setAttribute("fill", isClear(own) ? ground : own);
     }
   }
 
@@ -262,7 +279,9 @@ export function gooField(container) {
     lastShapes = shapes;
     for (let i = 0; i < shapes.length; i++) {
       const s = shapes[i];
-      paths[i].setAttribute("d", roundedRectPathAt(s.x, s.y, s.w, s.h, s.radii));
+      const d = roundedRectPathAt(s.x, s.y, s.w, s.h, s.radii);
+      paths[i * 2].setAttribute("d", d);
+      paths[i * 2 + 1].setAttribute("d", d);
     }
     blur.setAttribute("stdDeviation", sigma.toFixed(3));
 
@@ -318,6 +337,7 @@ export function gooField(container) {
         if (!records.some((r) => r.target !== svg && !svg.contains(r.target))) return;
         observeMembers();
         measure();
+        awaitImages();
       })
     : null;
 

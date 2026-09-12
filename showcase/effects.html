@@ -519,8 +519,8 @@
           <div class="g-cell">
             <span class="g-label">pictures weld with their own colours</span>
             <div class="sl-fx-goo goo-plates" style="--slfx-goo-weld: 20px">
-              <img class="sl-fx-goo__member" src="../docs/references/assets/border-beam-rotate-colorful-a-dark.png" alt="" width="220" height="132" loading="lazy">
-              <img class="sl-fx-goo__member" src="../docs/references/assets/gooey-rest-dark.png" alt="" width="220" height="132" loading="lazy">
+              <img class="sl-fx-goo__member" src="../docs/references/assets/liqui-button-text-glass-fixedbg.png" alt="" width="220" height="132">
+              <img class="sl-fx-goo__member" src="../docs/references/assets/border-beam-large-rotate-colorful-dark.png" alt="" width="220" height="132">
             </div>
             <p class="cap">An <b>&lt;img&gt;</b> has no fill of its own, so its silhouette is filled with the picture itself and the goo blurs it like any other paint — the edges run into the neck. The picture on top is untouched and unfiltered; only the substance behind it carries the blur.</p>
           </div>
@@ -542,7 +542,7 @@
               <span class="sl-tag sl-fx-goo__member">PoC</span>
               <span class="sl-tag sl-fx-goo__member">Placeholder</span>
             </div>
-            <p class="cap">A member with no fill of its own — a tag, a ghost button, anything whose glass paints on a pseudo-element — contributes <b>--slfx-goo-fill</b>, the field's declared substance, so it reads as part of the material rather than as a hole in it. A silhouette is always opaque whatever its member's alpha: the goo's slope erases everything below alpha 0.5, and a substance that thinned under one member and not its neighbour would read as a rendering fault.</p>
+            <p class="cap">Every member stands on <b>--slfx-goo-fill</b> — the field's declared substance, opaque — and its own fill is composited over that at the alpha the component chose. So a member with none at all (a ghost button, anything whose glass paints on a pseudo-element) is simply the substance, and a member with a tint stays a tint. The pair exists because the goo's slope erases everything below alpha 0.5: forcing a member's own colour opaque instead was tried, and a <b>sl-tag</b> — the accent at low alpha — stopped being a tint and became the accent, three quiet tags rendering as three saturated slabs.</p>
           </div>
         </div>
         <p class="cap">Containers must give the substance room. The goo reaches <b>--slfx-goo-reach</b> plus three blur sigmas past the outermost member — about 34px at the default weld — so an ancestor with <b>overflow</b> other than <b>visible</b>, with <b>contain</b>, or with a <b>clip-path</b> cuts it along a straight line. The rule of <a class="sl-link" href="#glass">§04</a>, one scale up.</p>
