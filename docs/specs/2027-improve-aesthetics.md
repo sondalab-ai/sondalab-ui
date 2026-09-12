@@ -11,51 +11,68 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 09:35
+## Start here — handoff, 2026-09-12 10:05
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (140 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (143 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/effects.css" --product effects` clean. The kit ships:
+"packages/ui-kit/effects.css" --product effects` clean. 187 tests green. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
   its capture within ±3 luminance on `lab/1n`; tint 0.18; layers sit at
   negative z-index under the host's own label; `__specular` paints nothing.
 - `glass-lens.js` — a REAL refraction, adopted from shuding/liquid-glass (MIT):
   `backdrop-filter: url(#…)` with a data-URI displacement map; per-channel
-  dispersion (`disperse`, default 18); bend capped at `reach` = 6 px; frost
-  and saturation animatable via `--slg-lens-blur` / `--slg-lens-sat`.
-- `effects.css` / `effects.js` — the aurora: bloom INSIDE the box, **solved
-  against border-beam's composer at its own zoom on `lab/1x` (2026-09-12)**:
-  `--slfx-bleed` 10 px, blur `--slfx-soft` 6.5 px, bloom alphas 44 / 33 % of
-  the vivid accent lifted a quarter toward white (chroma kept), arc 90°,
-  hairline `--slfx-ring-lit` 0.28, the seated glow clipped to the host's box
-  (except `--beam` and `--rim`); border-beam's plateau profile and a derived
-  accent → complement → split palette; `--beam` and `--pillars` as optional
-  modes; the glow is a SIBLING seated before the host (so the lens can bend
-  it), with twelve `--slfx-*` variables copied across.
+  dispersion (`disperse`, default 18); bend capped at `reach`, 6 px for the
+  material and **readable from the element as `--slg-lens-reach`**, which the
+  aurora's hosts raise to 18 px; frost and saturation animatable via
+  `--slg-lens-blur` / `--slg-lens-sat`.
+- `effects.css` / `effects.js` — the aurora's light is **the curtains**
+  (`--pillars`), by default on every host that does not ask for another
+  (`--sweep`, `--beam`, `--rim`), fitted on `lab/1y` (2026-09-12): ribs 30 %,
+  curtains 44 / 41 %, blur 4 px, pitch a quarter wider than it shipped. The
+  glow is a SIBLING seated before the host, so it is in the backdrop and the
+  lens bends it — which is the whole reason the curtains are the default: a
+  wash that follows the edge moves 0.93 % of its pixels under the lens, the
+  curtains 5.00 %.
+  The conic bloom, kept for `--sweep` / `--beam` / `--rim`, is solved against
+  border-beam's composer at its own zoom on `lab/1x`: `--slfx-bleed` 10 px,
+  blur `--slfx-soft` 6.5 px, alphas 44 / 33 % of the vivid accent lifted a
+  quarter toward white (chroma kept), arc 90°, hairline `--slfx-ring-lit`
+  0.28, the seated glow clipped to the host's box (except `--beam`, `--rim`
+  and `--pillars`, whose geometry is not the spread). Twelve `--slfx-*`
+  variables are copied onto the seated glow.
 - the showcase is back to defaults; every experiment lives in `lab/` (gitignored).
 
-**1w and 1x are closed — see the two sections below for the numbers.** 1w
-hooked the handoff's curve as stated and found two kit defects (a padding
-ring that could not fit a host shorter than 88 px; a `calc()` the seat read
-as nothing), each fixed with a regression test. The owner then looked and
-ruled *"non siamo ancora vicini"*, and 1x re-read the reference at its own
-zoom (it is a DPR-2 capture) with the colour's saturation measured beside its
-luminance: the kit now reads +42.9 / +34.2 / +27.9 / +19.8 / +11.8 / +4.0 /
-0 at 4 / 8 / 10 / 12 / 15 / 20 / 30 px against the reference's +43 / +34 /
-+27 / +20 / +13 / +4 / 0, with the same rgb spread (36 → 3 against 32 → 3),
-nothing outside the box, and a quarter-ring arc.
+**1w, 1x and 1y are closed — see the three sections below for the numbers**,
+and read them in that order: each one answered the owner's verdict on the one
+before it.
+
+- **1w** hooked the handoff's curve as stated and found two kit defects (a
+  padding ring that could not fit a host shorter than 88 px; a `calc()` the
+  seat read as nothing), each fixed with a regression test.
+- **1x** followed *"non siamo ancora vicini"*: the reference re-read at its own
+  zoom (it is a DPR-2 capture), with the colour's saturation measured beside
+  its luminance. The conic bloom reads +42.9 / +34.2 / +27.9 / +19.8 / +11.8 /
+  +4.0 / 0 at 4 / 8 / 10 / 12 / 15 / 20 / 30 px against the reference's
+  +43 / +34 / +27 / +20 / +13 / +4 / 0, same rgb spread, nothing outside.
+- **1y** followed *"luce vera che si deforma dietro al vetro"* and changed the
+  light model: the curtains are the aurora's light, because a lens can only be
+  seen to bend what has structure (0.93 % of the bloom's pixels move under the
+  lens, 5.00 % of the curtains'). **It supersedes 1x's fit as the DEFAULT
+  light** — the conic bloom and its numbers stay for `--sweep`, `--beam` and
+  `--rim`.
 
 **No next task is assigned.** One thing stays the owner's: the 1 px line on
 the reference's border where the beam passes (ours is the glass rim plus a
 0.28 ring; see 1w's list). Whether a card is glass is **ruled** (2026-09-12,
-below): it is. The kit's release and the GPU tier's cut are the owner's
-decisions.
+below): it is, with distortion and refraction, and the refraction wins where
+it pulls against the composer's flat-light curve. The kit's release and the
+GPU tier's cut are the owner's decisions.
 
 **Traps that cost hours, in order of cost:**
 
@@ -66,26 +83,32 @@ decisions.
 2. **The extension's tab is `visibilityState: hidden`.** rAF, IntersectionObserver
    and CSS transitions never settle there. Drive things by hand and say so;
    only the owner's real browser judges motion.
-3. **Capture with the extension's `zoom`, never its `screenshot`.** The full
+3. **A page that animates has no noise floor.** Two captures of the showcase
+   with nothing changed differed by **39 %** — its own keyframes advance
+   between calls. Freeze first (`*, *::before, *::after { animation: none
+   !important; transition: none !important; }`), take a control pair, and only
+   believe a diff once the control reads 0. Three showcase measurements were
+   taken and thrown away before this was noticed.
+4. **Capture with the extension's `zoom`, never its `screenshot`.** The full
    screenshot is a JPEG scaled to 1565 px wide (0.815 of a 1920 viewport) and
    useless for pixels. `zoom` with `save_to_disk` writes a PNG at DPR 2 — one
    CSS px is two capture px, measured on a 321 px card — but its `region` is
    in the screenshot's scaled frame (divide CSS px by 0.815), and passing
    `scale` shrinks the saved file too. Two identical zooms differ by 0 px, so
    a non-zero diff is signal.
-4. **Serve with `python3 lab/_serve.py`**, never `python3 -m http.server`: the
+5. **Serve with `python3 lab/_serve.py`**, never `python3 -m http.server`: the
    latter sends no cache headers and a stale stylesheet beside fresh JS
    produced false readings twice. Kill any other server on other ports first.
-5. **A sibling inherits nothing from the host.** Anything moved out of the host
+6. **A sibling inherits nothing from the host.** Anything moved out of the host
    needs its variables copied (`GLOW_VARS` in `effects.js`) and its own
    `z-index: auto` — `-1` under a non-stacking parent falls behind the page.
    And an `@property` with `inherits: false` (`--slfx-angle`) is not seen by
    the pseudo-element that paints from it: pin it ON the pseudo-element.
-6. **A `calc()` custom property computes to text unless registered.**
+7. **A `calc()` custom property computes to text unless registered.**
    `parseFloat("calc(14px * 3 + 12px)")` is `NaN`; register lengths JavaScript
    has to read (`--slfx-glow` is, now).
-7. **`sl-audit` reads comments.** No hex, no `rgb()`, in prose either.
-8. **The guards are contracts, not obstacles.** Eight edge rules may declare a
+8. **`sl-audit` reads comments.** No hex, no `rgb()`, in prose either.
+9. **The guards are contracts, not obstacles.** Eight edge rules may declare a
    background, each named; the radius guard exempts only `--beam`/`--pillars`.
    Extend them with the reason, never bypass.
 
@@ -524,6 +547,76 @@ Still open: the thickness unit. It is in the probe's own pixels rather than
 `glass-studio`'s units on its 200 × 200 shape, so the value 10 here is not the
 card's 20 under another name, and the conversion should be settled before it
 becomes a token.
+
+### 1y — the light the glass can be seen to bend — 2026-09-12
+
+*Owner: "riusciamo a far diventare l'aurora luce vera che si deforma dietro al
+vetro?"* It was already behind it — the glow has been a sibling in the backdrop
+since `7be2d20` — so the question was really why the lens was doing nothing
+visible to it. Isolated on `lab/1w`'s bed by setting the three
+`feDisplacementMap` scales to 0 and leaving the rest of the chain alone (an
+identity pass; the control read 0 px):
+
+| light behind the pane | pixels moved | max delta |
+|---|---|---|
+| the smooth bloom, as fitted that morning | 0.93 % | 13/255 |
+| the curtains (`--pillars`), same lens | 5.00 % | 35/255 |
+
+**A lens can only be seen to bend what has structure.** The bloom is a wide
+soft gradient drawn in the shape of the edge it hugs; displacing it radially
+maps it onto very nearly itself, and its dispersion is invisible for the same
+reason — three channels of a smooth amber shifted by ±2 px re-sum to nearly
+the same amber. This is the tradeoff the morning's two commits had set up
+without naming: the composer **is not glass**, so its profile is the light
+itself, and fitting our light to that curve put it in the one geometry the
+lens cannot show. *Owner's ruling: the refraction wins.*
+
+**So the curtains are the aurora's light again**, as they were at `5c1b433`
+before the sweep took the default back: `--sweep` asks for the rotating arc,
+`--beam` and `--rim` keep their own light, `--linear` never had a glow at all.
+The conic bloom and its 1x fit stay, for the three modes that use it.
+
+**Fitted on `lab/1y`** (the same bed, a card and a button, the curtains'
+alphas, pitch, blur and the lens's `reach` on the URL), reading the card's
+interior with the glass rim's own band excluded:
+
+| | peak over the bed | p90 | median |
+|---|---|---|---|
+| as shipped (ribs 42 %, curtains 62 / 58 %) | +61.7 | +52.4 | +26.2 |
+| **fitted (30 %, 44 / 41 %, blur 4 px, pitch ×1.25)** | **+49.0** | +39.5 | +17.6 |
+| the reference's own light, for scale | +48 | — | — |
+
+The pitch widened because a rib narrower than about twice the blur it sits
+under is erased by that blur — and then there is nothing left for the lens to
+bend.
+
+**The bend needed raising, and that is a second measurement.** `reach` caps the
+displacement at a fixed number of pixels; 6 px was fitted against a wide card
+bending the page behind it into a wave. On light it is invisible:
+
+| reach | pixels the bend moves | vs reach 6 |
+|---|---|---|
+| 6 | 4.53 % | — |
+| 12 | 7.27 % | 5.09 % |
+| 18 | — | 7.70 % |
+| 24 | 10.40 % | 9.65 % |
+| 40 | — | 12.16 % |
+
+From about 18 the curtains visibly gather and part into their colours at the
+faces. So `reach` is now readable from the element as `--slg-lens-reach` — how
+hard a surface bends is a property of that surface — and `.sl-fx-aurora`
+declares 18 px while a plain pane keeps the material's 6. The cost to the page
+behind, measured with the page's animations frozen against a 0-pixel control:
+**2.44 %** of pixels on the showcase's 494 px card over the wordmark and
+**1.80 %** on the pane cell over dense telemetry text, both confined to the
+host's own rim band, where the glass already fringed at 6.
+
+**A regression the bed caught, and it was `12367ef`'s.** That commit clipped the
+seated glow to the host's box using `--slfx-glow`, the spread `seatGlow()` gives
+a normal glow. A `--pillars` glow is seated with **no** spread — its box is the
+host's own — so the same inset ate it from every side: on a 90 × 40 button,
+11 297 pixels of curtain, max delta 149, simply gone. Fixed in `072d919` with a
+test; nothing on the showcase carried the class, which is why 185 stayed green.
 
 ### 1x — the reference at its own zoom — 2026-09-12
 

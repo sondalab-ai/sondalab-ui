@@ -1,6 +1,6 @@
 ---
 name: sondalab-ui-next-step-lab-1w-aurora-bed
-description: sondalab-ui — lab/1w (the aurora card on a flat ground, profiled against the border-beam reference) was CLOSED on 2026-09-12 with the curve within ±3; the spec's "Start here" block now says no next task is assigned and lists four measured questions for the owner (the reference's DPR, its border line, the blur outside the box, the sweep lighting three edges). Read that block first; do not judge the aurora on the showcase's wordmark cell.
+description: sondalab-ui — the aurora slice ran lab/1w, 1x and 1y on 2026-09-12 and all three are CLOSED. The light model changed at 1y: the aurora's light is the CURTAINS (--pillars), because a lens can only be seen to bend light that has structure; --sweep, --beam and --rim keep the conic bloom fitted at 1x. Read the spec's "Start here" block first; no task is queued. Do not judge the aurora on the showcase's wordmark cell, and freeze a page's animations before diffing it.
 metadata:
   node_type: memory
   loadout_kind: memory
@@ -15,11 +15,17 @@ state, the traps that cost most of two days, and the fact that **no task is
 queued** — the owner rules on the 1w findings, the kit's release and the GPU
 tier's cut.
 
-The 1w result (bleed 20 px, bloom alphas 51 / 38 %, hairline 0.28) is
-recorded under "1w — the curve is hooked — 2026-09-12" with the measured
-table and the verification diffs. The bed itself is `lab/1w-aurora-flat.html`
-(gitignored, rebuild from the section if needed) and its instrument is
-`lab/_profile_edge.py` (tracked).
+Each section records its own measured table and verification diffs: "1w — the
+curve is hooked", "1x — the reference at its own zoom", "1y — the light the
+glass can be seen to bend". The beds (`lab/1w-aurora-flat.html`,
+`1x-aurora-own-zoom.html`, `1y-pillars-refracted.html`) are gitignored like
+every probe and can be rebuilt from those sections; the instrument,
+`lab/_profile_edge.py`, is tracked and carries both target curves.
+
+**The one thing to know before touching the aurora again:** the composer
+reference is not glass, so fitting our light to its flat profile puts that
+light in the one geometry a lens cannot show itself bending. The owner ruled
+the refraction wins that conflict.
 
 The file below the Start-here block is a chronological record and reads
 correctly only downward from there.
