@@ -55,6 +55,15 @@ These are always yours (the `sl-ds-auditor` subagent covers them by reading `des
 - **L5 editorial voice** — precise/technical, active, structure-encodes-truth, English identifiers.
 - The house rule: ≥1 unexpected, intentional *composition* decision per screen (spend boldness on layout, keep materials shared).
 
+> **Effects (L6) — entirely judgement.** `sl-audit` can verify that `effects.css` uses no colour literal, and `scripts/effects-js.test.mjs` closes the same hole for the driver. It cannot verify any of what actually matters:
+> - **the right family for the right meaning** — a glitch on a passive container, or a liquid on something that is not interactive, is decoration, and Decision 1 forbids it; a text button is a glass pane (`sl-fx-glass--pane`), never gooey, and `sl-fx-liquid--drop` goes on a round icon-only button alone;
+> - **the budget** — more than one ambient `data-sl-fx-live="on"` per document, or four or more families stacked on one component;
+> - **the focus ring** — an aurora that replaced the `outline` instead of sitting inside the border band;
+> - **the ARIA** — a `busy` or determinate aurora without `aria-busy` / `role="progressbar"`, which leaves reduced-motion and high-contrast visitors with no state at all;
+> - **the paint-layer budget** — a glitch put on the component instead of on a child span, which silently drops the edge or the aurora's wash.
+>
+> Judge these by reading the surface against `design-language.md` L6 and `docs/specs/2026-09-08-effects-layer-design.md`.
+
 ## If you think a deferred check should become mechanical
 
 That is a human decision (see the spec's "Open decisions"), because it requires committing to a blessing policy for the legitimate off-scale/2px cases above. Don't add the check to `sl-audit.mjs` on your own initiative — raise it, with the specific reference example it would flag, and let the human decide.

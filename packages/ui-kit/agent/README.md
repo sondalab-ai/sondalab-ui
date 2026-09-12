@@ -17,7 +17,7 @@ The design system has always had the *rules* (`design-language.md`) and the *val
 | `workflows/migrate.md` | The ordered migrate procedure with human gates. |
 | `workflows/author.md` | The ordered author procedure (greenfield), built on the catalog. |
 | `workflows/adopt.md` | The ordered adopt procedure (one component into an existing app). |
-| `catalog.md` + `catalog.json` | Copy-paste component catalog (primitives + signature patterns) with markup, role-vars, and substrate; its machine index. Snippets are audited clean. |
+| `catalog.md` + `catalog.json` | Copy-paste component catalog (primitives, opt-in effects, and signature patterns) with markup, role-vars, and substrate; its machine index. Effects are a separate opt-in import (`effects.css`, plus `effects.js` for Tier 1) — not part of `components.css`. Snippets are audited clean. |
 | `HANDOFF.md` | What the audit does **not** check mechanically, and how to judge those cases (deferred spacing/border/recipe checks). Read before a job. |
 
 Everything else — the actual rules, why they exist, the compliance philosophy — stays in `design-language.md`. This core **references** it; it never forks it.

@@ -1,0 +1,221 @@
+/* @sondalab/ui-kit — glass.css
+   The glass surface's anatomy: stacked layers under one host, content on top.
+
+   ADAPTED FROM liqui-glass, and deliberately so. The reference card for this
+   material measures a six-layer CSS stack, and this repo spent a day building a
+   WGSL shader that approximated it — while the same measurement, recorded under
+   the `liqui-glass` card, shows the reference's own refraction layer moving 45
+   pixels of 114 704 and never displacing the backdrop. The material is CSS. The
+   GPU tier's job is what CSS cannot do: the pointer's light, and bending a
+   declared backdrop.
+
+     liqui glass — https://liqui.design · MIT License · Copyright (c) 2026 Fan Li
+     Permission is hereby granted, free of charge, to any person obtaining a
+     copy of this software and associated documentation files (the "Software"),
+     to deal in the Software without restriction, including without limitation
+     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+     and/or sell copies of the Software, and to permit persons to whom the
+     Software is furnished to do so, subject to the following conditions:
+     The above copyright notice and this permission notice shall be included in
+     all copies or substantial portions of the Software.
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     DEALINGS IN THE SOFTWARE.
+
+   WHAT WAS CHANGED, and why each change was needed rather than preferred:
+
+   - Every colour is a Sondalab token. The original carries an rgba() fallback
+     on each var so a surface renders with no token layer present; here the
+     token layer is not optional, AC-18 bans a hue that does not trace to one,
+     and `sl-audit` reads comments too. So the fallbacks are gone and the
+     densities they encoded are expressed as color-mix over --sl-bg-canvas.
+   - The `__refract` layer is DROPPED. It needs JS to build a per-element
+     feImage displacement map, and this repo measured what it buys: 0.04 % of
+     pixels, none of them on the backdrop behind the element.
+   - The `__specular` layer paints NOTHING. It was briefly a pair of gradients
+     fitted to a profile of the reference capture and it read as a 2004 glossy
+     button: the reference's own specular is a curved baked image along the
+     profile, not a linear wash from the top edge down.
+   - The layers sit BELOW the host's own inline content, at negative z-index,
+     instead of above it with the label wrapped in a __content element. The
+     original wraps, which is natural for a component that owns its children;
+     this kit decorates buttons a consumer already wrote, and wrapping their
+     label would change their DOM. Verified in lab/1n: backdrop-filter still
+     has a backdrop to read when it paints in the negative z-index step, and
+     the two shapes render alike. __content is still honoured for a consumer
+     who does wrap.
+   - No @layer. The original wraps its defaults in Tailwind's `base` layer so
+     utilities win; this kit ships no layers and no Tailwind, and an unlayered
+     rule here is what a consumer's own CSS should be able to beat.
+   - Tint densities are one custom property, --slg-tint-a, so a variant rebinds
+     a number rather than restating a gradient. The card's figure is 0.5125 and
+     this ships 0.18: that alpha sits on a dark blue-grey in the original,
+     while Sondalab's ground is nearly black, so the same number covers far
+     more. The owner picked 0.14 by eye on lab/1n and the profile says 0.18 —
+     two rounds of "correction" in between, to 0.37 and 0.46, were both read
+     off a contaminated column and were both wrong.
+   ------------------------------------------------------------------------- */
+
+/* The LIGHT POLE of the neutral pair, and the one colour every highlight here
+   is made of. Not --sl-text-primary directly: on ink that token IS the bright
+   pole (L 0.91), but on paper it is the dark one (L 0.24), and a highlight
+   made of it would paint a black band where the reference has a white one.
+   Mirroring its lightness — 1.2 − l lands at 0.96 on paper — and taking the
+   brighter of the two is the same criterion effects.css applies to --slfx-glint
+   and the shader applies at runtime. Written out rather than imported so this
+   stylesheet stands on its own; effects.css binds --slg-spec to its own glint
+   when both are loaded, so there is still one source. */
+.sl-glass {
+  --slg-pole: oklch(from var(--sl-text-primary) max(l, 1.2 - l) c h);
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--slg-radius, var(--sl-radius-md));
+  color: var(--slg-text, inherit);
+}
+
+/* EVERY default below is a var() fallback at the point of use, never a
+   declaration on .sl-glass. A custom property declared on the element itself
+   beats the same property inherited from an ancestor, so defaults written as
+   declarations here would silently ignore a container that rebinds them —
+   which is exactly what happened the first time this file was written, and it
+   read as "the material is wrong" rather than as a cascade mistake. The
+   original avoids it the same way. */
+
+.sl-glass__backdrop,
+.sl-glass__tint,
+.sl-glass__specular,
+.sl-glass__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* The whole frost, and the card keeps it UNDER 6px: a blur wide enough to
+   read as a material and narrow enough that the text behind it stays a shape
+   rather than a smear. saturate lifts what the blur washes out. */
+/* Negative z-index, so the host's own text paints over all three without a
+   wrapper: inside a stacking context, negative children paint after the
+   element's background and before its inline content. isolation: isolate above
+   is what makes the host that context, so these never escape it. */
+.sl-glass__backdrop {
+  z-index: -3;
+  backdrop-filter: blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7));
+}
+
+/* TWO gradients, always both present, each a density a component rebinds as a
+   number — never a restated gradient, so a variant is one line.
+ *
+ * Under: the tint. The page's own ground at a density, in both themes:
+ * near-black on ink, and the card's own light value is a wash of its light
+ * canvas. What separates that from generic glassmorphism is the density and
+ * the frost beneath it, not the direction. A component that fills itself with
+ * a role colour names it through --slg-tint-color, so a tag or a dialog stays
+ * ITS OWN colour lifted rather than the page's ground over it.
+ *
+ * Over: the accent, at 0% by default, so a plain pane pays nothing for it and
+ * a variant says which control it is by raising one number. ONE colour at two
+ * densities, like the reference's own tint pair — a gradient running from the
+ * accent to its depth companion turns a brand button into an amber-to-teal
+ * wash the moment the share is high enough to read as a fill. The reference's
+ * own rule is that variants override the tint rather than painting over the
+ * glass — and how far they may go is a measured question, not a preference:
+ * a saturated brand fill thinned far over a dark page stops being its hue. */
+.sl-glass__tint {
+  z-index: -2;
+  background-image:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--slg-accent, var(--sl-accent-default)) var(--slg-accent-a, 0%), transparent),
+      color-mix(in srgb, var(--slg-accent, var(--sl-accent-default)) var(--slg-accent-deep-a, var(--slg-accent-a, 0%)), transparent)
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-a, 18%), transparent),
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-deep-a, 15%), transparent)
+    );
+}
+
+/* The rim is an INSET shadow, so it cannot fatten the box the way a border
+   would, and it is asymmetric on purpose. */
+/* AC-33 — "an element at rest carries no light" — is OVERRIDDEN here, by the
+   owner, on 2026-09-11: "il risultato finale deve essere COME IL KNOWLEDGE
+   BASE". The `liqui-glass` card's Leave line rejects the reference's resting
+   state, and that ruling does not survive the owner's newer one. Every layer
+   is on at rest, the way the reference's are, because the rim and the polish
+   are what the surface is; what the pointer still adds is the pool, the
+   specular that tracks it and the edge that turns to face it, all of which
+   remain scaled by --slfx-lit on the host's own pseudo-element. */
+.sl-glass__shine {
+  z-index: -1;
+  /* Bright along the top, a softer edge down the left, barely anything at the
+     bottom — light arriving from above, which is why an even ring round the
+     perimeter reads as a border instead. */
+  box-shadow:
+    inset 0 1px 1px var(--slg-rim-hi, color-mix(in srgb, var(--slg-pole) 50%, transparent)),
+    inset 1px 0 1px 0.5px
+      color-mix(in srgb, var(--slg-rim-hi, var(--slg-pole)) 30%, transparent),
+    inset -1px -1px 1px var(--slg-rim-lo, color-mix(in srgb, var(--slg-pole) 5%, transparent));
+}
+
+/* THE SPECULAR PAINTS NOTHING, and that is a correction. It was briefly a pair
+   of linear gradients fitted to a profile of the reference capture — the top
+   edge peaks at 197 against a backdrop at 102 and is still at 148 six pixels
+   in, so a band about a quarter of the pane deep. The numbers were right and
+   the reading was wrong: a white wash running from the top edge downward is
+   the glossy button of 2004, and the owner named it on sight. What the
+   reference actually has there is a baked specular IMAGE, a curved arc along
+   the profile rather than a sheet.
+
+   The rim is __shine's job, and the material is the lens's. Kept as a class so
+   existing markup and the injected layer list do not have to change. */
+.sl-glass__specular { z-index: -1; }
+
+/* While a real lens is bound, the GROUND tint stands DOWN but not away: the
+   lens IS the surface, and a veil of the page's own colour over it is a veil
+   over a window — but a window with nothing in it cannot carry a label.
+   It went to zero until 2026-09-12, and the owner read the result: on paper,
+   a ghost pane over a dark region left the theme's dark ink on a dark
+   backdrop. Measured off the showcase's telemetry substrate, label against
+   the composited pane: 2.84:1, where WCAG AA asks 4.5. A lensed PRIMARY was
+   fine at 5.98 because its accent share survives the lens; a ghost has no
+   share, so it had nothing at all between the page and the label.
+   --slg-tint-lens is that floor, and it is a LEGIBILITY figure, not a taste
+   one: at 34% the same measurement reads 4.94:1, and at 58% it reads 7.09 with
+   very little lens left to see. It is one number on both themes because the
+   tint COLOUR already follows the theme — the veil is the page's own ground
+   either way, so the same alpha mutes a dark backdrop on paper and a light one
+   on ink. A surface that wants the old bare window back sets it to 0 and owns
+   the contrast.
+   Only the ground share is floored — the ACCENT share is untouched, or a
+   lensed primary would be indistinguishable from a lensed ghost. The frost
+   stays too, and so does the rim, which is what gives the edge its thickness.
+
+   The host's own fill goes with it, and this stylesheet is where that belongs:
+   glass-lens.js used to claim it cleared the background and did not, which
+   showed only on a page without effects.css — every lensed card and every
+   lensed primary stayed opaque, a working lens under a solid fill. (An earlier
+   version of this rule was cut by accident along with the specular block; it
+   never shipped, so the showcase had tint under every lens as well.) */
+/* Registered so they interpolate: an unregistered custom property inside a
+   filter snaps between keyframes instead of tweening. Inherit, so a container
+   can breathe every pane in it at once. */
+@property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 0.25px; }
+@property --slg-lens-sat  { syntax: "<number>"; inherits: true; initial-value: 1.1; }
+.sl-glass.is-lensed { background-color: transparent; }
+.sl-glass.is-lensed .sl-glass__tint {
+  --slg-tint-a: var(--slg-tint-lens, 34%);
+  --slg-tint-deep-a: calc(var(--slg-tint-lens, 34%) - 4%);
+}
+
+/* Honoured for a consumer who wraps their content the way the original does.
+   Unnecessary otherwise: the layers above already sit below inline content.
+   Either way the text is never filtered — AC-25. */
+.sl-glass__content {
+  position: relative;
+  z-index: 1;
+}

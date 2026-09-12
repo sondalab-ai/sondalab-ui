@@ -1,6 +1,6 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.7.2",
+  "version": "0.9.0",
   "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
   "keywords": [
     "design-system",
@@ -30,6 +30,15 @@
   "exports": {
     "./tokens.css": "./tokens.css",
     "./components.css": "./components.css",
+    "./glass.css": "./glass.css",
+    "./effects.css": "./effects.css",
+    "./fonts.css": "./fonts.css",
+    "./effects.js": "./effects.js",
+    "./glass-lens.js": "./glass-lens.js",
+    "./goo-field.js": "./goo-field.js",
+    "./geom.js": "./geom.js",
+    "./effects-gpu.js": "./effects-gpu.js",
+    "./effects-shader.js": "./effects-shader.js",
     "./themes/light.css": "./themes/light.css",
     "./themes/dark.css": "./themes/dark.css",
     "./themes/high-contrast.css": "./themes/high-contrast.css",
@@ -41,11 +50,21 @@
     "./agent/catalog.json": "./agent/catalog.json",
     "./agent/accent-registry.json": "./agent/accent-registry.json",
     "./agent/substrate-matrix.json": "./agent/substrate-matrix.json",
-    "./agent/*": "./agent/*"
+    "./agent/*": "./agent/*",
+    "./assets/fonts/*": "./assets/fonts/*"
   },
   "files": [
     "tokens.css",
     "components.css",
+    "glass.css",
+    "effects.css",
+    "fonts.css",
+    "glass-lens.js",
+    "goo-field.js",
+    "geom.js",
+    "effects.js",
+    "effects-gpu.js",
+    "effects-shader.js",
     "themes/light.css",
     "themes/dark.css",
     "themes/high-contrast.css",
@@ -55,6 +74,21 @@
     "assets/app-icon.svg",
     "assets/README.md",
     "README.md",
-    "agent/"
-  ]
+    "agent/",
+    "assets/fonts/fraunces-latin.woff2",
+    "assets/fonts/instrument-sans-latin.woff2",
+    "assets/fonts/martian-mono-latin.woff2",
+    "assets/fonts/OFL-Fraunces.txt",
+    "assets/fonts/OFL-InstrumentSans.txt",
+    "assets/fonts/OFL-MartianMono.txt",
+    "assets/fonts/README.md"
+  ],
+  "peerDependencies": {
+    "vgpu": "^0.3.1"
+  },
+  "peerDependenciesMeta": {
+    "vgpu": {
+      "optional": true
+    }
+  }
 }

@@ -7,3 +7,11 @@ __pycache__/
 
 # logo generator font cache
 scripts/.fontcache/
+
+# lab/ direction probes are disposable by construction; the harness is not
+lab/*.html
+!lab/_template.html
+# and the stand-in media a probe borrows to have something real to refract
+lab/_scene.*
+# and third-party copy-paste sources a probe vendors verbatim
+lab/_lg-*.js

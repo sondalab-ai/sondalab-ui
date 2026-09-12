@@ -1,0 +1,88 @@
+/* Lab chrome. Deliberately not Sondalab: no token is imported here, so nothing
+   in this file can be mistaken for a design decision. Grounds are hardcoded —
+   a near-black and a warm off-white — because the probe is about the element,
+   not about the palette. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 400 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+  background: #17171a;
+  color: #e8e8ea;
+}
+
+.lab-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #2e2e33;
+}
+.lab-head h1 { font: inherit; font-weight: 500; margin: 0; letter-spacing: .04em; text-transform: uppercase; }
+.lab-head p { margin: 0; color: #8b8b93; }
+.lab-head a { color: #8b8b93; }
+
+.lab-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+@media (max-width: 900px) { .lab-body { grid-template-columns: minmax(0, 1fr); } }
+
+/* The reference sits beside the grid and stays put while the grid scrolls:
+   the comparison has to happen in the eye, not in the memory between two tabs. */
+.lab-ref {
+  position: sticky;
+  top: 0;
+  padding: 1.5rem;
+  border-left: 1px solid #2e2e33;
+}
+.lab-ref img { display: block; width: 100%; border: 1px solid #2e2e33; }
+.lab-ref figcaption { margin-top: .5rem; color: #8b8b93; }
+.lab-ref .lab-ref__missing {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border: 1px dashed #3d3d44;
+  color: #6a6a72;
+  text-align: center;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.lab-panel { padding: 1.5rem; }
+.lab-panel + .lab-panel { border-top: 1px solid #2e2e33; }
+.lab-panel__label { margin: 0 0 1rem; color: #8b8b93; letter-spacing: .08em; text-transform: uppercase; }
+
+/* The two grounds. Everything a variant draws sits on one of these. */
+.lab-panel[data-ground="dark"]  { --lab-ground: #101013; --lab-ink: #ececef; }
+.lab-panel[data-ground="light"] { --lab-ground: #f4f1ea; --lab-ink: #1a1a1d; }
+
+.lab-grid {
+  display: grid;
+  /* auto-fit, not auto-fill: an empty track at the end of the row reads as a
+     failed variant, and the grid must show exactly as many cells as there are. */
+  grid-template-columns: repeat(auto-fit, minmax(var(--lab-cell, 280px), 1fr));
+  gap: 1px;
+  background: #2e2e33;
+  border: 1px solid #2e2e33;
+}
+
+.lab-cell {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: var(--lab-cell-h, 200px);
+  background: var(--lab-ground);
+  color: var(--lab-ink);
+  cursor: zoom-in;
+}
+.lab-cell > .lab-stage { display: grid; place-items: center; padding: 2rem; }
+.lab-cell > .lab-tag {
+  padding: .5rem .75rem;
+  border-top: 1px solid color-mix(in oklab, var(--lab-ink) 12%, transparent);
+  color: color-mix(in oklab, var(--lab-ink) 55%, transparent);
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+/* Solo hides its neighbours rather than sitting beside them: leftover tracks
+   leave dead ground in the row, and "solo" means look at this one anyway. */
+.lab-cell.is-solo { grid-column: 1 / -1; min-height: 420px; cursor: zoom-out; }
+.lab-grid:has(.is-solo) .lab-cell:not(.is-solo) { display: none; }

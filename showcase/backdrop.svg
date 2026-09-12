@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="200" viewBox="0 0 640 200">
+  <!-- The pane demo's declared backdrop. Everything a pane bends has to be IN
+       here: the kit refracts this image and nothing else, so a line of DOM text
+       laid over it would sit unrefracted beside a bent one and read as a bug.
+       Straight lines, because a bend is only visible where one crosses an edge. -->
+  <defs>
+    <linearGradient id="w" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a2f6b"/>
+      <stop offset="0.38" stop-color="#123a6b"/>
+      <stop offset="0.74" stop-color="#0d5c53"/>
+      <stop offset="1" stop-color="#6b4a12"/>
+    </linearGradient>
+    <pattern id="g" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0v32" fill="none" stroke="#ffffff" stroke-opacity="0.30" stroke-width="1.5"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="200" fill="url(#w)"/>
+  <rect width="640" height="200" fill="url(#g)"/>
+  <g fill="#ffffff" fill-opacity="0.62" font-family="ui-monospace, Menlo, monospace" font-size="15">
+    <text x="18" y="34">processInstanceKey 4251 &#183; active &#183; elementId Gateway_1v8qk2 &#183; last retry 12s</text>
+    <text x="18" y="58">worker sondalab-runner-03 has not acknowledged the job &#183; incident open</text>
+    <text x="18" y="82">bpmnProcessId probe-collection &#183; version 7 &#183; tenant default</text>
+  </g>
+  <text x="18" y="178" fill="#ffffff" fill-opacity="0.85"
+        font-family="ui-monospace, Menlo, monospace" font-size="19" font-weight="600">processInstanceKey 4251</text>
+</svg>

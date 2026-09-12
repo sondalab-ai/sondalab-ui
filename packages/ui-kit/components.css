@@ -111,7 +111,11 @@
   font-weight: 600;
   line-height: 1;
   padding: var(--sl-space-3, 0.75rem) var(--sl-space-5, 1.5rem);
-  border-radius: var(--sl-radius-md, 6px);
+  /* --lg, not --md: the button is the one control the glass family turns into
+     a pane, and at 6px a 40px-tall pane reads as a rectangle with the corners
+     filed off rather than as a rounded slab. The token is the existing one, so
+     this stays a choice between shipped radii and not a new value (AC-11). */
+  border-radius: var(--sl-radius-lg, 10px);
   border: 1px solid transparent;
   background: transparent;
   color: var(--slc-text);

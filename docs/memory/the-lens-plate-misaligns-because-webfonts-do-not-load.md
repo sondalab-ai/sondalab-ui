@@ -1,0 +1,208 @@
+---
+name: the-lens-plate-misaligns-because-webfonts-do-not-load
+description: The glass lens (e33ea31) paints the WRONG page content inside every pane, and the cause is fonts, not geometry — its plate rasterises a body clone inside an SVG foreignObject where webfonts never load, so text falls back, metrics change, blocks shift, and the crop drifts further the lower you scroll. Its sx/sy formula is correct. Hide `.sl-fx-glass__lens` to confirm in one step.
+metadata:
+  node_type: memory
+  loadout_kind: memory
+  scope: repo
+  created: 2026-09-11
+---
+
+Seen on `showcase/effects.html` at scroll ~3630: every glass button showed a
+line of small text through it that belonged to a different part of the page —
+legible, unblurred, and unrelated to what sits behind the button. Thirty lenses
+on the page, all wrong the same way.
+
+**It is not the crop arithmetic.** `paintLens` computes
+
+```js
+const sx = Math.round(r.left) + (Math.round(window.scrollX) - plateScrollX);
+const sy = Math.round(r.top)  + (Math.round(window.scrollY) - plateScrollY);
+```
+
+which is right: the plate is a viewport-aligned snapshot taken at
+`plateScrollY`, and the clone is offset by `top: -scrollY` so the frame stays
+put while the page slides behind it.
+
+**It is the fonts.** `capturePlate` serialises a `document.body` clone into an
+SVG `foreignObject` and rasterises it through a blob-URL `Image()`. That render
+happens in a separate document context with no network:
+
+1. The page's `@font-face` rules come from a cross-origin Google Fonts
+   stylesheet, and the CSS collector skips it — `sheet.cssRules` throws on a
+   cross-origin sheet and the `catch` swallows it (correctly, but silently).
+2. Even with the rules copied, the `.woff2` files would not load from a blob URL.
+
+So every string in the plate renders in a fallback face. Metrics change, lines
+wrap differently, every block shifts vertically, and the shift **accumulates
+down the document** — which is why the crop is plausible near the top and badly
+wrong thousands of pixels down.
+
+**Confirm it in one step:** `.sl-fx-glass__lens { display: none !important }`.
+The spurious text disappears and the panes read correctly.
+
+## Answered 2026-09-11 — and there are TWO causes, not one
+
+`lab/z-plate-fonts.html` settles the mechanism, in one look:
+
+| in a foreignObject raster | result |
+|---|---|
+| `@font-face` with an external URL, even same-origin and absolute | **does not load** |
+| `@font-face` with the bytes as a `data:` URI | **loads** — matches the live line |
+
+So the fonts must travel as bytes inside the CSS. `effects.js` now does that
+(`inlineFaces()`), and the kit vendors the three faces so they are readable and
+fetchable at all. Write the probe's rasters into `<img>` elements, never into
+`Image()` + canvas: the first version awaited `Image.onload` and hung with no
+error in every browser, which taught nothing.
+
+**The second cause, found by LOOKING at the plate.** Render the plate into an
+`<img>` pinned over the page, cropped to a pane's own band, one copy per clone
+strategy. At the button's band the `el.remove()` plate carried a heading from two
+sections away; the `opacity: 0` plate carried the line that is actually behind the
+button. That is the whole diagnosis, and it took one screenshot after three
+rounds of guessing — **render the plate before theorising about the crop.**
+
+`capturePlate` removes every glass element from the clone so a pane does not
+capture itself. A removal takes the box out of flow: everything after it moves up,
+and with thirty panes the accumulated shift is hundreds of pixels. `opacity: 0`
+keeps the box, paints nothing, and aligns the plate. (`visibility: hidden` also
+aligns it; `opacity: 0` is the one that shipped.)
+
+**What is left after both fixes, narrowed as far as it went:** a `--rim` pane —
+a filled primary — crops a **black rectangle** out of the plate, while a ghost
+pane in the same row is correct. It is the plate's own pixels, not the
+displacement: forcing `filter: none` on the lens leaves the black exactly where it
+was. Four things did *not* clear it —
+
+1. `visibility: hidden` on the clone's glass elements instead of `opacity: 0`;
+2. also forcing `background`, `box-shadow` and `filter` to none on them;
+3. also forcing `backdrop-filter: none` on them;
+4. hiding a lens whose crop falls outside the plate, so an empty canvas never
+   paints its filter (kept — it is right on its own terms, and fixes panes below
+   the fold, but it is not this bug).
+
+Four more observations narrow it, all made by rendering things rather than
+reasoning about them:
+
+- **The plate is correct at the primary's own band.** Rendered and cropped to it:
+  the substrate line that belongs behind the button, no black.
+- **The lens canvas is correct too.** Drawn into a fresh canvas at 3x with no
+  filter: real page content across its whole width, no black region.
+- **It is not the filter.** Forcing `filter: none` on the lens leaves the dark
+  area exactly where it was.
+- **It does not follow the page.** Translating the primary 360 px sideways, over
+  a completely different part of the section, leaves the dark area on the same
+  *left portion of the button*. So it is fixed to the pane, not to what is behind
+  it — which rules out "the section's display word showing through", the most
+  attractive explanation.
+
+**The aurora is not it either.** Four clones of the primary in one strip — as
+shipped, without `.sl-fx-aurora__glow`, without `--rim`, without the aurora
+entirely — all render the same: a dark interior inside an amber ring. Which also
+says the dark reading reproduces **with no lens crop at all**, since a cloned
+lens holds an empty canvas. That sits badly beside the fact that hiding
+`.sl-fx-glass__lens` on the live button makes it clean, and the contradiction is
+the most useful thing here: the two layers are interacting, rather than one of
+them being wrong on its own.
+
+**Painting order was a good theory and it is wrong.** A child with a negative
+`z-index` paints *above* its element's background, so the lens at `z-index: -2`
+sits over the host's fill rather than behind it — which would explain a dark crop
+covering the amber, and why a transparent-filled ghost looks fine. Tested by
+forcing `background-color: transparent` on the primary: the substrate text does
+now read through the pane, **and the opaque black rectangle is still there**. So
+the fill is not what it covers.
+
+**The element itself is innocent.** Enumerated every layer of the primary while
+the black box was on screen: host background is the amber at 0.72, `::before` is
+transparent gradients at `--slfx-lit: 0`, `::after` is `opacity: 0`, and the only
+two children are the lens and the aurora glow at `opacity: 0`.
+`document.elementsFromPoint` across the box returns nothing but the button and
+its ancestors. Nothing in the DOM should paint it — yet it paints, and hiding the
+lens removes it. So the lens is drawing black, from a plate that reads correct
+when reconstructed by hand.
+
+**Stripping the glass classes from the clone does not fix it either** (attempt
+eight), so it is not simply "an element carrying backdrop-filter rasterises black".
+
+**The plate is captured once and never again.** Intercepting
+`URL.createObjectURL` shows no SVG blob created on any scroll or resize after the
+first capture — so the plate is always the first viewport, and every pane below
+it crops from outside. One cause is in `armRefraction`: the scroll/resize
+listeners sat behind `if (!plate)`, which reads as "do not attach twice" but
+actually means "never attach once a capture has landed". Replaced with an
+explicit `plateListening` flag. **That did not restore refreshing on its own**, so
+there is at least one more reason captures stop.
+
+Net effect today: the lens hides itself wherever its crop falls outside the plate
+(the guard above), which is everywhere below the first viewport. The black
+rectangle is gone and the glass reads correctly — but the lens is **inert**, not
+working. That is graceful degradation, not the feature.
+
+Where that leaves it, after eight measurements that each removed a candidate:
+an opaque black rectangle drawn by the lens, from a plate that looks right when
+rebuilt by hand, on a `--rim` pane only, with every layer of the element
+accounted for. The next move is not another toggle from script — it is the
+devtools Layers panel on the live element, or rendering the SHIPPED plate rather
+than a reconstruction of it. The reconstruction matching is the weakest link in
+the chain above and the first thing to distrust.
+
+A plate that is right, a canvas that is right, no filter involved, the aurora
+ruled out, the fill ruled out, and an artefact anchored to the element rather
+than to the page: the remaining candidates are what composites BETWEEN them — the lens's `z-index: -2` under the
+host's own background, the host's `isolation: isolate`, and `--rim`'s extra
+layers, which the ghost does not have.
+
+**Superseded note —** what follows was written before the plate was rendered: With the fonts embedded the crop still lands
+wrong — the text under the pane changed, so the plate's layout did change, but it
+is still not the page's. The remaining offset is `capturePlate` **removing** every
+glass element from the clone: a removal takes the box out of flow, so everything
+after it moves up, and with thirty panes on a page the accumulated shift is
+hundreds of pixels. `visibility: hidden` keeps the box, but leaves a **black
+rectangle** in the raster — still there with `backdrop-filter`, `background`,
+`box-shadow` and `filter` all forced off. Three attempts, none clean; left as a
+removal. Whoever takes it next needs a way to reserve a box without painting it
+that survives the rasteriser.
+
+## What a fix had to get past (probed 2026-09-11)
+
+The obvious repair — inline the faces as data URIs in the plate's CSS — needs the
+font bytes, and a page cannot discover them on its own:
+
+- **The Google Fonts CSS endpoint is not fetchable.** `fetch()` on the
+  `fonts.googleapis.com/css2?...` href throws `TypeError: Failed to fetch`; it is
+  also unreadable through `sheet.cssRules`, being cross-origin. So the `@font-face`
+  rules and their `url()`s cannot be read at all.
+- **The faces are not enumerable either.** `[...document.fonts]` on the showcase
+  lists only unrelated browser/extension faces, all `unloaded`, even though
+  `document.fonts.status` is `loaded` — CSS-connected faces from a cross-origin
+  sheet are not exposed as `FontFace` objects.
+- **The font FILES are reachable.** A deliberately wrong `fonts.gstatic.com` URL
+  returned `404` with `response.type === "cors"`, so the request was not opaque:
+  given a URL, the bytes can be fetched and base64'd.
+
+So the missing piece is the URL list, and only the surface knows it. The workable
+shape of a fix is therefore **the surface self-hosts or declares its fonts** and
+the kit inlines them as data URIs — not something the kit can solve alone.
+
+Not verified: whether a `foreignObject` raster can load an external font URL at
+all (it is widely held that subresources do not load in that context). The test
+for it awaits `Image.onload` inside `javascript_tool`, which froze the renderer
+and timed out CDP — the same throttling as
+[[claude-in-chrome-the-mcp-tab-reports-visibilitystate-hidden]]. Run it in a real
+tab, not through the extension.
+
+Consequences worth knowing before touching this:
+
+- Any fix has to get the fonts into the plate (embed the faces as data URIs in
+  the inlined CSS) or stop cloning the document altogether. Matching only the
+  `font-family` is not enough; the files have to be there.
+- The same class of drift will hit any other external resource the clone cannot
+  fetch — background images, icon fonts.
+- It also means the lens cannot be judged on any page that uses webfonts, which
+  is every Sondalab surface.
+
+Related: [[opacity-on-the-backdrop-filter-element-throttles-the-filter]] and
+[[backdrop-filter-url-svg-displacement-is-applied-but-inert-ch152]] — the lens
+exists because that displacement route does not work in Chrome 152.
