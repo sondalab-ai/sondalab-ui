@@ -1031,10 +1031,18 @@
 /* NOTHING OUTSIDE THE BOX. The reference reads -5 outside the composer where
    an unclipped blur read +33 (lab/1w). clip-path is applied after filter, so
    the blur is cut at the host's border box, in the host's own radius, and the
-   band inside it is untouched. Two lights keep the outside on purpose: the
-   --beam is a line that enters one face and leaves the other, and --rim's
-   ring and light sit outside a filled control by the declension. */
-.sl-fx-aurora__glow[data-sl-fx-seated]:not([data-sl-fx-beam]):not(:has(+ .sl-fx-aurora--rim)) {
+   band inside it is untouched.
+   The inset is the spread effects.js gave the glow, so it names the SAME
+   geometry seatGlow() used — and three modes are excluded because that
+   geometry is not theirs:
+     --beam    a line that enters one face and leaves the other;
+     --rim     light outside a filled control, by the declension;
+     --pillars seated with NO spread at all (the box IS the host's box), so
+               this inset would eat it from every side — measured on a 40px
+               button, 32.5px of inset on a 40px box left nothing: 11 297
+               pixels of curtain, max delta 149, simply gone. It needs no clip
+               anyway: overflow:hidden and the seat radius already hold it. */
+.sl-fx-aurora__glow[data-sl-fx-seated]:not([data-sl-fx-beam], [data-sl-fx-pillars]):not(:has(+ .sl-fx-aurora--rim)) {
   clip-path: inset(calc(1px + var(--slfx-rim-out) + var(--slfx-glow)) round var(--slfx-seat-radius));
 }
 

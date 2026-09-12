@@ -100,6 +100,20 @@ test("--slfx-glow is registered as a <length>, so effects.js can read it in px",
   assert.match(effects, /@property\s+--slfx-glow\s*\{[^}]*syntax:\s*"<length>"/);
 });
 
+// Regression, 2026-09-12: the glow's clip is written from --slfx-glow, which is
+// the spread seatGlow() gives a NORMAL glow. A --pillars glow is seated with no
+// spread — its box is the host's own — so the same inset eats it from every
+// side; on a 40px button 32.5px of inset left nothing at all. Every mode whose
+// seat differs has to be out of the clip's selector.
+test("the glow's clip excludes every mode that is not seated with the spread", () => {
+  const rule = RULES.find((r) => /clip-path/.test(r.body) && /sl-fx-aurora__glow/.test(r.selector));
+  assert.ok(rule, "the seated glow must carry a clip rule");
+  for (const mode of ["data-sl-fx-beam", "data-sl-fx-pillars"]) {
+    assert.match(rule.selector, new RegExp(`:not\\([^)]*\\[${mode}\\]`), `${mode} must be excluded from the clip`);
+  }
+  assert.match(rule.selector, /:not\(:has\(\+ \.sl-fx-aurora--rim\)\)/, "--rim must be excluded from the clip");
+});
+
 // Regression, 2026-09-12 (lab/1w): the bloom band was a padding ring cut out
 // with a content-box mask, and a padding cannot shrink below itself — on a host
 // shorter than twice --slfx-bleed the box grew past the host's bottom (a 111px
