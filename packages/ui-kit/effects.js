@@ -22,8 +22,23 @@ const rand = (a, b) => a + Math.random() * (b - a);
    One ambient aurora and one glitch burst at a time. Busy auroras are exempt:
    they are bound to real work and several can legitimately run at once. */
 let liveEl = null;
-let burstActive = false;
 let armed = false;
+
+/** How many glitch bursts may run at once, and how many are running.
+ *
+ *  The budget was a single boolean until 2026-09-12, when the only consumer
+ *  was the showcase and one burst at a time was plainly right there. A real
+ *  page can want more: sondalab.eu runs an ambient burst on its hero claim,
+ *  another on each interlude marker and a hover burst on every product row,
+ *  and with a ceiling of one most of them are simply dropped — the effect
+ *  thins out rather than reading as restraint.
+ *
+ *  So the ceiling is the consumer's, and the DEFAULT IS STILL ONE: a surface
+ *  that says nothing behaves exactly as before, and raising it is a decision
+ *  someone made on purpose. A burst over the ceiling is still dropped, never
+ *  queued — a queue produces a stutter train, which reads as breakage. */
+let burstBudget = 1;
+let burstsRunning = 0;
 
 /** The document's live token values, re-read whenever the theme changes.
  *  Nothing in Tier 1 reads these — the CSS owns every colour it paints. They
@@ -959,7 +974,7 @@ function suppressed() {
  * @param {{ignoreReducedMotion?: boolean}} [options]
  * @returns {boolean} whether Tier 1 was armed
  */
-export function mount(root = document, { ignoreReducedMotion = false } = {}) {
+export function mount(root = document, { ignoreReducedMotion = false, bursts = 1 } = {}) {
   if (armed) return true;
   if (typeof window === "undefined") return false;
   const html = document.documentElement;
@@ -968,6 +983,7 @@ export function mount(root = document, { ignoreReducedMotion = false } = {}) {
   // alone: effects.css keys the glitch's reduced-motion removal off this
   // attribute, so the CSS and the JavaScript decline together or not at all.
   if (ignoreReducedMotion) html.setAttribute("data-sl-fx-motion", "always");
+  burstBudget = Math.max(1, Math.floor(bursts));
   // Before the motion guard, and deliberately: the goo animates nothing, so
   // refusing it for a motion preference would take away material rather than
   // movement. mountGoo() owns its own observers and its own armed flag.
@@ -1024,14 +1040,85 @@ export function burst(el, { burstMin = 200, burstMax = 500 } = {}) {
   // rather than called inline so the guard clause stays a single paren-free
   // condition — scripts/effects-js.test.mjs locates it by that shape.
   const blocked = suppressed();
-  if (!armed || burstActive || blocked || !el?.isConnected) return;
-  burstActive = true;
+  if (!armed || burstsRunning >= burstBudget || blocked || !el?.isConnected) return;
+  burstsRunning++;
   randomizeGhosts(el);
   el.classList.add("is-glitching");
   setTimeout(() => {
     el.classList.remove("is-glitching");
-    burstActive = false;
+    burstsRunning--;
   }, Math.min(CAP_MS, rand(burstMin, burstMax)));
+}
+
+/**
+ * Burst, wait, burst again — an ambient glitch on one element, with a random
+ * pause between each. The element re-resolving every so often is a different
+ * statement from one that glitches once: it says the thing is live, not that
+ * something just happened.
+ *
+ * Returns a stop function. Callers who never call it are not leaking a timer
+ * for the life of the page: the loop checks `isConnected` and lets itself go
+ * when the element leaves the document, which is the case that actually bites
+ * (a scene field drops its fallback picture once its tube is up).
+ *
+ * @param {Element} el an element carrying .sl-fx-glitch
+ * @param {{waitMin?: number, waitMax?: number, burstMin?: number, burstMax?: number}} [options]
+ * @returns {() => void} stop
+ */
+export function autoBurst(el, { waitMin = 6000, waitMax = 11000, burstMin = 200, burstMax = 500 } = {}) {
+  let timer = 0;
+  let stopped = false;
+  const loop = () => {
+    timer = setTimeout(() => {
+      if (stopped || !el?.isConnected) return;
+      burst(el, { burstMin, burstMax });
+      loop();
+    }, rand(waitMin, waitMax));
+  };
+  loop();
+  return () => { stopped = true; clearTimeout(timer); };
+}
+
+/**
+ * While the pointer is over one element, glitch another in bursts separated by
+ * random pauses; stop the moment it leaves.
+ *
+ * The two elements are separate on purpose: what the pointer is over is often
+ * a whole row or a link, and what should re-resolve is the name inside it.
+ *
+ * This does NOT go through burst(): a hover is a direct answer to the pointer,
+ * and dropping it because something ambient happens to be mid-burst would make
+ * the surface feel unresponsive at exactly the moment the visitor asked it for
+ * something. It is the one path allowed past the budget, and it is bounded by
+ * the pointer being there.
+ *
+ * @param {Element} hoverEl what the pointer is over
+ * @param {Element} targetEl what re-resolves — may be the same element
+ * @param {{burstMin?: number, burstMax?: number, pauseMin?: number, pauseMax?: number}} [options]
+ * @returns {() => void} stop, which also releases the listeners
+ */
+export function hoverBurst(hoverEl, targetEl, { burstMin = 200, burstMax = 500, pauseMin = 500, pauseMax = 1600 } = {}) {
+  let active = false;
+  const timers = [];
+  const clear = () => { while (timers.length) clearTimeout(timers.pop()); };
+  const cycle = () => {
+    if (!active || suppressed() || !targetEl?.isConnected) return;
+    randomizeGhosts(targetEl);
+    targetEl.classList.add("is-glitching");
+    timers.push(setTimeout(() => {
+      targetEl.classList.remove("is-glitching");
+      if (active) timers.push(setTimeout(cycle, rand(pauseMin, pauseMax)));
+    }, Math.min(CAP_MS, rand(burstMin, burstMax))));
+  };
+  const enter = () => { if (active || !armed) return; active = true; cycle(); };
+  const leave = () => { active = false; clear(); targetEl.classList.remove("is-glitching"); };
+  hoverEl.addEventListener("pointerenter", enter, { passive: true });
+  hoverEl.addEventListener("pointerleave", leave, { passive: true });
+  return () => {
+    leave();
+    hoverEl.removeEventListener("pointerenter", enter);
+    hoverEl.removeEventListener("pointerleave", leave);
+  };
 }
 
 /**
