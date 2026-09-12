@@ -142,8 +142,13 @@ function accentColorStrings(accentEntry) {
 
 /** 'A' (data-sl-theme), 'B' (data-theme), or null if neither appears. */
 export function detectTier(css) {
-  if (/\[data-sl-theme/.test(css)) return "A";
-  if (/\[data-theme/.test(css)) return "B";
+  if (/\[data-sl-theme[\]=~|^$*\s]/.test(css)) return "A";
+  // A DELIMITER after the name, not a bare prefix. `[data-theme-toggle]` is a
+  // JavaScript hook, not a theme selector, and matching the prefix reported a
+  // Tier A surface as Tier B on the strength of its own toggle's markup —
+  // found on sondalab-site, whose header carries both data-sl-theme and
+  // data-theme-toggle.
+  if (/\[data-theme[\]=~|^$*\s]/.test(css)) return "B";
   return null;
 }
 

@@ -82,6 +82,17 @@ test("buildAllowlistBases includes theme, accent, and accent-subtle bases", () =
 test("detectTier reads the selector convention", () => {
   assert.equal(detectTier(`[data-sl-theme="dark"] { --x: 1 }`), "A");
   assert.equal(detectTier(`[data-theme="dark"] { --x: 1 }`), "B");
+  assert.equal(detectTier(`[data-theme] { --x: 1 }`), "B", "a bare attribute selector is still the Tier B convention");
+  // REGRESSION: the name must be followed by a delimiter, not merely begin the
+  // attribute. A theme TOGGLE's own hooks are not a theme selector, and
+  // matching the prefix reported sondalab-site — which uses data-sl-theme
+  // correctly — as a Tier B surface on the strength of its own button markup.
+  assert.equal(detectTier(`[data-theme-toggle] { --x: 1 }`), null, "a JS hook is not a theme selector");
+  assert.equal(detectTier(`[data-theme-label] { --x: 1 }`), null);
+  assert.equal(
+    detectTier(`[data-sl-theme="dark"] [data-theme-toggle] { --x: 1 }`), "A",
+    "and a Tier A surface keeps its tier even when it carries such a hook",
+  );
 });
 
 // --- blessed selector matching (over-match guard) ---
