@@ -292,10 +292,41 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // The prism: three displacements of the same map at different scales, in the
   // ratio of glass-studio's IOR triple, added back together. One displacement
   // moves every colour the same distance, which is a lens with no glass in it.
-  assert.match(lensSrc, /capped \* \(1 - 0\.02 \* disperse\)/, "red bends less");
-  assert.match(lensSrc, /capped \* \(1 \+ 0\.02 \* disperse\)/, "blue bends more");
+  // Red bends least, blue most — glass-studio's IOR triple is still the model.
+  // What changed on 2026-09-12 is that the SEPARATION is a pixel budget rather
+  // than a fraction of the bend: the bend is capped for looks, so a fraction of
+  // it grew with the cap, and at the aurora's 18px cap the split reached 13px,
+  // which on a line of text behind a pane reads as a broken render and was
+  // reported as one. The cap decides how far light bends, not how far apart its
+  // colours land.
+  assert.match(lensSrc, /const split = disperse \* 0\.12;/, "the split is a pixel budget");
+  assert.match(lensSrc, /capped - split \/ 2/, "red bends less");
+  assert.match(lensSrc, /capped \+ split \/ 2/, "blue bends more");
+  assert.doesNotMatch(lensSrc, /0\.02 \* disperse/, "and it no longer scales with the cap");
   assert.match(lensSrc, /operator", "arithmetic"/, "and the channels are added, not blended");
   assert.match(lensSrc, /roundedRectSDF\(ix, iy, 0\.3, 0\.2, 0\.6\)/, "his SDF, his numbers");
+});
+
+// 2026-09-12: a lens needs a pane large enough for its own cap to be a small
+// share of it. On a button it is a third of the box and the filter stops
+// behaving like glass — a 55 x 30 control rendered a flat grey slab, a 96 x 40
+// one shredded the text behind it into RGB copies, while a 494 x 139 card is
+// correct. Everything else was ruled out first by capture and diff: the
+// displacement itself (grey at scale 0), `reach` (6 and 18 identical), the
+// filter region (grown 24px a side) and the ground tint.
+test("the lens refuses a pane too small for its own bend", () => {
+  assert.match(lensSrc, /function tooSmall\(\)/, "the boundary is named, not inlined");
+  assert.match(lensSrc, /Math\.min\(r\.width, r\.height\) < cap \* 6/, "six times the cap, on the shorter side");
+  // And refusing means the element keeps glass.css's material rather than a
+  // half-built filter: no is-lensed, no backdrop-filter, no orphan <svg>.
+  const body = lensSrc.slice(lensSrc.indexOf("if (tooSmall())"));
+  const block = body.slice(0, body.indexOf("\n  refresh();"));
+  assert.match(block, /svg\.remove\(\)/, "the filter it built is taken back out of the document");
+  assert.match(block, /return null/, "and it answers null, like every other refusal");
+  assert.ok(
+    lensSrc.indexOf("if (tooSmall())") < lensSrc.indexOf('el.classList.add("is-lensed")'),
+    "the refusal comes before the element is marked lensed",
+  );
 });
 
 test("the lens costs nothing per frame, and refuses where it cannot work", () => {
