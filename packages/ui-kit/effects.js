@@ -369,8 +369,20 @@ const PANE_HOSTS = ".sl-fx-glass--pane";
  *  the bearing written to the host is the pointer's bearing minus this, so
  *  the hot stop lands under the pointer. */
 const PANE_HOT_DEG = 20;
+/** The pane's light eases in and out on an exponential, and the loop runs
+ *  until the value falls under PANE_SETTLE — which is 5.3 time constants, not
+ *  three. At the original 0.14 that made a mouse-out take about 740ms to
+ *  finish and roughly 420ms to become invisible, and the owner's word for it
+ *  was clunky.
+ *
+ *  OUT IS NOW FASTER THAN IN, which inverts the original pair. The intuition
+ *  behind a slower fade — light lingers — is about a light that is still
+ *  there. This one is a response to a pointer: on the way in the pointer is
+ *  present and the light is chasing it, so a little ease reads as weight; on
+ *  the way out the pointer is gone and there is nothing left to justify the
+ *  wait, so the same ease reads as lag. ~180ms to invisible. */
 const PANE_TAU_IN = 0.08;
-const PANE_TAU_OUT = 0.14;
+const PANE_TAU_OUT = 0.06;
 const PANE_SETTLE = 0.005;
 let paneEl = null;
 let paneLit = 0;
@@ -988,6 +1000,35 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // refusing it for a motion preference would take away material rather than
   // movement. mountGoo() owns its own observers and its own armed flag.
   mountGoo(root);
+  // The lens goes with it, and for the reason lensRefused() has argued in its
+  // own comment since it was written: a lens is not motion. It is a static
+  // property of a surface — it does not animate, and it does not redraw on
+  // scroll — and a visitor who asked for less movement did not ask for less
+  // material. The comment said so; the call site said otherwise, because it
+  // sat after this guard. armLenses() still refuses high contrast on its own,
+  // which is a different requirement: there the point is that what is behind a
+  // surface must not interfere with what is on it.
+  //
+  // injectGlassLayers goes with it, and it is the larger half of the same
+  // defect: those children ARE the glass material — glass.css puts the
+  // backdrop-filter on .sl-glass__backdrop, split from the tint because
+  // opacity on the filtering element throttles it — so a visitor reporting a
+  // motion preference was getting no glass at all, not merely no lens. The
+  // layers carry no animation of their own; what animates on a pane is in
+  // effects.css, inside the media query, where it stays.
+  //
+  // Late arrivals need the material too, so the observer that gives it to them
+  // is set up here rather than with Tier 1's: a page that refuses below still
+  // has to dress a card rendered after mount().
+  injectGlassLayers(root);
+  armLenses(root);
+  watchLensTheme(root);
+  new MutationObserver((records) => {
+    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
+      injectGlassLayers(n);
+      armLenses(n);
+    }
+  }).observe(root, { childList: true, subtree: true });
   if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;
 
   readTokens(html);
@@ -1003,15 +1044,13 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // Before data-sl-fx="on" goes up: the arc's sweep and its bloom's sweep
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
-  injectGlassLayers(root);
-  armLenses(root);
-  watchLensTheme(root);
   injectGlows(root);
   watchNear(root);
+  // Tier 1's own late arrivals: the glow is a moving layer and the viewport
+  // gate only matters where something is running, so both belong on this side
+  // of the guard. The material's observer is above.
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
-      injectGlassLayers(n);
-      armLenses(n);
       injectGlows(n);
       watchNear(n);
     }

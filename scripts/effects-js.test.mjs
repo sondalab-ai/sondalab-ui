@@ -395,3 +395,53 @@ test("autoBurst and hoverBurst are the kit's, and each hands back a stop", () =>
   assert.match(hover, /hoverEl\.removeEventListener\("pointerenter", enter\)/, "its stop releases the listeners");
   assert.match(hover, /pointerenter|pointerleave/, "pointer events, not mouse events");
 });
+
+test("material survives a motion preference; motion does not", () => {
+  // A lens and the glass layers are STATIC properties of a surface: they do not
+  // animate and they do not redraw on scroll. lensRefused() has argued exactly
+  // that in its own comment since it was written, and the call site said
+  // otherwise — armLenses() sat after the motion guard, so a visitor reporting
+  // the preference got no lens. injectGlassLayers() sat there too, and that is
+  // the larger half: those children ARE the material, since glass.css puts the
+  // backdrop-filter on .sl-glass__backdrop.
+  const body = fnBody("mount");
+  const guard = body.indexOf("matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;");
+  assert.ok(guard > -1, "the motion guard must still be there");
+
+  for (const call of ["injectGlassLayers(root);", "armLenses(root);", "watchLensTheme(root);", "mountGoo(root);"]) {
+    const at = body.indexOf(call);
+    assert.ok(at > -1, `mount() must call ${call}`);
+    assert.ok(at < guard, `${call} is material, not motion — it must come BEFORE the guard`);
+  }
+  // …and what genuinely moves must stay behind it.
+  for (const call of ["injectGlows(root);", "watchNear(root);"]) {
+    const at = body.indexOf(call);
+    assert.ok(at > guard, `${call} belongs to Tier 1 and must stay after the guard`);
+  }
+
+  // A page that refuses below still has to dress an element rendered later, so
+  // the material needs its own observer on the near side of the guard.
+  const beforeGuard = body.slice(0, guard);
+  assert.match(beforeGuard, /new MutationObserver\([\s\S]*?injectGlassLayers\(n\);[\s\S]*?armLenses\(n\);/,
+    "late arrivals must get the material even when Tier 1 refused");
+  assert.doesNotMatch(beforeGuard, /injectGlows\(n\)/, "…but not the moving layers");
+
+  // High contrast is a different requirement and still refuses everything.
+  const hc = body.indexOf('"high-contrast"');
+  assert.ok(hc > -1 && hc < body.indexOf("injectGlassLayers(root);"), "high contrast refuses first");
+});
+
+test("the pane's light leaves faster than it arrives", () => {
+  // The loop runs until the value falls under PANE_SETTLE, which is 5.3 time
+  // constants — so 0.14 made a mouse-out take ~740ms to finish and ~420ms to
+  // become invisible, and the owner's word for it was clunky. On the way in the
+  // pointer is present and the light is chasing it; on the way out the pointer
+  // is gone and there is nothing left to justify the wait.
+  const inTau = Number(/const PANE_TAU_IN = ([\d.]+);/.exec(js)[1]);
+  const outTau = Number(/const PANE_TAU_OUT = ([\d.]+);/.exec(js)[1]);
+  assert.ok(outTau < inTau, `out (${outTau}) must be faster than in (${inTau})`);
+  const settle = Number(/const PANE_SETTLE = ([\d.]+);/.exec(js)[1]);
+  const toInvisible = -outTau * Math.log(0.05) * 1000;
+  assert.ok(toInvisible < 250, `a mouse-out must read as prompt, got ${Math.round(toInvisible)}ms to 5%`);
+  assert.ok(settle > 0 && settle < 0.01, "and the loop must still stop itself");
+});
