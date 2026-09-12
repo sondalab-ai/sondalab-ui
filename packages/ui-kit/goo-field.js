@@ -30,7 +30,10 @@
    sl-audit reads CSS only, so there is no colour literal in this file:
    every value is read from a computed style or from a --slfx-* binding. */
 
-import { cornerPx, roundedRectPathAt, fieldOrigin, memberShape, weldPlan, weldedMembers, filterRegion } from "./geom.js";
+import {
+  cornerPx, roundedRectPathAt, fieldOrigin, memberShape,
+  weldPlan, weldedMembers, filterRegion, GOO_CONTRAST, GOO_INTERCEPT,
+} from "./geom.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -61,13 +64,6 @@ const MEMBERS = ".sl-fx-goo__member";
  *  it paints nothing of its own, so the substance can be its whole surface,
  *  and the drag board depends on it. */
 const EXCLUDED = "button, input, select, textarea, a[href]";
-
-/** The goo: the alpha slope's steepness and the intercept that puts its
- *  midpoint at alpha 0.5. libraries.dev/gooey's own numbers, and the same pair
- *  the liquid's skin uses — one house goo, so a round button that is both a
- *  liquid host and a field member necks the same way in both. */
-const GOO_CONTRAST = 18;
-const GOO_INTERCEPT = -(GOO_CONTRAST / 2 - 0.5);
 
 /** Conservative defaults, so a container that opts in without binding anything
  *  renders the most restrained version of the effect rather than a broken one.

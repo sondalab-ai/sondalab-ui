@@ -1,9 +1,15 @@
 /* @sondalab/ui-kit — geom.js
-   The pure geometry the effects layer shares: resolving a computed radius the
-   way the browser paints it, tracing a rounded box, and the arithmetic of the
-   goo's weld. No DOM, no colour, no state — every function here is a value in
-   and a value out, which is what lets scripts/effects-goo.test.mjs assert the
-   shapes directly instead of scraping them out of a module's source.
+   What the effects layer's two gooey families share: resolving a computed
+   radius the way the browser paints it, tracing a rounded box, the goo filter
+   chain's own constants, and the arithmetic of the weld. No DOM, no colour, no
+   state — every export here is a value in and a value out, which is what lets
+   the tests assert the shapes directly instead of scraping them out of a
+   module's source.
+
+   The liquid (effects.js) and the goo (goo-field.js) both weld silhouettes
+   with the same chain, and the weld constant below is DERIVED from the slope
+   that chain applies. Keeping the two apart let one be changed without the
+   other, which is the whole reason they live together here.
 
    Contract: docs/specs/2026-09-08-effects-layer-design.md */
 
@@ -50,6 +56,16 @@ export function roundedRectPathAt(x, y, w, h, [tl, tr, br, bl]) {
   return `M ${x + tl} ${y} H ${r - tr} A ${tr} ${tr} 0 0 1 ${r} ${y + tr} V ${b - br} A ${br} ${br} 0 0 1 ${r - br} ${b} H ${x + bl} A ${bl} ${bl} 0 0 1 ${x} ${b - bl} V ${y + tl} A ${tl} ${tl} 0 0 1 ${x + tl} ${y} Z`;
 }
 
+/** The rounded box as a path at the origin — what a silhouette drawn in its
+ *  own element's coordinates needs.
+ *  @param {number} w width
+ *  @param {number} h height
+ *  @param {number[]} radii the four radii, clockwise from top-left
+ *  @returns {string} an SVG path `d` */
+export function roundedRectPath(w, h, radii) {
+  return roundedRectPathAt(0, 0, w, h, radii);
+}
+
 /** Where the shared field's coordinate origin sits in viewport coordinates.
  *
  *  The field is an absolutely positioned child with `inset: 0`, which resolves
@@ -89,6 +105,16 @@ export function memberShape(rect, origin, radii, reach) {
     radii: radii.map((r) => r + reach),
   };
 }
+
+/** The goo: the alpha slope's steepness, and the intercept that puts its
+ *  midpoint at alpha 0.5. libraries.dev/gooey's own numbers, and the pair both
+ *  families use — one house goo, so a round button that is a liquid host and a
+ *  field member necks the same way in both.
+ *
+ *  WELD_K below is derived from this pair. Change either and the weld distance
+ *  an author binds stops meaning what it says. */
+export const GOO_CONTRAST = 18;
+export const GOO_INTERCEPT = -(GOO_CONTRAST / 2 - 0.5);
 
 /** The gap, in units of sigma, at which two silhouettes weld.
  *

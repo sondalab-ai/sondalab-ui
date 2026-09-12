@@ -15,6 +15,8 @@ import {
   shapeGap,
   weldedMembers,
   filterRegion,
+  GOO_CONTRAST,
+  GOO_INTERCEPT,
 } from "../packages/ui-kit/geom.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -505,4 +507,23 @@ test("the showcase puts no form control inside a goo field", () => {
   assert.ok(members.length >= 8, "the showcase must still demonstrate the family");
   const controls = members.filter(([, tag]) => ["button", "input", "select", "textarea", "a"].includes(tag));
   assert.deepEqual(controls.map((m) => m[1].trim()), [], "a control member is inert, so one here would be a silent no-op the page still claims as a demonstration");
+});
+
+test("both families share one goo chain, and the weld constant is derived from it", () => {
+  // The liquid's skin and the field weld silhouettes with the same slope, and
+  // WELD_K is what that slope implies. Keeping the pair in two files let one
+  // be changed without the other, which would leave the weld distance an
+  // author binds meaning something else. This asserts the tie: the slope's
+  // midpoint must land on alpha 0.5, because 1.3489795 is derived from it.
+  assert.equal((0.5 - GOO_INTERCEPT) / GOO_CONTRAST, 0.5, "the slope's midpoint is the level set the weld is measured against");
+
+  const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
+  for (const [file, src] of [["effects.js", effectsJs], ["goo-field.js", js]]) {
+    assert.doesNotMatch(src, /^const GOO_(?:CONTRAST|INTERCEPT)\s*=/m, `${file} must import the chain, not redeclare it`);
+    assert.match(src, /GOO_CONTRAST[\s\S]{0,400}from "\.\/geom\.js"|from "\.\/geom\.js"[\s\S]{0,400}GOO_CONTRAST/,
+      `${file} must take it from geom.js`);
+  }
+  // …and the geometry with it: one clamp, not two.
+  assert.doesNotMatch(effectsJs, /^function cornerPx\(|^function roundedRectPath\(/m,
+    "effects.js must not keep its own copy of the radius clamp or the box path");
 });

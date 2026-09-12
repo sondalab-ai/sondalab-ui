@@ -221,7 +221,7 @@ test("the liquid never filters, re-radiuses or re-colours the host", () => {
   assert.doesNotMatch(js, /\.style\.border(?:Radius|Color|TopColor|Image)\s*=|setProperty\(\s*["']border-/, "no border property may be written onto an element");
   // Scoped to the skin's own builder: glass displaces a copy of the page, but
   // the skin must stay a shape.
-  const skin = js.slice(js.indexOf("function buildSkin("), js.indexOf("function cornerPx("));
+  const skin = js.slice(js.indexOf("function buildSkin("), js.indexOf("function nearestEdge("));
   assert.doesNotMatch(skin, /feDisplacementMap|feImage/, "the skin is a shape, not a lens");
   assert.match(js, /<g filter="url\(#slfx-goo\)">/, "the goo filter sits on the skin's own group");
 });
@@ -246,17 +246,17 @@ test("the coordinator never touches the busy value", () => {
   assert.doesNotMatch(fnBody("revokeLive"), /busy/);
 });
 
-test("a pill radius is clamped to what the browser actually paints", () => {
+test("a pill radius is clamped to what the browser actually paints", async () => {
   // --sl-radius-pill is 9999px. CSS reduces a radius that cannot fit to half
   // the shorter side, so a 40px round button paints a 20px circle. Without the
   // clamp the skin traced its outline against 9999px and nearestEdge answered
   // with a point on that imaginary shape: the drop was written thousands of
   // pixels from the element. The gooey was not faint on round buttons — the
   // one silhouette it exists for — it was somewhere else entirely.
-  const from = js.indexOf("function cornerPx(");
-  assert.ok(from > 0, "the helper must be findable");
-  const body = js.slice(from, js.indexOf("\n}\n", from) + 3);
-  const cornerPx = new Function(`${body}; return cornerPx;`)();
+  // Imported, not sliced out of the source: it lives in geom.js now, shared
+  // with the field family, and rebuilding it from a byte offset was a test
+  // mechanism that broke every time the file moved.
+  const { cornerPx } = await import("../packages/ui-kit/geom.js");
   assert.equal(cornerPx("9999px", 40, 40), 20, "a pill on a 40px box paints a circle");
   assert.equal(cornerPx("9999px", 200, 40), 20, "and is bounded by the SHORTER side");
   assert.equal(cornerPx("6px", 200, 40), 6, "a radius that fits is untouched");

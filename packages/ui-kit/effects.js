@@ -12,6 +12,8 @@
    getComputedStyle and re-read on theme change. scripts/effects-js.test.mjs
    enforces the absence of literals. */
 
+import { cornerPx, roundedRectPath, GOO_CONTRAST, GOO_INTERCEPT } from "./geom.js";
+
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const CAP_MS = 1500;                      // hard ceiling on any single burst
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -84,13 +86,10 @@ const NS = "http://www.w3.org/2000/svg";
 const LIQUID_HOSTS = ".sl-fx-liquid.sl-fx-liquid--drop";
 /** The goo: blur sigma and alpha slope. liquid-gooey's defaults are 6 and
  *  18; the sigma is smaller here because the swell is a few pixels and its
- *  neck has to stay in proportion — "molto leggero". The intercept places
- *  the slope's midpoint at alpha 0.5, so a straight edge of the goo lands
- *  exactly on the source edge (the reference's 5/12 formula puts it at
- *  0.42, a dilation of a fraction of a pixel that would pop on hover). */
+ *  neck has to stay in proportion — "molto leggero". The slope itself is
+ *  geom.js's: one house goo, shared with the field family, whose weld
+ *  arithmetic is derived from the same pair. */
 const GOO_BLUR = 4;
-const GOO_CONTRAST = 18;
-const GOO_INTERCEPT = -(GOO_CONTRAST / 2 - 0.5);
 /** The chrome's smooth-union radius (effects-shader.js, `smin`) that matches
  *  this goo's neck; passed to the GPU tier so the two silhouettes agree. */
 let skin = null;
@@ -137,37 +136,6 @@ function buildSkin() {
     box: paths[1],
     drop: skin.querySelector("circle"),
   };
-}
-
-/** A corner radius from its computed string, resolved against the box the way
- *  CSS does: a percentage is of the shorter side (right for a pill or a
- *  circle, the two shapes a percentage is written for), and the result is
- *  CLAMPED to half that side.
- *
- *  The clamp is not a safety net, it is the rule. CSS reduces every radius
- *  proportionally when two on the same side would overlap, so a uniform
- *  `border-radius: 9999px` on a 40px button paints a 20px circle. Without the
- *  clamp the skin traced its outline against 9999px, `nearestEdge` returned a
- *  point on that imaginary shape, and the drop was written thousands of pixels
- *  from the element — which is why the gooey read as absent on exactly the
- *  round buttons it is meant for: `--sl-radius-pill` is 9999px.
- *  @param {string} raw the computed border-*-radius string
- *  @param {number} w the box width in CSS pixels
- *  @param {number} h the box height in CSS pixels
- *  @returns {number} the radius the browser actually paints, in CSS pixels */
-function cornerPx(raw, w, h) {
-  const v = parseFloat(raw);
-  if (!Number.isFinite(v)) return 0;
-  const shortest = Math.min(w, h);
-  return Math.min(raw.trimEnd().endsWith("%") ? (v / 100) * shortest : v, shortest / 2);
-}
-
-/** The rounded box as a path, radii scaled down together when they would
- *  overlap — the same clamp CSS applies to border-radius. */
-function roundedRectPath(w, h, [tl, tr, br, bl]) {
-  const f = Math.min(1, w / Math.max(1e-6, tl + tr), w / Math.max(1e-6, bl + br), h / Math.max(1e-6, tl + bl), h / Math.max(1e-6, tr + br));
-  tl *= f; tr *= f; br *= f; bl *= f;
-  return `M ${tl} 0 H ${w - tr} A ${tr} ${tr} 0 0 1 ${w} ${tr} V ${h - br} A ${br} ${br} 0 0 1 ${w - br} ${h} H ${bl} A ${bl} ${bl} 0 0 1 0 ${h - bl} V ${tl} A ${tl} ${tl} 0 0 1 ${tl} 0 Z`;
 }
 
 /** The point on the rounded box's outline nearest to p (p inside the box),
