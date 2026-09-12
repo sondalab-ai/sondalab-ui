@@ -128,10 +128,12 @@ export function gooField(container) {
   const filter = svg.querySelector("filter");
   const blur = svg.querySelector("feGaussianBlur");
   const group = svg.querySelector("g");
+  const defs = svg.querySelector("defs");
   container.prepend(svg);
 
   let members = [];
   let paths = [];
+  let lastShapes = [];
   let alive = true;
 
   /** Match the pool of <path> elements to the number of members. */
@@ -144,12 +146,60 @@ export function gooField(container) {
     while (paths.length > n) paths.pop().remove();
   }
 
+  /** An image member's paint is its CONTENT, not a background: an <img> has no
+   *  fill of its own, and falling back to --slfx-goo-fill would drop a picture
+   *  into the substance as a flat rectangle. So its silhouette is filled with
+   *  the picture itself, through a pattern locked to that silhouette's box. The
+   *  goo then blurs the picture like any other paint, which is what lets an
+   *  image weld to a neighbour with its own colours running into the neck.
+   *
+   *  `slice` rather than `meet`: the silhouette is the element's box dilated by
+   *  reach, and a picture letterboxed inside it would show the substance's
+   *  fallback in the bars.
+   *  @param {HTMLImageElement} img the member
+   *  @param {{x: number, y: number, w: number, h: number}} shape its silhouette
+   *  @param {number} i the member's index, which names its pattern
+   *  @returns {string} a `fill` value */
+  function imageFill(img, shape, i) {
+    const patternId = `${id}-img-${i}`;
+    let pattern = defs.querySelector(`#${patternId}`);
+    if (!pattern) {
+      pattern = document.createElementNS(NS, "pattern");
+      pattern.setAttribute("id", patternId);
+      pattern.setAttribute("patternUnits", "userSpaceOnUse");
+      pattern.append(document.createElementNS(NS, "image"));
+      defs.append(pattern);
+    }
+    const picture = pattern.querySelector("image");
+    picture.setAttribute("preserveAspectRatio", "xMidYMid slice");
+    // The tile is placed in user space; the picture is placed in the TILE's own
+    // space, which starts at the tile's origin. Giving the picture the same
+    // absolute x/y as the pattern offsets it twice, so every tile shows the
+    // wrapped-around part of the image — the picture still looks present, and
+    // its edges, which are the only part the weld blends, are the wrong ones.
+    pattern.setAttribute("x", String(shape.x));
+    pattern.setAttribute("y", String(shape.y));
+    picture.setAttribute("x", "0");
+    picture.setAttribute("y", "0");
+    for (const [k, v] of [["width", shape.w], ["height", shape.h]]) {
+      pattern.setAttribute(k, String(v));
+      picture.setAttribute(k, String(v));
+    }
+    picture.setAttribute("href", img.currentSrc || img.src);
+    return `url(#${patternId})`;
+  }
+
   /** Read every member's own computed background and write it as its
    *  silhouette's fill. Geometry is untouched, so this is what a hover or an
    *  active state costs. */
   function paint(fallback) {
     for (let i = 0; i < members.length; i++) {
-      const own = getComputedStyle(members[i]).backgroundColor;
+      const el = members[i];
+      if (el instanceof HTMLImageElement && lastShapes[i]) {
+        paths[i].setAttribute("fill", imageFill(el, lastShapes[i], i));
+        continue;
+      }
+      const own = getComputedStyle(el).backgroundColor;
       paths[i].setAttribute("fill", isClear(own) ? fallback : own);
     }
   }
@@ -181,6 +231,7 @@ export function gooField(container) {
       return memberShape(rect, origin, radii, reach);
     });
 
+    lastShapes = shapes;
     for (let i = 0; i < shapes.length; i++) {
       const s = shapes[i];
       paths[i].setAttribute("d", roundedRectPathAt(s.x, s.y, s.w, s.h, s.radii));
@@ -209,17 +260,25 @@ export function gooField(container) {
     paint(cs.getPropertyValue("--slfx-goo-fill").trim() || cs.backgroundColor);
     raf = requestAnimationFrame(tick);
   };
-  const onEnter = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  const start = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; };
   const onLeave = (e) => {
     // Delegated: pointerleave fires for every descendant as the pointer moves
     // between members. Only the container's own leave ends the substance's
     // colour tracking — the same guard the liquid and the pane both carry.
     if (e.target !== container) return;
-    cancelAnimationFrame(raf);
-    raf = 0;
+    stop();
   };
-  container.addEventListener("pointerenter", onEnter, { passive: true });
+  // Focus as well as the pointer. Nothing in components.css changes a
+  // background on :focus-visible today — the shared focus ring is an outline —
+  // but a consumer's component may, and a member whose fill changed with no
+  // pointer event is the staleness that made a light-theme label vanish,
+  // arriving through the keyboard instead of through the theme. focusin and
+  // focusout bubble, so one pair on the container covers every member.
+  container.addEventListener("pointerenter", start, { passive: true });
   container.addEventListener("pointerleave", onLeave, { capture: true, passive: true });
+  container.addEventListener("focusin", start, { passive: true });
+  container.addEventListener("focusout", stop, { passive: true });
 
   const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => measure()) : null;
   // measure() adds and removes <path> elements, which are themselves childList
@@ -244,9 +303,25 @@ export function gooField(container) {
     for (const el of container.querySelectorAll(MEMBERS)) ro.observe(el);
   }
 
+  /** Re-measure once every image member has decoded.
+   *
+   *  An <img> whose bytes have not arrived contributes an empty pattern, and a
+   *  CSS-sized <img> never changes its box when they do — so the ResizeObserver
+   *  would never fire and the hole would be permanent. decode() is the event
+   *  that actually matters here, and a failed one is simply skipped: that
+   *  member keeps the substance's fallback fill, which is the right reading of
+   *  a picture that did not load. */
+  function awaitImages() {
+    const pending = members
+      .filter((el) => el instanceof HTMLImageElement && !el.complete)
+      .map((el) => el.decode().catch(() => {}));
+    if (pending.length) Promise.all(pending).then(() => measure());
+  }
+
   observeMembers();
   mo?.observe(container, { childList: true, subtree: true });
   measure();
+  awaitImages();
   container.classList.add("is-goo-live");
 
   return {
@@ -256,8 +331,10 @@ export function gooField(container) {
       cancelAnimationFrame(raf);
       ro?.disconnect();
       mo?.disconnect();
-      container.removeEventListener("pointerenter", onEnter);
+      container.removeEventListener("pointerenter", start);
       container.removeEventListener("pointerleave", onLeave, { capture: true });
+      container.removeEventListener("focusin", start);
+      container.removeEventListener("focusout", stop);
       container.classList.remove("is-goo-live");
       svg.remove();
     },

@@ -195,3 +195,35 @@ test("a theme change repaints every field", () => {
   assert.match(callback, /repaintGooFields\(\)/, "the theme observer must repaint the goo fields");
   assert.match(effectsJs, /function repaintGooFields\(\)[\s\S]{0,200}handle\.measure\(\)/, "the repaint re-reads each field");
 });
+
+test("an image member's picture is placed in the tile's space, not in user space", () => {
+  // REGRESSION (2026-09-12): the <image> inside a <pattern> is positioned in
+  // the TILE's coordinate system, which already starts at the tile's origin.
+  // Giving it the pattern's own absolute x/y offset it twice, so every tile
+  // showed the wrapped-around part of the picture. The picture still looked
+  // present — only its EDGES were wrong, and the edges are the only part a
+  // weld blends, so three images sat side by side welding into black.
+  const fn = js.slice(js.indexOf("function imageFill("), js.indexOf("function paint("));
+  assert.ok(fn.length > 0, "imageFill must exist");
+  assert.match(fn, /picture\.setAttribute\("x", "0"\)/, "the picture sits at the tile's own origin");
+  assert.match(fn, /picture\.setAttribute\("y", "0"\)/);
+  assert.match(fn, /pattern\.setAttribute\("x", String\(shape\.x\)\)/, "the TILE carries the user-space offset");
+  assert.match(fn, /preserveAspectRatio", "xMidYMid slice"/, "a letterboxed picture would show the fallback in the bars");
+});
+
+test("an image member is measured again once it has decoded", () => {
+  // A CSS-sized <img> never changes its box when its bytes arrive, so the
+  // ResizeObserver never fires and an undecoded picture would stay a hole.
+  assert.match(js, /function awaitImages\(\)/, "there must be a decode gate");
+  assert.match(js, /\.decode\(\)\s*\.catch\(/, "a picture that fails to load keeps the fallback fill, it does not throw");
+  assert.match(js, /Promise\.all\(pending\)\.then\(\(\) => measure\(\)\)/, "the gate re-measures");
+});
+
+test("focus tracks a member's colour as well as the pointer", () => {
+  // Same staleness class as the theme bug: a fill that changes with no pointer
+  // event leaves the silhouette painted in the resting colour.
+  for (const ev of ["pointerenter", "pointerleave", "focusin", "focusout"]) {
+    assert.ok(js.includes(`addEventListener("${ev}"`), `the field must listen for ${ev}`);
+    assert.ok(js.includes(`removeEventListener("${ev}"`), `and drop ${ev} on destroy`);
+  }
+});

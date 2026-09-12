@@ -1413,6 +1413,18 @@
    not about attention or recognition, and it is the reason this is a family
    of its own rather than a looser gate on .sl-fx-liquid.
 
+   --slfx-goo-weld is measured EDGE TO EDGE between two facing sides. Diagonal
+   neighbours in a grid stand further apart than the grid's own `gap`, so a
+   field bound from a gap welds its rows and columns and leaves the diagonals
+   open — which is usually what a grid wants, and is worth knowing before it
+   reads as a bug.
+
+   A member is whichever element PAINTS THE FILL, which for a replaced control
+   is the control itself: .sl-field__input carries the background, and
+   .sl-field__control is a transparent wrapper. The wrapper rule of §Decision
+   3b does not apply here — it exists because an <input> renders no
+   pseudo-element, and this family uses none.
+
    Two silhouettes can only weld if they share a filter coordinate space, so
    the container owns ONE <svg class="sl-fx-goo__field"> (goo-field.js) and
    every .sl-fx-goo__member contributes its rounded box to it, mapped into the
