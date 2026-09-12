@@ -11,13 +11,13 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 12:20
+## Start here — handoff, 2026-09-12 12:30
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (158 commits ahead of `main`; the site
+**State.** Branch `feat/effects-layer` (162 commits ahead of `main`; the site
 still installs kit 0.7.2 — nothing here is released). 185 tests green
 (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
 "packages/ui-kit/effects.css" --product effects` clean. 188 tests green. The kit ships:
@@ -686,6 +686,19 @@ loading dovrebbe essere un loading beam"*.
   with a radial map can only be seen to bend structure that runs across the
   radius.** The filaments hang five times deeper than the band, fade out, are
   cut from the same angle, and live on the glow's `::after`, which was free.
+
+- **The filaments turn with the light.** *Owner: "man mano che seguono il bordo
+  dovrebbero anche ruotare, adesso sembrano delle bande che si allungano e
+  basta solo su asse y."* The comb was a fixed 90°, so every filament was
+  vertical wherever the light was. **Rotating the whole layer is the wrong
+  shape**, and it was built and measured before the one that shipped: a rotated
+  rectangle uncovers its own corners, so the layer must be grown past the box,
+  and `inset: -30%` on a 494 px card pushes the side strips **148 px outside
+  it** — the filaments left the element and the bend fell from 1.93 % to
+  **1.60 %**, the band on its own. So the **gradient's angle** turns instead, on
+  the light's own 5.5 s clock, and the strips stay on the border. Measured at
+  the frozen phase, control 0 px: **1.93 %**, unchanged from the version that
+  did not turn; it varies over the turn, which is the point.
 
 - **The filaments keep to the side runs.** *Owner, after the sway fix: "in
   minima parte le bande si estendono ancora verso il centro dando l'effetto
