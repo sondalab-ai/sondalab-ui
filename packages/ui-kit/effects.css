@@ -869,6 +869,15 @@
   --slg-radius: 0;
   --slg-rim-hi: transparent;
   --slg-rim-lo: transparent;
+  /* AND IT TAKES NO POINTER. The host's box is the whole run, not the glyphs —
+     a mask changes what is painted, never what is hit — so an oversized word
+     laid over a card would swallow every click inside its rectangle. Measured
+     on the showcase before this line existed: elementFromPoint at the centre of
+     the figure returned the figure. It also settles the --pane question: --text
+     wants --pane, whose ::before slab is what gives the letterforms their body
+     once it is cut to them, but the pointer layers on that slab stay dark
+     because nothing ever lights an element that cannot be pointed at. */
+  pointer-events: none;
 }
 
 /* The unmasked copy that carries the light, seated before the host by

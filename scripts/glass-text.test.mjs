@@ -83,6 +83,11 @@ test("a box rim is meaningless on a letterform", () => {
   assert.match(decls, /--slg-rim-lo: transparent;/);
   assert.match(decls, /padding: 0\.09em 0\.07em;/,
     "and the ink gets room: measured, 92.6px of it in an 89.6px box at the 7rem cap");
+  // A mask changes what is PAINTED, never what is hit: the host's box is the
+  // whole run, so an oversized word over a card swallowed every click inside
+  // its rectangle. Measured on the showcase before the line existed --
+  // elementFromPoint at the centre of the figure returned the figure.
+  assert.match(decls, /pointer-events: none;/);
 });
 
 test("the glow's light is read with a fallback, never declared on the element", () => {
