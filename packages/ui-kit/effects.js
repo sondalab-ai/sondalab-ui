@@ -888,6 +888,35 @@ function mountGoo(root) {
   return true;
 }
 
+/** The hosts whose glass is cut to their own letterforms, guarded the way
+ *  `lensed` and `gooFields` are: mount() may be called twice, and a host may
+ *  leave the document. */
+const glassTexts = new Map();
+const GLASS_TEXT_HOSTS = ".sl-fx-glass--text";
+
+/** Cut every declared host's glass to its own text.
+ *
+ *  Dynamically imported, like the lens and the goo: a surface with no glass
+ *  text pays nothing for the module existing. There is no Tier 0 for this one
+ *  — an uncut host is a rectangle of glass with an invisible label in it — so
+ *  the modifier's CSS keeps the host transparent and lets its paired glow
+ *  carry the text until the mask arrives.
+ *  @param {ParentNode} root the subtree to arm
+ *  @returns {Promise<void>} */
+async function armGlassText(root) {
+  if (typeof window === "undefined") return;
+  let glassText;
+  try { ({ glassText } = await import("./glass-text.js")); } catch { return; }
+  const hosts = [];
+  if (root instanceof Element && root.matches(GLASS_TEXT_HOSTS)) hosts.push(root);
+  hosts.push(...root.querySelectorAll(GLASS_TEXT_HOSTS));
+  for (const el of hosts) {
+    if (glassTexts.has(el)) continue;
+    const handle = glassText(el);
+    if (handle) glassTexts.set(el, handle);
+  }
+}
+
 /** Re-read every field's colours after a theme change.
  *
  *  A field is static once laid out, so nothing else would ever repaint it: a
@@ -1065,11 +1094,15 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // has to dress a card rendered after mount().
   injectGlassLayers(root);
   armLenses(root);
+  // And the letterform cut goes with them, for the third time in the same
+  // argument: a mask is not motion. It is the shape the material has.
+  armGlassText(root);
   watchLensTheme(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
       armLenses(n);
+      armGlassText(n);
     }
   }).observe(root, { childList: true, subtree: true });
   if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;

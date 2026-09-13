@@ -1,6 +1,6 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
   "keywords": [
     "design-system",
@@ -36,6 +36,7 @@
     "./effects.js": "./effects.js",
     "./glass-lens.js": "./glass-lens.js",
     "./goo-field.js": "./goo-field.js",
+    "./glass-text.js": "./glass-text.js",
     "./geom.js": "./geom.js",
     "./effects-gpu.js": "./effects-gpu.js",
     "./effects-shader.js": "./effects-shader.js",
@@ -65,10 +66,12 @@
     "fonts.css",
     "glass-lens.js",
     "goo-field.js",
+    "glass-text.js",
     "geom.js",
     "effects.d.ts",
     "goo-field.d.ts",
     "geom.d.ts",
+    "glass-text.d.ts",
     "effects.js",
     "effects-gpu.js",
     "effects-shader.js",
