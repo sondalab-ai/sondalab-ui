@@ -21,14 +21,19 @@ downward, not from the bottom up.**
 https://github.com/sondalab-ai/sondalab-ui/pull/22 and everything after it has
 landed in small branches; `main` carries kit **0.9.5**, published. One kit
 branch is open — `feat/curtains-fit-their-pane`,
-https://github.com/sondalab-ai/sondalab-ui/pull/28, kit **0.9.6**: **257 tests
+https://github.com/sondalab-ai/sondalab-ui/pull/28, kit **0.9.6**: **268 tests
 green** (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/effects.css" --product effects` clean.
+"packages/ui-kit/effects.css" --product effects` clean. It carries three things
+that were briefly three branches — the curtains fitted to their pane, the glass
+cut to a letterform, and this record — collapsed into one release because none
+of them had been published.
 
-The first consumer is **`sondalab-site`**, which pins **0.9.5** and carries 26
-unpushed commits on `tune/method-goo-contrast`. While PR 28 is unpublished that
-site runs against a **symlink** into this repo's `feat/curtains-fit-their-pane`
-worktree, with the published copy set aside as `node_modules/@sondalab/ui-kit.published`;
+The first consumer is **`sondalab-site`**, which pins **0.9.5** and carries 24
+commits on `tune/method-goo-contrast`
+(https://github.com/sondalab-ai/sondalab-site/pull/11, **draft until 0.9.6
+publishes** — on 0.9.5 the page renders degraded, not broken). While PR 28 is
+unpublished that site runs against a **symlink** into this repo's
+`feat/curtains-fit-their-pane` worktree, with the published copy set aside as `node_modules/@sondalab/ui-kit.published`;
 its own `npm run audit` wrapper exits silently under that rig, so audits there
 are run against the set-aside copy's `agent/sl-audit.mjs`. Undo the symlink once
 0.9.6 publishes. The kit ships:

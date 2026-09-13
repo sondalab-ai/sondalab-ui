@@ -1,6 +1,6 @@
 ---
 name: the-mono-face-carries-the-brand-at-display-scale-too
-description: design-language.md:66 makes the mono label the strongest family signal but scopes it to small structural labels; the owner's ruling is that it governs oversized numerals too, because mono is the project's tech register.
+description: the mono label was the strongest family signal but was scoped to small structural labels; the owner's ruling extends it to oversized numerals, because mono is the project's tech register. Written into design-language.md L1 on 2026-09-13 — this entry is why.
 metadata:
   type: project
 ---
@@ -18,9 +18,12 @@ is a defensible editorial folio on its own terms — and his reading was that it
 is the wrong voice for this project, which is **tech/cyberpunk**. Mono at
 display scale is part of that register, not merely a label convention.
 
-**Why:** the rule as written is scoped by SIZE, so it does not forbid what it
+**Why:** the rule as written was scoped by SIZE, so it did not forbid what it
 was meant to forbid. Reading it literally and finding the big numeral outside
-its scope is exactly the mistake to avoid.
+its scope is exactly the mistake to avoid. **The grammar has since been
+amended** — `docs/design-language.md` L1 now says the rule is about role, not
+size, and carries a bullet of its own for a display-scale numeral — so this
+entry records the reasoning rather than a gap.
 
 **How to apply:** where an oversized numeral wants to be more than a hairline
 tick, change its SHAPE and COLOUR, not its face. What worked: the brand pair
