@@ -655,7 +655,50 @@ function seatGlow(el, glow) {
     const v = hostStyle.getPropertyValue(name);
     if (v) glow.style.setProperty(name, v);
   }
+
+  // HOW MANY CURTAINS, not how wide one is. The pattern was fitted at 104px on
+  // a 320px card — three across the pane — and left at that length it does not
+  // scale: a 1104px row showed nine ribs where the card it was measured on
+  // showed three, and the owner read the difference as stripes rather than as
+  // light. So the author binds a count and the width follows the host, which
+  // is why this belongs here: seatGlow() is already what runs on every resize.
+  //
+  // effects.css carries 104px as its own fallback, so a page that never mounts
+  // keeps exactly the pattern it has today.
+  const count = parseFloat(hostStyle.getPropertyValue("--slfx-pillar-count")) || PILLAR_COUNT;
+  if (r.width > 0) glow.style.setProperty("--slfx-pillar-pitch", `${r.width / count}px`);
+
+  // And a phase of its own. Every animation starts when its rule begins to
+  // match, so a surface that lights all its cards at once starts all of them
+  // on the same instant and they drift in formation — one pattern printed as
+  // many times as there are panes. The offset is derived from the host's
+  // ordinal rather than rolled, so it is stable across a re-render: a curtain
+  // that jumped to a new phase on every navigation would flicker for nothing.
+  // The golden ratio is the usual way to spread a small integer over [0, 1)
+  // without two neighbours landing close together.
+  glow.style.setProperty("--slfx-pillar-phase", String((glowOrdinal(el) * PHI) % 1));
 }
+
+/** The golden ratio's fractional part, for spreading ordinals over [0, 1). */
+const PHI = 0.618033988749895;
+
+/** How many curtains hang across a pane when the author binds no count. Three
+ *  is what the pattern was fitted at, on the card it was fitted on. */
+const PILLAR_COUNT = 3;
+
+/** A stable small integer per host, assigned in the order hosts are first
+ *  seated. Read off the id seatGlow's caller already gives them, so two calls
+ *  for the same host return the same number and a resize does not reshuffle
+ *  the page.
+ *  @param {Element} el the aurora host
+ *  @returns {number} */
+function glowOrdinal(el) {
+  const id = el.dataset.slFxId;
+  if (!id) return 0;
+  if (!ordinals.has(id)) ordinals.set(id, ordinals.size);
+  return ordinals.get(id);
+}
+const ordinals = new Map();
 
 function injectGlow(el) {
   const parent = el.parentElement;

@@ -1215,6 +1215,19 @@
    gave them, and the clip is what actually holds the blur inside it. Only the
    PAINTING changes while loading, below. */
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars] {
+  /* HOW WIDE A CURTAIN IS. Everything below — both combs' stops, both tiles,
+     and the sway — is a fraction of this one length, in the ratios the two
+     were fitted at, so changing it scales the whole pattern and never its
+     proportions.
+
+     104px is what it was fitted to on a 320px showcase card: three curtains
+     across the pane. That is the Tier 0 value and the fallback, and it is
+     also why the number a consumer binds is a COUNT, not a length —
+     --slfx-pillar-count, read off the host by seatGlow(), which divides the
+     host's own width by it. Fewer curtains are wider, more are narrower, and
+     a 1104px row no longer shows nine ribs where the card it was measured on
+     showed three. Without the JS the fallback holds and nothing changes. */
+  --slfx-pillar-pitch: 104px;
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
   filter: blur(var(--slfx-pillar-soft, 8px));
@@ -1343,23 +1356,29 @@
      30/44/41 the peak is +49.0. The pitch is a quarter wider so the ribs
      clear twice the blur they sit under — below that the blur erases the very
      structure the lens needs in order to have something to bend. */
+  /* Every stop is its fitted pixel figure over 104, so the pair still beats
+     exactly as it was measured to. The bright comb's own period is 0.4231 of
+     the wide one's, which is the interval that made them cross rather than
+     march. */
   background:
     repeating-linear-gradient(90deg,
-      transparent 0 14px,
-      color-mix(in srgb, var(--slfx-glint) 32%, transparent) 20px,
-      transparent 26px 44px),
+      transparent 0 calc(var(--slfx-pillar-pitch) * 0.1346),
+      color-mix(in srgb, var(--slfx-glint) 32%, transparent) calc(var(--slfx-pillar-pitch) * 0.1923),
+      transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.4231)),
     repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--slfx-pillar-a) 45%, transparent) 0 12px,
-      transparent 26px 54px,
-      color-mix(in srgb, var(--slfx-pillar-b) 42%, transparent) 66px,
-      transparent 82px 104px);
+      color-mix(in srgb, var(--slfx-pillar-a) 45%, transparent) 0 calc(var(--slfx-pillar-pitch) * 0.1154),
+      transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.5192),
+      color-mix(in srgb, var(--slfx-pillar-b) 42%, transparent) calc(var(--slfx-pillar-pitch) * 0.6346),
+      transparent calc(var(--slfx-pillar-pitch) * 0.7885) var(--slfx-pillar-pitch));
   /* Re-fitted for white, 2026-09-12: the light pole carries far less over a
      near-black ground than the vivid accent did, so the same alphas read
      dimmer — at 44/41 the interior peaked at +30 where the reference's light
      peaks at +48. At 45/42 it is +46.4. The pitch is wider again and the blur
      larger (owner: "sembrano zebrati, li blurrerei ancora di piu'"): at 200px
      the two combs still read as a comb, at 320 they read as light. */
-  background-size: 320px 100%, 480px 100%;
+  background-size:
+    calc(var(--slfx-pillar-pitch) * 3.0769) 100%,
+    calc(var(--slfx-pillar-pitch) * 4.6154) 100%;
   background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
 }
 
@@ -1758,16 +1777,31 @@
      ALTERNATES — the moment it turns around is the moment it stops being a
      sweep. The second comb still moves at -0.6 of this, so the two cross
      rather than march. */
-  @keyframes slfx-pillars-drift { from { --slfx-pillar-x: -38px; } to { --slfx-pillar-x: 44px; } }
+  /* A fraction of the pitch, not a fixed distance: a sway of 40px across a
+     368px curtain is a twitch, and the same sway across a 104px one is the
+     lean it was fitted as. */
+  @keyframes slfx-pillars-drift {
+    from { --slfx-pillar-x: calc(var(--slfx-pillar-pitch) * -0.3654); }
+    to   { --slfx-pillar-x: calc(var(--slfx-pillar-pitch) *  0.4231); }
+  }
   /* 3 -> 5.5px, so the fitted 4px sits in the middle of the breath rather
      than at the bottom of a 2 -> 7 swing that softened the ribs away at its
      top end. */
   @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 7px; } to { --slfx-pillar-soft: 10px; } }
+  /* The NEGATIVE DELAY is what keeps a row of panes from marching. Every
+     animation starts when its rule begins to match, so a surface that lights
+     all its cards at once starts all of them together; --slfx-pillar-phase,
+     written per host by seatGlow(), drops each one somewhere inside its own
+     cycle instead. Unset it and the delay is 0 and nothing changes.
+
+     The two clocks take different multipliers on purpose: the breathe and the
+     drift are the pair that beats, and offsetting them by the same amount
+     would only move the formation rather than break it. */
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
-    animation: slfx-pillars-breathe 8.7s ease-in-out infinite alternate;
+    animation: slfx-pillars-breathe 8.7s ease-in-out calc(var(--slfx-pillar-phase, 0) * -8.7s) infinite alternate;
   }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
-    animation: slfx-pillars-drift 23s cubic-bezier(0.42, 0, 0.58, 1) infinite alternate;
+    animation: slfx-pillars-drift 23s cubic-bezier(0.42, 0, 0.58, 1) calc(var(--slfx-pillar-phase, 0) * -23s) infinite alternate;
   }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {

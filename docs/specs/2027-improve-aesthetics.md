@@ -40,7 +40,20 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   page's derived light pole, so the only colour in a pane is the colour the
   glass makes of it (rgb spread 3 in the middle, 46 at the faces). Fitted on
   `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
-  320 / 480 px. **Loading and busy are an aurora that runs the whole border, in
+  320 / 480 px. **How many curtains hang across a pane is the author's, and how
+  wide one is follows the host** (2026-09-13): `--slfx-pillar-count` (default
+  3) is read off the host by `seatGlow()`, which divides the host's own width
+  by it and writes the pitch; every stop, both tiles and the sway are fractions
+  of that one length, in the ratios they were fitted at. Left absolute, the
+  fitted 104 px made a 1104 px row show nine ribs where the 320 px card it was
+  measured on showed three, and the owner read the difference as stripes rather
+  than as light. The 104 px stays as the Tier 0 fallback, so a page that never
+  mounts keeps exactly the pattern it had. **And each pane drifts on a phase of
+  its own**: every animation starts when its rule begins to match, so a surface
+  that lights all its cards at once started them together and they moved in
+  formation — `--slfx-pillar-phase`, an ordinal spread by the golden ratio,
+  becomes a negative delay on both clocks (different multipliers, or the offset
+  moves the formation rather than breaking it). **Loading and busy are an aurora that runs the whole border, in
   the accent**: the curtains stand down and the glow paints the conic band on
   the element's own edge, turning once per 5.5 s — cut across the lens's pull, so they bend where the
   band cannot. Determinate keeps its arc, whose length is the value. The
