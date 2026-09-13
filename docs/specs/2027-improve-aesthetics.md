@@ -11,16 +11,27 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
-## Start here — handoff, 2026-09-12 16:15
+## Start here — handoff, 2026-09-13
 
 **If you are the next agent, read this block and the Reference knowledge base;
 the rest of this file is a chronological record and reads best from here
 downward, not from the bottom up.**
 
-**State.** Branch `feat/effects-layer` (175 commits ahead of `main`; the site
-still installs kit 0.7.2 — nothing here is released). 185 tests green
-(`node --test scripts/*.test.mjs`), `npm run audit -- --surface
-"packages/ui-kit/effects.css" --product effects` clean. 190 tests green. The kit ships:
+**State.** The layer is **released**. `feat/effects-layer` merged as
+https://github.com/sondalab-ai/sondalab-ui/pull/22 and everything after it has
+landed in small branches; `main` carries kit **0.9.5**, published. One kit
+branch is open — `feat/curtains-fit-their-pane`,
+https://github.com/sondalab-ai/sondalab-ui/pull/28, kit **0.9.6**: **257 tests
+green** (`node --test scripts/*.test.mjs`), `npm run audit -- --surface
+"packages/ui-kit/effects.css" --product effects` clean.
+
+The first consumer is **`sondalab-site`**, which pins **0.9.5** and carries 26
+unpushed commits on `tune/method-goo-contrast`. While PR 28 is unpublished that
+site runs against a **symlink** into this repo's `feat/curtains-fit-their-pane`
+worktree, with the published copy set aside as `node_modules/@sondalab/ui-kit.published`;
+its own `npm run audit` wrapper exits silently under that rig, so audits there
+are run against the set-aside copy's `agent/sl-audit.mjs`. Undo the symlink once
+0.9.6 publishes. The kit ships:
 
 - `glass.css` — the glass MATERIAL, adopted from liqui-glass (MIT), matched to
   its capture within ±3 luminance on `lab/1n`; tint 0.18, floored at 0.34 under
@@ -29,7 +40,9 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   label; `__specular` paints nothing.
 - `glass-lens.js` — a REAL refraction, adopted from shuding/liquid-glass (MIT):
   `backdrop-filter: url(#…)` with a data-URI displacement map; per-channel
-  dispersion (`disperse`, now the red-to-blue separation in PIXELS, default 18);
+  dispersion (`disperse`, the red-to-blue separation in PIXELS, default 18,
+  and since 0.9.6 **readable from the element as `--slg-lens-disperse`** so a
+  surface can raise it without a second `mount` argument);
   bend capped at `reach`, 6 px for the material and **readable from the element
   as `--slg-lens-reach`**, which the aurora's hosts raise to 18 px; **the lens
   refuses a pane shorter than six times that cap** and leaves it the material; frost and saturation animatable via
@@ -40,7 +53,8 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   page's derived light pole, so the only colour in a pane is the colour the
   glass makes of it (rgb spread 3 in the middle, 46 at the faces). Fitted on
   `lab/1y` (2026-09-12): ribs 32 %, curtains 45 / 42 %, blur 8 px, pitch
-  320 / 480 px. **How many curtains hang across a pane is the author's, and how
+  320 / 480 px — **the two pitches are superseded in 0.9.6**, which derives one
+  from the host; the alphas and the blur stand. **How many curtains hang across a pane is the author's, and how
   wide one is follows the host** (2026-09-13): `--slfx-pillar-count` (default
   3) is read off the host by `seatGlow()`, which divides the host's own width
   by it and writes the pitch; every stop, both tiles and the sway are fractions
@@ -68,7 +82,11 @@ still installs kit 0.7.2 — nothing here is released). 185 tests green
   0.28, the seated glow clipped to the host's box (except `--beam`, `--rim`
   and `--pillars`, whose geometry is not the spread). Twelve `--slfx-*`
   variables are copied onto the seated glow.
-- the showcase is back to defaults; every experiment lives in `lab/` (gitignored).
+- the showcase is back to defaults. `lab/` keeps only its **harness**
+  (`_template.html`, `_harness.*`, `_serve.py`, `_pixdiff.py`, `_profile*.py`,
+  `README.md`); the 28 direction probes it held were deleted on 2026-09-13 —
+  they were gitignored and disposable by construction, and every number they
+  produced is recorded in the dated sections below.
 
 **1w, 1x and 1y are closed — see the three sections below for the numbers**,
 and read them in that order: each one answered the owner's verdict on the one
@@ -89,12 +107,15 @@ before it.
   light** — the conic bloom and its numbers stay for `--sweep`, `--beam` and
   `--rim`.
 
-**One open question, measured and NOT decided** — see the end of the 1y
-section: how far the white light should be made to decompose. The colour at
-the faces comes from the lens's `disperse`, which is a fraction of the bend
-and therefore applies to everything behind a pane: at the shipped 18 the faces
-read 46, at 60 they read 63 and the page's own text behind a pane splits into
-visible red/green/blue copies. The owner has the two captures.
+**That open question is now closed** (2026-09-13). It asked how far the white
+light should be made to decompose; the owner's answer was *"ancora di piu', deve
+essere molto accentuato"*. It was **not** settled by moving the default — the
+kit keeps `disperse` at 18, because raising it applies to everything behind a
+pane and at 60 the page's own text splits into visible red/green/blue copies.
+It was settled by making the value **readable from the element**
+(`--slg-lens-disperse`, 0.9.6): a surface that wants the split raises it on the
+panes that should have it and leaves the rest of the page alone. `sondalab-site`
+sets 90 on its card panes.
 
 **Otherwise no task is assigned.** One thing stays the owner's: the 1 px line on
 the reference's border where the beam passes (ours is the glass rim plus a
@@ -149,6 +170,23 @@ the reference is read at its own zoom (2026-09-12, after 1w); **a card is
 glass, with distortion and refraction** (2026-09-12, on 1x: "deve essere
 vetro con effetti di distorsione, rifrazione, etc.") — the composer's plain
 edge is not taken, and the material's inset rim stays on cards.
+
+Added 2026-09-13:
+
+- **No light follows the pointer on a card.** The pointer glint stays on
+  buttons, where it answers a hit target; on a card it was refused outright
+  ("in generale non mi piace quel glow che segue il mouse, va rimosso ovunque").
+- **Every card's curtains stay lit, not one at a time.** A rotation was tried
+  and rejected; the kit's one-live-aurora grant governs the *ambient* aurora,
+  and a page of glass cards lighting them all is a surface decision.
+- **The band count is the intensity knob.** `--slfx-pillar-count`, with the
+  width following from it — fewer bands, wider bands.
+- **The dispersion is raised per surface, not in the default** (see the closed
+  question above).
+- **A display-scale numeral stays mono.** Fraunces at `opsz` 144 was tried on
+  the method cards and rejected as the wrong voice for a tech/cyberpunk
+  project; variation is spent on shape and colour instead. Written into the
+  grammar at `docs/design-language.md` L1.
 
 ## Goal
 
