@@ -1720,9 +1720,20 @@
     /* Out: no overshoot. Coming back to rest should not bounce past it. */
     transition: transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
   }
+  /* THE AMOUNT IS A KNOB, AND IT IS READ WITH A FALLBACK, NOT DECLARED. A
+     surface that wraps the pane and its seated glow in a box of its own and
+     scales THAT has already moved both; the pane's own scale then composes
+     with the wrapper's rather than agreeing with it — 1.03 x 1.03 put a card's
+     curtains 34 px wider than the card they are clipped to, which reads as the
+     light spilling past the glass. Such a wrapper sets --slfx-pane-swell: 1
+     and the pane and its glow both stand down, because the property inherits
+     to both from the wrapper they share. That only works while nothing
+     declares a default ON the pane or the glow: a declaration there would
+     shadow the wrapper's value and be unreachable. The default lives at the
+     point of use. */
   .sl-fx-glass--pane:hover:not(:disabled),
   .sl-fx-glass--pane:focus-visible {
-    transform: scale(1.03);
+    transform: scale(var(--slfx-pane-swell, 1.03));
     /* In: one small rebound past the target, then settle. */
     transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
     transition-duration: 320ms;
@@ -1730,7 +1741,10 @@
   /* Pressed, the mass goes the other way and the bounce is gone: a press is
      an arrival, not a launch. */
   .sl-fx-glass--pane:active:not(:disabled) {
-    transform: scale(0.99);
+    /* The press is the swell's third, the other way: 1.03 -> 0.99, 1 -> 1. One
+       declaration governs both states, so standing the swell down cannot leave
+       a press behind. */
+    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
     transition-duration: 140ms;
     transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }
@@ -1749,7 +1763,10 @@
 
      Both boxes scale about their centres and the glow's box IS the host's, so
      they stay registered; the curtains' own drift is a background-position and
-     is untouched by a transform. */
+     is untouched by a transform.
+
+     The mirror reads the same --slfx-pane-swell the pane does, so a wrapper
+     that owns the scale cancels both with one declaration. */
   .sl-fx-aurora__glow[data-sl-fx-seated] {
     transition:
       opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
@@ -1757,12 +1774,12 @@
   }
   .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:hover:not(:disabled)),
   .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:focus-visible) {
-    transform: scale(1.03);
+    transform: scale(var(--slfx-pane-swell, 1.03));
     transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
     transition-duration: 320ms;
   }
   .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled)) {
-    transform: scale(0.99);
+    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
     transition-duration: 140ms;
     transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }

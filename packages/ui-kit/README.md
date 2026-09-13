@@ -93,6 +93,17 @@ mountGpu().then((ok) => {});  // Tier 2: the glass edge as chrome where WebGPU a
 - **Replaced controls** (`<input>`, `<textarea>`, `<select>`) render no pseudo-element: wrap them in `<span class="sl-field__control sl-fx-…">` and put the effect classes on the wrapper.
 - **Filled elements** (`sl-btn--primary`) take `sl-fx-aurora--rim`, which steps the arc just outside the fill — and tells a glass pane that its ground is the fill.
 
+**Knobs a surface is expected to set.** Everything else is derived; these four are the ones written by hand.
+
+| Property | On | Default | What it does |
+|---|---|---|---|
+| `--slfx-pillar-count` | an aurora host | `3` | how many curtains cross the host. The intensity control: fewer bands are wider bands. The pitch follows from the host's own width, so the pattern scales with the element rather than holding a fixed pixel size. |
+| `--slfx-pane-swell` | a glass pane, **or any ancestor of it** | `1.03` | how far the pane grows under the pointer; the press is its third the other way, so `1` stands both down. Set it to `1` on a wrapper that scales the pane itself — otherwise the two scales compose and the pane's seated light spills past its edge. |
+| `--slg-lens-disperse` | a lens host | `18` | the lens's red-to-blue separation, in px. Not raised in the default because it applies to everything behind the pane — at 60 the page's own text splits into visible RGB copies — so raise it per surface. |
+| `--slg-lens-reach` | a lens host | `6` (`18` on an aurora host) | how far the lens is allowed to bend. A pane shorter than six times this is refused the lens and keeps the material. |
+
+Read every one of them with `var(--name, default)` at the point of use if you extend this layer: a default **declared** on the pane or the glow would shadow the value an ancestor inherits down, and be unreachable from there.
+
 The reference page is `showcase/effects.html`; the contract is `docs/specs/2026-09-08-effects-layer-design.md`; the per-component declension (which family goes on which component, and which never do) is `agent/catalog.md` § Effects.
 
 Generated tokens (`tokens.css`, `themes/*.css`) come from the canonical `sondalab.tokens.json` — do not hand-edit them. `components.css` is hand-authored.
