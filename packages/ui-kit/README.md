@@ -65,7 +65,7 @@ The full reference implementation — every component in all three themes — is
 
 ## Effects (`effects.css` + `effects.js`, opt-in)
 
-Five additive families, each carrying one meaning, composed onto a shipped `.sl-*` class — never replacing it. **Glass** (`sl-fx-glass`) — the element's own border as chrome; with `--pane`, the element is made of glass: a slab of light under the label, a glint that follows the pointer, a hairline that turns to face it with a fringe of colour either side. Every text button takes `--pane`, primary or ghost. **Aurora** (`sl-fx-aurora`) — a 1px arc of light riding the border while attention lives on the element: focus, `data-sl-fx-live="on"` (one ambient sweep per document), `data-sl-fx-live="busy"` (with `aria-busy`), or a determinate arc from an inline `--slfx-progress` (with `role="progressbar"`). **Liquid** (`sl-fx-liquid`) — the outline gives under the pointer and springs back; gated behind `--drop`, a round icon-only button and nothing else, and inert without it. **Goo** (`sl-fx-goo` on a container + `sl-fx-goo__member` on each element in the set — standard elements only; `button`, `input`, `select`, `textarea` and `a[href]` are refused) — several elements read as one substance, welding where they come within `--slfx-goo-weld` of one another; it answers the layout, not the pointer, and each member's silhouette is painted in that member's own fill so their colours blend across the neck. **Glitch** (`sl-fx-glitch`) — a finite burst on a child `<span>`, fired from JavaScript.
+Five additive families, each carrying one meaning, composed onto a shipped `.sl-*` class — never replacing it. **Glass** (`sl-fx-glass`) — the element's own border as chrome; with `--pane`, the element is made of glass: a slab of light under the label, a glint that follows the pointer, a hairline that turns to face it with a fringe of colour either side. Every text button takes `--pane`, primary or ghost; with `--text` the letterform itself is the pane — a mask cuts the glass to the element's own glyphs, measured off the element, so the type stays entirely the surface's. **Aurora** (`sl-fx-aurora`) — a 1px arc of light riding the border while attention lives on the element: focus, `data-sl-fx-live="on"` (one ambient sweep per document), `data-sl-fx-live="busy"` (with `aria-busy`), or a determinate arc from an inline `--slfx-progress` (with `role="progressbar"`). **Liquid** (`sl-fx-liquid`) — the outline gives under the pointer and springs back; gated behind `--drop`, a round icon-only button and nothing else, and inert without it. **Goo** (`sl-fx-goo` on a container + `sl-fx-goo__member` on each element in the set — standard elements only; `button`, `input`, `select`, `textarea` and `a[href]` are refused) — several elements read as one substance, welding where they come within `--slfx-goo-weld` of one another; it answers the layout, not the pointer, and each member's silhouette is painted in that member's own fill so their colours blend across the neck. **Glitch** (`sl-fx-glitch`) — a finite burst on a child `<span>`, fired from JavaScript.
 
 ```css
 @import "@sondalab/ui-kit/effects.css";   /* after components.css */
@@ -86,12 +86,32 @@ mount();                      // Tier 1: the liquid, the goo's fields, glitch bu
 // autoBurst(el, {waitMin, waitMax})   — ambient: burst, wait, burst again; returns stop
 // hoverBurst(hoverEl, targetEl)       — while the pointer is over one, glitch the other
 mountGpu().then((ok) => {});  // Tier 2: the glass edge as chrome where WebGPU answers; resolves false otherwise.
+
+// Glass text: mount() cuts every .sl-fx-glass--text host to its own glyphs and
+// seats an unmasked .sl-fx-glass__glow before it to carry the light. The two
+// boxes are the same size and carry the same string; PLACING them together is
+// the surface's one rule — a slot that stacks them is enough:
+//   .folio-slot { display: inline-grid; }
+//   .folio-slot > * { grid-area: 1 / 1; }
+// One line only: the mask is a single SVG <text> run and SVG text does not wrap.
 ```
 
 - **Tiers.** Without `mount()` the CSS alone is Tier 0 and correct on its own: a static glass hairline, a static aurora arc on focus, and a goo field's members simply laid out unmerged. `mount()` arms Tier 1 by setting `data-sl-fx="on"` on `<html>`. `mountGpu()` needs `vgpu` (an optional peer dependency — install it yourself if you want Tier 2; nothing breaks without it) and sets `data-sl-fx-gpu="on"` only once a frame is actually on screen.
 - **Kill switches, all honoured at every tier:** `prefers-reduced-motion: reduce` (nothing animates; `mount()` refuses), `[data-sl-theme="high-contrast"]` (every family off, the GPU tier torn down), and `data-sl-fx="off"` on any element (that element and its subtree). The focus `outline` is never replaced or removed.
 - **Replaced controls** (`<input>`, `<textarea>`, `<select>`) render no pseudo-element: wrap them in `<span class="sl-field__control sl-fx-…">` and put the effect classes on the wrapper.
 - **Filled elements** (`sl-btn--primary`) take `sl-fx-aurora--rim`, which steps the arc just outside the fill — and tells a glass pane that its ground is the fill.
+
+**Knobs a surface is expected to set.** Everything else is derived; these four are the ones written by hand.
+
+| Property | On | Default | What it does |
+|---|---|---|---|
+| `--slfx-pillar-count` | an aurora host | `3` | how many curtains cross the host. The intensity control: fewer bands are wider bands. The pitch follows from the host's own width, so the pattern scales with the element rather than holding a fixed pixel size. |
+| `--slfx-pane-swell` | a glass pane, **or any ancestor of it** | `1.03` | how far the pane grows under the pointer; the press is its third the other way, so `1` stands both down. Set it to `1` on a wrapper that scales the pane itself — otherwise the two scales compose and the pane's seated light spills past its edge. |
+| `--slg-lens-disperse` | a lens host | `18` | the lens's red-to-blue separation, in px. Not raised in the default because it applies to everything behind the pane — at 60 the page's own text splits into visible RGB copies — so raise it per surface. |
+| `--slg-lens-reach` | a lens host | `6` (`18` on an aurora host) | how far the lens is allowed to bend. A pane shorter than six times this is refused the lens and keeps the material. |
+| `--slfx-text-light` | a `--text` host or any ancestor | `--slc-text` | the light the cut glyphs are lit by, with `--slfx-text-core-a` (46%) and `--slfx-text-halo-a` (26%) for the two shadows. Rebind all three inside an inversion band, where `--slc-text` is the band's own ground. |
+
+Read every one of them with `var(--name, default)` at the point of use if you extend this layer: a default **declared** on the pane or the glow would shadow the value an ancestor inherits down, and be unreachable from there.
 
 The reference page is `showcase/effects.html`; the contract is `docs/specs/2026-09-08-effects-layer-design.md`; the per-component declension (which family goes on which component, and which never do) is `agent/catalog.md` § Effects.
 

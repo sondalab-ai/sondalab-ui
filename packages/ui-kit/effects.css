@@ -835,6 +835,83 @@
 .sl-fx-glass--field,
 .sl-fx-aurora--field { --slfx-ring-w: 2px; }
 
+/* ══ GLASS TEXT — the letterform IS the pane ═════════════════════════════════
+   A mask clips a backdrop-filter's output, so masking a pane to its own glyphs
+   leaves glass in the shape of the words rather than a box containing them.
+   glass-text.js writes the mask, measured off this element; everything here is
+   what has to be true for that mask to land on the ink.
+
+   PLACEMENT IS THE SURFACE'S. Nothing here positions the host, sizes it or
+   picks its face: a folio on a card, a section index and an oversized word are
+   the same material at three different places on three different scales, and
+   only the surface knows which. `width: max-content` is the one exception,
+   because it is load-bearing — the mask centres the run in this box, so the
+   box has to BE the run.
+
+   ONE LINE. SVG text does not wrap; a host that reaches a second line gets its
+   first cut and the rest invisible. */
+.sl-fx-glass--text {
+  width: max-content;
+  /* The glyphs are the mask, not the paint. The host's own text is laid out —
+     it is what the mask is measured from, and what a screen reader reads — and
+     never painted. */
+  color: transparent;
+  /* ROOM FOR THE INK. A mask clips to its own rect and a backdrop-filter to the
+     border box, while a display figure usually runs a line-height well under 1:
+     measured on a 7rem numeral, 92.6px of ink in an 89.6px box, and the top of
+     every glyph shaved off. Ems, so it follows the size, and on the glow too so
+     the two copies grow together and stay registered. */
+  padding: 0.09em 0.07em;
+  /* The mask is the shape, so a rounded rect under it rounds corners nobody can
+     see — and glass.css's __shine gives a pane its thickness with an inset line
+     along the top of its BOX, which masked to a letterform survives as a white
+     bar across the text. A box rim is meaningless on a letter. */
+  --slg-radius: 0;
+  --slg-rim-hi: transparent;
+  --slg-rim-lo: transparent;
+  /* AND IT TAKES NO POINTER. The host's box is the whole run, not the glyphs —
+     a mask changes what is painted, never what is hit — so an oversized word
+     laid over a card would swallow every click inside its rectangle. Measured
+     on the showcase before this line existed: elementFromPoint at the centre of
+     the figure returned the figure. It also settles the --pane question: --text
+     wants --pane, whose ::before slab is what gives the letterforms their body
+     once it is cut to them, but the pointer layers on that slab stay dark
+     because nothing ever lights an element that cannot be pointed at. */
+  pointer-events: none;
+}
+
+/* The unmasked copy that carries the light, seated before the host by
+   glass-text.js. A sibling, not a child: the host is masked to its glyphs, so a
+   glow inside it would be masked away with everything else.
+
+   ITS TYPE IS BORROWED, its PLACE is not. glass-text.js copies the host's face,
+   size, weight, tracking and padding onto this element inline — a bare span
+   inherits the surface's body type, and a 14px halo under an 88px figure is the
+   light in one place and the glass in another. Where the pair goes is still the
+   surface's: only it knows whether coinciding means absolute placement in a
+   slot, a grid cell or a stack. */
+.sl-fx-glass__glow {
+  width: max-content;
+  color: transparent;
+  pointer-events: none;
+  /* Two shadows: a tight bright core that gives the strokes an edge to read
+     against, and a wide soft halo that lifts the text off what it sits on.
+
+     EVERY default is a var() fallback AT THE POINT OF USE, never a declaration
+     here. A custom property declared on this element beats the same property
+     inherited from an ancestor, so writing --slfx-text-light on .sl-fx-glass__glow
+     would put an inversion band's rebinding out of reach — and inside a band
+     --slc-text is the band's own GROUND, which makes a glow built from it
+     invisible. glass.css states the same rule about its own defaults. */
+  text-shadow:
+    0 0 0.09em color-mix(in srgb,
+      var(--slfx-text-light, var(--slc-text, var(--sl-text-primary)))
+      var(--slfx-text-core-a, 46%), transparent),
+    0 0 0.43em color-mix(in srgb,
+      var(--slfx-text-light, var(--slc-text, var(--sl-text-primary)))
+      var(--slfx-text-halo-a, 26%), transparent);
+}
+
 /* ══ GPU TIER STAND-DOWN ═════════════════════════════════════════════════════
    The light is per-element now, so "the GPU tier is available" and "this
    element is lit" are different facts and only the second one may silence
@@ -1215,6 +1292,19 @@
    gave them, and the clip is what actually holds the blur inside it. Only the
    PAINTING changes while loading, below. */
 .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars] {
+  /* HOW WIDE A CURTAIN IS. Everything below — both combs' stops, both tiles,
+     and the sway — is a fraction of this one length, in the ratios the two
+     were fitted at, so changing it scales the whole pattern and never its
+     proportions.
+
+     104px is what it was fitted to on a 320px showcase card: three curtains
+     across the pane. That is the Tier 0 value and the fallback, and it is
+     also why the number a consumer binds is a COUNT, not a length —
+     --slfx-pillar-count, read off the host by seatGlow(), which divides the
+     host's own width by it. Fewer curtains are wider, more are narrower, and
+     a 1104px row no longer shows nine ribs where the card it was measured on
+     showed three. Without the JS the fallback holds and nothing changes. */
+  --slfx-pillar-pitch: 104px;
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
   filter: blur(var(--slfx-pillar-soft, 8px));
@@ -1343,23 +1433,29 @@
      30/44/41 the peak is +49.0. The pitch is a quarter wider so the ribs
      clear twice the blur they sit under — below that the blur erases the very
      structure the lens needs in order to have something to bend. */
+  /* Every stop is its fitted pixel figure over 104, so the pair still beats
+     exactly as it was measured to. The bright comb's own period is 0.4231 of
+     the wide one's, which is the interval that made them cross rather than
+     march. */
   background:
     repeating-linear-gradient(90deg,
-      transparent 0 14px,
-      color-mix(in srgb, var(--slfx-glint) 32%, transparent) 20px,
-      transparent 26px 44px),
+      transparent 0 calc(var(--slfx-pillar-pitch) * 0.1346),
+      color-mix(in srgb, var(--slfx-glint) 32%, transparent) calc(var(--slfx-pillar-pitch) * 0.1923),
+      transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.4231)),
     repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--slfx-pillar-a) 45%, transparent) 0 12px,
-      transparent 26px 54px,
-      color-mix(in srgb, var(--slfx-pillar-b) 42%, transparent) 66px,
-      transparent 82px 104px);
+      color-mix(in srgb, var(--slfx-pillar-a) 45%, transparent) 0 calc(var(--slfx-pillar-pitch) * 0.1154),
+      transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.5192),
+      color-mix(in srgb, var(--slfx-pillar-b) 42%, transparent) calc(var(--slfx-pillar-pitch) * 0.6346),
+      transparent calc(var(--slfx-pillar-pitch) * 0.7885) var(--slfx-pillar-pitch));
   /* Re-fitted for white, 2026-09-12: the light pole carries far less over a
      near-black ground than the vivid accent did, so the same alphas read
      dimmer — at 44/41 the interior peaked at +30 where the reference's light
      peaks at +48. At 45/42 it is +46.4. The pitch is wider again and the blur
      larger (owner: "sembrano zebrati, li blurrerei ancora di piu'"): at 200px
      the two combs still read as a comb, at 320 they read as light. */
-  background-size: 320px 100%, 480px 100%;
+  background-size:
+    calc(var(--slfx-pillar-pitch) * 3.0769) 100%,
+    calc(var(--slfx-pillar-pitch) * 4.6154) 100%;
   background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
 }
 
@@ -1701,9 +1797,20 @@
     /* Out: no overshoot. Coming back to rest should not bounce past it. */
     transition: transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
   }
+  /* THE AMOUNT IS A KNOB, AND IT IS READ WITH A FALLBACK, NOT DECLARED. A
+     surface that wraps the pane and its seated glow in a box of its own and
+     scales THAT has already moved both; the pane's own scale then composes
+     with the wrapper's rather than agreeing with it — 1.03 x 1.03 put a card's
+     curtains 34 px wider than the card they are clipped to, which reads as the
+     light spilling past the glass. Such a wrapper sets --slfx-pane-swell: 1
+     and the pane and its glow both stand down, because the property inherits
+     to both from the wrapper they share. That only works while nothing
+     declares a default ON the pane or the glow: a declaration there would
+     shadow the wrapper's value and be unreachable. The default lives at the
+     point of use. */
   .sl-fx-glass--pane:hover:not(:disabled),
   .sl-fx-glass--pane:focus-visible {
-    transform: scale(1.03);
+    transform: scale(var(--slfx-pane-swell, 1.03));
     /* In: one small rebound past the target, then settle. */
     transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
     transition-duration: 320ms;
@@ -1711,7 +1818,45 @@
   /* Pressed, the mass goes the other way and the bounce is gone: a press is
      an arrival, not a launch. */
   .sl-fx-glass--pane:active:not(:disabled) {
-    transform: scale(0.99);
+    /* The press is the swell's third, the other way: 1.03 -> 0.99, 1 -> 1. One
+       declaration governs both states, so standing the swell down cannot leave
+       a press behind. */
+    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
+    transition-duration: 140ms;
+    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
+  }
+
+  /* AND THE LIGHT INSIDE IT SWELLS TOO. A seated glow is the host's previous
+     SIBLING, not its child, so a transform on the host reaches it not at all:
+     the pane grew under the pointer and its curtains stayed exactly the size
+     they were, which reads as the light sliding out from under the glass. The
+     owner saw it as the effect not following the container.
+
+     So the glow mirrors the host's scale, on the host's own curves. Mirrored
+     rather than inherited because there is nothing to inherit from — and it is
+     three rules rather than one because each of the pane's three states has a
+     curve of its own, and a glow easing differently from the pane it hangs in
+     is the same defect one step smaller.
+
+     Both boxes scale about their centres and the glow's box IS the host's, so
+     they stay registered; the curtains' own drift is a background-position and
+     is untouched by a transform.
+
+     The mirror reads the same --slfx-pane-swell the pane does, so a wrapper
+     that owns the scale cancels both with one declaration. */
+  .sl-fx-aurora__glow[data-sl-fx-seated] {
+    transition:
+      opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+      transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
+  }
+  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:hover:not(:disabled)),
+  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:focus-visible) {
+    transform: scale(var(--slfx-pane-swell, 1.03));
+    transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
+    transition-duration: 320ms;
+  }
+  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled)) {
+    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
     transition-duration: 140ms;
     transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }
@@ -1758,16 +1903,31 @@
      ALTERNATES — the moment it turns around is the moment it stops being a
      sweep. The second comb still moves at -0.6 of this, so the two cross
      rather than march. */
-  @keyframes slfx-pillars-drift { from { --slfx-pillar-x: -38px; } to { --slfx-pillar-x: 44px; } }
+  /* A fraction of the pitch, not a fixed distance: a sway of 40px across a
+     368px curtain is a twitch, and the same sway across a 104px one is the
+     lean it was fitted as. */
+  @keyframes slfx-pillars-drift {
+    from { --slfx-pillar-x: calc(var(--slfx-pillar-pitch) * -0.3654); }
+    to   { --slfx-pillar-x: calc(var(--slfx-pillar-pitch) *  0.4231); }
+  }
   /* 3 -> 5.5px, so the fitted 4px sits in the middle of the breath rather
      than at the bottom of a 2 -> 7 swing that softened the ribs away at its
      top end. */
   @keyframes slfx-pillars-breathe { from { --slfx-pillar-soft: 7px; } to { --slfx-pillar-soft: 10px; } }
+  /* The NEGATIVE DELAY is what keeps a row of panes from marching. Every
+     animation starts when its rule begins to match, so a surface that lights
+     all its cards at once starts all of them together; --slfx-pillar-phase,
+     written per host by seatGlow(), drops each one somewhere inside its own
+     cycle instead. Unset it and the delay is 0 and nothing changes.
+
+     The two clocks take different multipliers on purpose: the breathe and the
+     drift are the pair that beats, and offsetting them by the same amount
+     would only move the formation rather than break it. */
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
-    animation: slfx-pillars-breathe 8.7s ease-in-out infinite alternate;
+    animation: slfx-pillars-breathe 8.7s ease-in-out calc(var(--slfx-pillar-phase, 0) * -8.7s) infinite alternate;
   }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
-    animation: slfx-pillars-drift 23s cubic-bezier(0.42, 0, 0.58, 1) infinite alternate;
+    animation: slfx-pillars-drift 23s cubic-bezier(0.42, 0, 0.58, 1) calc(var(--slfx-pillar-phase, 0) * -23s) infinite alternate;
   }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {

@@ -304,7 +304,12 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // 0.24 is the 4.3px separation the prism was fitted at on lab/1t and lab/1v,
   // back when the cap was 6 and the split was a fraction of it. The first
   // version of this line used 0.12 and quietly halved the prism.
-  assert.match(lensSrc, /const split = disperse \* 0\.24;/, "the split is a pixel budget, at the fitted fringe");
+  // The 0.24 is the budget; where the number comes from is the surface's, so
+  // the assertion is about the arithmetic and the default, not the spelling.
+  assert.match(lensSrc, /\* 0\.24;/, "the split is a pixel budget, at the fitted fringe");
+  assert.match(lensSrc, /Number\.isFinite\(askedSplit\) \? askedSplit : disperse/,
+    "and a surface may ask for a wider prism, with the fitted figure as the fallback");
+  assert.match(lensSrc, /getPropertyValue\("--slg-lens-disperse"\)/, "through CSS, like --slg-lens-reach");
   assert.match(lensSrc, /capped - split \/ 2/, "red bends less");
   assert.match(lensSrc, /capped \+ split \/ 2/, "blue bends more");
   assert.doesNotMatch(lensSrc, /0\.02 \* disperse/, "and it no longer scales with the cap");
@@ -380,17 +385,45 @@ test("the pane's hover has mass, and does not invalidate the lens", () => {
   // displacement map stays valid. Animating width or padding would rebuild a
   // canvas every frame.
   assert.match(css2, /\.sl-fx-glass--pane:hover:not\(:disabled\),/);
-  assert.match(css2, /transform: scale\(1\.03\);/, "three percent: seen, without the row around it moving");
+  assert.match(css2, /transform: scale\(var\(--slfx-pane-swell, 1\.03\)\);/,
+    "three percent: seen, without the row around it moving");
   assert.match(css2, /cubic-bezier\(0\.34, 1\.12, 0\.36, 1\)/,
     "the bounce is a gentle overshooting curve, not a keyframe that would restart on a re-entry");
   assert.match(css2, /transition: transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
     "and the way out is slower still, with no overshoot at all");
-  assert.match(css2, /\.sl-fx-glass--pane:active:not\(:disabled\) \{\s*transform: scale\(0\.99\);/,
+  assert.match(css2, /\.sl-fx-glass--pane:active:not\(:disabled\) \{[\s\S]{0,400}?transform: scale\(calc\(1 - \(var\(--slfx-pane-swell, 1\.03\) - 1\) \/ 3\)\);/,
     "a press goes the other way, and without the overshoot");
-  const guard = css2.slice(0, css2.indexOf("transform: scale(1.03)"));
+  const guard = css2.slice(0, css2.indexOf("transform: scale(var(--slfx-pane-swell"));
   assert.ok(guard.lastIndexOf("@media (prefers-reduced-motion: no-preference)") >
             guard.lastIndexOf("@media (prefers-reduced-motion: reduce)"),
     "and all of it sits inside the no-preference guard");
+});
+
+test("the swell is a knob, so a wrapper that scales the pane can stand it down", () => {
+  // Measured on sondalab-site: the hover swell was moved onto a wrapper that
+  // holds the pane AND its seated glow, so both grow about one centre -- and
+  // the kit's own scale then COMPOSED with the wrapper's instead of agreeing
+  // with it. 1.03 x 1.03 = 1.0609 put the curtains 34.1px wider than the card
+  // they are clipped to. The site's only recourse was `transform: none
+  // !important` on a kit internal, which is the signal that the kit was
+  // missing a knob.
+  //
+  // The knob has to be READ WITH A FALLBACK and never DECLARED on the pane or
+  // the glow: a custom property set on the wrapper inherits to both, but a
+  // declaration on either would shadow it and be unreachable from there. This
+  // is the same pitfall an inversion band sets for a colour var.
+  assert.ok(!/\.sl-fx-glass--pane[^{]*\{[^}]*--slfx-pane-swell:/.test(css2),
+    "no default is declared on the pane, or a wrapper could not reach it");
+  assert.ok(!/\.sl-fx-aurora__glow[^{]*\{[^}]*--slfx-pane-swell:/.test(css2),
+    "nor on the glow, for the same reason");
+  const uses = css2.match(/var\(--slfx-pane-swell, 1\.03\)/g) ?? [];
+  assert.equal(uses.length, 4,
+    "all four states read it: the pane's swell and press, and the glow's mirror of each");
+  // 1.03 -> 0.99 and 1 -> 1: one declaration governs both states, so standing
+  // the swell down cannot leave a press behind.
+  const press = (swell) => 1 - (swell - 1) / 3;
+  assert.ok(Math.abs(press(1.03) - 0.99) < 1e-12, "the press is the swell's third, the other way");
+  assert.equal(press(1), 1, "and a cancelled swell cancels the press with it");
 });
 
 test("the lens's frost is animatable, so glass can breathe", () => {

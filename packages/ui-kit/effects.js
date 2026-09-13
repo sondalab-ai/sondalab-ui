@@ -655,7 +655,50 @@ function seatGlow(el, glow) {
     const v = hostStyle.getPropertyValue(name);
     if (v) glow.style.setProperty(name, v);
   }
+
+  // HOW MANY CURTAINS, not how wide one is. The pattern was fitted at 104px on
+  // a 320px card — three across the pane — and left at that length it does not
+  // scale: a 1104px row showed nine ribs where the card it was measured on
+  // showed three, and the owner read the difference as stripes rather than as
+  // light. So the author binds a count and the width follows the host, which
+  // is why this belongs here: seatGlow() is already what runs on every resize.
+  //
+  // effects.css carries 104px as its own fallback, so a page that never mounts
+  // keeps exactly the pattern it has today.
+  const count = parseFloat(hostStyle.getPropertyValue("--slfx-pillar-count")) || PILLAR_COUNT;
+  if (r.width > 0) glow.style.setProperty("--slfx-pillar-pitch", `${r.width / count}px`);
+
+  // And a phase of its own. Every animation starts when its rule begins to
+  // match, so a surface that lights all its cards at once starts all of them
+  // on the same instant and they drift in formation — one pattern printed as
+  // many times as there are panes. The offset is derived from the host's
+  // ordinal rather than rolled, so it is stable across a re-render: a curtain
+  // that jumped to a new phase on every navigation would flicker for nothing.
+  // The golden ratio is the usual way to spread a small integer over [0, 1)
+  // without two neighbours landing close together.
+  glow.style.setProperty("--slfx-pillar-phase", String((glowOrdinal(el) * PHI) % 1));
 }
+
+/** The golden ratio's fractional part, for spreading ordinals over [0, 1). */
+const PHI = 0.618033988749895;
+
+/** How many curtains hang across a pane when the author binds no count. Three
+ *  is what the pattern was fitted at, on the card it was fitted on. */
+const PILLAR_COUNT = 3;
+
+/** A stable small integer per host, assigned in the order hosts are first
+ *  seated. Read off the id seatGlow's caller already gives them, so two calls
+ *  for the same host return the same number and a resize does not reshuffle
+ *  the page.
+ *  @param {Element} el the aurora host
+ *  @returns {number} */
+function glowOrdinal(el) {
+  const id = el.dataset.slFxId;
+  if (!id) return 0;
+  if (!ordinals.has(id)) ordinals.set(id, ordinals.size);
+  return ordinals.get(id);
+}
+const ordinals = new Map();
 
 function injectGlow(el) {
   const parent = el.parentElement;
@@ -845,6 +888,35 @@ function mountGoo(root) {
   return true;
 }
 
+/** The hosts whose glass is cut to their own letterforms, guarded the way
+ *  `lensed` and `gooFields` are: mount() may be called twice, and a host may
+ *  leave the document. */
+const glassTexts = new Map();
+const GLASS_TEXT_HOSTS = ".sl-fx-glass--text";
+
+/** Cut every declared host's glass to its own text.
+ *
+ *  Dynamically imported, like the lens and the goo: a surface with no glass
+ *  text pays nothing for the module existing. There is no Tier 0 for this one
+ *  — an uncut host is a rectangle of glass with an invisible label in it — so
+ *  the modifier's CSS keeps the host transparent and lets its paired glow
+ *  carry the text until the mask arrives.
+ *  @param {ParentNode} root the subtree to arm
+ *  @returns {Promise<void>} */
+async function armGlassText(root) {
+  if (typeof window === "undefined") return;
+  let glassText;
+  try { ({ glassText } = await import("./glass-text.js")); } catch { return; }
+  const hosts = [];
+  if (root instanceof Element && root.matches(GLASS_TEXT_HOSTS)) hosts.push(root);
+  hosts.push(...root.querySelectorAll(GLASS_TEXT_HOSTS));
+  for (const el of hosts) {
+    if (glassTexts.has(el)) continue;
+    const handle = glassText(el);
+    if (handle) glassTexts.set(el, handle);
+  }
+}
+
 /** Re-read every field's colours after a theme change.
  *
  *  A field is static once laid out, so nothing else would ever repaint it: a
@@ -1022,11 +1094,15 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // has to dress a card rendered after mount().
   injectGlassLayers(root);
   armLenses(root);
+  // And the letterform cut goes with them, for the third time in the same
+  // argument: a mask is not motion. It is the shape the material has.
+  armGlassText(root);
   watchLensTheme(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
       armLenses(n);
+      armGlassText(n);
     }
   }).observe(root, { childList: true, subtree: true });
   if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;

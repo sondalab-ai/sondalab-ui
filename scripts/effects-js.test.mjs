@@ -445,3 +445,110 @@ test("the pane's light leaves faster than it arrives", () => {
   assert.ok(toInvisible < 250, `a mouse-out must read as prompt, got ${Math.round(toInvisible)}ms to 5%`);
   assert.ok(settle > 0 && settle < 0.01, "and the loop must still stop itself");
 });
+
+/* ── the curtains fit the pane they hang in ──────────────────────────────── */
+
+const css = readFileSync(resolve(HERE, "../packages/ui-kit/effects.css"), "utf8")
+  .replace(/\/\*[\s\S]*?\*\//g, "");
+
+/** The balanced block that follows `at`, braces included. */
+function blockAt(src, at) {
+  const open = src.indexOf("{", at);
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}" && --depth === 0) return src.slice(open, i + 1);
+  }
+  throw new Error("unbalanced block");
+}
+
+const pillarsRule = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\[data-sl-fx-pillars\]\s*\{/));
+// The combs are painted on the glow's ::before, not on the glow itself, and
+// that selector is long enough that matching it is its own trap — so find the
+// declaration and take the block around it.
+const pillarsPaint = (() => {
+  const at = css.indexOf("--slfx-pillar-a");
+  assert.ok(at > -1, "the curtains must still be painted");
+  return blockAt(css, css.lastIndexOf("{", at) - 1);
+})();
+
+test("every curtain measurement is a fraction of one pitch", () => {
+  // The pattern was fitted at 104px on a 320px card and left at that length it
+  // does not scale: a 1104px row showed nine ribs where the card it was
+  // measured on showed three. Both combs, both tiles and the sway now derive
+  // from one length, so changing it scales the pattern and never its
+  // proportions — which is the only reason the pair still beats as measured.
+  const gradients = /background:\s*([\s\S]*?);/.exec(pillarsPaint)[1];
+  assert.match(gradients, /--slfx-pillar-pitch/, "the stops must derive from the pitch");
+  assert.doesNotMatch(gradients, /\b\d+px\b/, "no stop may keep a fitted pixel figure of its own");
+
+  const size = /background-size:\s*([\s\S]*?);/.exec(pillarsPaint)[1];
+  assert.doesNotMatch(size, /\b\d+px\b/, "the tiles scale with the pattern they carry");
+
+  const sway = /@keyframes\s+slfx-pillars-drift\s*\{[\s\S]*?\n\s*\}/.exec(css)[0];
+  assert.match(sway, /--slfx-pillar-pitch/, "a fixed sway is a twitch on a wide curtain");
+  assert.doesNotMatch(sway, /-?\d+px/, "and a lean on a narrow one");
+});
+
+test("a page that never mounts keeps the pattern it was fitted with", () => {
+  // The pitch comes from seatGlow(), so Tier 0 has to carry the measured value
+  // itself or a consumer without JS loses the curtains' shape entirely.
+  const fallback = /--slfx-pillar-pitch:\s*(\d+)px/.exec(pillarsRule);
+  assert.ok(fallback, "the pillars glow must declare a Tier 0 pitch");
+  assert.equal(fallback[1], "104", "and it is the figure the pattern was fitted at");
+});
+
+test("the count is what an author binds, and the width follows the host", () => {
+  const body = js.slice(js.indexOf("function seatGlow"), js.indexOf("function injectGlow"));
+  assert.match(body, /--slfx-pillar-count/, "the author's knob is a COUNT, not a length");
+  assert.match(body, /--slfx-pillar-pitch.*r\.width \/ count/s, "and the width is the host's own, divided by it");
+  assert.match(js, /const PILLAR_COUNT = 3;/, "three across the pane is what it was fitted at");
+  // seatGlow is what runs on every resize, which is why the division lives
+  // there rather than at injection.
+  assert.match(js, /new ResizeObserver\(\(\) => seatGlow\(el, glow\)\)/, "so a resize re-fits it");
+});
+
+test("no two panes drift in step, and the offset is stable", () => {
+  const body = js.slice(js.indexOf("function seatGlow"), js.indexOf("function injectGlow"));
+  assert.match(body, /--slfx-pillar-phase/, "each glow carries a phase of its own");
+  assert.match(js, /const PHI = 0\.618033988749895;/, "spread by the golden ratio");
+  // Stable across a re-render: a curtain that jumped to a new phase on every
+  // navigation would flicker for nothing. The ordinal is remembered per host.
+  assert.match(js, /function glowOrdinal/, "the ordinal is derived, not rolled");
+  assert.match(js, /ordinals\.set\(id, ordinals\.size\)/, "and remembered, so a resize does not reshuffle the page");
+
+  // The delay has to reach BOTH clocks, with different multipliers: the
+  // breathe and the drift are the pair that beats, and one offset for both
+  // would move the formation rather than break it.
+  const anims = [...css.matchAll(/animation:\s*slfx-pillars-(breathe|drift)[^;]*;/g)].map((m) => m[0]);
+  assert.equal(anims.length, 2, "both pillars clocks must be declared");
+  for (const a of anims) assert.match(a, /--slfx-pillar-phase/, `${a.slice(0, 40)}… must take the phase`);
+  const mults = anims.map((a) => /\* (-[\d.]+)s/.exec(a)[1]);
+  assert.notEqual(mults[0], mults[1], "one offset for both clocks only moves the formation");
+});
+
+test("a seated glow swells with the pane it hangs in", () => {
+  // The glow is the host's previous SIBLING, so a transform on the host reaches
+  // it not at all: the pane grew under the pointer and its curtains stayed the
+  // size they were, which reads as the light sliding out from under the glass.
+  const paneScale = (state) => {
+    const at = css.search(new RegExp(`\\.sl-fx-glass--pane${state}[^{]*\\{`));
+    assert.ok(at > -1, `the pane must still have a ${state} scale`);
+    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+  };
+  const glowScale = (state) => {
+    const at = css.search(new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-fx-glass--pane${state}`));
+    assert.ok(at > -1, `the glow must mirror the pane's ${state}`);
+    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+  };
+  for (const state of [":hover", ":active"]) {
+    assert.equal(glowScale(state), paneScale(state), `${state}: the light must swell exactly as its pane does`);
+  }
+
+  // …and on the same curves. A glow easing differently from the pane it hangs
+  // in is the same defect one step smaller.
+  const glowRest = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\s*\{\s*\n?\s*transition:/));
+  assert.match(glowRest, /transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
+    "the way out is the pane's own curve");
+  assert.match(glowRest, /opacity/, "and lighting up is still a fade, not a jump");
+});

@@ -217,6 +217,24 @@
     }
     .g-demo--substrate .substrate p { margin: 0; }
     .g-demo--substrate .substrate__row { position: relative; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    /* The glass text's type is the SURFACE's: the kit ships the cut, not the
+       face. The mask follows these declarations because it is measured off the
+       element. */
+    .glass-text-row { align-items: center; gap: 2.2rem; padding: 0.6rem 0; }
+    .glass-text-fig, .glass-text-word {
+      font-family: var(--sl-font-mono);
+      font-weight: 200;
+      line-height: 0.8;
+      letter-spacing: -0.02em;
+    }
+    .glass-text-fig { font-size: clamp(2.6rem, 7vw, 4.4rem); }
+    .glass-text-word { font-size: clamp(1.4rem, 3.4vw, 2.2rem); letter-spacing: 0.06em; }
+    /* AND PUTTING THE PAIR IN ONE PLACE IS THE SURFACE'S ONE RULE. The kit
+       seats .sl-fx-glass__glow before the host and gives it the host's own
+       type, so the two boxes are the same size; a slot that stacks them is all
+       that is left to write. */
+    .glass-text-slot { position: relative; display: inline-grid; }
+    .glass-text-slot > * { grid-area: 1 / 1; }
 
     /* -- inversion band: the Tier-B remap components.css already documents,
        extended to all three border roles — the glass fallback reads the strong/
@@ -475,6 +493,14 @@
             </article>
             <p class="cap" style="padding:0 1.4rem 1.2rem">Curtains behind the pane, drifting on one clock and softening on another. They sit in the backdrop, so the glass bends them and parts them into their colours at the faces — the light is <em>in</em> the glass, not laid on it. <b>--sweep</b> asks for the rotating arc instead.</p>
           </div>
+          <div class="g-cell" style="padding:0">
+            <article class="sl-card sl-fx-glass sl-fx-aurora" data-sl-fx-live="on"
+                     style="padding:1.4rem; --slfx-pillar-count: 8">
+              <h3 class="sl-card__title">Eight curtains, same pane</h3>
+              <p class="sl-card__body">The count is the knob. Fewer curtains are wider, more are narrower, and the pane decides how wide one is.</p>
+            </article>
+            <p class="cap" style="padding:0 1.4rem 1.2rem"><b>--slfx-pillar-count</b> is how many curtains hang across the host; <b>seatGlow()</b> divides the host's own width by it, so the pattern scales with the box instead of being a fixed <b>104px</b> wherever it lands. That figure was fitted on a 320px card — three across the pane, which is still the default — and left absolute it made a 1104px row show nine ribs where the card it was measured on showed three. Every stop, both tiles and the sway are fractions of that one pitch, so the two combs still beat in the ratio they were measured at. Without JavaScript the 104px fallback holds and nothing changes.</p>
+          </div>
           <div class="g-cell">
             <span class="g-label">linear — not every edge is a ring</span>
             <a class="sl-link sl-fx-aurora sl-fx-aurora--linear" href="../docs/specs/2026-09-08-effects-layer-design.md">read the spec</a>
@@ -498,6 +524,16 @@
               </div>
             </div>
             <p class="cap">Move the pointer over either. A ghost button's 1px border <b>is</b> the glass edge — no second ring is added on top of it — and while the pointer is on the pane the hairline's hot stop faces it, a fringe of colour either side. A primary is the harder case: translucency over an opaque fill is light that sits <b>on</b> the fill — the glint along the top, the shade along the bottom, the 1px rim inside the edge, the spot under the pointer — while its <b>::after</b> belongs to the rim aurora; under Tier 2 the chrome takes the fill's outer pixel.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">text — the letterform is the pane</span>
+            <div class="g-demo g-demo--substrate">
+              <div class="substrate__row glass-text-row">
+                <span class="glass-text-slot"><span class="glass-text-fig sl-fx-glass sl-fx-glass--text sl-fx-glass--pane">01</span></span>
+                <span class="glass-text-slot"><span class="glass-text-word sl-fx-glass sl-fx-glass--text sl-fx-glass--pane">refract</span></span>
+              </div>
+            </div>
+            <p class="cap">A mask clips a <b>backdrop-filter</b>'s output, so a pane masked to its own glyphs leaves glass in the <em>shape</em> of the text. <b>glass-text.js</b> measures the element — face, size, weight, tracking, and the real ascent off a canvas — and writes an SVG <b>&lt;text&gt;</b> mask in page pixels; nothing about the type is declared in the kit, so a surface restyles it in CSS alone. An unmasked copy is seated before the host to carry the light, because a glow inside the host would be masked away with it, and the module keeps the two strings in step so a scramble decodes in both at once. One line only: SVG text does not wrap.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">keycap</span>
