@@ -134,6 +134,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
  *   amplifies the IOR triple's ±0.02 — 18 puts a visible fringe on a button,
  *   0 is a lens with no glass in it; `reach` caps the bend in CSS pixels, so a
  *   card does not bend six times harder than a button just for being wider.
+ *   `disperse` is readable from CSS as `--slg-lens-disperse`, and
  *   `reach` is also readable from CSS as `--slg-lens-reach` on the element,
  *   which wins when it is declared: how hard a surface bends is a property of
  *   that surface, and a stylesheet is where a surface says what it is. The
@@ -310,7 +311,19 @@ export function lens(el, look = {}) {
     // 0.24: at disperse 18 that is the 4.3px separation the prism was fitted
     // at on lab/1t and lab/1v, when the cap was 6 and the split was a fraction
     // of it. The first version of this line used 0.12 and halved the prism.
-    const split = disperse * 0.24;
+    // AND THE SPLIT IS READABLE FROM CSS, the way `reach` above is. It was the
+     // one number of the five with no hook, so a surface that wanted a wider
+     // prism had no way to ask for one — the option exists and nothing passes
+     // it. Read here rather than cached, for the reason `reach` gives: a number
+     // held in two places is the first thing to drift.
+     //
+     // The default does not move. The figure this was fitted at answers a
+     // question about a pane with TEXT behind it, where the note above records
+     // 13px of channel separation reading as a broken render rather than as a
+     // prism; a surface laid over a picture or a bed has no such reader, and
+     // that is the surface that should be raising it.
+     const askedSplit = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-disperse"));
+     const split = (Number.isFinite(askedSplit) ? askedSplit : disperse) * 0.24;
     dispR.setAttribute("scale", String(capped - split / 2));
     dispG.setAttribute("scale", String(capped));
     dispB.setAttribute("scale", String(capped + split / 2));

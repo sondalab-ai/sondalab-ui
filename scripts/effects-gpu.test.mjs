@@ -304,7 +304,12 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // 0.24 is the 4.3px separation the prism was fitted at on lab/1t and lab/1v,
   // back when the cap was 6 and the split was a fraction of it. The first
   // version of this line used 0.12 and quietly halved the prism.
-  assert.match(lensSrc, /const split = disperse \* 0\.24;/, "the split is a pixel budget, at the fitted fringe");
+  // The 0.24 is the budget; where the number comes from is the surface's, so
+  // the assertion is about the arithmetic and the default, not the spelling.
+  assert.match(lensSrc, /\* 0\.24;/, "the split is a pixel budget, at the fitted fringe");
+  assert.match(lensSrc, /Number\.isFinite\(askedSplit\) \? askedSplit : disperse/,
+    "and a surface may ask for a wider prism, with the fitted figure as the fallback");
+  assert.match(lensSrc, /getPropertyValue\("--slg-lens-disperse"\)/, "through CSS, like --slg-lens-reach");
   assert.match(lensSrc, /capped - split \/ 2/, "red bends less");
   assert.match(lensSrc, /capped \+ split \/ 2/, "blue bends more");
   assert.doesNotMatch(lensSrc, /0\.02 \* disperse/, "and it no longer scales with the cap");
