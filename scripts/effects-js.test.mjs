@@ -526,3 +526,29 @@ test("no two panes drift in step, and the offset is stable", () => {
   const mults = anims.map((a) => /\* (-[\d.]+)s/.exec(a)[1]);
   assert.notEqual(mults[0], mults[1], "one offset for both clocks only moves the formation");
 });
+
+test("a seated glow swells with the pane it hangs in", () => {
+  // The glow is the host's previous SIBLING, so a transform on the host reaches
+  // it not at all: the pane grew under the pointer and its curtains stayed the
+  // size they were, which reads as the light sliding out from under the glass.
+  const paneScale = (state) => {
+    const at = css.search(new RegExp(`\\.sl-fx-glass--pane${state}[^{]*\\{`));
+    assert.ok(at > -1, `the pane must still have a ${state} scale`);
+    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+  };
+  const glowScale = (state) => {
+    const at = css.search(new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-fx-glass--pane${state}`));
+    assert.ok(at > -1, `the glow must mirror the pane's ${state}`);
+    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+  };
+  for (const state of [":hover", ":active"]) {
+    assert.equal(glowScale(state), paneScale(state), `${state}: the light must swell exactly as its pane does`);
+  }
+
+  // …and on the same curves. A glow easing differently from the pane it hangs
+  // in is the same defect one step smaller.
+  const glowRest = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\s*\{\s*\n?\s*transition:/));
+  assert.match(glowRest, /transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
+    "the way out is the pane's own curve");
+  assert.match(glowRest, /opacity/, "and lighting up is still a fade, not a jump");
+});

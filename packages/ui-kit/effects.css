@@ -1735,6 +1735,38 @@
     transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }
 
+  /* AND THE LIGHT INSIDE IT SWELLS TOO. A seated glow is the host's previous
+     SIBLING, not its child, so a transform on the host reaches it not at all:
+     the pane grew under the pointer and its curtains stayed exactly the size
+     they were, which reads as the light sliding out from under the glass. The
+     owner saw it as the effect not following the container.
+
+     So the glow mirrors the host's scale, on the host's own curves. Mirrored
+     rather than inherited because there is nothing to inherit from — and it is
+     three rules rather than one because each of the pane's three states has a
+     curve of its own, and a glow easing differently from the pane it hangs in
+     is the same defect one step smaller.
+
+     Both boxes scale about their centres and the glow's box IS the host's, so
+     they stay registered; the curtains' own drift is a background-position and
+     is untouched by a transform. */
+  .sl-fx-aurora__glow[data-sl-fx-seated] {
+    transition:
+      opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+      transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
+  }
+  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:hover:not(:disabled)),
+  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:focus-visible) {
+    transform: scale(1.03);
+    transition-timing-function: cubic-bezier(0.34, 1.12, 0.36, 1);
+    transition-duration: 320ms;
+  }
+  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled)) {
+    transform: scale(0.99);
+    transition-duration: 140ms;
+    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
+  }
+
   /* Sweep: 210deg → 570deg rather than 0 → 360, so the rotation is continuous
      instead of snapping back through the resting angle. */
   @keyframes slfx-sweep { to { --slfx-angle: 570deg; } }
