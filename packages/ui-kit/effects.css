@@ -588,6 +588,11 @@
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
+/* injectGlass() stamps .sl-glass on the host so glass.css's anatomy applies,
+   and glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
+   there — which overwrites a component's own radius unless this knob is bound.
+   .sl-icon-btn--round is 50%, not --sl-radius-md, so it needs the rebind. */
+.sl-icon-btn--round.sl-fx-glass { --slg-radius: 50%; }
 
 /* A filled brand button is the one surface whose own content constrains how
    translucent it may be: thinning the fill on paper moves the amber toward
