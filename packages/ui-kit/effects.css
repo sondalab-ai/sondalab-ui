@@ -588,6 +588,26 @@
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
+/* A rule of their own, not a join to the .sl-btn/.sl-badge/.sl-field__control/
+   .sl-icon-btn group above, though that group also binds transparent:
+   1. transparent is what components.css ships these two — neither .sl-anchor
+      nor .sl-stat__value declares a background. A heading and a numeral have
+      no ground of their own.
+   2. No --slg-tint-color/--slg-tint-a rebind: the group's 25%/22% tint alphas
+      were fitted by contrast measurement on a FILLED CONTROL over a telemetry
+      substrate (see the comment above, 4.24:1 → 4.74 → 5.19). A display-scale
+      letterform is not that case; inheriting those numbers would be borrowing
+      a measurement taken for something else. Tint stays at the family default.
+   3. Bound on the two host classes, not on .sl-fx-glass--text, though that is
+      where it conceptually belongs — one declension, every glass-text host.
+      The guard at scripts/effects-guards.test.mjs:310 keys each binding by
+      stripping the selector from .sl-fx-glass onward; a selector of
+      .sl-fx-glass--text strips to "", which the guard reads as the FAMILY
+      DEFAULT and would silently rebind the fill for every glass host on every
+      page. That is a limitation of the guard, not a preference — do not move
+      this binding onto --text without fixing the guard first. */
+.sl-anchor.sl-fx-glass,
+.sl-stat__value.sl-fx-glass { --slfx-fill: transparent; }
 /* injectGlass() stamps .sl-glass on the host so glass.css's anatomy applies,
    and glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
    there — which overwrites a component's own radius unless this knob is bound.

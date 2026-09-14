@@ -331,6 +331,8 @@ Additive classes over `components.css` — never a replacement for the shared co
 | Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
 | Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
 | Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
+| Oversized anchor | `sl-anchor sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
+| Stat value | `sl-stat__value sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
 
 Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
 
