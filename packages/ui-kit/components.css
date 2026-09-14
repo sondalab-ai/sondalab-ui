@@ -55,6 +55,8 @@
 .sl-link:focus-visible,
 .sl-field__input:focus-visible,
 .sl-tabs__tab:focus-visible,
+.sl-check__input:focus-visible + .sl-check__box,
+.sl-radio__input:focus-visible + .sl-radio__box,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
@@ -255,6 +257,100 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-rule--labeled::before,
 .sl-rule--labeled::after { content: ""; flex: 1; border-top: 1px solid var(--slc-border); }
+
+/* ══ FORM CONTROLS ═══════════════════════════════════════════════════════════ */
+
+/* Checkbox / radio / switch share one shape: a <label> host, a hidden-but-
+   focusable <input>, a <span> that paints the control, a <span> of text.
+   The input is NOT styled directly: pseudo-elements on replaced elements are
+   undefined per spec and inconsistent across engines, which is the same reason
+   effects.css requires an .sl-field__control wrapper. */
+.sl-check,
+.sl-radio,
+.sl-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-3, 0.75rem);
+  cursor: pointer;
+}
+
+/* Hidden from sight, present in the focus order. Never display:none. */
+.sl-check__input,
+.sl-radio__input,
+.sl-switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sl-check__box,
+.sl-radio__box {
+  position: relative;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border-strong);
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-check__box { border-radius: var(--sl-radius-sm, 4px); }
+.sl-radio__box { border-radius: 50%; }
+
+.sl-check__input:checked + .sl-check__box,
+.sl-radio__input:checked + .sl-radio__box {
+  background: var(--slc-accent);
+  border-color: var(--slc-accent);
+}
+
+/* The tick is a rotated border corner — no asset, no data URI, nothing to
+   audit. The radio's dot is a filled circle for the same reason. */
+.sl-check__box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.3rem;
+  height: 0.55rem;
+  border: solid var(--slc-on-accent);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg);
+  opacity: 0;
+}
+.sl-radio__box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--slc-on-accent);
+  opacity: 0;
+}
+.sl-check__input:checked + .sl-check__box::after,
+.sl-radio__input:checked + .sl-radio__box::after { opacity: 1; }
+
+/* Content, not a structural label (L1): sans, sentence case. */
+.sl-check__label,
+.sl-radio__label,
+.sl-switch__label {
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text);
+}
+
+.sl-check:has(.sl-check__input:disabled),
+.sl-radio:has(.sl-radio__input:disabled),
+.sl-switch:has(.sl-switch__input:disabled) { opacity: 0.5; cursor: not-allowed; }
 
 /* ══ COMPLEX (composed shells — no behaviour JS) ═════════════════════════════ */
 

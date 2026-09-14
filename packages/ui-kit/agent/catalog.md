@@ -69,6 +69,28 @@ Label + input/textarea/select. Substrate: **R** App.
 ```
 Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
 
+### Checkbox — `sl-check` (`__input` · `__box` · `__label`)
+A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that paints the box, and a `<span>` that carries the text. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-check">
+  <input class="sl-check__input" type="checkbox">
+  <span class="sl-check__box"></span>
+  <span class="sl-check__label">Run the audit on save</span>
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
+
+### Radio — `sl-radio` (`__input` · `__box` · `__label`)
+The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-radio">
+  <input class="sl-radio__input" type="radio" name="tier">
+  <span class="sl-radio__box"></span>
+  <span class="sl-radio__label">Tier A — full theme selector</span>
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
+
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
 Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
 ```html

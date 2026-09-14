@@ -310,6 +310,44 @@
         "--sl-font-display",
         "--sl-line-tight"
       ]
+    },
+    {
+      "id": "checkbox",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-check",
+        "sl-check__input",
+        "sl-check__box",
+        "sl-check__label"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-on-accent",
+        "--slc-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "radio",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-radio",
+        "sl-radio__input",
+        "sl-radio__box",
+        "sl-radio__label"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-on-accent",
+        "--slc-text",
+        "--slc-focus"
+      ]
     }
   ]
 }
