@@ -348,6 +348,25 @@
         "--slc-text",
         "--slc-focus"
       ]
+    },
+    {
+      "id": "switch",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-switch",
+        "sl-switch__input",
+        "sl-switch__track",
+        "sl-switch__label"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-on-accent",
+        "--slc-text",
+        "--slc-focus"
+      ]
     }
   ]
 }

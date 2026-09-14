@@ -91,6 +91,17 @@ The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A**
 ```
 Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
 
+### Switch — `sl-switch` (`__input` · `__track` · `__label`)
+A checkbox that reads as a state rather than a choice: use it where the change takes effect immediately, and a checkbox where it takes effect on submit. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-switch">
+  <input class="sl-switch__input" type="checkbox" role="switch">
+  <span class="sl-switch__track"></span>
+  <span class="sl-switch__label">Tier 2 GPU effects</span>
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: carry `role="switch"` on the input, so the state reaches a screen reader as on/off rather than as checked. Don't: put ON/OFF text inside the track — the knob's position is the state, and a label that repeats it goes stale in translation.
+
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
 Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
 ```html
