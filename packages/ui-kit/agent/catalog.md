@@ -246,6 +246,34 @@ Numbered navigation across pages of results. Mono tabular figures (L1). Substrat
 ```
 Consumes: `--slc-border`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
 
+### Empty state — `sl-empty` (`__title` · `__body`)
+What a surface shows where its content would be. Composes `sl-eyebrow` above the title. Substrate: **R** App, **A** IDE/Page.
+```html
+<div class="sl-empty">
+  <span class="sl-eyebrow">No findings</span>
+  <p class="sl-empty__title">The audit found nothing to report.</p>
+  <p class="sl-empty__body">4 surfaces read, 0 R-violations, 0 blessed deviations.</p>
+</div>
+```
+Consumes: `--slc-border`, `--slc-text`, `--slc-text-secondary`. Do: say what is absent and what was actually measured — L5 prefers a real figure to an adjective. Don't: write "Nothing here yet!"; the exclamation mark is the marketing voice this house does not use.
+
+### Skeleton — `sl-skeleton`
+A placeholder block for content that has not arrived. **Static** — it does not shimmer. Substrate: **R** App, **A** IDE/Page.
+```html
+<div class="sl-skeleton" style="height: 1rem; width: 60%"></div>
+```
+Consumes: `--slc-text`. Do: size it to the content it stands in for, give the block `aria-hidden="true"`, and carry the real loading state on the container's `aria-busy`. Don't: animate it. A shimmer is ambient motion that means nothing, and L6 switches off an effect that means nothing — the same rule that forbids an ambient glitch on a control. Where a surface genuinely needs to say *work is running*, that is the aurora's busy reading, bound to `aria-busy`.
+
+### Stat — `sl-stat` (`__value` · `__label`)
+A single measured figure with its caption. Substrate: **R** App/Page, **N/A** IDE.
+```html
+<div class="sl-stat">
+  <span class="sl-stat__value">268</span>
+  <span class="sl-stat__label">Tests green</span>
+</div>
+```
+Consumes: `--slc-text`, `--slc-text-muted`. Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected). Don't: set a stat you have not measured.
+
 ## Effects (opt-in, `effects.css`)
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).

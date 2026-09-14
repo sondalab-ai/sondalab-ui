@@ -473,6 +473,43 @@
         "--slc-accent-subtle",
         "--slc-focus"
       ]
+    },
+    {
+      "id": "empty-state",
+      "kind": "primitive",
+      "classes": [
+        "sl-empty",
+        "sl-empty__title",
+        "sl-empty__body"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-text",
+        "--slc-text-secondary"
+      ]
+    },
+    {
+      "id": "skeleton",
+      "kind": "primitive",
+      "classes": [
+        "sl-skeleton"
+      ],
+      "roleVars": [
+        "--slc-text"
+      ]
+    },
+    {
+      "id": "stat",
+      "kind": "primitive",
+      "classes": [
+        "sl-stat",
+        "sl-stat__value",
+        "sl-stat__label"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-text-muted"
+      ]
     }
   ]
 }
