@@ -297,6 +297,27 @@ Where even the lockup is too wide to read: a social avatar, a square tile. `s.` 
 ```
 Consumes: `--slc-text`, `--slc-accent`, `--slc-surface`. Rendered assets: `packages/ui-kit/assets/sondalab-avatar-{ink,paper}.{svg,png}`. Resize it by setting `--sl-monogram-size` (default `3rem`) — the letter is sized off that box, never off an inherited `font-size`, so the three corrections hold at every size. Those corrections are fixed in `design-language.md` L3 and transcribed here, not re-derived: the mark is sized to the inscribed crop circle (~60% of the canvas wide) rather than the square; the accent period is scaled +35% around its own centre so it survives a 32px render; and it is pushed +0.06em off the letter, because the wordmark's tight tracking is drawn for a period at its natural size. Do: give it `role="img"` and a label — `s.` read aloud is not the brand. The period is drawn by the class, so the markup carries the letter alone. Don't: re-tune the three corrections per surface; they are what makes the small end legible.
 
+### Figure — `sl-figure` (`__media` · `__caption`)
+An image in a hairline frame with a mono caption. The house way to put a picture in a page without it reading as a blog post. Substrate: **R** Page, **A** App, **N/A** IDE.
+```html
+<figure class="sl-figure">
+  <div class="sl-figure__media" style="aspect-ratio: 16 / 9">
+    <img src="/contact-1k.jpg" alt="Glass pane, GPU tier, dark theme">
+  </div>
+  <figcaption class="sl-figure__caption">Contact 1k — the GPU glass pane</figcaption>
+</figure>
+```
+Consumes: `--slc-border`, `--slc-surface`, `--slc-text-muted`. Do: declare the `aspect-ratio` on `sl-figure__media` yourself — the class sets none, because the right ratio is a property of the image and not of the design system, and a default would silently crop most of them. Don't: let the caption run to sentence case in the sans face; a caption is a structural label (L1).
+
+### Avatar — `sl-avatar` (`--sm` · `--lg`)
+A person or a product, as a square tile. Falls back to `sl-monogram` when there is no image. Substrate: **R** IDE/App, **A** Page.
+```html
+<span class="sl-avatar"><img src="/avatar.png" alt=""></span>
+<span class="sl-avatar sl-avatar--sm"><span class="sl-monogram" role="img" aria-label="Sondalab">s</span></span>
+<span class="sl-avatar sl-avatar--lg"><span class="sl-monogram" role="img" aria-label="Sondalab">s</span></span>
+```
+Consumes: `--slc-surface`, `--slc-border`. Do: use the monogram as the fallback rather than initials in a circle — the monogram is the mark, and it already carries the three small-size corrections; the avatar hands it its own box, so the corrections scale with the modifier. Don't: give a decorative avatar alt text; `alt=""` is correct when the name is beside it.
+
 ## Effects (opt-in, `effects.css`)
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).

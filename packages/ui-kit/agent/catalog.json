@@ -546,6 +546,33 @@
         "--slc-accent",
         "--slc-surface"
       ]
+    },
+    {
+      "id": "figure",
+      "kind": "primitive",
+      "classes": [
+        "sl-figure",
+        "sl-figure__media",
+        "sl-figure__caption"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-surface",
+        "--slc-text-muted"
+      ]
+    },
+    {
+      "id": "avatar",
+      "kind": "primitive",
+      "classes": [
+        "sl-avatar",
+        "sl-avatar--sm",
+        "sl-avatar--lg"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border"
+      ]
     }
   ]
 }
