@@ -573,7 +573,10 @@
    fill to carry its own label. */
 .sl-btn.sl-fx-glass,
 .sl-badge.sl-fx-glass,
-.sl-field__control.sl-fx-glass {
+.sl-field__control.sl-fx-glass,
+/* .sl-icon-btn ships a transparent background like .sl-btn, which is why it
+   joins this group and not the .sl-tag one. */
+.sl-icon-btn.sl-fx-glass {
   --slfx-fill: transparent;
   --slg-tint-color: var(--sl-bg-canvas);
   --slg-tint-a: 25%;
