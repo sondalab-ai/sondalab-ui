@@ -206,7 +206,7 @@ Joins `sl-btn` children into one control with a shared 1px rule. Built on the ha
   <button class="sl-btn sl-btn--ghost">Adopt</button>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two.
+Consumes: `--slc-border`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two. Do: put `sl-fx-glass sl-fx-glass--pane` on the members, never `sl-fx-glass` on `.sl-btn-group` itself — a group's `background` **is** the 1px rule between its members, and the material clears the host's own background so its tint layer can paint instead, so glass on the group dissolves the separator it was supposed to leave alone. The group also clips (`overflow: hidden`), so its ring would be cut at the group's own edges regardless of the background question.
 
 ### Segmented control — `sl-segmented` (`__item`)
 A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: **R** IDE/App, **A** Page.
@@ -336,7 +336,6 @@ Additive classes over `components.css` — never a replacement for the shared co
 | Figure frame | `sl-figure__media sl-fx-glass sl-fx-glass--wide` |
 | Avatar, interactive | `sl-avatar sl-fx-glass sl-fx-glass--pane` |
 | Segmented item, selected | `sl-segmented__item sl-fx-aurora sl-fx-aurora--rim` |
-| Button group member | `sl-btn sl-fx-glass sl-fx-glass--pane` |
 
 The **section index** is the one declension driven from JavaScript rather than written in markup: `scramble(el)` on an element entering the viewport, which is *something re-resolved* at the smallest scale the grammar has. Bind it with an `IntersectionObserver` over `.sl-section__idx`; it is a text change rather than motion, so it is safe under `prefers-reduced-motion`.
 
