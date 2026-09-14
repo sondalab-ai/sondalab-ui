@@ -329,7 +329,6 @@ Additive classes over `components.css` — never a replacement for the shared co
 |---|---|
 | Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane` |
 | Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
-| Select | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
 | Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
 | Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
 | Oversized anchor | `sl-anchor sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
