@@ -66,6 +66,27 @@ test("both kill switches neutralise host-level effects, not only paint layers", 
   }
 });
 
+// Regression: GLASS TEXT hides its own ink behind `color: transparent` and
+// stands an SVG mask in for it, and neither kill switch named
+// `.sl-fx-glass--text` — so switching a glass-text host off left the mask cut
+// into the text and the colour still transparent, which is invisible, not
+// "off". A kill switch that stops short of the family's own text-hiding trick
+// is not a kill switch.
+test("both kill switches give a glass-text host its colour back and lose its mask", () => {
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    const targets = RULES.filter((r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-glass--text"));
+    assert.ok(targets.length > 0, `[${attr}] must reach .sl-fx-glass--text`);
+
+    const body = targets.map((r) => r.body).join(";");
+    const color = body.match(/(?:^|;)\s*color\s*:\s*([^;]+)/)?.[1]?.trim();
+    assert.ok(color && color !== "transparent", `[${attr}] must give .sl-fx-glass--text a colour back, not leave it transparent`);
+    assert.match(
+      body, /(?:^|;)\s*(?:-webkit-)?mask-image\s*:\s*none/,
+      `[${attr}] must remove the mask from .sl-fx-glass--text`,
+    );
+  }
+});
+
 test("the opt-out disables the element carrying it, not only its descendants", () => {
   // `[data-sl-fx="off"] .sl-fx-glass` is descendant-only: putting the attribute
   // ON an effect element did nothing at all. design-language.md L6 and the spec

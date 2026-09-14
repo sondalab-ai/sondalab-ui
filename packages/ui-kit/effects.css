@@ -212,6 +212,36 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch__shard,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__shard { opacity: 0 !important; }
 
+/* GLASS TEXT (below) paints nothing of its own: the host is `color:
+   transparent` with an SVG mask standing in for the ink, and the glow seated
+   before it is a second, unmasked copy that exists only to carry light for
+   that mask. Neither switch above names `.sl-fx-glass--text` or
+   `.sl-fx-glass__glow`, so turning a glass-text host off used to leave the
+   mask in place — glass-text.js writes `mask-image`/`-webkit-mask-image` as
+   an INLINE style, which is why removing it here needs `!important` for the
+   same reason the block above does — while the colour stayed transparent:
+   the material was gone and the letters were still hidden for it. Restore
+   exactly what GLASS TEXT set and no more: colour back to ordinary painted
+   text (no `!important` needed — this selector already outranks the plain
+   `.sl-fx-glass--text` rule on specificity alone), mask gone. The glow
+   restores nothing of its own — it has no ink, only borrowed light for a
+   mask that no longer exists — so it just stops shining.
+   Wrapped in `:is()` rather than written as a bare descendant selector:
+   glass-text.test.mjs locates the real declension by the first occurrence of
+   the class name immediately followed by an opening brace (the "Paint
+   layers" rule below explains the same hazard) — a plain selector here would
+   produce that same substring earlier in the file and shadow it. */
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass--text),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) :is(.sl-fx-glass--text) {
+  color: inherit;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass__glow),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) :is(.sl-fx-glass__glow) {
+  text-shadow: none !important;
+}
+
 /* Paint layers. Written as separate selectors rather than
    :is(.sl-fx-glass, .sl-fx-aurora)::after so this text never collides with
    the shared ring rule's own selector further down the file — a test locates
