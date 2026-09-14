@@ -320,6 +320,51 @@ test("the ambient aurora budget holds: at most one per document, off-regions exc
   );
 });
 
+test("a markup grant next to a grantLive() call is only safe because grantLive() sweeps the DOM", () => {
+  // The test above counts data-sl-fx-live="on" in the HTML SOURCE only, so it
+  // cannot see a grant handed out at runtime by grantLive(). The showcase has
+  // exactly that shape: "Eight curtains, same pane" declares the grant
+  // statically, and the boot script separately calls grantLive(sweepCard) on
+  // a different element — the combination that produced two ambient auroras
+  // at once until grantLive() was fixed (2026-09-14) to revoke every element
+  // holding the attribute, not only the one it remembers issuing.
+  //
+  // If neither half of that shape is present there is nothing to fence.
+  const offRegions = offRegionExtents();
+  const grants = [...html.matchAll(/data-sl-fx-live="on"/g)].map((m) => m.index);
+  const hasStaticGrant = grants.some(
+    (pos) => !offRegions.some(([start, end]) => pos > start && pos < end),
+  );
+  const scriptStart = html.indexOf('<script type="module">');
+  assert.ok(scriptStart > -1, "the showcase must carry its boot script");
+  const script = html.slice(scriptStart);
+  const callsGrantLive = /\bgrantLive\(/.test(script);
+  if (!hasStaticGrant || !callsGrantLive) return;
+
+  // The page's own combination is only correct because grantLive() reaches
+  // beyond the one element it remembers granting. Pin THAT, in effects.js,
+  // rather than re-deriving the runtime outcome from text: a count can only
+  // ever see what shipped in the HTML source, never what a passing call does
+  // to the DOM.
+  const effectsJs = readFileSync(resolve(REPO, "packages/ui-kit/effects.js"), "utf8");
+  const start = effectsJs.search(/export function grantLive\b/);
+  assert.ok(start > -1, "missing export: grantLive");
+  const open = effectsJs.indexOf("{", effectsJs.indexOf("(", start));
+  let depth = 0;
+  let i = open;
+  do {
+    if (effectsJs[i] === "{") depth++;
+    else if (effectsJs[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < effectsJs.length);
+  const body = effectsJs.slice(open + 1, i - 1);
+  assert.match(
+    body, /document\.querySelectorAll\(/,
+    "the showcase declares an ambient grant in markup AND grants a different element via grantLive() elsewhere — " +
+      "that is only safe while grantLive() revokes EVERY held grant, not only the one it remembers issuing itself",
+  );
+});
+
 test("components.css never names an effect class", () => {
   // "Classes are additive" is a rule with no mechanical guard until now: an
   // .sl-fx-* selector reaching into the Tier 0 layer would make an effect

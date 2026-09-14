@@ -1279,6 +1279,16 @@ export function scramble(el, { duration = 520, tick = 45 } = {}) {
  */
 export function grantLive(el) {
   if (liveEl && liveEl !== el) liveEl.removeAttribute("data-sl-fx-live");
+  // liveEl only remembers a grant THIS function handed out. A page can also
+  // write data-sl-fx-live="on" straight into its markup — a grant this
+  // function never issued and so cannot know about through liveEl alone — so
+  // the query is needed IN ADDITION: it finds every element currently
+  // holding the attribute, wherever it came from, and revokes all but `el`.
+  if (typeof document !== "undefined") {
+    for (const prior of document.querySelectorAll('[data-sl-fx-live="on"]')) {
+      if (prior !== el) prior.removeAttribute("data-sl-fx-live");
+    }
+  }
   liveEl = el;
   el.setAttribute("data-sl-fx-live", "on");
 }
