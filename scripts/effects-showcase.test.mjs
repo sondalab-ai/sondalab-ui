@@ -229,3 +229,72 @@ test("the section index scramble is bound to the shipped class", () => {
     "the page-local .sec-idx rule is back: .sl-section__idx ships this, and a local copy shadows it",
   );
 });
+
+/** The extents of every `data-sl-fx="off"` subtree, as [start, end) offsets
+ *  into the page source. A grant inside one of these is inert by design — the
+ *  kill switch beats the grant — so the ambient budget must not count it.
+ *
+ *  This is a text scan, not a DOM, and the technique has real limits. It
+ *  walks `<div ...>` / `</div>` tags with depth counting from the opening tag
+ *  that carries `data-sl-fx="off"`, tracking nesting depth so an intervening
+ *  `<div>` does not close the region early — but that path is untested here:
+ *  the one off-region this page has (§ kill switch) contains no nested
+ *  `<div>`, so the depth counter has never been exercised past 1. It would be
+ *  fooled outright by an off-region rooted on a non-`<div>` element (a
+ *  `<section data-sl-fx="off">`, say), by a `<div` appearing inside an
+ *  attribute value or HTML comment, or by markup that is not well-formed to
+ *  begin with. It is not a general HTML parser — it is only as sound as the
+ *  page's own div nesting, and only as proven as what this page happens to
+ *  contain. */
+function offRegionExtents() {
+  const extents = [];
+  const openRe = /<div[^>]*\bdata-sl-fx="off"[^>]*>/g;
+  let open;
+  while ((open = openRe.exec(html))) {
+    const tagRe = /<div\b[^>]*>|<\/div>/g;
+    tagRe.lastIndex = openRe.lastIndex;
+    let depth = 1;
+    let close;
+    while (depth > 0 && (close = tagRe.exec(html))) {
+      depth += close[0] === "</div>" ? -1 : 1;
+    }
+    extents.push([open.index, tagRe.lastIndex]);
+    openRe.lastIndex = tagRe.lastIndex;
+  }
+  return extents;
+}
+
+test("the ambient aurora budget holds: at most one per document, off-regions excluded", () => {
+  // L6 caps ambient work at one aurora, one glitch burst and one deforming
+  // element per document. Busy auroras are exempt — they are bound to real
+  // work and several may legitimately run at once — so they are counted
+  // separately rather than folded in.
+  //
+  // A flat count of data-sl-fx-live="on" would also condemn a grant that sits
+  // inside a data-sl-fx="off" subtree — correct markup, there precisely to
+  // demonstrate that the kill switch beats the grant. The rule this fence
+  // holds is narrower than "count the attribute": it is "count the grants the
+  // page actually honours", so any grant inside an off-region is excluded
+  // from the budget, not just tolerated on this page. See offRegionExtents()
+  // for how that exclusion is found, and its limits.
+  const grants = [...html.matchAll(/data-sl-fx-live="on"/g)].map((m) => m.index);
+  const offRegions = offRegionExtents();
+  const counted = grants.filter(
+    (pos) => !offRegions.some(([start, end]) => pos > start && pos < end),
+  );
+  assert.ok(
+    counted.length <= 1,
+    `L6 grants one ambient aurora per document; the showcase has ${counted.length} outside data-sl-fx="off" regions`,
+  );
+});
+
+test("components.css never names an effect class", () => {
+  // "Classes are additive" is a rule with no mechanical guard until now: an
+  // .sl-fx-* selector reaching into the Tier 0 layer would make an effect
+  // arrive without being asked for, and only a reader would notice.
+  const components = readFileSync(resolve(REPO, "packages/ui-kit/components.css"), "utf8");
+  assert.doesNotMatch(
+    components, /sl-fx-/,
+    "components.css must not name an effect class: effects compose onto it, never from it",
+  );
+});

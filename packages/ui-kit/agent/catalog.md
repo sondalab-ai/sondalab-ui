@@ -336,6 +336,7 @@ Additive classes over `components.css` — never a replacement for the shared co
 | Figure frame | `sl-figure__media sl-fx-glass sl-fx-glass--wide` |
 | Avatar, interactive | `sl-avatar sl-fx-glass sl-fx-glass--pane` |
 | Segmented item, selected | `sl-segmented__item sl-fx-aurora sl-fx-aurora--rim` |
+| Inversion band | `sl-invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top` |
 
 The **section index** is the one declension driven from JavaScript rather than written in markup: `scramble(el)` on an element entering the viewport, which is *something re-resolved* at the smallest scale the grammar has. Bind it with an `IntersectionObserver` over `.sl-section__idx`; it is a text change rather than motion, so it is safe under `prefers-reduced-motion`.
 
