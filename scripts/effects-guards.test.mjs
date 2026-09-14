@@ -646,3 +646,49 @@ test("injectGlass() reads the host's own radius before it becomes a glass host",
     "injectGlass writes --slg-radius AFTER stamping .sl-glass — too late to stop glass.css's own declaration from winning",
   );
 });
+
+// REGRESSION FENCE: compositions.css binds --slfx-pane-swell: 1 on every
+// wrapper that both clips its contents (overflow: hidden) and hosts a glass
+// pane, because the swell — a 3% scale on the pane and its seated light —
+// crosses a clipping edge and is cut, so the pane loses its rim at exactly
+// the moment it is being pointed at. Deleting the .sl-btn-group half of that
+// binding left the suite green: nothing asserted it.
+//
+// "Hosts a glass pane" is a fact about a component's contract, not something
+// any stylesheet states declaratively — CSS has no way to mark "this class's
+// children may be .sl-fx-glass--pane" the way it marks overflow: hidden as a
+// property. compositions.css's own prose names exactly two wrappers so far,
+// and gives the counter-example that proves the set can't be inferred from
+// "clips" alone: .sl-avatar clips too (components.css) and is deliberately
+// left out, because its contract admits only an <img> or the monogram, never
+// a pane. So PANE_WRAPPERS below is manual, sourced from that same prose —
+// but everything checked ABOUT each wrapper is read mechanically from the
+// stylesheets, so a wrapper that stops clipping, or a binding that quietly
+// disappears, does not pass silently.
+const PANE_WRAPPERS = ["sl-figure__media", "sl-btn-group"];
+
+test("every wrapper that clips a filling glass pane stands its swell down", () => {
+  const componentsSrc = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const compositionsSrc = readFileSync(resolve(KIT, "compositions.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const componentRules = rules(componentsSrc);
+  const compositionRules = rules(compositionsSrc);
+  const selectorList = (sel) => sel.split(",").map((s) => s.trim());
+
+  for (const cls of PANE_WRAPPERS) {
+    const owns = componentRules.filter((r) => selectorList(r.selector).includes(`.${cls}`));
+    assert.ok(
+      owns.some((r) => /(?:^|;)\s*overflow\s*:\s*hidden/.test(r.body)),
+      `.${cls} is listed as a clipping pane wrapper but components.css no longer clips it (overflow: hidden) — ` +
+        "either the CSS regressed or this wrapper no longer belongs in PANE_WRAPPERS",
+    );
+
+    const bound = compositionRules.filter(
+      (r) => selectorList(r.selector).includes(`.${cls}`) && /--slfx-pane-swell\s*:\s*1\b/.test(r.body),
+    );
+    assert.ok(
+      bound.length > 0,
+      `.${cls} clips its contents and hosts a glass pane — compositions.css must bind --slfx-pane-swell: 1 there, ` +
+        "or a pane filling it swells past the wrapper's own clip and loses its rim at the moment it is pointed at",
+    );
+  }
+});
