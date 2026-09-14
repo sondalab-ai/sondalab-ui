@@ -102,3 +102,35 @@ test("every text button is a glass pane; only a round icon-only button goes gooe
   }
   assert.ok(drops >= 1, "the gooey must have somewhere to demonstrate: a round icon-only button");
 });
+
+test("the showcase imports compositions.css, after effects.css", () => {
+  const links = [...html.matchAll(/<link[^>]*href="([^"]*\.css)"/g)].map((m) => m[1]);
+  const fx = links.findIndex((h) => h.endsWith("effects.css"));
+  const comp = links.findIndex((h) => h.endsWith("compositions.css"));
+  assert.ok(comp > -1, "the page must import compositions.css, or nothing on it tests that file");
+  assert.ok(fx > -1 && comp > fx, "compositions.css binds properties effects.css reads: it must come after");
+});
+
+test("the showcase declares none of the bindings compositions.css owns", () => {
+  // The page is only a test of that file while it does not hand-roll the same
+  // values: a page-local copy makes a working shipped stylesheet and a shadowed
+  // one indistinguishable. Scoped to the page's own <style>, because the prose
+  // below the demos legitimately names these properties.
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  for (const prop of ["--slfx-text-light", "--slfx-pane-swell"]) {
+    assert.doesNotMatch(
+      style, new RegExp(`${prop}\\s*:`),
+      `${prop} ships in compositions.css — a page-local declaration hides whether it works`,
+    );
+  }
+});
+
+test("the showcase uses the shipped inversion band, not a hand-rolled one", () => {
+  // .sl-invert carries the three-role remap the glass fallback needs
+  // (--slfx-edge-hi/mid read --slc-border-strong). The page hand-rolled it
+  // until 0.10.0; a re-introduced local band would silently take over.
+  assert.match(html, /class="sl-invert\b/, "the band must be the shipped class");
+  // `-` is a word boundary, so \binvert\b matches sl-invert too: exclude a
+  // preceding hyphen or word character explicitly.
+  assert.doesNotMatch(html, /class="[^"]*(?<![\w-])invert(?![\w-])/, "no hand-rolled .invert band");
+});

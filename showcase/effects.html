@@ -11,6 +11,11 @@
   <link rel="stylesheet" href="../packages/ui-kit/components.css">
   <link rel="stylesheet" href="../packages/ui-kit/glass.css">
   <link rel="stylesheet" href="../packages/ui-kit/effects.css">
+  <!-- AFTER effects.css, and it is what makes this page a test of the file:
+       the bindings below are declared nowhere on this page, so a glass-text
+       host inside the inversion band is lit by compositions.css or not at
+       all. -->
+  <link rel="stylesheet" href="../packages/ui-kit/compositions.css">
 
   <!-- vgpu is an optional PEER dependency of @sondalab/ui-kit: the kit never
        installs it, and effects-gpu.js reaches it through a bare specifier. A
@@ -236,22 +241,11 @@
     .glass-text-slot { position: relative; display: inline-grid; }
     .glass-text-slot > * { grid-area: 1 / 1; }
 
-    /* -- inversion band: the Tier-B remap components.css already documents,
-       extended to all three border roles — the glass fallback reads the strong/
-       subtle pair to build --slfx-edge-hi/lo/mid/tint, so a remap of --slc-border
-       alone leaves the ring on the wrong ground even though it now resolves on
-       the edge itself rather than at :root (effects.css). ------------------- */
-    .invert { background: var(--sl-text-primary); color: var(--sl-bg-canvas); }
-    .invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 60%, transparent); }
-    .g-cell .invert {
-      --slc-text: var(--sl-bg-canvas);
-      --slc-text-secondary: color-mix(in srgb, var(--sl-bg-canvas) 82%, transparent);
-      --slc-text-muted: color-mix(in srgb, var(--sl-bg-canvas) 62%, transparent);
-      --slc-surface: color-mix(in srgb, var(--sl-text-primary) 86%, var(--sl-bg-canvas));
-      --slc-border: color-mix(in srgb, currentColor 22%, transparent);
-      --slc-border-strong: color-mix(in srgb, currentColor 38%, transparent);
-      --slc-border-subtle: color-mix(in srgb, currentColor 12%, transparent);
-    }
+    /* -- inversion band: nothing here any more. The page hand-rolled the remap
+       until 0.10.0, including the strong/subtle pair the glass fallback needs
+       for --slfx-edge-hi/lo/mid; .sl-invert ships all of it. The deletion is
+       the point — a page that kept its own copy could not tell a working
+       shipped class from a shadowed one. ----------------------------------- */
 
     /* -- 05 declension: asymmetric split — the unexpected composition call -- */
     .declension-split { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
@@ -545,7 +539,13 @@
             <p class="cap">An <b>&lt;input&gt;</b>, <b>&lt;textarea&gt;</b> or <b>&lt;select&gt;</b> renders no <b>::before</b>/<b>::after</b> of its own — the browser owns that box. Wrap it in <b>.sl-field__control</b> instead; the field entry in <a class="sl-link" href="#declension">§06 Declension</a> below carries the live example.</p>
           </div>
           <div class="g-cell" style="padding:0">
-            <div class="invert" style="padding:1.4rem">
+            <div class="sl-invert" style="padding:1.4rem">
+              <!-- The glass-text host is here to exercise compositions.css: its
+                   glow is built from --slfx-text-light, which nothing on this
+                   page declares. -->
+              <div class="substrate__row glass-text-row" style="margin-bottom:1.1rem">
+                <span class="glass-text-slot"><span class="glass-text-word sl-fx-glass sl-fx-glass--text sl-fx-glass--pane">on ink</span></span>
+              </div>
               <article class="sl-card sl-fx-glass" style="padding:1.2rem">
                 <h3 class="sl-card__title">On ink</h3>
                 <p class="sl-card__body">The band remaps all three border roles — <b>--slc-border</b>, <b>--slc-border-strong</b>, <b>--slc-border-subtle</b> — off <b>currentColor</b>. This card's own 1px border reads the first directly; the glass ring's <b>--slfx-edge-*</b> stops read the other two, resolved on the edge itself rather than at <b>:root</b>, so both survive the strongest neutral.</p>
@@ -732,7 +732,7 @@
               <p class="cap">Scrambles once as it enters the viewport — every <b>.sec-idx</b> on this page (<b>01</b>…<b>06</b>) does exactly this; scroll away and back to watch one re-run.</p>
             </div>
             <div class="g-cell" style="padding:0">
-              <div class="invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top" style="padding:1.4rem">
+              <div class="sl-invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top" style="padding:1.4rem">
                 <p class="sl-eyebrow">On ink</p>
                 <div class="g-demo" style="margin-top:0.7rem">
                   <span class="sl-tag">Inverted</span>
