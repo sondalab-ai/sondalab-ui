@@ -1271,7 +1271,7 @@ node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/components.cs
 
 Expected: 336 tests passing; `R-violation (0)` on both surfaces.
 
-- [x] **Step 5: Tick this plan and record the outcomes**
+- [x] **Step 5: Tick this plan and record the outcomes** — every checkbox above is ticked or left open with a recorded reason; 21 are left open by design (Tasks 4's 6A, 5's Steps 1–2, 9's Steps 1/3/5, 11's Steps 1/2/5/6, all of 12 and 13, and this plan's own Step 3), none silently.
 
 Tick every checkbox above. Where a task took a gated branch (Task 4 outcome B, Task 11 or 12 closed as not needed, Task 13's route), add a one-line note under that task saying which branch it took and why — a plan that reads as fully executed while hiding which fork it walked is worse than one with an open box.
 
