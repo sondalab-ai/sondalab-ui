@@ -28,6 +28,7 @@
     {
       "id": "button",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-btn",
         "sl-btn--primary",
@@ -46,6 +47,7 @@
     {
       "id": "link",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-link"
       ],
@@ -88,6 +90,7 @@
     {
       "id": "field",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-field",
         "sl-field__label",
@@ -151,6 +154,7 @@
     {
       "id": "tabs",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-tabs",
         "sl-tabs__list",
