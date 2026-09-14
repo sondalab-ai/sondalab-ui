@@ -573,6 +573,12 @@
         "--slc-surface",
         "--slc-border"
       ]
+    },
+    {
+      "id": "compositions",
+      "kind": "effect",
+      "classes": [],
+      "roleVars": []
     }
   ]
 }

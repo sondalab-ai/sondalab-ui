@@ -322,6 +322,18 @@ Consumes: `--slc-surface`, `--slc-border`. Do: use the monogram as the fallback 
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).
 
+
+**Canonical strings.** The declension below is already bound per component inside `effects.css` — a product importing it does not re-derive which family goes where, or how each tunes. What it needs is the string to write. These are the canonical ones; `compositions.css` (opt-in, imported after `effects.css`) carries the custom-property bindings that have no other home.
+
+| Component | Canonical string |
+|---|---|
+| Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane` |
+| Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
+| Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
+| Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
+
+Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
+
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
 The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
 ```html

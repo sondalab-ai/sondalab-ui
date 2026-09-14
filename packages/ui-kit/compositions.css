@@ -1,0 +1,30 @@
+/* @sondalab/ui-kit — compositions.css
+   Hand-authored (NOT generated). Opt-in, imported AFTER effects.css.
+
+   What this file is: the custom-property bindings a composition needs, which
+   have no other home. It contains NO paint and no new class. Without
+   effects.css it is inert — nothing else reads these properties.
+
+   What it is deliberately NOT: alias classes for the effect declension. Plain
+   CSS cannot alias a class; the :is() route would raise every glass rule from
+   (0,1,0) to (0,2,0) across a released layer, and a JavaScript pass that stamps
+   classes is dropped by the first React or Theia re-render. The declension
+   itself already lives in effects.css, per component (see .sl-btn.sl-fx-glass
+   and its neighbours there). The canonical class string per component is
+   documented in agent/catalog.md § Effects. */
+
+/* Inside an inversion band --slc-text IS the band's ground, so a glass-text
+   host lit by it would be lit by its own background. The band's foreground is
+   the light there. All three are read with var(--name, default) at the point of
+   use in effects.css, so binding them here reaches every descendant. */
+.sl-invert {
+  --slfx-text-light:  var(--slc-canvas);
+  --slfx-text-core-a: 46%;
+  --slfx-text-halo-a: 26%;
+}
+
+/* A pane inside an element that scales composes two scales, and the pane's
+   seated light spills past its edge. Shipped wrappers that size or clip their
+   contents stand the inner swell down. */
+.sl-avatar,
+.sl-figure__media { --slfx-pane-swell: 1; }
