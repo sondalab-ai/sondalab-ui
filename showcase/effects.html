@@ -258,6 +258,12 @@
     @media (min-width: 860px) { .fam-index { position: sticky; top: 4.5rem; } }
     .declension-split .gallery { margin-top: 0; }
 
+    /* A pane that FILLS the wrapper is the case the stand-down is for: one that
+       sits in the middle with room around it has somewhere to swell into and
+       shows nothing. The radius goes too — the wrapper already carries one, and
+       two concentric radii read as a button pasted on a frame. */
+    .clip-pane { width: 100%; height: 100%; border-radius: 0; }
+
     /* .sl-field__control now ships from effects.css itself, including the
        control-fill rule this page never had — no page-local rule needed. */
 
@@ -540,9 +546,12 @@
           </div>
           <div class="g-cell" style="padding:0">
             <div class="sl-invert" style="padding:1.4rem">
-              <!-- The glass-text host is here to exercise compositions.css: its
-                   glow is built from --slfx-text-light, which nothing on this
-                   page declares. -->
+              <!-- Glass-text on ink. The glow's light is read
+                   var(--slfx-text-light, var(--slc-text, ...)) at the point of
+                   use, and .sl-invert > * binds --slc-text to the band's
+                   canvas, so the band's foreground lights it with nothing bound
+                   here. compositions.css carried a block for this and it was
+                   measurably a no-op; it is gone. -->
               <div class="substrate__row glass-text-row" style="margin-bottom:1.1rem">
                 <span class="glass-text-slot"><span class="glass-text-word sl-fx-glass sl-fx-glass--text sl-fx-glass--pane">on ink</span></span>
               </div>
@@ -552,6 +561,26 @@
               </article>
             </div>
             <span class="g-label" style="padding:0.9rem 1.4rem">without the full remap, either the card's border or the ring (or both) inherit a canvas-oriented default and sit invisible on ink</span>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">a pane inside a wrapper that clips</span>
+            <div class="g-demo" style="align-items:flex-end; gap:1.4rem">
+              <figure class="sl-figure" style="width:9.5rem; margin:0">
+                <div class="sl-figure__media" style="aspect-ratio: 16 / 9">
+                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane">Open</button>
+                </div>
+                <figcaption class="sl-figure__caption">stood down</figcaption>
+              </figure>
+              <figure class="sl-figure" style="width:9.5rem; margin:0">
+                <!-- The default put back by hand. This is the defect, not a
+                     second way to write the composition. -->
+                <div class="sl-figure__media" style="aspect-ratio: 16 / 9; --slfx-pane-swell: 1.03">
+                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane">Open</button>
+                </div>
+                <figcaption class="sl-figure__caption">swell left on</figcaption>
+              </figure>
+            </div>
+            <p class="cap">Hover the first two. <b>.sl-figure__media</b> sizes its contents and clips them (<b>overflow: hidden</b>), so a pane filling it has nowhere to swell into: at <b>1.03</b> its 1px rim and the glint along its top cross the wrapper's edge and are cut, and the pane loses its edge at exactly the moment it is being pointed at. <b>compositions.css</b> binds <b>--slfx-pane-swell: 1</b> there. <b>.sl-avatar</b> clips as well and is deliberately left out: its contract admits an image or the monogram rather than a pane, and the composition it does have with glass is <em>being</em> a pane — a clickable avatar — whose swell nothing clips. The property is read with its default <em>at the point of use</em> in <b>effects.css</b> — never declared on the pane — which is what lets a value set on the wrapper reach the pane and the light seated before it together.</p>
           </div>
         </div>
       </div>

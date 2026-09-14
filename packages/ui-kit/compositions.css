@@ -13,18 +13,26 @@
    and its neighbours there). The canonical class string per component is
    documented in agent/catalog.md § Effects. */
 
-/* Inside an inversion band --slc-text IS the band's ground, so a glass-text
-   host lit by it would be lit by its own background. The band's foreground is
-   the light there. All three are read with var(--name, default) at the point of
-   use in effects.css, so binding them here reaches every descendant. */
-.sl-invert {
-  --slfx-text-light:  var(--slc-canvas);
-  --slfx-text-core-a: 46%;
-  --slfx-text-halo-a: 26%;
-}
+/* The inversion band had a block here and it was a no-op, measured: the glow's
+   light is read `var(--slfx-text-light, var(--slc-text, ...))` at the point of
+   use, and .sl-invert > * already binds --slc-text to the band's canvas, so the
+   fallback was the value the block declared. Its two alphas were the
+   point-of-use defaults as well. Nothing is lost by its absence, and a binding
+   that changes nothing is one more thing to keep in step with components.css.
 
-/* A pane inside an element that scales composes two scales, and the pane's
-   seated light spills past its edge. Shipped wrappers that size or clip their
-   contents stand the inner swell down. */
-.sl-avatar,
+   A pane that FILLS a wrapper which clips is a different matter. The swell is a
+   3% scale on the pane and on the light seated before it, and a wrapper with
+   overflow: hidden cuts both -- the 1px rim inside the edge and the glint along
+   the top cross the wrapper's edge and are gone, so the pane loses its edge at
+   exactly the moment it is being pointed at. The property is read with its
+   default AT THE POINT OF USE in effects.css, never declared on the pane, which
+   is what lets a value set on the wrapper reach the pane and the glow together.
+
+   .sl-avatar is deliberately NOT here, though it clips too. Its contract admits
+   an <img> or the monogram, not a pane, so the filling case does not arise; and
+   the one composition an avatar does have with glass is being a pane itself --
+   a clickable avatar -- where the swell is not clipped by anything (a wrapper
+   clips its children, not itself, and the glow is a sibling). Binding it there
+   would silently switch off a working affordance. A surface that really does
+   put a pane inside an avatar sets the property itself. */
 .sl-figure__media { --slfx-pane-swell: 1; }

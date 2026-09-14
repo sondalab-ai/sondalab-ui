@@ -114,13 +114,36 @@ test("the showcase imports compositions.css, after effects.css", () => {
 test("the showcase declares none of the bindings compositions.css owns", () => {
   // The page is only a test of that file while it does not hand-roll the same
   // values: a page-local copy makes a working shipped stylesheet and a shadowed
-  // one indistinguishable. Scoped to the page's own <style>, because the prose
-  // below the demos legitimately names these properties.
+  // one indistinguishable. The property list is read OUT of the stylesheet, so
+  // a binding added or dropped there is covered without editing this test.
+  // Scoped to the page's own <style>, because the prose below the demos
+  // legitimately names these properties.
+  const comp = readFileSync(resolve(REPO, "packages/ui-kit/compositions.css"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const owned = [...new Set([...comp.matchAll(/(--slfx-[a-z0-9-]+)\s*:/g)].map((m) => m[1]))];
+  assert.ok(owned.length > 0, "compositions.css must declare at least one binding");
   const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
-  for (const prop of ["--slfx-text-light", "--slfx-pane-swell"]) {
+  for (const prop of owned) {
     assert.doesNotMatch(
       style, new RegExp(`${prop}\\s*:`),
       `${prop} ships in compositions.css — a page-local declaration hides whether it works`,
+    );
+  }
+});
+
+test("every binding compositions.css owns has something on the page to act on", () => {
+  // A binding whose selector matches nothing is inert whether it works or not.
+  const comp = readFileSync(resolve(REPO, "packages/ui-kit/compositions.css"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const selectors = [...comp.matchAll(/^([.][a-z0-9_ ,.\-\n]*?)\s*\{/gm)]
+    .flatMap((m) => m[1].split(","))
+    .map((s) => s.trim().replace(/^\./, ""))
+    .filter(Boolean);
+  assert.ok(selectors.length > 0, "compositions.css must declare at least one rule");
+  for (const cls of selectors) {
+    assert.match(
+      html, new RegExp(`class="[^"]*\\b${cls.replace(/[-]/g, "[-]")}\\b`),
+      `compositions.css binds .${cls}, and the showcase renders no such element`,
     );
   }
 });

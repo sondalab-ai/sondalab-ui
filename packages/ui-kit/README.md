@@ -5,7 +5,6 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 ```css
 @import "@sondalab/ui-kit/tokens.css";        /* shared: type, spacing, radii, motion, shadow, z */
 @import "@sondalab/ui-kit/components.css";     /* .sl-* components (reads role-vars, see below) */
-@import "@sondalab/ui-kit/compositions.css";   /* optional, AFTER effects.css — bindings only */
 @import "@sondalab/ui-kit/themes/light.css";  /* [data-sl-theme="light"]  surfaces, text, borders, status, accent */
 @import "@sondalab/ui-kit/themes/dark.css";
 @import "@sondalab/ui-kit/themes/high-contrast.css";
@@ -84,9 +83,10 @@ Five additive families, each carrying one meaning, composed onto a shipped `.sl-
 
 ```css
 @import "@sondalab/ui-kit/effects.css";   /* after components.css */
+@import "@sondalab/ui-kit/compositions.css"; /* optional, AFTER effects.css — bindings only */
 ```
 
-**Compositions.** `compositions.css` is an optional stylesheet carrying the custom-property bindings a composition needs — the inversion band's light, and the pane-swell stand-down on wrappers that size their contents. It contains no paint and no new class, and is inert without `effects.css`. The canonical class string per component lives in `agent/catalog.md` § Effects.
+**Compositions.** `compositions.css` is an optional stylesheet carrying the custom-property bindings a composition needs: today, the pane-swell stand-down on `.sl-figure__media`, where a pane filling the media box would have its 3% hover swell and its seated light cut by the wrapper's `overflow: hidden`. It contains no paint and no new class, and is inert without `effects.css`. The canonical class string per component lives in `agent/catalog.md` § Effects.
 
 ```js
 import { mount, mountGpu, burst, autoBurst, hoverBurst, scramble, grantLive } from "@sondalab/ui-kit/effects.js";
