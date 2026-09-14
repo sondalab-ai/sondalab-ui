@@ -337,6 +337,8 @@ Additive classes over `components.css` — never a replacement for the shared co
 | Avatar, interactive | `sl-avatar sl-fx-glass sl-fx-glass--pane` |
 | Segmented item, selected | `sl-segmented__item sl-fx-aurora sl-fx-aurora--rim` |
 
+The **section index** is the one declension driven from JavaScript rather than written in markup: `scramble(el)` on an element entering the viewport, which is *something re-resolved* at the smallest scale the grammar has. Bind it with an `IntersectionObserver` over `.sl-section__idx`; it is a text change rather than motion, so it is safe under `prefers-reduced-motion`.
+
 Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
 
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)

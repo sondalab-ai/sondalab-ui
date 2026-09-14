@@ -198,3 +198,17 @@ test("the drop belongs to a round icon-only button, and nothing else", () => {
     assert.doesNotMatch(tag, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
   }
 });
+
+test("the section index scramble is bound to the shipped class", () => {
+  // The behaviour predates .sl-section__idx and was wired to a page-local
+  // .sec-idx. A catalog entry that names scramble() while only a local class
+  // receives it is a claim about the kit that the kit does not carry.
+  assert.match(
+    html, /querySelectorAll\("\.sl-section__idx"\)/,
+    "the IntersectionObserver must observe the shipped class",
+  );
+  assert.match(
+    html, /class="[^"]*\bsl-section__idx\b/,
+    "the page must render .sl-section__idx",
+  );
+});
