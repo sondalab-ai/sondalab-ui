@@ -718,6 +718,23 @@
               <p class="cap">— never liquid: a field that deforms while typed into trades legibility for spectacle. ● glass + ● aurora bind to the <b>.sl-field__control</b> wrapper, since the <b>&lt;input&gt;</b> itself hosts no pseudo-element.</p>
             </div>
             <div class="g-cell">
+              <span class="g-label">select — the wrapper carries the effect, not the control</span>
+              <div class="g-demo" style="display:grid; gap:1.1rem">
+                <label class="sl-field">
+                  <span class="sl-field__label">Wrapped in .sl-field__control</span>
+                  <span class="sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field">
+                    <span class="sl-select">
+                      <select class="sl-field__input">
+                        <option>components.css</option>
+                        <option>effects.css</option>
+                      </select>
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <p class="cap">A replaced control hosts no <b>::before</b>/<b>::after</b> — the browser owns that box — so the effect must land on a wrapper or it renders nothing at all, with no error. <b>.sl-select</b> <em>is</em> a wrapper, but its own <b>::after</b> is already the chevron, and both families paint their ring on <b>::after</b> too — so the classes go on <b>.sl-field__control</b> instead, and the two pseudo-element layers then live on different elements. Measured, not argued: with the classes moved onto <b>.sl-select</b> directly, the chevron's <b>opacity</b> computed to <b>0</b> and its box took the ring's <b>conic-gradient</b> — the same silent loss the switch knob took.</p>
+            </div>
+            <div class="g-cell">
               <span class="g-label">tabs</span>
               <div class="sl-tabs__list" role="tablist" aria-label="Demo">
                 <button class="sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear" role="tab" aria-selected="true">Overview</button>

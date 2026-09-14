@@ -116,7 +116,7 @@ The chevron a `<select>` cannot draw for itself. Composes onto `sl-field__contro
   </span>
 </label>
 ```
-Consumes: `--slc-text-muted`. Do: keep `sl-field__input` on the `<select>` itself — the border, the ground and the focus ring all come from there. Don't: reach for a `mask-image` to draw the arrow; a mask on a `<select>` masks its text along with the arrow.
+Consumes: `--slc-text-muted`. Do: keep `sl-field__input` on the `<select>` itself — the border, the ground and the focus ring all come from there. Don't: reach for a `mask-image` to draw the arrow; a mask on a `<select>` masks its text along with the arrow. Don't: put the glass/aurora effect classes on `.sl-select` itself — it is a wrapper, but its `::after` is the chevron, and both families paint their ring there too, so the chevron is replaced in silence. Nest `.sl-select` inside `.sl-field__control` and dress that instead.
 
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
 Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
@@ -329,6 +329,7 @@ Additive classes over `components.css` — never a replacement for the shared co
 |---|---|
 | Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane` |
 | Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
+| Select | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
 | Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
 | Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
 | Oversized anchor | `sl-anchor sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
