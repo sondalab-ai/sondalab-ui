@@ -262,7 +262,7 @@ A placeholder block for content that has not arrived. **Static** — it does not
 ```html
 <div class="sl-skeleton" style="height: 1rem; width: 60%"></div>
 ```
-Consumes: `--slc-text`. Do: size it to the content it stands in for, give the block `aria-hidden="true"`, and carry the real loading state on the container's `aria-busy`. Don't: animate it. A shimmer is ambient motion that means nothing, and L6 switches off an effect that means nothing — the same rule that forbids an ambient glitch on a control. Where a surface genuinely needs to say *work is running*, that is the aurora's busy reading, bound to `aria-busy`.
+Consumes: `--slc-text`. Do: size it to the content it stands in for, give the block `aria-hidden="true"`, and carry the real loading state on the container's `aria-busy`. Don't: animate it. A shimmer is ambient motion that means nothing, and L6 switches off an effect that means nothing — the same rule that forbids an ambient glitch on a control. Where a surface genuinely needs to say *work is running*, that is the aurora's busy reading, bound to `aria-busy`. Do: put the busy aurora (`sl-fx-aurora sl-fx-aurora--wide`) on the skeleton's *container*, never on the individual bars — one operation is loading, not three — and require `data-sl-fx-live="busy"` with `aria-busy="true"` on that same container: the aurora renders the state, it never *is* the state.
 
 ### Stat — `sl-stat` (`__value` · `__label`)
 A single measured figure with its caption. Substrate: **R** App/Page, **N/A** IDE.
@@ -336,9 +336,6 @@ Additive classes over `components.css` — never a replacement for the shared co
 | Figure frame | `sl-figure__media sl-fx-glass sl-fx-glass--wide` |
 | Avatar, interactive | `sl-avatar sl-fx-glass sl-fx-glass--pane` |
 | Segmented item, selected | `sl-segmented__item sl-fx-aurora sl-fx-aurora--rim` |
-| Skeleton container, loading | `sl-fx-aurora sl-fx-aurora--wide` |
-
-The skeleton's row carries an obligation the table cannot: a busy aurora is only correct with `data-sl-fx-live="busy"` and `aria-busy="true"` on the same element. The aurora renders state and never *is* the state.
 
 Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
 
