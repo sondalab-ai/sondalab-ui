@@ -211,4 +211,12 @@ test("the section index scramble is bound to the shipped class", () => {
     html, /class="[^"]*\bsl-section__idx\b/,
     "the page must render .sl-section__idx",
   );
+  // A count of the shipped class would pass at five of six; the honest
+  // assertion is that the page-local class this behaviour used to hang on is
+  // gone entirely. It is deleted from the stylesheet, so any survivor in the
+  // markup is an unstyled leftover the observer no longer reaches.
+  assert.doesNotMatch(
+    html, /class="[^"]*\bsec-idx\b/,
+    "a section head is still on the page-local .sec-idx: the observer no longer reaches it",
+  );
 });
