@@ -13,6 +13,26 @@ const KIT = resolve(HERE, "../packages/ui-kit");
 // hide a real declaration, so the guard loses no strength.
 const effects = readFileSync(resolve(KIT, "effects.css"), "utf8")
   .replace(/\/\*[\s\S]*?\*\//g, "");
+const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
+
+/** The body of a top-level function in effects.js, comments stripped so an
+ *  assertion about ORDER inside it cannot be satisfied by a string that
+ *  merely appears in prose explaining the order, rather than by the code. */
+function jsFnBody(name) {
+  const start = effectsJs.search(new RegExp(`function ${name}\\b`));
+  assert.ok(start > -1, `missing function: ${name}`);
+  const open = effectsJs.indexOf("{", effectsJs.indexOf("(", start));
+  let depth = 0;
+  let i = open;
+  do {
+    if (effectsJs[i] === "{") depth++;
+    else if (effectsJs[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < effectsJs.length);
+  return effectsJs.slice(open + 1, i - 1)
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+}
 
 /** Leaf CSS rules with their own selector, body and source index.
  *  At-rules are descended into rather than reported, so a rule nested in an
@@ -590,4 +610,39 @@ test("a prefixed property never follows its standard form", () => {
       );
     }
   }
+});
+
+test("injectGlass() reads the host's own radius before it becomes a glass host", () => {
+  // glass.css:76 resolves .sl-glass's border-radius through --slg-radius,
+  // falling back to --sl-radius-md — a rule injectGlass() makes live the
+  // instant it adds .sl-glass to the host. L6: the radius is read, never
+  // written; a surface stays free to re-parametrise its own radius without
+  // touching the effect. injectGlass() keeps that by reading the host's own
+  // computed border-radius and writing it to --slg-radius BEFORE stamping
+  // .sl-glass — read after, and getComputedStyle would already report
+  // glass.css's own fallback, the value this exists to preserve, not the
+  // component's.
+  //
+  // A bare check that "--slg-radius" appears somewhere in the function proves
+  // nothing: it would still pass with the read deleted, or with the read left
+  // in place but moved after classList.add. This asserts the ORDER, the same
+  // way scripts/effects-js.test.mjs pins "the skin must leave the previous
+  // host before it enters the next" — by index inside the function body,
+  // comments stripped so a sentence describing the order cannot stand in for
+  // code that enforces it.
+  const body = jsFnBody("injectGlass");
+  const read = body.search(/getComputedStyle\(/);
+  const write = body.search(/setProperty\(\s*["']--slg-radius["']/);
+  const add = body.search(/classList\.add\(\s*["']sl-glass["']\s*\)/);
+  assert.ok(read > -1, "injectGlass must read the host's computed style");
+  assert.ok(write > -1, "injectGlass must write the host's own radius to --slg-radius");
+  assert.ok(add > -1, "injectGlass must stamp .sl-glass onto the host");
+  assert.ok(
+    read < add,
+    "injectGlass reads the host's computed style AFTER stamping .sl-glass — that reads glass.css's own fallback, not the component's radius",
+  );
+  assert.ok(
+    write < add,
+    "injectGlass writes --slg-radius AFTER stamping .sl-glass — too late to stop glass.css's own declaration from winning",
+  );
 });

@@ -766,6 +766,33 @@ let glowSerial = 0;
 const GLASS_LAYERS = ["backdrop", "tint", "specular", "shine"];
 
 function injectGlass(el) {
+  // glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
+  // on .sl-glass, the class classList.add below is about to stamp on el — so
+  // unless --slg-radius is already bound, the component's OWN radius (.sl-btn
+  // at 10px, say) is about to be overwritten by the family default the moment
+  // it joins the anatomy: catalog.md's canonical-strings table measured
+  // exactly that on .sl-btn, 10px → 6px. L6: "a surface stays free to
+  // re-parametrise its own radius without touching the effect" — the glass
+  // layer keeps that contract by reading the host's OWN computed radius
+  // before it becomes a glass host, and writing it back as the property
+  // glass.css already resolves through, so the layer's own declaration
+  // resolves back to what the component declared.
+  //
+  // Read BEFORE classList.add, not after: once .sl-glass is on the element,
+  // getComputedStyle(el) already reflects glass.css's own fallback — the
+  // very value this exists to preserve — so reading here is the only reading
+  // that still sees the component's own declaration.
+  //
+  // Two cases need no rebind and get none, because both already compute a
+  // non-empty --slg-radius at this point: glass-text sets it to 0
+  // deliberately, and the round icon button's 50% binding
+  // (.sl-icon-btn--round.sl-fx-glass) is keyed off .sl-fx-glass, already in
+  // the markup before injectGlass ever runs — neither waits on .sl-glass.
+  const cs = getComputedStyle(el);
+  const ownRadius = cs.borderTopLeftRadius;
+  if (!cs.getPropertyValue("--slg-radius").trim() && ownRadius) {
+    el.style.setProperty("--slg-radius", ownRadius);
+  }
   // The host joins the anatomy too, not just its layers. glass.css declares the
   // stacking context, the radius and the derived light pole on .sl-glass, and
   // an element carrying only .sl-fx-glass got the layers with none of that —
