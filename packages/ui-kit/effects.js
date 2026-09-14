@@ -789,8 +789,33 @@ function injectGlass(el) {
   // (.sl-icon-btn--round.sl-fx-glass) is keyed off .sl-fx-glass, already in
   // the markup before injectGlass ever runs — neither waits on .sl-glass.
   const cs = getComputedStyle(el);
-  const ownRadius = cs.borderTopLeftRadius;
-  if (!cs.getPropertyValue("--slg-radius").trim() && ownRadius) {
+  // getComputedStyle cannot tell "declared no radius, relying on the glass
+  // family default" from "declared border-radius: 0" — both resolve to 0px.
+  // The pin exists to stop the layer overriding a radius the COMPONENT
+  // chose; a zero computed radius carries no such choice, so the safe
+  // reading is the one that shipped before this pin existed — leave the
+  // family default (--sl-radius-md) in place. A component that genuinely
+  // wants square corners under glass says so with --slg-radius: 0 directly,
+  // the same escape hatch the GLASS TEXT declension already uses
+  // (effects.css, the GLASS TEXT section) to flatten its own pane.
+  const corners = [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomRightRadius, cs.borderBottomLeftRadius];
+  const isZero = corners.every((c) => parseFloat(c) === 0);
+  if (!cs.getPropertyValue("--slg-radius").trim() && !isZero) {
+    // All four corners, not just the top-left one, or a shorthand radius
+    // like `10px 10px 0 0` flattens to a single value. Horizontal and
+    // vertical radii are kept apart rather than joined per corner, because a
+    // corner can itself be elliptical (`10px / 20px`); joining a corner's
+    // own two numbers into the four-value list would describe a DIFFERENT
+    // geometry once the shorthand reassembles it (TL/BR vs TR/BL).
+    const uniform = corners.every((c) => c === corners[0]);
+    let ownRadius;
+    if (uniform) {
+      ownRadius = corners[0];
+    } else {
+      const h = corners.map((c) => c.split(" ")[0]);
+      const v = corners.map((c) => c.split(" ")[1] ?? c.split(" ")[0]);
+      ownRadius = v.some((val, i) => val !== h[i]) ? `${h.join(" ")} / ${v.join(" ")}` : h.join(" ");
+    }
     el.style.setProperty("--slg-radius", ownRadius);
   }
   // The host joins the anatomy too, not just its layers. glass.css declares the
