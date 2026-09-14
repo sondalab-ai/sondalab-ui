@@ -657,15 +657,29 @@ test("injectGlass() reads the host's own radius before it becomes a glass host",
 // "Hosts a glass pane" is a fact about a component's contract, not something
 // any stylesheet states declaratively — CSS has no way to mark "this class's
 // children may be .sl-fx-glass--pane" the way it marks overflow: hidden as a
-// property. compositions.css's own prose names exactly two wrappers so far,
-// and gives the counter-example that proves the set can't be inferred from
-// "clips" alone: .sl-avatar clips too (components.css) and is deliberately
-// left out, because its contract admits only an <img> or the monogram, never
-// a pane. So PANE_WRAPPERS below is manual, sourced from that same prose —
-// but everything checked ABOUT each wrapper is read mechanically from the
-// stylesheets, so a wrapper that stops clipping, or a binding that quietly
-// disappears, does not pass silently.
+// property. So PANE_WRAPPERS is manual, sourced from compositions.css's own
+// prose. But checking only the two named wrappers would repeat the same
+// mistake in a new shape: a THIRD clipping wrapper added later, with no
+// binding and no entry anywhere, would still pass. So the fence also closes
+// the world mechanically — every single-class selector in components.css
+// that clips must be accounted for, either as a pane wrapper here or as a
+// documented exemption in SWELL_EXEMPT below, sourced from the same
+// counter-example compositions.css's own comment already gives:
+// .sl-avatar clips too and is deliberately not a pane wrapper, because its
+// contract admits only an <img> or the monogram — never a pane.
 const PANE_WRAPPERS = ["sl-figure__media", "sl-btn-group"];
+
+// Every OTHER clipping class components.css ships, and why a glass pane
+// cannot fill it. Manual, like PANE_WRAPPERS — the reason is a contract
+// fact, not a CSS property — but the classes themselves (the map keys) are
+// cross-checked mechanically below, so a stale or missing key fails loudly
+// rather than quietly under-covering the closed-world check.
+const SWELL_EXEMPT = new Map([
+  ["sl-avatar", "contract admits an <img> or the monogram, never a pane; the one glass composition it does have is BEING a pane, whose swell nothing clips"],
+  ["sl-check__input", "the visually-hidden-input technique (position/size/clip-path to one pixel) — nothing ever fills it"],
+  ["sl-radio__input", "same visually-hidden-input technique as .sl-check__input"],
+  ["sl-switch__input", "same visually-hidden-input technique as .sl-check__input"],
+]);
 
 test("every wrapper that clips a filling glass pane stands its swell down", () => {
   const componentsSrc = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -689,6 +703,32 @@ test("every wrapper that clips a filling glass pane stands its swell down", () =
       bound.length > 0,
       `.${cls} clips its contents and hosts a glass pane — compositions.css must bind --slfx-pane-swell: 1 there, ` +
         "or a pane filling it swells past the wrapper's own clip and loses its rim at the moment it is pointed at",
+    );
+  }
+
+  // Closed world: every single-class selector components.css clips must be
+  // either a pane wrapper (checked above) or a documented exemption. A new
+  // clipping wrapper with no opinion either way fails here, by name, instead
+  // of shipping unguarded the way .sl-btn-group briefly did.
+  const clipping = new Set();
+  for (const r of componentRules) {
+    if (!/(?:^|;)\s*overflow\s*:\s*hidden/.test(r.body)) continue;
+    for (const sel of selectorList(r.selector)) {
+      const m = sel.match(/^\.([a-z0-9_-]+)$/);
+      if (m) clipping.add(m[1]);
+    }
+  }
+  assert.ok(
+    clipping.size >= PANE_WRAPPERS.length + SWELL_EXEMPT.size,
+    `the parser must find at least the ${PANE_WRAPPERS.length + SWELL_EXEMPT.size} known clipping classes, found ${clipping.size}: ` +
+      `${[...clipping].join(", ")}`,
+  );
+  for (const cls of clipping) {
+    assert.ok(
+      PANE_WRAPPERS.includes(cls) || SWELL_EXEMPT.has(cls),
+      `.${cls} clips its contents (overflow: hidden, components.css) with no opinion on --slfx-pane-swell — either ` +
+        "bind --slfx-pane-swell: 1 in compositions.css and add it to PANE_WRAPPERS, or add it to SWELL_EXEMPT with " +
+        "the reason a glass pane cannot fill it",
     );
   }
 });
