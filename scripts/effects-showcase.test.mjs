@@ -89,7 +89,17 @@ test("every text button is a glass pane; only a round icon-only button goes gooe
   // belongs to round icon-only buttons (--drop, an aria-label because there
   // is no text), and every other button is made of glass (--pane), whatever
   // its variant. A bare .sl-fx-liquid on a button is a mistake either way.
-  const buttons = [...html.matchAll(/<button class="([^"]*\bsl-btn\b[^"]*)"([^>]*)>/g)];
+  //
+  // Match the WHOLE tag first, then pull `class` out of it wherever it sits —
+  // the same fix already applied to the ARIA test above. `class="…"` right
+  // after `<button ` was the only order this ever matched: a
+  // `<button type="button" class="…">` passed this fence by never being seen
+  // at all, not by carrying the right classes.
+  const buttons = [...html.matchAll(/<button\b[^>]*>/g)]
+    .map((m) => m[0])
+    .map((tag) => [tag, tag.match(/\bclass="([^"]*)"/)])
+    .filter(([, m]) => m && /\bsl-btn\b/.test(m[1]))
+    .map(([tag, m]) => [tag, m[1]]);
   assert.ok(buttons.length >= 8, "the showcase must show its buttons");
   for (const [tag, cls] of buttons) {
     assert.match(cls, /\bsl-fx-glass--pane\b/, `a text button must be a glass pane: ${tag}`);
@@ -173,7 +183,12 @@ function canonicalStrings() {
 
 test("every canonical string in the catalog is applied on the showcase", () => {
   const rows = canonicalStrings();
-  assert.ok(rows.length >= 4, `expected the table to have rows, parsed ${rows.length}`);
+  // 10 is the table's actual row count, not a number to keep in sync with
+  // content: it is a FLOOR against silent deletion. Delete six of the ten
+  // rows and `>= 4` still passed — the gutted table's own row would be the
+  // last thing to catch that. Raise this number when a row is genuinely
+  // added; never lower it to make a deletion pass.
+  assert.ok(rows.length >= 10, `expected at least 10 canonical-string rows, parsed ${rows.length}`);
   const attrs = [...html.matchAll(/class="([^"]*)"/g)].map((m) => m[1].split(/\s+/));
   for (const { component, classes } of rows) {
     const applied = attrs.some((have) => classes.every((c) => have.includes(c)));
