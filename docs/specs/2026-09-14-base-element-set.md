@@ -82,7 +82,7 @@ Every element must be correct with `components.css` alone, no `effects.css` impo
 
 ### I5 — Structural labels take the mono treatment
 
-`design-language.md` L1: eyebrows, section indices, meta, badges, tags are `--sl-font-mono`, `text-transform: uppercase`, letter-spacing in the `0.14em–0.22em` band. This reaches the new set at: the switch label, the segmented item, the breadcrumb, the stat caption **and the stat value**, the figure caption, the empty state's eyebrow, and the pagination. L1 also fixes that the rule is about **role, not size** — a display-scale numeral is a structural label and stays mono.
+`design-language.md` L1: eyebrows, section indices, meta, badges, tags are `--sl-font-mono`, `text-transform: uppercase`, letter-spacing in the `0.14em–0.22em` band. This reaches the new set at: the segmented item, the breadcrumb, the stat caption **and the stat value**, the figure caption, the empty state's eyebrow, and the pagination's figures. It does **not** reach the checkbox, radio and switch labels: those are content describing an option, not structural labels, and they take `--sl-font-sans` like any other body copy. L1 also fixes that the rule is about **role, not size** — a display-scale numeral is a structural label and stays mono.
 
 ### I6 — Hairline structure
 
