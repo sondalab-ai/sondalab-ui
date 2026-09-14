@@ -102,6 +102,22 @@ A checkbox that reads as a state rather than a choice: use it where the change t
 ```
 Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: carry `role="switch"` on the input, so the state reaches a screen reader as on/off rather than as checked. Don't: put ON/OFF text inside the track — the knob's position is the state, and a label that repeats it goes stale in translation.
 
+### Select — `sl-select`
+The chevron a `<select>` cannot draw for itself. Composes onto `sl-field__control`, the wrapper the effects layer already binds to, so a field and a select take an effect the same way. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-field">
+  <span class="sl-field__label">Substrate</span>
+  <span class="sl-field__control sl-select">
+    <select class="sl-field__input">
+      <option>App</option>
+      <option>IDE</option>
+      <option>Page</option>
+    </select>
+  </span>
+</label>
+```
+Consumes: `--slc-text-muted`. Do: keep `sl-field__input` on the `<select>` itself — the border, the ground and the focus ring all come from there. Don't: reach for a `mask-image` to draw the arrow; a mask on a `<select>` masks its text along with the arrow.
+
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
 Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
 ```html

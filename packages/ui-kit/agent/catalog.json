@@ -367,6 +367,16 @@
         "--slc-text",
         "--slc-focus"
       ]
+    },
+    {
+      "id": "select",
+      "kind": "primitive",
+      "classes": [
+        "sl-select"
+      ],
+      "roleVars": [
+        "--slc-text-muted"
+      ]
     }
   ]
 }

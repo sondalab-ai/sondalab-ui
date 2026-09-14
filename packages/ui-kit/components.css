@@ -384,6 +384,27 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   transform: translateY(-50%) translateX(1rem);
 }
 
+/* The chevron rides the WRAPPER, never the <select>: a mask or a pseudo-element
+   on the control itself would take the option text with it. */
+.sl-select { position: relative; display: block; }
+.sl-select > .sl-field__input {
+  appearance: none;
+  width: 100%;
+  padding-right: var(--sl-space-6, 2rem);
+}
+.sl-select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: var(--sl-space-4, 1rem);
+  width: 0.4rem;
+  height: 0.4rem;
+  border: solid var(--slc-text-muted);
+  border-width: 0 1px 1px 0;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
 .sl-check:has(.sl-check__input:disabled),
 .sl-radio:has(.sl-radio__input:disabled),
 .sl-switch:has(.sl-switch__input:disabled) { opacity: 0.5; cursor: not-allowed; }
