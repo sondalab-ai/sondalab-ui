@@ -345,7 +345,7 @@ test("--slfx-fill names the background the component actually ships", () => {
   const shipped = new Map();
   for (const r of rules(components)) {
     const sel = r.selector.trim();
-    if (!/^\.[a-z0-9-]+$/.test(sel)) continue;
+    if (!/^\.[a-z0-9_-]+$/.test(sel)) continue;
     const m = [...r.body.matchAll(/(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/g)].pop();
     if (m) shipped.set(sel.slice(1), m[1].trim());
   }
