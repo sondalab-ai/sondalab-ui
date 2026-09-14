@@ -803,19 +803,16 @@ function injectGlass(el) {
   if (!cs.getPropertyValue("--slg-radius").trim() && !isZero) {
     // All four corners, not just the top-left one, or a shorthand radius
     // like `10px 10px 0 0` flattens to a single value. Horizontal and
-    // vertical radii are kept apart rather than joined per corner, because a
-    // corner can itself be elliptical (`10px / 20px`); joining a corner's
-    // own two numbers into the four-value list would describe a DIFFERENT
-    // geometry once the shorthand reassembles it (TL/BR vs TR/BL).
-    const uniform = corners.every((c) => c === corners[0]);
-    let ownRadius;
-    if (uniform) {
-      ownRadius = corners[0];
-    } else {
-      const h = corners.map((c) => c.split(" ")[0]);
-      const v = corners.map((c) => c.split(" ")[1] ?? c.split(" ")[0]);
-      ownRadius = v.some((val, i) => val !== h[i]) ? `${h.join(" ")} / ${v.join(" ")}` : h.join(" ");
-    }
+    // vertical radii are read apart from the start, because a corner can
+    // itself be elliptical (`10px / 20px`) — a uniform ELLIPTICAL radius
+    // still needs the h/v form: collapsing to `corners[0]` unmodified would
+    // write `10px 20px` straight into --slg-radius, which in the four-value
+    // shorthand reads as TL/BR = 10px, TR/BL = 20px, a DIFFERENT geometry
+    // than one ellipse repeated on every corner.
+    const h = corners.map((c) => c.split(" ")[0]);
+    const v = corners.map((c) => c.split(" ")[1] ?? c.split(" ")[0]);
+    const flat = h.every((x) => x === h[0]) && v.every((x) => x === h[0]);
+    const ownRadius = flat ? h[0] : v.some((val, i) => val !== h[i]) ? `${h.join(" ")} / ${v.join(" ")}` : h.join(" ");
     el.style.setProperty("--slg-radius", ownRadius);
   }
   // The host joins the anatomy too, not just its layers. glass.css declares the
