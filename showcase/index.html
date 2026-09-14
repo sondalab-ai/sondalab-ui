@@ -457,6 +457,29 @@
           </div>
 
           <div class="g-cell">
+            <span class="g-label">breadcrumb &middot; button group &middot; segmented</span>
+            <div class="g-demo g-demo--col">
+              <nav class="sl-breadcrumb" aria-label="Breadcrumb">
+                <a class="sl-breadcrumb__item" href="#">Specs</a>
+                <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+                <a class="sl-breadcrumb__item" href="#">Design system</a>
+                <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+                <span class="sl-breadcrumb__item" aria-current="page">Base element set</span>
+              </nav>
+              <div class="sl-btn-group">
+                <button class="sl-btn sl-btn--ghost">Audit</button>
+                <button class="sl-btn sl-btn--ghost">Migrate</button>
+                <button class="sl-btn sl-btn--ghost">Adopt</button>
+              </div>
+              <div class="sl-segmented" role="tablist">
+                <button class="sl-segmented__item" role="tab" aria-selected="true">Light</button>
+                <button class="sl-segmented__item" role="tab" aria-selected="false">Dark</button>
+                <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="g-cell">
             <span class="g-label">inline: kbd · code · link · tooltip</span>
             <div class="g-demo">
               <span>Press <kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd></span>

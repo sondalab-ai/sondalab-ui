@@ -397,6 +397,50 @@
         "sl-prose"
       ],
       "roleVars": []
+    },
+    {
+      "id": "breadcrumb",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-breadcrumb",
+        "sl-breadcrumb__item",
+        "sl-breadcrumb__sep"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "button-group",
+      "kind": "primitive",
+      "classes": [
+        "sl-btn-group"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-surface"
+      ]
+    },
+    {
+      "id": "segmented",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-segmented",
+        "sl-segmented__item"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-surface",
+        "--slc-raised",
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-focus"
+      ]
     }
   ]
 }

@@ -182,6 +182,43 @@ Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: *
 ```
 Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`.
 
+## Navigation & state
+
+### Breadcrumb — `sl-breadcrumb` (`__item` · `__sep`)
+The trail to here. Structural navigation labels, so mono uppercase tracked (L1). Substrate: **R** App, **A** IDE/Page.
+```html
+<nav class="sl-breadcrumb" aria-label="Breadcrumb">
+  <a class="sl-breadcrumb__item" href="/">Specs</a>
+  <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+  <a class="sl-breadcrumb__item" href="/specs/ds">Design system</a>
+  <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+  <span class="sl-breadcrumb__item" aria-current="page">Base element set</span>
+</nav>
+```
+Consumes: `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-focus`. Do: mark the last item `aria-current="page"` and leave it a `<span>` — the page you are on is not a link. Don't: import an icon for the separator; a glyph is one character and needs no asset.
+
+### Button group — `sl-btn-group`
+Joins `sl-btn` children into one control with a shared 1px rule. Built on the hairline-grid technique, so no rule is ever doubled (L2). Substrate: **R** IDE/App, **A** Page.
+```html
+<div class="sl-btn-group">
+  <button class="sl-btn sl-btn--ghost">Audit</button>
+  <button class="sl-btn sl-btn--ghost">Migrate</button>
+  <button class="sl-btn sl-btn--ghost">Adopt</button>
+</div>
+```
+Consumes: `--slc-border`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two.
+
+### Segmented control — `sl-segmented` (`__item`)
+A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: **R** IDE/App, **A** Page.
+```html
+<div class="sl-segmented" role="tablist">
+  <button class="sl-segmented__item" role="tab" aria-selected="true">Light</button>
+  <button class="sl-segmented__item" role="tab" aria-selected="false">Dark</button>
+  <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
+</div>
+```
+Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. Don't: use it for more than about four options; that is a `select`.
+
 ## Effects (opt-in, `effects.css`)
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).

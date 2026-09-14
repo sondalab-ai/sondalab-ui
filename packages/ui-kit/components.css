@@ -60,6 +60,8 @@
 .sl-check__input:focus-visible + .sl-check__box,
 .sl-radio__input:focus-visible + .sl-radio__box,
 .sl-switch__input:focus-visible + .sl-switch__track,
+.sl-segmented__item:focus-visible,
+.sl-breadcrumb__item:focus-visible,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
@@ -648,4 +650,79 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   line-height: var(--sl-line-tight, 1.2);
   text-wrap: balance;
   font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+}
+
+/* ══ NAVIGATION & STATE ══════════════════════════════════════════════════════ */
+
+.sl-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.sl-breadcrumb__item {
+  color: var(--slc-text-muted);
+  text-decoration: none;
+  transition: color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
+.sl-breadcrumb__item[aria-current] { color: var(--slc-text); }
+.sl-breadcrumb__sep { color: var(--slc-text-muted); opacity: 0.6; }
+
+/* The hairline technique again: a 1px gap over the line colour is the rule
+   between buttons, so no button carries a border on the joining edge and
+   nothing doubles. */
+.sl-btn-group {
+  display: inline-flex;
+  /* One control: it sizes to its buttons whatever the parent's alignment says.
+     Stretched by an align-items:stretch parent it would show its own ground
+     past the last button, because that ground is the rule between them. */
+  width: fit-content;
+  gap: 1px;
+  background: var(--slc-border);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+  overflow: hidden;
+}
+.sl-btn-group > .sl-btn { border-radius: 0; border: none; }
+/* Cells paint their own ground — the group's background IS the rule between
+   them, so a transparent ghost would show the line colour across its whole
+   face instead of only in the 1px gap. A filled variant brings its own. */
+.sl-btn-group > .sl-btn:not(.sl-btn--primary) { background: var(--slc-surface); }
+
+.sl-segmented {
+  display: inline-flex;
+  width: fit-content;
+  gap: 1px;
+  padding: 2px;
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+}
+.sl-segmented__item {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--slc-text-muted);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
+  border-radius: var(--sl-radius-sm, 4px);
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-segmented__item:hover { color: var(--slc-text); }
+/* The CSS reads aria-selected, so the accessible state and the visible one
+   cannot drift apart. */
+.sl-segmented__item[aria-selected="true"] {
+  background: var(--slc-raised);
+  color: var(--slc-text);
 }
