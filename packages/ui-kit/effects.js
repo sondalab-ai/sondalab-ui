@@ -1313,7 +1313,12 @@ export function grantLive(el) {
   // holding the attribute, wherever it came from, and revokes all but `el`.
   if (typeof document !== "undefined") {
     for (const prior of document.querySelectorAll('[data-sl-fx-live="on"]')) {
-      if (prior !== el) prior.removeAttribute("data-sl-fx-live");
+      // A grant inside a data-sl-fx="off" subtree is switched off, not
+      // competing for the one-per-document budget — the ambient-budget fence
+      // (scripts/effects-showcase.test.mjs, offRegionExtents) excludes
+      // off-region grants from the count for exactly that reason. Revoking
+      // it would be taking something from a page that was not asking.
+      if (prior !== el && !prior.closest('[data-sl-fx="off"]')) prior.removeAttribute("data-sl-fx-live");
     }
   }
   liveEl = el;
