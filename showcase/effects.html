@@ -600,6 +600,18 @@
             </div>
             <p class="cap">Hover the first two. <b>.sl-figure__media</b> sizes its contents and clips them (<b>overflow: hidden</b>), so a pane filling it has nowhere to swell into: at <b>1.03</b> its 1px rim and the glint along its top cross the wrapper's edge and are cut, and the pane loses its edge at exactly the moment it is being pointed at. <b>compositions.css</b> binds <b>--slfx-pane-swell: 1</b> there. <b>.sl-avatar</b> clips as well and is deliberately left out: its contract admits an image or the monogram rather than a pane, and the composition it does have with glass is <em>being</em> a pane — a clickable avatar — whose swell nothing clips. The property is read with its default <em>at the point of use</em> in <b>effects.css</b> — never declared on the pane — which is what lets a value set on the wrapper reach the pane and the light seated before it together.</p>
           </div>
+          <div class="g-cell">
+            <span class="g-label">switch track — withdrawn: the track's own <code>::after</code> is the knob</span>
+            <div class="g-demo" style="gap:1.4rem; align-items:center">
+              <label class="sl-switch">
+                <input class="sl-switch__input" type="checkbox" role="switch" checked>
+                <span class="sl-switch__track"></span>
+                <span class="sl-switch__label">Tier 2 GPU effects</span>
+              </label>
+              <span class="sl-kbd sl-fx-glass">esc</span>
+            </div>
+            <p class="cap">Not a scale problem: the track's own <b>::after</b> is the knob, and the glass ring is also painted on <b>::after</b> — one pseudo-element, two claims on it. Put the class on the track and the ring rule wins: <b>opacity: 0</b>, a conic-gradient background, no rule left that draws the knob back. No error, no warning, the switch just stops having a moving part. The keycap beside it, still glass, is the contrast that makes the finding legible: the family works fine where <b>::before</b>/<b>::after</b> is free, and fails silently where it is not.</p>
+          </div>
         </div>
       </div>
     </section>

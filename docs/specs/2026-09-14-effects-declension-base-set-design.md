@@ -31,9 +31,9 @@ This spec supplies the verdict for all twenty-four, and the order in which the t
 
 ## The verdict, per element
 
-Twenty-four catalog entries (`compositions` is not a class and is excluded). Counts: **9** take a family, **2** need tuning only, **11** take nothing, **2** are open.
+Twenty-four catalog entries (`compositions` is not a class and is excluded). Counts: **8** take a family, **2** need tuning only, **12** take nothing, **2** are open.
 
-### A — Take a family (9)
+### A — Take a family (8)
 
 | Class | Canonical string | Family and the rule it is claimed under |
 |---|---|---|
@@ -41,15 +41,13 @@ Twenty-four catalog entries (`compositions` is not a class and is excluded). Cou
 | `.sl-stat__value` | `sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` | **Glass (text).** L1, same clause: a display-scale numeral is a structural label and stays mono; the material is where its variation goes. |
 | `.sl-figure__media` | `sl-fx-glass sl-fx-glass--wide` | **Glass.** L6: glass means *this is a physical surface*. A 1 px frame around an image is the literal case. `--wide` matches the container treatment card and dialog already take. |
 | `.sl-avatar` | `sl-fx-glass sl-fx-glass--pane` | **Glass (pane).** Only when the avatar is a `<button>` — then it is a text button's silhouette without the text. A static avatar takes nothing. |
-| `.sl-switch__track` | `sl-fx-glass` | **Glass.** L6: it has its own surface, border and fill; a switch is the most physical control in the set. |
 | `.sl-select` | `sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` | **Glass + aurora.** The field declension, unchanged in meaning: material at rest, attention on focus. |
 | `.sl-segmented__item` (selected) | `sl-fx-aurora sl-fx-aurora--rim` | **Aurora.** L6: *attention lives here* — the active item. `--rim` because a selected item is **filled**, and a filled element has no edge to inhabit, so the arc steps just outside it in the depth companion. |
 | `.sl-skeleton` (container) | `sl-fx-aurora sl-fx-aurora--wide` + `data-sl-fx-live="busy"` + `aria-busy="true"` | **Aurora (busy).** L6: *busy while real work runs*. The ARIA is not decoration — the aurora renders state and never is the state. Busy auroras are exempt from the one-ambient budget. |
 | `.sl-section__idx` | `scramble(el)` from JavaScript | **Glitch.** L6: *something re-resolved*. `showcase/effects.html` already does exactly this, on a page-local `.sec-idx`; this moves an existing behaviour onto the public class. |
 
-Two rows carry a caveat that Slice 1 resolves by looking, not by design:
+One row carries a caveat that Slice 1 resolves by looking, not by design:
 
-- **`.sl-switch__track` — measurable risk.** The track is `1.25rem` tall. The glass chrome is the element's own border width, and at that scale the ring may read as mush rather than as material. The comparison point is `.sl-kbd`, the smallest element that carries glass today. If it does not read, the row moves to C and the spec is amended.
 - **`.sl-select` — the collision is `::after`, not the selector.** Corrected after reading `effects.css`: `--field` is **not** bound to `.sl-field__control`. It is a generic modifier that sets `--slfx-ring-w: 2px` and nothing else (`effects.css:835`), so the class reaches whatever element carries it. The real constraint is the one the catalog already states — a replaced control renders no `::before`/`::after`, so the effect must land on a wrapper — and `.sl-select` **is** a wrapper. What actually collides is the pseudo-element: the glass and aurora rings are painted on `::after` (`effects.css:469`), and `.sl-select::after` is the chevron. Either the markup nests `.sl-select` inside `.sl-field__control`, putting the two on different elements, or one of the two is given up. Decided in Slice 2 from the rendered page; the nesting route is preferred on current information because it adds no selector to a released layer and keeps both.
 
 ### B — Tuning only (2)
@@ -59,12 +57,13 @@ Two rows carry a caveat that Slice 1 resolves by looking, not by design:
 | `.sl-btn-group` | `sl-btn-group sl-fx-glass sl-fx-glass--wide` **or** members as panes | The family is not in doubt — they are text buttons, so they are panes. What is in doubt is *where the glass goes*. The group sets `border: none` on its children and its own `background` **is** the 1 px rule between them; a ring on each member would be drawn exactly where the group already draws a line, and one hairline would render as two. The alternative needs no tuning at all: the **group** is the glass host, one silhouette with one ring, and the members keep the group's rule between them untouched. Slice 1 renders both and Slice 2 keeps one. |
 | `.sl-icon-btn` | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` (round) · `sl-icon-btn sl-fx-glass sl-fx-glass--pane` (quad) | The round icon button is **already** in the catalog's canonical-strings table, and `effects.css` never names `.sl-icon-btn` — nor does it need to. `sl-fx-liquid--drop` is **not a CSS class at all**: it is a JavaScript selector gate (`LIQUID_HOSTS = ".sl-fx-liquid.sl-fx-liquid--drop"` in `effects.js`), and the driver reads the host's computed box rather than matching a component. So the liquid works on the shipped icon button with no binding, and the only work here is rendering it and saying so. The quad variant is not round and therefore takes no drop: it is a pane like any other button, and *that* is the row needing a look. |
 
-### C — Take nothing (11)
+### C — Take nothing (12)
 
 Switching a family off is as much a decision as switching it on (L6: "an effect that means nothing is switched off"). Each of these is recorded with its reason so a later reader does not read the absence as an oversight.
 
 | Class | Why nothing |
 |---|---|
+| `.sl-switch__track` | Measured, 2026-09-14: the track's own `::after` **is the knob**, and the glass family paints its ring on `::after` too. With the class the pseudo-element computes `opacity: 0` and a conic-gradient — the ring rule takes it over and nothing paints, so the control silently loses the moving part that carries its state. Not a question of scale; the element has one `::after` and the knob needs it. |
 | `.sl-header` | Already expresses *physical surface* through its own `backdrop-filter`. A glass ring would be a second concentric treatment of one idea. |
 | `.sl-hgrid` | The goo welds silhouettes; the whole point of the hairline grid is the crisp shared 1 px rule between cells. The family would destroy the signature it landed on. |
 | `.sl-check` | A `1rem` box: the chrome is illegible at that width, and an aurora beside the focus `outline` is exactly the unreadable sandwich L6 forbids. |
