@@ -29,10 +29,13 @@ test("the showcase applies all five families to real elements", () => {
 });
 
 test("every busy aurora in the showcase carries its ARIA", () => {
-  // The aurora renders state; it never is the state.
-  const busy = html.match(/data-sl-fx-live="busy"[^>]*/g) || [];
-  assert.ok(busy.length > 0, "the showcase must demonstrate the busy mode");
-  for (const tag of busy) {
+  // The aurora renders state; it never is the state. Match the WHOLE tag, not
+  // the tail after the attribute: a host with aria-busy written before
+  // data-sl-fx-live would pass a tail-only scan while meaning the same thing,
+  // and a host with no ARIA at all would pass if the tag ended there.
+  const tags = [...html.matchAll(/<[a-z][^>]*data-sl-fx-live="busy"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(tags.length > 0, "the showcase must demonstrate the busy mode");
+  for (const tag of tags) {
     assert.ok(
       /aria-busy="true"|role="progressbar"/.test(tag),
       `busy aurora without ARIA: ${tag}`,

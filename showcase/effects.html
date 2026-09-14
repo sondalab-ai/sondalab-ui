@@ -518,6 +518,18 @@
             </div>
             <p class="cap">Only the selected item carries the aurora — <b>attention lives here</b> means the one that is active, and lighting all three would say nothing. It takes <b>--rim</b> rather than the tab's <b>--linear</b> because a selected item is <em>filled</em>: a filled element has no edge for the arc to inhabit, so the arc steps just outside the fill, in the accent's depth companion rather than in the accent the fill is made of. At rest the ring is quiet — tab to the selected item to see it light: that is the <b>static</b> reading, which lives on <b>:focus-visible</b>, not on the eye alone. There is no <b>data-sl-fx-live</b> here and no ambient grant either: a sweep says <em>liveness</em>, and a selected item is not alive, it is chosen.</p>
           </div>
+          <div class="g-cell">
+            <span class="g-label">skeleton — the wait is real work</span>
+            <div class="g-demo">
+              <div class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy" aria-busy="true"
+                   aria-label="Loading probe results" style="padding:1.1rem; display:grid; gap:0.55rem; min-width:15rem">
+                <span class="sl-skeleton" style="height:0.9rem; width:60%"></span>
+                <span class="sl-skeleton" style="height:0.9rem; width:100%"></span>
+                <span class="sl-skeleton" style="height:0.9rem; width:82%"></span>
+              </div>
+            </div>
+            <p class="cap">The aurora goes on the <b>container</b>, never on the individual bars: one operation is loading, not three. <b>aria-busy="true"</b> is not decoration — the aurora renders state and never <em>is</em> the state, so a screen-reader user, a reduced-motion visitor and a high-contrast visitor all get the fact from the markup while the light is merely how it looks. Busy auroras are exempt from the one-ambient-per-document budget, because they are bound to work that is genuinely running.</p>
+          </div>
         </div>
       </div>
     </section>
