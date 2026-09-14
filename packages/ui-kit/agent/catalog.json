@@ -204,7 +204,8 @@
         "sl-fx-glass",
         "sl-fx-glass--wide",
         "sl-fx-glass--field",
-        "sl-fx-glass--pane"
+        "sl-fx-glass--pane",
+        "sl-fx-glass--text"
       ],
       "roleVars": [
         "--slc-border-strong",
@@ -221,7 +222,8 @@
         "sl-fx-aurora--wide",
         "sl-fx-aurora--field",
         "sl-fx-aurora--linear",
-        "sl-fx-aurora--rim"
+        "sl-fx-aurora--rim",
+        "sl-fx-aurora--top"
       ],
       "roleVars": [
         "--slc-accent",

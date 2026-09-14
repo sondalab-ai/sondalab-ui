@@ -60,7 +60,7 @@ The catalog's § Effects table has four rows and nothing checks that the page ap
 - Consumes: nothing from earlier tasks.
 - Produces: the helper `canonicalStrings()` in `scripts/effects-showcase.test.mjs`, returning `Array<{component: string, classes: string[]}>` parsed from `catalog.md`. Tasks 2–10 rely on this: adding a table row is what makes their cell mandatory.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `scripts/effects-showcase.test.mjs`:
 
@@ -99,12 +99,12 @@ test("every canonical string in the catalog is applied on the showcase", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail on the drifted row**
+- [x] **Step 2: Run it and watch it fail on the drifted row**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL — `catalog.md promises "sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop" for Round icon button, and no element on showcase/effects.html carries all of it.`
 
-- [ ] **Step 3: Render the shipped icon button**
+- [x] **Step 3: Render the shipped icon button**
 
 In `showcase/effects.html` § 02 Liquid, replace the page-local round button:
 
@@ -131,7 +131,7 @@ Then delete the now-unused page-local rule and replace its comment with what is 
     .sl-icon-btn svg { width: 1rem; height: 1rem; display: block; }
 ```
 
-- [ ] **Step 4: Write the second fence — the drop belongs to one silhouette**
+- [x] **Step 4: Write the second fence — the drop belongs to one silhouette**
 
 The existing `every text button is a glass pane` test scans `<button class="…sl-btn…">`, so the element you just changed has walked out of its reach: it is a `.sl-icon-btn` now, and `drops >= 1` will fail. That is the test telling the truth about a page that moved, not a bug — and the fix is the fence the spec asks for, which is about the modifier rather than about buttons. Append:
 
@@ -153,16 +153,16 @@ test("the drop belongs to a round icon-only button, and nothing else", () => {
 
 Then narrow the older test so the two do not overlap: in `every text button is a glass pane`, delete the `sl-fx-liquid` branch and its `drops` counter — the new fence owns that claim now — and keep the `else` branch asserting every `.sl-btn` is a pane.
 
-- [ ] **Step 5: Run the suite**
+- [x] **Step 5: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 333 tests.
 
-- [ ] **Step 6: Look at it**
+- [x] **Step 6: Look at it**
 
 Open `http://localhost:8731/showcase/effects.html#liquid`, hover the round button. Expected: the silhouette swells and settles — the shipped `.sl-icon-btn--round` is 2rem with a pill radius, slightly smaller than the page's old 2.5rem square. If the swell does not fire, `mount()` is not reaching it; check the element matches `.sl-fx-liquid.sl-fx-liquid--drop` exactly.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/effects-showcase.test.mjs showcase/effects.html
@@ -197,7 +197,7 @@ Spec § A, rows 1 and 2. One task: same family, same string, same failure mode �
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: two new rows in the canonical table. No JavaScript API.
 
-- [ ] **Step 1: Add the table rows (this is the failing test)**
+- [x] **Step 1: Add the table rows (this is the failing test)**
 
 In `packages/ui-kit/agent/catalog.md`, inside the canonical-strings table, after the `Round icon button` row:
 
@@ -206,12 +206,12 @@ In `packages/ui-kit/agent/catalog.md`, inside the canonical-strings table, after
 | Stat value | `sl-stat__value sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL twice — the page carries neither string.
 
-- [ ] **Step 3: Add the showcase cells**
+- [x] **Step 3: Add the showcase cells**
 
 In `showcase/effects.html` § 04 Glass, after the existing `text — the letterform is the pane` cell, add:
 
@@ -234,19 +234,19 @@ In `showcase/effects.html` § 04 Glass, after the existing `text — the letterf
 
 The `.glass-text-slot` wrapper is required and already exists on this page — the kit seats `.sl-fx-glass__glow` before the host and both need to occupy one grid cell, which is what that class does.
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 333 tests.
 
-- [ ] **Step 5: Look at it, in three themes**
+- [x] **Step 5: Look at it, in three themes**
 
 Open `http://localhost:8731/showcase/effects.html#glass`. In light, dark and high-contrast (the theme switcher is in the header):
 - the glyphs must read as glass — a mask over the substrate, with the seated glow carrying the light;
 - under **high contrast** every family is off by design, so both must fall back to plain painted text and stay legible. An element whose legibility *depends* on the mask is a defect, and this is the theme that exposes it;
 - one line only — SVG text does not wrap. If `Refraction` wraps at narrow widths the mask desynchronises from the text; reduce the clamp maximum rather than letting it wrap.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/ui-kit/agent/catalog.md showcase/effects.html
@@ -279,19 +279,19 @@ Spec § A, rows 3 and 4. Both are containers with a 1px border and `overflow: hi
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: two canonical rows.
 
-- [ ] **Step 1: Add the table rows**
+- [x] **Step 1: Add the table rows**
 
 ```markdown
 | Figure frame | `sl-figure__media sl-fx-glass sl-fx-glass--wide` |
 | Avatar, interactive | `sl-avatar sl-fx-glass sl-fx-glass--pane` |
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL twice.
 
-- [ ] **Step 3: Apply the strings to the existing cell**
+- [x] **Step 3: Apply the strings to the existing cell**
 
 The cell `a pane inside a wrapper that clips` already renders two `.sl-figure__media` boxes. Add the glass to the left-hand one only — the right-hand one exists to show the swell defect and a second effect on it would confuse two claims:
 
@@ -307,19 +307,19 @@ Then add the interactive avatar to the same `.g-demo`, after the second figure:
               </button>
 ```
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 333 tests.
 
-- [ ] **Step 5: Look at it**
+- [x] **Step 5: Look at it**
 
 At `#glass`:
 - the figure frame takes a 2px fallback ring (`--wide`) that sits on the border it already has, never beside it. Two concentric rings is a defect.
 - the avatar swells on hover. It is a pane and **nothing clips it** — a wrapper clips its children, not itself — which is exactly why `compositions.css` deliberately does not bind `--slfx-pane-swell` on `.sl-avatar`. If the avatar does not swell, something reintroduced that binding; check `packages/ui-kit/compositions.css`.
 - the monogram inside must stay square and centred. `.sl-avatar > .sl-monogram` re-sizes a **direct child** only; the monogram here is a direct child of the button, not of the avatar, so if it renders squashed the markup needs the button to be the avatar rather than to contain one. Record which shape you ended with — Task 13 needs it.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/ui-kit/agent/catalog.md showcase/effects.html
@@ -355,18 +355,18 @@ Spec § A, row 5, flagged **measurable risk**. The track is `1.25rem` tall and t
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: either one canonical row, or a documented amendment moving the row to § C.
 
-- [ ] **Step 1: Add the table row**
+- [x] **Step 1: Add the table row**
 
 ```markdown
 | Switch track | `sl-switch__track sl-fx-glass` |
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL once.
 
-- [ ] **Step 3: Add the showcase cell**
+- [x] **Step 3: Add the showcase cell**
 
 In § 04 Glass:
 
@@ -385,12 +385,12 @@ In § 04 Glass:
           </div>
 ```
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 333 tests.
 
-- [ ] **Step 5: Decide by looking, at three themes**
+- [x] **Step 5: Decide by looking, at three themes**
 
 Open `#glass` and compare the switch track against the `.sl-kbd` beside it, in light, dark and high-contrast.
 
@@ -398,7 +398,9 @@ Open `#glass` and compare the switch track against the `.sl-kbd` beside it, in l
 
 **Outcome B — it does not read** (mush, or indistinguishable from the border, or reads as a rendering artefact). This is a valid result. Do **not** widen the chrome to rescue it.
 
-- [ ] **Step 6A: Commit (outcome A)**
+> **Outcome taken: B — but not for the reason this step guesses.** The call was not made from a three-theme legibility read ("mush"). `.sl-switch__track::after` **is the knob**, and the glass family also paints its ring on `::after`; with the class applied, the ring rule won the pseudo-element outright — `opacity: 0`, a conic-gradient background — and the rule that moves the knob under `:checked` never ran. No error, no warning: the switch silently lost the part that carries its state. See commit `28de725`.
+
+- [ ] **Step 6A: Commit (outcome A)** — not executed. Task 4 took outcome B (see Step 5's note); this branch does not apply.
 
 ```bash
 git add packages/ui-kit/agent/catalog.md showcase/effects.html
@@ -415,7 +417,7 @@ Claude-Session: https://claude.ai/code/session_01MLYgqyrxY1fTtLb1g3y6jw
 EOF
 ```
 
-- [ ] **Step 6B: Withdraw the row and amend the spec (outcome B)**
+- [x] **Step 6B: Withdraw the row and amend the spec (outcome B)** — executed (commit `28de725`). The spec was amended: `.sl-switch__track` moved to § C with the measured mechanism, and the counts now read **8** take a family / **12** take nothing throughout the spec.
 
 Remove the table row added in Step 1 and the `sl-fx-glass` class from the cell's `.sl-switch__track` — keep the cell, with the keycap, and rewrite its caption to state what was measured. In the spec, move `.sl-switch__track` from § A to § C with this row:
 
@@ -457,7 +459,7 @@ Spec § A, row 6. `--field` reaches any element that carries it — it only sets
 - Consumes: nothing.
 - Produces: the two rendered candidates Task 13 chooses between. **No catalog row yet** — the canonical string is not decided, and writing one now would promise a shape that may not ship.
 
-- [ ] **Step 1: Add the comparison cell**
+- [ ] **Step 1: Add the comparison cell** — not executed as written. No two-candidate cell was ever committed to § 06 Declension; both shapes were instead rendered and measured on the uncommitted working tree, and only the resolved shape was committed (see Step 4's note).
 
 In § 06 Declension, after the existing field cell:
 
@@ -490,12 +492,12 @@ In § 06 Declension, after the existing field cell:
             </div>
 ```
 
-- [ ] **Step 2: Run the suite**
+- [ ] **Step 2: Run the suite** — not executed as its own step; folded into the direct resolution described under Step 1/4.
 
 Run: `npm test`
 Expected: PASS, 333 tests. No new assertion — there is no canonical row to enforce yet, deliberately.
 
-- [ ] **Step 3: Look, and write down which one works**
+- [x] **Step 3: Look, and write down which one works** — done by computed-style measurement rather than a visual three-theme read: nesting `.sl-select` inside `.sl-field__control` left the chevron alone (`opacity: 1`, own border-width, no background image); classes on `.sl-select` directly took the chevron's `::after` for the ring (`opacity: 0`, conic-gradient background-image), the same mechanism that deleted the switch knob.
 
 At `#declension`, tab into each select.
 - The glass edge must be visible at rest on the wrapper's border.
@@ -504,7 +506,7 @@ At `#declension`, tab into each select.
 
 Record the outcome in the commit message. Task 13 consumes it.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit** — executed, but not as this prescribed commit. Task 13 was merged into this task: the decision landed directly in commit `4057ee5`, which renders only the winning wrapper-route shape (classes on `.sl-field__control`, `.sl-select` nested inside), adds the canonical row to `catalog.md`, and adds the `Don't` line under `### Select` — the deliverables Task 13 was to have produced. A duplicate "Select" row (added here, redundant with the pre-existing "Field / select wrapper" row) was removed in a follow-up, `2fcf8d6`. See Task 13's note.
 
 ```bash
 git add showcase/effects.html
@@ -543,18 +545,18 @@ Spec § A, row 7. A filled element has no edge to inhabit, so the arc steps just
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: one canonical row.
 
-- [ ] **Step 1: Add the table row**
+- [x] **Step 1: Add the table row**
 
 ```markdown
 | Segmented item, selected | `sl-segmented__item sl-fx-aurora sl-fx-aurora--rim` |
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL once.
 
-- [ ] **Step 3: Add the showcase cell**
+- [x] **Step 3: Add the showcase cell**
 
 In § 03 Aurora:
 
@@ -572,16 +574,16 @@ In § 03 Aurora:
           </div>
 ```
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 333 tests. Check by eye that this cell adds no `data-sl-fx-live="on"` — Task 10 installs the fence that would catch it, and Task 10 comes after this one.
 
-- [ ] **Step 5: Look at it**
+- [x] **Step 5: Look at it**
 
 At `#aurora`: the arc must sit **outside** the selected item's fill and must not be clipped by `.sl-segmented`, which has `padding: 2px` and no `overflow` — confirm nothing was added. The bloom reaches ~22px outside the box; an ancestor with `overflow` other than `visible` would cut it along a straight line.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/ui-kit/agent/catalog.md showcase/effects.html
@@ -615,7 +617,7 @@ Spec § A, row 8. The aurora renders state and never is the state, so the ARIA i
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: one canonical row, and a widened ARIA fence that no longer assumes a busy host is a `<button>`.
 
-- [ ] **Step 1: Write the widened ARIA fence**
+- [x] **Step 1: Write the widened ARIA fence**
 
 The existing `every busy aurora in the showcase carries its ARIA` test already scans `data-sl-fx-live="busy"` on any tag, so it covers the skeleton — but it matches `[^>]*` after the attribute only, which misses ARIA written **before** it. Replace that test body with:
 
@@ -636,12 +638,12 @@ test("every busy aurora in the showcase carries its ARIA", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and confirm the suite is still green**
+- [x] **Step 2: Run it and confirm the suite is still green**
 
 Run: `npm test`
 Expected: PASS, 333 tests. This step rewrites an existing test without changing its verdict; if it goes red, an existing busy host is missing ARIA and that is a real find — fix the markup, do not weaken the regex.
 
-- [ ] **Step 3: Add the catalog row**
+- [x] **Step 3: Add the catalog row**
 
 ```markdown
 | Skeleton container, loading | `sl-fx-aurora sl-fx-aurora--wide` |
@@ -655,12 +657,12 @@ The skeleton's row carries an obligation the table cannot: a busy aurora is only
 
 The second column must be **one backticked class list and nothing else**. `canonicalStrings()` matches `` |…|`…`| `` and a row with trailing prose after the backticks does not match at all — it would be skipped in silence, which is the exact failure the fence exists to prevent.
 
-- [ ] **Step 4: Run the test to verify it fails**
+- [x] **Step 4: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL once — no element carries `sl-fx-aurora sl-fx-aurora--wide` *as a set* yet unless § 03 already has one. If it passes because an existing card carries both, add the cell anyway (Step 5) and rely on the visual check.
 
-- [ ] **Step 5: Add the showcase cell**
+- [x] **Step 5: Add the showcase cell**
 
 In § 03 Aurora:
 
@@ -679,12 +681,12 @@ In § 03 Aurora:
           </div>
 ```
 
-- [ ] **Step 6: Run the suite and look**
+- [x] **Step 6: Run the suite and look**
 
 Run: `npm test` — expected PASS, 333 tests.
 At `#aurora`: the arc sweeps at the busy rate (about one turn per 1.1s, ~18% of the perimeter lit). Under `prefers-reduced-motion: reduce` and under high contrast it must stop, and the skeleton bars must still read as placeholders on their own — if the card looks empty without the aurora, the skeleton is carrying meaning the effect was supposed to decorate.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/ui-kit/agent/catalog.md showcase/effects.html scripts/effects-showcase.test.mjs
@@ -720,7 +722,7 @@ Spec § A, row 9. The behaviour exists; it is bound to a page-local class. This 
 - Consumes: `scramble(el, { duration = 520, tick = 45 })` exported from `packages/ui-kit/effects.js:1248`.
 - Produces: a fence asserting the observer targets the shipped class.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `scripts/effects-showcase.test.mjs`:
 
@@ -740,12 +742,12 @@ test("the section index scramble is bound to the shipped class", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL — neither the observer nor any element names the shipped class.
 
-- [ ] **Step 3: Swap the markup**
+- [x] **Step 3: Swap the markup**
 
 Each of the six section heads reads:
 
@@ -759,7 +761,7 @@ Change every one of the six to the shipped class, keeping its own number (`01` G
         <div class="sec-head"><span class="sl-section__idx">01</span><h2>Glitch</h2></div>
 ```
 
-- [ ] **Step 4: Swap the observer and delete the page-local rule**
+- [x] **Step 4: Swap the observer and delete the page-local rule**
 
 At the observer (around line 896):
 
@@ -775,7 +777,7 @@ Delete the page-local rule, which the shipped class now supplies:
 
 Before deleting it, check `.sl-section__idx` in `packages/ui-kit/components.css` actually carries the same four declarations. If it does not, **do not** re-add the local rule — that would be the page keeping its own copy of what the kit ships, which is the failure mode commit `6475c8a` fenced against. Fix the shipped class in a separate commit instead, and note it.
 
-- [ ] **Step 5: Update the caption and the catalog**
+- [x] **Step 5: Update the caption and the catalog**
 
 The caption at the section-index cell says "every `.sec-idx` on this page". Change it to `.sl-section__idx`. In `catalog.md`, in the § Effects prose after the canonical-strings table, add:
 
@@ -783,12 +785,12 @@ The caption at the section-index cell says "every `.sec-idx` on this page". Chan
 The **section index** is the one declension driven from JavaScript rather than written in markup: `scramble(el)` on an element entering the viewport, which is *something re-resolved* at the smallest scale the grammar has. Bind it with an `IntersectionObserver` over `.sl-section__idx`; it is a text change rather than motion, so it is safe under `prefers-reduced-motion`.
 ```
 
-- [ ] **Step 6: Run the suite and look**
+- [x] **Step 6: Run the suite and look**
 
 Run: `npm test` — expected PASS, 334 tests.
 At the page: scroll each section head into view; the index must scramble once and lock left to right. Six sections, six scrambles. The type must be unchanged from before the swap — if the indices now look different, the shipped class and the deleted local rule disagreed, which is Step 4's warning.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add showcase/effects.html packages/ui-kit/agent/catalog.md scripts/effects-showcase.test.mjs
@@ -822,18 +824,18 @@ Spec § B, row 1. The family is settled; the placement is not. This task renders
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: one canonical row, and the rendered collision Task 12 consumes.
 
-- [ ] **Step 1: Add the table row**
+- [ ] **Step 1: Add the table row** — not executed as written. This exact row (`sl-btn-group sl-fx-glass sl-fx-glass--wide`) was never committed: the group placement was measured and rejected before either row landed (see Step 5's note), so only the resolved member-route row (`Button group member | sl-btn sl-fx-glass sl-fx-glass--pane`) was ever added — and that row was itself later deleted as vacuous (commit `eedd750`; its guidance moved to a `Do` line under `### Button group`).
 
 ```markdown
 | Button group | `sl-btn-group sl-fx-glass sl-fx-glass--wide` |
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: FAIL once, unless a lone `.sl-btn` already carries the pane — in which case the fence passes on the wrong element and the cell below is still required.
 
-- [ ] **Step 3: Add the showcase cell**
+- [ ] **Step 3: Add the showcase cell** — not executed as written. Only the member-route placement was ever committed (commit `05304fc`); the group-route row was never rendered as a persisting cell. The group's failure (background computed to `rgba(0, 0, 0, 0)`, plus clipping cutting the ring at the group's edges) is recorded as prose in the cell's caption instead.
 
 In § 04 Glass:
 
@@ -856,12 +858,12 @@ In § 04 Glass:
           </div>
 ```
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 334 tests.
 
-- [ ] **Step 5: Look at both rows, and say which one is a control**
+- [ ] **Step 5: Look at both rows, and say which one is a control** — not executed as written; no two rows were ever rendered side by side to zoom into. The comparison came from computed-style measurement on the uncommitted tree instead: glass on `.sl-btn-group` measured `background: rgba(0, 0, 0, 0)` — the group's own 1px inter-member rule, gone — and `.sl-btn-group` also clips (`overflow: hidden`), which would cut the shared ring at the group's edges regardless. The member route needed no such measurement to fail; it just worked, ring and rule both intact. **Task 9 and Task 11's decision were made together, from this one measurement** (see Task 11's notes).
 
 At `#glass`, zoom into the boundary between two members in each row.
 - **Top row (glass on the group).** One ring around the whole group, the internal rules unchanged at 1px. Check the ring follows the group's radius and is not clipped — `.sl-btn-group` has `overflow` unset, and the ring sits at `inset: -1px`, so nothing should cut it.
@@ -869,7 +871,7 @@ At `#glass`, zoom into the boundary between two members in each row.
 
 Record in the commit message: whether the seam is real and how wide, and whether the top row keeps the group reading as one control. Task 11 chooses from that.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit** — executed as commit `05304fc`, which also carries Task 11's decision (no separate commit exists for Task 11).
 
 ```bash
 git add packages/ui-kit/agent/catalog.md showcase/effects.html
@@ -907,7 +909,7 @@ Closes Slice 1. Spec § D row 1 (`.sl-invert`, documentation only) plus the budg
 - Consumes: `canonicalStrings()` from Task 1.
 - Produces: nothing later tasks depend on. Slice 1 is complete after this.
 
-- [ ] **Step 1: Write the two failing tests**
+- [x] **Step 1: Write the two failing tests**
 
 Append to `scripts/effects-showcase.test.mjs`:
 
@@ -936,12 +938,12 @@ test("components.css never names an effect class", () => {
 });
 ```
 
-- [ ] **Step 2: Run them**
+- [x] **Step 2: Run them**
 
 Run: `node --test scripts/effects-showcase.test.mjs`
 Expected: both PASS immediately. These are **regression fences on rules already held**, not red-green cycles — the codebase satisfies them today and the tests exist so it keeps doing so. Confirm they can fail: temporarily add `.sl-fx-test {}` to the end of `components.css`, re-run, see the second test go red, then remove it. Do not commit that line.
 
-- [ ] **Step 3: Add the inversion band's canonical row**
+- [x] **Step 3: Add the inversion band's canonical row**
 
 In `catalog.md`'s canonical-strings table:
 
@@ -949,12 +951,12 @@ In `catalog.md`'s canonical-strings table:
 | Inversion band | `sl-invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top` |
 ```
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 336 tests. The new row is already satisfied — `showcase/effects.html` renders that exact combination in § 06 Declension, which is why this is one line of documentation rather than a task of its own.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/effects-showcase.test.mjs packages/ui-kit/agent/catalog.md
@@ -993,7 +995,7 @@ Every task in this slice begins with a gate that reads Slice 1's observation. **
 - Consumes: Task 9's observation.
 - Produces: the surviving canonical row, already enforced by Task 1's fence.
 
-- [ ] **Step 1: If the group route won — delete the member row**
+- [ ] **Step 1: If the group route won — delete the member row** — not applicable. The group route did not win; see Task 9's Step 5 note. No dedicated Task 11 commit exists — this task's outcome landed inside Task 9's commit `05304fc`.
 
 Remove the second `.sl-btn-group` from the cell, keep the first, and rewrite the caption to state the rule rather than the comparison:
 
@@ -1003,7 +1005,7 @@ Remove the second `.sl-btn-group` from the cell, keep the first, and rewrite the
 
 No CSS is written on this route. The canonical row from Task 9 is already correct, and the `sl-fx-glass--wide` it names is the container treatment the card and the dialog already take.
 
-- [ ] **Step 2: If the member route won and the seam is real — stand the ring down on facing edges**
+- [ ] **Step 2: If the member route won and the seam is real — stand the ring down on facing edges** — not executed; no CSS was written, deliberately. The member route won, but the gate's second condition was not met: at rest each member's ring is `opacity: 0` (only `:focus-visible`/`:focus-within`/a live state raises it), so the doubled hairline this step predicts cannot occur there — no tuning to ship. **Hover is unverified**: the automation browser reports `visibilityState: hidden`, and the ring's intensity ramp runs on `requestAnimationFrame`, which is throttled in that state, so a hover-state seam could not be measured this session.
 
 Read `:is(.sl-fx-glass, .sl-fx-aurora)::after` at `packages/ui-kit/effects.css:469` before writing: the ring is one absolutely-positioned box at `inset: -1px` with `padding: var(--slfx-ring-w)`, masked to a band. It is **not** a border, so a `border-*-color` override does nothing. Append, in its own banner section:
 
@@ -1032,21 +1034,21 @@ If that alone does not close the seam, the remaining width is the ring's own `--
 | Button group member | `sl-btn sl-fx-glass sl-fx-glass--pane` |
 ```
 
-- [ ] **Step 3: Run the audit**
+- [x] **Step 3: Run the audit** — correctly skipped: no CSS was written (Step 2), and this step is only required on the member route when tuning is added.
 
 Run: `node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/effects.css" --product default`
 Expected: `R-violation (0)`. Only required on the member route; skip if no CSS was written.
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `npm test`
 Expected: PASS, 336 tests.
 
-- [ ] **Step 5: Look**
+- [ ] **Step 5: Look** — partial. At rest, verified: one 1px line between members, no doubled ring (rings are `opacity: 0` at rest). The hover check (swell and glint unchanged on a middle member) was not performed — see Step 2's note on the automation browser.
 
 At `#glass`: one 1px line between members, the outer edge carrying glass, and the group reading as a single control rather than as three objects that happen to touch. Hover a middle member — on the member route the swell and glint must be unchanged, since only the ring's inset was touched.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Commit** — no dedicated commit. This task's outcome (no tuning shipped) landed inside Task 9's commit `05304fc`.
 
 ```bash
 git add showcase/effects.html packages/ui-kit/effects.css
@@ -1071,6 +1073,8 @@ EOF
 ---
 
 ## Task 12: Settle the switch track, if Task 4 took outcome A
+
+> **Not executed. This task does not exist.** Task 4 took outcome B — the switch-track row was withdrawn (commit `28de725`), not shipped — and this task's own gate says plainly that on outcome B it does not exist. None of the steps below were run; no checkbox is ticked.
 
 **Gate:** if Task 4 took **outcome B** (row withdrawn), this task does not exist — mark it closed and move on. If it took outcome A, the row shipped and this task checks it did not bring a defect with it.
 
@@ -1128,6 +1132,8 @@ EOF
 ---
 
 ## Task 13: Choose the select's shape and make it canonical
+
+> **Not executed as its own task.** Task 13 was merged into Task 5: rather than eight tasks apart, the select's two candidate shapes were rendered, measured and resolved together, in commit `4057ee5`. The wrapper route won — classes on `.sl-field__control`, with `.sl-select` nested inside as a separate element — because on the direct route (`.sl-select` classed directly) the chevron's `::after` lost to the ring's `::after` (`opacity: 0`, conic-gradient), the same silent-loss mechanism that deleted the switch knob. That commit already carries this task's deliverables: the canonical row in `catalog.md` and the `Don't` line under `### Select`. A duplicate "Select" row was briefly added and then removed as redundant with the pre-existing "Field / select wrapper" row (commit `2fcf8d6`). No step below ran as a separate Task 13 action; no checkbox is ticked.
 
 **Gate:** Task 5's commit message records which of the two rendered rows worked. This task ships that one and deletes the other.
 
@@ -1231,7 +1237,7 @@ EOF
 - Consumes: everything.
 - Produces: the deliverable.
 
-- [ ] **Step 1: Bring `catalog.json` into step**
+- [x] **Step 1: Bring `catalog.json` into step** — `sl-fx-glass--text` (rendered by Task 2 on the oversized anchor and stat value) and `sl-fx-aurora--top` (documented in `catalog.md` by Task 10, but absent from `catalog.json` since before this plan — `git show d29d496:packages/ui-kit/agent/catalog.md | grep -c aurora--top` is `0`, so json and md were in step until Task 10 put them out of step) were added to the `fx-glass`/`fx-aurora` `classes` arrays. No `roleVars` changed — none of this plan's tunings read a new `--slc-*` role-var.
 
 Any component whose `classes` array gained an effect-related entry, or whose `roleVars` changed because a tuning reads a new one, is updated here. Run:
 
@@ -1239,9 +1245,9 @@ Any component whose `classes` array gained an effect-related entry, or whose `ro
 node --test scripts/catalog-audit.test.mjs
 ```
 
-Expected: PASS — every id has a section in `catalog.md` and every snippet audits clean.
+Expected: PASS — every id has a section in `catalog.md` and every snippet audits clean. **Result: PASS, 87/87.**
 
-- [ ] **Step 2: Verify the constraints that have no test**
+- [x] **Step 2: Verify the constraints that have no test** — verified. `tokens.css`, `themes/`, `packages/ui-kit/effects.js`, `docs/design-language.md` and `packages/ui-kit/agent/design-language.md` show **zero diff at all** against `main` (not just zero from this plan). `showcase/index.html`, `components.css` and `compositions.css` do differ from `main`, but `git log --oneline d29d496..HEAD -- <path>` is empty for all three — every change to them predates commit `d29d496` (the last pre-flight-scan commit before Task 1), i.e. base-element-set prep work, not this plan. No commit from Task 1 onward touches any of the seven paths.
 
 ```bash
 git diff --stat main..HEAD -- packages/ui-kit/tokens.css packages/ui-kit/themes packages/ui-kit/components.css packages/ui-kit/compositions.css docs/design-language.md packages/ui-kit/agent/design-language.md showcase/index.html
@@ -1249,13 +1255,13 @@ git diff --stat main..HEAD -- packages/ui-kit/tokens.css packages/ui-kit/themes 
 
 Expected for this plan's commits: `components.css` and `compositions.css` may appear from **earlier** work on this branch, but **no commit from Task 1 onward** may touch `tokens.css`, `themes/`, `docs/design-language.md`, `packages/ui-kit/agent/design-language.md` or `showcase/index.html`. Check with `git log --oneline main..HEAD -- <path>` if the stat is ambiguous.
 
-- [ ] **Step 3: The three-theme pass, in one sitting**
+- [ ] **Step 3: The three-theme pass, in one sitting** — not performed. This closing task was scoped to run no browser (see its own brief); the visual light/dark/high-contrast/reduced-motion walk was not done this session. It remains open.
 
 Open `http://localhost:8731/showcase/effects.html` and walk every cell this plan added, in **light**, **dark** and **high-contrast**. In high contrast every family is off and the GPU field is torn down: each cell must still be a legible component. A cell that only makes sense with its effect running is the defect this pass exists to find.
 
 Also check `prefers-reduced-motion: reduce` once (macOS: System Settings → Accessibility → Display → Reduce motion): nothing animates, static material survives, and the skeleton's ARIA still carries the state.
 
-- [ ] **Step 4: Run everything**
+- [x] **Step 4: Run everything** — **340 tests passing, not 336.** Two areas grew regression fences beyond what their originating task anticipated (e.g. the section-index absence checks added after Task 8, and the ambient-budget exclusion-helper fixes after Task 10) — 336 was this task's stated baseline at the time it was written, and drifted upward as later tasks found more to guard. `R-violation (0)` on `effects.css`, `components.css` **and** `compositions.css` (a third surface, beyond the two this step names, audited clean as well).
 
 ```bash
 npm test
@@ -1265,11 +1271,11 @@ node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/components.cs
 
 Expected: 336 tests passing; `R-violation (0)` on both surfaces.
 
-- [ ] **Step 5: Tick this plan and record the outcomes**
+- [x] **Step 5: Tick this plan and record the outcomes**
 
 Tick every checkbox above. Where a task took a gated branch (Task 4 outcome B, Task 11 or 12 closed as not needed, Task 13's route), add a one-line note under that task saying which branch it took and why — a plan that reads as fully executed while hiding which fork it walked is worse than one with an open box.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/ui-kit/agent/catalog.json packages/ui-kit/README.md docs/plans/2026-09-14-effects-declension-base-set.md
@@ -1293,7 +1299,8 @@ EOF
 
 ## Deliverable
 
-- Nine 0.10.0 classes (eight, if Task 4 took outcome B) carrying a rendered, documented effects declension, and eleven (twelve) carrying a documented decision to take none.
-- The catalog's canonical-strings table grown from four rows to cover the base element set, **and machine-checked against the showcase** — the fence that makes the table a contract rather than a wish.
-- Per-component tuning in `effects.css` for the collisions Slice 1 demonstrated, and none for those it did not.
-- Five new fences: canonical strings applied, the drop confined to a round icon-only silhouette, the ambient budget, the section-index binding, and `components.css` free of effect classes — plus the existing ARIA scan widened to match whole tags.
+- **Eight** 0.10.0 classes carry a rendered, documented effects declension — Task 4 took outcome B, so the switch track is not among them — and **twelve** carry a documented decision to take none.
+- The catalog's canonical-strings table grown from four rows to ten, covering the base element set, **and machine-checked against the showcase** — the fence that makes the table a contract rather than a wish. Two rows added along the way (the skeleton's busy-aurora reading, the button-group row) were deleted after proving vacuous under that fence; their guidance moved into the component's own `Do`/`Don't` prose instead.
+- Per-component tuning in `effects.css` for the collisions Slice 1 demonstrated (the icon button's transparent fill, its radius, the glass-text kill-switches), and none for those it did not (the button group's member route needed no tuning; the switch track and the select's direct route were withdrawn rather than tuned).
+- Five new fences: canonical strings applied, the drop confined to a round icon-only silhouette, the ambient budget, the section-index binding, and `components.css` free of effect classes — plus the existing ARIA scan widened to match whole tags. Several more were added beyond this original five as later tasks found more to guard (see Task 14 Step 4's note on the test count).
+- Three of the plan's fourteen tasks did not run as written: **Task 4** took the documented outcome B rather than outcome A; **Task 12** never existed, gated closed by that outcome; **Task 13** never ran as its own task, folded into Task 5's single resolution. Tasks 9 and 11 also changed shape — collapsing into one measurement-driven commit rather than the render-both-then-choose sequence the plan describes — recorded in their own notes above rather than counted among the three.
