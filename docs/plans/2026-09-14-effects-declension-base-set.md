@@ -46,7 +46,7 @@
 
 # Slice 1 — Apply and look
 
-No new CSS in this slice. If a task tempts you to write a rule in `effects.css`, stop: that is Slice 2, and the whole point is to find out first whether the rule is needed.
+No new CSS **in the kit** in this slice. If a task tempts you to write a rule in `packages/ui-kit/effects.css`, stop: that is Slice 2, and the whole point is to find out first whether the rule is needed. Page-local CSS in `showcase/effects.html`'s own `<style>` is fine and several tasks need it — that is the page laying out a demo, not the kit growing a declension.
 
 ## Task 1: Make the canonical-strings table a contract
 
@@ -575,7 +575,7 @@ In § 03 Aurora:
 - [ ] **Step 4: Run the suite**
 
 Run: `npm test`
-Expected: PASS, 333 tests. In particular the ambient-budget fence from Task 10 (if already landed) must still pass: this cell adds no `data-sl-fx-live="on"`.
+Expected: PASS, 333 tests. Check by eye that this cell adds no `data-sl-fx-live="on"` — Task 10 installs the fence that would catch it, and Task 10 comes after this one.
 
 - [ ] **Step 5: Look at it**
 
@@ -644,10 +644,16 @@ Expected: PASS, 333 tests. This step rewrites an existing test without changing 
 - [ ] **Step 3: Add the catalog row**
 
 ```markdown
-| Skeleton container, loading | `sl-fx-aurora sl-fx-aurora--wide` + `data-sl-fx-live="busy"` + `aria-busy="true"` |
+| Skeleton container, loading | `sl-fx-aurora sl-fx-aurora--wide` |
 ```
 
-Note this row's second column is not a bare class list, so `canonicalStrings()` will parse `sl-fx-aurora sl-fx-aurora--wide` from the backticked run and ignore the rest — which is the behaviour we want: the fence checks the classes, and Step 1's test checks the ARIA.
+and immediately under the table, in prose:
+
+```markdown
+The skeleton's row carries an obligation the table cannot: a busy aurora is only correct with `data-sl-fx-live="busy"` and `aria-busy="true"` on the same element. The aurora renders state and never *is* the state.
+```
+
+The second column must be **one backticked class list and nothing else**. `canonicalStrings()` matches `` |…|`…`| `` and a row with trailing prose after the backticks does not match at all — it would be skipped in silence, which is the exact failure the fence exists to prevent.
 
 - [ ] **Step 4: Run the test to verify it fails**
 
@@ -1019,6 +1025,12 @@ Read `:is(.sl-fx-glass, .sl-fx-aurora)::after` at `packages/ui-kit/effects.css:4
 ```
 
 If that alone does not close the seam, the remaining width is the ring's own `--slfx-ring-w` on two adjacent members meeting. Do **not** widen the group's rule to swallow it — a structural separator stays 1px whatever an effect is doing to it. Fall back to the group route in Step 1 and record why.
+
+**On this route the canonical row Task 9 wrote is wrong and must be replaced**, or the fence will demand an element that no longer exists:
+
+```markdown
+| Button group member | `sl-btn sl-fx-glass sl-fx-glass--pane` |
+```
 
 - [ ] **Step 3: Run the audit**
 
