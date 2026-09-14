@@ -574,3 +574,35 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --sl-measure: 63ch;
   max-width: var(--sl-measure);
 }
+
+.sl-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--sl-z-overlay, 50);
+  background: color-mix(in srgb, var(--slc-canvas) 84%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid var(--slc-border-subtle);
+}
+
+.sl-invert {
+  background: var(--slc-text);
+  color: var(--slc-canvas);
+}
+/* The re-derivation sits on the CHILDREN, not on the band. A custom property
+   whose value references a property declared on the same element is a cycle,
+   and CSS makes every property in a cycle invalid at computed-value time — so
+   `--slc-text: var(--slc-canvas)` next to `background: var(--slc-text)` would
+   silently paint the band its own foreground. Custom properties inherit, so
+   one generation is enough to reach the whole subtree. */
+.sl-invert > * {
+  --slc-text:           var(--slc-canvas);
+  /* Surfaces are re-derived too, not just text and lines: a component that
+     paints its own ground (card, dialog, field, checkbox) would otherwise keep
+     the light surface and render the re-derived light text on top of it. */
+  --slc-surface:        color-mix(in srgb, currentColor 7%, transparent);
+  --slc-raised:         color-mix(in srgb, currentColor 12%, transparent);
+  --slc-text-secondary: color-mix(in srgb, currentColor 78%, transparent);
+  --slc-text-muted:     color-mix(in srgb, currentColor 58%, transparent);
+  --slc-border:         color-mix(in srgb, currentColor 22%, transparent);
+  --slc-border-subtle:  color-mix(in srgb, currentColor 12%, transparent);
+}

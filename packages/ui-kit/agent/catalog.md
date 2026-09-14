@@ -274,28 +274,27 @@ Caps running text at the ~63ch measure. `--sl-measure` is a convention, not a to
 ```
 Consumes: nothing — layout only. Do: put it on the text container, not on a grid cell that also holds a figure. Don't: let prose run full-bleed; L1 caps the measure for a reason.
 
-### Sticky translucent header
-Substrate: **R** App/Page. The house header: sticky, translucent, 1px bottom rule; mono wordmark left, mono meta right.
-```css
-.site-header {
-  position: sticky; top: 0; z-index: var(--sl-z-overlay);
-  background: color-mix(in srgb, var(--sl-bg-canvas) 84%, transparent);
-  backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 1px solid var(--sl-border-subtle);
-}
+### Sticky translucent header — `sl-header`
+The house header: sticky, translucent over the page ground, a 1px bottom rule. Mono wordmark left, mono meta right. Substrate: **R** App/Page, **N/A** IDE.
+```html
+<header class="sl-header">
+  <div class="sl-wrap"> … </div>
+</header>
 ```
-Don't: use an opaque header or a drop-shadow instead of the 1px rule.
+Consumes: `--slc-canvas`, `--slc-border-subtle`. Do: put a `sl-wrap` inside it, so the translucency reaches the viewport edge and only the content is inset. Don't: use an opaque header, or a drop-shadow instead of the 1px rule.
 
-### Inversion band
-Substrate: **R** Page, **A** App/IDE/Term. A full-width block flipped to paper-on-ink; punctuates rhythm, marks the thesis or primary CTA. At least one per long page.
-```css
-.invert {
-  background: var(--sl-text-primary);
-  color: var(--sl-bg-canvas);
-}
-.invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 70%, transparent); }
+### Inversion band — `sl-invert`
+A full-width block flipped to paper-on-ink. It punctuates rhythm and marks the thesis or the primary call to action; at least one per long page is idiomatic. Substrate: **R** Page, **A** App, **N/A** IDE.
+```html
+<section class="sl-invert">
+  <div class="sl-wrap"> … </div>
+</section>
 ```
-Don't: put an alpha-on-canvas hairline inside it (it vanishes) — derive an on-ink rule locally.
+Consumes: `--slc-text`, `--slc-canvas`.
+
+The class re-derives the border, text **and surface** role-vars from the band's own foreground **on its children**, so every component placed inside — card, table, field, callout, checkbox, switch — keeps a visible hairline and a ground it can be read against. Re-deriving only the lines and the text is not enough: a component that paints its own surface would keep the light one and render the re-derived light text on top of it. (This sentence is deliberately on its own line: `scripts/catalog-audit.test.mjs` reads the whole `Consumes:` line and compares every `--slc-*` on it against `catalog.json` as a set, so a role-var named in trailing prose fails parity.)
+
+Do: give it a direct child to hold the content (a `sl-wrap` is the usual one); the re-derivation is a `> *` rule, because a custom property cannot be defined on the same element that reads it. Don't: hand-write an alpha-over-canvas hairline inside the band — that is the bug this class exists to close.
 
 ### Hairline grid
 Substrate: **R** App/Page. Cards formed by a 1px gap over a line-colour background; cells paint their own surface → crisp shared rules, no doubled borders. Prefer over bordered-card grids.

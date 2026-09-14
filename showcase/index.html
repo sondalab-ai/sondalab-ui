@@ -503,15 +503,25 @@
           </div>
 
           <div class="g-cell" style="padding:0">
-            <div class="invert" style="padding:1.4rem">
-              <p class="sl-eyebrow">On ink</p>
-              <div class="g-demo" style="margin-top:0.7rem">
-                <span class="sl-tag">Inverted</span>
-                <span class="sl-badge sl-badge--success">Passed</span>
-                <span class="sl-kbd">esc</span>
+            <div class="sl-invert" style="padding:1.4rem">
+              <div>
+                <span class="sl-eyebrow">On ink</span>
+                <div class="g-demo" style="margin-top:0.7rem">
+                  <span class="sl-tag">Inverted</span>
+                  <span class="sl-badge sl-badge--success">Passed</span>
+                  <span class="sl-kbd">esc</span>
+                </div>
+                <article class="sl-card" style="margin-top:1rem">
+                  <h3 class="sl-card__title">The hairline survives</h3>
+                  <div class="sl-card__body">
+                    <b>.sl-invert</b> re-derives <b>--slc-border</b> from its own
+                    foreground on its children, so a bordered component placed
+                    inside keeps a visible edge with no work from the author.
+                  </div>
+                </article>
               </div>
             </div>
-            <span class="g-label" style="padding:0.9rem 1.4rem">Inversion band — <b>--slc-border</b> scope-override keeps hairlines visible on the strongest neutral.</span>
+            <span class="g-label" style="padding:0.9rem 1.4rem">Inversion band &mdash; the shipped <b>.sl-invert</b> carries the <b>--slc-border</b> re-derivation itself.</span>
           </div>
 
         </div>

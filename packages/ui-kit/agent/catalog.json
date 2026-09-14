@@ -264,20 +264,23 @@
     {
       "id": "sticky-header",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-header"
+      ],
       "roleVars": [
-        "--sl-bg-canvas",
-        "--sl-border-subtle",
-        "--sl-z-overlay"
+        "--slc-canvas",
+        "--slc-border-subtle"
       ]
     },
     {
       "id": "inversion-band",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-invert"
+      ],
       "roleVars": [
-        "--sl-text-primary",
-        "--sl-bg-canvas"
+        "--slc-text",
+        "--slc-canvas"
       ]
     },
     {
