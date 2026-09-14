@@ -231,38 +231,70 @@ test("the section index scramble is bound to the shipped class", () => {
 });
 
 /** The extents of every `data-sl-fx="off"` subtree, as [start, end) offsets
- *  into the page source. A grant inside one of these is inert by design — the
- *  kill switch beats the grant — so the ambient budget must not count it.
+ *  into `src` (the page source by default; overridable so tests can probe it
+ *  with a synthetic fixture instead of editing the page). A grant inside one
+ *  of these is inert by design — the kill switch beats the grant — so the
+ *  ambient budget must not count it.
  *
  *  This is a text scan, not a DOM, and the technique has real limits. It
- *  walks `<div ...>` / `</div>` tags with depth counting from the opening tag
- *  that carries `data-sl-fx="off"`, tracking nesting depth so an intervening
- *  `<div>` does not close the region early — but that path is untested here:
- *  the one off-region this page has (§ kill switch) contains no nested
- *  `<div>`, so the depth counter has never been exercised past 1. It would be
- *  fooled outright by an off-region rooted on a non-`<div>` element (a
- *  `<section data-sl-fx="off">`, say), by a `<div` appearing inside an
- *  attribute value or HTML comment, or by markup that is not well-formed to
- *  begin with. It is not a general HTML parser — it is only as sound as the
- *  page's own div nesting, and only as proven as what this page happens to
- *  contain. */
-function offRegionExtents() {
+ *  matches the opening tag that carries `data-sl-fx="off"`, whatever element
+ *  it is — `<div>`, `<section>`, anything — then depth-counts open/close
+ *  pairs of that SAME tag name from there to find the matching close. It is
+ *  generalised to the tag actually present rather than hardcoded to `<div>`,
+ *  so an off-region rooted on a different element is still found and its
+ *  grant still excluded, rather than the fence condemning correct markup it
+ *  cannot see.
+ *
+ *  If no matching close is ever found — an unterminated region, a missing
+ *  `</tag>` — depth never reaches 0 and the scan stops there (`break`)
+ *  instead of re-matching the same opening tag forever: `openRe.lastIndex`
+ *  is never rewound to a point already visited. That is a stop, not a
+ *  correction — an unterminated region's grants are not excluded, so on
+ *  already-broken markup the fence goes red rather than hanging or passing
+ *  vacuously.
+ *
+ *  It would still be fooled by a self-closing or malformed root tag (a
+ *  `<section data-sl-fx="off" />` with no separate close, say), by a literal
+ *  `<tag` appearing inside an attribute value or an HTML comment, or by
+ *  markup that is not well-formed to begin with — it is text matching, not
+ *  parsing, and has no notion of what a comment or an attribute value is. */
+function offRegionExtents(src = html) {
   const extents = [];
-  const openRe = /<div[^>]*\bdata-sl-fx="off"[^>]*>/g;
+  const openRe = /<([a-z][a-z0-9]*)\b[^>]*\bdata-sl-fx="off"[^>]*>/g;
   let open;
-  while ((open = openRe.exec(html))) {
-    const tagRe = /<div\b[^>]*>|<\/div>/g;
+  while ((open = openRe.exec(src))) {
+    const tag = open[1];
+    const tagRe = new RegExp(`<${tag}\\b[^>]*>|</${tag}>`, "g");
     tagRe.lastIndex = openRe.lastIndex;
     let depth = 1;
     let close;
-    while (depth > 0 && (close = tagRe.exec(html))) {
-      depth += close[0] === "</div>" ? -1 : 1;
+    while (depth > 0 && (close = tagRe.exec(src))) {
+      depth += close[0].startsWith("</") ? -1 : 1;
     }
+    if (depth > 0) break; // unterminated: stop the scan instead of re-matching the same tag forever
     extents.push([open.index, tagRe.lastIndex]);
     openRe.lastIndex = tagRe.lastIndex;
   }
   return extents;
 }
+
+test("offRegionExtents spans to the outer close, not a same-tag child's", () => {
+  const src = '<section data-sl-fx="off"><section>inner</section> data-sl-fx-live="on" tail</section>';
+  const extents = offRegionExtents(src);
+  assert.equal(extents.length, 1, "one outer off-region, despite a same-tag child nested inside it");
+  const [start, end] = extents[0];
+  assert.equal(src.slice(start, end), src, "the extent must reach the OUTER close, not the inner child's");
+});
+
+test("offRegionExtents finds an off-region rooted on a non-div element", () => {
+  const src = '<article data-sl-fx="off"><span data-sl-fx-live="on"></span></article>';
+  assert.equal(offRegionExtents(src).length, 1, "a non-div root must still be found, or its grant goes uncounted-for");
+});
+
+test("offRegionExtents does not hang on an unterminated off-region", () => {
+  const src = '<div data-sl-fx="off"><p>no matching close for this region';
+  assert.deepEqual(offRegionExtents(src), [], "an unterminated region contributes no extent, and the scan still returns");
+});
 
 test("the ambient aurora budget holds: at most one per document, off-regions excluded", () => {
   // L6 caps ambient work at one aurora, one glitch burst and one deforming
