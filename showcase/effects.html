@@ -272,13 +272,14 @@
        layer's `position: relative` and detach the ring from the dialog. */
     dialog.sl-dialog[open] { position: relative; margin: 0; max-width: none; width: auto; }
 
-    /* -- round icon-only button: the one silhouette the gooey belongs to.
-       components.css has no icon-button class yet; the page sizes a .sl-btn
-       square and re-parametrises its radius to the pill — which is exactly
-       the case the liquid's markup gate protects (a measured radius would
-       have to guess). ---------------------------------------------------- */
-    .round { width: 2.5rem; height: 2.5rem; padding: 0; border-radius: var(--sl-radius-pill); }
-    .round svg { width: 1rem; height: 1rem; display: block; }
+    /* -- the round icon-only button ships as .sl-icon-btn--round since 0.10.0.
+       The page sized a .sl-btn square and re-parametrised its radius until
+       then; nothing page-local is left. sl-fx-liquid--drop is not a CSS class
+       at all — it is a JavaScript selector gate (LIQUID_HOSTS in effects.js) —
+       so the liquid needs no binding for this component, which is exactly why
+       the drifted row went unnoticed: it never broke, it was just never true
+       of this page. ------------------------------------------------------- */
+    .sl-icon-btn svg { width: 1rem; height: 1rem; display: block; }
 
     /* -- §05 goo: the substance needs room, so every field here carries its own
        padding rather than relying on the cell's. The reach is --slfx-goo-reach
@@ -440,10 +441,10 @@
           <div class="g-cell">
             <span class="g-label">round, icon-only — the edge gives under the pointer</span>
             <div class="g-demo">
-              <button class="sl-btn sl-btn--ghost round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
+              <button class="sl-icon-btn sl-icon-btn--round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
-              <button class="sl-btn sl-btn--primary round sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora sl-fx-aurora--rim" aria-label="Add">
+              <button class="sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora sl-fx-aurora--rim" aria-label="Add">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
               </button>
             </div>
@@ -663,7 +664,7 @@
               <div class="g-demo">
                 <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
                 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
-                <button class="sl-btn sl-btn--ghost round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
+                <button class="sl-icon-btn sl-icon-btn--round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
                   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
               </div>

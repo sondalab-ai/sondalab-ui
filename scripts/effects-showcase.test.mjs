@@ -88,19 +88,10 @@ test("every text button is a glass pane; only a round icon-only button goes gooe
   // its variant. A bare .sl-fx-liquid on a button is a mistake either way.
   const buttons = [...html.matchAll(/<button class="([^"]*\bsl-btn\b[^"]*)"([^>]*)>/g)];
   assert.ok(buttons.length >= 8, "the showcase must show its buttons");
-  let drops = 0;
-  for (const [tag, cls, attrs] of buttons) {
-    if (/\bsl-fx-liquid\b/.test(cls)) {
-      assert.match(cls, /\bsl-fx-liquid--drop\b/, `a liquid button must be --drop: ${tag}`);
-      assert.match(attrs, /aria-label=/, `a --drop button is icon-only and needs an aria-label: ${tag}`);
-      assert.doesNotMatch(cls, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
-      drops++;
-    } else {
-      assert.match(cls, /\bsl-fx-glass--pane\b/, `a text button must be a glass pane: ${tag}`);
-      assert.match(cls, /\bsl-fx-glass\b/, `--pane requires .sl-fx-glass: ${tag}`);
-    }
+  for (const [tag, cls] of buttons) {
+    assert.match(cls, /\bsl-fx-glass--pane\b/, `a text button must be a glass pane: ${tag}`);
+    assert.match(cls, /\bsl-fx-glass\b/, `--pane requires .sl-fx-glass: ${tag}`);
   }
-  assert.ok(drops >= 1, "the gooey must have somewhere to demonstrate: a round icon-only button");
 });
 
 test("the showcase imports compositions.css, after effects.css", () => {
@@ -156,4 +147,51 @@ test("the showcase uses the shipped inversion band, not a hand-rolled one", () =
   // `-` is a word boundary, so \binvert\b matches sl-invert too: exclude a
   // preceding hyphen or word character explicitly.
   assert.doesNotMatch(html, /class="[^"]*(?<![\w-])invert(?![\w-])/, "no hand-rolled .invert band");
+});
+
+/** The § Effects canonical-strings table, parsed into the class sets it
+ *  promises. The table is documentation until something asserts the page
+ *  actually carries what it lists — a string nobody renders has never been
+ *  seen, which is how the round icon button's row drifted. */
+function canonicalStrings() {
+  const md = readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.md"), "utf8");
+  const start = md.indexOf("**Canonical strings.**");
+  assert.ok(start > -1, "catalog.md must carry the canonical-strings block");
+  const table = md.slice(start, md.indexOf("\n### ", start));
+  const rows = [];
+  for (const line of table.split("\n")) {
+    const m = line.match(/^\|\s*([^|]+?)\s*\|\s*`([^`]+)`\s*\|/);
+    if (!m) continue;
+    if (/^Component$/i.test(m[1])) continue;
+    rows.push({ component: m[1], classes: m[2].trim().split(/\s+/) });
+  }
+  return rows;
+}
+
+test("every canonical string in the catalog is applied on the showcase", () => {
+  const rows = canonicalStrings();
+  assert.ok(rows.length >= 4, `expected the table to have rows, parsed ${rows.length}`);
+  const attrs = [...html.matchAll(/class="([^"]*)"/g)].map((m) => m[1].split(/\s+/));
+  for (const { component, classes } of rows) {
+    const applied = attrs.some((have) => classes.every((c) => have.includes(c)));
+    assert.ok(
+      applied,
+      `catalog.md promises "${classes.join(" ")}" for ${component}, and no element on ` +
+        `showcase/effects.html carries all of it. A canonical string nobody renders is a wish.`,
+    );
+  }
+});
+
+test("the drop belongs to a round icon-only button, and nothing else", () => {
+  // sl-fx-liquid--drop is a JavaScript selector gate (LIQUID_HOSTS in
+  // effects.js), not a CSS class, so nothing about the host is checked at
+  // runtime: the markup IS the contract. The gooey belongs to a round
+  // silhouette — on a text button the drop reads as a blister on a box.
+  const tags = [...html.matchAll(/<[a-z][^>]*\bsl-fx-liquid--drop\b[^>]*>/g)].map((m) => m[0]);
+  assert.ok(tags.length >= 1, "the gooey must have somewhere to demonstrate");
+  for (const tag of tags) {
+    assert.match(tag, /\bsl-icon-btn--round\b/, `--drop needs a round silhouette: ${tag}`);
+    assert.match(tag, /aria-label=/, `a --drop host is icon-only and needs an aria-label: ${tag}`);
+    assert.doesNotMatch(tag, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
+  }
 });
