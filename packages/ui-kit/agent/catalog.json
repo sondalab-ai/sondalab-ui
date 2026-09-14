@@ -510,6 +510,42 @@
         "--slc-text",
         "--slc-text-muted"
       ]
+    },
+    {
+      "id": "wordmark",
+      "kind": "signature",
+      "classes": [
+        "sl-wordmark",
+        "sl-wordmark__dot"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent"
+      ]
+    },
+    {
+      "id": "lockup",
+      "kind": "signature",
+      "classes": [
+        "sl-lockup",
+        "sl-lockup__dot"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent"
+      ]
+    },
+    {
+      "id": "monogram",
+      "kind": "signature",
+      "classes": [
+        "sl-monogram"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent",
+        "--slc-surface"
+      ]
     }
   ]
 }

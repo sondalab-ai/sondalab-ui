@@ -274,6 +274,29 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
 ```
 Consumes: `--slc-text`, `--slc-text-muted`. Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected). Don't: set a stat you have not measured.
 
+## Identity & media
+
+### Wordmark — `sl-wordmark` (`__dot`)
+The official logo. The brand is typographic; there is no pictorial mark. `sondalab.` in the display face at weight 500, tracked `-0.05em`, the trailing period in the accent. Substrate: **R** App/Page, **A** IDE.
+```html
+<span class="sl-wordmark">sondalab<span class="sl-wordmark__dot">.</span></span>
+```
+Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-wordmark.svg` — where this class and that file disagree, the file is right. Do: let it inherit its size from context; it is type, so it scales with `font-size`. Don't: re-letter it, re-space it, or set the period in the text colour — the accent period is the mark.
+
+### Compact lockup — `sl-lockup` (`__dot`)
+The wordmark where the wordmark is too wide: headers, tight chrome. `sonda·lab` in the mono face, uppercase, tracked `0.2em`, the middle dot in the accent. Substrate: **R** IDE/App/Page.
+```html
+<span class="sl-lockup">sonda<span class="sl-lockup__dot">·</span>lab</span>
+```
+Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg`. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
+
+### Monogram — `sl-monogram`
+Where even the lockup is too wide to read: a social avatar, a square tile. `s.` in the display cut, the letter in the text colour and the period in the accent, on a full-bleed square of the surface. Substrate: **R** IDE/App/Page.
+```html
+<span class="sl-monogram" role="img" aria-label="Sondalab">s</span>
+```
+Consumes: `--slc-text`, `--slc-accent`, `--slc-surface`. Rendered assets: `packages/ui-kit/assets/sondalab-avatar-{ink,paper}.{svg,png}`. Resize it by setting `--sl-monogram-size` (default `3rem`) — the letter is sized off that box, never off an inherited `font-size`, so the three corrections hold at every size. Those corrections are fixed in `design-language.md` L3 and transcribed here, not re-derived: the mark is sized to the inscribed crop circle (~60% of the canvas wide) rather than the square; the accent period is scaled +35% around its own centre so it survives a 32px render; and it is pushed +0.06em off the letter, because the wordmark's tight tracking is drawn for a period at its natural size. Do: give it `role="img"` and a label — `s.` read aloud is not the brand. The period is drawn by the class, so the markup carries the letter alone. Don't: re-tune the three corrections per surface; they are what makes the small end legible.
+
 ## Effects (opt-in, `effects.css`)
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).

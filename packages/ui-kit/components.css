@@ -838,3 +838,70 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   text-transform: uppercase;
   color: var(--slc-text-muted);
 }
+
+/* ══ IDENTITY & MEDIA ════════════════════════════════════════════════════════ */
+
+/* The brand is typographic — there is no pictorial mark. These three classes
+   must render as packages/ui-kit/assets/sondalab-*.svg does; where they
+   disagree, the asset is right and the CSS is the defect. */
+.sl-wordmark {
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--slc-text);
+}
+.sl-wordmark__dot { color: var(--slc-accent); }
+
+.sl-lockup {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--slc-text);
+}
+.sl-lockup__dot { color: var(--slc-accent); }
+
+/* Three corrections, all for the small end of the scale (design-language L3):
+   the mark is sized to the INSCRIBED CROP CIRCLE (~60% of the canvas wide),
+   not the square; the accent period is scaled +35% around its own centre so it
+   survives a 32px render; and it is pushed +0.06em off the letter, because the
+   wordmark's tight tracking is drawn for a period at its natural size.
+   The letter is sized off this element's OWN box, not an inherited font-size,
+   so the 60% holds wherever the mark is placed. */
+.sl-monogram {
+  --sl-monogram-size: 3rem;
+  /* inline-BLOCK, not inline-flex: as a flex container the ::after period
+     becomes a flex item, and align-items centres it by box — which drops the
+     bigger dot below the letter's baseline. A line box centres the single line
+     vertically and keeps letter and period on one baseline, as the asset has
+     them. */
+  display: inline-block;
+  width: var(--sl-monogram-size);
+  height: var(--sl-monogram-size);
+  line-height: var(--sl-monogram-size);
+  text-align: center;
+  background: var(--slc-surface);
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-weight: 500;
+  /* The 60% in L3 is the MARK's ink width against the tile, not a font-size.
+     sondalab-avatar-ink.svg puts s + period at 59.7% of its 1024 canvas
+     (scale 0.567848 over a 1076.9-unit mark). Fraunces' 's' inks 0.385em wide
+     and the period 0.154em, so with the period at 1.35x and the 0.06em offset
+     the mark is 0.653em — 0.597 / 0.653 gives this multiplier. Verified
+     against the rendered element at 48px and 32px: 0.600 and 0.608 of the
+     tile. Re-measure in the page if you change the face; the ratio is a
+     property of the glyph, not of the rule. */
+  font-size: calc(var(--sl-monogram-size) * 0.91);
+  letter-spacing: -0.05em;
+  color: var(--slc-text);
+}
+/* +35% around its OWN CENTRE (L3) — a transform, not a font-size, which would
+   scale it around the baseline and sink it. inline-block is what makes a
+   transform apply at all. */
+.sl-monogram::after {
+  content: ".";
+  display: inline-block;
+  transform: scale(1.35);
+  margin-left: 0.06em;
+  color: var(--slc-accent);
+}
