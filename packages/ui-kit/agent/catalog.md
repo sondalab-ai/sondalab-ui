@@ -256,9 +256,23 @@ The `--shatter` variant additionally wraps an intact `sl-fx-glitch__text` and a 
 ```
 Consumes: `--slc-accent`, `--slc-accent-hover`. Do: call `effects.js`'s `mount()` once and fire `burst(el)` on the triggering event — CSS alone renders nothing; set `data-text` to the element's own text, and give every shard its `--slfx-i`/`--slfx-n` pair. Don't: run it ambiently on a control — ambient glitch is the wordmark's alone.
 
-## Signature patterns (page-level composition — copy the CSS)
+## Signature patterns (shipped classes)
 
-These are not single classes; they are the composition motifs from `design-language.md` L2/L3. Copy the CSS into your surface (they read `--sl-*` tokens directly, theme-independent).
+These were CSS to copy until 0.10.0; they are shipped classes now. They carry the composition motifs from `design-language.md` L2/L3, and like every other component they reach colour through `--slc-*` role-vars — which is why `--slc-canvas` exists.
+
+### Wrap — `sl-wrap`
+The content measure and the fluid gutter, in one class. `--sl-gutter` is a convention, not a token (`design-language.md` §New-token policy), and this class is where the kit declares it. Substrate: **A** App, **R** Page, **N/A** IDE.
+```html
+<div class="sl-wrap"> … </div>
+```
+Consumes: nothing — layout only. Do: put it inside a full-bleed section, so the section's background reaches the viewport edge and only the content is inset. Don't: nest one `sl-wrap` in another; the gutters add up.
+
+### Prose — `sl-prose`
+Caps running text at the ~63ch measure. `--sl-measure` is a convention, not a token. Substrate: **A** IDE, **R** App/Page.
+```html
+<div class="sl-prose"> <p>…</p> </div>
+```
+Consumes: nothing — layout only. Do: put it on the text container, not on a grid cell that also holds a figure. Don't: let prose run full-bleed; L1 caps the measure for a reason.
 
 ### Sticky translucent header
 Substrate: **R** App/Page. The house header: sticky, translucent, 1px bottom rule; mono wordmark left, mono meta right.

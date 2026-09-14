@@ -377,6 +377,22 @@
       "roleVars": [
         "--slc-text-muted"
       ]
+    },
+    {
+      "id": "wrap",
+      "kind": "signature",
+      "classes": [
+        "sl-wrap"
+      ],
+      "roleVars": []
+    },
+    {
+      "id": "prose",
+      "kind": "signature",
+      "classes": [
+        "sl-prose"
+      ],
+      "roleVars": []
     }
   ]
 }
