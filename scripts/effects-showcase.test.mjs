@@ -219,4 +219,13 @@ test("the section index scramble is bound to the shipped class", () => {
     html, /class="[^"]*\bsec-idx\b/,
     "a section head is still on the page-local .sec-idx: the observer no longer reaches it",
   );
+  // The markup check above cannot see CSS. A re-added `.sec-idx { … }` rule is
+  // the page taking back ownership of something the kit ships, which is the
+  // failure this file has fenced twice; assert the selector is gone from the
+  // page's own <style> too.
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  assert.doesNotMatch(
+    style, /\.sec-idx\b/,
+    "the page-local .sec-idx rule is back: .sl-section__idx ships this, and a local copy shadows it",
+  );
 });
