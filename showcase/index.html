@@ -563,6 +563,55 @@
             </div>
           </div>
 
+          <div class="g-cell" style="grid-column:1/-1">
+            <span class="g-label">sticky header &middot; wrap &middot; prose &middot; section index</span>
+            <div style="height:15rem;overflow:auto;border:1px solid var(--slc-border);border-radius:var(--sl-radius-md)">
+              <header class="sl-header">
+                <div class="sl-wrap" style="display:flex;align-items:center;justify-content:space-between;padding-block:0.7rem">
+                  <span class="sl-lockup">sonda<span class="sl-lockup__dot">&middot;</span>lab</span>
+                  <span class="sl-eyebrow">Scroll me</span>
+                </div>
+              </header>
+              <div class="sl-wrap">
+                <section class="sl-section" style="padding-block:1.2rem;border-top:none">
+                  <div class="sl-section__head">
+                    <span class="sl-section__idx">01</span>
+                    <h2 style="margin:0;font-size:1.1rem">Measure</h2>
+                  </div>
+                  <div class="sl-prose">
+                    <p>Running text is capped at the ~63ch measure, which is what
+                    <b>.sl-prose</b> carries. The gutter beside it is
+                    <b>.sl-wrap</b>: a fluid clamp, not a token, because the
+                    value is not fixed. Scroll this box and the header above
+                    stays put, translucent over whatever passes beneath it.</p>
+                  </div>
+                </section>
+                <section class="sl-section" style="padding-block:1.2rem">
+                  <div class="sl-section__head">
+                    <span class="sl-section__idx">02</span>
+                    <h2 style="margin:0;font-size:1.1rem">Rule</h2>
+                  </div>
+                  <div class="sl-prose">
+                    <p>A section opens with a mono index beside its heading and
+                    is separated from the one before it by a single 1px rule.
+                    Number it only where the content is a real sequence.</p>
+                  </div>
+                </section>
+                <section class="sl-section" style="padding-block:1.2rem">
+                  <div class="sl-section__head">
+                    <span class="sl-section__idx">03</span>
+                    <h2 style="margin:0;font-size:1.1rem">Ground</h2>
+                  </div>
+                  <div class="sl-prose">
+                    <p>The header reads <b>--slc-canvas</b> at 84% with a
+                    backdrop blur, so the page ground is what shows through it.
+                    That role-var is the one addition this release makes.</p>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+
           <div class="g-cell">
             <span class="g-label">inline: kbd · code · link · tooltip</span>
             <div class="g-demo">
