@@ -62,6 +62,8 @@
 .sl-switch__input:focus-visible + .sl-switch__track,
 .sl-segmented__item:focus-visible,
 .sl-breadcrumb__item:focus-visible,
+.sl-icon-btn:focus-visible,
+.sl-pagination__item:focus-visible,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
@@ -725,4 +727,60 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 .sl-segmented__item[aria-selected="true"] {
   background: var(--slc-raised);
   color: var(--slc-text);
+}
+
+.sl-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  cursor: pointer;
+  color: var(--slc-text);
+  background: transparent;
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-icon-btn:hover:not(:disabled) {
+  color: var(--slc-accent);
+  border-color: var(--slc-accent);
+}
+.sl-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* The round silhouette the liquid's --drop is allowed on. It does NOT apply
+   the effect: L6 makes the modifier written in the markup the contract, and
+   forbids anything from measuring a radius to decide. */
+.sl-icon-btn--round { border-radius: 50%; }
+
+.sl-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-1, 0.25rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+}
+.sl-pagination__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 var(--sl-space-2, 0.5rem);
+  color: var(--slc-text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--sl-radius-sm, 4px);
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-pagination__item:hover { color: var(--slc-text); border-color: var(--slc-border); }
+.sl-pagination__item[aria-current] {
+  color: var(--slc-accent);
+  background: var(--slc-accent-subtle);
+  border-color: var(--slc-accent-subtle);
 }

@@ -441,6 +441,38 @@
         "--slc-text",
         "--slc-focus"
       ]
+    },
+    {
+      "id": "icon-button",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-icon-btn",
+        "sl-icon-btn--round"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "pagination",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-pagination",
+        "sl-pagination__item"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-accent-subtle",
+        "--slc-focus"
+      ]
     }
   ]
 }

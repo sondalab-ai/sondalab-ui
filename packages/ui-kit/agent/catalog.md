@@ -219,6 +219,33 @@ A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: *
 ```
 Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. Don't: use it for more than about four options; that is a `select`.
 
+### Icon button — `sl-icon-btn` (`--round`)
+A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
+```html
+<button class="sl-icon-btn" aria-label="Re-run the audit">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  </svg>
+</button>
+<button class="sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop" aria-label="Add a product">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  </svg>
+</button>
+```
+Consumes: `--slc-border`, `--slc-text`, `--slc-accent`, `--slc-focus`. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
+
+### Pagination — `sl-pagination` (`__item`)
+Numbered navigation across pages of results. Mono tabular figures (L1). Substrate: **R** App, **A** Page, **N/A** IDE.
+```html
+<nav class="sl-pagination" aria-label="Pagination">
+  <a class="sl-pagination__item" href="?p=1">1</a>
+  <a class="sl-pagination__item" href="?p=2" aria-current="page">2</a>
+  <a class="sl-pagination__item" href="?p=3">3</a>
+</nav>
+```
+Consumes: `--slc-border`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
+
 ## Effects (opt-in, `effects.css`)
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).
