@@ -634,6 +634,17 @@
             </div>
             <p class="cap">Not a scale problem: the track's own <b>::after</b> is the knob, and the glass ring is also painted on <b>::after</b> — one pseudo-element, two claims on it. Put the class on the track and the ring rule wins: <b>opacity: 0</b>, a conic-gradient background, no rule left that draws the knob back. No error, no warning, the switch just stops having a moving part. The keycap beside it, still glass, is the contrast that makes the finding legible: the family works fine where <b>::before</b>/<b>::after</b> is free, and fails silently where it is not.</p>
           </div>
+          <div class="g-cell">
+            <span class="g-label">button group — glass on the members, never on the group</span>
+            <div class="g-demo" style="display:grid; gap:1.2rem; justify-items:start">
+              <div class="sl-btn-group" role="group" aria-label="Probe">
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane">Run</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane">Re-run</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane">Save</button>
+              </div>
+            </div>
+            <p class="cap">They are text buttons, so panes are not wrong — but the glass never goes on <b>.sl-btn-group</b> itself. A group's <b>background</b> is not a surface; it <b>is</b> the 1px rule between its members, and the material clears whatever background the host had so its own tint layer can paint instead. Measured on the group: glass on it took the computed background to <b>rgba(0, 0, 0, 0)</b> — the rule between members gone, silently. Left on the members, as above, that background survives untouched (<b>--slc-border</b>). A second, independent reason stacks on top of the first: the group also clips (<b>overflow: hidden</b>), so the shared ring — drawn at <b>inset: -1px</b> — would be cut at the group's own edges regardless of the background question.</p>
+          </div>
         </div>
       </div>
     </section>
