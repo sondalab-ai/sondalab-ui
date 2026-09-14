@@ -22,6 +22,7 @@ Copied verbatim from the spec. Every task's requirements implicitly include thes
 - **I6 — Hairline structure.** A single `1px` rule in the line colour. Groups are built with the hairline-grid technique (a `1px` gap over a line-colour background), never with adjacent borders.
 - **Release:** bump `packages/ui-kit/package.json` to `0.10.0`. `packages/palette-py/pyproject.toml` is **not** bumped.
 - **Every element touches seven places:** `components.css`; the hand-enumerated focus-ring selector list; `agent/catalog.md`; `agent/catalog.json`; `packages/ui-kit/README.md`; `showcase/index.html` §04; and (Slice 5 only) `package.json` `exports`/`files`.
+- **New `catalog.json` entries are appended at the end of the `components` array.** No test asserts the array's order (verified: nothing in `scripts/` reads it positionally), so grouping by `kind` is a nicety, not a contract. Append, and do not renumber or reorder existing entries — a reordering diff buries the one line that actually changed.
 - **Verification after every task:** `node --test scripts/*.test.mjs` green, and `node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/components.css" --product default` clean.
 
 ---
@@ -455,9 +456,11 @@ In `showcase/index.html`, inside the §04 `<div class="gallery">`, after the cel
           </div>
 ```
 
-- [ ] **Step 9: Look at it in all three themes**
+- [ ] **Step 9: Look at it in all three themes, and check the one invisible failure**
 
 Open `showcase/index.html` in a browser, switch theme to light, dark and high-contrast using the switcher in the header. Confirm: the box border is visible on all three grounds, the tick is legible on the accent fill, and keyboard `Tab` gives every control the house focus ring.
+
+Then add `disabled` to one of the demo checkboxes and confirm the whole row dims. The disabled state is the one mechanism here that fails **silently**: it rides `:has()`, no test covers it, and if the selector does not apply the control simply looks enabled while being unclickable. All three form controls use the same mechanism, so this one check clears Tasks 2, 3 and 4. Remove the `disabled` attribute afterwards.
 
 - [ ] **Step 10: Run the full suite and commit**
 
@@ -785,7 +788,7 @@ The `components.css` header explains the role-var fallback chain. Add `--slc-can
 
 - [ ] **Step 3: Add the catalog.json entries**
 
-At the end of the `components` array, before the existing `signature` entries:
+Append at the end of the `components` array:
 
 ```json
     {
@@ -936,7 +939,7 @@ Expected: FAIL — `class "sl-header" (sticky-header) is not documented in catal
 
 - [ ] **Step 3: Rewrite the two catalog.md sections**
 
-Replace the existing `### Sticky translucent header` and `### Inversion band` sections:
+Replace the existing `### Sticky translucent header` and `### Inversion band` sections **in full — including their ```css fences**. Those fences carry raw `var(--sl-bg-canvas)` / `var(--sl-text-primary)`, and `scripts/catalog-audit.test.mjs` audits every fence in the file: a theme token left behind in a snippet fails the audit the promotion exists to satisfy.
 
 ````markdown
 ### Sticky translucent header — `sl-header`
@@ -1097,7 +1100,7 @@ its own foreground."
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL for all three ids.
 
-- [ ] **Step 3: Rewrite the three catalog.md sections**
+- [ ] **Step 3: Rewrite the three catalog.md sections **in full — including their ```css fences**, for the reason given in Task 6 Step 3**
 
 ````markdown
 ### Hairline grid — `sl-hgrid`
@@ -2323,6 +2326,8 @@ Four families are **not** in that table, and must not be applied by rote: **goo*
 ```
 
 - [ ] **Step 6: Add the compositions entry to catalog.json**
+
+Append at the end of the `components` array:
 
 ```json
     {
