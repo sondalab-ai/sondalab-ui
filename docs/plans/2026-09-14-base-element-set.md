@@ -68,7 +68,7 @@ Task 1 is different, and deliberately so: the two new tests are **fences**, not 
 **Interfaces:**
 - Produces: the `interactive` boolean field on `catalog.json` component entries. Every later task that adds a focusable element sets it.
 
-- [ ] **Step 1: Write the focus-ring fence**
+- [x] **Step 1: Write the focus-ring fence**
 
 Create `scripts/focus-ring.test.mjs`:
 
@@ -117,7 +117,7 @@ for (const c of index.components.filter((c) => c.interactive)) {
 }
 ```
 
-- [ ] **Step 2: Write the token-scope fence**
+- [x] **Step 2: Write the token-scope fence**
 
 Create `scripts/components-token-scope.test.mjs`:
 
@@ -166,12 +166,12 @@ test("no selector outside the :root role-var block reads a theme colour token", 
 });
 ```
 
-- [ ] **Step 3: Run both, confirm they pass on the current tree**
+- [x] **Step 3: Run both, confirm they pass on the current tree**
 
 Run: `node --test scripts/focus-ring.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS. The focus-ring file reports only the "names at least one selector" test, because no entry carries `interactive` yet.
 
-- [ ] **Step 4: Mark the four already-interactive catalog entries**
+- [x] **Step 4: Mark the four already-interactive catalog entries**
 
 In `packages/ui-kit/agent/catalog.json`, add `"interactive": true` to the entries with ids `button`, `link`, `field`, and `tabs`. Place the key directly after `"kind"`. Example for `button`:
 
@@ -183,17 +183,17 @@ In `packages/ui-kit/agent/catalog.json`, add `"interactive": true` to the entrie
       "classes": [
 ```
 
-- [ ] **Step 5: Run the focus-ring test to see it now actually checks something**
+- [x] **Step 5: Run the focus-ring test to see it now actually checks something**
 
 Run: `node --test scripts/focus-ring.test.mjs`
 Expected: PASS, with five tests — the selector-not-empty one plus `button`, `link`, `field`, `tabs`. If any fails, the extraction in Step 1 is wrong; fix it before going further, because every later task depends on this fence.
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 Run: `node --test scripts/*.test.mjs`
 Expected: 268 + 6 = 274 pass, 0 fail.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/focus-ring.test.mjs scripts/components-token-scope.test.mjs packages/ui-kit/agent/catalog.json
@@ -222,7 +222,7 @@ Both pass on arrival. They are here to fail later."
 - Consumes: the `interactive` field from Task 1; the `--slc-*` role-vars already declared in `components.css`.
 - Produces: `.sl-check` / `.sl-check__input` / `.sl-check__box` / `.sl-check__label` and `.sl-radio` / `.sl-radio__input` / `.sl-radio__box` / `.sl-radio__label`. Task 3 reuses the host and hidden-input rules by adding `.sl-switch` to their selector lists.
 
-- [ ] **Step 1: Add the catalog.json entries (this is the failing test)**
+- [x] **Step 1: Add the catalog.json entries (this is the failing test)**
 
 Insert after the `field` entry in `packages/ui-kit/agent/catalog.json`:
 
@@ -267,12 +267,12 @@ Insert after the `field` entry in `packages/ui-kit/agent/catalog.json`:
     },
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs`
 Expected: FAIL. `catalog.md documents "checkbox"` fails with `class "sl-check" (checkbox) is not documented in catalog.md outside a heading`; `focus ring covers "checkbox"` fails because the selector list has no `.sl-check`.
 
-- [ ] **Step 3: Write the catalog.md section**
+- [x] **Step 3: Write the catalog.md section**
 
 Insert in `packages/ui-kit/agent/catalog.md`, after the `### Field` section:
 
@@ -300,7 +300,7 @@ The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A**
 Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append a new banner section to `packages/ui-kit/components.css`, after the `PRIMITIVES` section and before `══ COMPLEX ══`:
 
@@ -400,7 +400,7 @@ Append a new banner section to `packages/ui-kit/components.css`, after the `PRIM
 .sl-switch:has(.sl-switch__input:disabled) { opacity: 0.5; cursor: not-allowed; }
 ```
 
-- [ ] **Step 5: Add the focus-ring lines**
+- [x] **Step 5: Add the focus-ring lines**
 
 In `packages/ui-kit/components.css`, extend the shared focus-ring selector list (the rule whose body sets `outline: var(--sl-focus-ring-width…)`) so it reads:
 
@@ -414,17 +414,17 @@ In `packages/ui-kit/components.css`, extend the shared focus-ring selector list 
 [data-sl-tooltip]:focus-visible {
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 7: Run the audit**
+- [x] **Step 7: Run the audit**
 
 Run: `node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/components.css" --product default`
 Expected: no `R` findings.
 
-- [ ] **Step 8: Add the showcase cell**
+- [x] **Step 8: Add the showcase cell**
 
 In `showcase/index.html`, inside the §04 `<div class="gallery">`, after the cell labelled `field`:
 
@@ -456,13 +456,13 @@ In `showcase/index.html`, inside the §04 `<div class="gallery">`, after the cel
           </div>
 ```
 
-- [ ] **Step 9: Look at it in all three themes, and check the one invisible failure**
+- [x] **Step 9: Look at it in all three themes, and check the one invisible failure**
 
 Open `showcase/index.html` in a browser, switch theme to light, dark and high-contrast using the switcher in the header. Confirm: the box border is visible on all three grounds, the tick is legible on the accent fill, and keyboard `Tab` gives every control the house focus ring.
 
 Then add `disabled` to one of the demo checkboxes and confirm the whole row dims. The disabled state is the one mechanism here that fails **silently**: it rides `:has()`, no test covers it, and if the selector does not apply the control simply looks enabled while being unclickable. All three form controls use the same mechanism, so this one check clears Tasks 2, 3 and 4. Remove the `disabled` attribute afterwards.
 
-- [ ] **Step 10: Run the full suite and commit**
+- [x] **Step 10: Run the full suite and commit**
 
 Run: `node --test scripts/*.test.mjs` → expected 0 fail.
 
@@ -490,7 +490,7 @@ are undefined per spec, which is why effects.css already wraps them."
 - Consumes: `.sl-switch`, `.sl-switch__input` and `.sl-switch__label` rules already written in Task 2's shared selector lists.
 - Produces: `.sl-switch__track`.
 
-- [ ] **Step 1: Add the catalog.json entry**
+- [x] **Step 1: Add the catalog.json entry**
 
 After the `radio` entry:
 
@@ -516,12 +516,12 @@ After the `radio` entry:
     },
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs`
 Expected: FAIL — `class "sl-switch" (switch) is not documented in catalog.md outside a heading`, and the focus ring does not cover `switch`.
 
-- [ ] **Step 3: Write the catalog.md section**
+- [x] **Step 3: Write the catalog.md section**
 
 After the `### Radio` section:
 
@@ -538,7 +538,7 @@ A checkbox that reads as a state rather than a choice: use it where the change t
 Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: carry `role="switch"` on the input, so the state reaches a screen reader as on/off rather than as checked. Don't: put ON/OFF text inside the track — the knob's position is the state, and a label that repeats it goes stale in translation.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `FORM CONTROLS` section, after the checkbox/radio rules:
 
@@ -579,16 +579,16 @@ Append to the `FORM CONTROLS` section, after the checkbox/radio rules:
 }
 ```
 
-- [ ] **Step 5: Add the focus-ring line**
+- [x] **Step 5: Add the focus-ring line**
 
 Add `.sl-switch__input:focus-visible + .sl-switch__track,` to the shared focus-ring selector list, after the radio line.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 7: Add the showcase cell**
+- [x] **Step 7: Add the showcase cell**
 
 After the `checkbox · radio` cell:
 
@@ -610,11 +610,11 @@ After the `checkbox · radio` cell:
           </div>
 ```
 
-- [ ] **Step 8: Check the knob travel**
+- [x] **Step 8: Check the knob travel**
 
 Open the showcase. The knob must land flush inside the track's right edge, not overhanging it: track `2.25rem` = 36px, border 1px each side, knob `0.875rem` = 14px, left offset 2px. Travel is `36 - 2 - 14 - 2 - 2 = 15px` (`0.9375rem`). If the border-box maths in your browser puts it elsewhere, adjust the `translateX` and record the value here — do not adjust the track width, which is shared with nothing.
 
-- [ ] **Step 9: Run the full suite and commit**
+- [x] **Step 9: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md showcase/index.html
@@ -639,7 +639,7 @@ screen reader."
 - Consumes: `.sl-field__control` and `.sl-field__input`, both already in `components.css`.
 - Produces: `.sl-select` — a wrapper class that composes onto `.sl-field__control`.
 
-- [ ] **Step 1: Add the catalog.json entry**
+- [x] **Step 1: Add the catalog.json entry**
 
 After the `switch` entry. Note there is **no** `interactive` flag: the focusable element is the `<select>`, which already carries `.sl-field__input` and is therefore covered by the ring through the `field` entry.
 
@@ -656,12 +656,12 @@ After the `switch` entry. Note there is **no** `interactive` flag: the focusable
     },
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL — `class "sl-select" (select) is not documented in catalog.md outside a heading`.
 
-- [ ] **Step 3: Write the catalog.md section**
+- [x] **Step 3: Write the catalog.md section**
 
 After the `### Switch` section:
 
@@ -683,7 +683,7 @@ The chevron a `<select>` cannot draw for itself. Composes onto `sl-field__contro
 Consumes: `--slc-text-muted`. Do: keep `sl-field__input` on the `<select>` itself — the border, the ground and the focus ring all come from there. Don't: reach for a `mask-image` to draw the arrow; a mask on a `<select>` masks its text along with the arrow.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `FORM CONTROLS` section:
 
@@ -710,12 +710,12 @@ Append to the `FORM CONTROLS` section:
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 6: Add the showcase cell**
+- [x] **Step 6: Add the showcase cell**
 
 ```html
           <div class="g-cell">
@@ -736,7 +736,7 @@ Expected: PASS.
           </div>
 ```
 
-- [ ] **Step 7: Check it in all three themes, run the full suite, commit**
+- [x] **Step 7: Check it in all three themes, run the full suite, commit**
 
 Confirm the chevron sits clear of the longest option's text and that clicking it still opens the menu (`pointer-events: none` is what makes that work).
 
@@ -761,7 +761,7 @@ to, so a field and a select take an effect the same way."
 **Interfaces:**
 - Produces: `--slc-canvas` (the page ground), consumed by Task 6's `.sl-header` and `.sl-invert`. Also `.sl-wrap` and `.sl-prose`, and the conventions `--sl-gutter` and `--sl-measure` that they declare.
 
-- [ ] **Step 1: Add the role-var**
+- [x] **Step 1: Add the role-var**
 
 In the `:root` block of `packages/ui-kit/components.css`, in the `/* surfaces + text */` group, add `--slc-canvas` as the first line — the page ground sits below the surface, and the block reads outward-in:
 
@@ -771,7 +771,7 @@ In the `:root` block of `packages/ui-kit/components.css`, in the `/* surfaces + 
   --slc-surface:       var(--sl-bg-surface,        #F6F1E6);
 ```
 
-- [ ] **Step 2: Extend the header comment that documents the contract**
+- [x] **Step 2: Extend the header comment that documents the contract**
 
 The `components.css` header explains the role-var fallback chain. Add `--slc-canvas` to the inversion-band note there, which currently says the fix is applied at the band by the consumer — after Task 6 the band ships that fix itself:
 
@@ -786,7 +786,7 @@ The `components.css` header explains the role-var fallback chain. Add `--slc-can
    field, callout, checkbox, switch) inherits the fix automatically.
 ```
 
-- [ ] **Step 3: Add the catalog.json entries**
+- [x] **Step 3: Add the catalog.json entries**
 
 Append at the end of the `components` array:
 
@@ -809,12 +809,12 @@ Append at the end of the `components` array:
     },
 ```
 
-- [ ] **Step 4: Run the test to verify it fails**
+- [x] **Step 4: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL — `class "sl-wrap" (wrap) is not documented in catalog.md outside a heading`, and `section for wrap has no Consumes: line`.
 
-- [ ] **Step 5: Write the catalog.md sections**
+- [x] **Step 5: Write the catalog.md sections**
 
 In `packages/ui-kit/agent/catalog.md`, change the `## Signature patterns (page-level composition — copy the CSS)` heading to `## Signature patterns (shipped classes)` and replace its intro paragraph with:
 
@@ -840,7 +840,7 @@ Caps running text at the ~63ch measure. `--sl-measure` is a convention, not a to
 Consumes: nothing — layout only. Do: put it on the text container, not on a grid cell that also holds a figure. Don't: let prose run full-bleed; L1 caps the measure for a reason.
 ````
 
-- [ ] **Step 6: Write the CSS**
+- [x] **Step 6: Write the CSS**
 
 Append a new banner section at the end of `packages/ui-kit/components.css`:
 
@@ -865,12 +865,12 @@ Append a new banner section at the end of `packages/ui-kit/components.css`:
 }
 ```
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS. The token-scope test is the one that matters here — it proves `--slc-canvas` landed inside the `:root` block and not in a selector.
 
-- [ ] **Step 8: Run the audit and the full suite, then commit**
+- [x] **Step 8: Run the audit and the full suite, then commit**
 
 Run: `node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/components.css" --product default`
 Run: `node --test scripts/*.test.mjs`
@@ -903,7 +903,7 @@ is what the new-token policy asks for; nothing lands on :root."
 - Consumes: `--slc-canvas` from Task 5.
 - Produces: `.sl-header`, `.sl-invert`.
 
-- [ ] **Step 1: Rewrite the two catalog.json entries**
+- [x] **Step 1: Rewrite the two catalog.json entries**
 
 Replace the existing `sticky-header` and `inversion-band` entries — note the `roleVars` change from `--sl-*` theme tokens to `--slc-*` role-vars, which is the whole point of the promotion:
 
@@ -932,12 +932,12 @@ Replace the existing `sticky-header` and `inversion-band` entries — note the `
     },
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL — `class "sl-header" (sticky-header) is not documented in catalog.md outside a heading`, and the `Consumes:` parity test fails for both entries.
 
-- [ ] **Step 3: Rewrite the two catalog.md sections**
+- [x] **Step 3: Rewrite the two catalog.md sections**
 
 Replace the existing `### Sticky translucent header` and `### Inversion band` sections **in full — including their ```css fences**. Those fences carry raw `var(--sl-bg-canvas)` / `var(--sl-text-primary)`, and `scripts/catalog-audit.test.mjs` audits every fence in the file: a theme token left behind in a snippet fails the audit the promotion exists to satisfy.
 
@@ -965,7 +965,7 @@ The class re-derives the border and text role-vars from the band's own foregroun
 Do: give it a direct child to hold the content (a `sl-wrap` is the usual one); the re-derivation is a `> *` rule, because a custom property cannot be defined on the same element that reads it. Don't: hand-write an alpha-over-canvas hairline inside the band — that is the bug this class exists to close.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `PATTERNS` section:
 
@@ -998,12 +998,12 @@ Append to the `PATTERNS` section:
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 6: Replace the showcase's bespoke inversion demo**
+- [x] **Step 6: Replace the showcase's bespoke inversion demo**
 
 `showcase/index.html` §04 ends with a hand-rolled inversion band (search for `Inversion band — <b>--slc-border</b> scope-override`). Replace that cell's markup so it uses `.sl-invert`, and put a bordered component inside it to prove the hairline survives:
 
@@ -1025,11 +1025,11 @@ Expected: PASS.
           </div>
 ```
 
-- [ ] **Step 7: Verify the cycle bug is actually absent**
+- [x] **Step 7: Verify the cycle bug is actually absent**
 
 Open the showcase. The band's background must be the strongest neutral (near-black in light theme, near-white in dark), **not** the canvas. If the band paints itself canvas-on-canvas, the `> *` rule has been collapsed onto `.sl-invert` — that is the cycle described in the CSS comment. Confirm in all three themes, and confirm the card inside keeps a visible border.
 
-- [ ] **Step 8: Run the full suite and commit**
+- [x] **Step 8: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md showcase/index.html
@@ -1058,7 +1058,7 @@ its own foreground."
 **Interfaces:**
 - Produces: `.sl-hgrid`, `.sl-section`, `.sl-section__head`, `.sl-section__idx`, `.sl-anchor`.
 
-- [ ] **Step 1: Rewrite the three catalog.json entries**
+- [x] **Step 1: Rewrite the three catalog.json entries**
 
 ```json
     {
@@ -1095,12 +1095,12 @@ its own foreground."
     },
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL for all three ids.
 
-- [ ] **Step 3: Rewrite the three catalog.md sections **in full — including their ```css fences**, for the reason given in Task 6 Step 3**
+- [x] **Step 3: Rewrite the three catalog.md sections **in full — including their ```css fences**, for the reason given in Task 6 Step 3**
 
 ````markdown
 ### Hairline grid — `sl-hgrid`
@@ -1134,7 +1134,7 @@ One oversized display heading per screen, sized by a fluid clamp — a documente
 Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't reach for the display serif on a numeral — a display-scale numeral is a structural label and stays mono (L1).
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `PATTERNS` section:
 
@@ -1183,12 +1183,12 @@ Append to the `PATTERNS` section:
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 6: Add a showcase cell for the grid and the anchor**
+- [x] **Step 6: Add a showcase cell for the grid and the anchor**
 
 ```html
           <div class="g-cell" style="grid-column:1/-1">
@@ -1204,11 +1204,11 @@ Expected: PASS.
           </div>
 ```
 
-- [ ] **Step 7: Confirm the grid's rules are 1px in all three themes**
+- [x] **Step 7: Confirm the grid's rules are 1px in all three themes**
 
 Open the showcase and zoom to 200%. The rules between cells must stay a single hairline, and must not double at the grid's outer edge (there should be no outer rule at all — the background only shows through the gaps).
 
-- [ ] **Step 8: Run the full suite and commit**
+- [x] **Step 8: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md showcase/index.html
@@ -1232,7 +1232,7 @@ gap, so no cell carries a border and nothing doubles."
 - Consumes: `.sl-btn` (Task-independent, already shipped).
 - Produces: `.sl-breadcrumb` / `__item` / `__sep`, `.sl-btn-group`, `.sl-segmented` / `__item`.
 
-- [ ] **Step 1: Add the catalog.json entries**
+- [x] **Step 1: Add the catalog.json entries**
 
 ```json
     {
@@ -1280,12 +1280,12 @@ gap, so no cell carries a border and nothing doubles."
     },
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs`
 Expected: FAIL on documentation for all three, and on focus-ring coverage for `breadcrumb` and `segmented`.
 
-- [ ] **Step 3: Write the catalog.md sections**
+- [x] **Step 3: Write the catalog.md sections**
 
 Insert a `## Navigation & state` heading after the primitives section, then:
 
@@ -1326,7 +1326,7 @@ A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: *
 Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. Don't: use it for more than about four options; that is a `select`.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append a new banner section to `packages/ui-kit/components.css`:
 
@@ -1398,7 +1398,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 }
 ```
 
-- [ ] **Step 5: Add the focus-ring lines**
+- [x] **Step 5: Add the focus-ring lines**
 
 Add to the shared focus-ring selector list:
 
@@ -1407,12 +1407,12 @@ Add to the shared focus-ring selector list:
 .sl-breadcrumb__item:focus-visible,
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 7: Add the showcase cell**
+- [x] **Step 7: Add the showcase cell**
 
 ```html
           <div class="g-cell">
@@ -1439,11 +1439,11 @@ Expected: PASS.
           </div>
 ```
 
-- [ ] **Step 8: Check the joins**
+- [x] **Step 8: Check the joins**
 
 Open the showcase and zoom to 200%. The rules inside the button group must be a single hairline, the same weight as the group's outer border. If a join reads as two pixels, a `.sl-btn` border survived the `border: none` — check that the `.sl-btn-group > .sl-btn` rule is after the `.sl-btn` rules in source order.
 
-- [ ] **Step 9: Run the full suite and commit**
+- [x] **Step 9: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md showcase/index.html
@@ -1468,7 +1468,7 @@ the accessible one from drifting apart."
 **Interfaces:**
 - Produces: `.sl-icon-btn`, `.sl-icon-btn--round`, `.sl-pagination`, `.sl-pagination__item`.
 
-- [ ] **Step 1: Add the catalog.json entries**
+- [x] **Step 1: Add the catalog.json entries**
 
 ```json
     {
@@ -1505,12 +1505,12 @@ the accessible one from drifting apart."
     },
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs`
 Expected: FAIL on both.
 
-- [ ] **Step 3: Write the catalog.md sections**
+- [x] **Step 3: Write the catalog.md sections**
 
 ````markdown
 ### Icon button — `sl-icon-btn` (`--round`)
@@ -1541,7 +1541,7 @@ Numbered navigation across pages of results. Mono tabular figures (L1). Substrat
 Consumes: `--slc-border`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. Don't: render a page count you have not measured — L5, structure encodes truth.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `NAVIGATION & STATE` section:
 
@@ -1603,19 +1603,19 @@ Append to the `NAVIGATION & STATE` section:
 }
 ```
 
-- [ ] **Step 5: Add the focus-ring lines**
+- [x] **Step 5: Add the focus-ring lines**
 
 ```css
 .sl-icon-btn:focus-visible,
 .sl-pagination__item:focus-visible,
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/focus-ring.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 7: Add the showcase cell**
+- [x] **Step 7: Add the showcase cell**
 
 ```html
           <div class="g-cell">
@@ -1648,11 +1648,11 @@ Expected: PASS.
           </div>
 ```
 
-- [ ] **Step 8: Record the pagination truncation ruling**
+- [x] **Step 8: Record the pagination truncation ruling**
 
 The spec left open whether `.sl-pagination` needs an ellipsis item. **Ruling: it does not, in this pass.** A truncated range is a product decision (how many neighbours to show, whether to jump), and an `__ellipsis` class that renders a `…` adds a class for one character the caller can write as a `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Record this in the Rulings section at the bottom of this file.
 
-- [ ] **Step 9: Run the full suite and commit**
+- [x] **Step 9: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md docs/plans/2026-09-14-base-element-set.md showcase/index.html
@@ -1678,7 +1678,7 @@ decide."
 - Consumes: `.sl-eyebrow` (already shipped) — the empty state composes it rather than restyling a label.
 - Produces: `.sl-empty` / `__title` / `__body`, `.sl-skeleton`, `.sl-stat` / `__value` / `__label`.
 
-- [ ] **Step 1: Add the catalog.json entries**
+- [x] **Step 1: Add the catalog.json entries**
 
 ```json
     {
@@ -1720,12 +1720,12 @@ decide."
     },
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL on all three ids.
 
-- [ ] **Step 3: Write the catalog.md sections**
+- [x] **Step 3: Write the catalog.md sections**
 
 ````markdown
 ### Empty state — `sl-empty` (`__title` · `__body`)
@@ -1757,7 +1757,7 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
 Consumes: `--slc-text`, `--slc-text-muted`. Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected). Don't: set a stat you have not measured.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `NAVIGATION & STATE` section:
 
@@ -1817,12 +1817,12 @@ Append to the `NAVIGATION & STATE` section:
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 6: Add the showcase cell**
+- [x] **Step 6: Add the showcase cell**
 
 ```html
           <div class="g-cell">
@@ -1852,11 +1852,11 @@ Expected: PASS.
           </div>
 ```
 
-- [ ] **Step 7: Confirm the skeleton reads on all three grounds**
+- [x] **Step 7: Confirm the skeleton reads on all three grounds**
 
 `color-mix(--slc-text 8%)` is a tint of the foreground, so it inverts with the theme automatically. Open the showcase in light, dark and high-contrast and confirm the blocks are visible but quieter than the text beside them. If they vanish in high-contrast, raise the percentage — do not switch to a border.
 
-- [ ] **Step 8: Run the full suite and commit**
+- [x] **Step 8: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md showcase/index.html
@@ -1882,7 +1882,7 @@ switched off (L6). The stat's value keeps the mono face at display size
 
 **Before starting:** read `packages/ui-kit/assets/sondalab-wordmark.svg`, `sondalab-lockup.svg` and `sondalab-avatar-ink.svg`. Those assets are the published identity. Where the CSS you write and the asset disagree, **the asset is right** and the CSS is the defect.
 
-- [ ] **Step 1: Add the catalog.json entries**
+- [x] **Step 1: Add the catalog.json entries**
 
 ```json
     {
@@ -1923,12 +1923,12 @@ switched off (L6). The stat's value keeps the mono face at display size
     },
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL on all three ids.
 
-- [ ] **Step 3: Write the catalog.md sections**
+- [x] **Step 3: Write the catalog.md sections**
 
 Insert a `## Identity & media` heading, then:
 
@@ -1955,7 +1955,7 @@ Where even the lockup is too wide to read: a social avatar, a square tile. `s.` 
 Consumes: `--slc-text`, `--slc-accent`, `--slc-surface`. Rendered assets: `packages/ui-kit/assets/sondalab-avatar-{ink,paper}.{svg,png}`. Three corrections are fixed in `design-language.md` L3 and are transcribed here, not re-derived: the mark is sized to the inscribed crop circle (~60% of the canvas wide) rather than the square; the accent period is scaled +35% around its own centre so it survives a 32px render; and it is pushed +0.06em off the letter, because the wordmark's tight tracking is drawn for a period at its natural size. Do: give it `role="img"` and a label — `s.` read aloud is not the brand. Don't: re-tune the three corrections per surface; they are what makes the small end legible.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append a new banner section:
 
@@ -2012,7 +2012,7 @@ Append a new banner section:
 
 **Note on the markup:** the `.` in the example markup above is decorative to the eye but is drawn by `::after` here, so the class expects the letter alone. Write the markup as `<span class="sl-monogram" role="img" aria-label="Sondalab">s</span>` and update the `catalog.md` snippet in Step 3 to match before committing — the snippet and the CSS must agree, or the first adopter gets two periods.
 
-- [ ] **Step 5: Reconcile the snippet with the CSS**
+- [x] **Step 5: Reconcile the snippet with the CSS**
 
 Change the monogram snippet in `catalog.md` to:
 
@@ -2020,16 +2020,16 @@ Change the monogram snippet in `catalog.md` to:
 <span class="sl-monogram" role="img" aria-label="Sondalab">s</span>
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 7: Compare against the published assets**
+- [x] **Step 7: Compare against the published assets**
 
 Open `packages/ui-kit/assets/sondalab-wordmark.svg` and the showcase side by side at the same rendered size. The letterforms, the tracking and the period's position must match. Then shrink the monogram to 32px and confirm the period is still legible — that is what the +35% correction is for. **If the CSS and the asset disagree, change the CSS.**
 
-- [ ] **Step 8: Add the showcase cell**
+- [x] **Step 8: Add the showcase cell**
 
 ```html
           <div class="g-cell">
@@ -2045,7 +2045,7 @@ Open `packages/ui-kit/assets/sondalab-wordmark.svg` and the showcase side by sid
           </div>
 ```
 
-- [ ] **Step 9: Run the full suite and commit**
+- [x] **Step 9: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md showcase/index.html
@@ -2073,7 +2073,7 @@ re-derived -- inscribed crop circle, period at +35%, offset +0.06em."
 - Consumes: `.sl-monogram` from Task 11 — the avatar's fallback is the monogram, not a second mark.
 - Produces: `.sl-figure` / `__media` / `__caption`, `.sl-avatar` / `--sm` / `--lg`.
 
-- [ ] **Step 1: Add the catalog.json entries**
+- [x] **Step 1: Add the catalog.json entries**
 
 ```json
     {
@@ -2105,12 +2105,12 @@ re-derived -- inscribed crop circle, period at +35%, offset +0.06em."
     },
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/catalog-audit.test.mjs`
 Expected: FAIL on both ids.
 
-- [ ] **Step 3: Write the catalog.md sections**
+- [x] **Step 3: Write the catalog.md sections**
 
 ````markdown
 ### Figure — `sl-figure` (`__media` · `__caption`)
@@ -2134,7 +2134,7 @@ A person or a product, as a square tile. Falls back to `sl-monogram` when there 
 Consumes: `--slc-surface`, `--slc-border`. Do: use the monogram as the fallback rather than initials in a circle — the monogram is the mark, and it already carries the three small-size corrections. Don't: give a decorative avatar alt text; `alt=""` is correct when the name is beside it.
 ````
 
-- [ ] **Step 4: Write the CSS**
+- [x] **Step 4: Write the CSS**
 
 Append to the `IDENTITY & MEDIA` section:
 
@@ -2183,16 +2183,16 @@ Append to the `IDENTITY & MEDIA` section:
 .sl-avatar--lg { width: 4rem; }
 ```
 
-- [ ] **Step 5: Record the figure aspect-ratio ruling**
+- [x] **Step 5: Record the figure aspect-ratio ruling**
 
 The spec left this open. **Ruling: `.sl-figure__media` declares no default `aspect-ratio`.** A default would be wrong for most images and would silently crop them; the caller declares it inline, as the catalog snippet shows. Record it in the Rulings section at the bottom of this file.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `node --test scripts/catalog-audit.test.mjs scripts/components-token-scope.test.mjs`
 Expected: PASS.
 
-- [ ] **Step 7: Add the showcase cell**
+- [x] **Step 7: Add the showcase cell**
 
 Reuse an image the repo already ships so the cell is real content, not filler (L5, real-content blocks):
 
@@ -2215,11 +2215,11 @@ Reuse an image the repo already ships so the cell is real content, not filler (L
           </div>
 ```
 
-- [ ] **Step 8: Confirm the monogram scales inside all three avatar sizes**
+- [x] **Step 8: Confirm the monogram scales inside all three avatar sizes**
 
 The monogram sizes its letter at `60%` of its own font-size and the avatar does not set one, so the letter inherits from context. Check all three sizes render a centred, proportionate `s.` — if the small one looks oversized, give `.sl-avatar > .sl-monogram` a `font-size: 100%` and set the face size on `.sl-avatar` per modifier. Record whichever you do.
 
-- [ ] **Step 9: Run the full suite and commit**
+- [x] **Step 9: Run the full suite and commit**
 
 ```bash
 git add packages/ui-kit/components.css packages/ui-kit/agent/catalog.json packages/ui-kit/agent/catalog.md docs/plans/2026-09-14-base-element-set.md showcase/index.html
@@ -2248,7 +2248,7 @@ mark, and it already carries the three small-size corrections."
 
 **Why this file holds bindings and not alias classes:** plain CSS cannot alias a class. Making `.sl-fx-glass` also match a composed form needs `:is()` on all 58 of its selector lines, and `:is()` takes the specificity of its most specific argument — silently raising every glass rule from (0,1,0) to (0,2,0) across a released layer. A JavaScript pass that stamps the classes instead dies on the first React or Theia re-render that touches `className`. And the per-component binding **already exists** in `effects.css:574-587` and `:788-815`. What a product lacks is knowledge of what to type, which is documentation — so this task ships the bindings that genuinely have nowhere else to live, and puts the canonical strings in the catalog.
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 Create `packages/ui-kit/compositions.css`:
 
@@ -2284,7 +2284,7 @@ Create `packages/ui-kit/compositions.css`:
 .sl-figure__media { --slfx-pane-swell: 1; }
 ```
 
-- [ ] **Step 2: Add the export and the files entry**
+- [x] **Step 2: Add the export and the files entry**
 
 In `packages/ui-kit/package.json`, add to `exports` immediately after the `"./components.css"` line:
 
@@ -2298,17 +2298,36 @@ and to `files`, immediately after `"components.css"`:
     "compositions.css",
 ```
 
-- [ ] **Step 3: Run the module-shipping test**
+- [x] **Step 3: Run the module-shipping test**
 
 Run: `node --test scripts/types-drift.test.mjs`
 Expected: PASS — `every declared module is shipped and resolvable` must still hold with the new entry.
 
-- [ ] **Step 4: Audit the new file**
+- [x] **Step 4: Audit the new file**
 
 Run: `node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/compositions.css" --product default`
 Expected: no `R` findings. The file declares only custom properties whose values are role-vars and percentages, so there is nothing to flag.
 
-- [ ] **Step 5: Add the canonical effect strings to catalog.md**
+> **Outcome, 2026-09-14 (recorded after execution).** The audit is clean, but
+> the step did not ask anything to *render* the file, and nothing did until
+> `showcase/effects.html` imported it (commit `6475c8a`). Measured on the live
+> page, the two bindings are not in the same state:
+>
+> - `--slfx-pane-swell` on `.sl-avatar` / `.sl-figure__media` is **live** —
+>   with `compositions.css` a pane inside either wrapper reads `1`, without it
+>   the property is unset and the pane's own `1.03` default applies. Verified
+>   through an injected probe: no page renders that composition, and
+>   `catalog.md` § Effects blesses no avatar/figure + glass string.
+> - The `.sl-invert` block is a **no-op as shipped**. `--slfx-text-light` is
+>   read with `var(--slfx-text-light, var(--slc-text, …))`, and Task 6's
+>   `.sl-invert > * { --slc-text: var(--slc-canvas) }` already makes that
+>   fallback the band's canvas; `--slfx-text-core-a: 46%` and
+>   `--slfx-text-halo-a: 26%` equal the point-of-use defaults. A glass-text
+>   glow inside the band computes byte-identical text-shadow with the
+>   stylesheet enabled and disabled. Whether the block is deleted or kept as an
+>   explicit assertion is an owner call, open at time of writing.
+
+- [x] **Step 5: Add the canonical effect strings to catalog.md**
 
 In `packages/ui-kit/agent/catalog.md`, add to the `## Effects` section intro:
 
@@ -2325,7 +2344,7 @@ In `packages/ui-kit/agent/catalog.md`, add to the `## Effects` section intro:
 Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
 ```
 
-- [ ] **Step 6: Add the compositions entry to catalog.json**
+- [x] **Step 6: Add the compositions entry to catalog.json**
 
 Append at the end of the `components` array:
 
@@ -2340,12 +2359,12 @@ Append at the end of the `components` array:
 
 `classes: []` makes it a signature-style entry, matched by its id word appearing in `catalog.md` — which Step 5 satisfies.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `node --test scripts/*.test.mjs`
 Expected: 0 fail. `scripts/catalog-audit.test.mjs` re-checks every snippet in the file, including the new table's strings.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/ui-kit/compositions.css packages/ui-kit/package.json packages/ui-kit/agent/catalog.md packages/ui-kit/agent/catalog.json
@@ -2371,7 +2390,7 @@ in the catalog and the homeless bindings go here."
 **Interfaces:**
 - Consumes: everything from Tasks 1–13.
 
-- [ ] **Step 1: Add `--slc-canvas` to the Tier B mapping recipe**
+- [x] **Step 1: Add `--slc-canvas` to the Tier B mapping recipe**
 
 In `packages/ui-kit/README.md`, in the `:root { … }` block under "Colour contract — role-vars", add as the first line of the surfaces group:
 
@@ -2379,7 +2398,7 @@ In `packages/ui-kit/README.md`, in the `:root { … }` block under "Colour contr
   --slc-canvas:         var(--your-canvas);        /* the page ground, below surface */
 ```
 
-- [ ] **Step 2: Update the component lists**
+- [x] **Step 2: Update the component lists**
 
 Replace the "Components (`components.css`)" prose with:
 
@@ -2399,7 +2418,7 @@ Patterns (page-level composition, shipped since 0.10.0): `.sl-wrap`, `.sl-prose`
 Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`).
 ```
 
-- [ ] **Step 3: Document `compositions.css` in the README's import block**
+- [x] **Step 3: Document `compositions.css` in the README's import block**
 
 Add after the `components.css` line in the opening `@import` example:
 
@@ -2413,7 +2432,7 @@ and add one paragraph under the Effects section:
 **Compositions.** `compositions.css` is an optional stylesheet carrying the custom-property bindings a composition needs — the inversion band's light, and the pane-swell stand-down on wrappers that scale their contents. It contains no paint and no new class, and is inert without `effects.css`. The canonical class string per component lives in `agent/catalog.md` § Effects.
 ```
 
-- [ ] **Step 4: Update the inversion-band note**
+- [x] **Step 4: Update the inversion-band note**
 
 The README's "Inversion bands" paragraph tells the consumer to write the `--slc-border` re-derivation themselves. Replace it with:
 
@@ -2425,23 +2444,23 @@ The README's "Inversion bands" paragraph tells the consumer to write the `--slc-
 ```
 ```
 
-- [ ] **Step 5: Bump the version**
+- [x] **Step 5: Bump the version**
 
 In `packages/ui-kit/package.json`, set `"version": "0.10.0"`.
 
 Confirm `packages/palette-py/pyproject.toml` is **unchanged**: run `git diff --stat main -- packages/palette-py` and expect empty output. The dual-bump rule in `AGENTS.md` binds changes to `sondalab.tokens.json`; this branch changes none.
 
-- [ ] **Step 6: Confirm the version is not already live**
+- [x] **Step 6: Confirm the version is not already live**
 
 Run: `curl -sS -o /dev/null -w "%{http_code}\n" https://registry.npmjs.org/@sondalab%2Fui-kit/0.10.0`
 Expected: `404`.
 
-- [ ] **Step 7: Confirm no generated file drifted**
+- [x] **Step 7: Confirm no generated file drifted**
 
 Run: `npm run gen:tokens && git status --porcelain`
 Expected: no changes to `packages/ui-kit/tokens.css`, `packages/ui-kit/themes/*.css`, `packages/palette-py/sondalab_palette/__init__.py`, or `packages/ui-kit/agent/design-language.md`. If `agent/design-language.md` changed, a task edited `docs/design-language.md` — commit both together or revert the doc edit.
 
-- [ ] **Step 8: Run everything**
+- [x] **Step 8: Run everything**
 
 ```bash
 node --test scripts/*.test.mjs
@@ -2451,11 +2470,11 @@ node packages/ui-kit/agent/sl-audit.mjs --surface "packages/ui-kit/compositions.
 
 Expected: 0 test failures; no `R` findings from either audit.
 
-- [ ] **Step 9: Walk the acceptance criteria**
+- [x] **Step 9: Walk the acceptance criteria**
 
 Open `docs/specs/2026-09-14-base-element-set.md` § Acceptance criteria and check all nine by hand. Criterion 7 (three themes) and criterion 8 (Tier 0: every element correct with `components.css` alone) are the two nothing automated covers — for criterion 8, open the showcase with the `effects.css` and `effects.js` tags commented out and confirm nothing is missing or broken.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/ui-kit/README.md packages/ui-kit/package.json README.md
