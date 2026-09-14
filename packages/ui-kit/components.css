@@ -606,3 +606,46 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-border:         color-mix(in srgb, currentColor 22%, transparent);
   --slc-border-subtle:  color-mix(in srgb, currentColor 12%, transparent);
 }
+
+/* Cells paint their own surface; the 1px gap over the line colour IS the rule.
+   No cell carries a border, so no rule is ever doubled. */
+.sl-hgrid {
+  display: grid;
+  gap: 1px;
+  background: var(--slc-border-subtle);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+.sl-hgrid > * {
+  background: var(--slc-surface);
+  padding: var(--sl-space-5, 1.5rem);
+}
+
+.sl-section {
+  border-top: 1px solid var(--slc-border-subtle);
+  padding-block: var(--sl-space-8, 3rem);
+}
+.sl-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sl-space-4, 1rem);
+}
+.sl-section__idx {
+  flex: none;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+
+/* Fluid by design: the size is a clamp, which is why it is a pattern and not
+   a --sl-text-* token. At most one per screen (L1). */
+.sl-anchor {
+  margin: 0;
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: var(--sl-line-tight, 1.2);
+  text-wrap: balance;
+  font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+}

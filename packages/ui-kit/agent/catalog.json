@@ -286,33 +286,34 @@
     {
       "id": "hairline-grid",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-hgrid"
+      ],
       "roleVars": [
-        "--sl-border-subtle",
-        "--sl-bg-surface",
-        "--sl-space-5"
+        "--slc-border-subtle",
+        "--slc-surface"
       ]
     },
     {
       "id": "section-index",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-section",
+        "sl-section__head",
+        "sl-section__idx"
+      ],
       "roleVars": [
-        "--sl-border-subtle",
-        "--sl-font-mono",
-        "--sl-text-xs",
-        "--sl-text-muted",
-        "--sl-space-8"
+        "--slc-border-subtle",
+        "--slc-text-muted"
       ]
     },
     {
       "id": "oversized-anchor",
       "kind": "signature",
-      "classes": [],
-      "roleVars": [
-        "--sl-font-display",
-        "--sl-line-tight"
-      ]
+      "classes": [
+        "sl-anchor"
+      ],
+      "roleVars": []
     },
     {
       "id": "checkbox",

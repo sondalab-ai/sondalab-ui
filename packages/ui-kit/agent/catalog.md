@@ -296,34 +296,35 @@ The class re-derives the border, text **and surface** role-vars from the band's 
 
 Do: give it a direct child to hold the content (a `sl-wrap` is the usual one); the re-derivation is a `> *` rule, because a custom property cannot be defined on the same element that reads it. Don't: hand-write an alpha-over-canvas hairline inside the band — that is the bug this class exists to close.
 
-### Hairline grid
-Substrate: **R** App/Page. Cards formed by a 1px gap over a line-colour background; cells paint their own surface → crisp shared rules, no doubled borders. Prefer over bordered-card grids.
-```css
-.hgrid {
-  display: grid; gap: 1px;
-  background: var(--sl-border-subtle);
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-}
-.hgrid > * { background: var(--sl-bg-surface); padding: var(--sl-space-5); }
+### Hairline grid — `sl-hgrid`
+Cards formed by a 1px gap over a line-colour background; cells paint their own surface, producing crisp shared rules instead of doubled borders. This is a signature — prefer it over the bordered-card grid the house style otherwise avoids. Substrate: **R** App/Page, **N/A** IDE.
+```html
+<div class="sl-hgrid">
+  <div>…</div>
+  <div>…</div>
+  <div>…</div>
+</div>
 ```
+Consumes: `--slc-border-subtle`, `--slc-surface`. Do: let the cells be plain elements — the grid paints them. Don't: give a cell its own border; that is the doubling this technique exists to avoid.
 
-### Section with mono index
-Substrate: **R** Page. A section opens with a mono index label beside its heading, separated from the previous section by a 1px top rule. Number it only where the content is a real sequence.
-```css
-.section { border-top: 1px solid var(--sl-border-subtle); padding-block: var(--sl-space-8); }
-.section__idx { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--sl-text-muted); }
+### Section with mono index — `sl-section` (`__head` · `__idx`)
+A section opens with a mono index beside its heading, separated from the previous section by a 1px top rule. Substrate: **R** Page, **A** App, **N/A** IDE.
+```html
+<section class="sl-section">
+  <div class="sl-section__head">
+    <span class="sl-section__idx">03</span>
+    <h2>Signature components</h2>
+  </div>
+</section>
 ```
+Consumes: `--slc-border-subtle`, `--slc-text-muted`. Do: number it only where the content is a real sequence — L5, structure encodes truth. Don't: number four unrelated sections 01–04 because it looks tidy.
 
-### Oversized display anchor
-Substrate: **R** Page (**A** App where a hero exists). One oversized display heading per screen, sized by a fluid clamp (a documented pattern, not a token).
-```css
-.anchor {
-  font-family: var(--sl-font-display); font-weight: 600;
-  letter-spacing: -0.02em; line-height: var(--sl-line-tight);
-  font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
-}
+### Oversized display anchor — `sl-anchor`
+One oversized display heading per screen, sized by a fluid clamp — a documented pattern, not a token, because the size is fluid. Substrate: **R** Page, **A** App where a hero exists, **N/A** IDE.
+```html
+<h1 class="sl-anchor">Everything measured, nothing asserted.</h1>
 ```
-Don't: use more than one oversized anchor per screen.
+Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't reach for the display serif on a numeral — a display-scale numeral is a structural label and stays mono (L1).
 
 ## Rules of use (all components)
 
