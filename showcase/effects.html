@@ -510,10 +510,10 @@
           <div class="g-cell">
             <span class="g-label">segmented — the selected item is filled</span>
             <div class="g-demo">
-              <div class="sl-segmented" role="group" aria-label="Tier">
-                <button class="sl-segmented__item sl-fx-aurora sl-fx-aurora--rim" aria-pressed="true">Tier 0</button>
-                <button class="sl-segmented__item" aria-pressed="false">Tier 1</button>
-                <button class="sl-segmented__item" aria-pressed="false">Tier 2</button>
+              <div class="sl-segmented" role="tablist" aria-label="Tier">
+                <button class="sl-segmented__item sl-fx-aurora sl-fx-aurora--rim" role="tab" aria-selected="true">Tier 0</button>
+                <button class="sl-segmented__item" role="tab" aria-selected="false">Tier 1</button>
+                <button class="sl-segmented__item" role="tab" aria-selected="false">Tier 2</button>
               </div>
             </div>
             <p class="cap">Only the selected item carries the aurora — <b>attention lives here</b> means the one that is active, and lighting all three would say nothing. It takes <b>--rim</b> rather than the tab's <b>--linear</b> because a selected item is <em>filled</em>: a filled element has no edge for the arc to inhabit, so the arc steps just outside the fill, in the accent's depth companion rather than in the accent the fill is made of. There is no <b>data-sl-fx-live</b> here — this is the static reading on a real selection, not an ambient sweep, and the page spends its one ambient grant in <a class="sl-link" href="#aurora">§03</a>.</p>
