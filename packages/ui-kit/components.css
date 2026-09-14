@@ -608,6 +608,13 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-text-secondary: color-mix(in srgb, currentColor 78%, transparent);
   --slc-text-muted:     color-mix(in srgb, currentColor 58%, transparent);
   --slc-border:         color-mix(in srgb, currentColor 22%, transparent);
+  /* The strong line is not decoration here: the checkbox and radio box edge,
+     the switch track and ITS KNOB are painted with it. Left on the canvas
+     value, a switch inside the band has an ink knob on an ink ground and
+     reads as having no knob at all. The effects layer's ring is built from
+     the strong/subtle pair too (--slfx-edge-hi/mid), so one remap fixes both
+     tiers. */
+  --slc-border-strong:  color-mix(in srgb, currentColor 38%, transparent);
   --slc-border-subtle:  color-mix(in srgb, currentColor 12%, transparent);
 }
 

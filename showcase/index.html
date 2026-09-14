@@ -687,9 +687,26 @@
                     inside keeps a visible edge with no work from the author.
                   </div>
                 </article>
+                <!-- The controls are here because they are the ones that PAINT
+                     with the strong line: the checkbox box edge, the switch
+                     track, and the switch knob, which is a solid fill in it.
+                     Left on the canvas value all three are ink on ink, and the
+                     knob is the one that reads as simply missing. -->
+                <div class="g-demo" style="margin-top:1rem; gap:1.2rem">
+                  <label class="sl-check">
+                    <input class="sl-check__input" type="checkbox" checked>
+                    <span class="sl-check__box"></span>
+                    <span class="sl-check__label">Strong line survives</span>
+                  </label>
+                  <label class="sl-switch">
+                    <input class="sl-switch__input" type="checkbox" role="switch">
+                    <span class="sl-switch__track"></span>
+                    <span class="sl-switch__label">And so does the knob</span>
+                  </label>
+                </div>
               </div>
             </div>
-            <span class="g-label" style="padding:0.9rem 1.4rem">Inversion band &mdash; the shipped <b>.sl-invert</b> carries the <b>--slc-border</b> re-derivation itself.</span>
+            <span class="g-label" style="padding:0.9rem 1.4rem">Inversion band &mdash; the shipped <b>.sl-invert</b> re-derives all three line roles from its own foreground, so a bordered component and a control that fills with the strong line both survive.</span>
           </div>
 
         </div>
