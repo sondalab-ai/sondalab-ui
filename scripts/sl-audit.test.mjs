@@ -9,6 +9,7 @@ import {
   auditCss,
   matchesSelector,
   resolveAccentEntry,
+  auditEffectsRuntime,
 } from "../packages/ui-kit/agent/sl-audit.mjs";
 
 // --- colour normalization (the bug-prone core) ---
@@ -225,4 +226,87 @@ test("auditCss accepts an in-token colour", () => {
     declaredTier: "B",
   });
   assert.equal(r.findings.filter((f) => f.rule === "accent-one-hue").length, 0);
+});
+
+// --- check 8: the effect layer's runtime ---
+// The omission this covers shipped to production once: sondalab.eu carried every
+// glass class and never armed the tier, because no colour check can see a
+// missing mount() and nothing else was looking.
+
+const markup = (cls) => ({ file: "page.html", text: `<div class="${cls}">go</div>` });
+
+test("effects-runtime: classes used with no mount() anywhere is an R-violation", () => {
+  const out = auditEffectsRuntime([markup("sl-btn sl-fx-glass sl-fx-glass--pane")]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].level, "R");
+  assert.equal(out[0].rule, "effects-runtime");
+  assert.match(out[0].message, /mount\(\)/);
+});
+
+test("effects-runtime: a mount() call in ANY scanned file clears it", () => {
+  // The call almost never lives in the markup, which is why the check is
+  // surface-level rather than per-file.
+  const out = auditEffectsRuntime([
+    markup("sl-fx-aurora"),
+    { file: "main.js", text: 'import { mount } from "@sondalab/ui-kit/effects.js";\nmount();' },
+  ]);
+  assert.deepEqual(out, []);
+});
+
+test("effects-runtime: importing mount without calling it does not count", () => {
+  const out = auditEffectsRuntime([
+    markup("sl-fx-glass"),
+    { file: "main.js", text: 'import { mount, mountGpu } from "@sondalab/ui-kit/effects.js";' },
+  ]);
+  assert.equal(out.length, 1, "an import wires nothing");
+});
+
+test("effects-runtime: mountGpu() alone does not count as armed", () => {
+  // mountGpu() returns false unless mount() ran first, so a surface with only
+  // the GPU call is exactly as unarmed as one with none.
+  const out = auditEffectsRuntime([
+    markup("sl-fx-glass"),
+    { file: "main.js", text: "await mountGpu();" },
+  ]);
+  assert.equal(out.length, 1);
+});
+
+test("effects-runtime: a stylesheet DEFINING the family never fires", () => {
+  // The kit's own effects.css is full of `.sl-fx-glass { … }`. Matching the
+  // selector form rather than the attribute form would flag the design system
+  // itself — the same shape of error the deferred colour checks exist to avoid.
+  const out = auditEffectsRuntime([
+    { file: "effects.css", text: ".sl-fx-glass { --slfx-ring-w: 1px; }\n.sl-fx-aurora::after { content: ''; }" },
+  ]);
+  assert.deepEqual(out, []);
+});
+
+test("effects-runtime: one finding for the whole surface, not one per file", () => {
+  const out = auditEffectsRuntime([
+    { file: "a.html", text: '<b class="sl-fx-glass">a</b>' },
+    { file: "b.html", text: '<b class="sl-fx-aurora">b</b>' },
+    { file: "c.html", text: '<b class="sl-fx-liquid">c</b>' },
+  ]);
+  assert.equal(out.length, 1, "the omission is a property of the surface");
+  assert.equal(out[0].file, "a.html");
+  assert.match(out[0].message, /and 2 more file\(s\)/);
+});
+
+test("effects-runtime: JSX className is markup too", () => {
+  const out = auditEffectsRuntime([{ file: "Btn.jsx", text: '<b className="sl-fx-glass">x</b>' }]);
+  assert.equal(out.length, 1);
+});
+
+test("effects-runtime: a declared Tier-0 surface can bless the omission", () => {
+  // A host that genuinely cannot run the JS takes Tier 0 — but it declares that,
+  // the way every other deviation is declared, rather than passing by silence.
+  const out = auditEffectsRuntime([markup("sl-fx-glass")], {
+    blessed: { deviations: [{ kind: "effects-runtime", why: "SSR-only email template; no JS runtime" }] },
+  });
+  assert.deepEqual(out, []);
+});
+
+test("effects-runtime: a surface with no effect classes is silent", () => {
+  const out = auditEffectsRuntime([markup("sl-btn sl-btn--primary")]);
+  assert.deepEqual(out, []);
 });

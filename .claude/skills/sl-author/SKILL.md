@@ -12,7 +12,7 @@ steps.
 
 ## What this skill adds
 
-- **Create a todo per workflow step (0–5)** and work them in order.
+- **Create a todo per workflow step (0–6)** and work them in order.
 - **Build from the catalog, don't invent.** `packages/ui-kit/agent/catalog.md` is
   the source of markup: for every part of the screen, copy the matching
   primitive or signature pattern rather than hand-rolling elements. `catalog.json`

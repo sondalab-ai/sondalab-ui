@@ -398,6 +398,55 @@ function loadTokenCss() {
 
 // --- CLI ------------------------------------------------------------------
 
+/* ── check 8 — the effect layer's runtime ─────────────────────────────────────
+   Most of the effect layer needs JavaScript. A surface that carries the classes
+   without calling mount() renders Tier 0 — no error, no warning, and every
+   other check here reads colour, so nothing else would ever notice. sondalab.eu
+   shipped exactly that: the glass classes in place and the tier never armed.
+
+   The class must be USED, not merely defined. `.sl-fx-glass { … }` in a
+   stylesheet is the kit declaring the family; `class="sl-fx-glass"` in markup is
+   a surface asking for it. Matching the selector form would fire on effects.css
+   itself, so only the attribute form counts. A template literal or a clsx()
+   call is missed, which is the safe direction for a Required-level check. */
+const FX_CLASS_USE = /\bclass(?:Name)?\s*=\s*["'`][^"'`]*\bsl-fx-[a-z][\w-]*/;
+/* A CALL, not an import: `import { mount }` wires nothing. mountGpu() does not
+   match on its own, and should not — it returns false unless mount() ran. */
+const MOUNT_CALL = /\bmount\s*\(/;
+
+/** Does this surface ask for effects it never arms?
+ *
+ *  @param {{file: string, text: string}[]} scanned every file in the surface
+ *  @param {{blessed?: {deviations?: {kind: string}[]}}} [opts]
+ *  @returns {object[]} one finding at most — the omission is a property of the
+ *    surface, not of a file, so a hundred markup files produce one line.
+ */
+export function auditEffectsRuntime(scanned, { blessed = { deviations: [] } } = {}) {
+  // Tier 0 on purpose is a legitimate choice — a host that cannot run the JS
+  // takes the plain component. It has to be declared, the way every other
+  // deviation is, rather than being the silent default.
+  if ((blessed.deviations || []).some((d) => d.kind === "effects-runtime")) return [];
+
+  const users = scanned.filter((f) => FX_CLASS_USE.test(f.text));
+  if (users.length === 0) return [];
+  if (scanned.some((f) => MOUNT_CALL.test(f.text))) return [];
+
+  const first = users[0];
+  const line = first.text.slice(0, first.text.search(FX_CLASS_USE)).split("\n").length;
+  const others = users.length > 1 ? ` (and ${users.length - 1} more file(s))` : "";
+  return [{
+    rule: "effects-runtime",
+    level: "R",
+    file: first.file,
+    line,
+    message:
+      `sl-fx-* classes are used${others} but no scanned file calls mount() — ` +
+      `the effect layer renders Tier 0 silently. Import effects.js and call mount() once ` +
+      `(see catalog.md "Turning effects on"), widen --surface if the call lives outside it, ` +
+      `or bless {"kind":"effects-runtime"} if Tier 0 is deliberate`,
+  }];
+}
+
 function parseArgs(argv) {
   const args = {};
   for (let i = 0; i < argv.length; i++) {
@@ -437,8 +486,10 @@ function main() {
   const cwd = process.cwd();
   const files = globSync(args.surface, { cwd }).map((f) => resolve(cwd, f));
   const all = [];
+  const scanned = [];
   for (const file of files) {
     const css = readFileSync(file, "utf8");
+    scanned.push({ file: relative(cwd, file), text: css });
     const res = auditCss({
       css,
       allowlistBases,
@@ -451,6 +502,9 @@ function main() {
     });
     all.push(...res.findings);
   }
+  // Surface-level, so it runs once over everything rather than per file: the
+  // mount() call almost never lives in the same file as the markup.
+  all.push(...auditEffectsRuntime(scanned, { blessed }));
 
   const R = group(all, "R");
   const A = group(all, "A");

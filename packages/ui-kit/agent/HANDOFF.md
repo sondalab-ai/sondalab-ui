@@ -6,11 +6,12 @@
 
 ## What the script decides — and what it does not
 
-`sl-audit.mjs` mechanically checks three things:
+`sl-audit.mjs` mechanically checks four things:
 
 1. **Colour value-equality** — every hex/rgb literal resolves to a token, the product's accent, or a blessed value.
 2. **Tier consistency** — the theme selector (`[data-sl-theme]` vs `[data-theme]`) matches the product's tier in `substrate-matrix.json`.
 3. **Accent-step derivation** *(check 7, mechanical as of v0.7.0)* — every `--sl-accent-hover/active/subtle` derives off `--sl-accent-default` (see the check-7 section below for the exemptions).
+4. **Effects runtime** *(check 8)* — a surface that uses `sl-fx-*` classes in markup while no scanned file calls `mount()`. One finding for the whole surface, because the call rarely sits in the same file as the markup; widen `--surface` if it lives outside the glob, or bless `{"kind": "effects-runtime"}` where Tier 0 is deliberate. It matches the `class="…"` / `className="…"` form only, so a stylesheet *declaring* `.sl-fx-glass` never trips it.
 
 **Everything else is your judgement.** The script is silent on it — silence is not a pass. In particular, the checks below were specified but deliberately **not** built, because the design language itself uses "violating" values in blessed places, so a mechanical flag would fire on the DS's own reference. Do not treat their absence as "these are fine"; treat them as *yours to judge*.
 
@@ -55,7 +56,7 @@ These are always yours (the `sl-ds-auditor` subagent covers them by reading `des
 - **L5 editorial voice** — precise/technical, active, structure-encodes-truth, English identifiers.
 - The house rule: ≥1 unexpected, intentional *composition* decision per screen (spend boldness on layout, keep materials shared).
 
-> **Effects (L6) — entirely judgement.** `sl-audit` can verify that `effects.css` uses no colour literal, that the runtime is wired at all (check 8 below), and `scripts/effects-js.test.mjs` closes the colour hole for the driver. It cannot verify any of what actually matters:
+> **Effects (L6) — entirely judgement.** `sl-audit` can verify that `effects.css` uses no colour literal, that the runtime is wired at all (check 8, above), and `scripts/effects-js.test.mjs` closes the colour hole for the driver. It cannot verify any of what actually matters:
 > - **the right family for the right meaning** — a glitch on a passive container, or a liquid on something that is not interactive, is decoration, and Decision 1 forbids it; a text button is a glass pane (`sl-fx-glass--pane`), never gooey, and `sl-fx-liquid--drop` goes on a round icon-only button alone;
 > - **the budget** — more than one ambient `data-sl-fx-live="on"` per document, or four or more families stacked on one component;
 > - **the focus ring** — an aurora that replaced the `outline` instead of sitting inside the border band;
