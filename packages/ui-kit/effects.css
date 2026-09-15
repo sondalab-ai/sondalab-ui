@@ -899,6 +899,13 @@
 .sl-fx-glass--field,
 .sl-fx-aurora--field { --slfx-ring-w: 2px; }
 
+/* There is no --thick. It existed for one afternoon on 2026-09-15, to scope
+   the 21.6px prism to large panels while small hosts kept a fitted 4.32; the
+   ruling that followed is that the lens must be VISIBLE on every surface, so
+   90 is the default in glass-lens.js and a class that re-declared it would
+   name nothing. What makes that default safe on a small box is the bound in
+   channelScales(), not a class an author has to remember. */
+
 /* ══ GLASS TEXT — the letterform IS the pane ═════════════════════════════════
    A mask clips a backdrop-filter's output, so masking a pane to its own glyphs
    leaves glass in the shape of the words rather than a box containing them.
@@ -1085,19 +1092,20 @@
      against a 0-pixel control. The owner's ruling when the two pull against
      each other is that the refraction wins. */
   --slg-lens-reach: 18px;
-  /* AND THE PRISM OPENS WITH IT, ON THE OWNER'S INSTRUCTION AND AGAINST THE
-     FITTED FIGURE -- recorded here because the next reader will otherwise take
-     it for an oversight. glass-lens.js reads this as a pixel budget at 0.24px
-     of red-to-blue per unit, so 90 is 21.6px of channel separation, matching
-     what sondalab.eu runs on its .pillar and .prow panels (measured
-     2026-09-15). The site scopes it to a declared `glass-thick` class and
-     leaves its buttons at the default; this rule does not, by instruction.
-     What that costs is the case the default was fitted to protect: an aurora
-     host with TEXT behind it -- .sl-field__control, a selected tab, a busy
-     button -- now fringes that text, and glass-lens.js's own comment calls
-     13px of separation "not a prism, it is a broken render". A surface that
-     needs the old reading back sets --slg-lens-disperse: 18 on the host. */
-  --slg-lens-disperse: 90;
+  /* THE PRISM IS NOT DECLARED HERE EITHER. An earlier version of this block
+     raised --slg-lens-disperse to 90 on every aurora host, which was right
+     about the look and wrong about the arithmetic: the split is symmetric
+     about the bend, the bend is capped at a sixth of the shorter side, and 90
+     is 21.6px of separation -- so on any host under about 65px the red channel
+     came out NEGATIVE and displaced backwards. Ten of sixteen aurora hosts on
+     the showcase shipped that way, a 32px icon button worst at -5.61 against a
+     green of 5.19.
+     90 is now the DEFAULT for every lensed surface, in glass-lens.js, because
+     the owner's ruling is that the lens must be visible everywhere and not
+     only on the panels with room for it. What makes that safe is the bound in
+     channelScales(), which gives a small box the widest prism it can hold
+     rather than a broken one -- so nothing needs to declare the prism, here or
+     on a thickness class, and this block declares only the bend. */
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */

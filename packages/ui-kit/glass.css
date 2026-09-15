@@ -204,7 +204,21 @@
 /* Registered so they interpolate: an unregistered custom property inside a
    filter snaps between keyframes instead of tweening. Inherit, so a container
    can breathe every pane in it at once. */
-@property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 0.25px; }
+/* THE LENSED PANE CARRIES ITS OWN FROST, AND IT IS NARROW ON PURPOSE.
+   .sl-glass__backdrop above runs 5.9px, and on a lensed host that blur is
+   DEAD: the host's own backdrop-filter makes it a backdrop root, so the child
+   has nothing behind it left to filter. Measured 2026-09-15 — drop the host's
+   filter and the child's blur bites immediately. So a lensed surface's only
+   frost is this one, which is why 0.25px read as a warped window rather than
+   as glass, and why the two layers were never one material.
+
+   1.5px, not the 5.9 the non-lensed layer runs, because here the frost has a
+   bend to protect. The displacement is capped at a sixth of the shorter side,
+   so a 37px field bends about 6px; a 5.9px frost erases that entirely, and
+   raising the bend does not buy it back. The owner's ruling is that the lens
+   must be visible on every surface, so the frost yields to it: a legible
+   ghost of the copy behind, rather than a smear with no refraction in it. */
+@property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 1.5px; }
 @property --slg-lens-sat  { syntax: "<number>"; inherits: true; initial-value: 1.1; }
 .sl-glass.is-lensed { background-color: transparent; }
 .sl-glass.is-lensed .sl-glass__tint {

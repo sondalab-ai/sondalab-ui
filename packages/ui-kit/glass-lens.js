@@ -205,7 +205,22 @@ export function lens(el, look = {}) {
   // take. This is the narrow case the platform forbids, and nothing more.
   if (el.parentElement?.closest(".sl-glass, .sl-fx-glass")) return null;
 
-  const { blur = 0.25, saturate = 1.1, brightness = 1.05, disperse = 18, reach = 6 } = look;
+  // blur 1.5 and disperse 90: A LENS YOU CAN SEE, which is the owner's ruling
+  // and is not what either number was before. The two fight, and measurement
+  // is what settled them. The bend is capped at a sixth of the shorter side —
+  // 6.2px on a 37px field — so a frost of 5.9 erases exactly the detail the
+  // bend moved: toggling the displacement off that field changed the interior
+  // by at most 10/255, and forcing the bend to 18 with the frost up changed
+  // nothing visible at all. The frost is the limiting knob, not the bend.
+  // At 1.5 the copy behind a pane is a legible ghost rather than a smear, and
+  // that is the cost the ruling accepts to get refraction on a small host.
+  //
+  // 90 is sondalab.eu's prism, 21.6px of red-to-blue, and it is safe to make
+  // it the default ONLY because channelScales() bounds the split: a box with
+  // no room gets the widest prism it can hold instead of a red channel
+  // displaced backwards. Before that bound this default would have broken ten
+  // of sixteen aurora hosts.
+  const { blur = 1.5, saturate = 1.1, brightness = 1.05, disperse = 90, reach = 6 } = look;
   const id = `sl-lens-${serial++}`;
 
   const svg = document.createElementNS(SVG_NS, "svg");
