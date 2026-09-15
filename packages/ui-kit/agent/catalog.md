@@ -322,6 +322,36 @@ Consumes: `--slc-surface`, `--slc-border`. Do: use the monogram as the fallback 
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).
 
+### Turning effects on — the runtime contract
+
+**Read this before you write a single `sl-fx-*` class.** Most of the effect layer needs JavaScript, and a surface that carries the classes without it renders Tier 0 silently — no error, no warning, and `sl-audit` reads CSS text, so it cannot see the omission either. This is not hypothetical: sondalab.eu shipped with every glass class in place and Tier 2 never came up, because `mountGpu()` was never called and no box carried `data-sl-fx-backdrop`.
+
+```html
+<link rel="stylesheet" href="@sondalab/ui-kit/effects.css">
+<!-- glass.css too, if you use the glass family: it carries the pane's anatomy -->
+<link rel="stylesheet" href="@sondalab/ui-kit/glass.css">
+```
+```js
+import { mount, mountGpu } from "@sondalab/ui-kit/effects.js";
+
+mount();                 // Tier 1 — call once, after the DOM exists
+await mountGpu();        // Tier 2 — optional, and only after mount()
+```
+
+| Tier | Needs | You get | If you skip it |
+|---|---|---|---|
+| **0** | `effects.css` alone | Resting glass hairline, static aurora arc on focus, no motion | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
+| **1** | `mount()` | The liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
+| **2** | `await mountGpu()` | WebGPU chrome on the glass family: a hairline reflecting a moving environment, a wandering halo, the cursor's reflection | Tier 1 keeps its CSS conic hairline — a fallback, not a lesser draft |
+
+Four things that bite, in the order they usually bite:
+
+- **`mountGpu()` returns `false` unless `mount()` ran first.** It checks `armed` and gives up immediately. Call them in order.
+- **`mount()` arms once per document.** Calling it again returns the first result; it does not re-scan. Mount after your markup exists, and use `mount(root)` for a subtree you add later.
+- **Tier 2 refraction needs an anchor.** A pane only refracts something if it sits inside an element carrying the **`data-sl-fx-backdrop` attribute**, with the image declared as **`--slfx-backdrop: url(…)` on that same element**. Both, together, on the anchor — the attribute marks which box the image covers, and the custom property would otherwise inherit with no way to tell which ancestor set it. An unmarked pane has no declared backdrop and is left as it was. Only `url()` is sampled; a gradient or a keyword is ignored rather than guessed at.
+- **Both refuse under high contrast, by design.** `mount()` returns `false` when `data-sl-theme="high-contrast"`, and `mountGpu()` re-checks at call time. Reduced motion refuses Tier 1 as well. Do not work around either: the component must still read correctly with every family off, which is what those guards exist to guarantee.
+
+`mount()` also takes `ignoreReducedMotion` — a derogation a consumer takes on their own evidence, not a convenience. It arms Tier 1 for a visitor reporting `prefers-reduced-motion: reduce` and lets the **glitch** animate for them; every other family's motion stays inside the media query in `effects.css`, where nothing can overrule it. High contrast refuses regardless.
 
 **Canonical strings.** The declension below is already bound per component inside `effects.css` — a product importing it does not re-derive which family goes where, or how each tunes. What it needs is the string to write. These are the canonical ones; `compositions.css` (opt-in, imported after `effects.css`) carries the custom-property bindings that have no other home.
 
