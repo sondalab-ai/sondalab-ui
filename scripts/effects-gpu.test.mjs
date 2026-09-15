@@ -289,8 +289,16 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
     lensSrc.indexOf('getPropertyValue("--slg-lens-reach")') < lensSrc.indexOf("const capped ="),
     "read the property before capping with it, not after",
   );
-  assert.match(lensSrc, /dispG\.setAttribute\("scale", String\(capped\)\)/,
+  // Since 2026-09-15 the three scales are computed by channelScales(), a pure
+  // function beside lens() — so the green channel reads `bend.g` here and the
+  // arithmetic that produced it is executed by scripts/glass-lens-dispersion
+  // .test.mjs rather than matched as a string. What this still pins is that
+  // green carries the capped bend UNSPLIT: the prism opens either side of the
+  // measured displacement, it does not move it.
+  assert.match(lensSrc, /dispG\.setAttribute\("scale", String\(bend\.g\)\)/,
     "scale derived from the measured maximum displacement, then capped");
+  assert.match(lensSrc, /g: capped,/,
+    "and green is that capped bend itself, with the split opening around it");
   // The prism: three displacements of the same map at different scales, in the
   // ratio of glass-studio's IOR triple, added back together. One displacement
   // moves every colour the same distance, which is a lens with no glass in it.
@@ -306,7 +314,16 @@ test("the displacement map is a data URI, and the numbers are not re-derived", (
   // version of this line used 0.12 and quietly halved the prism.
   // The 0.24 is the budget; where the number comes from is the surface's, so
   // the assertion is about the arithmetic and the default, not the spelling.
-  assert.match(lensSrc, /\* 0\.24;/, "the split is a pixel budget, at the fitted fringe");
+  // The 0.24 is now the exported PX_PER_DISPERSE, so the figure has one home
+  // and the guard reads the constant rather than every site that multiplies by
+  // it. And the split is BOUNDED: symmetric about the bend, so wider than
+  // twice it sends red past zero, and a negative feDisplacementMap scale
+  // displaces the channel backwards instead of failing. Ten of sixteen aurora
+  // hosts shipped that way.
+  assert.match(lensSrc, /export const PX_PER_DISPERSE = 0\.24;/,
+    "the split is a pixel budget, at the fitted fringe, declared once");
+  assert.match(lensSrc, /Math\.min\(disperse \* PX_PER_DISPERSE, 2 \* capped\)/,
+    "and the split is bounded so red never displaces backwards");
   assert.match(lensSrc, /Number\.isFinite\(askedSplit\) \? askedSplit : disperse/,
     "and a surface may ask for a wider prism, with the fitted figure as the fallback");
   assert.match(lensSrc, /getPropertyValue\("--slg-lens-disperse"\)/, "through CSS, like --slg-lens-reach");
