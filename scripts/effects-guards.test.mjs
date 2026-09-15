@@ -13,6 +13,26 @@ const KIT = resolve(HERE, "../packages/ui-kit");
 // hide a real declaration, so the guard loses no strength.
 const effects = readFileSync(resolve(KIT, "effects.css"), "utf8")
   .replace(/\/\*[\s\S]*?\*\//g, "");
+const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
+
+/** The body of a top-level function in effects.js, comments stripped so an
+ *  assertion about ORDER inside it cannot be satisfied by a string that
+ *  merely appears in prose explaining the order, rather than by the code. */
+function jsFnBody(name) {
+  const start = effectsJs.search(new RegExp(`function ${name}\\b`));
+  assert.ok(start > -1, `missing function: ${name}`);
+  const open = effectsJs.indexOf("{", effectsJs.indexOf("(", start));
+  let depth = 0;
+  let i = open;
+  do {
+    if (effectsJs[i] === "{") depth++;
+    else if (effectsJs[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < effectsJs.length);
+  return effectsJs.slice(open + 1, i - 1)
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+}
 
 /** Leaf CSS rules with their own selector, body and source index.
  *  At-rules are descended into rather than reported, so a rule nested in an
@@ -63,6 +83,27 @@ test("both kill switches neutralise host-level effects, not only paint layers", 
     for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-goo", "sl-fx-glitch"]) {
       assert.ok(covered.includes(cls), `[${attr}] must neutralise host-level .${cls}, not just its pseudo-elements`);
     }
+  }
+});
+
+// Regression: GLASS TEXT hides its own ink behind `color: transparent` and
+// stands an SVG mask in for it, and neither kill switch named
+// `.sl-fx-glass--text` — so switching a glass-text host off left the mask cut
+// into the text and the colour still transparent, which is invisible, not
+// "off". A kill switch that stops short of the family's own text-hiding trick
+// is not a kill switch.
+test("both kill switches give a glass-text host its colour back and lose its mask", () => {
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    const targets = RULES.filter((r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-glass--text"));
+    assert.ok(targets.length > 0, `[${attr}] must reach .sl-fx-glass--text`);
+
+    const body = targets.map((r) => r.body).join(";");
+    const color = body.match(/(?:^|;)\s*color\s*:\s*([^;]+)/)?.[1]?.trim();
+    assert.ok(color && color !== "transparent", `[${attr}] must give .sl-fx-glass--text a colour back, not leave it transparent`);
+    assert.match(
+      body, /(?:^|;)\s*(?:-webkit-)?mask-image\s*:\s*none/,
+      `[${attr}] must remove the mask from .sl-fx-glass--text`,
+    );
   }
 });
 
@@ -324,7 +365,7 @@ test("--slfx-fill names the background the component actually ships", () => {
   const shipped = new Map();
   for (const r of rules(components)) {
     const sel = r.selector.trim();
-    if (!/^\.[a-z0-9-]+$/.test(sel)) continue;
+    if (!/^\.[a-z0-9_-]+$/.test(sel)) continue;
     const m = [...r.body.matchAll(/(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/g)].pop();
     if (m) shipped.set(sel.slice(1), m[1].trim());
   }
@@ -568,5 +609,126 @@ test("a prefixed property never follows its standard form", () => {
         `${r.selector}: -webkit-${m[1]} must come BEFORE ${m[1]}, or a minifier may keep only the prefix`,
       );
     }
+  }
+});
+
+test("injectGlass() reads the host's own radius before it becomes a glass host", () => {
+  // glass.css:76 resolves .sl-glass's border-radius through --slg-radius,
+  // falling back to --sl-radius-md — a rule injectGlass() makes live the
+  // instant it adds .sl-glass to the host. L6: the radius is read, never
+  // written; a surface stays free to re-parametrise its own radius without
+  // touching the effect. injectGlass() keeps that by reading the host's own
+  // computed border-radius and writing it to --slg-radius BEFORE stamping
+  // .sl-glass — read after, and getComputedStyle would already report
+  // glass.css's own fallback, the value this exists to preserve, not the
+  // component's.
+  //
+  // A bare check that "--slg-radius" appears somewhere in the function proves
+  // nothing: it would still pass with the read deleted, or with the read left
+  // in place but moved after classList.add. This asserts the ORDER, the same
+  // way scripts/effects-js.test.mjs pins "the skin must leave the previous
+  // host before it enters the next" — by index inside the function body,
+  // comments stripped so a sentence describing the order cannot stand in for
+  // code that enforces it.
+  const body = jsFnBody("injectGlass");
+  const read = body.search(/getComputedStyle\(/);
+  const write = body.search(/setProperty\(\s*["']--slg-radius["']/);
+  const add = body.search(/classList\.add\(\s*["']sl-glass["']\s*\)/);
+  assert.ok(read > -1, "injectGlass must read the host's computed style");
+  assert.ok(write > -1, "injectGlass must write the host's own radius to --slg-radius");
+  assert.ok(add > -1, "injectGlass must stamp .sl-glass onto the host");
+  assert.ok(
+    read < add,
+    "injectGlass reads the host's computed style AFTER stamping .sl-glass — that reads glass.css's own fallback, not the component's radius",
+  );
+  assert.ok(
+    write < add,
+    "injectGlass writes --slg-radius AFTER stamping .sl-glass — too late to stop glass.css's own declaration from winning",
+  );
+});
+
+// REGRESSION FENCE: compositions.css binds --slfx-pane-swell: 1 on every
+// wrapper that both clips its contents (overflow: hidden) and hosts a glass
+// pane, because the swell — a 3% scale on the pane and its seated light —
+// crosses a clipping edge and is cut, so the pane loses its rim at exactly
+// the moment it is being pointed at. Deleting the .sl-btn-group half of that
+// binding left the suite green: nothing asserted it.
+//
+// "Hosts a glass pane" is a fact about a component's contract, not something
+// any stylesheet states declaratively — CSS has no way to mark "this class's
+// children may be .sl-fx-glass--pane" the way it marks overflow: hidden as a
+// property. So PANE_WRAPPERS is manual, sourced from compositions.css's own
+// prose. But checking only the two named wrappers would repeat the same
+// mistake in a new shape: a THIRD clipping wrapper added later, with no
+// binding and no entry anywhere, would still pass. So the fence also closes
+// the world mechanically — every single-class selector in components.css
+// that clips must be accounted for, either as a pane wrapper here or as a
+// documented exemption in SWELL_EXEMPT below, sourced from the same
+// counter-example compositions.css's own comment already gives:
+// .sl-avatar clips too and is deliberately not a pane wrapper, because its
+// contract admits only an <img> or the monogram — never a pane.
+const PANE_WRAPPERS = ["sl-figure__media", "sl-btn-group"];
+
+// Every OTHER clipping class components.css ships, and why a glass pane
+// cannot fill it. Manual, like PANE_WRAPPERS — the reason is a contract
+// fact, not a CSS property — but the classes themselves (the map keys) are
+// cross-checked mechanically below, so a stale or missing key fails loudly
+// rather than quietly under-covering the closed-world check.
+const SWELL_EXEMPT = new Map([
+  ["sl-avatar", "contract admits an <img> or the monogram, never a pane; the one glass composition it does have is BEING a pane, whose swell nothing clips"],
+  ["sl-check__input", "the visually-hidden-input technique (position/size/clip-path to one pixel) — nothing ever fills it"],
+  ["sl-radio__input", "same visually-hidden-input technique as .sl-check__input"],
+  ["sl-switch__input", "same visually-hidden-input technique as .sl-check__input"],
+]);
+
+test("every wrapper that clips a filling glass pane stands its swell down", () => {
+  const componentsSrc = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const compositionsSrc = readFileSync(resolve(KIT, "compositions.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const componentRules = rules(componentsSrc);
+  const compositionRules = rules(compositionsSrc);
+  const selectorList = (sel) => sel.split(",").map((s) => s.trim());
+
+  for (const cls of PANE_WRAPPERS) {
+    const owns = componentRules.filter((r) => selectorList(r.selector).includes(`.${cls}`));
+    assert.ok(
+      owns.some((r) => /(?:^|;)\s*overflow\s*:\s*hidden/.test(r.body)),
+      `.${cls} is listed as a clipping pane wrapper but components.css no longer clips it (overflow: hidden) — ` +
+        "either the CSS regressed or this wrapper no longer belongs in PANE_WRAPPERS",
+    );
+
+    const bound = compositionRules.filter(
+      (r) => selectorList(r.selector).includes(`.${cls}`) && /--slfx-pane-swell\s*:\s*1\b/.test(r.body),
+    );
+    assert.ok(
+      bound.length > 0,
+      `.${cls} clips its contents and hosts a glass pane — compositions.css must bind --slfx-pane-swell: 1 there, ` +
+        "or a pane filling it swells past the wrapper's own clip and loses its rim at the moment it is pointed at",
+    );
+  }
+
+  // Closed world: every single-class selector components.css clips must be
+  // either a pane wrapper (checked above) or a documented exemption. A new
+  // clipping wrapper with no opinion either way fails here, by name, instead
+  // of shipping unguarded the way .sl-btn-group briefly did.
+  const clipping = new Set();
+  for (const r of componentRules) {
+    if (!/(?:^|;)\s*overflow\s*:\s*hidden/.test(r.body)) continue;
+    for (const sel of selectorList(r.selector)) {
+      const m = sel.match(/^\.([a-z0-9_-]+)$/);
+      if (m) clipping.add(m[1]);
+    }
+  }
+  assert.ok(
+    clipping.size >= PANE_WRAPPERS.length + SWELL_EXEMPT.size,
+    `the parser must find at least the ${PANE_WRAPPERS.length + SWELL_EXEMPT.size} known clipping classes, found ${clipping.size}: ` +
+      `${[...clipping].join(", ")}`,
+  );
+  for (const cls of clipping) {
+    assert.ok(
+      PANE_WRAPPERS.includes(cls) || SWELL_EXEMPT.has(cls),
+      `.${cls} clips its contents (overflow: hidden, components.css) with no opinion on --slfx-pane-swell — either ` +
+        "bind --slfx-pane-swell: 1 in compositions.css and add it to PANE_WRAPPERS, or add it to SWELL_EXEMPT with " +
+        "the reason a glass pane cannot fill it",
+    );
   }
 });

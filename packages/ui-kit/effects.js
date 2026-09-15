@@ -766,6 +766,55 @@ let glowSerial = 0;
 const GLASS_LAYERS = ["backdrop", "tint", "specular", "shine"];
 
 function injectGlass(el) {
+  // glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
+  // on .sl-glass, the class classList.add below is about to stamp on el — so
+  // unless --slg-radius is already bound, the component's OWN radius (.sl-btn
+  // at 10px, say) is about to be overwritten by the family default the moment
+  // it joins the anatomy: catalog.md's canonical-strings table measured
+  // exactly that on .sl-btn, 10px → 6px. L6: "a surface stays free to
+  // re-parametrise its own radius without touching the effect" — the glass
+  // layer keeps that contract by reading the host's OWN computed radius
+  // before it becomes a glass host, and writing it back as the property
+  // glass.css already resolves through, so the layer's own declaration
+  // resolves back to what the component declared.
+  //
+  // Read BEFORE classList.add, not after: once .sl-glass is on the element,
+  // getComputedStyle(el) already reflects glass.css's own fallback — the
+  // very value this exists to preserve — so reading here is the only reading
+  // that still sees the component's own declaration.
+  //
+  // Two cases need no rebind and get none, because both already compute a
+  // non-empty --slg-radius at this point: glass-text sets it to 0
+  // deliberately, and the round icon button's 50% binding
+  // (.sl-icon-btn--round.sl-fx-glass) is keyed off .sl-fx-glass, already in
+  // the markup before injectGlass ever runs — neither waits on .sl-glass.
+  const cs = getComputedStyle(el);
+  // getComputedStyle cannot tell "declared no radius, relying on the glass
+  // family default" from "declared border-radius: 0" — both resolve to 0px.
+  // The pin exists to stop the layer overriding a radius the COMPONENT
+  // chose; a zero computed radius carries no such choice, so the safe
+  // reading is the one that shipped before this pin existed — leave the
+  // family default (--sl-radius-md) in place. A component that genuinely
+  // wants square corners under glass says so with --slg-radius: 0 directly,
+  // the same escape hatch the GLASS TEXT declension already uses
+  // (effects.css, the GLASS TEXT section) to flatten its own pane.
+  const corners = [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomRightRadius, cs.borderBottomLeftRadius];
+  const isZero = corners.every((c) => parseFloat(c) === 0);
+  if (!cs.getPropertyValue("--slg-radius").trim() && !isZero) {
+    // All four corners, not just the top-left one, or a shorthand radius
+    // like `10px 10px 0 0` flattens to a single value. Horizontal and
+    // vertical radii are read apart from the start, because a corner can
+    // itself be elliptical (`10px / 20px`) — a uniform ELLIPTICAL radius
+    // still needs the h/v form: collapsing to `corners[0]` unmodified would
+    // write `10px 20px` straight into --slg-radius, which in the four-value
+    // shorthand reads as TL/BR = 10px, TR/BL = 20px, a DIFFERENT geometry
+    // than one ellipse repeated on every corner.
+    const h = corners.map((c) => c.split(" ")[0]);
+    const v = corners.map((c) => c.split(" ")[1] ?? c.split(" ")[0]);
+    const flat = h.every((x) => x === h[0]) && v.every((x) => x === h[0]);
+    const ownRadius = flat ? h[0] : v.some((val, i) => val !== h[i]) ? `${h.join(" ")} / ${v.join(" ")}` : h.join(" ");
+    el.style.setProperty("--slg-radius", ownRadius);
+  }
   // The host joins the anatomy too, not just its layers. glass.css declares the
   // stacking context, the radius and the derived light pole on .sl-glass, and
   // an element carrying only .sl-fx-glass got the layers with none of that —
@@ -1279,6 +1328,21 @@ export function scramble(el, { duration = 520, tick = 45 } = {}) {
  */
 export function grantLive(el) {
   if (liveEl && liveEl !== el) liveEl.removeAttribute("data-sl-fx-live");
+  // liveEl only remembers a grant THIS function handed out. A page can also
+  // write data-sl-fx-live="on" straight into its markup — a grant this
+  // function never issued and so cannot know about through liveEl alone — so
+  // the query is needed IN ADDITION: it finds every element currently
+  // holding the attribute, wherever it came from, and revokes all but `el`.
+  if (typeof document !== "undefined") {
+    for (const prior of document.querySelectorAll('[data-sl-fx-live="on"]')) {
+      // A grant inside a data-sl-fx="off" subtree is switched off, not
+      // competing for the one-per-document budget — the ambient-budget fence
+      // (scripts/effects-showcase.test.mjs, offRegionExtents) excludes
+      // off-region grants from the count for exactly that reason. Revoking
+      // it would be taking something from a page that was not asking.
+      if (prior !== el && !prior.closest('[data-sl-fx="off"]')) prior.removeAttribute("data-sl-fx-live");
+    }
+  }
   liveEl = el;
   el.setAttribute("data-sl-fx-live", "on");
 }

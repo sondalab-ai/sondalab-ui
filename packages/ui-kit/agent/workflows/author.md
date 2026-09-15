@@ -26,11 +26,20 @@ npx sl-audit --surface "<glob>" --product <name>
 ```
 Then the judgement pass the script can't do (delegate to `sl-ds-auditor` or do it yourself against `design-language.md`, scoped to the substrate's Required rules): are the structural mono labels present (eyebrow, section index)? Is there real content, not filler? Is the editorial voice precise/active (L5)? See `HANDOFF.md` for what is judgement vs mechanical.
 
-### 5 — Effects (optional layer)
-Once the surface is composed and compliant, reach for effects (`catalog.md` `## Effects`) where a meaning applies — each family carries exactly one meaning, subject to the effect budget (`design-language.md` L6). Skip if no meaning fits; an effect that means nothing is switched off.
+### 5 — Effects
+Once the surface is composed and compliant, apply the effects layer. This is a real step, not a flourish: the families are how a Sondalab surface reads as *material* rather than as a flat theme, and a screen that ships without them is half the design system.
+
+1. **Wire the runtime first.** Read `catalog.md` § *Turning effects on* and do what it says — the imports (`effects.css`, and `glass.css` for the glass family), `mount()`, and `await mountGpu()` if the surface wants Tier 2. Classes without the JS render Tier 0 silently, and the audit's check 8 will fail you for it.
+2. **Take the canonical string, don't invent a declension.** `catalog.md`'s canonical-strings table already binds which family goes on which component. Copy the string.
+3. **Judge what the table does not cover.** Goo, glitch, and the ambient/busy/determinate aurora readings are never applied by rote — see the note under the table. Each family carries exactly one meaning; an effect that means nothing is switched off, and the budget is `design-language.md` L6.
+4. **For glass, place the pane before you tune it.** `catalog.md` § *Glass pane* — a pane over flat ground shows nothing no matter what you set. If there is no content behind the surface, that is a composition problem, not a parameter problem.
+
+Skip a family when no meaning fits. Skipping *all* of them on an App or Page substrate is a decision to justify, not a default.
 
 ### 6 — Visual check
-Render across the applicable themes (light / dark / high-contrast); verify reduced-motion and that active/pressed states show the accent, not a neutral.
+Render across the applicable themes (light / dark / high-contrast); verify reduced-motion and that active/pressed states show the accent, not a neutral. In high contrast every family is off and the GPU field is torn down: each component must still be legible and complete. A cell that only makes sense with its effect running is a defect this pass exists to find.
+
+If you touched glass or the lens, do not sign it off by eye — `HANDOFF.md` § *How to verify an effect*.
 
 ## Output
 A new surface that passes `sl-audit` clean, satisfies its substrate's Required rules, and reads as Sondalab through the shared components — with its one intentional composition surprise.

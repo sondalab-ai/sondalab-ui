@@ -212,6 +212,36 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch__shard,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch__shard { opacity: 0 !important; }
 
+/* GLASS TEXT (below) paints nothing of its own: the host is `color:
+   transparent` with an SVG mask standing in for the ink, and the glow seated
+   before it is a second, unmasked copy that exists only to carry light for
+   that mask. Neither switch above names `.sl-fx-glass--text` or
+   `.sl-fx-glass__glow`, so turning a glass-text host off used to leave the
+   mask in place — glass-text.js writes `mask-image`/`-webkit-mask-image` as
+   an INLINE style, which is why removing it here needs `!important` for the
+   same reason the block above does — while the colour stayed transparent:
+   the material was gone and the letters were still hidden for it. Restore
+   exactly what GLASS TEXT set and no more: colour back to ordinary painted
+   text (no `!important` needed — this selector already outranks the plain
+   `.sl-fx-glass--text` rule on specificity alone), mask gone. The glow
+   restores nothing of its own — it has no ink, only borrowed light for a
+   mask that no longer exists — so it just stops shining.
+   Wrapped in `:is()` rather than written as a bare descendant selector:
+   glass-text.test.mjs locates the real declension by the first occurrence of
+   the class name immediately followed by an opening brace (the "Paint
+   layers" rule below explains the same hazard) — a plain selector here would
+   produce that same substring earlier in the file and shadow it. */
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass--text),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) :is(.sl-fx-glass--text) {
+  color: inherit;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass__glow),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) :is(.sl-fx-glass__glow) {
+  text-shadow: none !important;
+}
+
 /* Paint layers. Written as separate selectors rather than
    :is(.sl-fx-glass, .sl-fx-aurora)::after so this text never collides with
    the shared ring rule's own selector further down the file — a test locates
@@ -573,7 +603,10 @@
    fill to carry its own label. */
 .sl-btn.sl-fx-glass,
 .sl-badge.sl-fx-glass,
-.sl-field__control.sl-fx-glass {
+.sl-field__control.sl-fx-glass,
+/* .sl-icon-btn ships a transparent background like .sl-btn, which is why it
+   joins this group and not the .sl-tag one. */
+.sl-icon-btn.sl-fx-glass {
   --slfx-fill: transparent;
   --slg-tint-color: var(--sl-bg-canvas);
   --slg-tint-a: 25%;
@@ -585,27 +618,58 @@
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
+/* A rule of their own, not a join to the .sl-btn/.sl-badge/.sl-field__control/
+   .sl-icon-btn group above, though that group also binds transparent:
+   1. transparent is what components.css ships these two — neither .sl-anchor
+      nor .sl-stat__value declares a background. A heading and a numeral have
+      no ground of their own.
+   2. No --slg-tint-color/--slg-tint-a rebind: the group's 25%/22% tint alphas
+      were fitted by contrast measurement on a FILLED CONTROL over a telemetry
+      substrate (see the comment above, 4.24:1 → 4.74 → 5.19). A display-scale
+      letterform is not that case; inheriting those numbers would be borrowing
+      a measurement taken for something else. Tint stays at the family default.
+   3. Bound on the two host classes, not on .sl-fx-glass--text, though that is
+      where it conceptually belongs — one declension, every glass-text host.
+      The guard at scripts/effects-guards.test.mjs:310 keys each binding by
+      stripping the selector from .sl-fx-glass onward; a selector of
+      .sl-fx-glass--text strips to "", which the guard reads as the FAMILY
+      DEFAULT and would silently rebind the fill for every glass host on every
+      page. That is a limitation of the guard, not a preference — do not move
+      this binding onto --text without fixing the guard first. */
+.sl-anchor.sl-fx-glass,
+.sl-stat__value.sl-fx-glass { --slfx-fill: transparent; }
+/* injectGlass() stamps .sl-glass on the host so glass.css's anatomy applies,
+   and glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
+   there — which overwrites a component's own radius unless this knob is bound.
+   .sl-icon-btn--round is 50%, not --sl-radius-md, so it needs the rebind. */
+.sl-icon-btn--round.sl-fx-glass { --slg-radius: 50%; }
 
 /* A filled brand button is the one surface whose own content constrains how
    translucent it may be: thinning the fill on paper moves the amber toward
-   cream and its white label goes with it. The owner's ruling is to carry the
-   label rather than thin the glass less — a dark shadow in the accent's own
-   hue, 2px and softly blurred, so the letterform keeps an edge whatever the
-   fill is doing behind it.
+   cream and the label goes with it. The owner's ruling is to carry the label
+   rather than thin the glass less — a shadow in the accent's own hue, 2px and
+   softly blurred, so the letterform keeps an edge whatever the fill is doing
+   behind it.
 
    Said plainly: this is a LEGIBILITY aid, not a contrast fix. WCAG measures
-   foreground against background and a shadow changes neither, so the pair
-   still computes 1.99:1 on the plain component. The real fix is
-   --sl-text-on-accent, which is white on both themes and fails on the light
-   accent before this layer runs at all; that is a token decision. */
+   foreground against background and a shadow changes neither. Ruling 8 below
+   is what fixed the contrast, by making the label the DARK pole
+   (--slfx-shade); --slc-on-accent's white is built for an opaque accent and
+   goes the wrong way under a translucent one. */
 .sl-btn--primary.sl-fx-glass {
-  /* Gated to paper by its own lightness. On ink the composited fill is dark
-     and the label is dark with it, so a dark shadow is mud — which is what
-     the owner saw. The colour is a 55/45 mix of the accent and the sheen, so
-     it keeps the accent's hue while its LIGHTNESS reports the theme: 0.84 on
-     ink (alpha 0), 0.44 on paper (alpha 0.8). */
+  /* THE SHADOW IS THE MIX'S OWN LIGHTNESS, not a fixed dark. This read `0.24`
+     from the era when the label was white, where anything dark behind it was
+     an edge. Ruling 8 then made the label dark — 0.236 on paper — and 0.24
+     under 0.236 is not an edge, it is mud, which is what the owner saw.
+     Keeping `l` puts the shadow at 0.44: below the composited fill it sits on
+     (~0.63) and well above the label, so it reads as the fill's own colour
+     deepened under the letterform rather than as a black halo.
+
+     Gated to paper by that same lightness. The colour is a 55/45 mix of the
+     accent and the sheen, so it keeps the accent's hue while its LIGHTNESS
+     reports the theme: 0.84 on ink (alpha 0), 0.44 on paper (alpha 0.8). */
   text-shadow: 0 1px 2px oklch(from color-mix(in oklab, var(--slc-accent) 55%, var(--slfx-sheen))
-                               0.24 c h / clamp(0, (0.6 - l) * 5, 1));
+                               l c h / clamp(0, (0.6 - l) * 5, 1));
   /* A saturated brand fill cannot be thinned far on a dark page: at 48% over
      near-black the amber read as dark olive, and no veil recovers a hue that
      has been mixed away. This is not a compromise but the way the register
@@ -835,6 +899,13 @@
 .sl-fx-glass--field,
 .sl-fx-aurora--field { --slfx-ring-w: 2px; }
 
+/* There is no --thick. It existed for one afternoon on 2026-09-15, to scope
+   the 21.6px prism to large panels while small hosts kept a fitted 4.32; the
+   ruling that followed is that the lens must be VISIBLE on every surface, so
+   90 is the default in glass-lens.js and a class that re-declared it would
+   name nothing. What makes that default safe on a small box is the bound in
+   channelScales(), not a class an author has to remember. */
+
 /* ══ GLASS TEXT — the letterform IS the pane ═════════════════════════════════
    A mask clips a backdrop-filter's output, so masking a pane to its own glyphs
    leaves glass in the shape of the words rather than a box containing them.
@@ -1021,6 +1092,20 @@
      against a 0-pixel control. The owner's ruling when the two pull against
      each other is that the refraction wins. */
   --slg-lens-reach: 18px;
+  /* THE PRISM IS NOT DECLARED HERE EITHER. An earlier version of this block
+     raised --slg-lens-disperse to 90 on every aurora host, which was right
+     about the look and wrong about the arithmetic: the split is symmetric
+     about the bend, the bend is capped at a sixth of the shorter side, and 90
+     is 21.6px of separation -- so on any host under about 65px the red channel
+     came out NEGATIVE and displaced backwards. Ten of sixteen aurora hosts on
+     the showcase shipped that way, a 32px icon button worst at -5.61 against a
+     green of 5.19.
+     90 is now the DEFAULT for every lensed surface, in glass-lens.js, because
+     the owner's ruling is that the lens must be visible everywhere and not
+     only on the panels with room for it. What makes that safe is the bound in
+     channelScales(), which gives a small box the widest prism it can hold
+     rather than a broken one -- so nothing needs to declare the prism, here or
+     on a thickness class, and this block declares only the bend. */
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */

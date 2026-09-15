@@ -11,6 +11,11 @@
   <link rel="stylesheet" href="../packages/ui-kit/components.css">
   <link rel="stylesheet" href="../packages/ui-kit/glass.css">
   <link rel="stylesheet" href="../packages/ui-kit/effects.css">
+  <!-- AFTER effects.css, and it is what makes this page a test of the file:
+       the bindings below are declared nowhere on this page, so a glass-text
+       host inside the inversion band is lit by compositions.css or not at
+       all. -->
+  <link rel="stylesheet" href="../packages/ui-kit/compositions.css">
 
   <!-- vgpu is an optional PEER dependency of @sondalab/ui-kit: the kit never
        installs it, and effects-gpu.js reaches it through a bare specifier. A
@@ -127,7 +132,6 @@
       }
     }
     .sec-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2.2rem; flex-wrap: wrap; }
-    .sec-idx { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; color: var(--sl-text-muted); }
     .sec-head h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
 
     /* -- hairline-grid gallery (shared by every section on this page) ------ */
@@ -217,6 +221,19 @@
     }
     .g-demo--substrate .substrate p { margin: 0; }
     .g-demo--substrate .substrate__row { position: relative; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    /* THE SUBSTRATE CELLS ARE THE CASE THE LENS DEFAULT PROTECTS AGAINST, INVERTED.
+       glass-lens.js reads --slg-lens-disperse as a pixel budget for how far the
+       red and blue channels of the backdrop land apart, and its default of 18
+       (4.3px) was fitted on a pane with TEXT behind it -- the comment there
+       records 13px reading as a broken render rather than as a prism. Behind
+       these cells is backdrop.svg, a picture. Nothing back there has letterforms
+       to fringe, so this is the surface the lens's own note says should be
+       raising it: "a surface laid over a picture or a bed has no such reader".
+       48 asks for ~11.5px of separation, and the reach asks past the geometric
+       cap so each box bends as far as its own shorter side allows. Page-local
+       on purpose: it is a property of what THIS page put behind the glass, not
+       of any component. */
+    .g-demo--substrate { --slg-lens-disperse: 48; --slg-lens-reach: 28px; }
     /* The glass text's type is the SURFACE's: the kit ships the cut, not the
        face. The mask follows these declarations because it is measured off the
        element. */
@@ -236,22 +253,11 @@
     .glass-text-slot { position: relative; display: inline-grid; }
     .glass-text-slot > * { grid-area: 1 / 1; }
 
-    /* -- inversion band: the Tier-B remap components.css already documents,
-       extended to all three border roles — the glass fallback reads the strong/
-       subtle pair to build --slfx-edge-hi/lo/mid/tint, so a remap of --slc-border
-       alone leaves the ring on the wrong ground even though it now resolves on
-       the edge itself rather than at :root (effects.css). ------------------- */
-    .invert { background: var(--sl-text-primary); color: var(--sl-bg-canvas); }
-    .invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 60%, transparent); }
-    .g-cell .invert {
-      --slc-text: var(--sl-bg-canvas);
-      --slc-text-secondary: color-mix(in srgb, var(--sl-bg-canvas) 82%, transparent);
-      --slc-text-muted: color-mix(in srgb, var(--sl-bg-canvas) 62%, transparent);
-      --slc-surface: color-mix(in srgb, var(--sl-text-primary) 86%, var(--sl-bg-canvas));
-      --slc-border: color-mix(in srgb, currentColor 22%, transparent);
-      --slc-border-strong: color-mix(in srgb, currentColor 38%, transparent);
-      --slc-border-subtle: color-mix(in srgb, currentColor 12%, transparent);
-    }
+    /* -- inversion band: nothing here any more. The page hand-rolled the remap
+       until 0.10.0, including the strong/subtle pair the glass fallback needs
+       for --slfx-edge-hi/lo/mid; .sl-invert ships all of it. The deletion is
+       the point — a page that kept its own copy could not tell a working
+       shipped class from a shadowed one. ----------------------------------- */
 
     /* -- 05 declension: asymmetric split — the unexpected composition call -- */
     .declension-split { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
@@ -264,6 +270,12 @@
     @media (min-width: 860px) { .fam-index { position: sticky; top: 4.5rem; } }
     .declension-split .gallery { margin-top: 0; }
 
+    /* A pane that FILLS the wrapper is the case the stand-down is for: one that
+       sits in the middle with room around it has somewhere to swell into and
+       shows nothing. The radius goes too — the wrapper already carries one, and
+       two concentric radii read as a button pasted on a frame. */
+    .clip-pane { width: 100%; height: 100%; border-radius: 0; }
+
     /* .sl-field__control now ships from effects.css itself, including the
        control-fill rule this page never had — no page-local rule needed. */
 
@@ -272,13 +284,14 @@
        layer's `position: relative` and detach the ring from the dialog. */
     dialog.sl-dialog[open] { position: relative; margin: 0; max-width: none; width: auto; }
 
-    /* -- round icon-only button: the one silhouette the gooey belongs to.
-       components.css has no icon-button class yet; the page sizes a .sl-btn
-       square and re-parametrises its radius to the pill — which is exactly
-       the case the liquid's markup gate protects (a measured radius would
-       have to guess). ---------------------------------------------------- */
-    .round { width: 2.5rem; height: 2.5rem; padding: 0; border-radius: var(--sl-radius-pill); }
-    .round svg { width: 1rem; height: 1rem; display: block; }
+    /* -- the round icon-only button ships as .sl-icon-btn--round since 0.10.0.
+       The page sized a .sl-btn square and re-parametrised its radius until
+       then; nothing page-local is left. sl-fx-liquid--drop is not a CSS class
+       at all — it is a JavaScript selector gate (LIQUID_HOSTS in effects.js) —
+       so the liquid needs no binding for this component, which is exactly why
+       the drifted row went unnoticed: it never broke, it was just never true
+       of this page. ------------------------------------------------------- */
+    .sl-icon-btn svg { width: 1rem; height: 1rem; display: block; }
 
     /* -- §05 goo: the substance needs room, so every field here carries its own
        padding rather than relying on the cell's. The reach is --slfx-goo-reach
@@ -385,7 +398,7 @@
 
     <section id="glitch" data-back="GLITCH">
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">01</span><h2>Glitch</h2></div>
+        <div class="sec-head"><span class="sl-section__idx">01</span><h2>Glitch</h2></div>
         <p class="cap">Something re-resolved. Two ghost channels off <b>--slc-accent</b> and <b>--slfx-depth</b>, blended with <b>mix-blend-mode: screen</b>. JS owns timing only — <b>burst()</b> runs one finite, randomised pulse (200–500ms, capped at 1500ms); a burst requested while another runs is dropped, not queued, because a queue reads as breakage rather than signal. The glitch never uses its host's <b>::before</b>/<b>::after</b> — it lives on a required child <b>&lt;span class="sl-fx-glitch"&gt;</b>, so a button can glitch, sheen and ring all at once without one effect winning by accident.</p>
         <div class="gallery">
           <div class="g-cell">
@@ -434,16 +447,16 @@
 
     <section id="liquid" data-back="LIQUID">
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">02</span><h2>Liquid</h2></div>
+        <div class="sec-head"><span class="sl-section__idx">02</span><h2>Liquid</h2></div>
         <p class="cap">You are recognised. The silhouette gives under the pointer, the content never does: one shared <b>&lt;svg class="sl-fx-liquid__skin"&gt;</b> is parented into the element below its text — its own rounded box plus a drop at the cursor, welded by a goo filter (blur, then alpha contrast, as <b>libraries.dev/gooey</b> does it) and painted in the element's own computed fill and border colours, so hover and active states stay its own. A critically-underdamped spring drives the swell, a few pixels at most; the drop trails the pointer with its own lag, a released shape overshoots and settles, and the skin leaves once the spring is still — non-destructive. The gooey belongs to a round silhouette: only a round icon-only button takes the swell, through <b>.sl-fx-liquid--drop</b> — a modifier written in the markup, never inferred from a measured radius — and nothing else takes it — a container yielding under the pointer reads as a toy; a bare <b>.sl-fx-liquid</b> is inert, and a text button is glass instead (§04). Only one element deforms at a time, and under Tier 2 the chrome The radius is never rewritten: the skin traces whatever the component declared.</p>
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">round, icon-only — the edge gives under the pointer</span>
             <div class="g-demo">
-              <button class="sl-btn sl-btn--ghost round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
+              <button class="sl-icon-btn sl-icon-btn--round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
-              <button class="sl-btn sl-btn--primary round sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora sl-fx-aurora--rim" aria-label="Add">
+              <button class="sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Add">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
               </button>
             </div>
@@ -461,7 +474,7 @@
 
     <section id="aurora" data-back="AURORA">
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">03</span><h2>Aurora</h2></div>
+        <div class="sec-head"><span class="sl-section__idx">03</span><h2>Aurora</h2></div>
         <p class="cap">Attention lives here. The border beam, in CSS at every tier: a 1px arc of light riding the border — the depth companion at its tails, the accent along it, a white-hot core — with a bloom that follows the arc’s own shape and a wash of the same light just inside the edge, its hue drifting a little while it sweeps. Four readings, separated by the fraction of the perimeter lit — never by colour, never by speed: <b>static</b> on focus, <b>sweep</b> for ambient liveness (one per document, granted by <b>grantLive()</b>), <b>busy</b> while real work runs, <b>determinate</b> when the arc length is the value. The aurora renders state; it never is the state — every busy element below also carries <b>aria-busy</b> or <b>role="progressbar"</b>, which is what keeps reduced-motion and high-contrast visitors informed. Where the light is on, the chrome stands down: the edge belongs to attention.</p>
         <div class="gallery">
           <div class="g-cell" style="padding:0">
@@ -506,13 +519,36 @@
             <a class="sl-link sl-fx-aurora sl-fx-aurora--linear" href="../docs/specs/2026-09-08-effects-layer-design.md">read the spec</a>
             <p class="cap">A link's underline, a tab's active bar, an inversion band's rule: the aurora sweeps a segment instead of a perimeter, and never becomes a ring there.</p>
           </div>
+          <div class="g-cell">
+            <span class="g-label">segmented — the selected item is filled</span>
+            <div class="g-demo">
+              <div class="sl-segmented" role="tablist" aria-label="Tier">
+                <button class="sl-segmented__item sl-fx-aurora sl-fx-aurora--rim" role="tab" aria-selected="true">Tier 0</button>
+                <button class="sl-segmented__item" role="tab" aria-selected="false">Tier 1</button>
+                <button class="sl-segmented__item" role="tab" aria-selected="false">Tier 2</button>
+              </div>
+            </div>
+            <p class="cap">Only the selected item carries the aurora — <b>attention lives here</b> means the one that is active, and lighting all three would say nothing. It takes <b>--rim</b> rather than the tab's <b>--linear</b> because a selected item is <em>filled</em>: a filled element has no edge for the arc to inhabit, so the arc steps just outside the fill, in the accent's depth companion rather than in the accent the fill is made of. At rest the ring is quiet — tab to the selected item to see it light: that is the <b>static</b> reading, which lives on <b>:focus-visible</b>, not on the eye alone. There is no <b>data-sl-fx-live</b> here and no ambient grant either: a sweep says <em>liveness</em>, and a selected item is not alive, it is chosen.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">skeleton — the wait is real work</span>
+            <div class="g-demo">
+              <div class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy" aria-busy="true"
+                   aria-label="Loading probe results" style="padding:1.1rem; display:grid; gap:0.55rem; min-width:15rem">
+                <span class="sl-skeleton" style="height:0.9rem; width:60%"></span>
+                <span class="sl-skeleton" style="height:0.9rem; width:100%"></span>
+                <span class="sl-skeleton" style="height:0.9rem; width:82%"></span>
+              </div>
+            </div>
+            <p class="cap">The aurora goes on the <b>container</b>, never on the individual bars: one operation is loading, not three. <b>aria-busy="true"</b> is not decoration — the aurora renders state and never <em>is</em> the state, so a screen-reader user, a reduced-motion visitor and a high-contrast visitor all get the fact from the markup while the light is merely how it looks. Busy auroras are exempt from the one-ambient-per-document budget, because they are bound to work that is genuinely running.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="glass" data-back="GLASS">
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">04</span><h2>Glass</h2></div>
+        <div class="sec-head"><span class="sl-section__idx">04</span><h2>Glass</h2></div>
         <p class="cap">This is a physical surface. Under Tier 2 the element’s own border becomes chrome: its <b>border-radius</b> and <b>border-width</b> are read into a signed distance field, and a hairline exactly that wide reflects a moving environment — bright and dark bands, the product’s hue as pastel flecks between them, never a tint over the whole ring — with one soft halo wandering around the edge and a bright spot under the cursor. The chrome’s two poles sit around the page’s own ground, on ink and on paper alike. Without a GPU the same border carries a static conic hairline; glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives an edge, and while the aurora is lit it owns that edge. Every text button, primary or ghost, is a <b>pane</b> — made of glass, not merely edged with it: a slab of light on <b>::before</b> under the label, a glint that follows the pointer, and a hairline that turns to face it fringed with the accent on one side and the depth companion on the other, which is what refraction looks like on an edge. The label is never refracted.</p>
         <div class="gallery">
           <div class="g-cell">
@@ -536,6 +572,20 @@
             <p class="cap">A mask clips a <b>backdrop-filter</b>'s output, so a pane masked to its own glyphs leaves glass in the <em>shape</em> of the text. <b>glass-text.js</b> measures the element — face, size, weight, tracking, and the real ascent off a canvas — and writes an SVG <b>&lt;text&gt;</b> mask in page pixels; nothing about the type is declared in the kit, so a surface restyles it in CSS alone. An unmasked copy is seated before the host to carry the light, because a glow inside the host would be masked away with it, and the module keeps the two strings in step so a scramble decodes in both at once. One line only: SVG text does not wrap.</p>
           </div>
           <div class="g-cell">
+            <span class="g-label">oversized anchor · stat value</span>
+            <div class="g-demo g-demo--substrate">
+              <div class="substrate__row" style="display:grid; gap:0.9rem">
+                <span class="glass-text-slot">
+                  <h3 class="sl-anchor sl-fx-glass sl-fx-glass--text sl-fx-glass--pane" style="font-size:clamp(2.2rem,5vw,3.4rem)">Refraction</h3>
+                </span>
+                <span class="glass-text-slot">
+                  <span class="sl-stat__value sl-fx-glass sl-fx-glass--text sl-fx-glass--pane">1680</span>
+                </span>
+              </div>
+            </div>
+            <p class="cap">L1 says where a display-scale heading or numeral wants to be more than a hairline tick, the variation goes on <b>shape and colour, never on the face</b> — so the glyphs are cut out of a material rather than set in a second typeface. The anchor keeps the display serif and the stat keeps Martian Mono; nothing about the type is declared by the kit, so a surface restyles either in CSS alone. The figure is real: <b>1680</b> ms is what the goo field cost after the optimisation, down from 9990.</p>
+          </div>
+          <div class="g-cell">
             <span class="g-label">keycap</span>
             <span>Press <kbd class="sl-kbd sl-fx-glass">⌘</kbd><kbd class="sl-kbd sl-fx-glass">K</kbd></span>
             <p class="cap">The keycap edge is glass at rest, always — a keycap never takes focus, so it never has an attention state.</p>
@@ -545,7 +595,16 @@
             <p class="cap">An <b>&lt;input&gt;</b>, <b>&lt;textarea&gt;</b> or <b>&lt;select&gt;</b> renders no <b>::before</b>/<b>::after</b> of its own — the browser owns that box. Wrap it in <b>.sl-field__control</b> instead; the field entry in <a class="sl-link" href="#declension">§06 Declension</a> below carries the live example.</p>
           </div>
           <div class="g-cell" style="padding:0">
-            <div class="invert" style="padding:1.4rem">
+            <div class="sl-invert" style="padding:1.4rem">
+              <!-- Glass-text on ink. The glow's light is read
+                   var(--slfx-text-light, var(--slc-text, ...)) at the point of
+                   use, and .sl-invert > * binds --slc-text to the band's
+                   canvas, so the band's foreground lights it with nothing bound
+                   here. compositions.css carried a block for this and it was
+                   measurably a no-op; it is gone. -->
+              <div class="substrate__row glass-text-row" style="margin-bottom:1.1rem">
+                <span class="glass-text-slot"><span class="glass-text-word sl-fx-glass sl-fx-glass--text sl-fx-glass--pane">on ink</span></span>
+              </div>
               <article class="sl-card sl-fx-glass" style="padding:1.2rem">
                 <h3 class="sl-card__title">On ink</h3>
                 <p class="sl-card__body">The band remaps all three border roles — <b>--slc-border</b>, <b>--slc-border-strong</b>, <b>--slc-border-subtle</b> — off <b>currentColor</b>. This card's own 1px border reads the first directly; the glass ring's <b>--slfx-edge-*</b> stops read the other two, resolved on the edge itself rather than at <b>:root</b>, so both survive the strongest neutral.</p>
@@ -553,13 +612,59 @@
             </div>
             <span class="g-label" style="padding:0.9rem 1.4rem">without the full remap, either the card's border or the ring (or both) inherit a canvas-oriented default and sit invisible on ink</span>
           </div>
+          <div class="g-cell">
+            <span class="g-label">a pane inside a wrapper that clips</span>
+            <div class="g-demo" style="align-items:flex-end; gap:1.4rem">
+              <figure class="sl-figure" style="width:9.5rem; margin:0">
+                <div class="sl-figure__media sl-fx-glass sl-fx-glass--wide" style="aspect-ratio: 16 / 9">
+                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane">Open</button>
+                </div>
+                <figcaption class="sl-figure__caption">stood down</figcaption>
+              </figure>
+              <figure class="sl-figure" style="width:9.5rem; margin:0">
+                <!-- The default put back by hand. This is the defect, not a
+                     second way to write the composition. -->
+                <div class="sl-figure__media" style="aspect-ratio: 16 / 9; --slfx-pane-swell: 1.03">
+                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane">Open</button>
+                </div>
+                <figcaption class="sl-figure__caption">swell left on</figcaption>
+              </figure>
+              <button class="sl-avatar sl-avatar--lg sl-fx-glass sl-fx-glass--pane" aria-label="Open the sondalab profile">
+                <span class="sl-monogram" aria-hidden="true">s</span>
+              </button>
+            </div>
+            <p class="cap">Hover the first two. <b>.sl-figure__media</b> sizes its contents and clips them (<b>overflow: hidden</b>), so a pane filling it has nowhere to swell into: at <b>1.03</b> its 1px rim and the glint along its top cross the wrapper's edge and are cut, and the pane loses its edge at exactly the moment it is being pointed at. <b>compositions.css</b> binds <b>--slfx-pane-swell: 1</b> there. <b>.sl-avatar</b> clips as well and is deliberately left out: its contract admits an image or the monogram rather than a pane, and the composition it does have with glass is <em>being</em> a pane — a clickable avatar — whose swell nothing clips. The property is read with its default <em>at the point of use</em> in <b>effects.css</b> — never declared on the pane — which is what lets a value set on the wrapper reach the pane and the light seated before it together.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">switch track — withdrawn: the track's own <code>::after</code> is the knob</span>
+            <div class="g-demo" style="gap:1.4rem; align-items:center">
+              <label class="sl-switch">
+                <input class="sl-switch__input" type="checkbox" role="switch" checked>
+                <span class="sl-switch__track"></span>
+                <span class="sl-switch__label">Tier 2 GPU effects</span>
+              </label>
+              <span class="sl-kbd sl-fx-glass">esc</span>
+            </div>
+            <p class="cap">Not a scale problem: the track's own <b>::after</b> is the knob, and the glass ring is also painted on <b>::after</b> — one pseudo-element, two claims on it. Put the class on the track and the ring rule wins: <b>opacity: 0</b>, a conic-gradient background, no rule left that draws the knob back. No error, no warning, the switch just stops having a moving part. The keycap beside it, still glass, is the contrast that makes the finding legible: the family works fine where <b>::before</b>/<b>::after</b> is free, and fails silently where it is not.</p>
+          </div>
+          <div class="g-cell">
+            <span class="g-label">button group — glass on the members, never on the group</span>
+            <div class="g-demo" style="display:grid; gap:1.2rem; justify-items:start">
+              <div class="sl-btn-group" role="group" aria-label="Probe">
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane">Run</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane">Re-run</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane">Save</button>
+              </div>
+            </div>
+            <p class="cap">They are text buttons, so panes are not wrong — but the glass never goes on <b>.sl-btn-group</b> itself. A group's <b>background</b> is not a surface; it <b>is</b> the 1px rule between its members, and the material clears whatever background the host had so its own tint layer can paint instead. Measured on the group: glass on it took the computed background to <b>rgba(0, 0, 0, 0)</b> — the rule between members gone, silently. Left on the members, as above, that background survives untouched (<b>--slc-border</b>). A second, independent reason stacks on top of the first: the group also clips (<b>overflow: hidden</b>), so the shared ring — drawn at <b>inset: -1px</b> — would be cut at the group's own edges regardless of the background question.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="goo" data-back="GOO">
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">05</span><h2>Goo</h2></div>
+        <div class="sec-head"><span class="sl-section__idx">05</span><h2>Goo</h2></div>
         <p class="cap">These are one substance. Where the liquid answers the pointer on one element, the goo answers the <b>layout</b> across several: a container carries <b>.sl-fx-goo</b> and owns one <b>&lt;svg class="sl-fx-goo__field"&gt;</b>, every <b>.sl-fx-goo__member</b> contributes its rounded box to that field in the container's own coordinates, and a single goo filter runs over the group. Two silhouettes can only weld if they share a filter coordinate space — which is why this is a family of its own and not a looser gate on <a class="sl-link" href="#liquid">§02</a>: the liquid's skin is parented <i>into</i> one host and is structurally incapable of merging with a neighbour. The meaning differs too. Not <i>you are recognised</i> but <i>these belong to one another</i>, so it marks a set, never a state. The content is never filtered: the field is a silhouette layer below the members and the real DOM rides crisp on top.</p>
         <div class="gallery">
           <div class="g-cell">
@@ -614,7 +719,7 @@
 
     <section id="declension" data-back="FORM">
       <div class="wrap">
-        <div class="sec-head"><span class="sec-idx">06</span><h2>Declension</h2></div>
+        <div class="sec-head"><span class="sl-section__idx">06</span><h2>Declension</h2></div>
         <p class="cap">Every family, applied to the shipped <b>.sl-*</b> classes from <b>@sondalab/ui-kit/components.css</b> — never all four per component, and never one because it was available. The mapping is <b>docs/specs/2026-09-08-effects-layer-design.md</b> §Per-component declension; <b>sl-audit</b> checks colour, not this.</p>
         <div class="declension-split">
           <nav class="fam-index" aria-label="Effect families">
@@ -634,7 +739,7 @@
               <div class="g-demo">
                 <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
                 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
-                <button class="sl-btn sl-btn--ghost round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
+                <button class="sl-icon-btn sl-icon-btn--round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
                   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
               </div>
@@ -657,6 +762,23 @@
                 </span>
               </label>
               <p class="cap">— never liquid: a field that deforms while typed into trades legibility for spectacle. ● glass + ● aurora bind to the <b>.sl-field__control</b> wrapper, since the <b>&lt;input&gt;</b> itself hosts no pseudo-element.</p>
+            </div>
+            <div class="g-cell">
+              <span class="g-label">select — the wrapper carries the effect, not the control</span>
+              <div class="g-demo" style="display:grid; gap:1.1rem">
+                <label class="sl-field">
+                  <span class="sl-field__label">Wrapped in .sl-field__control</span>
+                  <span class="sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field">
+                    <span class="sl-select">
+                      <select class="sl-field__input">
+                        <option>components.css</option>
+                        <option>effects.css</option>
+                      </select>
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <p class="cap">A replaced control hosts no <b>::before</b>/<b>::after</b> — the browser owns that box — so the effect must land on a wrapper or it renders nothing at all, with no error. <b>.sl-select</b> <em>is</em> a wrapper, but its own <b>::after</b> is already the chevron, and both families paint their ring on <b>::after</b> too — so the classes go on <b>.sl-field__control</b> instead, and the two pseudo-element layers then live on different elements. Measured, not argued: with the classes moved onto <b>.sl-select</b> directly, the chevron's <b>opacity</b> computed to <b>0</b> and its box took the ring's <b>conic-gradient</b> — the same silent loss the switch knob took.</p>
             </div>
             <div class="g-cell">
               <span class="g-label">tabs</span>
@@ -729,10 +851,10 @@
             <div class="g-cell">
               <span class="g-label">eyebrow · section index</span>
               <p class="sl-eyebrow">Section eyebrow</p>
-              <p class="cap">Scrambles once as it enters the viewport — every <b>.sec-idx</b> on this page (<b>01</b>…<b>06</b>) does exactly this; scroll away and back to watch one re-run.</p>
+              <p class="cap">Scrambles once as it enters the viewport — every <b>.sl-section__idx</b> on this page (<b>01</b>…<b>06</b>) does exactly this; scroll away and back to watch one re-run.</p>
             </div>
             <div class="g-cell" style="padding:0">
-              <div class="invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top" style="padding:1.4rem">
+              <div class="sl-invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top" style="padding:1.4rem">
                 <p class="sl-eyebrow">On ink</p>
                 <div class="g-demo" style="margin-top:0.7rem">
                   <span class="sl-tag">Inverted</span>
@@ -864,7 +986,7 @@
       const io = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) { if (entry.isIntersecting) scramble(entry.target); });
       }, { threshold: 0.6 });
-      document.querySelectorAll(".sec-idx").forEach(function (el) { io.observe(el); });
+      document.querySelectorAll(".sl-section__idx").forEach(function (el) { io.observe(el); });
     }
 
     // Tier 2 is additive: everything above already works without it, and the label

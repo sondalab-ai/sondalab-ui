@@ -25,7 +25,15 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 ## Components (`components.css`)
 
-Primitives: `.sl-eyebrow`, `.sl-tag` (`--plain`), `.sl-btn` (`--primary` / `--ghost` / `--sm`), `.sl-card` (`__title` / `__body`), `.sl-badge` (`--success` / `--warning` / `--danger` / `--info`), `.sl-field` (`__label` / `__input`), `.sl-kbd`, `.sl-code`, `.sl-link`, `.sl-rule` (`--labeled`).
+Primitives: `.sl-eyebrow`, `.sl-tag` (`--plain`), `.sl-btn` (`--primary` / `--ghost` / `--sm`), `.sl-card` (`__title` / `__body`), `.sl-badge` (`--success` / `--warning` / `--danger` / `--info`), `.sl-field` (`__label` / `__input` / `__control`), `.sl-kbd`, `.sl-code`, `.sl-link`, `.sl-rule` (`--labeled`).
+
+Form controls: `.sl-check`, `.sl-radio`, `.sl-switch` (each `__input` / `__box`-or-`__track` / `__label`), `.sl-select` (a wrapper on `.sl-field__control`).
+
+Navigation & state: `.sl-breadcrumb` (`__item` / `__sep`), `.sl-btn-group`, `.sl-segmented` (`__item`), `.sl-icon-btn` (`--round`), `.sl-pagination` (`__item`), `.sl-empty` (`__title` / `__body`), `.sl-skeleton`, `.sl-stat` (`__value` / `__label`).
+
+Identity & media: `.sl-wordmark` (`__dot`), `.sl-lockup` (`__dot`), `.sl-monogram`, `.sl-figure` (`__media` / `__caption`), `.sl-avatar` (`--sm` / `--lg`).
+
+Patterns (page-level composition, shipped classes since 0.10.0): `.sl-wrap`, `.sl-prose`, `.sl-header`, `.sl-invert`, `.sl-hgrid`, `.sl-section` (`__head` / `__idx`), `.sl-anchor`.
 
 Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`).
 
@@ -40,6 +48,7 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
   --slc-accent-active:  var(--your-accent-active);
   --slc-accent-subtle:  var(--your-accent-tint);   /* ~12% accent over surface */
   --slc-on-accent:      var(--your-on-accent);     /* text on a filled accent */
+  --slc-canvas:         var(--your-canvas);        /* the page ground, below surface */
   --slc-surface:        var(--your-surface);
   --slc-raised:         var(--your-raised);
   --slc-overlay:        var(--your-overlay);        /* dialog backdrop */
@@ -55,11 +64,16 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
 }
 ```
 
-**Inversion bands.** `--slc-border` defaults to an alpha-over-canvas value; inside a band whose background is the strongest neutral (`.invert`), that alpha sits on the wrong ground and the hairline disappears. Re-derive it at the band from the band's foreground — no new token:
+**Inversion bands.** `.sl-invert` ships the fix. Inside a band whose background is the strongest neutral, `--slc-border`'s alpha-over-canvas value sits on the wrong ground and the hairline disappears — and a component that paints its own surface keeps the light one under re-derived light text. The class re-derives the border, text **and surface** role-vars from the band's own foreground, on its children, so any component placed inside keeps a visible edge and a ground it can be read against. A product rolling its own band does the same by hand:
 
 ```css
-.invert { --slc-border: color-mix(in srgb, currentColor 22%, transparent); }
+.invert > * {
+  --slc-border:  color-mix(in srgb, currentColor 22%, transparent);
+  --slc-surface: color-mix(in srgb, currentColor 7%, transparent);
+}
 ```
+
+The re-derivation sits on the children, not on the band: a custom property whose value references one declared on the same element is a cycle, and CSS makes every property in a cycle invalid — the band would paint itself its own foreground.
 
 The full reference implementation — every component in all three themes — is `showcase/index.html` (§04).
 
@@ -69,7 +83,10 @@ Five additive families, each carrying one meaning, composed onto a shipped `.sl-
 
 ```css
 @import "@sondalab/ui-kit/effects.css";   /* after components.css */
+@import "@sondalab/ui-kit/compositions.css"; /* optional, AFTER effects.css — bindings only */
 ```
+
+**Compositions.** `compositions.css` is an optional stylesheet carrying the custom-property bindings a composition needs: today, the pane-swell stand-down on `.sl-figure__media`, where a pane filling the media box would have its 3% hover swell and its seated light cut by the wrapper's `overflow: hidden`. It contains no paint and no new class, and is inert without `effects.css`. The canonical class string per component lives in `agent/catalog.md` § Effects.
 
 ```js
 import { mount, mountGpu, burst, autoBurst, hoverBurst, scramble, grantLive } from "@sondalab/ui-kit/effects.js";

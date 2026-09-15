@@ -120,6 +120,39 @@ function buildMap(w, h) {
   return { href: canvas.toDataURL(), scale: maxScale };
 }
 
+/** Red-to-blue separation, in CSS pixels, per unit of `disperse`. At the
+ *  fitted default of 18 that is the 4.32px fringe the prism was judged at on
+ *  lab/1t and lab/1v. Exported so the figure lives in one place: refresh()
+ *  and the guard that holds it to 4.32 must not each carry their own copy. */
+export const PX_PER_DISPERSE = 0.24;
+
+/** The three displacement scales for one bend, red bent least.
+ *
+ *  Split out of refresh() because it is the whole of the optical model and
+ *  none of the DOM: a pure function can be held to its invariants by a test,
+ *  and the invariant below was broken in the shipped tree for want of one.
+ *
+ *  @param {number} capped the bend the box allows, already capped
+ *  @param {number} disperse the asked-for prism, as a pixel budget
+ *  @returns {{r: number, g: number, b: number}} feDisplacementMap scales
+ */
+export function channelScales(capped, disperse) {
+  // THE SPLIT CANNOT EXCEED TWICE THE BEND. It is symmetric about `capped`, so
+  // a split wider than 2 * capped sends red PAST zero and out the other side —
+  // and a negative scale on an feDisplacementMap does not fail, it displaces
+  // the channel the opposite way. That is not the IOR triple at a lower
+  // amplitude but a different claim about the glass: red leaning the wrong
+  // side of every edge. Measured on the showcase before this bound existed,
+  // at the aurora's disperse of 90: ten of sixteen aurora hosts had a negative
+  // red, a 32px icon button worst at -5.61 against a green of 5.19.
+  // Clamping the SPLIT rather than the asked-for disperse is what keeps the
+  // bound invisible where the prism already fitted: on a panel with room for
+  // the full 21.6px nothing here changes, and a small host gets the widest
+  // prism its own box can hold instead of a broken one.
+  const split = Math.min(disperse * PX_PER_DISPERSE, 2 * capped);
+  return { r: capped - split / 2, g: capped, b: capped + split / 2 };
+}
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /**
@@ -172,7 +205,22 @@ export function lens(el, look = {}) {
   // take. This is the narrow case the platform forbids, and nothing more.
   if (el.parentElement?.closest(".sl-glass, .sl-fx-glass")) return null;
 
-  const { blur = 0.25, saturate = 1.1, brightness = 1.05, disperse = 18, reach = 6 } = look;
+  // blur 1.5 and disperse 90: A LENS YOU CAN SEE, which is the owner's ruling
+  // and is not what either number was before. The two fight, and measurement
+  // is what settled them. The bend is capped at a sixth of the shorter side —
+  // 6.2px on a 37px field — so a frost of 5.9 erases exactly the detail the
+  // bend moved: toggling the displacement off that field changed the interior
+  // by at most 10/255, and forcing the bend to 18 with the frost up changed
+  // nothing visible at all. The frost is the limiting knob, not the bend.
+  // At 1.5 the copy behind a pane is a legible ghost rather than a smear, and
+  // that is the cost the ruling accepts to get refraction on a small host.
+  //
+  // 90 is sondalab.eu's prism, 21.6px of red-to-blue, and it is safe to make
+  // it the default ONLY because channelScales() bounds the split: a box with
+  // no room gets the widest prism it can hold instead of a red channel
+  // displaced backwards. Before that bound this default would have broken ten
+  // of sixteen aurora hosts.
+  const { blur = 1.5, saturate = 1.1, brightness = 1.05, disperse = 90, reach = 6 } = look;
   const id = `sl-lens-${serial++}`;
 
   const svg = document.createElementNS(SVG_NS, "svg");
@@ -323,10 +371,13 @@ export function lens(el, look = {}) {
      // prism; a surface laid over a picture or a bed has no such reader, and
      // that is the surface that should be raising it.
      const askedSplit = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-disperse"));
-     const split = (Number.isFinite(askedSplit) ? askedSplit : disperse) * 0.24;
-    dispR.setAttribute("scale", String(capped - split / 2));
-    dispG.setAttribute("scale", String(capped));
-    dispB.setAttribute("scale", String(capped + split / 2));
+     // The arithmetic, and the bound on it, are channelScales() above — a pure
+     // function so the invariant it holds can be executed by a guard rather
+     // than read off a comment.
+     const bend = channelScales(capped, Number.isFinite(askedSplit) ? askedSplit : disperse);
+    dispR.setAttribute("scale", String(bend.r));
+    dispG.setAttribute("scale", String(bend.g));
+    dispB.setAttribute("scale", String(bend.b));
   }
 
   refresh();

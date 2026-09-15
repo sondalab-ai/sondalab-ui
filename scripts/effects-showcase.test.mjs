@@ -29,10 +29,13 @@ test("the showcase applies all five families to real elements", () => {
 });
 
 test("every busy aurora in the showcase carries its ARIA", () => {
-  // The aurora renders state; it never is the state.
-  const busy = html.match(/data-sl-fx-live="busy"[^>]*/g) || [];
-  assert.ok(busy.length > 0, "the showcase must demonstrate the busy mode");
-  for (const tag of busy) {
+  // The aurora renders state; it never is the state. Match the WHOLE tag, not
+  // the tail after the attribute: a host with aria-busy written before
+  // data-sl-fx-live would pass a tail-only scan while meaning the same thing,
+  // and a host with no ARIA at all would pass if the tag ended there.
+  const tags = [...html.matchAll(/<[a-z][^>]*data-sl-fx-live="busy"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(tags.length > 0, "the showcase must demonstrate the busy mode");
+  for (const tag of tags) {
     assert.ok(
       /aria-busy="true"|role="progressbar"/.test(tag),
       `busy aurora without ARIA: ${tag}`,
@@ -86,19 +89,304 @@ test("every text button is a glass pane; only a round icon-only button goes gooe
   // belongs to round icon-only buttons (--drop, an aria-label because there
   // is no text), and every other button is made of glass (--pane), whatever
   // its variant. A bare .sl-fx-liquid on a button is a mistake either way.
-  const buttons = [...html.matchAll(/<button class="([^"]*\bsl-btn\b[^"]*)"([^>]*)>/g)];
+  //
+  // Match the WHOLE tag first, then pull `class` out of it wherever it sits —
+  // the same fix already applied to the ARIA test above. `class="…"` right
+  // after `<button ` was the only order this ever matched: a
+  // `<button type="button" class="…">` passed this fence by never being seen
+  // at all, not by carrying the right classes.
+  const buttons = [...html.matchAll(/<button\b[^>]*>/g)]
+    .map((m) => m[0])
+    .map((tag) => [tag, tag.match(/\bclass="([^"]*)"/)])
+    .filter(([, m]) => m && /\bsl-btn\b/.test(m[1]))
+    .map(([tag, m]) => [tag, m[1]]);
   assert.ok(buttons.length >= 8, "the showcase must show its buttons");
-  let drops = 0;
-  for (const [tag, cls, attrs] of buttons) {
-    if (/\bsl-fx-liquid\b/.test(cls)) {
-      assert.match(cls, /\bsl-fx-liquid--drop\b/, `a liquid button must be --drop: ${tag}`);
-      assert.match(attrs, /aria-label=/, `a --drop button is icon-only and needs an aria-label: ${tag}`);
-      assert.doesNotMatch(cls, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
-      drops++;
-    } else {
-      assert.match(cls, /\bsl-fx-glass--pane\b/, `a text button must be a glass pane: ${tag}`);
-      assert.match(cls, /\bsl-fx-glass\b/, `--pane requires .sl-fx-glass: ${tag}`);
-    }
+  for (const [tag, cls] of buttons) {
+    assert.match(cls, /\bsl-fx-glass--pane\b/, `a text button must be a glass pane: ${tag}`);
+    assert.match(cls, /\bsl-fx-glass\b/, `--pane requires .sl-fx-glass: ${tag}`);
   }
-  assert.ok(drops >= 1, "the gooey must have somewhere to demonstrate: a round icon-only button");
+});
+
+test("the showcase imports compositions.css, after effects.css", () => {
+  const links = [...html.matchAll(/<link[^>]*href="([^"]*\.css)"/g)].map((m) => m[1]);
+  const fx = links.findIndex((h) => h.endsWith("effects.css"));
+  const comp = links.findIndex((h) => h.endsWith("compositions.css"));
+  assert.ok(comp > -1, "the page must import compositions.css, or nothing on it tests that file");
+  assert.ok(fx > -1 && comp > fx, "compositions.css binds properties effects.css reads: it must come after");
+});
+
+test("the showcase declares none of the bindings compositions.css owns", () => {
+  // The page is only a test of that file while it does not hand-roll the same
+  // values: a page-local copy makes a working shipped stylesheet and a shadowed
+  // one indistinguishable. The property list is read OUT of the stylesheet, so
+  // a binding added or dropped there is covered without editing this test.
+  // Scoped to the page's own <style>, because the prose below the demos
+  // legitimately names these properties.
+  const comp = readFileSync(resolve(REPO, "packages/ui-kit/compositions.css"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const owned = [...new Set([...comp.matchAll(/(--slfx-[a-z0-9-]+)\s*:/g)].map((m) => m[1]))];
+  assert.ok(owned.length > 0, "compositions.css must declare at least one binding");
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  for (const prop of owned) {
+    assert.doesNotMatch(
+      style, new RegExp(`${prop}\\s*:`),
+      `${prop} ships in compositions.css — a page-local declaration hides whether it works`,
+    );
+  }
+});
+
+test("every binding compositions.css owns has something on the page to act on", () => {
+  // A binding whose selector matches nothing is inert whether it works or not.
+  const comp = readFileSync(resolve(REPO, "packages/ui-kit/compositions.css"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const selectors = [...comp.matchAll(/^([.][a-z0-9_ ,.\-\n]*?)\s*\{/gm)]
+    .flatMap((m) => m[1].split(","))
+    .map((s) => s.trim().replace(/^\./, ""))
+    .filter(Boolean);
+  assert.ok(selectors.length > 0, "compositions.css must declare at least one rule");
+  for (const cls of selectors) {
+    assert.match(
+      html, new RegExp(`class="[^"]*\\b${cls.replace(/[-]/g, "[-]")}\\b`),
+      `compositions.css binds .${cls}, and the showcase renders no such element`,
+    );
+  }
+});
+
+test("the showcase uses the shipped inversion band, not a hand-rolled one", () => {
+  // .sl-invert carries the three-role remap the glass fallback needs
+  // (--slfx-edge-hi/mid read --slc-border-strong). The page hand-rolled it
+  // until 0.10.0; a re-introduced local band would silently take over.
+  assert.match(html, /class="sl-invert\b/, "the band must be the shipped class");
+  // `-` is a word boundary, so \binvert\b matches sl-invert too: exclude a
+  // preceding hyphen or word character explicitly.
+  assert.doesNotMatch(html, /class="[^"]*(?<![\w-])invert(?![\w-])/, "no hand-rolled .invert band");
+});
+
+/** The § Effects canonical-strings table, parsed into the class sets it
+ *  promises. The table is documentation until something asserts the page
+ *  actually carries what it lists — a string nobody renders has never been
+ *  seen, which is how the round icon button's row drifted. */
+function canonicalStrings() {
+  const md = readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.md"), "utf8");
+  const start = md.indexOf("**Canonical strings.**");
+  assert.ok(start > -1, "catalog.md must carry the canonical-strings block");
+  const table = md.slice(start, md.indexOf("\n### ", start));
+  const rows = [];
+  for (const line of table.split("\n")) {
+    const m = line.match(/^\|\s*([^|]+?)\s*\|\s*`([^`]+)`\s*\|/);
+    if (!m) continue;
+    if (/^Component$/i.test(m[1])) continue;
+    rows.push({ component: m[1], classes: m[2].trim().split(/\s+/) });
+  }
+  return rows;
+}
+
+test("every canonical string in the catalog is applied on the showcase", () => {
+  const rows = canonicalStrings();
+  // 10 is the table's actual row count, not a number to keep in sync with
+  // content: it is a FLOOR against silent deletion. Delete six of the ten
+  // rows and `>= 4` still passed — the gutted table's own row would be the
+  // last thing to catch that. Raise this number when a row is genuinely
+  // added; never lower it to make a deletion pass.
+  assert.ok(rows.length >= 10, `expected at least 10 canonical-string rows, parsed ${rows.length}`);
+  const attrs = [...html.matchAll(/class="([^"]*)"/g)].map((m) => m[1].split(/\s+/));
+  for (const { component, classes } of rows) {
+    const applied = attrs.some((have) => classes.every((c) => have.includes(c)));
+    assert.ok(
+      applied,
+      `catalog.md promises "${classes.join(" ")}" for ${component}, and no element on ` +
+        `showcase/effects.html carries all of it. A canonical string nobody renders is a wish.`,
+    );
+  }
+});
+
+test("the drop belongs to a round icon-only button, and nothing else", () => {
+  // sl-fx-liquid--drop is a JavaScript selector gate (LIQUID_HOSTS in
+  // effects.js), not a CSS class, so nothing about the host is checked at
+  // runtime: the markup IS the contract. The gooey belongs to a round
+  // silhouette — on a text button the drop reads as a blister on a box.
+  const tags = [...html.matchAll(/<[a-z][^>]*\bsl-fx-liquid--drop\b[^>]*>/g)].map((m) => m[0]);
+  assert.ok(tags.length >= 1, "the gooey must have somewhere to demonstrate");
+  for (const tag of tags) {
+    assert.match(tag, /\bsl-icon-btn--round\b/, `--drop needs a round silhouette: ${tag}`);
+    assert.match(tag, /aria-label=/, `a --drop host is icon-only and needs an aria-label: ${tag}`);
+    assert.doesNotMatch(tag, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
+  }
+});
+
+test("the section index scramble is bound to the shipped class", () => {
+  // The behaviour predates .sl-section__idx and was wired to a page-local
+  // .sec-idx. A catalog entry that names scramble() while only a local class
+  // receives it is a claim about the kit that the kit does not carry.
+  assert.match(
+    html, /querySelectorAll\("\.sl-section__idx"\)/,
+    "the IntersectionObserver must observe the shipped class",
+  );
+  assert.match(
+    html, /class="[^"]*\bsl-section__idx\b/,
+    "the page must render .sl-section__idx",
+  );
+  // A count of the shipped class would pass at five of six; the honest
+  // assertion is that the page-local class this behaviour used to hang on is
+  // gone entirely. It is deleted from the stylesheet, so any survivor in the
+  // markup is an unstyled leftover the observer no longer reaches.
+  assert.doesNotMatch(
+    html, /class="[^"]*\bsec-idx\b/,
+    "a section head is still on the page-local .sec-idx: the observer no longer reaches it",
+  );
+  // The markup check above cannot see CSS. A re-added `.sec-idx { … }` rule is
+  // the page taking back ownership of something the kit ships, which is the
+  // failure this file has fenced twice; assert the selector is gone from the
+  // page's own <style> too.
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  assert.doesNotMatch(
+    style, /\.sec-idx\b/,
+    "the page-local .sec-idx rule is back: .sl-section__idx ships this, and a local copy shadows it",
+  );
+});
+
+/** The extents of every `data-sl-fx="off"` subtree, as [start, end) offsets
+ *  into `src` (the page source by default; overridable so tests can probe it
+ *  with a synthetic fixture instead of editing the page). A grant inside one
+ *  of these is inert by design — the kill switch beats the grant — so the
+ *  ambient budget must not count it.
+ *
+ *  This is a text scan, not a DOM, and the technique has real limits. It
+ *  matches the opening tag that carries `data-sl-fx="off"`, whatever element
+ *  it is — `<div>`, `<section>`, anything — then depth-counts open/close
+ *  pairs of that SAME tag name from there to find the matching close. It is
+ *  generalised to the tag actually present rather than hardcoded to `<div>`,
+ *  so an off-region rooted on a different element is still found and its
+ *  grant still excluded, rather than the fence condemning correct markup it
+ *  cannot see.
+ *
+ *  If no matching close is ever found — an unterminated region, a missing
+ *  `</tag>` — depth never reaches 0 and the scan stops there (`break`)
+ *  instead of re-matching the same opening tag forever: `openRe.lastIndex`
+ *  is never rewound to a point already visited. That is a stop, not a
+ *  correction — an unterminated region's grants are not excluded, so on
+ *  already-broken markup the fence goes red rather than hanging or passing
+ *  vacuously.
+ *
+ *  It would still be fooled by a self-closing or malformed root tag (a
+ *  `<section data-sl-fx="off" />` with no separate close, say), by a literal
+ *  `<tag` appearing inside an attribute value or an HTML comment, or by
+ *  markup that is not well-formed to begin with — it is text matching, not
+ *  parsing, and has no notion of what a comment or an attribute value is. */
+function offRegionExtents(src = html) {
+  const extents = [];
+  const openRe = /<([a-z][a-z0-9]*)\b[^>]*\bdata-sl-fx="off"[^>]*>/g;
+  let open;
+  while ((open = openRe.exec(src))) {
+    const tag = open[1];
+    const tagRe = new RegExp(`<${tag}\\b[^>]*>|</${tag}>`, "g");
+    tagRe.lastIndex = openRe.lastIndex;
+    let depth = 1;
+    let close;
+    while (depth > 0 && (close = tagRe.exec(src))) {
+      depth += close[0].startsWith("</") ? -1 : 1;
+    }
+    if (depth > 0) break; // unterminated: stop the scan instead of re-matching the same tag forever
+    extents.push([open.index, tagRe.lastIndex]);
+    openRe.lastIndex = tagRe.lastIndex;
+  }
+  return extents;
+}
+
+test("offRegionExtents spans to the outer close, not a same-tag child's", () => {
+  const src = '<section data-sl-fx="off"><section>inner</section> data-sl-fx-live="on" tail</section>';
+  const extents = offRegionExtents(src);
+  assert.equal(extents.length, 1, "one outer off-region, despite a same-tag child nested inside it");
+  const [start, end] = extents[0];
+  assert.equal(src.slice(start, end), src, "the extent must reach the OUTER close, not the inner child's");
+});
+
+test("offRegionExtents finds an off-region rooted on a non-div element", () => {
+  const src = '<article data-sl-fx="off"><span data-sl-fx-live="on"></span></article>';
+  assert.equal(offRegionExtents(src).length, 1, "a non-div root must still be found, or its grant goes uncounted-for");
+});
+
+test("offRegionExtents does not hang on an unterminated off-region", () => {
+  const src = '<div data-sl-fx="off"><p>no matching close for this region';
+  assert.deepEqual(offRegionExtents(src), [], "an unterminated region contributes no extent, and the scan still returns");
+});
+
+test("the ambient aurora budget holds: at most one per document, off-regions excluded", () => {
+  // L6 caps ambient work at one aurora, one glitch burst and one deforming
+  // element per document. Busy auroras are exempt — they are bound to real
+  // work and several may legitimately run at once — so they are counted
+  // separately rather than folded in.
+  //
+  // A flat count of data-sl-fx-live="on" would also condemn a grant that sits
+  // inside a data-sl-fx="off" subtree — correct markup, there precisely to
+  // demonstrate that the kill switch beats the grant. The rule this fence
+  // holds is narrower than "count the attribute": it is "count the grants the
+  // page actually honours", so any grant inside an off-region is excluded
+  // from the budget, not just tolerated on this page. See offRegionExtents()
+  // for how that exclusion is found, and its limits.
+  const grants = [...html.matchAll(/data-sl-fx-live="on"/g)].map((m) => m.index);
+  const offRegions = offRegionExtents();
+  const counted = grants.filter(
+    (pos) => !offRegions.some(([start, end]) => pos > start && pos < end),
+  );
+  assert.ok(
+    counted.length <= 1,
+    `L6 grants one ambient aurora per document; the showcase has ${counted.length} outside data-sl-fx="off" regions`,
+  );
+});
+
+test("a markup grant next to a grantLive() call is only safe because grantLive() sweeps the DOM", () => {
+  // The test above counts data-sl-fx-live="on" in the HTML SOURCE only, so it
+  // cannot see a grant handed out at runtime by grantLive(). The showcase has
+  // exactly that shape: "Eight curtains, same pane" declares the grant
+  // statically, and the boot script separately calls grantLive(sweepCard) on
+  // a different element — the combination that produced two ambient auroras
+  // at once until grantLive() was fixed (2026-09-14) to revoke every element
+  // holding the attribute, not only the one it remembers issuing.
+  //
+  // If neither half of that shape is present there is nothing to fence.
+  const offRegions = offRegionExtents();
+  const grants = [...html.matchAll(/data-sl-fx-live="on"/g)].map((m) => m.index);
+  const hasStaticGrant = grants.some(
+    (pos) => !offRegions.some(([start, end]) => pos > start && pos < end),
+  );
+  const scriptStart = html.indexOf('<script type="module">');
+  assert.ok(scriptStart > -1, "the showcase must carry its boot script");
+  const script = html.slice(scriptStart);
+  const callsGrantLive = /\bgrantLive\(/.test(script);
+  if (!hasStaticGrant || !callsGrantLive) return;
+
+  // The page's own combination is only correct because grantLive() reaches
+  // beyond the one element it remembers granting. Pin THAT, in effects.js,
+  // rather than re-deriving the runtime outcome from text: a count can only
+  // ever see what shipped in the HTML source, never what a passing call does
+  // to the DOM.
+  const effectsJs = readFileSync(resolve(REPO, "packages/ui-kit/effects.js"), "utf8");
+  const start = effectsJs.search(/export function grantLive\b/);
+  assert.ok(start > -1, "missing export: grantLive");
+  const open = effectsJs.indexOf("{", effectsJs.indexOf("(", start));
+  let depth = 0;
+  let i = open;
+  do {
+    if (effectsJs[i] === "{") depth++;
+    else if (effectsJs[i] === "}") depth--;
+    i++;
+  } while (depth > 0 && i < effectsJs.length);
+  const body = effectsJs.slice(open + 1, i - 1);
+  assert.match(
+    body, /document\.querySelectorAll\(/,
+    "the showcase declares an ambient grant in markup AND grants a different element via grantLive() elsewhere — " +
+      "that is only safe while grantLive() revokes EVERY held grant, not only the one it remembers issuing itself",
+  );
+});
+
+test("components.css never names an effect class", () => {
+  // "Classes are additive" is a rule with no mechanical guard until now: an
+  // .sl-fx-* selector reaching into the Tier 0 layer would make an effect
+  // arrive without being asked for, and only a reader would notice.
+  const components = readFileSync(resolve(REPO, "packages/ui-kit/components.css"), "utf8");
+  assert.doesNotMatch(
+    components, /sl-fx-/,
+    "components.css must not name an effect class: effects compose onto it, never from it",
+  );
 });

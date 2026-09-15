@@ -28,6 +28,7 @@
     {
       "id": "button",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-btn",
         "sl-btn--primary",
@@ -46,6 +47,7 @@
     {
       "id": "link",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-link"
       ],
@@ -88,6 +90,7 @@
     {
       "id": "field",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-field",
         "sl-field__label",
@@ -151,6 +154,7 @@
     {
       "id": "tabs",
       "kind": "primitive",
+      "interactive": true,
       "classes": [
         "sl-tabs",
         "sl-tabs__list",
@@ -200,7 +204,8 @@
         "sl-fx-glass",
         "sl-fx-glass--wide",
         "sl-fx-glass--field",
-        "sl-fx-glass--pane"
+        "sl-fx-glass--pane",
+        "sl-fx-glass--text"
       ],
       "roleVars": [
         "--slc-border-strong",
@@ -217,7 +222,8 @@
         "sl-fx-aurora--wide",
         "sl-fx-aurora--field",
         "sl-fx-aurora--linear",
-        "sl-fx-aurora--rim"
+        "sl-fx-aurora--rim",
+        "sl-fx-aurora--top"
       ],
       "roleVars": [
         "--slc-accent",
@@ -260,52 +266,321 @@
     {
       "id": "sticky-header",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-header"
+      ],
       "roleVars": [
-        "--sl-bg-canvas",
-        "--sl-border-subtle",
-        "--sl-z-overlay"
+        "--slc-canvas",
+        "--slc-border-subtle"
       ]
     },
     {
       "id": "inversion-band",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-invert"
+      ],
       "roleVars": [
-        "--sl-text-primary",
-        "--sl-bg-canvas"
+        "--slc-text",
+        "--slc-canvas"
       ]
     },
     {
       "id": "hairline-grid",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-hgrid"
+      ],
       "roleVars": [
-        "--sl-border-subtle",
-        "--sl-bg-surface",
-        "--sl-space-5"
+        "--slc-border-subtle",
+        "--slc-surface"
       ]
     },
     {
       "id": "section-index",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-section",
+        "sl-section__head",
+        "sl-section__idx"
+      ],
       "roleVars": [
-        "--sl-border-subtle",
-        "--sl-font-mono",
-        "--sl-text-xs",
-        "--sl-text-muted",
-        "--sl-space-8"
+        "--slc-border-subtle",
+        "--slc-text-muted"
       ]
     },
     {
       "id": "oversized-anchor",
       "kind": "signature",
-      "classes": [],
+      "classes": [
+        "sl-anchor"
+      ],
+      "roleVars": []
+    },
+    {
+      "id": "checkbox",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-check",
+        "sl-check__input",
+        "sl-check__box",
+        "sl-check__label"
+      ],
       "roleVars": [
-        "--sl-font-display",
-        "--sl-line-tight"
+        "--slc-surface",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-on-accent",
+        "--slc-text",
+        "--slc-focus"
       ]
+    },
+    {
+      "id": "radio",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-radio",
+        "sl-radio__input",
+        "sl-radio__box",
+        "sl-radio__label"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-on-accent",
+        "--slc-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "switch",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-switch",
+        "sl-switch__input",
+        "sl-switch__track",
+        "sl-switch__label"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-on-accent",
+        "--slc-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "select",
+      "kind": "primitive",
+      "classes": [
+        "sl-select"
+      ],
+      "roleVars": [
+        "--slc-text-muted"
+      ]
+    },
+    {
+      "id": "wrap",
+      "kind": "signature",
+      "classes": [
+        "sl-wrap"
+      ],
+      "roleVars": []
+    },
+    {
+      "id": "prose",
+      "kind": "signature",
+      "classes": [
+        "sl-prose"
+      ],
+      "roleVars": []
+    },
+    {
+      "id": "breadcrumb",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-breadcrumb",
+        "sl-breadcrumb__item",
+        "sl-breadcrumb__sep"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "button-group",
+      "kind": "primitive",
+      "classes": [
+        "sl-btn-group"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-surface"
+      ]
+    },
+    {
+      "id": "segmented",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-segmented",
+        "sl-segmented__item"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-surface",
+        "--slc-raised",
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "icon-button",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-icon-btn",
+        "sl-icon-btn--round"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "pagination",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-pagination",
+        "sl-pagination__item"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-accent-subtle",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "empty-state",
+      "kind": "primitive",
+      "classes": [
+        "sl-empty",
+        "sl-empty__title",
+        "sl-empty__body"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-text",
+        "--slc-text-secondary"
+      ]
+    },
+    {
+      "id": "skeleton",
+      "kind": "primitive",
+      "classes": [
+        "sl-skeleton"
+      ],
+      "roleVars": [
+        "--slc-text"
+      ]
+    },
+    {
+      "id": "stat",
+      "kind": "primitive",
+      "classes": [
+        "sl-stat",
+        "sl-stat__value",
+        "sl-stat__label"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-text-muted"
+      ]
+    },
+    {
+      "id": "wordmark",
+      "kind": "signature",
+      "classes": [
+        "sl-wordmark",
+        "sl-wordmark__dot"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent"
+      ]
+    },
+    {
+      "id": "lockup",
+      "kind": "signature",
+      "classes": [
+        "sl-lockup",
+        "sl-lockup__dot"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent"
+      ]
+    },
+    {
+      "id": "monogram",
+      "kind": "signature",
+      "classes": [
+        "sl-monogram"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent",
+        "--slc-surface"
+      ]
+    },
+    {
+      "id": "figure",
+      "kind": "primitive",
+      "classes": [
+        "sl-figure",
+        "sl-figure__media",
+        "sl-figure__caption"
+      ],
+      "roleVars": [
+        "--slc-border",
+        "--slc-surface",
+        "--slc-text-muted"
+      ]
+    },
+    {
+      "id": "avatar",
+      "kind": "primitive",
+      "classes": [
+        "sl-avatar",
+        "sl-avatar--sm",
+        "sl-avatar--lg"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-border"
+      ]
+    },
+    {
+      "id": "compositions",
+      "kind": "effect",
+      "classes": [],
+      "roleVars": []
     }
   ]
 }

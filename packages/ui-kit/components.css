@@ -15,11 +15,12 @@
 
    ── Inversion-band pitfall ───────────────────────────────────────────────────
    --slc-border defaults to an alpha-over-canvas value. Inside an inversion band
-   (a block whose background is the strongest neutral, e.g. .invert), that alpha
-   sits on the wrong ground and the border vanishes. Fix at the band, not here:
-     .invert { --slc-border: color-mix(in srgb, currentColor 22%, transparent); }
+   (a block whose background is the strongest neutral) that alpha sits on the
+   wrong ground and the border vanishes. The shipped .sl-invert re-derives it
+   from the band's own foreground; a product rolling its own band does the same:
+     .invert > * { --slc-border: color-mix(in srgb, currentColor 22%, transparent); }
    Keeps value-equality, no new token. Any bordered component (card, table,
-   field, callout) inherits the fix automatically. */
+   field, callout, checkbox, switch) inherits the fix automatically. */
 
 :root {
   /* accent */
@@ -32,6 +33,7 @@
   --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
+  --slc-canvas:        var(--sl-bg-canvas,         #ECE4D4);
   --slc-surface:       var(--sl-bg-surface,        #F6F1E6);
   --slc-raised:        var(--sl-bg-surface-raised, #FFFFFF);
   --slc-overlay:       var(--sl-bg-overlay,        rgba(21,33,31,0.4));
@@ -55,6 +57,13 @@
 .sl-link:focus-visible,
 .sl-field__input:focus-visible,
 .sl-tabs__tab:focus-visible,
+.sl-check__input:focus-visible + .sl-check__box,
+.sl-radio__input:focus-visible + .sl-radio__box,
+.sl-switch__input:focus-visible + .sl-switch__track,
+.sl-segmented__item:focus-visible,
+.sl-breadcrumb__item:focus-visible,
+.sl-icon-btn:focus-visible,
+.sl-pagination__item:focus-visible,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
@@ -256,6 +265,156 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-rule--labeled::before,
 .sl-rule--labeled::after { content: ""; flex: 1; border-top: 1px solid var(--slc-border); }
 
+/* ══ FORM CONTROLS ═══════════════════════════════════════════════════════════ */
+
+/* Checkbox / radio / switch share one shape: a <label> host, a hidden-but-
+   focusable <input>, a <span> that paints the control, a <span> of text.
+   The input is NOT styled directly: pseudo-elements on replaced elements are
+   undefined per spec and inconsistent across engines, which is the same reason
+   effects.css requires an .sl-field__control wrapper. */
+.sl-check,
+.sl-radio,
+.sl-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-3, 0.75rem);
+  cursor: pointer;
+}
+
+/* Hidden from sight, present in the focus order. Never display:none. */
+.sl-check__input,
+.sl-radio__input,
+.sl-switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sl-check__box,
+.sl-radio__box {
+  position: relative;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border-strong);
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-check__box { border-radius: var(--sl-radius-sm, 4px); }
+.sl-radio__box { border-radius: 50%; }
+
+.sl-check__input:checked + .sl-check__box,
+.sl-radio__input:checked + .sl-radio__box {
+  background: var(--slc-accent);
+  border-color: var(--slc-accent);
+}
+
+/* The tick is a rotated border corner — no asset, no data URI, nothing to
+   audit. The radio's dot is a filled circle for the same reason. */
+.sl-check__box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.3rem;
+  height: 0.55rem;
+  border: solid var(--slc-on-accent);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg);
+  opacity: 0;
+}
+.sl-radio__box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--slc-on-accent);
+  opacity: 0;
+}
+.sl-check__input:checked + .sl-check__box::after,
+.sl-radio__input:checked + .sl-radio__box::after { opacity: 1; }
+
+/* Content, not a structural label (L1): sans, sentence case. */
+.sl-check__label,
+.sl-radio__label,
+.sl-switch__label {
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text);
+}
+
+.sl-switch__track {
+  position: relative;
+  flex: none;
+  width: 2.25rem;
+  height: 1.25rem;
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border-strong);
+  border-radius: 999px;
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--slc-border-strong);
+  transform: translateY(-50%);
+  transition:
+    transform var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-switch__input:checked + .sl-switch__track {
+  background: var(--slc-accent);
+  border-color: var(--slc-accent);
+}
+.sl-switch__input:checked + .sl-switch__track::after {
+  background: var(--slc-on-accent);
+  transform: translateY(-50%) translateX(1rem);
+}
+
+/* The chevron rides the WRAPPER, never the <select>: a mask or a pseudo-element
+   on the control itself would take the option text with it. */
+.sl-select { position: relative; display: block; }
+.sl-select > .sl-field__input {
+  appearance: none;
+  width: 100%;
+  padding-right: var(--sl-space-6, 2rem);
+}
+.sl-select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: var(--sl-space-4, 1rem);
+  width: 0.4rem;
+  height: 0.4rem;
+  border: solid var(--slc-text-muted);
+  border-width: 0 1px 1px 0;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.sl-check:has(.sl-check__input:disabled),
+.sl-radio:has(.sl-radio__input:disabled),
+.sl-switch:has(.sl-switch__input:disabled) { opacity: 0.5; cursor: not-allowed; }
+
 /* ══ COMPLEX (composed shells — no behaviour JS) ═════════════════════════════ */
 
 /* Callout — banner / admonition. The accent is a short "measure tick" on the
@@ -400,3 +559,405 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-tooltip:hover::after,
 .sl-tooltip:focus-visible::after { opacity: 1; }
+
+/* ══ PATTERNS (page-level composition) ═══════════════════════════════════════ */
+
+/* --sl-gutter and --sl-measure are CONVENTIONS, not tokens: they are fluid or
+   layout-level, so design-language.md §New-token policy keeps them out of
+   tokens.css and asks products to declare them locally with these values.
+   Declaring them in-class is exactly that — nothing lands on :root. */
+.sl-wrap {
+  --sl-gutter: clamp(1.25rem, 5vw, 6rem);
+  width: 100%;
+  max-width: 78rem;
+  margin-inline: auto;
+  padding-inline: var(--sl-gutter);
+}
+
+.sl-prose {
+  --sl-measure: 63ch;
+  max-width: var(--sl-measure);
+}
+
+.sl-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--sl-z-overlay, 50);
+  background: color-mix(in srgb, var(--slc-canvas) 84%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid var(--slc-border-subtle);
+}
+
+.sl-invert {
+  background: var(--slc-text);
+  color: var(--slc-canvas);
+}
+/* The re-derivation sits on the CHILDREN, not on the band. A custom property
+   whose value references a property declared on the same element is a cycle,
+   and CSS makes every property in a cycle invalid at computed-value time — so
+   `--slc-text: var(--slc-canvas)` next to `background: var(--slc-text)` would
+   silently paint the band its own foreground. Custom properties inherit, so
+   one generation is enough to reach the whole subtree. */
+.sl-invert > * {
+  --slc-text:           var(--slc-canvas);
+  /* Surfaces are re-derived too, not just text and lines: a component that
+     paints its own ground (card, dialog, field, checkbox) would otherwise keep
+     the light surface and render the re-derived light text on top of it. */
+  --slc-surface:        color-mix(in srgb, currentColor 7%, transparent);
+  --slc-raised:         color-mix(in srgb, currentColor 12%, transparent);
+  --slc-text-secondary: color-mix(in srgb, currentColor 78%, transparent);
+  --slc-text-muted:     color-mix(in srgb, currentColor 58%, transparent);
+  --slc-border:         color-mix(in srgb, currentColor 22%, transparent);
+  /* The strong line is not decoration here: the checkbox and radio box edge,
+     the switch track and ITS KNOB are painted with it. Left on the canvas
+     value, a switch inside the band has an ink knob on an ink ground and
+     reads as having no knob at all. The effects layer's ring is built from
+     the strong/subtle pair too (--slfx-edge-hi/mid), so one remap fixes both
+     tiers. */
+  --slc-border-strong:  color-mix(in srgb, currentColor 38%, transparent);
+  --slc-border-subtle:  color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* Cells paint their own surface; the 1px gap over the line colour IS the rule.
+   No cell carries a border, so no rule is ever doubled. */
+.sl-hgrid {
+  display: grid;
+  gap: 1px;
+  background: var(--slc-border-subtle);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+.sl-hgrid > * {
+  background: var(--slc-surface);
+  padding: var(--sl-space-5, 1.5rem);
+}
+
+.sl-section {
+  border-top: 1px solid var(--slc-border-subtle);
+  padding-block: var(--sl-space-8, 3rem);
+}
+.sl-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sl-space-4, 1rem);
+}
+.sl-section__idx {
+  flex: none;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+
+/* Fluid by design: the size is a clamp, which is why it is a pattern and not
+   a --sl-text-* token. At most one per screen (L1). */
+.sl-anchor {
+  margin: 0;
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: var(--sl-line-tight, 1.2);
+  text-wrap: balance;
+  font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+}
+
+/* ══ NAVIGATION & STATE ══════════════════════════════════════════════════════ */
+
+.sl-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.sl-breadcrumb__item {
+  color: var(--slc-text-muted);
+  text-decoration: none;
+  transition: color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
+.sl-breadcrumb__item[aria-current] { color: var(--slc-text); }
+.sl-breadcrumb__sep { color: var(--slc-text-muted); opacity: 0.6; }
+
+/* The hairline technique again: a 1px gap over the line colour is the rule
+   between buttons, so no button carries a border on the joining edge and
+   nothing doubles. */
+.sl-btn-group {
+  display: inline-flex;
+  /* One control: it sizes to its buttons whatever the parent's alignment says.
+     Stretched by an align-items:stretch parent it would show its own ground
+     past the last button, because that ground is the rule between them. */
+  width: fit-content;
+  gap: 1px;
+  background: var(--slc-border);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+  overflow: hidden;
+}
+.sl-btn-group > .sl-btn { border-radius: 0; border: none; }
+/* Cells paint their own ground — the group's background IS the rule between
+   them, so a transparent ghost would show the line colour across its whole
+   face instead of only in the 1px gap. A filled variant brings its own. */
+.sl-btn-group > .sl-btn:not(.sl-btn--primary) { background: var(--slc-surface); }
+
+.sl-segmented {
+  display: inline-flex;
+  width: fit-content;
+  gap: 1px;
+  padding: 2px;
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+}
+.sl-segmented__item {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--slc-text-muted);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
+  border-radius: var(--sl-radius-sm, 4px);
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-segmented__item:hover { color: var(--slc-text); }
+/* The CSS reads aria-selected, so the accessible state and the visible one
+   cannot drift apart. */
+.sl-segmented__item[aria-selected="true"] {
+  background: var(--slc-raised);
+  color: var(--slc-text);
+}
+
+.sl-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  cursor: pointer;
+  color: var(--slc-text);
+  background: transparent;
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-icon-btn:hover:not(:disabled) {
+  color: var(--slc-accent);
+  border-color: var(--slc-accent);
+}
+.sl-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* The round silhouette the liquid's --drop is allowed on. It does NOT apply
+   the effect: L6 makes the modifier written in the markup the contract, and
+   forbids anything from measuring a radius to decide. */
+.sl-icon-btn--round { border-radius: 50%; }
+
+.sl-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-1, 0.25rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+}
+.sl-pagination__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 var(--sl-space-2, 0.5rem);
+  color: var(--slc-text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--sl-radius-sm, 4px);
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-pagination__item:hover { color: var(--slc-text); border-color: var(--slc-border); }
+.sl-pagination__item[aria-current] {
+  color: var(--slc-accent);
+  background: var(--slc-accent-subtle);
+  border-color: var(--slc-accent-subtle);
+}
+
+.sl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sl-space-2, 0.5rem);
+  padding: var(--sl-space-6, 2rem) var(--sl-space-5, 1.5rem);
+  border: 1px dashed var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+}
+.sl-empty__title {
+  margin: 0;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-md, 1rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--slc-text);
+}
+.sl-empty__body {
+  margin: 0;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text-secondary);
+}
+
+/* STATIC. A shimmer is ambient motion that means nothing, and L6 switches off
+   an effect that means nothing. Where a surface needs to say work is running,
+   that is the aurora's busy reading, bound to aria-busy. */
+.sl-skeleton {
+  background: color-mix(in srgb, var(--slc-text) 8%, transparent);
+  border-radius: var(--sl-radius-sm, 4px);
+}
+
+.sl-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-space-1, 0.25rem);
+}
+/* Mono at every size: a display-scale numeral is a structural label (L1). */
+.sl-stat__value {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-2xl, 2rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--slc-text);
+}
+.sl-stat__label {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+
+/* ══ IDENTITY & MEDIA ════════════════════════════════════════════════════════ */
+
+/* The brand is typographic — there is no pictorial mark. These three classes
+   must render as packages/ui-kit/assets/sondalab-*.svg does; where they
+   disagree, the asset is right and the CSS is the defect. */
+.sl-wordmark {
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--slc-text);
+}
+.sl-wordmark__dot { color: var(--slc-accent); }
+
+.sl-lockup {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--slc-text);
+}
+.sl-lockup__dot { color: var(--slc-accent); }
+
+/* Three corrections, all for the small end of the scale (design-language L3):
+   the mark is sized to the INSCRIBED CROP CIRCLE (~60% of the canvas wide),
+   not the square; the accent period is scaled +35% around its own centre so it
+   survives a 32px render; and it is pushed +0.06em off the letter, because the
+   wordmark's tight tracking is drawn for a period at its natural size.
+   The letter is sized off this element's OWN box, not an inherited font-size,
+   so the 60% holds wherever the mark is placed. */
+.sl-monogram {
+  --sl-monogram-size: 3rem;
+  /* inline-BLOCK, not inline-flex: as a flex container the ::after period
+     becomes a flex item, and align-items centres it by box — which drops the
+     bigger dot below the letter's baseline. A line box centres the single line
+     vertically and keeps letter and period on one baseline, as the asset has
+     them. */
+  display: inline-block;
+  width: var(--sl-monogram-size);
+  height: var(--sl-monogram-size);
+  line-height: var(--sl-monogram-size);
+  text-align: center;
+  background: var(--slc-surface);
+  font-family: var(--sl-font-display, Georgia, serif);
+  font-weight: 500;
+  /* The 60% in L3 is the MARK's ink width against the tile, not a font-size.
+     sondalab-avatar-ink.svg puts s + period at 59.7% of its 1024 canvas
+     (scale 0.567848 over a 1076.9-unit mark). Fraunces' 's' inks 0.385em wide
+     and the period 0.154em, so with the period at 1.35x and the 0.06em offset
+     the mark is 0.653em — 0.597 / 0.653 gives this multiplier. Verified
+     against the rendered element at 48px and 32px: 0.600 and 0.608 of the
+     tile. Re-measure in the page if you change the face; the ratio is a
+     property of the glyph, not of the rule. */
+  font-size: calc(var(--sl-monogram-size) * 0.91);
+  letter-spacing: -0.05em;
+  color: var(--slc-text);
+}
+/* +35% around its OWN CENTRE (L3) — a transform, not a font-size, which would
+   scale it around the baseline and sink it. inline-block is what makes a
+   transform apply at all. */
+.sl-monogram::after {
+  content: ".";
+  display: inline-block;
+  transform: scale(1.35);
+  margin-left: 0.06em;
+  color: var(--slc-accent);
+}
+
+.sl-figure { margin: 0; }
+/* No aspect-ratio default: the right ratio is a property of the image, not of
+   the design system, and a default would silently crop most of them. The
+   author declares it on this element. */
+.sl-figure__media {
+  overflow: hidden;
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+}
+.sl-figure__media > img,
+.sl-figure__media > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sl-figure__caption {
+  margin-top: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+
+.sl-avatar {
+  --sl-avatar-size: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: var(--sl-avatar-size);
+  height: var(--sl-avatar-size);
+  background: var(--slc-surface);
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-md, 6px);
+}
+.sl-avatar > img { width: 100%; height: 100%; object-fit: cover; }
+/* The fallback IS the monogram — it already carries the small-size
+   corrections, so it sheds its own tile and takes this one's box, which keeps
+   those corrections proportional at every modifier. */
+.sl-avatar > .sl-monogram {
+  --sl-monogram-size: var(--sl-avatar-size);
+  background: transparent;
+}
+.sl-avatar--sm { --sl-avatar-size: 1.75rem; }
+.sl-avatar--lg { --sl-avatar-size: 4rem; }

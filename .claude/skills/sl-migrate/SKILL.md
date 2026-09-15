@@ -12,10 +12,16 @@ steps.
 
 ## What this skill adds
 
-- **Create a todo per workflow step (0–6)** and work them in order.
-- **Honour the two gates.** Step 2 (blessed list) and Step 3 (mapping plan) each
-  stop for explicit human approval. Present, then wait. Apply nothing before the
-  Step 3 yes — migrating a live surface is semi-irreversible.
+- **Create a todo per workflow step (0–7)** and work them in order.
+- **Honour the three gates.** Step 2 (blessed list), Step 3 (mapping plan) and
+  Step 6 (effects plan) each stop for explicit human approval. Present, then
+  wait. Apply nothing before the Step 3 yes — migrating a live surface is
+  semi-irreversible.
+- **Do not stop at Step 5.** Colour compliance makes the surface correct; the
+  effects layer (Step 6) is what makes it read as Sondalab. A migration that
+  lands compliant and flat is the common failure of this workflow, not a safe
+  minimum. Start from `catalog.md` § *Turning effects on* — classes without
+  `mount()` render Tier 0 silently, and the audit's check 8 fails for it.
 - **Delegate the audit** to the `sl-ds-auditor` subagent (read-only). It runs
   `packages/ui-kit/agent/sl-audit.mjs` and reads `design-language.md` for the judgement-level
   findings, returning them grouped R / A / N-A with `file:line`. You do not run

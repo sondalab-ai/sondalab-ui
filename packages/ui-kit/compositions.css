@@ -1,0 +1,74 @@
+/* @sondalab/ui-kit — compositions.css
+   Hand-authored (NOT generated). Opt-in, imported AFTER effects.css.
+
+   What this file is: the custom-property bindings a composition needs, which
+   have no other home. It contains NO paint and no new class. Without
+   effects.css it is inert — nothing else reads these properties.
+
+   What it is deliberately NOT: alias classes for the effect declension. Plain
+   CSS cannot alias a class; the :is() route would raise every glass rule from
+   (0,1,0) to (0,2,0) across a released layer, and a JavaScript pass that stamps
+   classes is dropped by the first React or Theia re-render. The declension
+   itself already lives in effects.css, per component (see .sl-btn.sl-fx-glass
+   and its neighbours there). The canonical class string per component is
+   documented in agent/catalog.md § Effects. */
+
+/* The inversion band had a block here and it was a no-op, measured: the glow's
+   light is read `var(--slfx-text-light, var(--slc-text, ...))` at the point of
+   use, and .sl-invert > * already binds --slc-text to the band's canvas, so the
+   fallback was the value the block declared. Its two alphas were the
+   point-of-use defaults as well. Nothing is lost by its absence, and a binding
+   that changes nothing is one more thing to keep in step with components.css.
+
+   A pane that FILLS a wrapper which clips is a different matter: a shipped
+   wrapper that clips its contents stands the inner swell down. The swell is a
+   3% scale on the pane and on the light seated before it, and a wrapper with
+   overflow: hidden cuts both -- the 1px rim inside the edge and the glint along
+   the top cross the wrapper's edge and are gone, so the pane loses its edge at
+   exactly the moment it is being pointed at. The property is read with its
+   default AT THE POINT OF USE in effects.css, never declared on the pane, which
+   is what lets a value set on the wrapper reach the pane and the glow together.
+
+   Two instances so far. .sl-figure__media is the plain case: a frame that
+   clips whatever pane fills it. .sl-btn-group has a second reason stacked on
+   top of the first: it clips (overflow: hidden, components.css:698) AND its
+   background IS the 1px rule its gap: 1px lays down between members
+   (components.css:695) -- a member scaled 3% on hover doesn't just lose its
+   own edge at the wrapper's clip, it invades its neighbour and eats the gap
+   that rule is drawn in, widening a separator L6 says stays 1px whatever an
+   effect is doing to it.
+
+   .sl-avatar is deliberately NOT here, though it clips too. Its contract admits
+   an <img> or the monogram, not a pane, so the filling case does not arise; and
+   the one composition an avatar does have with glass is being a pane itself --
+   a clickable avatar -- where the swell is not clipped by anything (a wrapper
+   clips its children, not itself, and the glow is a sibling). Binding it there
+   would silently switch off a working affordance. A surface that really does
+   put a pane inside an avatar sets the property itself. */
+.sl-figure__media,
+.sl-btn-group { --slfx-pane-swell: 1; }
+
+/* A PANE OVER A PICTURE CAN AFFORD A WIDER PRISM, and the lens already says so.
+   glass-lens.js splits the backdrop into three feDisplacementMaps -- R bent
+   least, B most, the glass-studio IOR triple -- and reads the separation from
+   --slg-lens-disperse as a pixel budget, 0.24px of red-to-blue per unit. The
+   shipped default of 18 is 4.3px, and its own comment records what set that
+   figure: a pane with TEXT behind it, where 13px of channel separation "is not
+   a prism, it is a broken render". It also names who should raise it -- "a
+   surface laid over a picture or a bed has no such reader, and that is the
+   surface that should be raising it".
+
+   A figure's media box IS that surface: its content is an image by contract
+   (the class exists to frame one), so there are no letterforms behind the pane
+   to fringe. 40 asks for ~9.6px of separation, a little over twice the default
+   and short of the figure recorded as broken -- and the reach asks past the
+   geometric cap of a sixth of the shorter side, so the box itself decides how
+   far the backdrop bends rather than a number guessing at it.
+
+   NOT .sl-avatar, though it also frames content: its documented fallback is the
+   monogram, and a monogram is a letterform. It is the reader the default was
+   fitted to protect. */
+.sl-figure__media {
+  --slg-lens-disperse: 40;
+  --slg-lens-reach: 24px;
+}

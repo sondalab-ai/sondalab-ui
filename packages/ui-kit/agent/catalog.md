@@ -69,6 +69,55 @@ Label + input/textarea/select. Substrate: **R** App.
 ```
 Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
 
+### Checkbox — `sl-check` (`__input` · `__box` · `__label`)
+A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that paints the box, and a `<span>` that carries the text. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-check">
+  <input class="sl-check__input" type="checkbox">
+  <span class="sl-check__box"></span>
+  <span class="sl-check__label">Run the audit on save</span>
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
+
+### Radio — `sl-radio` (`__input` · `__box` · `__label`)
+The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-radio">
+  <input class="sl-radio__input" type="radio" name="tier">
+  <span class="sl-radio__box"></span>
+  <span class="sl-radio__label">Tier A — full theme selector</span>
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
+
+### Switch — `sl-switch` (`__input` · `__track` · `__label`)
+A checkbox that reads as a state rather than a choice: use it where the change takes effect immediately, and a checkbox where it takes effect on submit. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-switch">
+  <input class="sl-switch__input" type="checkbox" role="switch">
+  <span class="sl-switch__track"></span>
+  <span class="sl-switch__label">Tier 2 GPU effects</span>
+</label>
+```
+Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: carry `role="switch"` on the input, so the state reaches a screen reader as on/off rather than as checked. Don't: put ON/OFF text inside the track — the knob's position is the state, and a label that repeats it goes stale in translation.
+
+### Select — `sl-select`
+The chevron a `<select>` cannot draw for itself. Composes onto `sl-field__control`, the wrapper the effects layer already binds to, so a field and a select take an effect the same way. Substrate: **R** IDE/App, **A** Page.
+```html
+<label class="sl-field">
+  <span class="sl-field__label">Substrate</span>
+  <span class="sl-field__control sl-select">
+    <select class="sl-field__input">
+      <option>App</option>
+      <option>IDE</option>
+      <option>Page</option>
+    </select>
+  </span>
+</label>
+```
+Consumes: `--slc-text-muted`. Do: keep `sl-field__input` on the `<select>` itself — the border, the ground and the focus ring all come from there. Don't: reach for a `mask-image` to draw the arrow; a mask on a `<select>` masks its text along with the arrow. Don't: put the glass/aurora effect classes on `.sl-select` itself — it is a wrapper, but its `::after` is the chevron, and both families paint their ring there too, so the chevron is replaced in silence. Nest `.sl-select` inside `.sl-field__control` and dress that instead.
+
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
 Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
 ```html
@@ -133,9 +182,226 @@ Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: *
 ```
 Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`.
 
+## Navigation & state
+
+### Breadcrumb — `sl-breadcrumb` (`__item` · `__sep`)
+The trail to here. Structural navigation labels, so mono uppercase tracked (L1). Substrate: **R** App, **A** IDE/Page.
+```html
+<nav class="sl-breadcrumb" aria-label="Breadcrumb">
+  <a class="sl-breadcrumb__item" href="/">Specs</a>
+  <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+  <a class="sl-breadcrumb__item" href="/specs/ds">Design system</a>
+  <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+  <span class="sl-breadcrumb__item" aria-current="page">Base element set</span>
+</nav>
+```
+Consumes: `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-focus`. Do: mark the last item `aria-current="page"` and leave it a `<span>` — the page you are on is not a link. Don't: import an icon for the separator; a glyph is one character and needs no asset.
+
+### Button group — `sl-btn-group`
+Joins `sl-btn` children into one control with a shared 1px rule. Built on the hairline-grid technique, so no rule is ever doubled (L2). Substrate: **R** IDE/App, **A** Page.
+```html
+<div class="sl-btn-group">
+  <button class="sl-btn sl-btn--ghost">Audit</button>
+  <button class="sl-btn sl-btn--ghost">Migrate</button>
+  <button class="sl-btn sl-btn--ghost">Adopt</button>
+</div>
+```
+Consumes: `--slc-border`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two. Do: put `sl-fx-glass sl-fx-glass--pane` on the members, never `sl-fx-glass` on `.sl-btn-group` itself — a group's `background` **is** the 1px rule between its members, and the material clears the host's own background so its tint layer can paint instead, so glass on the group dissolves the separator it was supposed to leave alone. The group also clips (`overflow: hidden`), so its ring would be cut at the group's own edges regardless of the background question.
+
+### Segmented control — `sl-segmented` (`__item`)
+A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: **R** IDE/App, **A** Page.
+```html
+<div class="sl-segmented" role="tablist">
+  <button class="sl-segmented__item" role="tab" aria-selected="true">Light</button>
+  <button class="sl-segmented__item" role="tab" aria-selected="false">Dark</button>
+  <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
+</div>
+```
+Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. Don't: use it for more than about four options; that is a `select`.
+
+### Icon button — `sl-icon-btn` (`--round`)
+A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
+```html
+<button class="sl-icon-btn" aria-label="Re-run the audit">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  </svg>
+</button>
+<button class="sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop" aria-label="Add a product">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  </svg>
+</button>
+```
+Consumes: `--slc-border`, `--slc-text`, `--slc-accent`, `--slc-focus`. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
+
+### Pagination — `sl-pagination` (`__item`)
+Numbered navigation across pages of results. Mono tabular figures (L1). Substrate: **R** App, **A** Page, **N/A** IDE.
+```html
+<nav class="sl-pagination" aria-label="Pagination">
+  <a class="sl-pagination__item" href="?p=1">1</a>
+  <a class="sl-pagination__item" href="?p=2" aria-current="page">2</a>
+  <a class="sl-pagination__item" href="?p=3">3</a>
+</nav>
+```
+Consumes: `--slc-border`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
+
+### Empty state — `sl-empty` (`__title` · `__body`)
+What a surface shows where its content would be. Composes `sl-eyebrow` above the title. Substrate: **R** App, **A** IDE/Page.
+```html
+<div class="sl-empty">
+  <span class="sl-eyebrow">No findings</span>
+  <p class="sl-empty__title">The audit found nothing to report.</p>
+  <p class="sl-empty__body">4 surfaces read, 0 R-violations, 0 blessed deviations.</p>
+</div>
+```
+Consumes: `--slc-border`, `--slc-text`, `--slc-text-secondary`. Do: say what is absent and what was actually measured — L5 prefers a real figure to an adjective. Don't: write "Nothing here yet!"; the exclamation mark is the marketing voice this house does not use.
+
+### Skeleton — `sl-skeleton`
+A placeholder block for content that has not arrived. **Static** — it does not shimmer. Substrate: **R** App, **A** IDE/Page.
+```html
+<div class="sl-skeleton" style="height: 1rem; width: 60%"></div>
+```
+Consumes: `--slc-text`. Do: size it to the content it stands in for, give the block `aria-hidden="true"`, and carry the real loading state on the container's `aria-busy`. Don't: animate it. A shimmer is ambient motion that means nothing, and L6 switches off an effect that means nothing — the same rule that forbids an ambient glitch on a control. Where a surface genuinely needs to say *work is running*, that is the aurora's busy reading, bound to `aria-busy`. Do: put the busy aurora (`sl-fx-aurora sl-fx-aurora--wide`) on the skeleton's *container*, never on the individual bars — one operation is loading, not three — and require `data-sl-fx-live="busy"` with `aria-busy="true"` on that same container: the aurora renders the state, it never *is* the state.
+
+### Stat — `sl-stat` (`__value` · `__label`)
+A single measured figure with its caption. Substrate: **R** App/Page, **N/A** IDE.
+```html
+<div class="sl-stat">
+  <span class="sl-stat__value">268</span>
+  <span class="sl-stat__label">Tests green</span>
+</div>
+```
+Consumes: `--slc-text`, `--slc-text-muted`. Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected). Don't: set a stat you have not measured.
+
+## Identity & media
+
+### Wordmark — `sl-wordmark` (`__dot`)
+The official logo. The brand is typographic; there is no pictorial mark. `sondalab.` in the display face at weight 500, tracked `-0.05em`, the trailing period in the accent. Substrate: **R** App/Page, **A** IDE.
+```html
+<span class="sl-wordmark">sondalab<span class="sl-wordmark__dot">.</span></span>
+```
+Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-wordmark.svg` — where this class and that file disagree, the file is right. Do: let it inherit its size from context; it is type, so it scales with `font-size`. Don't: re-letter it, re-space it, or set the period in the text colour — the accent period is the mark.
+
+### Compact lockup — `sl-lockup` (`__dot`)
+The wordmark where the wordmark is too wide: headers, tight chrome. `sonda·lab` in the mono face, uppercase, tracked `0.2em`, the middle dot in the accent. Substrate: **R** IDE/App/Page.
+```html
+<span class="sl-lockup">sonda<span class="sl-lockup__dot">·</span>lab</span>
+```
+Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg`. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
+
+### Monogram — `sl-monogram`
+Where even the lockup is too wide to read: a social avatar, a square tile. `s.` in the display cut, the letter in the text colour and the period in the accent, on a full-bleed square of the surface. Substrate: **R** IDE/App/Page.
+```html
+<span class="sl-monogram" role="img" aria-label="Sondalab">s</span>
+```
+Consumes: `--slc-text`, `--slc-accent`, `--slc-surface`. Rendered assets: `packages/ui-kit/assets/sondalab-avatar-{ink,paper}.{svg,png}`. Resize it by setting `--sl-monogram-size` (default `3rem`) — the letter is sized off that box, never off an inherited `font-size`, so the three corrections hold at every size. Those corrections are fixed in `design-language.md` L3 and transcribed here, not re-derived: the mark is sized to the inscribed crop circle (~60% of the canvas wide) rather than the square; the accent period is scaled +35% around its own centre so it survives a 32px render; and it is pushed +0.06em off the letter, because the wordmark's tight tracking is drawn for a period at its natural size. Do: give it `role="img"` and a label — `s.` read aloud is not the brand. The period is drawn by the class, so the markup carries the letter alone. Don't: re-tune the three corrections per surface; they are what makes the small end legible.
+
+### Figure — `sl-figure` (`__media` · `__caption`)
+An image in a hairline frame with a mono caption. The house way to put a picture in a page without it reading as a blog post. Substrate: **R** Page, **A** App, **N/A** IDE.
+```html
+<figure class="sl-figure">
+  <div class="sl-figure__media" style="aspect-ratio: 16 / 9">
+    <img src="/contact-1k.jpg" alt="Glass pane, GPU tier, dark theme">
+  </div>
+  <figcaption class="sl-figure__caption">Contact 1k — the GPU glass pane</figcaption>
+</figure>
+```
+Consumes: `--slc-border`, `--slc-surface`, `--slc-text-muted`. Do: declare the `aspect-ratio` on `sl-figure__media` yourself — the class sets none, because the right ratio is a property of the image and not of the design system, and a default would silently crop most of them. Don't: let the caption run to sentence case in the sans face; a caption is a structural label (L1).
+
+### Avatar — `sl-avatar` (`--sm` · `--lg`)
+A person or a product, as a square tile. Falls back to `sl-monogram` when there is no image. Substrate: **R** IDE/App, **A** Page.
+```html
+<span class="sl-avatar"><img src="/avatar.png" alt=""></span>
+<span class="sl-avatar sl-avatar--sm"><span class="sl-monogram" role="img" aria-label="Sondalab">s</span></span>
+<span class="sl-avatar sl-avatar--lg"><span class="sl-monogram" role="img" aria-label="Sondalab">s</span></span>
+```
+Consumes: `--slc-surface`, `--slc-border`. Do: use the monogram as the fallback rather than initials in a circle — the monogram is the mark, and it already carries the three small-size corrections; the avatar hands it its own box, so the corrections scale with the modifier. Don't: give a decorative avatar alt text; `alt=""` is correct when the name is beside it.
+
 ## Effects (opt-in, `effects.css`)
 
 Additive classes over `components.css` — never a replacement for the shared component. Each family carries exactly one meaning (`design-language.md` L6); an effect that means nothing is switched off. See `HANDOFF.md` for what stays judgement (right family for the meaning, the effect budget, the focus ring, the ARIA).
+
+### Turning effects on — the runtime contract
+
+**Read this before you write a single `sl-fx-*` class.** Most of the effect layer needs JavaScript, and a surface that carries the classes without it renders Tier 0 silently — no error, no warning, and `sl-audit` reads CSS text, so it cannot see the omission either. This is not hypothetical: sondalab.eu shipped with every glass class in place and Tier 2 never came up, because `mountGpu()` was never called and no box carried `data-sl-fx-backdrop`.
+
+```html
+<link rel="stylesheet" href="@sondalab/ui-kit/effects.css">
+<!-- glass.css too, if you use the glass family: it carries the pane's anatomy -->
+<link rel="stylesheet" href="@sondalab/ui-kit/glass.css">
+```
+```js
+import { mount, mountGpu } from "@sondalab/ui-kit/effects.js";
+
+mount();                 // Tier 1 — call once, after the DOM exists
+await mountGpu();        // Tier 2 — optional, and only after mount()
+```
+
+| Tier | Needs | You get | If you skip it |
+|---|---|---|---|
+| **0** | `effects.css` alone | Resting glass hairline, static aurora arc on focus, no motion | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
+| **1** | `mount()` | The liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
+| **2** | `await mountGpu()` | WebGPU chrome on the glass family: a hairline reflecting a moving environment, a wandering halo, the cursor's reflection | Tier 1 keeps its CSS conic hairline — a fallback, not a lesser draft |
+
+Four things that bite, in the order they usually bite:
+
+- **`mountGpu()` returns `false` unless `mount()` ran first.** It checks `armed` and gives up immediately. Call them in order.
+- **`mount()` arms once per document.** Calling it again returns the first result; it does not re-scan. Mount after your markup exists, and use `mount(root)` for a subtree you add later.
+- **Two different refractions, and only the second needs an anchor.** `mount()` gives every glass host the **SVG lens** — it bends whatever is actually behind the element, with nothing to declare. `mountGpu()` adds the **GPU chrome**, and a shader cannot read the document, so there a surface *names* what lies behind a region: the **`data-sl-fx-backdrop` attribute** on an ancestor box, with the image declared as **`--slfx-backdrop: url(…)` on that same element**. Both together, on the anchor — the attribute marks which box the image covers, and the custom property would otherwise inherit with no way to tell which ancestor set it. Only `url()` is sampled; a gradient or a keyword is ignored rather than guessed at. An unmarked pane still has its Tier 1 lens; it simply has no declared image for the GPU layer, which is additive and takes nothing away.
+- **Both refuse under high contrast, by design.** `mount()` returns `false` when `data-sl-theme="high-contrast"`, and `mountGpu()` re-checks at call time. Reduced motion refuses Tier 1 as well. Do not work around either: the component must still read correctly with every family off, which is what those guards exist to guarantee.
+
+`mount()` also takes `ignoreReducedMotion` — a derogation a consumer takes on their own evidence, not a convenience. It arms Tier 1 for a visitor reporting `prefers-reduced-motion: reduce` and lets the **glitch** animate for them; every other family's motion stays inside the media query in `effects.css`, where nothing can overrule it. High contrast refuses regardless.
+
+**Canonical strings.** The declension below is already bound per component inside `effects.css` — a product importing it does not re-derive which family goes where, or how each tunes. What it needs is the string to write. These are the canonical ones; `compositions.css` (opt-in, imported after `effects.css`) carries the custom-property bindings that have no other home.
+
+| Component | Canonical string |
+|---|---|
+| Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane` |
+| Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
+| Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
+| Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
+| Oversized anchor | `sl-anchor sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
+| Stat value | `sl-stat__value sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
+| Figure frame | `sl-figure__media sl-fx-glass sl-fx-glass--wide` |
+| Avatar, interactive | `sl-avatar sl-fx-glass sl-fx-glass--pane` |
+| Segmented item, selected | `sl-segmented__item sl-fx-aurora sl-fx-aurora--rim` |
+| Inversion band | `sl-invert sl-fx-aurora sl-fx-aurora--linear sl-fx-aurora--top` |
+
+The **section index** is the one declension driven from JavaScript rather than written in markup: `scramble(el)` on an element entering the viewport, which is *something re-resolved* at the smallest scale the grammar has. Bind it with an `IntersectionObserver` over `.sl-section__idx`; it is a text change rather than motion, so it is safe under `prefers-reduced-motion`.
+
+Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
+
+### Glass pane — the material (`glass.css`)
+
+The edge below is chrome on the border. This is the **surface inside it**, and it is a separate stylesheet: `glass.css`. Import it whenever you use the glass family; `effects.css` alone gives you the edge and no material.
+
+`mount()` stamps `.sl-glass` on the host and injects four layers beneath the host's own content, so a component needs no wrapper and its text is never filtered:
+
+| Layer | What it is |
+|---|---|
+| `__backdrop` | the frost — `blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7))` |
+| `__tint` | the colour, at `--slg-tint-a` (18% by default, 34% under a lens) |
+| `__specular` · `__shine` | the rim highlight and the inner top edge |
+
+**The lens.** Where the browser allows it, `mount()` also gives the host a real refraction — an SVG displacement map in the host's own `backdrop-filter`, so what is *behind* the pane bends while its content stays crisp. The host then carries `.is-lensed`. Three numbers govern it, all readable from CSS on the element:
+
+| Property | Default | What it does |
+|---|---|---|
+| `--slg-lens-reach` | `18px` on aurora hosts, `6px` otherwise | how far the light bends, in pixels |
+| `--slg-lens-blur` | `1.5px` | the lensed pane's own frost |
+| `--slg-lens-disperse` | `90` | the prism, as a **pixel budget**: 0.24px of red-to-blue per unit, so 90 is 21.6px |
+
+Four facts that decide whether your pane looks like glass or like nothing:
+
+- **A pane over flat ground shows nothing.** The material is mostly what is behind it. With one flat colour back there, a bend has nothing to bend and a prism has no edge to open — the pane renders almost identically however its chain is configured. Put glass where there is *content* behind it: over a picture, a data grid, a table, a page that scrolls under it. A pane floating on the canvas is a tinted box, and you may as well have spent nothing.
+- **The box caps the bend at a sixth of its shorter side.** `reach` asks; `min(w, h) / 6` decides. A 37px field bends ~6px whatever you ask for. This is not tunable from markup, and it exists because a large bend on a small box samples outside the element's own region, which comes back transparent and renders a flat grey slab.
+- **The frost and the bend compete, and the frost wins.** A frost wider than the bend erases exactly the detail the bend moved. This is why `--slg-lens-blur` is **1.5px** and not the 5.9px the non-lensed layer runs: at 5.9 the refraction on a 37px field measured at most 10/255 of interior change, and raising the bend did not buy it back. If you widen the frost on a lensed surface, you are switching the lens off.
+- **On a lensed host, `__backdrop`'s own blur is dead.** The host's `backdrop-filter` makes it a backdrop root, so that child layer has nothing behind it left to filter. A lensed pane's only frost is `--slg-lens-blur`; the 5.9px figure applies to non-lensed panes alone. Do not "fix" one by changing the other.
+
+The prism is bounded in `glass-lens.js`, not by you: the split can never exceed twice the bend, so a box with no room gets the widest prism it can hold rather than a red channel displaced backwards. In practice a host from ~65px up gets the full 21.6px and anything smaller degrades smoothly — a 40px button to 13.3px, a 32px icon button to 10.4px.
+
+**Don't**: raise `--slg-lens-blur` to make a pane "read as glass" — that is the one change guaranteed to remove its refraction. **Don't**: put a pane where nothing sits behind it and then tune numbers to rescue it; move the pane, or drop the family. **Don't**: verify any of this by eye — see `HANDOFF.md` § *How to verify an effect*.
 
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
 The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
@@ -149,7 +415,7 @@ The element's own border, as chrome: a hairline reflecting a moving environment,
 </label>
 ```
 `--wide` widens the CSS fallback ring to 2px for containers (card, dialog, panel); `--field` does the same for a field's wrapper. Neither changes the chrome, which is always the element's own border width. **On a replaced control the `sl-field__control` wrapper is mandatory:** `<input>`, `<textarea>` and `<select>` render no `::before`/`::after`, so the class on the control itself renders nothing at all — no error, no ring.
-Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px.
+Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px. Don't: put glass or aurora on a component whose own `::after` is load-bearing — both families paint their ring there (`:is(.sl-fx-glass, .sl-fx-aurora)::after`, `effects.css:499`), and the ring rule silently wins over whatever the component needed the pseudo-element for. `.sl-switch__track` is the instance that proved it: the track's `::after` **is** the knob, and glass on the track computed `opacity: 0` there, deleting the knob with no error and no warning. The same collision waits on `::before`: that is where `--pane` seats its pointer-following light, so a component that needs its own `::before` for something load-bearing is in the same position. Check what a component's `::before`/`::after` already does before reaching for either family. Don't: put glass on a container whose own background is structural — a separator, a rule, a divider — rather than a surface. The material clears the host's background so its own tint layer can paint (`glass.css:209`), and a container that has no fill of its own to spare loses whatever that background was doing. `.sl-btn-group` is the instance that proved it: the group's `background` **is** the 1px rule between its members, and glass on the group measured `rgba(0, 0, 0, 0)` there — the rule gone, silently. Same shape as the `::after` collision above, one property over: the effect layer takes over something the component was already using, with no error and no warning. The switch's knob (`::after`), the select's chevron (no pseudo-element at all on a replaced control), and the group's rule (`background`) are three instances of one pattern, in three different properties.
 
 ### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
 Attention lives here: a 1px arc of light riding the border with its bloom, which reaches ~22px outside the box and ~28px inside it — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. A filled element (`sl-btn--primary`) takes `--rim`: the arc steps just outside the fill, in the depth companion. Substrate: **R** Page, **A** App.
@@ -207,61 +473,75 @@ The `--shatter` variant additionally wraps an intact `sl-fx-glitch__text` and a 
 ```
 Consumes: `--slc-accent`, `--slc-accent-hover`. Do: call `effects.js`'s `mount()` once and fire `burst(el)` on the triggering event — CSS alone renders nothing; set `data-text` to the element's own text, and give every shard its `--slfx-i`/`--slfx-n` pair. Don't: run it ambiently on a control — ambient glitch is the wordmark's alone.
 
-## Signature patterns (page-level composition — copy the CSS)
+## Signature patterns (shipped classes)
 
-These are not single classes; they are the composition motifs from `design-language.md` L2/L3. Copy the CSS into your surface (they read `--sl-*` tokens directly, theme-independent).
+These were CSS to copy until 0.10.0; they are shipped classes now. They carry the composition motifs from `design-language.md` L2/L3, and like every other component they reach colour through `--slc-*` role-vars — which is why `--slc-canvas` exists.
 
-### Sticky translucent header
-Substrate: **R** App/Page. The house header: sticky, translucent, 1px bottom rule; mono wordmark left, mono meta right.
-```css
-.site-header {
-  position: sticky; top: 0; z-index: var(--sl-z-overlay);
-  background: color-mix(in srgb, var(--sl-bg-canvas) 84%, transparent);
-  backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 1px solid var(--sl-border-subtle);
-}
+### Wrap — `sl-wrap`
+The content measure and the fluid gutter, in one class. `--sl-gutter` is a convention, not a token (`design-language.md` §New-token policy), and this class is where the kit declares it. Substrate: **A** App, **R** Page, **N/A** IDE.
+```html
+<div class="sl-wrap"> … </div>
 ```
-Don't: use an opaque header or a drop-shadow instead of the 1px rule.
+Consumes: nothing — layout only. Do: put it inside a full-bleed section, so the section's background reaches the viewport edge and only the content is inset. Don't: nest one `sl-wrap` in another; the gutters add up.
 
-### Inversion band
-Substrate: **R** Page, **A** App/IDE/Term. A full-width block flipped to paper-on-ink; punctuates rhythm, marks the thesis or primary CTA. At least one per long page.
-```css
-.invert {
-  background: var(--sl-text-primary);
-  color: var(--sl-bg-canvas);
-}
-.invert .sl-eyebrow { color: color-mix(in srgb, var(--sl-bg-canvas) 70%, transparent); }
+### Prose — `sl-prose`
+Caps running text at the ~63ch measure. `--sl-measure` is a convention, not a token. Substrate: **A** IDE, **R** App/Page.
+```html
+<div class="sl-prose"> <p>…</p> </div>
 ```
-Don't: put an alpha-on-canvas hairline inside it (it vanishes) — derive an on-ink rule locally.
+Consumes: nothing — layout only. Do: put it on the text container, not on a grid cell that also holds a figure. Don't: let prose run full-bleed; L1 caps the measure for a reason.
 
-### Hairline grid
-Substrate: **R** App/Page. Cards formed by a 1px gap over a line-colour background; cells paint their own surface → crisp shared rules, no doubled borders. Prefer over bordered-card grids.
-```css
-.hgrid {
-  display: grid; gap: 1px;
-  background: var(--sl-border-subtle);
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-}
-.hgrid > * { background: var(--sl-bg-surface); padding: var(--sl-space-5); }
+### Sticky translucent header — `sl-header`
+The house header: sticky, translucent over the page ground, a 1px bottom rule. Mono wordmark left, mono meta right. Substrate: **R** App/Page, **N/A** IDE.
+```html
+<header class="sl-header">
+  <div class="sl-wrap"> … </div>
+</header>
 ```
+Consumes: `--slc-canvas`, `--slc-border-subtle`. Do: put a `sl-wrap` inside it, so the translucency reaches the viewport edge and only the content is inset. Don't: use an opaque header, or a drop-shadow instead of the 1px rule.
 
-### Section with mono index
-Substrate: **R** Page. A section opens with a mono index label beside its heading, separated from the previous section by a 1px top rule. Number it only where the content is a real sequence.
-```css
-.section { border-top: 1px solid var(--sl-border-subtle); padding-block: var(--sl-space-8); }
-.section__idx { font-family: var(--sl-font-mono); font-size: var(--sl-text-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--sl-text-muted); }
+### Inversion band — `sl-invert`
+A full-width block flipped to paper-on-ink. It punctuates rhythm and marks the thesis or the primary call to action; at least one per long page is idiomatic. Substrate: **R** Page, **A** App, **N/A** IDE.
+```html
+<section class="sl-invert">
+  <div class="sl-wrap"> … </div>
+</section>
 ```
+Consumes: `--slc-text`, `--slc-canvas`.
 
-### Oversized display anchor
-Substrate: **R** Page (**A** App where a hero exists). One oversized display heading per screen, sized by a fluid clamp (a documented pattern, not a token).
-```css
-.anchor {
-  font-family: var(--sl-font-display); font-weight: 600;
-  letter-spacing: -0.02em; line-height: var(--sl-line-tight);
-  font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
-}
+The class re-derives the border, text **and surface** role-vars from the band's own foreground **on its children**, so every component placed inside — card, table, field, callout, checkbox, switch — keeps a visible hairline and a ground it can be read against. Re-deriving only the lines and the text is not enough: a component that paints its own surface would keep the light one and render the re-derived light text on top of it. (This sentence is deliberately on its own line: `scripts/catalog-audit.test.mjs` reads the whole `Consumes:` line and compares every `--slc-*` on it against `catalog.json` as a set, so a role-var named in trailing prose fails parity.)
+
+Do: give it a direct child to hold the content (a `sl-wrap` is the usual one); the re-derivation is a `> *` rule, because a custom property cannot be defined on the same element that reads it. Don't: hand-write an alpha-over-canvas hairline inside the band — that is the bug this class exists to close.
+
+### Hairline grid — `sl-hgrid`
+Cards formed by a 1px gap over a line-colour background; cells paint their own surface, producing crisp shared rules instead of doubled borders. This is a signature — prefer it over the bordered-card grid the house style otherwise avoids. Substrate: **R** App/Page, **N/A** IDE.
+```html
+<div class="sl-hgrid">
+  <div>…</div>
+  <div>…</div>
+  <div>…</div>
+</div>
 ```
-Don't: use more than one oversized anchor per screen.
+Consumes: `--slc-border-subtle`, `--slc-surface`. Do: let the cells be plain elements — the grid paints them. Don't: give a cell its own border; that is the doubling this technique exists to avoid.
+
+### Section with mono index — `sl-section` (`__head` · `__idx`)
+A section opens with a mono index beside its heading, separated from the previous section by a 1px top rule. Substrate: **R** Page, **A** App, **N/A** IDE.
+```html
+<section class="sl-section">
+  <div class="sl-section__head">
+    <span class="sl-section__idx">03</span>
+    <h2>Signature components</h2>
+  </div>
+</section>
+```
+Consumes: `--slc-border-subtle`, `--slc-text-muted`. Do: number it only where the content is a real sequence — L5, structure encodes truth. Don't: number four unrelated sections 01–04 because it looks tidy.
+
+### Oversized display anchor — `sl-anchor`
+One oversized display heading per screen, sized by a fluid clamp — a documented pattern, not a token, because the size is fluid. Substrate: **R** Page, **A** App where a hero exists, **N/A** IDE.
+```html
+<h1 class="sl-anchor">Everything measured, nothing asserted.</h1>
+```
+Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't reach for the display serif on a numeral — a display-scale numeral is a structural label and stays mono (L1).
 
 ## Rules of use (all components)
 
