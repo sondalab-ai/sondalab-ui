@@ -221,6 +221,19 @@
     }
     .g-demo--substrate .substrate p { margin: 0; }
     .g-demo--substrate .substrate__row { position: relative; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    /* THE SUBSTRATE CELLS ARE THE CASE THE LENS DEFAULT PROTECTS AGAINST, INVERTED.
+       glass-lens.js reads --slg-lens-disperse as a pixel budget for how far the
+       red and blue channels of the backdrop land apart, and its default of 18
+       (4.3px) was fitted on a pane with TEXT behind it -- the comment there
+       records 13px reading as a broken render rather than as a prism. Behind
+       these cells is backdrop.svg, a picture. Nothing back there has letterforms
+       to fringe, so this is the surface the lens's own note says should be
+       raising it: "a surface laid over a picture or a bed has no such reader".
+       48 asks for ~11.5px of separation, and the reach asks past the geometric
+       cap so each box bends as far as its own shorter side allows. Page-local
+       on purpose: it is a property of what THIS page put behind the glass, not
+       of any component. */
+    .g-demo--substrate { --slg-lens-disperse: 48; --slg-lens-reach: 28px; }
     /* The glass text's type is the SURFACE's: the kit ships the cut, not the
        face. The mask follows these declarations because it is measured off the
        element. */

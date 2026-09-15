@@ -47,3 +47,28 @@
    put a pane inside an avatar sets the property itself. */
 .sl-figure__media,
 .sl-btn-group { --slfx-pane-swell: 1; }
+
+/* A PANE OVER A PICTURE CAN AFFORD A WIDER PRISM, and the lens already says so.
+   glass-lens.js splits the backdrop into three feDisplacementMaps -- R bent
+   least, B most, the glass-studio IOR triple -- and reads the separation from
+   --slg-lens-disperse as a pixel budget, 0.24px of red-to-blue per unit. The
+   shipped default of 18 is 4.3px, and its own comment records what set that
+   figure: a pane with TEXT behind it, where 13px of channel separation "is not
+   a prism, it is a broken render". It also names who should raise it -- "a
+   surface laid over a picture or a bed has no such reader, and that is the
+   surface that should be raising it".
+
+   A figure's media box IS that surface: its content is an image by contract
+   (the class exists to frame one), so there are no letterforms behind the pane
+   to fringe. 40 asks for ~9.6px of separation, a little over twice the default
+   and short of the figure recorded as broken -- and the reach asks past the
+   geometric cap of a sixth of the shorter side, so the box itself decides how
+   far the backdrop bends rather than a number guessing at it.
+
+   NOT .sl-avatar, though it also frames content: its documented fallback is the
+   monogram, and a monogram is a letterform. It is the reader the default was
+   fitted to protect. */
+.sl-figure__media {
+  --slg-lens-disperse: 40;
+  --slg-lens-reach: 24px;
+}
