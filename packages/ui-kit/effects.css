@@ -1079,6 +1079,19 @@
      against a 0-pixel control. The owner's ruling when the two pull against
      each other is that the refraction wins. */
   --slg-lens-reach: 18px;
+  /* AND THE PRISM OPENS WITH IT, ON THE OWNER'S INSTRUCTION AND AGAINST THE
+     FITTED FIGURE -- recorded here because the next reader will otherwise take
+     it for an oversight. glass-lens.js reads this as a pixel budget at 0.24px
+     of red-to-blue per unit, so 90 is 21.6px of channel separation, matching
+     what sondalab.eu runs on its .pillar and .prow panels (measured
+     2026-09-15). The site scopes it to a declared `glass-thick` class and
+     leaves its buttons at the default; this rule does not, by instruction.
+     What that costs is the case the default was fitted to protect: an aurora
+     host with TEXT behind it -- .sl-field__control, a selected tab, a busy
+     button -- now fringes that text, and glass-lens.js's own comment calls
+     13px of separation "not a prism, it is a broken render". A surface that
+     needs the old reading back sets --slg-lens-disperse: 18 on the host. */
+  --slg-lens-disperse: 90;
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */
