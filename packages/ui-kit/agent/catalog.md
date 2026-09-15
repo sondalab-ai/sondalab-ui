@@ -372,6 +372,37 @@ The **section index** is the one declension driven from JavaScript rather than w
 
 Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
 
+### Glass pane — the material (`glass.css`)
+
+The edge below is chrome on the border. This is the **surface inside it**, and it is a separate stylesheet: `glass.css`. Import it whenever you use the glass family; `effects.css` alone gives you the edge and no material.
+
+`mount()` stamps `.sl-glass` on the host and injects four layers beneath the host's own content, so a component needs no wrapper and its text is never filtered:
+
+| Layer | What it is |
+|---|---|
+| `__backdrop` | the frost — `blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7))` |
+| `__tint` | the colour, at `--slg-tint-a` (18% by default, 34% under a lens) |
+| `__specular` · `__shine` | the rim highlight and the inner top edge |
+
+**The lens.** Where the browser allows it, `mount()` also gives the host a real refraction — an SVG displacement map in the host's own `backdrop-filter`, so what is *behind* the pane bends while its content stays crisp. The host then carries `.is-lensed`. Three numbers govern it, all readable from CSS on the element:
+
+| Property | Default | What it does |
+|---|---|---|
+| `--slg-lens-reach` | `18px` on aurora hosts, `6px` otherwise | how far the light bends, in pixels |
+| `--slg-lens-blur` | `1.5px` | the lensed pane's own frost |
+| `--slg-lens-disperse` | `90` | the prism, as a **pixel budget**: 0.24px of red-to-blue per unit, so 90 is 21.6px |
+
+Four facts that decide whether your pane looks like glass or like nothing:
+
+- **A pane over flat ground shows nothing.** The material is mostly what is behind it. With one flat colour back there, a bend has nothing to bend and a prism has no edge to open — the pane renders almost identically however its chain is configured. Put glass where there is *content* behind it: over a picture, a data grid, a table, a page that scrolls under it. A pane floating on the canvas is a tinted box, and you may as well have spent nothing.
+- **The box caps the bend at a sixth of its shorter side.** `reach` asks; `min(w, h) / 6` decides. A 37px field bends ~6px whatever you ask for. This is not tunable from markup, and it exists because a large bend on a small box samples outside the element's own region, which comes back transparent and renders a flat grey slab.
+- **The frost and the bend compete, and the frost wins.** A frost wider than the bend erases exactly the detail the bend moved. This is why `--slg-lens-blur` is **1.5px** and not the 5.9px the non-lensed layer runs: at 5.9 the refraction on a 37px field measured at most 10/255 of interior change, and raising the bend did not buy it back. If you widen the frost on a lensed surface, you are switching the lens off.
+- **On a lensed host, `__backdrop`'s own blur is dead.** The host's `backdrop-filter` makes it a backdrop root, so that child layer has nothing behind it left to filter. A lensed pane's only frost is `--slg-lens-blur`; the 5.9px figure applies to non-lensed panes alone. Do not "fix" one by changing the other.
+
+The prism is bounded in `glass-lens.js`, not by you: the split can never exceed twice the bend, so a box with no room gets the widest prism it can hold rather than a red channel displaced backwards. In practice a host from ~65px up gets the full 21.6px and anything smaller degrades smoothly — a 40px button to 13.3px, a 32px icon button to 10.4px.
+
+**Don't**: raise `--slg-lens-blur` to make a pane "read as glass" — that is the one change guaranteed to remove its refraction. **Don't**: put a pane where nothing sits behind it and then tune numbers to rescue it; move the pane, or drop the family. **Don't**: verify any of this by eye — see `HANDOFF.md` § *How to verify an effect*.
+
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
 The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
 ```html
