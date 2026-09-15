@@ -27,6 +27,12 @@ steps.
 - **Audit the touched file only** (step 3) — the added component contributes zero
   R-violations. Delegate to `sl-ds-auditor` if useful, but keep its scope to the
   edited file.
+- **Carry the effects declension.** `catalog.md`'s canonical string is the whole
+  component: adopting `sl-btn sl-btn--primary` without `sl-fx-glass
+  sl-fx-glass--pane` adopts a different one. The effect classes need the runtime
+  (`catalog.md` § *Turning effects on*) — wiring `mount()` into the host is part
+  of the adopt. If the host cannot run it, take the plain component and say so;
+  never leave `sl-fx-*` classes rendering Tier 0.
 
 ## Inputs to confirm before Step 0
 

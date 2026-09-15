@@ -1,14 +1,14 @@
 # Workflow — Migrate a surface onto the Sondalab DS
 
 > **What this file is:** the ordered, harness-agnostic procedure an agent follows to migrate an existing app's UI onto the Sondalab design system. It is the portable core; the Claude Code `sl-migrate` skill loads and executes it. Any other harness can follow it directly.
-> **Reads:** `../design-language.md` (grammar), the token CSS (`../../tokens.css` + `../../themes/*.css`, the values), the agent core (`accent-registry.json`, `substrate-matrix.json`, `blessed/<product>.json`), `sl-audit` (verdict engine).
-> **Invariant:** migrating a live surface is semi-irreversible. Work on a branch; do not edit before the human approves the mapping plan (Step 3 gate).
+> **Reads:** `catalog.md` (components and the effects layer), `../design-language.md` (grammar), the token CSS (`../../tokens.css` + `../../themes/*.css`, the values), the agent core (`accent-registry.json`, `substrate-matrix.json`, `blessed/<product>.json`), `sl-audit` (verdict engine).
+> **Invariant:** migrating a live surface is semi-irreversible. Work on a branch; do not edit before the human approves the mapping plan (Step 3 gate) or the effects plan (Step 6 gate).
 
 ## Division of labour (do not blur)
 
 - **`sl-audit.mjs`** — the mechanical verdict: colour value-equality and tier consistency, decidable from CSS text. Trust it for those; never re-derive them by eye.
 - **You (the agent)** — the judgement: is a structural label *missing*, is the editorial voice off, is an inversion band warranted, does the composition earn its "one unexpected decision". The audit cannot see these; you read `design-language.md` and decide.
-- **The human** — approves the blessed list (Step 2) and the mapping plan (Step 3). Applies nothing without that yes.
+- **The human** — approves the blessed list (Step 2), the mapping plan (Step 3) and the effects plan (Step 6). Applies nothing without that yes.
 
 ## Steps
 
@@ -38,8 +38,22 @@ After approval, edit per the product's tier (A: consume the theme layer; B: keep
 ### 5 — Re-audit and diff
 Re-run the audit. R-violations must reach 0 or be blessed. Produce a before/after report (baseline counts vs current).
 
-### 6 — Visual check
-Render the surface across the applicable themes (light / dark / high-contrast). Verify reduced-motion. Check the dark-invert hairline regression explicitly: alpha-on-canvas rules (`--rule` style) can go invisible inside an inverted block — confirm they remain visible.
+### 6 — Effects pass  · GATE
+Colour compliance makes a surface *correct*; the effects layer is what makes it read as Sondalab. A migration that stops at Step 5 produces a compliant, flat screen — which is the common failure of this workflow, not a safe minimum.
+
+Scoped to the substrate's Required column (`design-language.md` L6 rows: glass edge, aurora, liquid, goo, glitch, budget — all `N/A` on IDE and Term by default):
+
+1. **Wire the runtime**, per `catalog.md` § *Turning effects on*. Without `mount()` the classes render Tier 0 with no error, and check 8 raises an R-violation.
+2. **Apply the canonical strings** from `catalog.md` for the components the surface already has. You are not redesigning: the declension is already bound per component.
+3. **Glass needs something behind it** — `catalog.md` § *Glass pane*. On a data-grid App the field-over-grid and button-over-table cases are exactly where the material pays off; on a marketing Page it is the pane over an image.
+4. **Respect the budget** and the ARIA contracts (`HANDOFF.md` L6). The aurora renders state, it never *is* the state.
+
+Present the effects plan in chat the way Step 3's mapping plan was presented — which components get which family, and why each meaning fits. **Apply nothing until the human says yes.**
+
+### 7 — Visual check
+Render the surface across the applicable themes (light / dark / high-contrast). Verify reduced-motion. Check the dark-invert hairline regression explicitly: alpha-on-canvas rules (`--rule` style) can go invisible inside an inverted block — confirm they remain visible. In high contrast every effect family is off: the surface must still be complete without them.
+
+If you touched glass or the lens, do not sign it off by eye — `HANDOFF.md` § *How to verify an effect*.
 
 ## Output
-A compliant surface + the before/after compliance report + a populated `blessed/<product>.json` + the CSS diff, all on the branch for review.
+A compliant surface that also carries the effects layer its substrate requires + the before/after compliance report + a populated `blessed/<product>.json` + the CSS diff, all on the branch for review.

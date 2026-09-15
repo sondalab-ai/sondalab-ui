@@ -27,6 +27,13 @@ steps.
   literal. Delegate the audit + judgement pass to the `sl-ds-auditor` subagent
   (mechanical value-equality/tier from the script; missing-labels / voice /
   composition from `design-language.md` + `HANDOFF.md`).
+- **Effects are step 5, and they are not optional decoration.** The families are
+  how a Sondalab surface reads as material rather than as a flat theme. Wire the
+  runtime first (`catalog.md` § *Turning effects on*), then take the canonical
+  strings; skipping every family on an App or Page substrate is a decision to
+  justify, not a default. For glass, place the pane where there is content behind
+  it — over flat ground it shows nothing whatever you set (`catalog.md`
+  § *Glass pane*).
 
 ## Inputs to confirm before Step 0
 
