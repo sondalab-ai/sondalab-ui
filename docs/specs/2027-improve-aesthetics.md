@@ -11,6 +11,46 @@ createdAt: 2026-09-10
 > **Companion files:** `docs/specs/2026-09-08-effects-layer-design.md` (the design contract for the effects layer — the first area this method is applied to; where the two disagree about *mechanism*, that file wins until an explicit ruling here overrules it), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling to date), `docs/design-language.md` (the human grammar, L6), `sondalab-site/docs/webgpu-surfaces.md` (the boot/fallback pattern), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot mechanically check).
 > **Ground truth:** the **Reference knowledge base** below. Where a document and a reference card disagree about how something should *look*, the card is right.
 
+## Re-scope — 2026-09-24 (supersedes the handoff below where they disagree)
+
+**If you are the next agent, start here, then read the new cards under Reference knowledge base.** The 2026-09-13 handoff below is the record of the first effects pass and stays accurate about what shipped.
+
+**Why.** After the base-layer sweep (`@sondalab/ui-kit` 0.11.0, `docs/specs/2026-09-24-base-layer-aesthetics.md`, https://github.com/sondalab-ai/sondalab-ui/pull/34) the components are quiet, filled and compact. The owner's ruling on the effects layer as it stands, 2026-09-24: **not striking enough, wrongly placed, and its light is bare minimum next to the state of the art.** Light and kinetics are wanted in all four placements — signature moments, live state, surfaces and controls — so the problem is ambition and quality, not coverage.
+
+**Method, unchanged.** The two loops below still hold: owner-verified cards first, three directions per slice on a contact sheet in `lab/`, the owner picks, the winner is rewritten into the kit under AC-18 – AC-25.
+
+### Rulings (owner, 2026-09-24)
+
+1. **Families are rebuilt around the new cards**, one meaning each (the effects-layer spec's Decision 1 stands):
+
+   | Placement | Family | Means | Built from | Replaces |
+   |---|---|---|---|---|
+   | Surfaces | **Specular** | this is a physical surface | `linear-specular`, `proximity-glow`, `relight-normals` | glass (blur + rim + glint) |
+   | Controls | **Press** | you acted on this | `press-light`, `spring-tokens`, `magnetic-primary` | liquid on buttons |
+   | Live state | **Live light** | work is happening here | `pulsing-border`, `edge-breath`, `peripheral-indicator` | aurora (the 1px arc) |
+   | Signature | **Signature light** (new) | this is the brand | `halftone-light`, `volumetric-type`, `prism-dispersion` | — |
+
+   Glitch and goo are outside this re-scope and stay as they are.
+2. **The refracting lens is retired.** Surfaces are specular without refraction (`linear-specular`: Linear dropped refraction on purpose, for legibility in dense UI). This removes the defect that kept slice 1 open ("Why slice 1 is still open", below).
+3. **The gooey drop is retired** (`sl-fx-liquid--drop`). Backlog, not scheduled: *the whole shape responds to the pointer as a liquid, subtly* — a future Press direction, never a blister on one spot.
+4. **Pointer light is a light source, never a brush.** Governs every family that follows the pointer:
+   - the pointer is a light *above* the surface; light appears only where the surface's form catches it — bevel, rim, corners — never as a disc on a flat interior;
+   - the highlight is a specular response from the shape's own normals (an SDF of the rounded rectangle), with Fresnel at grazing edges: a thin crescent that turns to face the light;
+   - luminance lift of a few percent, falling off with distance; the light is a warm white tinted by the material, never an accent-coloured patch;
+   - it trails the pointer on a spring and settles when the pointer leaves; an element at rest carries no light (AC-33);
+   - blue-noise dither in the shader, so no falloff bands;
+   - **mechanically enforced:** a test fails any pointer-positioned `radial-gradient` in the effects CSS (lands with slice R1, together with the code it replaces).
+5. **Order:** Surfaces → Controls → Live state → Signature. Surfaces first because it touches every card, button and dialog and unblocks slice 1; Signature last because it is hero-only and the heaviest GPU work.
+
+### Slice log (re-scope)
+
+| # | Placement | Cards | Directions probed | Picked | Rejected | Status |
+|---|---|---|---|---|---|---|
+| R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | | | | cards pending owner verification |
+| R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | | | | not started |
+| R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | | | | not started |
+| R4 | Signature | `halftone-light`, `volumetric-type`, `prism-dispersion` | | | | not started |
+
 ## Start here — handoff, 2026-09-13
 
 **If you are the next agent, read this block and the Reference knowledge base;
@@ -375,6 +415,129 @@ That 0-pixel control is also what makes the other measurements here trustworthy:
 - **Leave:** the whole set. Named here so that "bland" and "common AI-generated solutions" in the non-goals have an address
 - **Governs:** the non-goals, by counter-example
 - **Verified by owner:** **yes** — 2026-09-11
+
+### Cards — re-scope, 2026-09-24
+
+Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **None is verified yet**: every line below was read from the source's text, not from watching the effect run, and *Take* / *Leave* are drafts for the owner to correct. `Verified by owner` is the owner's to set, as for the cards above. No captures yet; the capture protocol above applies when they are taken.
+
+| Slug | Governs | Source | State |
+|---|---|---|---|
+| `linear-specular` | Specular — the highlight model | https://linear.app/now/linear-liquid-glass | chosen 2026-09-24 · **pending verification** |
+| `proximity-glow` | Specular — the edge facing the pointer | https://codepen.io/jh3y/pen/QWYPaax | chosen · pending |
+| `relight-normals` | Specular — imagery and the paper ground | https://tympanus.net/codrops/2026/08/19/relighting-images-with-depth-maps-and-three-js/ | chosen · pending |
+| `press-light` | Press — light on press, spill to neighbours | https://developer.apple.com/videos/play/wwdc2025/219/ | chosen · pending |
+| `spring-tokens` | Press — spring motion as a CSS token | https://linear-easing-generator.netlify.app/ | chosen · pending |
+| `magnetic-primary` | Press — pull on the primary call to action | https://motion.dev/examples/js-spring-follow-cursor | chosen · pending |
+| `pulsing-border` | Live light — the one running element | https://shaders.paper.design/pulsing-border | chosen · pending |
+| `edge-breath` | Live light — ambient busy surface | https://github.com/Huxpro/hux.pro/pull/261 | chosen · pending |
+| `peripheral-indicator` | Live light — tab / badge scale | https://linear.app/changelog/2026-05-14-code-intelligence | chosen · pending |
+| `halftone-light` | Signature — light as print | https://shaders.paper.design/halftone-dots · https://shaders.paper.design/dithering · https://blog.maximeheckel.com/posts/shades-of-halftone/ | chosen · pending |
+| `volumetric-type` | Signature — light raking through type | https://blog.maximeheckel.com/posts/shaping-light-volumetric-lighting-with-post-processing-and-raymarching/ | chosen · pending |
+| `prism-dispersion` | Signature — a beam split into a fan | https://tympanus.net/codrops/2026/09/03/from-rays-to-meshes-building-vercels-prism-with-vgpu/ | chosen · pending |
+
+#### `linear-specular` — Linear "Liquid Glass" *(chosen 2026-09-24)*
+
+- **Source:** https://linear.app/now/linear-liquid-glass
+- **Technology (as described):** Gaussian blur + a gradient layer + a specular pass computed from an SDF-derived normal map of the rounded rectangle, composited `plus-lighter`. Native (SwiftUI / Metal); the recipe ports to WebGPU / WebGL
+- **Take:** material from light, not distortion — no refraction, on purpose, for legibility in dense UI; a highlight that knows the shape's curvature and wraps its corners; "Increase Contrast" adds solid outlines
+- **Leave:** the blur as the main event; anything that depends on scroll-driven motion of a native sheet
+- **Governs:** Specular — the highlight model for every surface and control
+- **Verified by owner:** pending
+
+#### `proximity-glow` — Jhey Tompkins, proximity glow border *(chosen 2026-09-24)*
+
+- **Source:** https://codepen.io/jh3y/pen/QWYPaax
+- **Technology:** pointer angle and proximity into CSS variables; a conic gradient masked to the border ring (`mask-composite: intersect`); it wakes before the pointer enters the card
+- **Take:** the angle-aware arc on the side facing the light, and the proximity zone outside the box
+- **Leave:** the rainbow conic (single warm-white light, tinted by the material); any reading of the arc as a coloured stripe rather than a specular on the bevel (ruling 4)
+- **Governs:** Specular — the edge
+- **Verified by owner:** pending
+
+#### `relight-normals` — Codrops, relighting images with depth maps *(chosen 2026-09-24)*
+
+- **Source:** https://tympanus.net/codrops/2026/08/19/relighting-images-with-depth-maps-and-three-js/ · demo https://tympanus.net/Tutorials/RelightingImages
+- **Technology:** three.js WebGPU + TSL; depth map → blurred → normals, plus luminance-gradient detail and ray-traced self-shadowing; a movable light
+- **Take:** a true lighting model on 2D content; the same maths as paper grain catching raking light
+- **Leave:** a depth-generation pipeline per image as a requirement — the paper ground's normals can be procedural
+- **Governs:** Specular — imagery and the paper ground
+- **Verified by owner:** pending
+
+#### `press-light` — Apple, "Meet Liquid Glass" (WWDC25) *(chosen 2026-09-24)*
+
+- **Source:** https://developer.apple.com/videos/play/wwdc2025/219/
+- **Take:** the behaviour — on press the control illuminates from within and the light spills onto adjacent elements; Reduce Motion removes the elastic part
+- **Leave:** the Apple material and its look; anything literal enough to read as Apple
+- **Governs:** Press
+- **Verified by owner:** pending
+
+#### `spring-tokens` — CSS `linear()` spring easing *(chosen 2026-09-24)*
+
+- **Source:** https://linear-easing-generator.netlify.app/ · explainer https://www.joshwcomeau.com/animation/linear-timing-function/
+- **Take:** spring overshoot and settle as a design token (`--sl-ease-spring`), zero runtime
+- **Leave:** springs where interruption matters mid-flight (a CSS timing function cannot be interrupted like a JS spring)
+- **Governs:** Press — motion
+- **Verified by owner:** pending
+
+#### `magnetic-primary` — Motion, spring follow *(chosen 2026-09-24)*
+
+- **Source:** https://motion.dev/examples/js-spring-follow-cursor (the magnetic variant is Motion+, paid — the free spring-follow is the reference)
+- **Take:** an interruptible, velocity-preserving pull on the label, on the primary call to action only
+- **Leave:** magnetism on any other control; any effect for a coarse pointer or under reduced motion
+- **Governs:** Press — the primary call to action
+- **Verified by owner:** pending
+
+#### `pulsing-border` — Paper Shaders, pulsing border *(chosen 2026-09-24)*
+
+- **Source:** https://shaders.paper.design/pulsing-border · repo https://github.com/paper-design/shaders (Apache-2.0)
+- **Technology:** canvas fragment shader; roundness, thickness, softness, spots per colour, pulse, smoke, bloom
+- **Take:** light with volume travelling through the edge material, instead of a rotating conic stripe
+- **Leave:** more than two hues (amber, receding to teal); one canvas per element on many elements — one running element at a time (Decision 5)
+- **Governs:** Live light — the one running element
+- **Verified by owner:** pending
+
+#### `edge-breath` — Hux, Siri-style edge light *(chosen 2026-09-24)*
+
+- **Source:** https://github.com/Huxpro/hux.pro/pull/261
+- **Technology:** one fragment shader; four travelling waves at co-prime harmonics (2·3·5·7) so it never visibly loops; steeper-than-exponential falloff; DPR cap 1, half frame rate on slow devices, a still frame under reduced motion, CSS-gradient fallback
+- **Take:** the non-repeating breath, and the whole degradation ladder
+- **Leave:** the Apple rainbow (single amber field)
+- **Governs:** Live light — ambient busy surface
+- **Verified by owner:** pending
+
+#### `peripheral-indicator` — Linear, agent-working indicator *(chosen 2026-09-24)*
+
+- **Source:** https://linear.app/changelog/2026-05-14-code-intelligence
+- **Take:** the principle — live state as a small peripheral signal at tab or badge scale, not a full-surface glow
+- **Leave:** nothing yet; **the visual itself was not seen** (the changelog only states it exists) — the owner's capture decides what this card carries
+- **Governs:** Live light — tab / badge scale
+- **Verified by owner:** pending
+
+#### `halftone-light` — Paper Shaders halftone / dithering; Maxime Heckel, halftone and dithering *(chosen 2026-09-24)*
+
+- **Source:** https://shaders.paper.design/halftone-dots · https://shaders.paper.design/dithering · https://blog.maximeheckel.com/posts/shades-of-halftone/ · https://blog.maximeheckel.com/posts/the-art-of-dithering-and-retro-shading-web/
+- **Technology:** fragment shaders; luminance thresholded against a Bayer matrix or blue noise, quantised to a palette (Paper's rendering backend is undocumented — not assumed WebGPU)
+- **Take:** light rendered as print ink — the dot screen as the brand's way of showing light
+- **Leave:** coarse dot pitch (retro-game kitsch); default palettes — the ink palette only
+- **Governs:** Signature
+- **Verified by owner:** pending
+
+#### `volumetric-type` — Maxime Heckel, volumetric light with SDFs *(chosen 2026-09-24)*
+
+- **Source:** https://blog.maximeheckel.com/posts/shaping-light-volumetric-lighting-with-post-processing-and-raymarching/
+- **Technology:** WebGL post-processing raymarch; shadow map for occlusion; Henyey-Greenstein scattering; blue-noise dither (≈5000 → ≈100 steps)
+- **Take:** real shafts with occlusion — Fraunces letterforms as the occluder
+- **Leave:** a full 3D scene as a requirement; the parts the author calls creative rather than production-ready
+- **Governs:** Signature
+- **Verified by owner:** pending
+
+#### `prism-dispersion` — Vercel Prism, built with vgpu *(chosen 2026-09-24)*
+
+- **Source:** https://tympanus.net/codrops/2026/09/03/from-rays-to-meshes-building-vercels-prism-with-vgpu/ · live https://vgpu.sh · code https://github.com/vercel-labs/vgpu
+- **Technology:** WebGPU (vgpu — already the kit's optional peer dependency); per-wavelength refraction traced into a triangle mesh; adaptive quality tiers by GPU tier, battery and frame rate
+- **Take:** dispersion cheap enough for a hero; the adaptive-quality architecture, whatever the look
+- **Leave:** the prism object and the RGB fan — it is Vercel's signature; our split is amber → teal and our object is not a prism
+- **Governs:** Signature
+- **Verified by owner:** pending
 
 ## Acceptance Criteria
 
