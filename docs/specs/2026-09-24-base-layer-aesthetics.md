@@ -127,5 +127,5 @@ Scope: `.sl-card*`, `.sl-callout*`, `.sl-dialog*`, `.sl-badge*`, `.sl-tag*`, `.s
 
 ## Found on the way
 
-- **Showcase accent picker ignores the theme** (present on `main` at `8d220e4`). Choosing *Amber* writes `--sl-accent-default: #F5A83C` inline on `<html>`, so the light theme renders the dark amber (pale button, pale eyebrow) instead of `#B56A0C`. Showcase-only; consumers unaffected. To fix when a slice next touches `showcase/index.html`.
+- **Showcase accent picker ignores the theme** (present on `main` at `8d220e4`). Choosing *Amber* writes `--sl-accent-default: #F5A83C` inline on `<html>`, so the light theme renders the dark amber (pale button, pale eyebrow) instead of `#B56A0C`. Showcase-only; consumers unaffected. **Fixed** in this branch: both showcase pages take the registry's light/dark pair per theme and leave high contrast's own accent alone.
 - **`components.css` role-var fallbacks duplicate the light theme** (`--slc-success: var(--sl-status-success, #…)`). They must be updated with every light-theme value change; `sl-audit` catches a stale one.
