@@ -403,7 +403,7 @@ The prism is bounded in `glass-lens.js`, not by you: the split can never exceed 
 **Don't**: raise `--slg-lens-blur` to make a pane "read as glass" — that is the one change guaranteed to remove its refraction. **Don't**: put a pane where nothing sits behind it and then tune numbers to rescue it; move the pane, or drop the family. **Don't**: verify any of this by eye — see `HANDOFF.md` § *How to verify an effect*.
 
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
-The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
+The pointer is a light above the surface: a narrow arc of warm white wakes on the border facing it, from 140px before the pointer arrives, and on paper a soft shade answers on the far side. A crossing dims, turns and brightens it again rather than snapping. Nothing is lit at rest, and there is never a disc under the cursor (a test bans a pointer-positioned `radial-gradient`). Tier 1 only: `mount()` writes `--slfx-spec-a` (bearing) and `--slfx-spec-i` (how lit) and the class `is-spec-lit`. The WebGPU chrome that used to draw this edge is retired (2026-09-24); the material and the lens above are not. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
 ```html
 <article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
 <label class="sl-field">

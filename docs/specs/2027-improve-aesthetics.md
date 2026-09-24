@@ -31,7 +31,7 @@ createdAt: 2026-09-10
    | Signature | **Signature light** (new) | this is the brand | `halftone-light`, `volumetric-type`, `prism-dispersion` | — |
 
    Glitch and goo are outside this re-scope and stay as they are.
-2. **The refracting lens is retired.** Surfaces are specular without refraction (`linear-specular`: Linear dropped refraction on purpose, for legibility in dense UI). This removes the defect that kept slice 1 open ("Why slice 1 is still open", below).
+2. ~~**The refracting lens is retired.**~~ **Reversed by the owner the same day**, after seeing the site on a local 0.12.0 with the material gone: the distortion and dispersion of light are wanted, on every glass host. The frosted pane and the SVG lens stay; the specular edge replaces only the pointer glint, the pane's dispersing edge and the WebGPU chrome. The lens's own open defects ("Why slice 1 is still open", below) stay open with it.
 3. **The gooey drop is retired** (`sl-fx-liquid--drop`). Backlog, not scheduled: *the whole shape responds to the pointer as a liquid, subtly* — a future Press direction, never a blister on one spot.
 4. **Pointer light is a light source, never a brush.** Governs every family that follows the pointer:
    - the pointer is a light *above* the surface; light appears only where the surface's form catches it — bevel, rim, corners — never as a disc on a flat interior;
