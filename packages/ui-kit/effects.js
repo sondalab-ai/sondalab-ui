@@ -539,7 +539,6 @@ function randomizeGhosts(el) {
    all of it. */
 
 const GLOW_HOSTS = ".sl-fx-aurora:not(.sl-fx-aurora--linear)";
-const GLASS_HOSTS = ".sl-fx-glass";
 
 /** How far the glow reaches past its host, in CSS pixels. Read once from the
  *  host rather than hard-coded: --slfx-glow and --slfx-rim-out are the two
@@ -716,6 +715,8 @@ function injectGlow(el) {
 let glowSerial = 0;
 
 /* ── the glass anatomy ──────────────────────────────────────────────────────
+   Since 2026-09-24 only GLASS TEXT has a material (re-scope ruling 2): every
+   other glass host is a specular edge on its own fill, and gets no layers.
    glass.css paints the material in three stacked layers — frost, tint, rim —
    and they have to be elements: a host has two pseudo-elements and the aurora
    already owns ::after. They are injected rather than written by the consumer
@@ -795,53 +796,15 @@ function injectGlass(el) {
   }
 }
 
-/** The lenses currently bound, so mount() can be called twice without giving
- *  an element two filters, and so a theme change can take them all away. */
-const lensed = new Map();
-
-/** High contrast, and ONLY high contrast.
- *
- *  Not suppressed(): that also refuses under prefers-reduced-motion, and a lens
- *  is not motion — it is a static property of a surface, it does not animate,
- *  and it does not redraw on scroll. A visitor who asked for less movement did
- *  not ask for less material. High contrast is different in kind: it exists so
- *  that what is behind a surface does not interfere with what is on it, and a
- *  lens deforming the text behind a button is exactly that interference.
- *  @returns {boolean} whether a lens may not run */
-function lensRefused() {
-  if (typeof document === "undefined") return true;
-  return document.documentElement.getAttribute("data-sl-theme") === "high-contrast";
-}
-
-/** Give every glass host a real refraction of whatever is behind it.
- *
- *  Dynamically imported, like the GPU tier was, so a consumer who never mounts
- *  pays nothing for it — and so a browser that cannot do it degrades to the CSS
- *  material in glass.css with no branch here.
- *  @param {ParentNode} root the subtree to arm
- *  @returns {Promise<void>} */
-async function armLenses(root) {
-  if (lensRefused()) return;
-  let lens;
-  try { ({ lens } = await import("./glass-lens.js")); } catch { return; }
-  const hosts = [];
-  if (root instanceof Element && root.matches(GLASS_HOSTS)) hosts.push(root);
-  hosts.push(...root.querySelectorAll(GLASS_HOSTS));
-  for (const el of hosts) {
-    if (lensed.has(el) || el.closest('[data-sl-fx="off"]')) continue;
-    const handle = lens(el);
-    if (handle) lensed.set(el, handle);
-  }
-}
-
-/** The goo fields currently bound, for the same two reasons as `lensed`:
+/** The goo fields currently bound, so mount() can be called twice without
+ *  building a second field, and because
  *  mount() may be called twice, and a container may leave the document. */
 const gooFields = new Map();
 const GOO_HOSTS = ".sl-fx-goo";
 
 /** Give every declared container its one shared gooey field.
  *
- *  Dynamically imported, like the lens and the GPU tier: a consumer whose
+ *  Dynamically imported: a consumer whose
  *  surface has no field pays nothing for the module existing. Tier 0 — the
  *  members laid out and unmerged — is what a browser sees if this never runs.
  *  @param {ParentNode} root the subtree to arm
@@ -871,8 +834,8 @@ let gooArmed = false;
  *  reduced-motion clause is "nothing animates; static material survives". So
  *  it refuses on high contrast (where the point is that nothing behind a
  *  surface may interfere with what is on it) and runs under
- *  prefers-reduced-motion, on the same reasoning `lensRefused()` carries: a
- *  visitor who asked for less movement did not ask for less material. Its CSS
+ *  prefers-reduced-motion: a visitor who asked for less movement did not ask
+ *  for less material. Its CSS
  *  is not gated on `data-sl-fx="on"` either, so nothing about it depends on
  *  Tier 1 having armed.
  *
@@ -898,14 +861,14 @@ function mountGoo(root) {
 }
 
 /** The hosts whose glass is cut to their own letterforms, guarded the way
- *  `lensed` and `gooFields` are: mount() may be called twice, and a host may
- *  leave the document. */
+ *  `gooFields` is: mount() may be called twice, and a host may leave the
+ *  document. */
 const glassTexts = new Map();
 const GLASS_TEXT_HOSTS = ".sl-fx-glass--text";
 
 /** Cut every declared host's glass to its own text.
  *
- *  Dynamically imported, like the lens and the goo: a surface with no glass
+ *  Dynamically imported, like the goo: a surface with no glass
  *  text pays nothing for the module existing. There is no Tier 0 for this one
  *  — an uncut host is a rectangle of glass with an invisible label in it — so
  *  the modifier's CSS keeps the host transparent and lets its paired glow
@@ -940,29 +903,9 @@ function repaintGooFields() {
   for (const handle of gooFields.values()) handle.measure(true);
 }
 
-/** Take every lens away, leaving the CSS material that glass.css paints.
- *  @returns {void} */
-function dropLenses() {
-  for (const handle of lensed.values()) handle.destroy();
-  lensed.clear();
-}
-
-/** Follow the theme for as long as the page lives: a visitor can switch to
- *  high contrast — or away from it — long after mount() ran, and a kill switch
- *  that only reads its condition once is not a kill switch.
- *  @param {ParentNode} root the subtree mount() armed
- *  @returns {void} */
-function watchLensTheme(root) {
-  if (typeof MutationObserver !== "function") return;
-  new MutationObserver(() => {
-    if (lensRefused()) dropLenses();
-    else armLenses(root);
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-sl-theme"] });
-}
-
 function injectGlassLayers(root) {
-  if (root instanceof Element && root.matches(GLASS_HOSTS)) injectGlass(root);
-  for (const el of root.querySelectorAll(GLASS_HOSTS)) injectGlass(el);
+  if (root instanceof Element && root.matches(GLASS_TEXT_HOSTS)) injectGlass(root);
+  for (const el of root.querySelectorAll(GLASS_TEXT_HOSTS)) injectGlass(el);
 }
 
 function injectGlows(root) {
@@ -1081,17 +1024,8 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // refusing it for a motion preference would take away material rather than
   // movement. mountGoo() owns its own observers and its own armed flag.
   mountGoo(root);
-  // The lens goes with it, and for the reason lensRefused() has argued in its
-  // own comment since it was written: a lens is not motion. It is a static
-  // property of a surface — it does not animate, and it does not redraw on
-  // scroll — and a visitor who asked for less movement did not ask for less
-  // material. The comment said so; the call site said otherwise, because it
-  // sat after this guard. armLenses() still refuses high contrast on its own,
-  // which is a different requirement: there the point is that what is behind a
-  // surface must not interfere with what is on it.
-  //
-  // injectGlassLayers goes with it, and it is the larger half of the same
-  // defect: those children ARE the glass material — glass.css puts the
+  // The letterform's glass material goes with it, before the motion guard:
+  // those children ARE the material — glass.css puts the
   // backdrop-filter on .sl-glass__backdrop, split from the tint because
   // opacity on the filtering element throttles it — so a visitor reporting a
   // motion preference was getting no glass at all, not merely no lens. The
@@ -1102,15 +1036,12 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // is set up here rather than with Tier 1's: a page that refuses below still
   // has to dress a card rendered after mount().
   injectGlassLayers(root);
-  armLenses(root);
-  // And the letterform cut goes with them, for the third time in the same
-  // argument: a mask is not motion. It is the shape the material has.
+  // And the letterform cut goes with it, for the same reason: a mask is not
+  // motion. It is the shape the material has.
   armGlassText(root);
-  watchLensTheme(root);
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlassLayers(n);
-      armLenses(n);
       armGlassText(n);
     }
   }).observe(root, { childList: true, subtree: true });

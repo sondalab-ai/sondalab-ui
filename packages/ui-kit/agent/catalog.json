@@ -208,9 +208,6 @@
         "sl-fx-glass--text"
       ],
       "roleVars": [
-        "--slc-border-strong",
-        "--slc-border-subtle",
-        "--slc-accent",
         "--slc-text"
       ]
     },

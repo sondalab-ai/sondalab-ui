@@ -341,13 +341,12 @@ await mountGpu();        // Tier 2 — optional, and only after mount()
 | Tier | Needs | You get | If you skip it |
 |---|---|---|---|
 | **0** | `effects.css` alone | Static aurora arc on focus, no motion; glass carries no light without a pointer | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
-| **1** | `mount()` | The glass's specular edge (an arc of light on the border facing the pointer), the liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
+| **1** | `mount()` | The glass's specular edge (an arc of light on the border facing the pointer), the liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld | The classes render Tier 0 and nothing tells you |
 | **2** | `await mountGpu()` | **Retired 2026-09-24** — resolves `false`; kept so existing calls still work | Nothing: Tier 1 is the whole reading |
 
-Four things that bite, in the order they usually bite:
+Two things that bite, in the order they usually bite:
 
 - **`mount()` arms once per document.** Calling it again returns the first result; it does not re-scan. Mount after your markup exists, and use `mount(root)` for a subtree you add later.
-- **Two different refractions, and only the second needs an anchor.** `mount()` gives every glass host the **SVG lens** — it bends whatever is actually behind the element, with nothing to declare. `mountGpu()` adds the **GPU chrome**, and a shader cannot read the document, so there a surface *names* what lies behind a region: the **`data-sl-fx-backdrop` attribute** on an ancestor box, with the image declared as **`--slfx-backdrop: url(…)` on that same element**. Both together, on the anchor — the attribute marks which box the image covers, and the custom property would otherwise inherit with no way to tell which ancestor set it. Only `url()` is sampled; a gradient or a keyword is ignored rather than guessed at. An unmarked pane still has its Tier 1 lens; it simply has no declared image for the GPU layer, which is additive and takes nothing away.
 - **Both refuse under high contrast, by design.** `mount()` returns `false` when `data-sl-theme="high-contrast"`, and `mountGpu()` re-checks at call time. Reduced motion refuses Tier 1 as well. Do not work around either: the component must still read correctly with every family off, which is what those guards exist to guarantee.
 
 `mount()` also takes `ignoreReducedMotion` — a derogation a consumer takes on their own evidence, not a convenience. It arms Tier 1 for a visitor reporting `prefers-reduced-motion: reduce` and lets the **glitch** animate for them; every other family's motion stays inside the media query in `effects.css`, where nothing can overrule it. High contrast refuses regardless.
@@ -371,41 +370,11 @@ The **section index** is the one declension driven from JavaScript rather than w
 
 Four families are **not** in that table, and must not be applied by rote: **goo** needs a declared container and a weld gap, both properties of a layout the author owns; **glitch** is fired from JavaScript on a real event; and the **ambient, busy and determinate aurora** readings are budget-limited and bound to an ARIA contract (`aria-busy`, `role="progressbar"` with `aria-valuenow`) — the aurora renders state, it never *is* the state.
 
-### Glass pane — the material (`glass.css`)
-
-The edge below is chrome on the border. This is the **surface inside it**, and it is a separate stylesheet: `glass.css`. Import it whenever you use the glass family; `effects.css` alone gives you the edge and no material.
-
-`mount()` stamps `.sl-glass` on the host and injects four layers beneath the host's own content, so a component needs no wrapper and its text is never filtered:
-
-| Layer | What it is |
-|---|---|
-| `__backdrop` | the frost — `blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7))` |
-| `__tint` | the colour, at `--slg-tint-a` (18% by default, 34% under a lens) |
-| `__specular` · `__shine` | the rim highlight and the inner top edge |
-
-**The lens.** Where the browser allows it, `mount()` also gives the host a real refraction — an SVG displacement map in the host's own `backdrop-filter`, so what is *behind* the pane bends while its content stays crisp. The host then carries `.is-lensed`. Three numbers govern it, all readable from CSS on the element:
-
-| Property | Default | What it does |
-|---|---|---|
-| `--slg-lens-reach` | `18px` on aurora hosts, `6px` otherwise | how far the light bends, in pixels |
-| `--slg-lens-blur` | `1.5px` | the lensed pane's own frost |
-| `--slg-lens-disperse` | `90` | the prism, as a **pixel budget**: 0.24px of red-to-blue per unit, so 90 is 21.6px |
-
-Four facts that decide whether your pane looks like glass or like nothing:
-
-- **A pane over flat ground shows nothing.** The material is mostly what is behind it. With one flat colour back there, a bend has nothing to bend and a prism has no edge to open — the pane renders almost identically however its chain is configured. Put glass where there is *content* behind it: over a picture, a data grid, a table, a page that scrolls under it. A pane floating on the canvas is a tinted box, and you may as well have spent nothing.
-- **The box caps the bend at a sixth of its shorter side.** `reach` asks; `min(w, h) / 6` decides. A 37px field bends ~6px whatever you ask for. This is not tunable from markup, and it exists because a large bend on a small box samples outside the element's own region, which comes back transparent and renders a flat grey slab.
-- **The frost and the bend compete, and the frost wins.** A frost wider than the bend erases exactly the detail the bend moved. This is why `--slg-lens-blur` is **1.5px** and not the 5.9px the non-lensed layer runs: at 5.9 the refraction on a 37px field measured at most 10/255 of interior change, and raising the bend did not buy it back. If you widen the frost on a lensed surface, you are switching the lens off.
-- **On a lensed host, `__backdrop`'s own blur is dead.** The host's `backdrop-filter` makes it a backdrop root, so that child layer has nothing behind it left to filter. A lensed pane's only frost is `--slg-lens-blur`; the 5.9px figure applies to non-lensed panes alone. Do not "fix" one by changing the other.
-
-The prism is bounded in `glass-lens.js`, not by you: the split can never exceed twice the bend, so a box with no room gets the widest prism it can hold rather than a red channel displaced backwards. In practice a host from ~65px up gets the full 21.6px and anything smaller degrades smoothly — a 40px button to 13.3px, a 32px icon button to 10.4px.
-
-**Don't**: raise `--slg-lens-blur` to make a pane "read as glass" — that is the one change guaranteed to remove its refraction. **Don't**: put a pane where nothing sits behind it and then tune numbers to rescue it; move the pane, or drop the family. **Don't**: verify any of this by eye — see `HANDOFF.md` § *How to verify an effect*.
-
-### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
-The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
+### Glass — `sl-fx-glass` (`--wide` · `--field` · `--pane` · `--text`)
+**This is a physical surface**, read as light on its edge. The pointer is a light source above the surface: a narrow arc of warm white wakes on the border facing it, from 140px before the pointer arrives, and on paper a soft shade answers on the far side. When the pointer crosses the element, the arc dims, turns and comes back rather than jumping. Nothing is lit at rest. The component keeps its own fill and label colour: glass adds light, never material. Tier 1 only: without `mount()` there is no pointer light, and nothing is broken. Substrate: **R** Page, **A** App.
 ```html
 <article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
+<button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane">Save</button>
 <label class="sl-field">
   <span class="sl-field__label">Product</span>
   <span class="sl-field__control sl-fx-glass sl-fx-glass--field">
@@ -413,8 +382,15 @@ The element's own border, as chrome: a hairline reflecting a moving environment,
   </span>
 </label>
 ```
-`--wide` widens the CSS fallback ring to 2px for containers (card, dialog, panel); `--field` does the same for a field's wrapper. Neither changes the chrome, which is always the element's own border width. **On a replaced control the `sl-field__control` wrapper is mandatory:** `<input>`, `<textarea>` and `<select>` render no `::before`/`::after`, so the class on the control itself renders nothing at all — no error, no ring.
-Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px. Don't: put glass or aurora on a component whose own `::after` is load-bearing — both families paint their ring there (`:is(.sl-fx-glass, .sl-fx-aurora)::after`, `effects.css:499`), and the ring rule silently wins over whatever the component needed the pseudo-element for. `.sl-switch__track` is the instance that proved it: the track's `::after` **is** the knob, and glass on the track computed `opacity: 0` there, deleting the knob with no error and no warning. The same collision waits on `::before`: that is where `--pane` seats its pointer-following light, so a component that needs its own `::before` for something load-bearing is in the same position. Check what a component's `::before`/`::after` already does before reaching for either family. Don't: put glass on a container whose own background is structural — a separator, a rule, a divider — rather than a surface. The material clears the host's background so its own tint layer can paint (`glass.css:209`), and a container that has no fill of its own to spare loses whatever that background was doing. `.sl-btn-group` is the instance that proved it: the group's `background` **is** the 1px rule between its members, and glass on the group measured `rgba(0, 0, 0, 0)` there — the rule gone, silently. Same shape as the `::after` collision above, one property over: the effect layer takes over something the component was already using, with no error and no warning. The switch's knob (`::after`), the select's chevron (no pseudo-element at all on a replaced control), and the group's rule (`background`) are three instances of one pattern, in three different properties.
+`--wide` and `--field` widen the ring to 2px for containers and a field's wrapper. `--pane` is still valid on text buttons and draws nothing of its own since 2026-09-24; the swell on hover belongs to it. **On a replaced control the `sl-field__control` wrapper is mandatory:** `<input>`, `<textarea>` and `<select>` render no `::before`/`::after`, so the class on the control itself renders nothing, with no error.
+
+`mount()` writes two custom properties per lit host and nothing else: `--slfx-spec-a` (the light's bearing) and `--slfx-spec-i` (how lit, 0–1), plus the class `is-spec-lit` while it is lit.
+Consumes: `--slc-text`. The light and the shade are the page's two poles, read through `--slfx-sheen`. Don't: thicken it to replace a separator — a separator is always 1px. Don't: put glass or aurora on a component whose own `::after` is load-bearing — both families paint their ring there (`:is(.sl-fx-glass, .sl-fx-aurora)::after`), and the ring rule silently wins over whatever the component needed it for. `.sl-switch__track` is the instance that proved it: the track's `::after` **is** the knob.
+
+**Retired 2026-09-24** (re-scope R1, `docs/specs/2027-improve-aesthetics.md`): the blurred pane material on every glass host, the pointer glint, the dispersing edge, the SVG lens and its `--slg-lens-*` knobs, and the WebGPU chrome. A pointer light that is a disc under the cursor is banned, and a test enforces it.
+
+#### Glass text — the letterform is the pane (`glass.css`)
+The one glass reading that still has a material: a backdrop blur masked to the host's own glyphs. `mount()` stamps `.sl-glass` on a `--text` host and injects `glass.css`'s layers beneath its content (`__backdrop` the frost, `__tint` the colour, `__specular` · `__shine` the rim). Import `glass.css` whenever you use `--text`. One line only: SVG text does not wrap.
 
 ### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
 Attention lives here: a 1px arc of light riding the border with its bloom, which reaches ~22px outside the box and ~28px inside it — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. A filled element (`sl-btn--primary`) takes `--rim`: the arc steps just outside the fill, in the depth companion. Substrate: **R** Page, **A** App.

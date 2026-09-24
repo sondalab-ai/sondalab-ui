@@ -352,12 +352,13 @@ test("--slfx-fill names the background the component actually ships", () => {
   const components = effects + readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const page = readFileSync(resolve(HERE, "../showcase/effects.html"), "utf8");
 
-  // Every component class the showcase puts the glass family on.
+  // Every component class the showcase puts GLASS TEXT on: since 2026-09-24
+  // only a letterform has a material to tint, so only its fill has to be named.
   const hosts = new Set();
-  for (const m of page.matchAll(/class="([^"]*\bsl-fx-glass\b[^"]*)"/g)) {
+  for (const m of page.matchAll(/class="([^"]*\bsl-fx-glass--text\b[^"]*)"/g)) {
     for (const cls of m[1].split(/\s+/)) if (/^sl-(?!fx-)/.test(cls)) hosts.add(cls);
   }
-  assert.ok(hosts.size > 3, `the page must exercise several components, found ${[...hosts]}`);
+  assert.ok(hosts.size >= 1, `the page must exercise glass text, found ${[...hosts]}`);
 
   // What components.css gives each of them, taking the last declaration to win.
   const shipped = new Map();

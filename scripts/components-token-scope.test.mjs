@@ -99,10 +99,10 @@ test("the primary button's chrome survives a background + border reset", () => {
   const primary = [...bare.matchAll(/\.sl-btn--primary[^{,]*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
   assert.ok(primary.includes("background-color"), "parser found the primary rules");
   assert.doesNotMatch(primary, /box-shadow|background-image/);
-  // …and the glass pane brings its own rim, so the family clears the edge.
+  // …and since glass became a specular edge (2026-09-24) nothing in the
+  // effects layer takes that border away: the arc draws on ::after, over it.
   const fx = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  const clear = fx.match(/\.sl-btn--primary\.sl-fx-glass\s*\{([^}]*)\}/g)?.join("\n") ?? "";
-  assert.match(clear, /border-color:\s*transparent/);
+  assert.doesNotMatch(fx, /\.sl-btn--primary\.sl-fx-glass\s*\{[^}]*border-color/, "glass must leave the primary's edge alone");
 });
 
 // Reduced motion zeroes --sl-motion-*; a literal duration would escape it. A

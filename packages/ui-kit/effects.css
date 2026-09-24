@@ -575,33 +575,19 @@
 }
 
 
-/* ── Translucency ───────────────────────────────────────────────────────────
-   The owner: the elements have a transparent background and blur what is
-   behind them. The fill becomes a mix of the component's own role colour with
-   nothing, and the host carries a backdrop-filter — which is the one thing the
-   GPU tier cannot do for it, a canvas having no way to read the DOM beneath.
+/* ── The material: the letterform's alone ─────────────────────────────────
+   Retired 2026-09-24 (docs/specs/2027-improve-aesthetics.md, re-scope ruling
+   2 and R1): glass is the specular EDGE above, on the component's own fill.
+   The blurred pane, its tint, its veil, the pane's body and lit edge, the
+   slice-1 button shares and the lens are gone, and a glass component keeps
+   exactly the fill and label colour components.css gives it. --pane stays a
+   valid class and draws nothing of its own.
 
-   The fill has to be NAMED. CSS has no way to say "my own background, at a
-   lower alpha", so --slfx-fill binds the role-var the shipped component used,
-   and a consumer whose component fills itself some other way rebinds it.
-   `transparent` is a legitimate binding: a ghost button has no fill, and the
-   blur alone is what makes it glass.
-
-   The only shipped component whose fill changes with state is the primary
-   button, so its two states are matched again below — a plain
-   `background-color` here would lose to their 0-3-0 shorthand. A consumer
-   component that changes its own fill on a state must do the same.
-
-   @supports: with no backdrop-filter there is nothing behind the element to
-   see, and a translucent fill over an unblurred page reads as a weakened
-   colour rather than as glass. So the whole thing stands down together and
-   the component keeps the fill it shipped with. */
-/* Base classes first, then their variants: a variant binding is 0-2-0 like the
-   base's, so only source order separates them. */
-/* --slfx-fill names the colour the component fills itself with; glass.css
-   tints toward it, so a tag stays ITS OWN colour lifted rather than the page's
-   ground laid over it. The name is the contract: a consumer whose component
-   fills itself some other way rebinds this one property. */
+   What stays is what GLASS TEXT is made of: a backdrop blur masked to the
+   glyphs, painted by glass.css's layers, which effects.js now injects on
+   --text hosts only. --slfx-fill names what those hosts fill themselves with
+   (nothing: a heading and a numeral have no ground of their own), and
+   --slg-tint-color carries it into the anatomy. */
 .sl-fx-glass {
   --slfx-fill: var(--slc-surface);
   --slg-tint-color: var(--slc-surface);
@@ -610,257 +596,23 @@
      inversion band's remapped sheen into the material with it. */
   --slg-spec: var(--slfx-glint);
 }
-/* A transparent fill is not a tint colour: color-mix would give transparent
-   and the pane would have no tint at all. These carry the page's own ground
-   instead, which is what glass over nothing should look like.
-   AND A LITTLE MORE OF IT than the material's own 18%, which is a LEGIBILITY
-   figure. These three have no fill of their own, so their label sits on
-   whatever the page put behind them, and over a dark region the theme's own
-   ink ran out of ground: measured on the showcase's light theme over its
-   telemetry substrate, 4.24:1 where WCAG AA asks 4.5. At 25% the same
-   measurement reads 4.74 and the pane is all but indistinguishable; 32% reads
-   5.19. The material's fitted 18% is untouched for every surface that has a
-   fill to carry its own label. */
-.sl-btn.sl-fx-glass,
-.sl-badge.sl-fx-glass,
-.sl-field__control.sl-fx-glass,
-/* .sl-icon-btn carries no ground of its own, like .sl-btn — its 6% ink wash is
-   not one — which is why it joins this group and not the .sl-tag one. */
-.sl-icon-btn.sl-fx-glass {
-  --slfx-fill: transparent;
-  --slg-tint-color: var(--sl-bg-canvas);
-  --slg-tint-a: 25%;
-  --slg-tint-deep-a: 22%;
-}
-.sl-tag.sl-fx-glass { --slfx-fill: var(--slc-accent-subtle); --slg-tint-color: var(--slc-accent-subtle); }
-.sl-dialog.sl-fx-glass { --slfx-fill: var(--slc-raised); --slg-tint-color: var(--slc-raised); }
-.sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
-.sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
-.sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
-/* The pane brings its own rim and light. The primary's ink edge and lit top
-   line (components.css, 0.11, both border colours) would draw an outline
-   around the glass. */
-.sl-btn--primary.sl-fx-glass { border-color: transparent; }
-/* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
-   what ships; the tint stays the page's ground from the group above. */
-.sl-btn--ghost.sl-fx-glass,
-.sl-icon-btn.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 6%, transparent); }
-.sl-badge.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 7%, transparent); }
-.sl-badge--success.sl-fx-glass,
-.sl-badge--warning.sl-fx-glass,
-.sl-badge--danger.sl-fx-glass,
-.sl-badge--info.sl-fx-glass { --slfx-fill: color-mix(in srgb, currentColor 12%, transparent); }
-.sl-callout.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-accent) 7%, var(--slc-surface)); }
-.sl-callout--success.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-success) 8%, var(--slc-surface)); }
-.sl-callout--warning.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-warning) 8%, var(--slc-surface)); }
-.sl-callout--danger.sl-fx-glass  { --slfx-fill: color-mix(in srgb, var(--slc-danger)  8%, var(--slc-surface)); }
-.sl-callout--info.sl-fx-glass    { --slfx-fill: color-mix(in srgb, var(--slc-info)    8%, var(--slc-surface)); }
-.sl-kbd.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 9%, transparent); }
-.sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
-/* A rule of their own, not a join to the .sl-btn/.sl-badge/.sl-field__control/
-   .sl-icon-btn group above, though that group also binds transparent:
-   1. transparent is what components.css ships these two — neither .sl-anchor
-      nor .sl-stat__value declares a background. A heading and a numeral have
-      no ground of their own.
-   2. No --slg-tint-color/--slg-tint-a rebind: the group's 25%/22% tint alphas
-      were fitted by contrast measurement on a FILLED CONTROL over a telemetry
-      substrate (see the comment above, 4.24:1 → 4.74 → 5.19). A display-scale
-      letterform is not that case; inheriting those numbers would be borrowing
-      a measurement taken for something else. Tint stays at the family default.
-   3. Bound on the two host classes, not on .sl-fx-glass--text, though that is
-      where it conceptually belongs — one declension, every glass-text host.
-      The guard at scripts/effects-guards.test.mjs:310 keys each binding by
-      stripping the selector from .sl-fx-glass onward; a selector of
-      .sl-fx-glass--text strips to "", which the guard reads as the FAMILY
-      DEFAULT and would silently rebind the fill for every glass host on every
-      page. That is a limitation of the guard, not a preference — do not move
-      this binding onto --text without fixing the guard first. */
 .sl-anchor.sl-fx-glass,
 .sl-stat__value.sl-fx-glass { --slfx-fill: transparent; }
-/* injectGlass() stamps .sl-glass on the host so glass.css's anatomy applies,
-   and glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
-   there — which overwrites a component's own radius unless this knob is bound.
-   .sl-icon-btn--round is 50%, not --sl-radius-md, so it needs the rebind. */
-.sl-icon-btn--round.sl-fx-glass { --slg-radius: 50%; }
 
-/* A filled brand button is the one surface whose own content constrains how
-   translucent it may be: thinning the fill on paper moves the amber toward
-   cream and the label goes with it. The owner's ruling is to carry the label
-   rather than thin the glass less — a shadow in the accent's own hue, 2px and
-   softly blurred, so the letterform keeps an edge whatever the fill is doing
-   behind it.
-
-   Said plainly: this is a LEGIBILITY aid, not a contrast fix. WCAG measures
-   foreground against background and a shadow changes neither. Ruling 8 below
-   is what fixed the contrast, by making the label the DARK pole
-   (--slfx-shade); --slc-on-accent's white is built for an opaque accent and
-   goes the wrong way under a translucent one. */
-.sl-btn--primary.sl-fx-glass {
-  /* THE SHADOW IS THE MIX'S OWN LIGHTNESS, not a fixed dark. This read `0.24`
-     from the era when the label was white, where anything dark behind it was
-     an edge. Ruling 8 then made the label dark — 0.236 on paper — and 0.24
-     under 0.236 is not an edge, it is mud, which is what the owner saw.
-     Keeping `l` puts the shadow at 0.44: below the composited fill it sits on
-     (~0.63) and well above the label, so it reads as the fill's own colour
-     deepened under the letterform rather than as a black halo.
-
-     Gated to paper by that same lightness. The colour is a 55/45 mix of the
-     accent and the sheen, so it keeps the accent's hue while its LIGHTNESS
-     reports the theme: 0.84 on ink (alpha 0), 0.44 on paper (alpha 0.8). */
-  text-shadow: 0 1px 2px oklch(from color-mix(in oklab, var(--slc-accent) 55%, var(--slfx-sheen))
-                               l c h / clamp(0, (0.6 - l) * 5, 1));
-  /* A saturated brand fill cannot be thinned far on a dark page: at 48% over
-     near-black the amber read as dark olive, and no veil recovers a hue that
-     has been mixed away. This is not a compromise but the way the register
-     actually works — a prominent filled control in Apple's own glass is very
-     nearly solid, and the strong translucency lives on the neutral surfaces
-     (ghost buttons, cards, keycaps) where there is no hue to lose. */
-  --slfx-fill-a: 80%;
-}
-
-/* The frost and the fill used to be painted HERE, on the host: a
-   background-color mixing the component's colour with a veil, and a
-   backdrop-filter beside it. Both moved into glass.css's layers on
-   2026-09-11, and the move is the whole point of adopting that file — one
-   material, in one place, in the shape the reference measured. What the host
-   keeps is the naming: --slfx-fill says what colour the component fills itself
-   with and --slg-tint-color carries it into the anatomy, so a consumer still
-   rebinds one property and a tag is still its own colour lifted rather than
-   the page's ground laid over it.
-
-   The rim the old block lifted into the material (border-color mixed with the
-   veil) is now __shine's inset triple, which cannot fatten the box the way a
-   border can — the reference's own reason for using an inset shadow. */
 @supports (backdrop-filter: blur(1px)) {
-  /* The host stops painting its own fill: the anatomy carries it, and a solid
-     background under the layers would leave a filled control opaque with glass
-     drawn on top of nothing. The fill is not lost — --slg-tint-color and
-     --slg-accent-a put the component's own colour into the tint at the share
-     the contrast gate measured. */
-  .sl-fx-glass { background-color: transparent; }
+  /* The letterform stops painting a fill of its own: the anatomy carries the
+     material. */
+  /* Wrapped in :is() so this is not the first plain selector for the text
+     modifier in the file: glass-text.test.mjs locates the real declension by
+     the class name followed directly by an opening brace. */
+  :is(.sl-fx-glass--text) { background-color: transparent; }
 }
 
 @supports not (backdrop-filter: blur(1px)) {
-  /* No frost means no glass: a translucent fill over an unblurred page reads
-     as a weakened colour, so the whole thing stands down together and the
-     component keeps the fill it shipped with. The anatomy's layers paint
-     nothing on their own — the tint is the only one with a colour, and it is
-     held off here rather than left to tint a page it cannot blur. */
+  /* No frost means no glass: the anatomy's tint is held off rather than left
+     to tint a page it cannot blur. */
   .sl-glass__tint { background-image: none; }
 }
-
-/* ══ GLASS PANE — the element is made of glass ═══════════════════════════════
-   The glass family's pointer-reactive mode, for every text button whatever
-   its variant — the owner: buttons are made of glass, and the interaction is
-   light, translucency, refraction. Three layers, none of them a filter, and
-   the label sits on top of all of them untouched.
-
-   BODY  ::before, z-index -1 — above the host's own fill (the host is a
-         stacking context), below its label. A slab: the glint along the top
-         inside edge and the shade along the bottom (the reference's
-         innerShadow — white 90%, offset 1px, blur 0.5 — is the same light
-         from above), a 1px inner rim of the glint just inside the border,
-         which is the thickness of the pane, and a wash that lightens toward
-         the top. Every one of those is multiplied by --slfx-lit, so at rest
-         the slab is not there at all: the pane's thickness is something the
-         pointer reveals, not a permanent bevel. Over a filled control the
-         fill shows through all of it: translucency over an opaque brand fill
-         is light that sits ON the fill, not a fill that lets the page
-         through.
-   SPOT  RETIRED 2026-09-24 (re-scope R1): the pointer glint was a disc of
-         light under the cursor, which ruling 4 bans; the specular edge above
-         is the pointer's light now. The record: the
-         reference's cursor "spill" (48px radius, 1 → 0.35 at 45% → 0, peak
-         0.55), placed by effects.js through --slfx-px/--slfx-py and eased in
-         and out through --slfx-lit. On paper it is not white: the
-         reference's light preset composites its light with multiply and
-         saturate(5.4), and a near-white glint on cream is invisible — so the
-         spot is two colours whose ALPHA carries the theme, and only one of
-         them is ever visible (--slfx-spot-cool / --slfx-spot-warm).
-   EDGE  RETIRED 2026-09-24 with the spot, for the specular edge above. The
-         record: while lit, the conic's hot
-         stop sits at the pointer's bearing with a fringe of the accent on
-         one side and of the depth companion on the other — dispersion,
-         which is what refraction looks like on an edge (the reference's
-         material has one colour-separation knob, its R/B channel shift).
-         Under Tier 2 the chrome does the same in the cursor's reflection
-         (effects-shader.js, DISPERSE). Refraction lives on the edge band and
-         nowhere else: the content is never filtered, and nothing here is a
-         backdrop-filter — a lens over the label is the effect the owner
-         refused, and a blur on a 1px band would show nothing anyway.
-
-   Requires .sl-fx-glass on the same element (the vivid tier and the glint
-   are declared there). A filled element carries --rim, the marker the
-   aurora already needs on a fill: its ::after is the rim's, so its resting
-   edge is the body's inner rim, its spot is always the white glint (a warm
-   spot on an accent fill is accent on accent), and under Tier 2 the chrome
-   takes the fill's outer pixel. */
-.sl-fx-glass--pane {
-  /* Read by glass.css's __shine, which scales its rim by it. */
-  --slfx-lit: 0;
-  /* The dark pole of the neutral pair, the way --slfx-glint is the light
-     one: the sheen where it is dark (paper, L 0.24), its lightness mirrored
-     below where it is bright (ink: 1 − 0.91 = 0.09, under the surface). */
-  --slfx-shade: oklch(from var(--slfx-sheen) min(l, 1 - l) c h);
-}
-/* ══ SLICE 1 — BUTTONS ════════════════════════════════════════════════════════
-   The material settled on lab/1-1i and recorded in
-   docs/specs/2027-improve-aesthetics.md §"Slice 1 rulings (AC-6)". Every rule
-   here is scoped to .sl-btn on purpose: AC-7 puts ONE element in a slice, so
-   cards, dialogs, tags, keycaps and the field wrapper keep the material they
-   ship with until their own slice reaches them. Nothing above this block is
-   edited; this block only narrows it for buttons.
-
-   Ruling 10 — the remainder is the PAGE, not the veil. The shared rule mixes the
-   fill with --slfx-veil so a filled control is lifted rather than darkened, and
-   that reasoning holds on ink. It does not hold on paper: the veil's alpha is
-   0.854 there by construction and the pane resolves to 0.915 — effectively
-   solid, which is the opposite of what a glass button is for. Measured on
-   lab/1g. So on a button the remainder is transparency and the page shows
-   through, which is the owner's ruling of 2026-09-11 overruling §Translucency
-   on mechanism, for buttons only. */
-.sl-btn.sl-fx-glass {
-  /* Ruling: blur 2px, saturate 1.7. The shared 26px erases what is behind the
-     control entirely, and a blur you cannot see past is a tint with extra cost.
-     2px still smears a hairline and a line of text — verified by toggling it and
-     diffing the crop: 3918 px of 28676 change, max delta 29/255. */
-  --slfx-back: 2px;
-  --slfx-back-sat: 1.7;
-}
-/* Ruling 8 — the filled share is 72%, not the shared 80%. The dark theme has two
-   viable regions and one dead band: --slc-text clears 4.5:1 up to share 0.42,
-   the dark pole clears it from 0.65 up, and between 0.50 and 0.58 neither does.
-   0.72 sits inside the high region on BOTH themes — 5.48:1 on ink, 5.67:1 on
-   paper — so the share does not branch on the theme. */
-/* 0.72 is a CONTRAST result, so it is the share the accent layer carries too —
-   the pane it measured is the one the anatomy now composites. It supersedes the
-   0.80 the general rule above still names for non-button surfaces. */
-.sl-btn--primary.sl-fx-glass { --slfx-fill-a: 72%; --slg-accent-a: 72%; }
-
-/* Ruling 8 — the label is the pole that contrasts with the composited pane, and
-   at 0.72 that is the DARK pole on both themes, because the composited pane
-   lands mid-light either way. --slfx-shade is already exactly that
-   derivation — oklch(from sheen min(l, 1 - l) c h) — so this needs no new token
-   (AC-11), no literal (AC-18) and no [data-sl-theme] branch. Measured against
-   the pane over canvas, surface and raised: 5.72:1 on ink, 5.67:1 on paper.
-
-   It replaces --slc-on-accent, which is built for an OPAQUE accent and goes the
-   wrong way under a translucent one: #FFFFFF on paper measures 1.92:1. */
-.sl-btn--primary.sl-fx-glass--pane { color: var(--slfx-shade); }
-
-/* Ruling 9 — the lit rim is one continuous hairline, never a bevel. The pane's
-   body shipped three inset shadows: a top band, a bottom shade and a full ring.
-   The two bands are the 3D bevel of twenty years ago — straight runs that stop
-   at the corners instead of passing through them — and they are what the owner
-   read as "old-school, not much like real glass". They go; the ring stays and
-   takes their weight, so the pane keeps its thickness without the bevel.
-
-   The travelling part of the edge is not added here: ::after already carries the
-   conic that faces the pointer, which is border-beam's recipe and is what the
-   ruling asks for. This only stops ::before from fighting it. */
-/* Ruling 4's rounder inner rim is __shine's now: an inset shadow on the top
-   edge with a softer side pair, which is the reference's own asymmetry and the
-   thing a single even ring could not give. */
 
 /* Container-scale edges. Width is emphasis, not separation — HANDOFF check 4
    classes an emphasis edge as a blessed category, so this is not an L2 breach. */
