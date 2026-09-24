@@ -604,8 +604,8 @@
 .sl-btn.sl-fx-glass,
 .sl-badge.sl-fx-glass,
 .sl-field__control.sl-fx-glass,
-/* .sl-icon-btn ships a transparent background like .sl-btn, which is why it
-   joins this group and not the .sl-tag one. */
+/* .sl-icon-btn carries no ground of its own, like .sl-btn — its 6% ink wash is
+   not one — which is why it joins this group and not the .sl-tag one. */
 .sl-icon-btn.sl-fx-glass {
   --slfx-fill: transparent;
   --slg-tint-color: var(--sl-bg-canvas);
@@ -617,6 +617,10 @@
 .sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
+/* Since 0.11 these two fill with a 6% wash of the ink. The fill is named for
+   what ships; the tint stays the page's ground from the group above. */
+.sl-btn--ghost.sl-fx-glass,
+.sl-icon-btn.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 6%, transparent); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
 /* A rule of their own, not a join to the .sl-btn/.sl-badge/.sl-field__control/
    .sl-icon-btn group above, though that group also binds transparent:

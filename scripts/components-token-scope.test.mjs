@@ -76,3 +76,12 @@ test("the inversion band re-derives every neutral role its subtree paints with",
       `band's own ink on the band: ${missing}`,
   );
 });
+
+// Reduced motion zeroes --sl-motion-*; a literal duration would escape it. A
+// var() fallback is not one (it only applies where the token is absent).
+test("component motion reads the motion tokens, never a literal duration", () => {
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/var\([^()]*\)/g, "var()");
+  const literal = [...bare.matchAll(/(?:transition|animation)[^;{}]*?\b\d*\.?\d+m?s\b/g)]
+    .map((m) => m[0]);
+  assert.deepEqual(literal, []);
+});

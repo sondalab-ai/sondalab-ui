@@ -25,7 +25,7 @@ Accent-tinted pill with a leading dot; classification/status. Substrate: **R** A
 Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags.
 
 ### Button — `sl-btn` (`--primary` · `--ghost` · `--sm`)
-Filled-accent primary or bordered ghost. Active/hover track the accent hue. Substrate: **R** App/IDE, **A** Page.
+Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary hover/active track the accent hue; ghost hover deepens the wash. Substrate: **R** App/IDE, **A** Page.
 ```html
 <button class="sl-btn sl-btn--primary">Save changes</button>
 <button class="sl-btn sl-btn--ghost">Cancel</button>
