@@ -140,15 +140,20 @@
 }
 .sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .sl-btn--primary {
-  background: var(--slc-accent);
+  background-color: var(--slc-accent);
   color: var(--slc-on-accent);
   /* A pressed-ink edge and a lit top line: reads as a solid object without a
-     drop shadow, so it sits flat in a toolbar. */
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, black 12%, transparent),
-              inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
+     drop shadow, so it sits flat in a toolbar. Both ride properties a
+     consumer already resets when it strips a button to text (background,
+     border) — never box-shadow, which such an override does not think of. */
+  border-color: color-mix(in srgb, var(--slc-accent) 88%, black);
+  background-image: linear-gradient(color-mix(in srgb, white 20%, transparent), color-mix(in srgb, white 20%, transparent));
+  background-size: 100% 1px;
+  background-position: top;
+  background-repeat: no-repeat;
 }
-.sl-btn--primary:hover:not(:disabled)  { background: var(--slc-accent-hover); }
-.sl-btn--primary:active:not(:disabled) { background: var(--slc-accent-active); }
+.sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); }
+.sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); }
 .sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); }
 .sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
 .sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.35rem 0.6rem; }

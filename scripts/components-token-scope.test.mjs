@@ -91,6 +91,16 @@ test("high contrast gives every edgeless wash its border back", () => {
   assert.deepEqual(missing, []);
 });
 
+// sondalab-site strips its hero button to terminal text with `background:
+// transparent; border: 0` — the usual way to un-button a button. A primary
+// whose chrome rode box-shadow drew a stray line there after 0.11.
+test("the primary button's chrome survives a background + border reset", () => {
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const primary = [...bare.matchAll(/\.sl-btn--primary[^{,]*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
+  assert.ok(primary.includes("background-color"), "parser found the primary rules");
+  assert.doesNotMatch(primary, /box-shadow/);
+});
+
 // Reduced motion zeroes --sl-motion-*; a literal duration would escape it. A
 // var() fallback is not one (it only applies where the token is absent).
 test("component motion reads the motion tokens, never a literal duration", () => {
