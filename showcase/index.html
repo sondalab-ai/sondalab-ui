@@ -730,7 +730,14 @@
   <script>
     // Registry accents: one hue per product. hover/active/subtle re-derive from
     // it via the theme layer (color-mix / relative-color) — the one-var contract.
-    var ACCENTS = { amber: "#F5A83C", indigo: "#8b96ff", cyan: "#2ee6c0" };
+    // Per theme, from agent/accent-registry.json (default / spexr / introspect):
+    // a dark-ground hue on paper fails contrast, so light takes its own.
+    var ACCENTS = {
+      amber:  { light: "#B56A0C", dark: "#F5A83C" },
+      indigo: { light: "#5b6cff", dark: "#8b96ff" },
+      cyan:   { light: "#0e9c84", dark: "#2ee6c0" },
+    };
+    var accent = "amber";
     var root = document.documentElement;
 
     function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -742,14 +749,23 @@
       });
     }
 
-    function applyTheme(t) { root.setAttribute("data-sl-theme", t); press(document.getElementById("theme-seg"), "data-theme", t); store("sl-demo-theme", t); }
+    function applyTheme(t) { root.setAttribute("data-sl-theme", t); press(document.getElementById("theme-seg"), "data-theme", t); store("sl-demo-theme", t); applyAccent(accent); }
     function applyAccent(a) {
-      var hue = ACCENTS[a]; if (!hue) return;
+      var pair = ACCENTS[a]; if (!pair) return;
+      accent = a;
+      var theme = root.getAttribute("data-sl-theme");
+      var hue = theme === "light" ? pair.light : pair.dark;
+      // High contrast owns its accent outright; an inline hue would override it.
+      if (theme === "high-contrast") {
+        root.style.removeProperty("--sl-accent-default");
+        root.style.removeProperty("--sl-focus-ring");
+        hue = null;
+      }
       // Set only the hue. hover/active/subtle are color-mix()/relative-color
       // expressions off --sl-accent-default in the theme layer, so they
       // re-derive automatically — no per-step values, no amber leak.
-      root.style.setProperty("--sl-accent-default", hue);
-      root.style.setProperty("--sl-focus-ring", hue);
+      if (hue) root.style.setProperty("--sl-accent-default", hue);
+      if (hue) root.style.setProperty("--sl-focus-ring", hue);
       press(document.getElementById("accent-seg"), "data-accent", a);
       store("sl-demo-accent", a);
     }
@@ -761,8 +777,8 @@
       var b = e.target.closest("button"); if (b) applyAccent(b.getAttribute("data-accent"));
     });
 
+    accent = ACCENTS[load("sl-demo-accent")] ? load("sl-demo-accent") : "amber";
     applyTheme(load("sl-demo-theme") || "dark");
-    applyAccent(load("sl-demo-accent") || "amber");
 
     // -- atmospheric glow-blob field (ported from the identity board) --------
     // Amber + teal soft radial blobs, blurred, additive on dark / multiply on

@@ -25,7 +25,7 @@ Accent-tinted pill with a leading dot; classification/status. Substrate: **R** A
 Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags.
 
 ### Button — `sl-btn` (`--primary` · `--ghost` · `--sm`)
-Filled-accent primary or bordered ghost. Active/hover track the accent hue. Substrate: **R** App/IDE, **A** Page.
+Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary hover/active track the accent hue; ghost hover deepens the wash. Substrate: **R** App/IDE, **A** Page.
 ```html
 <button class="sl-btn sl-btn--primary">Save changes</button>
 <button class="sl-btn sl-btn--ghost">Cancel</button>
@@ -47,7 +47,7 @@ Semantic status pill. Semantic colour is **independent of the accent hue** and s
 <span class="sl-badge sl-badge--danger">Failed</span>
 ```
 One modifier per status: `--success`, `--warning`, `--danger`, `--info` — never a bare `sl-badge`.
-Consumes: `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: recolour a badge to the accent — status ≠ accent.
+Consumes: `--slc-text`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: recolour a badge to the accent — status ≠ accent.
 
 ### Card — `sl-card` (`__title` · `__body`)
 Surface panel. Substrate: **R** App.
@@ -57,7 +57,7 @@ Surface panel. Substrate: **R** App.
   <div class="sl-card__body">2 R-violations resolved, 1 blessed.</div>
 </article>
 ```
-Consumes: `--slc-surface`, `--slc-border`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
+Consumes: `--slc-surface`, `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
 
 ### Field — `sl-field` (`__label` · `__input` · `__control`)
 Label + input/textarea/select. Substrate: **R** App.
@@ -119,7 +119,7 @@ The chevron a `<select>` cannot draw for itself. Composes onto `sl-field__contro
 Consumes: `--slc-text-muted`. Do: keep `sl-field__input` on the `<select>` itself — the border, the ground and the focus ring all come from there. Don't: reach for a `mask-image` to draw the arrow; a mask on a `<select>` masks its text along with the arrow. Don't: put the glass/aurora effect classes on `.sl-select` itself — it is a wrapper, but its `::after` is the chevron, and both families paint their ring there too, so the chevron is replaced in silence. Nest `.sl-select` inside `.sl-field__control` and dress that instead.
 
 ### Callout — `sl-callout` (`--success` · `--warning` · `--danger` · `--info`)
-Banner / admonition. The accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
+Banner / admonition. The panel is a light wash of its status; the accent is a short "measure tick" on the top edge (not a left stripe). Substrate: **A** App/Page.
 ```html
 <div class="sl-callout sl-callout--info">
   <p class="sl-callout__title">Tier B</p>
@@ -127,7 +127,7 @@ Banner / admonition. The accent is a short "measure tick" on the top edge (not a
 </div>
 ```
 One modifier per status: `--success`, `--warning`, `--danger`, `--info` colours the tick.
-Consumes: `--slc-surface`, `--slc-border`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: reinstate a full left border stripe.
+Consumes: `--slc-surface`, `--slc-accent`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: reinstate a full left border stripe.
 
 ### Rule — `sl-rule` (`--labeled`)
 Hairline divider; `--labeled` centres a mono caption over the line. Substrate: **R** App/Page.
@@ -147,7 +147,7 @@ Data table shell. Wrap in an `overflow-x:auto` container so wide tables never sc
   </table>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`. Do: `--numeric` for tabular figures.
+Consumes: `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`. Do: `--numeric` for tabular figures.
 
 ### Tabs — `sl-tabs` (`__list` · `__tab`)
 Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px accent underline — an emphasis accent, not a separator. Substrate: **R** App.
@@ -166,7 +166,7 @@ Keyboard key and inline monospace code. Substrate: **A**.
 ```html
 Press <kbd class="sl-kbd">⌘K</kbd>, then run <code class="sl-code">sl-audit</code>.
 ```
-Consumes: `--slc-surface`, `--slc-border`, `--slc-text`, `--sl-font-mono`.
+Consumes: `--slc-surface`, `--slc-text`, `--sl-font-mono`.
 
 ### Dialog — `sl-dialog` (`__title` · `__body` · `__actions`)
 Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: **R** App.
@@ -255,7 +255,7 @@ What a surface shows where its content would be. Composes `sl-eyebrow` above the
   <p class="sl-empty__body">4 surfaces read, 0 R-violations, 0 blessed deviations.</p>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-text`, `--slc-text-secondary`. Do: say what is absent and what was actually measured — L5 prefers a real figure to an adjective. Don't: write "Nothing here yet!"; the exclamation mark is the marketing voice this house does not use.
+Consumes: `--slc-text`, `--slc-text-secondary`. Do: say what is absent and what was actually measured — L5 prefers a real figure to an adjective. Don't: write "Nothing here yet!"; the exclamation mark is the marketing voice this house does not use.
 
 ### Skeleton — `sl-skeleton`
 A placeholder block for content that has not arrived. **Static** — it does not shimmer. Substrate: **R** App, **A** IDE/Page.

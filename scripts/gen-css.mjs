@@ -58,6 +58,11 @@ function main() {
       // Syntax palette (--sl-code-*): per-theme, atom-one. Omitted where the
       // token file has no entry for the theme (e.g. high-contrast).
       ...(code ? Object.entries(code).map(([k, v]) => [`--sl-code-${k}`, v]) : []),
+      // Categorical ramp at the lightness this theme's grounds need; the
+      // shared ramp on :root stays as the default for a page with no theme.
+      ...(t.viz?.[id] ?? []).map((v, i) => [`--sl-viz-${i}`, v]),
+      // Shadows cast in the ground's own ink, so they are per theme too.
+      ...Object.entries(t.shadow?.[id] ?? {}).map(([k, v]) => [`--sl-shadow-${k}`, v]),
     ];
     const css = HEADER + block(`[data-sl-theme="${id}"]`, entries);
     writeFileSync(resolve(OUT, `themes/${id}.css`), css);

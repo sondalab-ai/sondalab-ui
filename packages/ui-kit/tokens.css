@@ -11,9 +11,9 @@
   --sl-space-5: 1.5rem;
   --sl-space-6: 2rem;
   --sl-space-8: 3rem;
-  --sl-radius-sm: 4px;
-  --sl-radius-md: 6px;
-  --sl-radius-lg: 10px;
+  --sl-radius-sm: 6px;
+  --sl-radius-md: 10px;
+  --sl-radius-lg: 16px;
   --sl-radius-pill: 9999px;
   --sl-text-xs: 0.75rem;
   --sl-text-sm: 0.875rem;
@@ -21,6 +21,8 @@
   --sl-text-lg: 1.125rem;
   --sl-text-xl: 1.5rem;
   --sl-text-2xl: 2rem;
+  --sl-text-3xl: 2.75rem;
+  --sl-text-display: clamp(3.5rem, 2rem + 5vw, 6rem);
   --sl-line-tight: 1.2;
   --sl-line-normal: 1.5;
   --sl-line-relaxed: 1.6;
@@ -33,19 +35,19 @@
   --sl-motion-mid: 220ms;
   --sl-motion-slow: 360ms;
   --sl-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --sl-shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
-  --sl-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --sl-shadow-lg: 0 12px 32px rgba(0,0,0,0.16);
+  --sl-shadow-sm: 0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03);
+  --sl-shadow-md: 0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12);
+  --sl-shadow-lg: 0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22);
   --sl-focus-ring-width: 2px;
   --sl-focus-ring-offset: 2px;
-  --sl-viz-0: #b388ff;
-  --sl-viz-1: #4dd0e1;
-  --sl-viz-2: #ffb74d;
-  --sl-viz-3: #81c784;
-  --sl-viz-4: #f06292;
-  --sl-viz-5: #7986cb;
-  --sl-viz-6: #a1887f;
-  --sl-viz-7: #4db6ac;
+  --sl-viz-0: #ef806f;
+  --sl-viz-1: #65a7fa;
+  --sl-viz-2: #9ab140;
+  --sl-viz-3: #d79628;
+  --sl-viz-4: #e17eb9;
+  --sl-viz-5: #14bcbc;
+  --sl-viz-6: #68eeba;
+  --sl-viz-7: #b28fef;
 }
 
 @media (prefers-reduced-motion: reduce) {
