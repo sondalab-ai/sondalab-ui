@@ -9,7 +9,7 @@
         ".spexr-df-card__trail"
       ],
       "value": "--theia-code-font-family (editor mono)",
-      "why": "design-language.md L3: code-content runs mirror the editor font; design-layer labels use --sl-font-code. Deliberate split, not a violation."
+      "why": "design-language.md L3: code-content runs mirror the editor font; design-layer labels use the brand mono --sl-font-mono. Deliberate split, not a violation."
     },
     {
       "kind": "color",
