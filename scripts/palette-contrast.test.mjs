@@ -16,6 +16,7 @@ const vars = (f) => Object.fromEntries(
     .map((m) => [m[1], m[2]]),
 );
 const shared = vars("tokens.css");
+const lin2g = (v) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
 const Y = (hex) => { const [r, g, b] = fromHex(hex).lin; return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [hi, lo] = [Y(a), Y(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
 
@@ -37,6 +38,16 @@ for (const theme of ["light", "dark"]) {
   for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
     test(`${theme} ${bg}: status reads as text (4.5:1)`, () =>
       assert.deepEqual(below(STATUS, bg, 4.5), []));
+    // The badge fills itself with a wash of its own status colour
+    // (components.css: color-mix(in srgb, currentColor 12%, transparent)),
+    // so the text's real ground is that wash over the page.
+    test(`${theme} ${bg}: status reads on its own 12% badge wash (4.5:1)`, () => {
+      const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
+        return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
+      const bad = STATUS.map((n) => [n, ratio(hex(n), lerp(hex(bg), hex(n), 0.12))])
+        .filter(([, r]) => r < 4.5).map(([n, r]) => `${n} ${r.toFixed(2)}`);
+      assert.deepEqual(bad, []);
+    });
     test(`${theme} ${bg}: code reads (4.5:1, comment 3:1)`, () =>
       assert.deepEqual([...below(CODE_TEXT, bg, 4.5), ...below(CODE_QUIET, bg, 3)], []));
     test(`${theme} ${bg}: viz marks are visible (3:1)`, () =>

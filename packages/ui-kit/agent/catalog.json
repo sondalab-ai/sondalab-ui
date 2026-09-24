@@ -66,6 +66,7 @@
         "sl-badge--info"
       ],
       "roleVars": [
+        "--slc-text",
         "--slc-success",
         "--slc-warning",
         "--slc-danger",
@@ -82,7 +83,7 @@
       ],
       "roleVars": [
         "--slc-surface",
-        "--slc-border",
+        "--slc-border-subtle",
         "--slc-text",
         "--slc-text-secondary"
       ]
@@ -119,7 +120,7 @@
       ],
       "roleVars": [
         "--slc-surface",
-        "--slc-border",
+        "--slc-accent",
         "--slc-info",
         "--slc-success",
         "--slc-warning",
@@ -145,7 +146,7 @@
         "sl-table--numeric"
       ],
       "roleVars": [
-        "--slc-border",
+        "--slc-border-subtle",
         "--slc-text",
         "--slc-text-secondary",
         "--slc-surface"
@@ -176,7 +177,6 @@
       ],
       "roleVars": [
         "--slc-surface",
-        "--slc-border",
         "--slc-text"
       ]
     },
@@ -485,7 +485,6 @@
         "sl-empty__body"
       ],
       "roleVars": [
-        "--slc-border",
         "--slc-text",
         "--slc-text-secondary"
       ]

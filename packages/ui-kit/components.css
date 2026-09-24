@@ -46,10 +46,10 @@
   --slc-border-strong: var(--sl-border-strong,  rgba(21,33,31,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent));
   /* status */
-  --slc-success: var(--sl-status-success, #536e06);
-  --slc-warning: var(--sl-status-warning, #865d06);
-  --slc-danger:  var(--sl-status-danger,  #bb3107);
-  --slc-info:    var(--sl-status-info,    #425ebc);
+  --slc-success: var(--sl-status-success, #4a6205);
+  --slc-warning: var(--sl-status-warning, #795305);
+  --slc-danger:  var(--sl-status-danger,  #a72b05);
+  --slc-info:    var(--sl-status-info,    #3853af);
   /* depth — cast in the ground's ink, so per theme */
   --slc-shadow-sm: var(--sl-shadow-sm, 0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03));
   --slc-shadow-md: var(--sl-shadow-md, 0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12));
@@ -156,7 +156,7 @@
 /* Card — surface panel. Compose with __title / __body. */
 .sl-card {
   background: var(--slc-surface);
-  border: 1px solid var(--slc-border);
+  border: 1px solid var(--slc-border-subtle);
   border-radius: var(--sl-radius-lg, 16px);
   padding: var(--sl-space-5, 1.5rem);
 }
@@ -188,15 +188,18 @@
   text-transform: uppercase;
   line-height: 1;
   color: var(--slc-text-secondary);
-  border: 1px solid var(--slc-border);
+  background: color-mix(in srgb, var(--slc-text) 7%, transparent);
+  border: 1px solid transparent;
   border-radius: var(--sl-radius-pill, 9999px);
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
 }
 .sl-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
-.sl-badge--success { color: var(--slc-success); border-color: color-mix(in srgb, var(--slc-success) 40%, transparent); }
-.sl-badge--warning { color: var(--slc-warning); border-color: color-mix(in srgb, var(--slc-warning) 40%, transparent); }
-.sl-badge--danger  { color: var(--slc-danger);  border-color: color-mix(in srgb, var(--slc-danger)  40%, transparent); }
-.sl-badge--info    { color: var(--slc-info);    border-color: color-mix(in srgb, var(--slc-info)    40%, transparent); }
+/* The status text sits on a 12% wash of itself; palette-contrast.test.mjs
+   holds every status ink to 4.5:1 on exactly that ground. */
+.sl-badge--success { color: var(--slc-success); background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--warning { color: var(--slc-warning); background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--danger  { color: var(--slc-danger);  background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--info    { color: var(--slc-info);    background: color-mix(in srgb, currentColor 12%, transparent); }
 
 /* Field — label + input/textarea/select. Compose __label with __input. */
 .sl-field { display: flex; flex-direction: column; gap: var(--sl-space-2, 0.5rem); }
@@ -238,9 +241,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   font-size: 0.8125em;
   line-height: 1;
   color: var(--slc-text-secondary);
-  background: var(--slc-surface);
-  border: 1px solid var(--slc-border);
-  border-bottom-width: 2px;
+  background: color-mix(in srgb, var(--slc-text) 9%, transparent);
+  border: 0;
   border-radius: var(--sl-radius-sm, 6px);
   padding: 0.2em 0.45em;
 }
@@ -437,11 +439,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 
 /* Callout — banner / admonition. The accent is a short "measure tick" on the
    top edge (a ruler mark, not the ubiquitous left stripe), aligned with the
-   title. Variants recolour the tick; the panel is plain surface. */
+   title. Variants recolour the tick and wash the panel with their status. */
 .sl-callout {
   position: relative;
-  background: var(--slc-surface);
-  border: 1px solid var(--slc-border);
+  background: color-mix(in srgb, var(--slc-accent) 7%, var(--slc-surface));
+  border: 1px solid transparent;
   border-radius: var(--sl-radius-md, 10px);
   padding: var(--sl-space-5, 1.5rem) var(--sl-space-5, 1.5rem) var(--sl-space-4, 1rem);
 }
@@ -471,6 +473,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   color: var(--slc-text-secondary);
   margin: 0;
 }
+.sl-callout--success { background: color-mix(in srgb, var(--slc-success) 8%, var(--slc-surface)); }
+.sl-callout--warning { background: color-mix(in srgb, var(--slc-warning) 8%, var(--slc-surface)); }
+.sl-callout--danger  { background: color-mix(in srgb, var(--slc-danger)  8%, var(--slc-surface)); }
+.sl-callout--info    { background: color-mix(in srgb, var(--slc-info)    8%, var(--slc-surface)); }
 .sl-callout--success::before { background: var(--slc-success); }
 .sl-callout--warning::before { background: var(--slc-warning); }
 .sl-callout--danger::before  { background: var(--slc-danger); }
@@ -493,8 +499,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   text-transform: uppercase;
   text-align: left;
   color: var(--slc-text-muted);
+  background: color-mix(in srgb, var(--slc-text) 4%, transparent);
   padding: var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
-  border-bottom: 1px solid var(--slc-border);
+  border-bottom: 1px solid transparent;
 }
 .sl-table tbody td {
   padding: var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
@@ -821,7 +828,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   align-items: flex-start;
   gap: var(--sl-space-2, 0.5rem);
   padding: var(--sl-space-6, 2rem) var(--sl-space-5, 1.5rem);
-  border: 1px dashed var(--slc-border);
+  background: color-mix(in srgb, var(--slc-text) 4%, transparent);
   border-radius: var(--sl-radius-md, 10px);
 }
 .sl-empty__title {
@@ -856,7 +863,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 /* Mono at every size: a display-scale numeral is a structural label (L1). */
 .sl-stat__value {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-2xl, 2rem);
+  font-size: var(--sl-text-3xl, 2.75rem);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   color: var(--slc-text);
