@@ -126,10 +126,10 @@ Spacing `0/1/2/3/4/5/6/8` (4px base), radii `sm 4 / md 6 / lg 10 / pill`, motion
 
 | Role | light | dark |
 |---|---|---|
-| `--sl-status-success` | `#16a34a` | `#4ade80` |
-| `--sl-status-warning` | `#d97706` | `#fbbf24` |
-| `--sl-status-danger` | `#dc2626` | `#f87171` |
-| `--sl-status-info` | `#0284c7` | `#38bdf8` |
+| `--sl-status-success` | `#536e06` | `#98b958` |
+| `--sl-status-warning` | `#865d06` | `#db9e2e` |
+| `--sl-status-danger` | `#bb3107` | `#fe8263` |
+| `--sl-status-info` | `#425ebc` | `#87a7fd` |
 
 ### Accent — default (canonical) + per-product overrides
 

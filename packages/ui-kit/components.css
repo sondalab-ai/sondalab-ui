@@ -46,10 +46,10 @@
   --slc-border-strong: var(--sl-border-strong,  rgba(21,33,31,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent));
   /* status */
-  --slc-success: var(--sl-status-success, #16a34a);
-  --slc-warning: var(--sl-status-warning, #d97706);
-  --slc-danger:  var(--sl-status-danger,  #dc2626);
-  --slc-info:    var(--sl-status-info,    #0284c7);
+  --slc-success: var(--sl-status-success, #536e06);
+  --slc-warning: var(--sl-status-warning, #865d06);
+  --slc-danger:  var(--sl-status-danger,  #bb3107);
+  --slc-info:    var(--sl-status-info,    #425ebc);
 }
 
 /* Shared focus ring for keyboard nav — every interactive component uses it. */

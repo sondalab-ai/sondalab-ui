@@ -14,21 +14,21 @@
     "motion": { "fast": "120ms", "mid": "220ms", "slow": "360ms", "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)" },
     "shadow": { "sm": "0 1px 2px rgba(0,0,0,0.06)", "md": "0 4px 12px rgba(0,0,0,0.08)", "lg": "0 12px 32px rgba(0,0,0,0.16)" },
     "focus": { "ring-width": "2px", "ring-offset": "2px" },
-    "$viz-note": "Categorical data-viz ramp (--sl-viz-0..7): distinct hues for arbitrary series / one-per-item colouring (agent walls, event kinds). Theme-independent by design — consumers place them on their own surface. Not brand accents; independent of --sl-accent-*.",
-    "viz": ["#b388ff", "#4dd0e1", "#ffb74d", "#81c784", "#f06292", "#7986cb", "#a1887f", "#4db6ac"]
+    "$viz-note": "Categorical data-viz ramp (--sl-viz-0..7): distinct hues for arbitrary series / one-per-item colouring (agent walls, event kinds). Print-ink hues (vermilion, ultramarine, olive, ochre, …). The value here is the no-theme default (the dark ramp) emitted on :root; each theme re-declares the ramp at the lightness that clears 3:1 on its own grounds — see the top-level `viz` block. Not brand accents; independent of --sl-accent-*.",
+    "viz": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
   },
   "themes": {
     "light": {
       "bg-canvas": "#ECE4D4", "bg-surface": "#F6F1E6", "bg-surface-raised": "#FFFFFF", "bg-overlay": "rgba(21,33,31,0.4)",
       "border-subtle": "rgba(21,33,31,0.09)", "border-default": "rgba(21,33,31,0.16)", "border-strong": "rgba(21,33,31,0.28)",
       "text-primary": "#15211F", "text-secondary": "#475754", "text-muted": "#6E7B78", "text-on-accent": "#FFFFFF",
-      "status-success": "#16a34a", "status-warning": "#d97706", "status-danger": "#dc2626", "status-info": "#0284c7"
+      "status-success": "#536e06", "status-warning": "#865d06", "status-danger": "#bb3107", "status-info": "#425ebc"
     },
     "dark": {
       "bg-canvas": "#070A0D", "bg-surface": "#0F151A", "bg-surface-raised": "#131C23", "bg-overlay": "rgba(0,0,0,0.6)",
       "border-subtle": "rgba(218,227,228,0.07)", "border-default": "rgba(218,227,228,0.13)", "border-strong": "rgba(218,227,228,0.28)",
       "text-primary": "#DAE3E4", "text-secondary": "#9AA9AD", "text-muted": "#6E8088", "text-on-accent": "#0A0A0B",
-      "status-success": "#4ade80", "status-warning": "#fbbf24", "status-danger": "#f87171", "status-info": "#38bdf8"
+      "status-success": "#98b958", "status-warning": "#db9e2e", "status-danger": "#fe8263", "status-info": "#87a7fd"
     },
     "high-contrast": {
       "bg-canvas": "#000000", "bg-surface": "#000000", "bg-surface-raised": "#0a0a0a", "bg-overlay": "rgba(0,0,0,0.85)",
@@ -42,10 +42,16 @@
     "dark": { "default": "#F5A83C", "hover": { "mix": [80, "white"] }, "active": { "oklch": ["calc(l * 0.92)", "calc(c * 0.96)", "h"], "fallback": "#E0942A" }, "subtle": { "mix": [16, "transparent"] }, "depth": "#35A0B4" },
     "high-contrast": { "default": "#ffff00", "hover": { "mix": [37, "white"] }, "active": { "mix": [80, "black"] }, "subtle": { "mix": [10, "black"] }, "depth": "#00ffff" }
   },
-  "$code-note": "Syntax-highlight palette (--sl-code-<role>): code is viz, out of the single-brand-accent scope — a code token stays semantically stable and readable, it does not track the product hue. Canonical = atom-one (light + dark). Emitted per theme; high-contrast intentionally omitted (undefined there, consumers fall back).",
+  "$code-note": "Syntax-highlight palette (--sl-code-<role>): code is viz, out of the single-brand-accent scope — a code token stays semantically stable and readable, it does not track the product hue. Print inks, the same family as status and viz; every role clears 4.5:1 (comment/null 3:1) on canvas, surface and raised. Emitted per theme; high-contrast intentionally omitted (undefined there, consumers fall back).",
   "code": {
-    "light": { "fg": "#383a42", "comment": "#9ca3a3", "keyword": "#a626a4", "string": "#50a14f", "number": "#986801", "boolean": "#0184bc", "function": "#4078f2", "tag": "#e45649", "builtin": "#c18401", "null": "#9ca3a3" },
-    "dark": { "fg": "#abb2bf", "comment": "#5c6370", "keyword": "#c678dd", "string": "#98c379", "number": "#d19a66", "boolean": "#56b6c2", "function": "#61aeee", "tag": "#e06c75", "builtin": "#e6c07b", "null": "#5c6370" }
+    "light": { "fg": "#383a42", "comment": "#727e7f", "keyword": "#4460b6", "string": "#536d0b", "number": "#aa442b", "boolean": "#aa442b", "function": "#1f6a96", "tag": "#b33c1e", "builtin": "#865d06", "null": "#727e7f" },
+    "dark": { "fg": "#DAE3E4", "comment": "#687475", "keyword": "#87a7fd", "string": "#99b860", "number": "#f5886c", "boolean": "#f5886c", "function": "#6db3e4", "tag": "#fe8263", "builtin": "#d4a14a", "null": "#687475" }
+  },
+  "$viz-theme-note": "Per-theme --sl-viz-0..7, emitted into each theme file after shared.viz on :root. High-contrast reuses the dark ramp (its ground is black).",
+  "viz": {
+    "light": ["#cb6050", "#4182d3", "#74890a", "#ac750a", "#be5f98", "#0c8e8f", "#066b4d", "#916ecb"],
+    "dark": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"],
+    "high-contrast": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
   },
   "terminal": {
     "prompt": { "ansi": "bright_yellow", "true": "#F5A83C" },

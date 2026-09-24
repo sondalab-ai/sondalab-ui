@@ -119,8 +119,13 @@ Scope: `.sl-card*`, `.sl-callout*`, `.sl-dialog*`, `.sl-badge*`, `.sl-tag*`, `.s
 
 | Slice | Directions probed | Picked | Rejected (one line each) | Status |
 |---|---|---|---|---|
-| 1 — Palette | | | | not started |
+| 1 — Palette | A ground-derived · B ink restraint · C print inks | **C** (owner, 2026-09-24); viz hues re-spaced 45° apart after promotion because the sheet's ramp failed the distinctness gate (two pairs at 0.049 / 0.054) | A — status tied to the brand but chart hues too close to C's to justify; B — success and info indistinguishable in light, a risk for spexr's agent wall | promoted; `--sl-viz-*` now per theme |
 | 2 — Depth and shape | | | | not started |
 | 3 — Controls | | | | not started |
 | 4 — Surfaces and labels | | | | not started |
 | 5 — Release and rollout | — | — | — | not started |
+
+## Found on the way
+
+- **Showcase accent picker ignores the theme** (present on `main` at `8d220e4`). Choosing *Amber* writes `--sl-accent-default: #F5A83C` inline on `<html>`, so the light theme renders the dark amber (pale button, pale eyebrow) instead of `#B56A0C`. Showcase-only; consumers unaffected. To fix when a slice next touches `showcase/index.html`.
+- **`components.css` role-var fallbacks duplicate the light theme** (`--slc-success: var(--sl-status-success, #…)`). They must be updated with every light-theme value change; `sl-audit` catches a stale one.

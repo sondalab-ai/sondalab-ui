@@ -21,4 +21,12 @@
   --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 10%, black);
   --sl-accent-depth: #00ffff;
   --sl-focus-ring: #ffff00;
+  --sl-viz-0: #ef806f;
+  --sl-viz-1: #65a7fa;
+  --sl-viz-2: #9ab140;
+  --sl-viz-3: #d79628;
+  --sl-viz-4: #e17eb9;
+  --sl-viz-5: #14bcbc;
+  --sl-viz-6: #68eeba;
+  --sl-viz-7: #b28fef;
 }
