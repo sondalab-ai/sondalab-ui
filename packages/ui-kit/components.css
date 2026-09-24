@@ -50,6 +50,10 @@
   --slc-warning: var(--sl-status-warning, #865d06);
   --slc-danger:  var(--sl-status-danger,  #bb3107);
   --slc-info:    var(--sl-status-info,    #425ebc);
+  /* depth — cast in the ground's ink, so per theme */
+  --slc-shadow-sm: var(--sl-shadow-sm, 0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03));
+  --slc-shadow-md: var(--sl-shadow-md, 0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12));
+  --slc-shadow-lg: var(--sl-shadow-lg, 0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22));
 }
 
 /* Shared focus ring for keyboard nav — every interactive component uses it. */
@@ -67,7 +71,7 @@
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
 }
 
 /* ══ PRIMITIVES ══════════════════════════════════════════════════════════════ */
@@ -124,7 +128,7 @@
      a pane, and at 6px a 40px-tall pane reads as a rectangle with the corners
      filed off rather than as a rounded slab. The token is the existing one, so
      this stays a choice between shipped radii and not a new value (AC-11). */
-  border-radius: var(--sl-radius-lg, 10px);
+  border-radius: var(--sl-radius-lg, 16px);
   border: 1px solid transparent;
   background: transparent;
   color: var(--slc-text);
@@ -146,7 +150,7 @@
 .sl-card {
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-lg, 10px);
+  border-radius: var(--sl-radius-lg, 16px);
   padding: var(--sl-space-5, 1.5rem);
 }
 .sl-card__title {
@@ -203,7 +207,7 @@
   color: var(--slc-text);
   background: var(--slc-raised);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
   padding: var(--sl-space-3, 0.75rem);
   transition: border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
@@ -223,7 +227,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
   border-bottom-width: 2px;
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
   padding: 0.2em 0.45em;
 }
 
@@ -233,7 +237,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   font-size: 0.875em;
   color: var(--slc-accent);
   background: var(--slc-accent-subtle);
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
   padding: 0.12em 0.36em;
 }
 
@@ -308,7 +312,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-.sl-check__box { border-radius: var(--sl-radius-sm, 4px); }
+.sl-check__box { border-radius: var(--sl-radius-sm, 6px); }
 .sl-radio__box { border-radius: 50%; }
 
 .sl-check__input:checked + .sl-check__box,
@@ -424,7 +428,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   position: relative;
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
   padding: var(--sl-space-5, 1.5rem) var(--sl-space-5, 1.5rem) var(--sl-space-4, 1rem);
 }
 .sl-callout::before {
@@ -435,7 +439,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 2.75rem;
   height: 3px;
   background: var(--slc-accent);
-  border-radius: 0 0 var(--sl-radius-sm, 4px) var(--sl-radius-sm, 4px);
+  border-radius: 0 0 var(--sl-radius-sm, 6px) var(--sl-radius-sm, 6px);
 }
 .sl-callout__title {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
@@ -491,8 +495,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   background: var(--slc-raised);
   color: var(--slc-text);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-lg, 10px);
-  box-shadow: var(--sl-shadow-lg, 0 12px 32px rgba(0,0,0,0.16));
+  border-radius: var(--sl-radius-lg, 16px);
+  box-shadow: var(--slc-shadow-lg);
   padding: var(--sl-space-6, 2rem);
   max-width: 32rem;
   width: calc(100% - var(--sl-space-8, 3rem));
@@ -550,7 +554,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      --slc-text background in every theme (never the unrelated on-accent role). */
   color: var(--slc-raised);
   background: var(--slc-text);
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
   opacity: 0;
   pointer-events: none;
@@ -616,6 +620,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      tiers. */
   --slc-border-strong:  color-mix(in srgb, currentColor 38%, transparent);
   --slc-border-subtle:  color-mix(in srgb, currentColor 12%, transparent);
+  /* The page's cast is tinted with the page's ink — which is the band's
+     ground here, so it would vanish. Cast in black, at the dark-ground alpha. */
+  --slc-shadow-sm: 0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08);
+  --slc-shadow-md: 0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31);
+  --slc-shadow-lg: 0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57);
 }
 
 /* Cells paint their own surface; the 1px gap over the line colour IS the rule.
@@ -694,7 +703,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   gap: 1px;
   background: var(--slc-border);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
   overflow: hidden;
 }
 .sl-btn-group > .sl-btn { border-radius: 0; border: none; }
@@ -710,7 +719,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   padding: 2px;
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
 }
 .sl-segmented__item {
   appearance: none;
@@ -723,7 +732,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
@@ -747,7 +756,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   color: var(--slc-text);
   background: transparent;
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
@@ -780,7 +789,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   color: var(--slc-text-muted);
   text-decoration: none;
   border: 1px solid transparent;
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
@@ -799,7 +808,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   gap: var(--sl-space-2, 0.5rem);
   padding: var(--sl-space-6, 2rem) var(--sl-space-5, 1.5rem);
   border: 1px dashed var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
 }
 .sl-empty__title {
   margin: 0;
@@ -822,7 +831,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
    that is the aurora's busy reading, bound to aria-busy. */
 .sl-skeleton {
   background: color-mix(in srgb, var(--slc-text) 8%, transparent);
-  border-radius: var(--sl-radius-sm, 4px);
+  border-radius: var(--sl-radius-sm, 6px);
 }
 
 .sl-stat {
@@ -921,7 +930,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   overflow: hidden;
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
 }
 .sl-figure__media > img,
 .sl-figure__media > video {
@@ -949,7 +958,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   height: var(--sl-avatar-size);
   background: var(--slc-surface);
   border: 1px solid var(--slc-border);
-  border-radius: var(--sl-radius-md, 6px);
+  border-radius: var(--sl-radius-md, 10px);
 }
 .sl-avatar > img { width: 100%; height: 100%; object-fit: cover; }
 /* The fallback IS the monogram — it already carries the small-size

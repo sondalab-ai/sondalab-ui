@@ -120,7 +120,7 @@ Scope: `.sl-card*`, `.sl-callout*`, `.sl-dialog*`, `.sl-badge*`, `.sl-tag*`, `.s
 | Slice | Directions probed | Picked | Rejected (one line each) | Status |
 |---|---|---|---|---|
 | 1 — Palette | A ground-derived · B ink restraint · C print inks | **C** (owner, 2026-09-24); viz hues re-spaced 45° apart after promotion because the sheet's ramp failed the distinctness gate (two pairs at 0.049 / 0.054) | A — status tied to the brand but chart hues too close to C's to justify; B — success and info indistinguishable in light, a risk for spexr's agent wall | promoted; `--sl-viz-*` now per theme |
-| 2 — Depth and shape | | | | not started |
+| 2 — Depth and shape | A hairline · B soft cast · C offset print | **B** (owner, 2026-09-24): radius 6/10/16; two-layer contact + ambient shadow in the ground's ink; `text-3xl` 2.75rem, `text-display` clamp(3.5rem, 2rem + 5vw, 6rem) | A — restrained, but reads as a spec sheet next to the print inks; C — hard offset shadow is loud on a dense IDE surface and dates fast | promoted; `--sl-shadow-*` now per theme, read through new `--slc-shadow-*` role vars (re-derived in black inside `.sl-invert`) |
 | 3 — Controls | | | | not started |
 | 4 — Surfaces and labels | | | | not started |
 | 5 — Release and rollout | — | — | — | not started |

@@ -7,12 +7,13 @@
       "mono": "\"Martian Mono\", ui-monospace, \"SF Mono\", Menlo, monospace"
     },
     "space": { "0": "0", "1": "0.25rem", "2": "0.5rem", "3": "0.75rem", "4": "1rem", "5": "1.5rem", "6": "2rem", "8": "3rem" },
-    "radius": { "sm": "4px", "md": "6px", "lg": "10px", "pill": "9999px" },
-    "text": { "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem" },
+    "radius": { "sm": "6px", "md": "10px", "lg": "16px", "pill": "9999px" },
+    "text": { "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem", "3xl": "2.75rem", "display": "clamp(3.5rem, 2rem + 5vw, 6rem)" },
     "line": { "tight": "1.2", "normal": "1.5", "relaxed": "1.6", "loose": "1.7" },
     "z": { "base": "1", "overlay": "50", "modal": "100", "toast": "200" },
     "motion": { "fast": "120ms", "mid": "220ms", "slow": "360ms", "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)" },
-    "shadow": { "sm": "0 1px 2px rgba(0,0,0,0.06)", "md": "0 4px 12px rgba(0,0,0,0.08)", "lg": "0 12px 32px rgba(0,0,0,0.16)" },
+    "$shadow-note": "Layered contact + ambient cast (soft cast, 2026-09-24). The :root value is the light ramp, tinted with the light ground ink; each theme re-declares its own in the top-level shadow block.",
+    "shadow": { "sm": "0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03)", "md": "0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12)", "lg": "0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22)" },
     "focus": { "ring-width": "2px", "ring-offset": "2px" },
     "$viz-note": "Categorical data-viz ramp (--sl-viz-0..7): distinct hues for arbitrary series / one-per-item colouring (agent walls, event kinds). Print-ink hues (vermilion, ultramarine, olive, ochre, …). The value here is the no-theme default (the dark ramp) emitted on :root; each theme re-declares the ramp at the lightness that clears 3:1 on its own grounds — see the top-level `viz` block. Not brand accents; independent of --sl-accent-*.",
     "viz": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
@@ -52,6 +53,12 @@
     "light": ["#cb6050", "#4182d3", "#74890a", "#ac750a", "#be5f98", "#0c8e8f", "#066b4d", "#916ecb"],
     "dark": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"],
     "high-contrast": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
+  },
+  "$shadow-theme-note": "Per-theme --sl-shadow-*: the cast takes the ground ink (teal-black on paper, black on the abyss, where it needs ~2.6x the alpha to read). High-contrast reuses dark.",
+  "shadow": {
+    "light": { "sm": "0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03)", "md": "0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12)", "lg": "0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22)" },
+    "dark": { "sm": "0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08)", "md": "0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31)", "lg": "0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57)" },
+    "high-contrast": { "sm": "0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08)", "md": "0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31)", "lg": "0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57)" }
   },
   "terminal": {
     "prompt": { "ansi": "bright_yellow", "true": "#F5A83C" },
