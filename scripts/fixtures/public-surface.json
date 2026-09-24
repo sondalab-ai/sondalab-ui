@@ -60,6 +60,8 @@
     "--sl-status-success",
     "--sl-status-warning",
     "--sl-text-2xl",
+    "--sl-text-3xl",
+    "--sl-text-display",
     "--sl-text-lg",
     "--sl-text-md",
     "--sl-text-muted",
