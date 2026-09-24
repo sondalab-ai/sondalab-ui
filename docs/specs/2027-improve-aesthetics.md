@@ -47,8 +47,8 @@ createdAt: 2026-09-10
 | # | Placement | Cards | Directions probed | Picked | Rejected | Status |
 |---|---|---|---|---|---|---|
 | R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | A crisp bevel (WebGL SDF specular) · B proximity edge (CSS) · C material relight (WebGL + microsurface) | **B** (owner, 2026-09-24); direction sprung as a vector after the owner saw the arc jump on a crossing | A — correct but quiet; the crescent needs a GPU for a reading B gives in CSS; C — the grain adds texture the quiet base does not ask for | **promoted** — `sl-fx-glass`'s pointer light is the specular edge (same class); glint, dispersing edge and WebGPU chrome retired; frost and lens kept on every glass host (owner reversal, 2026-09-24) |
-| R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | | | | not started |
-| R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | | | | not started |
+| R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | | | | cards verified 2026-09-24 · contact sheet in progress |
+| R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | | | | cards verified 2026-09-24 · contact sheet in progress |
 | R4 | Signature | `halftone-light`, `volumetric-type`, `prism-dispersion` | | | | not started |
 
 ## Start here — handoff, 2026-09-13
@@ -425,12 +425,12 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 | `linear-specular` | Specular — the highlight model | https://linear.app/now/linear-liquid-glass | chosen 2026-09-24 · **verified 2026-09-24** |
 | `proximity-glow` | Specular — the edge facing the pointer | https://codepen.io/jh3y/pen/QWYPaax | chosen · **verified 2026-09-24** |
 | `relight-normals` | Specular — imagery and the paper ground | https://tympanus.net/codrops/2026/08/19/relighting-images-with-depth-maps-and-three-js/ | chosen · **verified 2026-09-24** |
-| `press-light` | Press — light on press, spill to neighbours | https://developer.apple.com/videos/play/wwdc2025/219/ | chosen · pending |
-| `spring-tokens` | Press — spring motion as a CSS token | https://linear-easing-generator.netlify.app/ | chosen · pending |
-| `magnetic-primary` | Press — pull on the primary call to action | https://motion.dev/examples/js-spring-follow-cursor | chosen · pending |
-| `pulsing-border` | Live light — the one running element | https://shaders.paper.design/pulsing-border | chosen · pending |
-| `edge-breath` | Live light — ambient busy surface | https://github.com/Huxpro/hux.pro/pull/261 | chosen · pending |
-| `peripheral-indicator` | Live light — tab / badge scale | https://linear.app/changelog/2026-05-14-code-intelligence | chosen · pending |
+| `press-light` | Press — light on press, spill to neighbours | https://developer.apple.com/videos/play/wwdc2025/219/ | chosen · **verified 2026-09-24** |
+| `spring-tokens` | Press — spring motion as a CSS token | https://linear-easing-generator.netlify.app/ | chosen · **verified 2026-09-24** |
+| `magnetic-primary` | Press — pull on the primary call to action | https://motion.dev/examples/js-spring-follow-cursor | chosen · **verified 2026-09-24** |
+| `pulsing-border` | Live light — the one running element | https://shaders.paper.design/pulsing-border | chosen · **verified 2026-09-24** |
+| `edge-breath` | Live light — ambient busy surface | https://github.com/Huxpro/hux.pro/pull/261 | chosen · **verified 2026-09-24** |
+| `peripheral-indicator` | Live light — tab / badge scale | https://linear.app/changelog/2026-05-14-code-intelligence | chosen · **verified 2026-09-24** |
 | `halftone-light` | Signature — light as print | https://shaders.paper.design/halftone-dots · https://shaders.paper.design/dithering · https://blog.maximeheckel.com/posts/shades-of-halftone/ | chosen · pending |
 | `volumetric-type` | Signature — light raking through type | https://blog.maximeheckel.com/posts/shaping-light-volumetric-lighting-with-post-processing-and-raymarching/ | chosen · pending |
 | `prism-dispersion` | Signature — a beam split into a fan | https://tympanus.net/codrops/2026/09/03/from-rays-to-meshes-building-vercels-prism-with-vgpu/ | chosen · pending |
@@ -468,7 +468,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** the behaviour — on press the control illuminates from within and the light spills onto adjacent elements; Reduce Motion removes the elastic part
 - **Leave:** the Apple material and its look; anything literal enough to read as Apple
 - **Governs:** Press
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `spring-tokens` — CSS `linear()` spring easing *(chosen 2026-09-24)*
 
@@ -476,7 +476,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** spring overshoot and settle as a design token (`--sl-ease-spring`), zero runtime
 - **Leave:** springs where interruption matters mid-flight (a CSS timing function cannot be interrupted like a JS spring)
 - **Governs:** Press — motion
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `magnetic-primary` — Motion, spring follow *(chosen 2026-09-24)*
 
@@ -484,7 +484,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** an interruptible, velocity-preserving pull on the label, on the primary call to action only
 - **Leave:** magnetism on any other control; any effect for a coarse pointer or under reduced motion
 - **Governs:** Press — the primary call to action
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `pulsing-border` — Paper Shaders, pulsing border *(chosen 2026-09-24)*
 
@@ -493,7 +493,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** light with volume travelling through the edge material, instead of a rotating conic stripe
 - **Leave:** more than two hues (amber, receding to teal); one canvas per element on many elements — one running element at a time (Decision 5)
 - **Governs:** Live light — the one running element
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `edge-breath` — Hux, Siri-style edge light *(chosen 2026-09-24)*
 
@@ -502,7 +502,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** the non-repeating breath, and the whole degradation ladder
 - **Leave:** the Apple rainbow (single amber field)
 - **Governs:** Live light — ambient busy surface
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `peripheral-indicator` — Linear, agent-working indicator *(chosen 2026-09-24)*
 
@@ -510,7 +510,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** the principle — live state as a small peripheral signal at tab or badge scale, not a full-surface glow
 - **Leave:** nothing yet; **the visual itself was not seen** (the changelog only states it exists) — the owner's capture decides what this card carries
 - **Governs:** Live light — tab / badge scale
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `halftone-light` — Paper Shaders halftone / dithering; Maxime Heckel, halftone and dithering *(chosen 2026-09-24)*
 
