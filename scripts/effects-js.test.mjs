@@ -130,7 +130,6 @@ test("mountGpu() is retired and resolves false", () => {
   const body = fnBody("mountGpu");
   assert.match(body, /^\s*\{?\s*return false;\s*\}?\s*$/, "mountGpu() must do nothing but resolve false");
   assert.doesNotMatch(js, /import\(["']\.\/effects-gpu\.js["']\)/, "nothing may load the retired GPU module");
-  assert.doesNotMatch(js, /import\(["']\.\/glass-lens\.js["']\)/, "nor the retired lens");
 });
 
 
@@ -375,15 +374,18 @@ test("autoBurst and hoverBurst are the kit's, and each hands back a stop", () =>
 });
 
 test("material survives a motion preference; motion does not", () => {
-  // The glass layers are a STATIC property of a surface: they do not animate
-  // and they do not redraw on scroll. Those children ARE the material, since
-  // glass.css puts the backdrop-filter on .sl-glass__backdrop — since
-  // 2026-09-24 only a letterform's (the lens that used to sit here is retired).
+  // A lens and the glass layers are STATIC properties of a surface: they do not
+  // animate and they do not redraw on scroll. lensRefused() has argued exactly
+  // that in its own comment since it was written, and the call site said
+  // otherwise — armLenses() sat after the motion guard, so a visitor reporting
+  // the preference got no lens. injectGlassLayers() sat there too, and that is
+  // the larger half: those children ARE the material, since glass.css puts the
+  // backdrop-filter on .sl-glass__backdrop.
   const body = fnBody("mount");
   const guard = body.indexOf("matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;");
   assert.ok(guard > -1, "the motion guard must still be there");
 
-  for (const call of ["injectGlassLayers(root);", "armGlassText(root);", "mountGoo(root);"]) {
+  for (const call of ["injectGlassLayers(root);", "armLenses(root);", "watchLensTheme(root);", "mountGoo(root);"]) {
     const at = body.indexOf(call);
     assert.ok(at > -1, `mount() must call ${call}`);
     assert.ok(at < guard, `${call} is material, not motion — it must come BEFORE the guard`);
@@ -397,7 +399,7 @@ test("material survives a motion preference; motion does not", () => {
   // A page that refuses below still has to dress an element rendered later, so
   // the material needs its own observer on the near side of the guard.
   const beforeGuard = body.slice(0, guard);
-  assert.match(beforeGuard, /new MutationObserver\([\s\S]*?injectGlassLayers\(n\);[\s\S]*?armGlassText\(n\);/,
+  assert.match(beforeGuard, /new MutationObserver\([\s\S]*?injectGlassLayers\(n\);[\s\S]*?armLenses\(n\);/,
     "late arrivals must get the material even when Tier 1 refused");
   assert.doesNotMatch(beforeGuard, /injectGlows\(n\)/, "…but not the moving layers");
 

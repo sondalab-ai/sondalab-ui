@@ -46,7 +46,7 @@ createdAt: 2026-09-10
 
 | # | Placement | Cards | Directions probed | Picked | Rejected | Status |
 |---|---|---|---|---|---|---|
-| R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | A crisp bevel (WebGL SDF specular) · B proximity edge (CSS) · C material relight (WebGL + microsurface) | **B** (owner, 2026-09-24); direction sprung as a vector after the owner saw the arc jump on a crossing | A — correct but quiet; the crescent needs a GPU for a reading B gives in CSS; C — the grain adds texture the quiet base does not ask for | **promoted** — `sl-fx-glass` is the specular edge (owner: glass becomes specular, same class); pane material, glint, dispersing edge, lens and WebGPU chrome retired; `--text` keeps its material |
+| R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | | | | cards verified 2026-09-24 · contact sheet in progress |
 | R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | | | | not started |
 | R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | | | | not started |
 | R4 | Signature | `halftone-light`, `volumetric-type`, `prism-dispersion` | | | | not started |
