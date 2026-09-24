@@ -293,9 +293,11 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 8,
-    `exactly eight edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 7,
+    `exactly seven edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
+  // Seven since 2026-09-24 (re-scope R1): the pane's body and its lit,
+  // dispersing edge were retired, and the glass's specular edge took one slot.
   // It was nine for part of 2026-09-12, the ninth a fringe of filaments hanging
   // into the pane from the loading band. Removed the same day: five geometries
   // built and measured, none of them convincing. effects.css keeps the numbers.
@@ -307,11 +309,7 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   // background IS the light, so it has to be one of the declaring rules.
   assert.ok(declaring.some((s) => s.includes("[data-sl-fx-beam]::before")), "the beam must be one");
   assert.ok(declaring.some((s) => s.startsWith(":is(")), "the shared ring must be one");
-  assert.ok(declaring.some((s) => s === ".sl-fx-glass--pane::before"), "the pane's body must be one");
-  assert.ok(
-    declaring.some((s) => s.startsWith('[data-sl-fx="on"] .sl-fx-glass--pane.is-glass-lit') && s.endsWith("::after")),
-    "the pane's lit edge must be one, and only once Tier 1 is armed",
-  );
+  assert.ok(declaring.some((s) => s === ".sl-fx-glass.is-spec-lit::after"), "the specular edge must be one");
   assert.ok(
     declaring.some((s) => s.includes('[data-sl-fx-live="busy"]') && s.endsWith("::after")),
     "the aurora's arc must be one, and it must cover busy",
@@ -341,7 +339,7 @@ test("only shape re-declares the ring background; states rebind the stops", () =
 // either sit behind an interaction state in its selector, or be scaled to
 // nothing by --slfx-lit, which effects.js only ever writes on the one element
 // under the pointer.
-const LIT_STATE = /:hover|:focus-visible|:focus-within|\.is-glass-lit|\[data-sl-fx-live/;
+const LIT_STATE = /:hover|:focus-visible|:focus-within|\.is-glass-lit|\.is-spec-lit|\[data-sl-fx-live/;
 
 // The translucency mix replaces the component's own background, so the fill it
 // names has to BE that background. Nothing in the cascade catches a wrong
@@ -525,43 +523,39 @@ test("the glitch never claims the host's paint layers", () => {
   assert.deepEqual(nested, [], "the glitch must not nest an edge or liquid class");
 });
 
-test("the pane's body sits below the label, never filters, and both kill switches hide it", () => {
-  // The owner's rule on a new surface: refraction lives on the edge band,
-  // the label stays flat. The body is ::before at a negative z-index (above
-  // the host's own fill, below its content); no rule scoped to the pane may
-  // filter anything or reach for a backdrop-filter — a lens over the label
-  // is the effect the owner refused; and the body goes with the paint
-  // layers under both kill switches.
-  const body = RULES.find((r) => r.selector === ".sl-fx-glass--pane::before");
-  assert.ok(body, "the pane's body must be its own rule");
-  assert.match(body.body, /z-index:\s*-\d/, "the body must paint below the host's label");
-  assert.match(body.body, /pointer-events:\s*none/);
-  const filtered = RULES
-    .filter((r) => /--pane/.test(r.selector) && /(?:^|;)\s*(?:backdrop-)?filter\s*:/.test(r.body))
+test("no light is ever a disc under the pointer, and both kill switches hide the edge", () => {
+  // Re-scope ruling 4 (2026-09-24): the pointer is a light source, never a
+  // brush. A radial gradient placed at the pointer is exactly the blurred
+  // circle the owner ruled out, so none may exist in this file — whatever it
+  // is called, a gradient centred on a value the driver writes.
+  const brush = RULES
+    .filter((r) => /radial-gradient\([^;]*\bat\s+var\(--slfx-(?:px|py|spec|ptr)/.test(r.body))
     .map((r) => r.selector);
-  assert.deepEqual(filtered, [], "no pane rule may filter — the content is never refracted");
+  assert.deepEqual(brush, [], "a pointer-positioned radial-gradient is a brush, not a light");
+  assert.doesNotMatch(effects, /--slfx-px|--slfx-py/, "the pointer's position is never handed to the CSS");
   for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
     const killed = RULES.some(
-      (r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-glass::before") && /display:\s*none/.test(r.body),
+      (r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-glass::after") && /display:\s*none/.test(r.body),
     );
-    assert.ok(killed, `[${attr}] must hide the pane's body, the way it hides every other paint layer`);
+    assert.ok(killed, `[${attr}] must hide the glass edge, the way it hides every other paint layer`);
   }
 });
 
-test("the pane's lit edge yields to the aurora and stays off a filled element", () => {
-  // While attention lives on the element the edge belongs to the light; on a
-  // --rim the ::after is the rim aurora's, outside the fill. The lit ring
-  // rewrites --slfx-angle from the bearing effects.js writes, and nothing
-  // else may set the registered angle outside an animation.
-  const lit = RULES.find((r) => /\.sl-fx-glass--pane\.is-glass-lit/.test(r.selector) && r.selector.endsWith("::after"));
-  assert.ok(lit, "the lit edge must be its own rule");
-  assert.match(lit.selector, /^\[data-sl-fx="on"\]/, "the lit edge needs Tier 1 armed");
-  assert.match(lit.selector, /:not\([^)]*\.sl-fx-aurora--rim[^)]*\)/, "never on a --rim");
-  assert.match(lit.selector, /:not\([^)]*:focus-visible[^)]*\[data-sl-fx-live\][^)]*\)/, "never over a lit aurora");
-  assert.match(lit.body, /--slfx-angle:\s*var\(--slfx-ptr/, "the angle comes from the bearing the driver writes");
-  assert.doesNotMatch(lit.body, /(?:^|;)\s*opacity\s*:/, "the lit edge must not force the ring visible under Tier 2");
-  const rim = RULES.find((r) => r.selector === ".sl-fx-glass.sl-fx-aurora--rim::after");
-  assert.ok(rim && /opacity:\s*0/.test(rim.body), "the resting glass conic must stand down on a --rim");
+test("the specular edge is drawn from two numbers and yields to the aurora", () => {
+  const lit = RULES.find((r) => r.selector === ".sl-fx-glass.is-spec-lit::after");
+  assert.ok(lit, "the specular edge must be its own rule");
+  // Everything it paints scales with --slfx-spec-i, so at 0 it paints nothing.
+  const mixes = (lit.body.match(/color-mix\(/g) ?? []).length;
+  const gated = (lit.body.match(/var\(--slfx-spec-i\)/g) ?? []).length;
+  assert.ok(mixes > 0 && gated === mixes, `every colour term must scale with --slfx-spec-i (${gated}/${mixes})`);
+  assert.match(lit.body, /from calc\(var\(--slfx-spec-a\)/, "the arc faces the bearing the driver writes");
+  // The driver springs the light; a transition on the background would lag it
+  // behind its own spring.
+  assert.doesNotMatch(lit.body, /transition:[^;]*background/, "no second easing on the arc");
+  // While attention lives on the element the edge is the aurora's: its lit
+  // rule comes later in the file at equal specificity.
+  const aurora = RULES.find((r) => r.selector.startsWith(".sl-fx-aurora:is(:focus-visible"));
+  assert.ok(aurora && aurora.index > lit.index, "the aurora's lit edge must come after the specular edge");
 });
 
 test("an effect off-screen costs nothing, and Tier 0 keeps its material", () => {

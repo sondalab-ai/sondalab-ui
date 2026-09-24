@@ -340,13 +340,12 @@ await mountGpu();        // Tier 2 — optional, and only after mount()
 
 | Tier | Needs | You get | If you skip it |
 |---|---|---|---|
-| **0** | `effects.css` alone | Resting glass hairline, static aurora arc on focus, no motion | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
-| **1** | `mount()` | The liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
-| **2** | `await mountGpu()` | WebGPU chrome on the glass family: a hairline reflecting a moving environment, a wandering halo, the cursor's reflection | Tier 1 keeps its CSS conic hairline — a fallback, not a lesser draft |
+| **0** | `effects.css` alone | Static aurora arc on focus, no motion; glass carries no light without a pointer | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
+| **1** | `mount()` | The glass's specular edge (an arc of light on the border facing the pointer), the liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
+| **2** | `await mountGpu()` | **Retired 2026-09-24** — resolves `false`; kept so existing calls still work | Nothing: Tier 1 is the whole reading |
 
 Four things that bite, in the order they usually bite:
 
-- **`mountGpu()` returns `false` unless `mount()` ran first.** It checks `armed` and gives up immediately. Call them in order.
 - **`mount()` arms once per document.** Calling it again returns the first result; it does not re-scan. Mount after your markup exists, and use `mount(root)` for a subtree you add later.
 - **Two different refractions, and only the second needs an anchor.** `mount()` gives every glass host the **SVG lens** — it bends whatever is actually behind the element, with nothing to declare. `mountGpu()` adds the **GPU chrome**, and a shader cannot read the document, so there a surface *names* what lies behind a region: the **`data-sl-fx-backdrop` attribute** on an ancestor box, with the image declared as **`--slfx-backdrop: url(…)` on that same element**. Both together, on the anchor — the attribute marks which box the image covers, and the custom property would otherwise inherit with no way to tell which ancestor set it. Only `url()` is sampled; a gradient or a keyword is ignored rather than guessed at. An unmarked pane still has its Tier 1 lens; it simply has no declared image for the GPU layer, which is additive and takes nothing away.
 - **Both refuse under high contrast, by design.** `mount()` returns `false` when `data-sl-theme="high-contrast"`, and `mountGpu()` re-checks at call time. Reduced motion refuses Tier 1 as well. Do not work around either: the component must still read correctly with every family off, which is what those guards exist to guarantee.

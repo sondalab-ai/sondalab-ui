@@ -30,14 +30,15 @@ const THEMES = { light: themeTokens(read("themes/light.css")), dark: themeTokens
 // The cascade of a ghost pane with an aurora, and of a filled one (--rim):
 // the parent (where the fits live), then the edge itself.
 const GHOST = [":root", ":has(> :is(.sl-fx-glass, .sl-fx-aurora))", ":is(.sl-fx-glass, .sl-fx-aurora)", ".sl-fx-glass", ".sl-fx-glass--pane", ".sl-fx-aurora"];
-const RIM = [...GHOST, ".sl-fx-aurora--rim", ".sl-fx-glass--pane.sl-fx-aurora--rim"];
+const RIM = [...GHOST, ".sl-fx-aurora--rim"];
 const CASCADES = { ghost: declarations(effects, GHOST), rim: declarations(effects, RIM) };
 
 // What the paint layers consume. --slfx-beam is the arc, the tails and blooms
-// are its companions, the edge fringes and the spot are the pane's.
+// are its companions, and the specular light is the glass edge's (the pane's
+// fringes and spot were retired with it, 2026-09-24).
 const EMITTED = [
-  "--slfx-accent-vivid", "--slfx-depth-vivid", "--slfx-edge-tint", "--slfx-edge-warm", "--slfx-edge-cool",
-  "--slfx-spot-warm", "--slfx-beam", "--slfx-beam-tail", "--slfx-bloom-hi", "--slfx-bloom-lo",
+  "--slfx-accent-vivid", "--slfx-depth-vivid", "--slfx-edge-tint", "--slfx-spec-light",
+  "--slfx-beam", "--slfx-beam-tail", "--slfx-bloom-hi", "--slfx-bloom-lo",
 ];
 // A lifted colour and what it was lifted from.
 const LIFTS = { "--slfx-bloom-hi": "--slfx-beam", "--slfx-bloom-lo": "--slfx-depth-vivid" };

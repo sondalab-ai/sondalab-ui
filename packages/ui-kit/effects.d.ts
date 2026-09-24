@@ -20,8 +20,8 @@ export function mount(
   },
 ): boolean;
 
-/** Arm Tier 2 where WebGPU answers: the pointer as a light source inside the
- *  glass. Resolves false otherwise. */
+/** Retired 2026-09-24: the glass edge is the CSS specular arc, drawn from
+ *  what mount() writes. Kept for existing callers; always resolves false. */
 export function mountGpu(): Promise<boolean>;
 
 /** One finite glitch burst of randomised length, capped at 1500ms. Dropped if

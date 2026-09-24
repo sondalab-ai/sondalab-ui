@@ -102,7 +102,7 @@ mount();                      // Tier 1: the liquid, the goo's fields, glitch bu
 // burst(el)                     — one finite burst
 // autoBurst(el, {waitMin, waitMax})   — ambient: burst, wait, burst again; returns stop
 // hoverBurst(hoverEl, targetEl)       — while the pointer is over one, glitch the other
-mountGpu().then((ok) => {});  // Tier 2: the glass edge as chrome where WebGPU answers; resolves false otherwise.
+mountGpu().then((ok) => {});  // Tier 2 is retired: always resolves false (kept for existing callers).
 
 // Glass text: mount() cuts every .sl-fx-glass--text host to its own glyphs and
 // seats an unmasked .sl-fx-glass__glow before it to carry the light. The two
