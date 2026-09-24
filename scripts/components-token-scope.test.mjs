@@ -77,6 +77,20 @@ test("the inversion band re-derives every neutral role its subtree paints with",
   );
 });
 
+// A wash with no edge vanishes on high contrast's black, a theme that exists to
+// draw every edge. Each component shipped as an edgeless wash must get its
+// line back there.
+test("high contrast gives every edgeless wash its border back", () => {
+  const hc = [...css.matchAll(/:root\[data-sl-theme="high-contrast"\][^{]*\{[^}]*border[^}]*\}/g)]
+    .map((m) => m[0]).join("\n");
+  const WASHES = [
+    "sl-btn--ghost", "sl-icon-btn", "sl-segmented", "sl-badge", "sl-callout",
+    "sl-switch__track", "sl-pagination__item", "sl-kbd", "sl-empty", "sl-table",
+  ];
+  const missing = WASHES.filter((c) => !new RegExp(`\\.${c}\\b`).test(hc));
+  assert.deepEqual(missing, []);
+});
+
 // Reduced motion zeroes --sl-motion-*; a literal duration would escape it. A
 // var() fallback is not one (it only applies where the token is absent).
 test("component motion reads the motion tokens, never a literal duration", () => {

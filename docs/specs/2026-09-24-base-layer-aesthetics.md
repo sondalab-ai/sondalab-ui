@@ -31,7 +31,7 @@ The component layer carries the same identity the brand layer does, and it gets 
 - New components, or new modifiers beyond what a chosen direction strictly needs.
 - The effects layer (`effects.css`, `glass.css`, the JavaScript and WGSL). It follows under the hub.
 - The terminal palette (`terminal` in `sondalab.tokens.json`, `packages/palette-py/`). Untouched.
-- High-contrast theme values. They exist to be maximal, not tasteful, and stay as they are.
+- High-contrast theme values. They exist to be maximal, not tasteful, and stay as they are. **Exceptions, recorded:** `themes/high-contrast.css` now also declares `--sl-viz-*` and `--sl-shadow-*` (the dark ramps; both moved per theme and high contrast needs a value), and `components.css` gives the edgeless washes of slices 3–4 their border back under `:root[data-sl-theme="high-contrast"]`, pinned by `components-token-scope.test.mjs`.
 
 ## Contract that makes "bump the dependency" true
 

@@ -991,3 +991,21 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 }
 .sl-avatar--sm { --sl-avatar-size: 1.75rem; }
 .sl-avatar--lg { --sl-avatar-size: 4rem; }
+
+/* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
+
+/* Since 0.11 several components are washes with no edge. On high contrast's
+   black a 6–12% wash is invisible, and the theme exists to draw every edge —
+   so there the line comes back, in the theme's own (white) border colour. A
+   ghost inside a button group keeps the group's rule instead of doubling it. */
+:root[data-sl-theme="high-contrast"] :is(
+  .sl-btn--ghost:not(.sl-btn-group > *),
+  .sl-icon-btn,
+  .sl-segmented,
+  .sl-badge,
+  .sl-callout,
+  .sl-switch__track,
+  .sl-pagination__item[aria-current]
+) { border-color: var(--slc-border); }
+:root[data-sl-theme="high-contrast"] :is(.sl-kbd, .sl-empty) { border: 1px solid var(--slc-border); }
+:root[data-sl-theme="high-contrast"] .sl-table thead th { border-bottom-color: var(--slc-border); }
