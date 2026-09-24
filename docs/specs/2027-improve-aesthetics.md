@@ -47,9 +47,10 @@ createdAt: 2026-09-10
 | # | Placement | Cards | Directions probed | Picked | Rejected | Status |
 |---|---|---|---|---|---|---|
 | R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | A crisp bevel (WebGL SDF specular) · B proximity edge (CSS) · C material relight (WebGL + microsurface) | **B** (owner, 2026-09-24); direction sprung as a vector after the owner saw the arc jump on a crossing | A — correct but quiet; the crescent needs a GPU for a reading B gives in CSS; C — the grain adds texture the quiet base does not ask for | **promoted** — `sl-fx-glass`'s pointer light is the specular edge (same class); glint, dispersing edge and WebGPU chrome retired; frost and lens kept on every glass host (owner reversal, 2026-09-24) |
-| R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | | | | cards verified 2026-09-24 · contact sheet in progress |
-| R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | | | | cards verified 2026-09-24 · contact sheet in progress |
+| R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | A press light + spill · B springs only · C magnetic primary + press light (`lab/r2-controls.html`) | | | sheet ready 2026-09-25 · awaiting the owner's pick |
+| R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | A volume · B breath · C peripheral (`lab/r3-live.html`) | | | sheet ready 2026-09-25 · awaiting the owner's pick |
 | R4 | Signature | `halftone-light`, `volumetric-type`, `prism-dispersion` | | | | not started |
+| R5 | Lens (added by the owner, 2026-09-24) | `linear-specular` (rim light), glass-studio / kube.io refraction | A shipped lens · B Snell bevel, per-channel index · C B + dispersed edge (`lab/r5-lens.html`) | | | sheet ready 2026-09-25 · awaiting the owner's pick; black-rectangle defect not reproduced on filled panes, dark or light |
 
 ## Start here — handoff, 2026-09-13
 
