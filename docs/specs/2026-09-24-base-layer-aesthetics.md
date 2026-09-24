@@ -66,6 +66,19 @@ Constraints:
 - Code colours: `fg`, `keyword`, `string`, `function` ≥ 4.5:1 on `bg-surface` and `bg-canvas`; `comment` ≥ 3:1. (The kit itself does not read `--sl-code-*`; consumers' editors and highlighters do.)
 - Enforced by a new `scripts/palette-contrast.test.mjs`.
 
+Baseline at `0.10.1` (measured 2026-09-24 with the WCAG 2 formula; this is an accessibility defect, not only an aesthetic one):
+
+| Ground | Status (need 4.5) | Code, non-comment (need 4.5) | Viz (need 3) |
+|---|---|---|---|
+| light `bg-canvas` | 2.52 – 3.82, all fail | only `fg` and `keyword` pass | 1.37 – 2.73, all fail |
+| light `bg-surface` | 2.83 – 4.29, all fail | `fg`, `keyword` pass | 1.54 – 3.06, 7 of 8 fail |
+| dark `bg-canvas` | 7.17 – 11.89, pass | pass | 5.75 – 11.46, pass |
+| dark `bg-surface` | 6.64 – 11.01, pass | pass | 5.33 – 10.62, pass |
+
+Closest viz pair: OKLab distance 0.091.
+
+Consequence for viz: one theme-independent ramp that clears 3:1 against both canvases must sit in a relative-luminance window of roughly 0.11 – 0.22, which leaves eight hues very little room. The sheet may therefore emit `--sl-viz-0..7` per theme from the theme files instead of `tokens.css`. The names do not change, so C-1 holds; `$viz-note` in `sondalab.tokens.json` is updated to say so.
+
 ### Slice 2 — Depth and shape
 
 Scope: `shadow-sm/md/lg`, `radius-*`, border opacities, and additive type steps (`text-3xl`, `text-display`).
