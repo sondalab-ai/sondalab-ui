@@ -46,7 +46,7 @@ createdAt: 2026-09-10
 
 | # | Placement | Cards | Directions probed | Picked | Rejected | Status |
 |---|---|---|---|---|---|---|
-| R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | | | | cards pending owner verification |
+| R1 | Surfaces | `linear-specular`, `proximity-glow`, `relight-normals` | | | | cards verified 2026-09-24 · contact sheet in progress |
 | R2 | Controls | `press-light`, `spring-tokens`, `magnetic-primary` | | | | not started |
 | R3 | Live state | `pulsing-border`, `edge-breath`, `peripheral-indicator` | | | | not started |
 | R4 | Signature | `halftone-light`, `volumetric-type`, `prism-dispersion` | | | | not started |
@@ -422,9 +422,9 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 
 | Slug | Governs | Source | State |
 |---|---|---|---|
-| `linear-specular` | Specular — the highlight model | https://linear.app/now/linear-liquid-glass | chosen 2026-09-24 · **pending verification** |
-| `proximity-glow` | Specular — the edge facing the pointer | https://codepen.io/jh3y/pen/QWYPaax | chosen · pending |
-| `relight-normals` | Specular — imagery and the paper ground | https://tympanus.net/codrops/2026/08/19/relighting-images-with-depth-maps-and-three-js/ | chosen · pending |
+| `linear-specular` | Specular — the highlight model | https://linear.app/now/linear-liquid-glass | chosen 2026-09-24 · **verified 2026-09-24** |
+| `proximity-glow` | Specular — the edge facing the pointer | https://codepen.io/jh3y/pen/QWYPaax | chosen · **verified 2026-09-24** |
+| `relight-normals` | Specular — imagery and the paper ground | https://tympanus.net/codrops/2026/08/19/relighting-images-with-depth-maps-and-three-js/ | chosen · **verified 2026-09-24** |
 | `press-light` | Press — light on press, spill to neighbours | https://developer.apple.com/videos/play/wwdc2025/219/ | chosen · pending |
 | `spring-tokens` | Press — spring motion as a CSS token | https://linear-easing-generator.netlify.app/ | chosen · pending |
 | `magnetic-primary` | Press — pull on the primary call to action | https://motion.dev/examples/js-spring-follow-cursor | chosen · pending |
@@ -442,7 +442,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** material from light, not distortion — no refraction, on purpose, for legibility in dense UI; a highlight that knows the shape's curvature and wraps its corners; "Increase Contrast" adds solid outlines
 - **Leave:** the blur as the main event; anything that depends on scroll-driven motion of a native sheet
 - **Governs:** Specular — the highlight model for every surface and control
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `proximity-glow` — Jhey Tompkins, proximity glow border *(chosen 2026-09-24)*
 
@@ -451,7 +451,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** the angle-aware arc on the side facing the light, and the proximity zone outside the box
 - **Leave:** the rainbow conic (single warm-white light, tinted by the material); any reading of the arc as a coloured stripe rather than a specular on the bevel (ruling 4)
 - **Governs:** Specular — the edge
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `relight-normals` — Codrops, relighting images with depth maps *(chosen 2026-09-24)*
 
@@ -460,7 +460,7 @@ Chosen by the owner on 2026-09-24 from a research sweep of 2024–2026 work. **N
 - **Take:** a true lighting model on 2D content; the same maths as paper grain catching raking light
 - **Leave:** a depth-generation pipeline per image as a requirement — the paper ground's normals can be procedural
 - **Governs:** Specular — imagery and the paper ground
-- **Verified by owner:** pending
+- **Verified by owner:** **yes** — 2026-09-24 (Take / Leave accepted as drafted)
 
 #### `press-light` — Apple, "Meet Liquid Glass" (WWDC25) *(chosen 2026-09-24)*
 
