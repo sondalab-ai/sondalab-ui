@@ -221,19 +221,6 @@
     }
     .g-demo--substrate .substrate p { margin: 0; }
     .g-demo--substrate .substrate__row { position: relative; display: flex; flex-wrap: wrap; gap: 0.7rem; }
-    /* THE SUBSTRATE CELLS ARE THE CASE THE LENS DEFAULT PROTECTS AGAINST, INVERTED.
-       glass-lens.js reads --slg-lens-disperse as a pixel budget for how far the
-       red and blue channels of the backdrop land apart, and its default of 18
-       (4.3px) was fitted on a pane with TEXT behind it -- the comment there
-       records 13px reading as a broken render rather than as a prism. Behind
-       these cells is backdrop.svg, a picture. Nothing back there has letterforms
-       to fringe, so this is the surface the lens's own note says should be
-       raising it: "a surface laid over a picture or a bed has no such reader".
-       48 asks for ~11.5px of separation, and the reach asks past the geometric
-       cap so each box bends as far as its own shorter side allows. Page-local
-       on purpose: it is a property of what THIS page put behind the glass, not
-       of any component. */
-    .g-demo--substrate { --slg-lens-disperse: 48; --slg-lens-reach: 28px; }
     /* The glass text's type is the SURFACE's: the kit ships the cut, not the
        face. The mask follows these declarations because it is measured off the
        element. */
@@ -392,7 +379,7 @@
         <p class="sl-eyebrow" id="tier-report">TIER 0 — MATERIAL</p>
         <h1 class="anchor">Material becomes <span class="accent">behaviour</span>.</h1>
         <p class="lede">A fifth, opt-in layer above tokens, themes and <b>components.css</b>: five families, each carrying one meaning — glitch marks something re-resolved, liquid says you are recognised, aurora says attention lives here, glass says this is a physical surface, goo says these belong to one another. Every class here is additive; it composes onto a shipped <b>.sl-*</b> class and never replaces it. Ships as <b>@sondalab/ui-kit 0.9.0</b>.</p>
-        <p class="lede">Tier 0 is the default and is correct on its own: a resting glass hairline, a static aurora arc on focus, no motion. Tier 1 arms on <b>mount()</b> — the liquid’s deformation, finite glitch bursts, the aurora’s sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running. Tier 2 arms on <b>mountGpu()</b> where WebGPU answers, and turns the glass hairline into chrome: a reflection that slides along the edge, a halo that wanders around it, a bright spot under the cursor, and a ring that bends with the surface. The reference for all of it is <b>libraries.dev</b>; the conic hairline beneath the chrome is the fallback, not a lesser draft of it.</p>
+        <p class="lede">Tier 0 is the default and is correct on its own: a static aurora arc on focus, no motion, and glass that carries no light because there is no pointer to light it. Tier 1 arms on <b>mount()</b> — the glass’s specular edge and its lens, the liquid’s deformation, finite glitch bursts, the aurora’s sweep — and refuses under <b>prefers-reduced-motion: reduce</b> and under high contrast, so the label above never lies about what is actually running. <b>mountGpu()</b> is still called here and resolves false: the WebGPU chrome was retired on 2026-09-24; the glass pane and its lens stay.</p>
       </div>
     </section>
 
@@ -549,17 +536,17 @@
     <section id="glass" data-back="GLASS">
       <div class="wrap">
         <div class="sec-head"><span class="sl-section__idx">04</span><h2>Glass</h2></div>
-        <p class="cap">This is a physical surface. Under Tier 2 the element’s own border becomes chrome: its <b>border-radius</b> and <b>border-width</b> are read into a signed distance field, and a hairline exactly that wide reflects a moving environment — bright and dark bands, the product’s hue as pastel flecks between them, never a tint over the whole ring — with one soft halo wandering around the edge and a bright spot under the cursor. The chrome’s two poles sit around the page’s own ground, on ink and on paper alike. Without a GPU the same border carries a static conic hairline; glass and aurora share one <b>::after</b>, because a single pseudo-element is all CSS gives an edge, and while the aurora is lit it owns that edge. Every text button, primary or ghost, is a <b>pane</b> — made of glass, not merely edged with it: a slab of light on <b>::before</b> under the label, a glint that follows the pointer, and a hairline that turns to face it fringed with the accent on one side and the depth companion on the other, which is what refraction looks like on an edge. The label is never refracted.</p>
+        <p class="cap">This is a physical surface. The material is the pane: frost, tint and a lens that bends and splits what is behind it. The light is on the edge: the pointer is a light source above the page, and a narrow arc of warm white wakes on the border facing it, from 140px before the pointer arrives, with a soft shade answering on the far side on paper. Cross an element and the arc dims, turns and comes back — its direction is sprung as a vector, never snapped. Nothing is lit at rest, and there is no disc under the cursor anywhere on this page; a test bans one. Glass and aurora share one <b>::after</b>, and while the aurora is lit it owns that edge.</p>
         <div class="gallery">
           <div class="g-cell">
-            <span class="g-label">pane — the button is made of glass</span>
+            <span class="g-label">edge — the light faces the pointer</span>
             <div class="g-demo g-demo--substrate">
               <div class="substrate__row">
                 <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--sweep">Cancel</button>
                 <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
               </div>
             </div>
-            <p class="cap">Move the pointer over either. A ghost button's 1px border <b>is</b> the glass edge — no second ring is added on top of it — and while the pointer is on the pane the hairline's hot stop faces it, a fringe of colour either side. A primary is the harder case: translucency over an opaque fill is light that sits <b>on</b> the fill — the glint along the top, the shade along the bottom, the 1px rim inside the edge, the spot under the pointer — while its <b>::after</b> belongs to the rim aurora; under Tier 2 the chrome takes the fill's outer pixel.</p>
+            <p class="cap">Move the pointer toward either, slowly. The pane bends and splits the substrate behind it; the arc lives on the border facing the light and turns as the pointer moves round; over the button it dims, because a light overhead grazes the edge less. The rim aurora still takes a filled button's edge when it lights.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">text — the letterform is the pane</span>

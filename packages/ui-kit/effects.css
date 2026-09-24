@@ -530,30 +530,61 @@
     background var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease);
 }
 
-/* ══ GLASS — this is a physical surface ══════════════════════════════════════ */
-.sl-fx-glass {
-  --slfx-s0: var(--slfx-edge-hi);
-  --slfx-s1: var(--slfx-edge-lo);
-  --slfx-s2: var(--slfx-edge-tint);
-  --slfx-s3: var(--slfx-edge-mid);
-}
-/* Light arrives with the pointer; at rest a glass element is quiet. The
-   owner's ruling: a hairline burning on every element at all times is not
-   glass, it is an outline, and the only family allowed to glow unprompted is
-   the aurora — which is restricted to the cases that earn it. `:hover` and
-   the focus pseudo-classes carry Tier 0 on its own; `.is-glass-lit` is Tier
-   1's eased version of the same state, so the ring does not snap on ahead of
-   the driver's ramp. Equal specificity to the two stand-downs below, both of
-   which come later and so still win. */
-.sl-fx-glass:is(:hover, :focus-visible, :focus-within, .is-glass-lit)::after { opacity: 1; }
+/* ══ GLASS — this is a physical surface ══════════════════════════════════════
+   The specular edge (docs/specs/2027-improve-aesthetics.md, re-scope R1,
+   owner's pick 2026-09-24; card `proximity-glow`). The pointer is a light
+   source above the surface: a narrow arc of warm white wakes on the border
+   facing it, up to SPEC_REACH (effects.js) before the pointer arrives, and on
+   paper a soft shade answers it on the far side. Nothing at rest — an element
+   the pointer is nowhere near carries no light (AC-33).
 
-/* A filled element's ::after is the rim aurora's, stepped OUTSIDE the fill
-   (--rim, below): a resting chrome conic there would be a 2px bezel around
-   the button, not an edge on it. So on a filled element the glass hairline
-   stands down at rest — its edge is the pane's inner rim (--pane) at Tiers
-   0/1 and the chrome on the fill's outer pixel at Tier 2 — and the aurora's
-   rules, later in the file at equal specificity, still light it. */
-.sl-fx-glass.sl-fx-aurora--rim::after { opacity: 0; }
+   effects.js writes two numbers and nothing else: --slfx-spec-a, the light's
+   bearing as a conic angle, and --slfx-spec-i, how lit the edge is (0–1).
+   Both are sprung there — the DIRECTION is sprung as a vector, so a pointer
+   crossing the element dims the arc, turns it and brightens it again rather
+   than snapping it 180° in a frame. No transition on the background: the
+   driver already eases, and a second easing on top of it lags the light
+   behind its own spring.
+
+   Tier 0 (no JavaScript) has no light at all: a pointer light needs the
+   pointer. Focus and live states belong to the aurora, which still owns this
+   ::after when it is lit — its rules come later at equal specificity. */
+.sl-fx-glass {
+  --slfx-spec-a: 0deg;
+  --slfx-spec-i: 0;
+  /* The light: the page's own light pole — near-white on both themes. */
+  --slfx-spec-light: var(--slfx-glint);
+  /* The shade: the sheen where it is the dark pole (paper), gone on ink,
+     where a darker line on near-black reads as nothing. */
+  --slfx-spec-shade: oklch(from var(--slfx-sheen) l c h / clamp(0, (0.6 - l) * 5, 1));
+}
+.sl-fx-glass.is-spec-lit::after {
+  opacity: 1;
+  background:
+    conic-gradient(from calc(var(--slfx-spec-a) - 38deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--slfx-spec-light) calc(var(--slfx-spec-i) * 55%), transparent) 30deg,
+      color-mix(in srgb, var(--slfx-spec-light) calc(var(--slfx-spec-i) * 95%), transparent) 38deg,
+      color-mix(in srgb, var(--slfx-spec-light) calc(var(--slfx-spec-i) * 55%), transparent) 46deg,
+      transparent 76deg),
+    conic-gradient(from calc(var(--slfx-spec-a) + 142deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--slfx-spec-shade) calc(var(--slfx-spec-i) * 22%), transparent) 38deg,
+      transparent 76deg);
+  transition: opacity var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+/* The arc sits ON the element's own border band, whatever the ring's geometry
+   says. A --rim host steps the shared ::after outside its fill for the rim
+   aurora, and the arc inherited that: a gap the width of the (transparent)
+   border opened between the fill and the light — the owner saw it on a filled
+   button. Geometry only, and only while the aurora is not lit: this selector
+   outranks the aurora's, so the aurora's background and its rim placement
+   must stay out of it. */
+.sl-fx-glass.is-spec-lit:not(:focus-visible, :focus-within, [data-sl-fx-live])::after {
+  inset: -1px;
+  padding: 1px;
+}
+
 
 /* ── Translucency ───────────────────────────────────────────────────────────
    The owner: the elements have a transparent background and blur what is
@@ -747,7 +778,9 @@
          fill shows through all of it: translucency over an opaque brand fill
          is light that sits ON the fill, not a fill that lets the page
          through.
-   SPOT  the same layer carries a radial glint at the pointer — the
+   SPOT  RETIRED 2026-09-24 (re-scope R1): the pointer glint was a disc of
+         light under the cursor, which ruling 4 bans; the specular edge above
+         is the pointer's light now. The record: the
          reference's cursor "spill" (48px radius, 1 → 0.35 at 45% → 0, peak
          0.55), placed by effects.js through --slfx-px/--slfx-py and eased in
          and out through --slfx-lit. On paper it is not white: the
@@ -755,7 +788,8 @@
          saturate(5.4), and a near-white glint on cream is invisible — so the
          spot is two colours whose ALPHA carries the theme, and only one of
          them is ever visible (--slfx-spot-cool / --slfx-spot-warm).
-   EDGE  the hairline turns to face the pointer: while lit, the conic's hot
+   EDGE  RETIRED 2026-09-24 with the spot, for the specular edge above. The
+         record: while lit, the conic's hot
          stop sits at the pointer's bearing with a fringe of the accent on
          one side and of the depth companion on the other — dispersion,
          which is what refraction looks like on an edge (the reference's
@@ -773,85 +807,13 @@
    spot on an accent fill is accent on accent), and under Tier 2 the chrome
    takes the fill's outer pixel. */
 .sl-fx-glass--pane {
-  --slfx-px: 50%;
-  --slfx-py: 50%;
+  /* Read by glass.css's __shine, which scales its rim by it. */
   --slfx-lit: 0;
-  --slfx-spot-r: 3rem;
   /* The dark pole of the neutral pair, the way --slfx-glint is the light
      one: the sheen where it is dark (paper, L 0.24), its lightness mirrored
      below where it is bright (ink: 1 − 0.91 = 0.09, under the surface). */
   --slfx-shade: oklch(from var(--slfx-sheen) min(l, 1 - l) c h);
-  /* The spot's two colours. Cool: the glint, with alpha 1 where the sheen
-     is the light pole (ink, L 0.91 → (0.91 − 0.45) × 4, clamped to 1) and 0
-     where it is the dark one (paper, L 0.24). Warm: the accent's hue at the
-     vivid tier's floor — the vivid accent brought to L 0.66 and fitted to
-     the gamut again, since a bright token (an ink accent pinned onto paper,
-     which the showcase does) can hold more chroma at its own lightness than
-     the floor holds — with the opposite alpha, read off a 30/70 mix of that
-     colour and the sheen's LIGHTNESS in oklab: the sheen with its chroma
-     zeroed, because the real sheen is not neutral (paper's is a cool
-     near-black, C 0.02) and 70% of it turned the amber 14° toward yellow.
-     Against a grey the mix is exact: the accent's hue untouched, its chroma
-     × 0.3 (restored ÷ 0.3), the lightness 0.3 × 0.66 + 0.7 × sheen: paper
-     0.3 × 0.66 + 0.7 × 0.24 = 0.37 → alpha 1; ink 0.3 × 0.66 + 0.7 × 0.91 =
-     0.84 → alpha 0. The sheen decides, as it does for the glint and for the
-     chrome's poles, so an inversion band's remapped sheen flips the spot. */
-  --slfx-spot-cool: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h / clamp(0, (l - 0.45) * 4, 1));
-  --slfx-spot-warm: oklch(from color-mix(in oklab, var(--slfx-spot) 30%, oklch(from var(--slfx-sheen) l 0 h)) var(--slfx-vivid-l) calc(c / 0.3) h / clamp(0, (0.6 - l) * 5, 1));
-  /* The dispersion fringes either side of the hot stop. */
-  --slfx-edge-warm: color-mix(in srgb, var(--slfx-accent-vivid) 70%, var(--slfx-edge-hi));
-  --slfx-edge-cool: color-mix(in srgb, var(--slfx-depth-vivid) 70%, var(--slfx-edge-hi));
 }
-.sl-fx-glass--pane.sl-fx-aurora--rim {
-  --slfx-spot-cool: var(--slfx-glint);
-  --slfx-spot-warm: transparent;
-}
-.sl-fx-glass--pane::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    radial-gradient(circle var(--slfx-spot-r) at var(--slfx-px) var(--slfx-py),
-      color-mix(in srgb, var(--slfx-spot-cool) calc(var(--slfx-lit) * 26%), transparent) 0%,
-      color-mix(in srgb, var(--slfx-spot-cool) calc(var(--slfx-lit) * 9%), transparent) 45%,
-      transparent 100%),
-    radial-gradient(circle var(--slfx-spot-r) at var(--slfx-px) var(--slfx-py),
-      color-mix(in srgb, var(--slfx-spot-warm) calc(var(--slfx-lit) * 34%), transparent) 0%,
-      color-mix(in srgb, var(--slfx-spot-warm) calc(var(--slfx-lit) * 12%), transparent) 45%,
-      transparent 100%);
-  /* The slab used to live here too — a wash lightening toward the top and an
-     inset triple for the thickness, both scaled by --slfx-lit. They were the
-     same thing glass.css's __tint and __shine now paint, in the shape the
-     reference measured, and __shine carries the same --slfx-lit scaling so the
-     AC-33 ruling survives the move. What is left on this pseudo-element is the
-     pointer's own light and nothing else. */
-}
-/* The edge faces the pointer. Only once Tier 1 is armed (effects.js writes
-   the bearing), only on an element whose ::after is the glass's own (not a
-   --rim), and never over a lit aurora, which owns the edge. The hot stop
-   sits at 20deg (effects.js, PANE_HOT_DEG) between a cool fringe and a warm
-   one; the bearing is written unwrapped, so the transition on the angle —
-   a registered property, so it interpolates — never turns the long way. */
-[data-sl-fx="on"] .sl-fx-glass--pane.is-glass-lit:not(.sl-fx-aurora--rim, :focus-visible, :focus-within, [data-sl-fx-live])::after {
-  --slfx-angle: var(--slfx-ptr, 210deg);
-  background: conic-gradient(from var(--slfx-angle),
-    var(--slfx-edge-cool) 0deg,
-    var(--slfx-edge-hi) 20deg,
-    var(--slfx-edge-warm) 40deg,
-    var(--slfx-edge-lo) 100deg,
-    var(--slfx-edge-lo) 180deg,
-    var(--slfx-edge-lo) 260deg,
-    var(--slfx-edge-cool) 340deg,
-    var(--slfx-edge-cool) 360deg);
-  transition:
-    opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
-    background var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
-    --slfx-angle var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
-}
-
 /* ══ SLICE 1 — BUTTONS ════════════════════════════════════════════════════════
    The material settled on lab/1-1i and recorded in
    docs/specs/2027-improve-aesthetics.md §"Slice 1 rulings (AC-6)". Every rule
@@ -1002,45 +964,10 @@
       var(--slfx-text-halo-a, 26%), transparent);
 }
 
-/* ══ GPU TIER STAND-DOWN ═════════════════════════════════════════════════════
-   The light is per-element now, so "the GPU tier is available" and "this
-   element is lit" are different facts and only the second one may silence
-   anything. The lit element is the one holding the canvas, and :has() is how
-   the CSS reads that — keyed on the child rather than on the page-level
-   attribute, which would otherwise stand the Tier 1 pane down on every glass
-   element the moment one of them lit up.
-
-   The CSS answer is NOT removed: it is the Tier 0/1 reading and the only
-   thing a visitor without WebGPU ever sees. Placed BEFORE the aurora rules on
-   purpose: those set opacity: 1 at the same specificity, and later wins — an
-   element that is glass AND lit shows the aurora's arc over the light, which
-   is the intended reading. */
-.sl-fx-glass:has(> .sl-fx-glass__lit)::after { opacity: 0; }
-.sl-fx-glass--pane:has(> .sl-fx-glass__lit)::before { opacity: 0; }
-
 /* The lens is gone (2026-09-11): the declared-backdrop route replaces it, and
    effects.js carries the full record of why. Nothing selects .sl-fx-glass__lens
    any more; the two kill-switch rules below are left because they are harmless
    and a consumer may still have one in an old build. */
-
-/* The Tier 2 canvas. Its box is the host's BORDER box — the shader is handed
-   that rect and reads the pointer against the same origin — and it sits in the
-   same layer as the pane's own slab: above the host's fill, below the label.
-   The owner's ruling that the light must stay on the element's inside face is
-   the reason it is a child at all, and the reason nothing here has a negative
-   inset. No clip is needed: the shader's own silhouette zeroes the alpha
-   outside the rounded box, which antialiases the corners better than a mask
-   would and leaves no container to truncate it. */
-.sl-fx-glass__lit {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  display: block;
-  pointer-events: none;
-  user-select: none;
-}
 
 /* While a glass element is liquid under Tier 1, its edge is the liquid's own
    outline (the skin's band, in the host's border colour): the static conic

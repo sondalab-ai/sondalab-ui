@@ -340,13 +340,12 @@ await mountGpu();        // Tier 2 — optional, and only after mount()
 
 | Tier | Needs | You get | If you skip it |
 |---|---|---|---|
-| **0** | `effects.css` alone | Resting glass hairline, static aurora arc on focus, no motion | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
-| **1** | `mount()` | The liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
-| **2** | `await mountGpu()` | WebGPU chrome on the glass family: a hairline reflecting a moving environment, a wandering halo, the cursor's reflection | Tier 1 keeps its CSS conic hairline — a fallback, not a lesser draft |
+| **0** | `effects.css` alone | Static aurora arc on focus, no motion; glass carries no light without a pointer | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
+| **1** | `mount()` | The glass's specular edge (an arc of light on the border facing the pointer), the liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
+| **2** | `await mountGpu()` | **Retired 2026-09-24** — resolves `false`; kept so existing calls still work | Nothing: Tier 1 is the whole reading |
 
 Four things that bite, in the order they usually bite:
 
-- **`mountGpu()` returns `false` unless `mount()` ran first.** It checks `armed` and gives up immediately. Call them in order.
 - **`mount()` arms once per document.** Calling it again returns the first result; it does not re-scan. Mount after your markup exists, and use `mount(root)` for a subtree you add later.
 - **Two different refractions, and only the second needs an anchor.** `mount()` gives every glass host the **SVG lens** — it bends whatever is actually behind the element, with nothing to declare. `mountGpu()` adds the **GPU chrome**, and a shader cannot read the document, so there a surface *names* what lies behind a region: the **`data-sl-fx-backdrop` attribute** on an ancestor box, with the image declared as **`--slfx-backdrop: url(…)` on that same element**. Both together, on the anchor — the attribute marks which box the image covers, and the custom property would otherwise inherit with no way to tell which ancestor set it. Only `url()` is sampled; a gradient or a keyword is ignored rather than guessed at. An unmarked pane still has its Tier 1 lens; it simply has no declared image for the GPU layer, which is additive and takes nothing away.
 - **Both refuse under high contrast, by design.** `mount()` returns `false` when `data-sl-theme="high-contrast"`, and `mountGpu()` re-checks at call time. Reduced motion refuses Tier 1 as well. Do not work around either: the component must still read correctly with every family off, which is what those guards exist to guarantee.
@@ -404,7 +403,7 @@ The prism is bounded in `glass-lens.js`, not by you: the split can never exceed 
 **Don't**: raise `--slg-lens-blur` to make a pane "read as glass" — that is the one change guaranteed to remove its refraction. **Don't**: put a pane where nothing sits behind it and then tune numbers to rescue it; move the pane, or drop the family. **Don't**: verify any of this by eye — see `HANDOFF.md` § *How to verify an effect*.
 
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
-The element's own border, as chrome: a hairline reflecting a moving environment, a halo that wanders around it, a bright spot under the cursor, a reflection onto the near edge of an adjacent effect element (WebGPU, via `mountGpu()`); a static conic hairline where there is no GPU. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
+The pointer is a light above the surface: a narrow arc of warm white wakes on the border facing it, from 140px before the pointer arrives, and on paper a soft shade answers on the far side. A crossing dims, turns and brightens it again rather than snapping. Nothing is lit at rest, and there is never a disc under the cursor (a test bans a pointer-positioned `radial-gradient`). Tier 1 only: `mount()` writes `--slfx-spec-a` (bearing) and `--slfx-spec-i` (how lit) and the class `is-spec-lit`. The WebGPU chrome that used to draw this edge is retired (2026-09-24); the material and the lens above are not. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
 ```html
 <article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
 <label class="sl-field">

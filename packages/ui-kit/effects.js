@@ -1,7 +1,7 @@
 /* @sondalab/ui-kit — effects.js
-   Hand-authored Tier 1 driver for effects.css: the liquid's silhouette, the
-   glitch's timing, the aurora's one-per-document grant, and the hand-off to
-   the GPU chrome.
+   Hand-authored Tier 1 driver for effects.css: the glass's specular edge, the
+   liquid's silhouette, the glitch's timing and the aurora's one-per-document
+   grant.
    Contract: docs/specs/2026-09-08-effects-layer-design.md
 
    Importing this module does nothing. mount() is explicit, which is what makes
@@ -39,21 +39,6 @@ let armed = false;
  *  queued — a queue produces a stutter train, which reads as breakage. */
 let burstBudget = 1;
 let burstsRunning = 0;
-
-/** The document's live token values, re-read whenever the theme changes.
- *  Nothing in Tier 1 reads these — the CSS owns every colour it paints. They
- *  exist for the GPU tier, whose shader needs real values as uniforms and
- *  cannot resolve a custom property. Kept here so there is exactly one place
- *  that reads a hue from the token layer, and one observer keeping it live. */
-const tokens = { accent: "", depth: "", text: "", canvas: "" };
-
-function readTokens(root = document.documentElement) {
-  const cs = getComputedStyle(root);
-  tokens.accent = cs.getPropertyValue("--sl-accent-default").trim();
-  tokens.depth = cs.getPropertyValue("--sl-accent-depth").trim();
-  tokens.text = cs.getPropertyValue("--sl-text-primary").trim();
-  tokens.canvas = cs.getPropertyValue("--sl-bg-canvas").trim();
-}
 
 /* ── liquid: the silhouette goes gooey ──────────────────────────────────────
    The reference (libraries.dev/gooey, liquid-gooey) never filters the UI: a
@@ -323,7 +308,7 @@ function ensureLiquidLoop() {
 
 function onPointerMove(ev) {
   if (!(ev.target instanceof Element)) return;
-  onPanePointer(ev);
+  onSpecPointer(ev);
   const el = ev.target.closest(LIQUID_HOSTS);
   if (!el || el.closest('[data-sl-fx="off"]')) return;
   const r = el.getBoundingClientRect();
@@ -342,7 +327,6 @@ function onPointerMove(ev) {
 
 function onPointerLeave(ev) {
   if (!(ev.target instanceof Element)) return;
-  onPaneLeave(ev);
   const el = ev.target.closest(LIQUID_HOSTS);
   // pointerleave does not bubble, but the listener is on the root in the
   // capture phase, so it also fires for every CHILD the pointer leaves — an
@@ -352,174 +336,150 @@ function onPointerLeave(ev) {
   ensureLiquidLoop(); // keep the loop running so the overshoot plays out
 }
 
-/* ── glass pane: the light answers the pointer ──────────────────────────────
-   The glass family's pointer-reactive mode (effects.css, .sl-fx-glass--pane):
-   the button is made of glass, and the interaction is light. This driver
-   writes NOTHING but custom properties onto the host — where the pointer is,
-   its bearing from the centre, and how lit the pane is — and the CSS draws
-   from them: a radial glint on the body at the pointer (the reference's
-   cursor "spill": 48px radius, peak 0.55), and the hairline's hot stop turned
-   to face the pointer with a fringe of colour either side of it. No filter,
-   no colour, no geometry is ever written; a pane the pointer has left is
-   left exactly as it was. The lit amount eases, so the light arrives and
-   goes the way light does (the reference fades its cursor light over 200ms
-   and its bend out over 350ms), and the loop stops itself once dark. */
-const PANE_HOSTS = ".sl-fx-glass--pane";
-/** Where the pane's conic puts its hot stop (effects.css, the lit ring):
- *  the bearing written to the host is the pointer's bearing minus this, so
- *  the hot stop lands under the pointer. */
-const PANE_HOT_DEG = 20;
-/** The pane's light eases in and out on an exponential, and the loop runs
- *  until the value falls under PANE_SETTLE — which is 5.3 time constants, not
- *  three. At the original 0.14 that made a mouse-out take about 740ms to
- *  finish and roughly 420ms to become invisible, and the owner's word for it
- *  was clunky.
- *
- *  OUT IS NOW FASTER THAN IN, which inverts the original pair. The intuition
- *  behind a slower fade — light lingers — is about a light that is still
- *  there. This one is a response to a pointer: on the way in the pointer is
- *  present and the light is chasing it, so a little ease reads as weight; on
- *  the way out the pointer is gone and there is nothing left to justify the
- *  wait, so the same ease reads as lag. ~180ms to invisible. */
-const PANE_TAU_IN = 0.08;
-const PANE_TAU_OUT = 0.06;
-const PANE_SETTLE = 0.005;
-let paneEl = null;
-let paneLit = 0;
-let paneTarget = 0;
-let paneBearing = 0;      // degrees, continuous — never wrapped, so it never turns the long way
-let paneRafId = 0;
-let panePrevT = 0;
-/** The lit pane's geometry, in its own CSS pixels, refreshed on every pointer
- *  move and read once per frame by the Tier 2 light. It exists so the GPU
- *  module forces no layout of its own: onPanePointer already has the rect and
- *  the computed style, because it needs both to place the CSS spot. */
-// `host` rides along with the geometry so the GPU tier can read the element's
-// own --slfx-backdrop and glass parameters. It is the only reference this
-// module hands over; the shader still never touches the document.
-const paneGeom = { w: 0, h: 0, radius: 0, border: 0, x: 0, y: 0, lit: 0, host: null };
-/** The Tier 2 handle and its single canvas, moved between hosts exactly the
- *  way the liquid's single skin is. One device, one surface, one pipeline,
- *  created once in mountGpu() and never per element. */
-let light = null;
-let lightCanvas = null;
-/** The panes the GPU tier gave a canvas of their own, so setPaneLive knows not
- *  to hand them the shared one as well. */
-const ownsLight = new Set();
+/* ── glass: the specular edge ─────────────────────────────────────────────────
+   The pointer is a light above the surface (docs/specs/2027-improve-aesthetics.md,
+   re-scope ruling 4, and R1's pick). Every glass host near the pointer gets
+   two custom properties and nothing else — --slfx-spec-a, the light's bearing
+   as a conic angle, and --slfx-spec-i, how lit its edge is — and effects.css
+   draws a narrow arc on the border facing the light from them.
 
-function setPaneLive(el) {
-  if (paneEl === el) return;
-  if (paneEl) {
-    paneEl.classList.remove("is-glass-lit");
-    for (const k of ["--slfx-px", "--slfx-py", "--slfx-ptr", "--slfx-lit"]) paneEl.style.removeProperty(k);
-    // Leave no empty style="" behind on an element that had none.
-    if (!paneEl.getAttribute("style")) paneEl.removeAttribute("style");
-    // Detach the shared light before it can be attached anywhere else: exactly
-    // one of it exists, so moving it IS the release. A pane that owns a canvas
-    // never held this one.
-    if (lightCanvas?.parentElement === paneEl) lightCanvas.remove();
-  }
-  paneEl = el;
-  paneLit = 0;
-  if (el) {
-    el.classList.add("is-glass-lit");
-    // A pane with a declared backdrop has a canvas of its own, holding a
-    // material that exists at rest; handing it the shared one too would stack
-    // two lights on one element.
-    if (lightCanvas && !ownsLight.has(el)) el.appendChild(lightCanvas);
-  }
+   Two springs per host, both frame-rate independent:
+   - PRESENCE eases toward how close the pointer is: 1 on or over the box,
+     falling to 0 at SPEC_REACH px beyond its edge, so the edge wakes before
+     the pointer arrives and settles after it leaves.
+   - DIRECTION is sprung as a VECTOR in box-normalised space, never as an
+     angle: outside the box it has length 1; over the box it shortens, because
+     a light overhead grazes the edge less. A pointer crossing the element
+     therefore dims the arc, turns it and brightens it again on the far side,
+     instead of the arc snapping 180° in a frame — the owner's note on the
+     first probe was exactly that jump.
+   The loop runs only while some edge is lit and stops itself when all have
+   settled; a host is only measured while the IntersectionObserver still
+   marks it near the viewport. */
+const SPEC_HOSTS = ".sl-fx-glass";
+/** How far beyond its box a host starts to catch the light, in CSS px. */
+const SPEC_REACH = 140;
+/** Per-frame spring rates at 60 fps; scaled by the real frame time. */
+const SPEC_DIR_K = 0.06;
+const SPEC_PRES_K = 0.08;
+/** Below this the edge is dark and the host is released. */
+const SPEC_SETTLE = 0.004;
+/** The vector length below which the arc is off, and above which it is full:
+ *  the smoothstep that dims it through a crossing. */
+const SPEC_DIM_LO = 0.12;
+const SPEC_DIM_HI = 0.85;
+
+const specHosts = new Set();
+const specState = new Map();
+let specX = 0;
+let specY = 0;
+let specIn = false;
+let specRafId = 0;
+let specPrevT = 0;
+
+function collectSpecHosts(root) {
+  if (root instanceof Element && root.matches(SPEC_HOSTS)) specHosts.add(root);
+  for (const el of root.querySelectorAll(SPEC_HOSTS)) specHosts.add(el);
 }
 
-function onPanePointer(ev) {
-  const el = ev.target.closest(PANE_HOSTS);
-  if (!el || el.closest('[data-sl-fx="off"]')) return;
-  if (paneEl !== el) {
-    setPaneLive(el);
-    paneBearing = 0;
+function onSpecPointer(ev) {
+  specX = ev.clientX;
+  specY = ev.clientY;
+  specIn = true;
+  ensureSpecLoop();
+}
+
+/** The pointer left the window: every edge goes dark on its own spring. */
+function onSpecOut(ev) {
+  if (ev.relatedTarget) return;
+  specIn = false;
+  ensureSpecLoop();
+}
+
+/** The pointer's direction from the host's centre, in box-normalised space,
+ *  clamped to the unit circle.
+ *  @returns {[number, number]} */
+function specDirection(tx, ty, hw, hh) {
+  let nx = tx / hw;
+  let ny = ty / hh;
+  const len = Math.hypot(nx, ny);
+  if (len > 1) { nx /= len; ny /= len; }
+  return [nx, ny];
+}
+
+function releaseSpec(el) {
+  specState.delete(el);
+  el.classList.remove("is-spec-lit");
+  el.style.removeProperty("--slfx-spec-a");
+  el.style.removeProperty("--slfx-spec-i");
+  if (!el.getAttribute("style")) el.removeAttribute("style");
+}
+
+/** One host, one frame.
+ *  @returns {boolean} whether its edge is still lit */
+function stepSpec(el, kd, kp) {
+  let s = specState.get(el);
+  if (!s && !specIn) return false;
+  if (!s && !el.hasAttribute("data-sl-fx-near")) return false;
+  if (el.closest('[data-sl-fx="off"]')) {
+    if (s) releaseSpec(el);
+    return false;
   }
   const r = el.getBoundingClientRect();
-  const cs = getComputedStyle(el);
-  // The body (::before) is inset: 0, which resolves against the padding
-  // box; the pointer is measured from the same origin.
-  const bl = parseFloat(cs.borderLeftWidth) || 0;
-  const bt = parseFloat(cs.borderTopWidth) || 0;
-  el.style.setProperty("--slfx-px", `${(ev.clientX - r.left - bl).toFixed(1)}px`);
-  el.style.setProperty("--slfx-py", `${(ev.clientY - r.top - bt).toFixed(1)}px`);
-  // Bearing as a conic angle: 0 straight up, clockwise. Unwrapped against
-  // the previous value so a pointer crossing the top goes 359 → 361, not
-  // 359 → 1 — the CSS transition on the angle would otherwise spin the ring
-  // the long way round.
-  const dx = ev.clientX - (r.left + r.width / 2);
-  const dy = ev.clientY - (r.top + r.height / 2);
-  const raw = (Math.atan2(dx, -dy) * 180) / Math.PI - PANE_HOT_DEG;
-  let d = (raw - paneBearing) % 360;
-  if (d > 180) d -= 360;
-  if (d < -180) d += 360;
-  paneBearing += d;
-  el.style.setProperty("--slfx-ptr", `${paneBearing.toFixed(1)}deg`);
-  // The same measurement, in the host's own pixels, for the Tier 2 light.
-  // The light is drawn on the BORDER box — the canvas is inset: 0 against it —
-  // so the pointer is measured from that origin, not the padding box's.
-  paneGeom.host = el;
-  paneGeom.w = r.width;
-  paneGeom.h = r.height;
-  paneGeom.radius = cornerPx(cs.borderTopLeftRadius, r.width, r.height);
-  paneGeom.border = parseFloat(cs.borderTopWidth) || 0;
-  paneGeom.x = ev.clientX - r.left;
-  paneGeom.y = ev.clientY - r.top;
-  paneTarget = 1;
-  ensurePaneLoop();
-}
-
-/** One pane's border box at rest, in the shape the GPU tier draws from. The
- *  pointer is put far outside the pane, so nothing but the material is left.
- *  @param {Element} el the pane
- *  @returns {{w: number, h: number, radius: number, border: number, x: number, y: number, lit: number}} */
-function paneRestGeom(el) {
-  const r = el.getBoundingClientRect();
-  const cs = getComputedStyle(el);
-  return {
-    w: r.width,
-    h: r.height,
-    radius: cornerPx(cs.borderTopLeftRadius, r.width, r.height),
-    border: parseFloat(cs.borderTopWidth) || 0,
-    x: -r.width,
-    y: -r.height,
-    lit: 0,
-  };
-}
-
-function onPaneLeave(ev) {
-  const el = ev.target.closest(PANE_HOSTS);
-  if (!el || el !== paneEl || ev.target !== el) return;
-  paneTarget = 0;
-  ensurePaneLoop();
-}
-
-function integratePane(now) {
-  if (paneEl && !paneEl.isConnected) paneTarget = 0;
-  const dt = Math.min((now - panePrevT) / 1000 || 0, 1 / 30);
-  panePrevT = now;
-  const tau = paneTarget > paneLit ? PANE_TAU_IN : PANE_TAU_OUT;
-  paneLit += (paneTarget - paneLit) * (1 - Math.exp(-dt / tau));
-  if (paneTarget === 0 && paneLit < PANE_SETTLE) {
-    paneRafId = 0;
-    setPaneLive(null);
-    return;
+  const hw = r.width / 2;
+  const hh = r.height / 2;
+  if (!hw || !hh) return false;
+  const tx = specX - (r.left + hw);
+  const ty = specY - (r.top + hh);
+  const gap = Math.hypot(Math.max(Math.abs(tx) - hw, 0), Math.max(Math.abs(ty) - hh, 0));
+  const want = specIn ? Math.max(0, 1 - gap / SPEC_REACH) : 0;
+  const [nx, ny] = specDirection(tx, ty, hw, hh);
+  if (!s) {
+    if (want <= 0) return false;
+    // Born pointing at the light, so the first frame does not sweep in.
+    s = { dx: nx, dy: ny, pres: 0 };
+    specState.set(el, s);
+    el.classList.add("is-spec-lit");
   }
-  paneEl?.style.setProperty("--slfx-lit", paneLit.toFixed(3));
-  // Tier 2 rides the pane's own loop rather than running a frame loop of its
-  // own: that loop already starts on pointer entry and stops itself once the
-  // light has eased to nothing, which is exactly when the GPU should be idle.
-  paneGeom.lit = paneLit;
-  light?.draw();
-  paneRafId = requestAnimationFrame(integratePane);
+  s.dx += (nx - s.dx) * kd;
+  s.dy += (ny - s.dy) * kd;
+  s.pres += (want - s.pres) * kp;
+  if (want === 0 && s.pres < SPEC_SETTLE) {
+    releaseSpec(el);
+    return false;
+  }
+  const t = Math.min(1, Math.max(0, (Math.hypot(s.dx, s.dy) - SPEC_DIM_LO) / (SPEC_DIM_HI - SPEC_DIM_LO)));
+  const lit = s.pres * t * t * (3 - 2 * t);
+  // Conic angles start at 12 o'clock and run clockwise; atan2 on screen axes
+  // starts at 3 o'clock, hence the quarter turn. Back in pixel space first, so
+  // the bearing on a wide card is the pointer's, not the unit square's.
+  const bearing = (Math.atan2(s.dy * r.height, s.dx * r.width) * 180) / Math.PI + 90;
+  el.style.setProperty("--slfx-spec-a", `${bearing.toFixed(1)}deg`);
+  el.style.setProperty("--slfx-spec-i", lit.toFixed(3));
+  return true;
 }
 
-function ensurePaneLoop() {
-  if (paneRafId) return;
-  panePrevT = performance.now();
-  paneRafId = requestAnimationFrame(integratePane);
+function integrateSpec(now) {
+  const dt = Math.min((now - specPrevT) / 1000 || 1 / 60, 1 / 20);
+  specPrevT = now;
+  const kd = 1 - (1 - SPEC_DIR_K) ** (dt * 60);
+  const kp = 1 - (1 - SPEC_PRES_K) ** (dt * 60);
+  let lit = false;
+  for (const el of specHosts) {
+    if (!el.isConnected) {
+      if (specState.has(el)) releaseSpec(el);
+      specHosts.delete(el);
+      continue;
+    }
+    if (stepSpec(el, kd, kp)) lit = true;
+  }
+  specRafId = lit ? requestAnimationFrame(integrateSpec) : 0;
+}
+
+function ensureSpecLoop() {
+  if (specRafId) return;
+  specPrevT = performance.now();
+  specRafId = requestAnimationFrame(integrateSpec);
 }
 
 /* ── glitch ──────────────────────────────────────────────────────────────────
@@ -1156,21 +1116,12 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   }).observe(root, { childList: true, subtree: true });
   if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;
 
-  readTokens(html);
-  // data-sl-theme and style both matter: a theme switch changes the former,
-  // a per-product accent override (root.style.setProperty("--sl-accent-..."))
-  // changes only the latter. The GPU tier reads the shared `tokens` object,
-  // and this is the one observer that keeps it live.
-  new MutationObserver(() => readTokens(html)).observe(html, {
-    attributes: true,
-    attributeFilter: ["data-sl-theme", "style"],
-  });
-
   // Before data-sl-fx="on" goes up: the arc's sweep and its bloom's sweep
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
   injectGlows(root);
   watchNear(root);
+  collectSpecHosts(root);
   // Tier 1's own late arrivals: the glow is a moving layer and the viewport
   // gate only matters where something is running, so both belong on this side
   // of the guard. The material's observer is above.
@@ -1178,12 +1129,14 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlows(n);
       watchNear(n);
+      collectSpecHosts(n);
     }
   }).observe(root, { childList: true, subtree: true });
 
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
   root.addEventListener("pointerleave", onPointerLeave, { capture: true, passive: true });
+  window.addEventListener("pointerout", onSpecOut, { passive: true });
 
   html.setAttribute("data-sl-fx", "on");
   armed = true;
@@ -1355,92 +1308,16 @@ export function revokeLive(el) {
 }
 
 /**
- * Tier 2 — the WebGPU chrome on the glass family: a hairline reflecting a
- * moving environment, a wandering halo, the cursor's reflection, and the
- * liquid's swell carried into the ring. Additive: everything
- * already works without it, and it is only attached once the device has
- * actually answered. Refuses under high contrast, the same way mount() does —
- * a CSS kill switch cannot silence a canvas, so the refusal has to live here.
- * @returns {Promise<boolean>} whether the GPU tier came up
+ * Tier 2 is retired (2026-09-24, re-scope R1). It drew the glass edge as a
+ * WebGPU chrome that reflected a moving environment; the glass edge is now the
+ * specular arc, drawn in CSS from what mount() writes, and there is nothing
+ * left for a GPU to draw on it. The export stays because consumers call it
+ * (sondalab-site does), and because the re-scope's Signature slice brings a
+ * WebGPU tier back for a different job. Until then it resolves false, which is
+ * the answer it always gave a browser without WebGPU — so every caller already
+ * handles it.
+ * @returns {Promise<boolean>} always false
  */
 export async function mountGpu() {
-  if (!armed) return false;
-  // Re-read at call time rather than relying on mount()'s own guard: a visitor
-  // can switch to high contrast between mount() and this call, and `armed`
-  // stays true once set. bootLight() additionally tears the light down if the
-  // switch happens while it is already live.
-  if (typeof document === "undefined") return false;
-  if (document.documentElement.getAttribute("data-sl-theme") === "high-contrast") return false;
-
-  // Dynamic import, so a consumer that never calls mountGpu() never loads
-  // the GPU module or the shader. This import only ever pulls in
-  // ./effects-gpu.js and ./effects-shader.js — vgpu itself (an optional
-  // PEER dependency, installed only if the consumer asks for it) is
-  // imported inside bootLight()'s own try/catch, which is where a missing
-  // peer degrades to Tier 1. The catch here covers a bundler that fails to
-  // resolve the kit's own module, nothing else.
-  let mod;
-  try {
-    mod = await import("./effects-gpu.js");
-  } catch {
-    return false;
-  }
-  const { bootLight } = mod;
-
-  // ONE canvas, for the whole page, moved between hosts by the pane driver —
-  // the same single-instance discipline the liquid's skin has. Its box is
-  // pure CSS (.sl-fx-glass__lit: inset 0 on the host, below the label), so
-  // nothing here writes geometry: vgpu's surface is layout-backed and picks
-  // up each new host's size on the next frame clock advance by itself.
-  //
-  // A child of the host, not an overlay on the page. The host carries
-  // backdrop-filter, which makes it a backdrop root, so only a child
-  // composites over the blurred result — and a canvas above the DOM would
-  // paint its light over the label, which is what the old field did and what
-  // the owner objected to.
-  lightCanvas = document.createElement("canvas");
-  lightCanvas.className = "sl-fx-glass__lit";
-  lightCanvas.setAttribute("aria-hidden", "true");
-
-  const handle = await bootLight({ canvas: lightCanvas, state: () => paneGeom, geom: paneRestGeom, tokens });
-  if (!handle) {
-    lightCanvas.remove();
-    lightCanvas = null;
-    return false;
-  }
-  light = handle;
-
-  // Every pane that sits inside a declared backdrop gets a canvas of its own,
-  // because its material — the bend, the Fresnel rim, the glare — is there
-  // whether or not a pointer is. The rest keep the single shared canvas: with
-  // nothing declared they have nothing to refract, so a canvas at rest would
-  // hold an empty frame. track() refuses those on its own; the set below
-  // records only the ones it took.
-  //
-  // Painted lazily, as each pane comes into view. A sweep of every pane at
-  // mount is a measurable stall — 30 surfaces took roughly 0.6s in one go —
-  // and most of them are below the fold at the time.
-  const backdropPanes = [...document.querySelectorAll(PANE_HOSTS)]
-    .filter((el) => el.closest("[data-sl-fx-backdrop]") && !el.closest('[data-sl-fx="off"]'));
-  if (backdropPanes.length && typeof IntersectionObserver === "function") {
-    const seen = new IntersectionObserver((entries, obs) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        obs.unobserve(e.target);
-        light?.track(e.target).then((took) => { if (took) ownsLight.add(e.target); });
-      }
-    }, { rootMargin: NEAR_MARGIN });
-    for (const el of backdropPanes) seen.observe(el);
-  } else {
-    for (const el of backdropPanes) {
-      // eslint-disable-next-line no-await-in-loop -- one upload at a time is
-      // the point: a parallel burst is the stall this avoids.
-      if (await handle.track(el)) ownsLight.add(el);
-    }
-  }
-
-  // data-sl-fx-gpu="on" is set inside the GPU module itself, on the first
-  // frame it actually draws. This function only reports that the device and
-  // pipeline came up.
-  return true;
+  return false;
 }

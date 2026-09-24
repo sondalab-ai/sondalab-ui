@@ -123,34 +123,15 @@ test("mount() refuses to arm Tier 1 under high contrast", () => {
   );
 });
 
-test("mountGpu() refuses to bring Tier 2 up under high contrast", () => {
-  // A CSS kill switch cannot silence a canvas, so the refusal has to live in
-  // the module. mount()'s own guard is not enough: `armed` latches true, and a
-  // visitor can switch to high contrast between mount() and this call.
+test("mountGpu() is retired and resolves false", () => {
+  // Tier 2 drew the glass edge as WebGPU chrome; the edge is the CSS specular
+  // arc since 2026-09-24. The export stays for its callers and resolves false,
+  // the answer a browser without WebGPU always got.
   const body = fnBody("mountGpu");
-  const guard = body.indexOf('"high-contrast"');
-  const attach = body.indexOf('createElement("canvas")');
-  assert.ok(guard > -1, "mountGpu() must consult the theme");
-  assert.ok(attach > -1, "mountGpu() must create the canvas it guards");
-  assert.ok(guard < attach, "the high-contrast guard must precede the canvas, not follow it");
-  assert.match(
-    guardStatement(body, '"high-contrast"'), /return false/,
-    "the high-contrast guard must return, not merely branch",
-  );
+  assert.match(body, /^\s*\{?\s*return false;\s*\}?\s*$/, "mountGpu() must do nothing but resolve false");
+  assert.doesNotMatch(js, /import\(["']\.\/effects-gpu\.js["']\)/, "nothing may load the retired GPU module");
 });
 
-test("a switch to high contrast tears a live Tier 2 down", () => {
-  // The guard above only covers the moment of mounting. Once the field is up,
-  // nothing in CSS can stop it painting, so the theme observer inside
-  // bootField() has to stop() outright — which also restores the CSS ring, by
-  // removing the attribute that stood it down.
-  const gpu = readFileSync(resolve(HERE, "../packages/ui-kit/effects-gpu.js"), "utf8");
-  const at = gpu.indexOf("themeObserver = new MutationObserver");
-  assert.ok(at > -1, "bootField() must observe the theme");
-  const block = gpu.slice(at, gpu.indexOf("themeObserver.observe", at));
-  assert.match(block, /"high-contrast"/, "the theme observer must recognise high contrast");
-  assert.match(block, /stop\(\)/, "high contrast must tear the field down, not merely re-read tokens");
-});
 
 test("burst drops a burst over the budget rather than queueing it", () => {
   const body = fnBody("burst");
@@ -279,10 +260,7 @@ test("the gooey engages only behind a modifier written in the markup", () => {
   assert.doesNotMatch(js, /sl-fx-liquid--calm/, "a container takes no swell at all");
   assert.doesNotMatch(js, /closest\("\.sl-fx-liquid"\)/, "the pointer path must not match a bare .sl-fx-liquid");
   assert.match(js.slice(js.indexOf("function onPointerMove(")), /closest\(LIQUID_HOSTS\)/);
-  // Bounded at onPanePointer, not at onPaneLeave: the pane driver in between
-  // reads borderTopLeftRadius legitimately, to hand the Tier 2 light the
-  // element's own corner. What must not measure a radius is the liquid's gate.
-  const pointer = js.slice(js.indexOf("function onPointerMove("), js.indexOf("function onPanePointer("));
+  const pointer = js.slice(js.indexOf("function onPointerMove("), js.indexOf("function onPointerLeave("));
   assert.doesNotMatch(pointer, /borderRadius|borderTopLeftRadius|Radius/, "no radius may be measured to decide who goes gooey");
 });
 
@@ -291,25 +269,24 @@ test("a pointer leaving a child of the host does not release the host", () => {
   // capture phase, so it fires for every child the pointer leaves — the
   // icon inside a round button, the glitch span inside a text button. The
   // liquid dipped to zero on every one of those before the next move.
-  for (const name of ["onPointerLeave", "onPaneLeave"]) {
+  for (const name of ["onPointerLeave"]) {
     const body = js.slice(js.indexOf(`function ${name}(`));
     assert.match(body.slice(0, 500), /ev\.target !== el\) return/, `${name} must release only on the host's own leave`);
   }
 });
 
-test("the pane writes nothing onto the host but custom properties", () => {
-  // The pane is CSS drawing from three numbers; the driver may write where
-  // the pointer is, its bearing and how lit the pane is, and nothing else —
-  // no colour, no filter, no background, no geometry — so a pane the pointer
-  // has left is exactly what it was.
-  const pane = js.slice(js.indexOf("const PANE_HOSTS"), js.indexOf("/* ── glitch"));
-  const writes = [...pane.matchAll(/style\.setProperty\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
-  assert.ok(writes.length >= 3, "the pane driver must write its properties");
-  for (const w of writes) assert.match(w, /^--slfx-/, `the pane may only write --slfx-* properties, wrote ${w}`);
-  assert.doesNotMatch(pane, /\.style\.(?:background|filter|color|border|transform)/, "no real property may be written by the pane");
-  const cleared = pane.match(/removeProperty\(k\)/);
-  assert.ok(cleared, "the properties must be removed when the pane goes dark");
-  assert.match(pane, /paneTarget === 0 && paneLit < PANE_SETTLE[\s\S]*?paneRafId = 0;[\s\S]*?setPaneLive\(null\);\s*return;/, "the loop must stop itself once dark");
+test("the specular edge writes nothing onto the host but its two properties", () => {
+  // The edge is CSS drawing from two numbers: the light's bearing and how lit
+  // the edge is. No colour, no filter, no geometry — so a host the light has
+  // left is exactly what it was.
+  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── glitch"));
+  const writes = [...spec.matchAll(/style\.setProperty\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
+  assert.deepEqual(writes.sort(), ["--slfx-spec-a", "--slfx-spec-i"], `wrote ${writes}`);
+  assert.doesNotMatch(spec, /\.style\.(?:background|filter|color|border|transform)/, "no real property may be written");
+  for (const k of ["--slfx-spec-a", "--slfx-spec-i"]) {
+    assert.match(spec, new RegExp(`removeProperty\\("${k}"\\)`), `${k} must be removed when the edge goes dark`);
+  }
+  assert.match(spec, /specRafId = lit \? requestAnimationFrame\(integrateSpec\) : 0;/, "the loop must stop itself once every edge is dark");
 });
 
 test("the reduced-motion derogation is narrow, opt-in, and named so a reader cannot mistake it", async () => {
@@ -355,7 +332,7 @@ test("Tier 1 watches what is near the viewport, with a margin", () => {
   // The margin is the house's: the lazy backdrop paint already arms 200px
   // early for the same reason, and the two must not drift apart.
   const margins = [...js.matchAll(/rootMargin:\s*([^,}]+)/g)].map((m) => m[1].trim());
-  assert.deepEqual(margins, ["NEAR_MARGIN", "NEAR_MARGIN"], `every observer takes the same margin, got ${margins}`);
+  assert.deepEqual(margins, ["NEAR_MARGIN"], `every observer takes the same margin, got ${margins}`);
   const mounted = fnBody("mount");
   assert.match(mounted, /watchNear\(root\)/, "mount() must start it");
   assert.match(js, /watchNear\(n\);/, "and late arrivals must be picked up too");
@@ -431,19 +408,17 @@ test("material survives a motion preference; motion does not", () => {
   assert.ok(hc > -1 && hc < body.indexOf("injectGlassLayers(root);"), "high contrast refuses first");
 });
 
-test("the pane's light leaves faster than it arrives", () => {
-  // The loop runs until the value falls under PANE_SETTLE, which is 5.3 time
-  // constants — so 0.14 made a mouse-out take ~740ms to finish and ~420ms to
-  // become invisible, and the owner's word for it was clunky. On the way in the
-  // pointer is present and the light is chasing it; on the way out the pointer
-  // is gone and there is nothing left to justify the wait.
-  const inTau = Number(/const PANE_TAU_IN = ([\d.]+);/.exec(js)[1]);
-  const outTau = Number(/const PANE_TAU_OUT = ([\d.]+);/.exec(js)[1]);
-  assert.ok(outTau < inTau, `out (${outTau}) must be faster than in (${inTau})`);
-  const settle = Number(/const PANE_SETTLE = ([\d.]+);/.exec(js)[1]);
-  const toInvisible = -outTau * Math.log(0.05) * 1000;
-  assert.ok(toInvisible < 250, `a mouse-out must read as prompt, got ${Math.round(toInvisible)}ms to 5%`);
-  assert.ok(settle > 0 && settle < 0.01, "and the loop must still stop itself");
+test("the specular edge springs its direction as a vector, frame-rate independent", () => {
+  // The owner's note on the first probe: a pointer crossing the element made
+  // the light switch sides almost at once. Sprung as a vector, a crossing
+  // dims, turns and re-brightens instead of snapping 180 degrees.
+  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── glitch"));
+  assert.match(spec, /s\.dx \+= \(nx - s\.dx\) \* kd;/, "the direction's x is sprung");
+  assert.match(spec, /s\.dy \+= \(ny - s\.dy\) \* kd;/, "and its y");
+  assert.match(spec, /Math\.hypot\(s\.dx, s\.dy\)/, "the vector's length dims the arc through a crossing");
+  assert.match(spec, /\*\* \(dt \* 60\)/, "the spring rate must follow the real frame time");
+  const reach = Number(/const SPEC_REACH = (\d+);/.exec(spec)[1]);
+  assert.ok(reach > 0 && reach <= 200, `the edge wakes before the pointer arrives, within reason (${reach}px)`);
 });
 
 /* ── the curtains fit the pane they hang in ──────────────────────────────── */

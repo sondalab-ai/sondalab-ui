@@ -6,6 +6,8 @@
 > **Companion files:** `design-language.md` (the grammar these effects extend — L2 hairline, L4 motion, L5 voice), `design-system-spec.md` (token contract — no token is added here), `packages/ui-kit/agent/HANDOFF.md` (what `sl-audit` cannot check), `docs/plans/2026-09-08-effects-layer.md` (the implementation record and every ruling), `sondalab-site/docs/webgpu-surfaces.md` (the WebGPU boot/fallback pattern this reuses).
 > **Visual reference:** **https://libraries.dev/** — the owner's stated desiderata. Where this document and that site disagree about how something should *look*, the site is right. Its `Metal` entry (https://libraries.dev/metal) is the reference for glass; its `Gooey` entry (https://libraries.dev/gooey) is the reference for the liquid's skin; its `Border beam` entry (https://libraries.dev/beam) is the reference for the aurora.
 
+> **Superseded for glass, 2026-09-24.** The effects re-scope (`docs/specs/2027-improve-aesthetics.md` § *Re-scope*) rebuilt the families around new reference cards. For **glass** it wins over this file: the pointer's light is a specular edge (an arc of light on the border facing the pointer, nothing at rest), which replaces the pointer glint, the pane's dispersing edge and the WebGPU chrome described below. The pane material and the SVG lens stay (owner, 2026-09-24). The liquid's `--drop` is retired in the re-scope's rulings but still ships until the Controls slice replaces it. Aurora, glitch and goo are unchanged here until their own re-scope slices reach them.
+
 ## Legend (status vocabulary)
 
 - **Shipped / Delivered** — merged to the surface's production codebase, available to users.
