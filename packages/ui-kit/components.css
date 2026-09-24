@@ -143,14 +143,12 @@
   background-color: var(--slc-accent);
   color: var(--slc-on-accent);
   /* A pressed-ink edge and a lit top line: reads as a solid object without a
-     drop shadow, so it sits flat in a toolbar. Both ride properties a
-     consumer already resets when it strips a button to text (background,
-     border) — never box-shadow, which such an override does not think of. */
+     drop shadow, so it sits flat in a toolbar. Both are the border — which a
+     consumer already resets when it strips a button to text — never
+     box-shadow, which such an override does not think of. The glass family
+     clears it on its pane (effects.css). */
   border-color: color-mix(in srgb, var(--slc-accent) 88%, black);
-  background-image: linear-gradient(color-mix(in srgb, white 20%, transparent), color-mix(in srgb, white 20%, transparent));
-  background-size: 100% 1px;
-  background-position: top;
-  background-repeat: no-repeat;
+  border-top-color: color-mix(in srgb, var(--slc-accent) 80%, white);
 }
 .sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); }
 .sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); }

@@ -617,6 +617,10 @@
 .sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
+/* The pane brings its own rim and light. The primary's ink edge and lit top
+   line (components.css, 0.11, both border colours) would draw an outline
+   around the glass. */
+.sl-btn--primary.sl-fx-glass { border-color: transparent; }
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
 .sl-btn--ghost.sl-fx-glass,
