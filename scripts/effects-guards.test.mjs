@@ -541,6 +541,19 @@ test("no light is ever a disc under the pointer, and both kill switches hide the
   }
 });
 
+test("the specular arc sits on the element's own border band, even on a --rim", () => {
+  // REGRESSION (owner, 2026-09-24): on a filled --rim button the arc inherited
+  // the rim aurora's outward ring and floated a border-width off the fill.
+  const geo = RULES.find((r) => r.selector.startsWith(".sl-fx-glass.is-spec-lit:not(") && r.selector.endsWith("::after"));
+  assert.ok(geo, "the arc's geometry must be its own rule");
+  assert.match(geo.body, /inset:\s*-1px/, "the arc lands on the border band");
+  assert.match(geo.body, /padding:\s*1px/, "and is one pixel wide");
+  for (const lit of [":focus-visible", ":focus-within", "[data-sl-fx-live]"]) {
+    assert.ok(geo.selector.includes(lit), `a lit aurora (${lit}) keeps its own rim placement`);
+  }
+  assert.doesNotMatch(geo.body, /background/, "it outranks the aurora, so it may carry geometry only");
+});
+
 test("the specular edge is drawn from two numbers and yields to the aurora", () => {
   const lit = RULES.find((r) => r.selector === ".sl-fx-glass.is-spec-lit::after");
   assert.ok(lit, "the specular edge must be its own rule");

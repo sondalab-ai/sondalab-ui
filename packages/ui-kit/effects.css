@@ -573,6 +573,17 @@
       transparent 76deg);
   transition: opacity var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
+/* The arc sits ON the element's own border band, whatever the ring's geometry
+   says. A --rim host steps the shared ::after outside its fill for the rim
+   aurora, and the arc inherited that: a gap the width of the (transparent)
+   border opened between the fill and the light — the owner saw it on a filled
+   button. Geometry only, and only while the aurora is not lit: this selector
+   outranks the aurora's, so the aurora's background and its rim placement
+   must stay out of it. */
+.sl-fx-glass.is-spec-lit:not(:focus-visible, :focus-within, [data-sl-fx-live])::after {
+  inset: -1px;
+  padding: 1px;
+}
 
 
 /* ── Translucency ───────────────────────────────────────────────────────────
