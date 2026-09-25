@@ -946,6 +946,21 @@ async function armLenses(root) {
   }
 }
 
+/** The live light (re-scope R3): the aurora's run and busy readings as light
+ *  with body. Dynamically imported, so a surface with nothing working pays
+ *  nothing for the module; it follows hosts and attribute changes itself.
+ *  Behind the motion guard: it is motion, and the CSS arc is its fallback.
+ *  @param {ParentNode} root
+ *  @returns {Promise<void>} */
+let liveArmed = false;
+async function armLiveLight(root) {
+  if (liveArmed) return;
+  liveArmed = true;
+  let liveLight;
+  try { ({ liveLight } = await import("./live-light.js")); } catch { return; }
+  liveLight(root);
+}
+
 /** The goo fields currently bound, for the same two reasons as `lensed`:
  *  mount() may be called twice, and a container may leave the document. */
 const gooFields = new Map();
@@ -1234,6 +1249,7 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   injectGlows(root);
   watchNear(root);
   collectSpecHosts(root);
+  armLiveLight(root);
   // Tier 1's own late arrivals: the glow is a moving layer and the viewport
   // gate only matters where something is running, so both belong on this side
   // of the guard. The material's observer is above.

@@ -63,7 +63,8 @@
         "sl-badge--success",
         "sl-badge--warning",
         "sl-badge--danger",
-        "sl-badge--info"
+        "sl-badge--info",
+        "sl-badge--live"
       ],
       "roleVars": [
         "--slc-text",

@@ -40,13 +40,13 @@ Underlined, accent on hover. Substrate: **R** App/Page.
 ```
 Consumes: `--slc-accent`. Don't: remove the underline (leave the affordance).
 
-### Badge — `sl-badge` (`--success` · `--warning` · `--danger` · `--info`)
+### Badge — `sl-badge` (`--success` · `--warning` · `--danger` · `--info` · `--live`)
 Semantic status pill. Semantic colour is **independent of the accent hue** and shared. Substrate: **R** App/IDE.
 ```html
 <span class="sl-badge sl-badge--success">Passing</span>
 <span class="sl-badge sl-badge--danger">Failed</span>
 ```
-One modifier per status: `--success`, `--warning`, `--danger`, `--info` — never a bare `sl-badge`.
+One modifier per status: `--success`, `--warning`, `--danger`, `--info` — never a bare `sl-badge`. Add `--live` when the thing it labels is working right now: its dot breathes (not under reduced motion). The words still carry the state ("Running").
 Consumes: `--slc-text`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: recolour a badge to the accent — status ≠ accent.
 
 ### Card — `sl-card` (`__title` · `__body`)
@@ -417,6 +417,7 @@ The pointer is a light above the surface: a narrow arc of warm white wakes on th
 Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px. Don't: put glass or aurora on a component whose own `::after` is load-bearing — both families paint their ring there (`:is(.sl-fx-glass, .sl-fx-aurora)::after`, `effects.css:499`), and the ring rule silently wins over whatever the component needed the pseudo-element for. `.sl-switch__track` is the instance that proved it: the track's `::after` **is** the knob, and glass on the track computed `opacity: 0` there, deleting the knob with no error and no warning. The same collision waits on `::before`: that is where `--pane` seats its pointer-following light, so a component that needs its own `::before` for something load-bearing is in the same position. Check what a component's `::before`/`::after` already does before reaching for either family. Don't: put glass on a container whose own background is structural — a separator, a rule, a divider — rather than a surface. The material clears the host's background so its own tint layer can paint (`glass.css:209`), and a container that has no fill of its own to spare loses whatever that background was doing. `.sl-btn-group` is the instance that proved it: the group's `background` **is** the 1px rule between its members, and glass on the group measured `rgba(0, 0, 0, 0)` there — the rule gone, silently. Same shape as the `::after` collision above, one property over: the effect layer takes over something the component was already using, with no error and no warning. The switch's knob (`::after`), the select's chevron (no pseudo-element at all on a replaced control), and the group's rule (`background`) are three instances of one pattern, in three different properties.
 
 ### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
+**Work readings (2026-09-25, re-scope R3):** `data-sl-fx-live="run"` (an agent working here, with `aria-busy="true"`) draws two bodies of light travelling the edge; `"busy"` (loading) breathes light in from the edges. Both are WebGL from `live-light.js`, loaded by `mount()`; a `--linear` aurora gets a travelling segment on its underline instead, and a `--rim` or determinate one keeps the CSS arc. Without WebGL, past eight live hosts, or under reduced motion, the CSS arc is the reading.
 Attention lives here: a 1px arc of light riding the border with its bloom, which reaches ~22px outside the box and ~28px inside it — CSS at every tier. Inhabits the element's own edge; never a second concentric ring, never a replacement for the focus outline. A filled element (`sl-btn--primary`) takes `--rim`: the arc steps just outside the fill, in the depth companion. Substrate: **R** Page, **A** App.
 ```html
 <button class="sl-btn sl-btn--ghost sl-fx-aurora">Run audit</button>

@@ -254,6 +254,7 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-press::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora__glow,
+:root[data-sl-theme="high-contrast"] .sl-fx-live__canvas,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lens,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lit,
 :root[data-sl-theme="high-contrast"] .sl-fx-liquid__skin,
@@ -268,6 +269,7 @@
 .sl-fx-press:is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora__glow,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-live__canvas,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lens,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lit,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid__skin,
@@ -1101,7 +1103,7 @@
    ring band, and CSS applies a filter BEFORE the mask, so a drop-shadow on
    it can never leave the band — that is where four rounds of "the glow is
    truncated" came from. The bloom is the injected child, below. */
-.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])::after {
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"], [data-sl-fx-live="run"])::after {
   /* Faint: the light is the glow's job, and a focus ring is still a ring.
      Measured on lab/1w against the reference's border pixel, both read as
      the median across the card's middle rows: the composer's 1px border
@@ -1376,8 +1378,8 @@
    so the same state has to be read forwards with :has(). Losing this is what
    made the aurora read as a bare coloured border with no light at all: the ring
    still painted, and the thing that turns it on no longer matched it. */
-.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"]) > .sl-fx-aurora__glow,
-.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"])) {
+.sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"], [data-sl-fx-live="run"]) > .sl-fx-aurora__glow,
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:is(:focus-visible, :focus-within, [data-sl-fx-live="on"], [data-sl-fx-live="busy"], [data-sl-fx-live="run"])) {
   opacity: 1;
 }
 
@@ -1627,6 +1629,45 @@
 /* The band's structural rule is its top edge; a tab's and a link's are their
    bottom. The default stays bottom because two of the three want it. */
 .sl-fx-aurora--linear.sl-fx-aurora--top::after { inset: 0 0 auto 0; }
+
+/* ══ LIVE LIGHT — work is happening here ═══════════════════════════════════
+   Re-scope R3 (docs/specs/2027-improve-aesthetics.md), owner's pick A,
+   2026-09-25. live-light.js gives a ring aurora that is working a canvas of
+   its own: data-sl-fx-live="run" (an agent working HERE) is two bodies of
+   light travelling the edge; "busy" (something loading) is the edge
+   breathing light inward. While the canvas holds the light, the CSS arc and
+   the seated glow stand down; without it (no WebGL, too many hosts, a
+   --linear or --rim aurora, a determinate one) they are the reading. "run"
+   takes the busy arc's CSS as its own fallback. */
+.sl-fx-live__canvas {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  z-index: -1;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+.sl-fx-aurora.is-live-lit[data-sl-fx-live]::after { opacity: 0; }
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora.is-live-lit) { display: none; }
+/* Without the canvas, "run" reads exactly as "busy" does in CSS. */
+.sl-fx-aurora[data-sl-fx-live="run"] { --slfx-arc: 65deg; }
+
+/* A tab or a link that is working: a short segment of light travels its
+   underline. The busy conic was never allowed on a 2px strip (it smears);
+   a linear gradient sliding along it does not. */
+.sl-fx-aurora--linear:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"])::after {
+  opacity: 1;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 80%, transparent) 45%,
+    color-mix(in srgb, var(--slfx-sheen) 55%, var(--slc-accent, var(--sl-accent-default))) 50%,
+    color-mix(in srgb, var(--slc-accent, var(--sl-accent-default)) 80%, transparent) 55%,
+    transparent) no-repeat;
+  background-size: 38% 100%;
+  background-position: -60% 0;
+}
 
 /* ══ LIQUID — you are recognised ═════════════════════════════════════════════
    The SILHOUETTE deforms; the content never does. While the pointer shapes an
@@ -1986,6 +2027,13 @@
     transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
   }
 
+  /* The working tab's segment travels; under reduced motion it rests at its
+     start, off the strip. */
+  [data-sl-fx="on"] .sl-fx-aurora--linear:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"])::after {
+    animation: slfx-travel calc(var(--sl-motion-slow, 360ms) * 5) cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+  @keyframes slfx-travel { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+
   /* Sweep: 210deg → 570deg rather than 0 → 360, so the rotation is continuous
      instead of snapping back through the resting angle. */
   @keyframes slfx-sweep { to { --slfx-angle: 570deg; } }
@@ -2059,9 +2107,16 @@
     animation: slfx-beam-drift 11s ease-in-out infinite alternate;
   }
   /* Determinate never orbits — its arc length carries the value. */
-  [data-sl-fx="on"] .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
+  [data-sl-fx="on"] .sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: slfx-orbit 1.1s linear infinite;
     will-change: background;
+  }
+  /* …unless live-light.js holds the light: the arc is hidden then, and an
+     orbit nobody can see is work nobody asked for. Same specificity plus the
+     class, later in the file. */
+  [data-sl-fx="on"] .sl-fx-aurora.is-live-lit:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
+    animation: none;
+    will-change: auto;
   }
   /* Whatever is cut from --slfx-angle belongs in this selector: a light cut
      from an angle nothing turns sits wherever that angle's initial value
@@ -2162,6 +2217,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
-  .sl-fx-aurora[data-sl-fx-live="busy"]:not(.sl-fx-aurora--linear):not([style*="--slfx-progress"])::after { opacity: 0.55; }
+  .sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
+  .sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not(.sl-fx-aurora--linear):not([style*="--slfx-progress"])::after { opacity: 0.55; }
 }
