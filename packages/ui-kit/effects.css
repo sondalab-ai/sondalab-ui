@@ -1750,11 +1750,22 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+/* PAUSED, and !important. Written as `animation: none` this lost to every
+   rule that starts an aurora animation: the sweep and the linear travel tie
+   it and come later, the busy/run orbit outranks it, and a seated glow is the
+   host's previous sibling, which the child form never reached. Measured on
+   the showcase, 11 of 12 running animations sat more than 200px off-screen,
+   each re-resolving a registered property and repainting every frame. Paused
+   rather than removed, so a light scrolling back in resumes where it was
+   instead of jumping. */
 [data-sl-fx="on"] .sl-fx-aurora:not([data-sl-fx-near])::after,
+[data-sl-fx="on"] .sl-fx-aurora:not([data-sl-fx-near]) > .sl-fx-aurora__glow,
 [data-sl-fx="on"] .sl-fx-aurora:not([data-sl-fx-near]) > .sl-fx-aurora__glow::before,
+[data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:not([data-sl-fx-near])),
+[data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:not([data-sl-fx-near]))::before,
 [data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near])::before,
 [data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near])::after {
-  animation: none;
+  animation-play-state: paused !important;
 }
 
 /* ══ GOO — these are one substance ═══════════════════════════════════════════
@@ -2075,7 +2086,6 @@
      The aurora's light is the curtains; --sweep brings the rotation back. */
   [data-sl-fx="on"] .sl-fx-aurora--sweep[data-sl-fx-live="on"]::after {
     animation: slfx-sweep 3.2s linear infinite, slfx-drift 9s ease-in-out infinite;
-    will-change: background;
   }
   [data-sl-fx="on"] .sl-fx-aurora--sweep[data-sl-fx-live="on"] > .sl-fx-aurora__glow::before,
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora--sweep[data-sl-fx-live="on"])::before {
@@ -2131,14 +2141,12 @@
   /* Determinate never orbits — its arc length carries the value. */
   [data-sl-fx="on"] .sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: slfx-orbit 1.1s linear infinite;
-    will-change: background;
   }
   /* …unless live-light.js holds the light: the arc is hidden then, and an
      orbit nobody can see is work nobody asked for. Same specificity plus the
      class, later in the file. */
   [data-sl-fx="on"] .sl-fx-aurora.is-live-lit:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not([style*="--slfx-progress"]):not(.sl-fx-aurora--linear)::after {
     animation: none;
-    will-change: auto;
   }
   /* Whatever is cut from --slfx-angle belongs in this selector: a light cut
      from an angle nothing turns sits wherever that angle's initial value

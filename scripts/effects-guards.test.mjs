@@ -604,7 +604,15 @@ test("an effect off-screen costs nothing, and Tier 0 keeps its material", () => 
     near.some((r) => /backdrop-filter:\s*none/.test(r.body)),
     "the glass's backdrop must be the first thing to go",
   );
-  assert.ok(near.some((r) => /animation:\s*none/.test(r.body)), "and animations the second");
+  // Animations pause, and !important: as `animation: none` the gate lost to
+  // every rule that starts an aurora animation (a tie that came later, or a
+  // higher specificity), so 11 of 12 animations on the showcase ran off-screen.
+  const pause = near.filter((r) => /animation-play-state:\s*paused\s*!important/.test(r.body));
+  assert.ok(pause.length, "and animations the second, paused so nothing outranks the gate");
+  const paused = pause.map((r) => r.selector).join(" , ");
+  assert.match(paused, /\.sl-fx-aurora:not\(\[data-sl-fx-near\]\)::after/, "the ring");
+  assert.match(paused, /\.sl-fx-aurora__glow\[data-sl-fx-seated\]:has\(\+ \.sl-fx-aurora:not\(\[data-sl-fx-near\]\)\)(?!::)/, "a seated glow (pillars breathe on the glow itself)");
+  assert.match(paused, /\.sl-fx-aurora__glow\[data-sl-fx-seated\]:has\(\+ \.sl-fx-aurora:not\(\[data-sl-fx-near\]\)\)::before/, "and its ::before (drift, beam, sweep, busy)");
 });
 
 test("a prefixed property never follows its standard form", () => {
