@@ -71,15 +71,27 @@ const live = new Map();
 let rafId = 0;
 let t0 = 0;
 
+let swatch = null;
+
 /** A role variable's resolved sRGB, 0–1, read through a probe element.
+ *  The computed colour is not always sRGB bytes: a colour mix or a relative
+ *  colour serialises in the Oklab space or as a colour function, and reading
+ *  its numbers as bytes gave black. So it is painted on a one-pixel 2D canvas, which converts any
+ *  CSS colour to sRGB, and the pixel is read back.
  *  @returns {[number, number, number]} */
 function roleColour(host, prop) {
   const probe = host.ownerDocument.createElement("span");
   probe.style.cssText = `position:absolute;visibility:hidden;color:var(${prop})`;
   host.append(probe);
-  const parts = (getComputedStyle(probe).color.match(/[\d.]+/g) || ["0", "0", "0"]).slice(0, 3).map(Number);
+  const css = getComputedStyle(probe).color;
   probe.remove();
-  return parts.map((v) => v / 255);
+  swatch ??= host.ownerDocument.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  if (!swatch) return [0, 0, 0];
+  swatch.clearRect(0, 0, 1, 1);
+  swatch.fillStyle = css;
+  swatch.fillRect(0, 0, 1, 1);
+  const [r, g, b] = swatch.getImageData(0, 0, 1, 1).data;
+  return [r / 255, g / 255, b / 255];
 }
 
 function compile(gl, fs) {

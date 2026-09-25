@@ -768,3 +768,18 @@ test("the press lights only while lit, never at the pointer, and both kill switc
   const sink = RULES.find((r) => r.selector === ".sl-fx-press");
   assert.match(sink.body, /var\(--sl-motion-spring/, "the return runs on the spring token");
 });
+
+// spexr, 0.15.0: under high contrast mount() refuses, no layers are built, and
+// a glass primary had lost its fill (transparent) and its label (the dark pole)
+// — invisible on black. The host gives up its fill only where the layers are.
+test("a glass host keeps its own fill until the layers exist", () => {
+  const fx = readFileSync(resolve(KIT, "effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const clears = [...fx.matchAll(/([^{}]+)\{\s*background-color:\s*transparent;\s*\}/g)].map((m) => m[1].trim());
+  const glass = clears.filter((sel) => sel.includes(".sl-fx-glass"));
+  assert.ok(glass.length > 0, "the translucency rule is still there");
+  for (const sel of glass) assert.match(sel, /:where\(\.sl-glass\)/, `${sel} must wait for the layers`);
+  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*var\(--slfx-shade\)/)?.[0] ?? "";
+  assert.match(label, /:where\(\.sl-glass\)/, "the dark label only on a built pane");
+  assert.match(label, /:not\(\[data-sl-theme="high-contrast"\]\)/, "and never under high contrast");
+  assert.match(label, /data-sl-fx="off"/, "nor in an opt-out region");
+});

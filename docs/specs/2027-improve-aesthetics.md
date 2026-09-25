@@ -1949,6 +1949,8 @@ A final point is architecture rather than a value, and belongs in the promotion:
 
 **`.sl-btn--primary` fails WCAG AA on the light theme today, before any effect is added.** `--sl-accent-default` `#B56A0C` with `--sl-text-on-accent` `#FFFFFF` measures **4.17:1**, against a 4.5 floor for normal text — and `.sl-btn` is `0.875rem` at weight 600, which is normal text, not large. The dark theme is fine at 9.94:1. This is a pre-existing defect in `themes/light.css` + `components.css`, not something slice 1 introduces, and it is recorded here rather than fixed because it belongs to the component contract and wants its own change. Note the direction of travel: the glass primary at tint 0.42 measures **8.29:1** on light, so this slice improves the number it inherits.
 
+**Fixed in 0.15.1, found adopting 0.15.0 in spexr (2026-09-25).** Two defects, both reproduced in the browser. (1) Under high contrast `mount()` refuses, so no glass layers are built, yet `.sl-fx-glass` still dropped its own background and a glass primary kept the dark label meant for a translucent pane: transparent fill, transparent border, black on black. The host now gives up its fill only once the layers exist (`:where(.sl-glass)`), and the dark label applies only on a built pane, outside high contrast and outside an opt-out region. (2) `live-light.js` read a role colour by parsing `getComputedStyle().color` as bytes; a `color-mix()` computes to `oklab(...)`, which read as near-black and drew a dark smudge on the paper theme. The colour is now painted on a one-pixel 2D canvas and read back.
+
 ## Notes
 
 Open questions, and the record of the ones now closed. Each open item blocks the criteria named beside it.

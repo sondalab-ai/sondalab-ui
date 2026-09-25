@@ -59,3 +59,12 @@ test("a live badge breathes only where motion is welcome", () => {
   const anim = comp.indexOf(".sl-badge--live::before { animation:");
   assert.ok(guard > -1 && anim > guard, "the breath sits inside the reduced-motion guard");
 });
+
+// spexr, 0.15.0: a depth companion bound to color-mix() computes to oklab(),
+// whose numbers read as bytes gave a near-black light on the paper theme.
+test("a role colour is converted to sRGB by painting it, never parsed", () => {
+  const fn = js.slice(js.indexOf("function roleColour("), js.indexOf("function compile("));
+  assert.match(fn, /getContext\("2d"/, "painted on a 2D canvas");
+  assert.match(fn, /getImageData\(0, 0, 1, 1\)/, "and read back as a pixel");
+  assert.doesNotMatch(fn, /\.match\(/, "no parsing of the computed string");
+});

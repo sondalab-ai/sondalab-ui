@@ -101,7 +101,7 @@ test("the primary button's chrome survives a background + border reset", () => {
   assert.doesNotMatch(primary, /box-shadow|background-image/);
   // …and the glass pane brings its own rim, so the family clears the edge.
   const fx = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  const clear = fx.match(/\.sl-btn--primary\.sl-fx-glass\s*\{([^}]*)\}/g)?.join("\n") ?? "";
+  const clear = fx.match(/\.sl-btn--primary\.sl-fx-glass(?::where\(\.sl-glass\))?\s*\{([^}]*)\}/g)?.join("\n") ?? "";
   assert.match(clear, /border-color:\s*transparent/);
 });
 
