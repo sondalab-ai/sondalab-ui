@@ -104,7 +104,7 @@
    is what makes the host that context, so these never escape it. */
 .sl-glass__backdrop {
   z-index: -3;
-  backdrop-filter: blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7));
+  backdrop-filter: blur(var(--slg-blur, 5.9px)) saturate(var(--slg-sat, 1.7)) contrast(var(--slg-lens-contrast, 0.72));
 }
 
 /* TWO gradients, always both present, each a density a component rebinds as a
@@ -228,6 +228,11 @@
    with it; that is the cost the ruling accepts. */
 @property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 2.5px; }
 @property --slg-lens-sat  { syntax: "<number>"; inherits: true; initial-value: 1.1; }
+/* What is behind a pane loses a quarter of its contrast: shapes and colours
+   stay, their hard edges soften, and the copy ON the pane has less to fight.
+   The owner's pick (2026-09-25, lab/r5-read.html), with the text halo in
+   effects.css; neither blurs the glass further. 1 turns it off. */
+@property --slg-lens-contrast { syntax: "<number>"; inherits: true; initial-value: 0.72; }
 .sl-glass.is-lensed { background-color: transparent; }
 .sl-glass.is-lensed .sl-glass__tint {
   --slg-tint-a: var(--slg-tint-lens, 34%);

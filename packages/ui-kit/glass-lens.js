@@ -462,7 +462,10 @@ export function lens(el, look = {}) {
   // transition or keyframe interpolates them instead of snapping.
   el.style.backdropFilter =
     `url(#${id}_filter) blur(var(--slg-lens-blur, ${blur}px)) ` +
-    `saturate(var(--slg-lens-sat, ${saturate})) brightness(${brightness})`;
+    `saturate(var(--slg-lens-sat, ${saturate})) brightness(${brightness}) ` +
+    // The calmer backdrop (glass.css, --slg-lens-contrast): last, so it softens
+    // what the lens and the frost already made of the page behind.
+    `contrast(var(--slg-lens-contrast, 0.72))`;
 
   return {
     refresh,

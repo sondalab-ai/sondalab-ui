@@ -187,6 +187,7 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
+  text-shadow: none !important;
   filter: none !important;
   border-image: none !important;
   backdrop-filter: none !important;
@@ -698,6 +699,18 @@
       this binding onto --text without fixing the guard first. */
 .sl-anchor.sl-fx-glass,
 .sl-stat__value.sl-fx-glass { --slfx-fill: transparent; }
+
+/* THE TEXT HALO. The owner's pick (2026-09-25, lab/r5-read.html): the copy on a
+   glass surface gets a soft glow of the pane's own tint behind each line, so it
+   reads over a lens without the glass being blurred further. A text-shadow on
+   the host inherits to every line inside it. Surfaces only: on a button the
+   label already sits on its own fill, and on a filled one a glow of the surface
+   colour muddies it; a letterform (--text) is the glass itself. */
+.sl-fx-glass:not(.sl-btn, .sl-icon-btn, .sl-fx-glass--text) {
+  text-shadow:
+    0 0 6px color-mix(in srgb, var(--slg-tint-color, var(--slc-surface, var(--sl-bg-surface))) 85%, transparent),
+    0 0 16px color-mix(in srgb, var(--slg-tint-color, var(--slc-surface, var(--sl-bg-surface))) 55%, transparent);
+}
 /* injectGlass() stamps .sl-glass on the host so glass.css's anatomy applies,
    and glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
    there — which overwrites a component's own radius unless this knob is bound.

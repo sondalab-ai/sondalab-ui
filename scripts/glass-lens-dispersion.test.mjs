@@ -109,3 +109,25 @@ test("the bulge magnifies toward the centre, and leaves the rim alone", () => {
   // And 0 turns it off.
   assert.deepEqual(convexShift(80, 30, hw, hh, 0).map((v) => Math.abs(v)), [0, 0]);
 });
+
+/* ── reading on glass (owner's pick, 2026-09-25): halo + calmer backdrop ──── */
+import { readFileSync } from "node:fs";
+const lensJs = readFileSync(resolve(KIT, "glass-lens.js"), "utf8");
+const glassCss = readFileSync(resolve(KIT, "glass.css"), "utf8");
+const fxCss = readFileSync(resolve(KIT, "effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+test("the backdrop behind a pane is calmed, last in both frost chains", () => {
+  assert.match(glassCss, /@property --slg-lens-contrast \{ syntax: "<number>"; inherits: true; initial-value: 0\.72; \}/);
+  assert.match(lensJs, /brightness\(\$\{brightness\}\) ` \+[\s\S]*?`contrast\(var\(--slg-lens-contrast, 0\.72\)\)`/,
+    "the lensed chain ends with the contrast step");
+  assert.match(glassCss, /\.sl-glass__backdrop \{[^}]*contrast\(var\(--slg-lens-contrast, 0\.72\)\)/,
+    "and so does the unlensed frost, so a browser without the lens reads the same");
+});
+
+test("the text halo sits on glass surfaces only, and both kill switches remove it", () => {
+  const halo = /\.sl-fx-glass:not\(\.sl-btn, \.sl-icon-btn, \.sl-fx-glass--text\) \{\s*text-shadow:/;
+  assert.match(fxCss, halo, "surfaces, never a button's label or a letterform");
+  assert.doesNotMatch(fxCss, /text-shadow:[^;]*#[0-9a-f]{3,8}/i, "the halo is the pane's own tint, never a literal");
+  const kill = fxCss.slice(fxCss.indexOf(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
+  assert.match(kill.slice(0, kill.indexOf("}")), /text-shadow: none !important;/, "high contrast and the opt-out take it away");
+});

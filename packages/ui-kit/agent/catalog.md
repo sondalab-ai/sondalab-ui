@@ -390,6 +390,7 @@ The edge below is chrome on the border. This is the **surface inside it**, and i
 | `--slg-lens-reach` | `18px` on aurora hosts, `6px` otherwise | how far the light bends, in pixels |
 | `--slg-lens-bulge` | `0.4` | the convex bulge: magnification at the pane's centre, nothing at the rim; `0` turns it off |
 | `--slg-lens-blur` | `2.5px` | the lensed pane's own frost (raised from 1.5px for legibility once the bulge carried the distortion) |
+| `--slg-lens-contrast` | `0.72` | how much contrast the page behind keeps; with the text halo on glass surfaces, it is what keeps the copy readable without more blur. `1` turns it off |
 | `--slg-lens-disperse` | `90` | the prism, as a **pixel budget**: 0.24px of red-to-blue per unit, so 90 is 21.6px |
 
 Four facts that decide whether your pane looks like glass or like nothing:
