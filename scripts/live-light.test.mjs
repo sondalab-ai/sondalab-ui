@@ -38,8 +38,30 @@ test("the CSS arc keeps what the canvas refuses", () => {
 });
 
 test("reduced motion draws one still frame and never loops", () => {
-  assert.match(js, /requestAnimationFrame\(frame\) : 0;/, "the loop is conditional");
-  assert.match(js, /!globalThis\.matchMedia\?\.\(REDUCE\)\.matches/, "on the motion preference");
+  assert.match(js, /if \(draw\(now\) && moving\(\)\) rafId = requestAnimationFrame\(frame\);/, "the loop is conditional");
+  assert.match(js, /matchMedia\?\.\(REDUCE\)/, "on the motion preference");
+});
+
+// 0.16.0: on the showcase the loop spent 1.45 ms a frame drawing three
+// canvases that were all off-screen.
+test("only near hosts are drawn, and the loop stops when none are", () => {
+  const draw = js.slice(js.indexOf("function draw("), js.indexOf("function frame("));
+  assert.match(draw, /if \(!it\.near\) continue;/, "an off-screen host is skipped");
+  assert.match(js, /new IntersectionObserver\([\s\S]*?rootMargin: NEAR_MARGIN/, "nearness comes from an observer");
+  assert.match(js, /near: true,/, "and fails open: a host is near until told otherwise");
+  assert.match(js, /nearIO\?\.unobserve\(el\)/, "a detached host is unobserved");
+});
+
+test("a frame reads no layout and looks nothing up", () => {
+  const draw = js.slice(js.indexOf("function draw("), js.indexOf("function frame("));
+  assert.doesNotMatch(draw, /getBoundingClientRect|getComputedStyle|getUniformLocation|matchMedia/);
+  assert.match(js, /new ResizeObserver\(/, "the box is read when it resizes");
+});
+
+test("a host removed from the DOM releases its context without waiting for a frame", () => {
+  const watch = js.slice(js.indexOf("const watch = new MutationObserver"), js.indexOf("watch.observe("));
+  assert.match(watch, /removedNodes/);
+  assert.match(watch, /if \(!el\.isConnected\) detach\(el\)/);
 });
 
 test("the canvas stands the arc down, and both kill switches hide the canvas", () => {

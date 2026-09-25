@@ -72,6 +72,47 @@ const FS_BUSY = HEAD + `void main(){
 const live = new Map();
 let rafId = 0;
 let t0 = 0;
+let motion = null;
+const UNIFORMS = ["uSize", "uR", "uT", "uPad", "uDpr", "uDark", "uA", "uB"];
+/** Same margin as effects.js's near marking: a light is drawing before it
+ *  crosses the fold, never after. */
+const NEAR_MARGIN = "200px";
+let nearIO = null;
+let sizeRO = null;
+
+/** Whether motion is welcome. The query list is made once: matchMedia builds
+ *  a new one on every call, and this is read every frame. */
+function moving() {
+  motion ??= globalThis.matchMedia?.(REDUCE) ?? { matches: false };
+  return !motion.matches;
+}
+
+/** The observers every host shares. Off-screen hosts are not drawn at all,
+ *  and a host's box and radius are read when it resizes, never per frame.
+ *  Without IntersectionObserver every host stays near: fail open. */
+function observers() {
+  if (!nearIO && typeof IntersectionObserver === "function") {
+    nearIO = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const it = live.get(e.target);
+        if (it) it.near = e.isIntersecting;
+      }
+      ensureLoop();
+    }, { rootMargin: NEAR_MARGIN });
+  }
+  if (!sizeRO && typeof ResizeObserver === "function") {
+    sizeRO = new ResizeObserver((entries) => {
+      for (const e of entries) {
+        const it = live.get(e.target);
+        if (!it) continue;
+        const b = e.borderBoxSize?.[0];
+        if (b) { it.w = b.inlineSize; it.h = b.blockSize; }
+        it.dirty = true;
+      }
+      ensureLoop();
+    });
+  }
+}
 
 let swatch = null;
 
@@ -137,14 +178,23 @@ function attach(el) {
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   el.append(canvas);
   el.classList.add("is-live-lit");
-  const u = (n) => gl.getUniformLocation(prog, n);
-  live.set(el, { canvas, gl, u, mode, a: roleColour(el, "--slc-accent"), b: roleColour(el, "--slfx-depth") });
+  const u = Object.fromEntries(UNIFORMS.map((n) => [n, gl.getUniformLocation(prog, n)]));
+  live.set(el, {
+    canvas, gl, u, mode,
+    a: roleColour(el, "--slc-accent"), b: roleColour(el, "--slfx-depth"),
+    near: true, dirty: true, w: el.offsetWidth, h: el.offsetHeight, dpr: 0,
+  });
+  observers();
+  nearIO?.observe(el);
+  sizeRO?.observe(el);
   ensureLoop();
 }
 
 function detach(el) {
   const it = live.get(el);
   if (!it) return;
+  nearIO?.unobserve(el);
+  sizeRO?.unobserve(el);
   it.canvas.remove();
   it.gl.getExtension("WEBGL_lose_context")?.loseContext();
   el.classList.remove("is-live-lit");
@@ -158,38 +208,52 @@ function reconcile(el) {
   if (wanted(el)) attach(el);
 }
 
+/** Upload what changes only on a resize, a DPR change or a theme switch. */
+function setup(el, it, dpr) {
+  const { gl, u } = it;
+  const w = Math.round((it.w + PAD * 2) * dpr);
+  const h = Math.round((it.h + PAD * 2) * dpr);
+  if (it.canvas.width !== w || it.canvas.height !== h) {
+    it.canvas.width = w;
+    it.canvas.height = h;
+    gl.viewport(0, 0, w, h);
+  }
+  const dark = el.ownerDocument.documentElement.getAttribute("data-sl-theme") !== "light";
+  gl.uniform2f(u.uSize, it.w, it.h);
+  gl.uniform1f(u.uR, Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, it.h / 2, it.w / 2));
+  gl.uniform1f(u.uPad, PAD);
+  gl.uniform1f(u.uDpr, dpr);
+  gl.uniform1f(u.uDark, dark ? 1 : 0);
+  gl.uniform3f(u.uA, it.a[0], it.a[1], it.a[2]);
+  gl.uniform3f(u.uB, it.b[0], it.b[1], it.b[2]);
+  it.dpr = dpr;
+  it.dirty = false;
+}
+
+/** Draw every near host; per frame that is one uniform and one triangle. */
 function draw(now) {
   const t = (now - t0) / 1000;
   const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+  let drawn = 0;
   for (const [el, it] of live) {
     if (!el.isConnected) { detach(el); continue; }
-    const box = el.getBoundingClientRect();
-    const w = Math.round((box.width + PAD * 2) * dpr);
-    const h = Math.round((box.height + PAD * 2) * dpr);
-    if (it.canvas.width !== w || it.canvas.height !== h) {
-      it.canvas.width = w;
-      it.canvas.height = h;
-      it.gl.viewport(0, 0, w, h);
-    }
-    const dark = el.ownerDocument.documentElement.getAttribute("data-sl-theme") !== "light";
-    const { gl, u } = it;
-    gl.uniform2f(u("uSize"), box.width, box.height);
-    gl.uniform1f(u("uR"), Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, box.height / 2, box.width / 2));
-    gl.uniform1f(u("uT"), t);
-    gl.uniform1f(u("uPad"), PAD);
-    gl.uniform1f(u("uDpr"), dpr);
-    gl.uniform1f(u("uDark"), dark ? 1 : 0);
-    gl.uniform3f(u("uA"), ...it.a);
-    gl.uniform3f(u("uB"), ...it.b);
+    if (!it.near) continue;
+    if (it.dirty || it.dpr !== dpr) setup(el, it, dpr);
+    const { gl } = it;
+    gl.uniform1f(it.u.uT, t);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    drawn++;
   }
+  return drawn;
 }
 
 function frame(now) {
-  draw(now);
-  rafId = live.size && !globalThis.matchMedia?.(REDUCE).matches ? requestAnimationFrame(frame) : 0;
+  rafId = 0;
+  // Nothing near, nothing to draw: the loop stops, and the observers start it
+  // again when a host comes near or resizes.
+  if (draw(now) && moving()) rafId = requestAnimationFrame(frame);
 }
 
 function ensureLoop() {
@@ -214,17 +278,24 @@ export function liveLight(root) {
   };
   scan(root);
   const watch = new MutationObserver((records) => {
+    let removed = false;
     for (const r of records) {
-      if (r.type === "attributes") reconcile(r.target);
-      else for (const n of r.addedNodes) if (n instanceof Element) scan(n);
+      // effects.js writes inline style on lit hosts every frame; only an
+      // aurora's own attributes matter here.
+      if (r.type === "attributes") { if (r.target.classList.contains("sl-fx-aurora")) reconcile(r.target); continue; }
+      for (const n of r.addedNodes) if (n instanceof Element) scan(n);
+      removed ||= r.removedNodes.length > 0;
     }
+    // A host that left the DOM gives its WebGL context back now, not on a
+    // frame that may never run once the loop has stopped.
+    if (removed) for (const el of [...live.keys()]) if (!el.isConnected) detach(el);
   });
   watch.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-sl-fx-live", "style"] });
   const theme = new MutationObserver(() => {
     for (const el of [...live.keys()]) reconcile(el);
     scan(root);
     // A theme switch re-reads the colours on the next attach.
-    for (const [el, it] of live) { it.a = roleColour(el, "--slc-accent"); it.b = roleColour(el, "--slfx-depth"); }
+    for (const [el, it] of live) { it.a = roleColour(el, "--slc-accent"); it.b = roleColour(el, "--slfx-depth"); it.dirty = true; }
     ensureLoop();
   });
   theme.observe(doc.documentElement, { attributes: true, attributeFilter: ["data-sl-theme", "style"] });
