@@ -662,7 +662,7 @@
 /* The pane brings its own rim and light. The primary's ink edge and lit top
    line (components.css, 0.11, both border colours) would draw an outline
    around the glass. */
-.sl-btn--primary.sl-fx-glass { border-color: transparent; }
+.sl-btn--primary.sl-fx-glass:where(.sl-glass) { border-color: transparent; }
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
 .sl-btn--ghost.sl-fx-glass,
@@ -771,7 +771,11 @@
      drawn on top of nothing. The fill is not lost — --slg-tint-color and
      --slg-accent-a put the component's own colour into the tint at the share
      the contrast gate measured. */
-  .sl-fx-glass { background-color: transparent; }
+  /* Only once mount() has built the layers (.sl-glass): without them — no
+     script, or high contrast, where mount() refuses — nothing would paint the
+     fill back, and a primary went transparent on black. :where() keeps the
+     rule at 0-1-0, where the primary's own states have always met it. */
+  .sl-fx-glass:where(.sl-glass) { background-color: transparent; }
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -880,7 +884,10 @@
 
    It replaces --slc-on-accent, which is built for an OPAQUE accent and goes the
    wrong way under a translucent one: #FFFFFF on paper measures 1.92:1. */
-.sl-btn--primary.sl-fx-glass--pane { color: var(--slfx-shade); }
+/* Only on a translucent pane: without the layers, under high contrast and in an
+   opt-out region the primary is its own opaque fill again, and its label goes
+   back to --slc-on-accent. */
+.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) { color: var(--slfx-shade); }
 
 /* Ruling 9 — the lit rim is one continuous hairline, never a bevel. The pane's
    body shipped three inset shadows: a top band, a bottom shade and a full ring.
