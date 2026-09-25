@@ -25,8 +25,10 @@ const HOSTS = '.sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"
 /** Canvases beyond this fall back to the CSS arc: a WebGL context each, and
  *  browsers cap how many a page may hold. */
 const MAX_LIVE = 8;
-/** How far the light may reach past the host's box, in CSS px. */
-const PAD = 6;
+/** How far the light may reach past the host's box, in CSS px. At 6 the run
+ *  light still carried 18% alpha where the canvas ended and stopped on a hard
+ *  rectangle; by 16 its bleed is under 0.5%, and FS_RUN fades it to zero here. */
+const PAD = 16;
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
 const VS = "attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
@@ -51,7 +53,7 @@ const FS_RUN = HEAD + `void main(){
     light+=body; acc+=body*mix(uA,uB,smoothstep(0.,.08,dd));
   }
   float smoke=.8+.4*vn(p*.022+vec2(uT*.25,-uT*.2));
-  float a=clamp((band+bleed)*light*smoke,0.,1.)*(uDark>.5?.95:.8);
+  float a=clamp((band+bleed)*light*smoke,0.,1.)*(1.-smoothstep(uPad*.5,uPad,d))*(uDark>.5?.95:.8);
   vec3 c=light>0.?acc/max(light,1e-3):uA;
   float dz=(hash(gl_FragCoord.xy+uT)-.5)/255.;
   gl_FragColor=vec4(c*a+dz,a);

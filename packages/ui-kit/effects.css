@@ -1661,9 +1661,11 @@
    takes the busy arc's CSS as its own fallback. */
 .sl-fx-live__canvas {
   position: absolute;
-  inset: -6px;
-  width: calc(100% + 12px);
-  height: calc(100% + 12px);
+  /* PAD in live-light.js; an ancestor with overflow other than visible within
+     this distance of the host clips the light. */
+  inset: -16px;
+  width: calc(100% + 32px);
+  height: calc(100% + 32px);
   z-index: -1;
   display: block;
   pointer-events: none;
