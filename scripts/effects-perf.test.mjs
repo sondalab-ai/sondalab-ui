@@ -35,11 +35,14 @@ test("a lensed host drops its dead blur, and its lens stands down off-screen", (
     "!important: the lens chain is written inline");
 });
 
-test("lens maps are shared between hosts of the same size, and the cache is bounded", () => {
-  assert.match(lens, /cachedMap\(`p\$\{w\}x\$\{h\}`, \(\) => buildMap\(w, h\)\)/);
-  assert.match(lens, /cachedMap\(`c\$\{w\}x\$\{h\}x\$\{bulge\}`, \(\) => buildConvexMap\(w, h, bulge\)\)/);
-  assert.match(lens, /if \(mapCache\.size >= MAP_CACHE_MAX\) mapCache\.delete/);
+test("lens maps are shared by the lenses that show them, and freed by the last", () => {
+  assert.match(lens, /acquireMap\(keys\[0\], \(\) => buildMap\(w, h\)\)/);
+  assert.match(lens, /acquireMap\(keys\[1\], \(\) => buildConvexMap\(w, h, bulge\)\)/);
+  assert.match(lens, /if \(entry && --entry\.refs <= 0\) mapCache\.delete\(key\)/, "the last holder frees it");
   const refresh = lens.slice(lens.indexOf("function refresh()"), lens.indexOf("refresh();\n"));
+  assert.ok(refresh.indexOf("acquireMap(keys[1]") < refresh.indexOf("releaseMap(k)"), "new maps are taken before old ones are given back");
+  const destroy = lens.slice(lens.indexOf("    destroy() {"));
+  assert.match(destroy, /for \(const k of held\) releaseMap\(k\);/, "a destroyed lens gives its maps back");
   assert.equal((refresh.match(/getComputedStyle\(/g) || []).length, 1, "one style read per refresh");
 });
 
