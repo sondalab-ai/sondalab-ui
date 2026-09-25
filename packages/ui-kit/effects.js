@@ -847,11 +847,14 @@ function injectGlow(el) {
     const watch = new ResizeObserver(() => seatGlow(el, glow));
     watch.observe(el);
     watch.observe(parent);
+    glowWatches.set(el, { watch, glow });
   }
 }
 
 /** @type {number} pairs a seated glow with the host it belongs to */
 let glowSerial = 0;
+/** Each seated glow's observer, so a host that leaves takes both with it. */
+const glowWatches = new Map();
 
 /* ── the glass anatomy ──────────────────────────────────────────────────────
    glass.css paints the material in three stacked layers — frost, tint, rim —
@@ -1113,6 +1116,32 @@ function watchLensTheme(root) {
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-sl-theme"] });
 }
 
+/** Release everything held for a host that has left the document: its lens
+ *  (an <svg> in <body> with two PNG maps), its glass-text cut, its goo field
+ *  (window listeners and observers), its seated glow and that glow's
+ *  observer, its near-viewport watch and its specular state. Held strongly
+ *  until now, so a long-lived app that re-renders glass leaked all of it.
+ *  A host moved within one task is still connected here and keeps it all; one
+ *  that comes back later is armed again as an added node.
+ *  @returns {void} */
+function pruneDetached() {
+  for (const held of [lensed, glassTexts, gooFields]) {
+    for (const [el, handle] of held) if (!el.isConnected) { handle.destroy(); held.delete(el); }
+  }
+  for (const [el, { watch, glow }] of glowWatches) {
+    if (el.isConnected) continue;
+    watch.disconnect();
+    glow.remove();
+    glowWatches.delete(el);
+  }
+  for (const el of nearHosts) if (!el.isConnected) { nearObserver?.unobserve(el); nearHosts.delete(el); }
+  for (const el of specHosts) {
+    if (el.isConnected) continue;
+    if (specState.has(el)) releaseSpec(el);
+    specHosts.delete(el);
+  }
+}
+
 function injectGlassLayers(root) {
   if (root instanceof Element && root.matches(GLASS_HOSTS)) injectGlass(root);
   for (const el of root.querySelectorAll(GLASS_HOSTS)) injectGlass(el);
@@ -1145,6 +1174,8 @@ function injectGlows(root) {
 const NEAR_MARGIN = "200px";
 const NEAR_HOSTS = ".sl-fx-glass, .sl-fx-aurora";
 let nearObserver = null;
+/** What nearObserver watches: it holds each target strongly until unobserved. */
+const nearHosts = new Set();
 
 /** Watch an element and mark it while it is near the viewport.
  *  @param {ParentNode} root the subtree to watch
@@ -1171,6 +1202,7 @@ function watchNear(root) {
     // improvement on that state, never a precondition for it.
     el.toggleAttribute("data-sl-fx-near", true);
     nearObserver.observe(el);
+    nearHosts.add(el);
   }
 }
 
@@ -1261,11 +1293,16 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   armGlassText(root);
   watchLensTheme(root);
   new MutationObserver((records) => {
-    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
-      injectGlassLayers(n);
-      armLenses(n);
-      armGlassText(n);
+    let removed = false;
+    for (const r of records) {
+      removed ||= r.removedNodes.length > 0;
+      for (const n of r.addedNodes) if (n instanceof Element) {
+        injectGlassLayers(n);
+        armLenses(n);
+        armGlassText(n);
+      }
     }
+    if (removed) pruneDetached();
   }).observe(root, { childList: true, subtree: true });
   if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;
 

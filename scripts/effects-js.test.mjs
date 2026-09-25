@@ -572,3 +572,19 @@ test("a keyboard press is the same act as a click", () => {
     assert.ok(mounted.includes(ev), `mount() must listen for ${ev}`);
   }
 });
+
+// 0.16.0: lenses (an <svg> in <body> each), goo fields (window listeners),
+// glass-text cuts, seated glows' observers and the near watch were held
+// strongly for hosts long gone, so a long-lived app leaked them per render.
+test("a host that leaves the document releases everything held for it", () => {
+  const prune = js.slice(js.indexOf("function pruneDetached("), js.indexOf("function injectGlassLayers("));
+  assert.match(prune, /\[lensed, glassTexts, gooFields\]/, "every handle map is pruned");
+  assert.match(prune, /handle\.destroy\(\)/, "through the handle's own destroy");
+  assert.match(prune, /watch\.disconnect\(\);\s*glow\.remove\(\);/, "a seated glow and its observer go with the host");
+  assert.match(prune, /nearObserver\?\.unobserve\(el\)/, "the near watch lets go");
+  assert.match(prune, /specHosts\.delete\(el\)/, "and so does the specular set");
+  assert.match(prune, /isConnected/, "decided at callback time, so a host moved within a task keeps it all");
+  const body = fnBody("mount");
+  assert.match(body, /if \(removed\) pruneDetached\(\);/, "the material's observer runs it on removals");
+  assert.ok(body.indexOf("pruneDetached") < body.indexOf("matchMedia(REDUCE)"), "before the motion guard: lenses exist under reduced motion too");
+});
