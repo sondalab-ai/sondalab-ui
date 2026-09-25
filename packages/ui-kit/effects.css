@@ -1463,7 +1463,10 @@
   --slfx-pillar-pitch: 104px;
   overflow: hidden;
   border-radius: var(--slfx-seat-radius);
-  filter: blur(var(--slfx-pillar-soft, 8px));
+  /* Fixed, the middle of the old 7–10px breath: the curtains now move by
+     their own shape (below), and a blur that pulsed over all of them at once
+     was the one clock every curtain shared. */
+  filter: blur(8.5px);
   /* overflow:hidden clips the PATTERN; the blur is applied to the result and
      spills past the box anyway — measured on the showcase's 43px field, where
      the curtains smudged above and below the control. clip-path runs after
@@ -1556,63 +1559,74 @@
     linear-gradient(to left, black, transparent) right / calc(var(--slfx-bleed) * 2) 100% no-repeat;
 }
 
-.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before {
+/* TWO SHEETS, EACH ITS OWN LAYER (owner's pick DEEP, lab/pillars-organic,
+   2026-09-25: "their movement is not organic but rather mechanical"). The
+   two combs used to share ::before and one registered offset on one clock,
+   so the whole pattern slid as a rigid sheet. Now comb A is ::before and
+   comb B is ::after, and each sways, leans, widens and lets its light climb
+   on clocks of its own (the motion block below). The stops are the probe's.
+   The mask is two layers intersected: the fade to the top, and a softer band
+   repeating on twice the height, whose position climbs. */
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before,
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::after {
+  content: "";
+  position: absolute;
   inset: -20% -40%;
   padding: 0;
-  -webkit-mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
-  mask: linear-gradient(to top, black 0%, black 35%, transparent 100%);
   border-radius: 0;
-  /* two curtains at different pitches and speeds, so the pillars beat
-     against each other instead of scrolling as one sheet; the light pole
-     for the bright ribs, the bloom colour for the body */
-  /* THE PALETTE is the accent and its complement. --slfx-accent-vivid is the
-     accent lifted to the vivid tier and gamut-fitted (it is already how the
-     edge's warm fringe is made); the complement is the same colour turned
-     180° in oklch, so it keeps the accent's lightness and chroma and only
-     changes hue — which is what "complementary" means in a perceptual space,
-     and what keeps it inside the gamut the accent was fitted to. Derived, not
-     declared: a product that re-registers its accent gets its own pair (AC-18). */
-  /* WHITE (2026-09-12, owner: "userei luce bianca che si scompone"). The two
-     curtains were the accent and its complement; they are now both the page's
-     own light pole, the same derived neutral the hairline's bright stop is
-     made of, so the only colour left in the pane is the colour the GLASS makes
-     of it. Measured on lab/1y: across the middle of the pane the light is
-     white (rgb spread 4), at the faces the lens parts it (spread 46). The two
-     names stay, and stay separate, because the pair is what beats — a product
-     that wants coloured curtains rebinds one of them. */
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  -webkit-mask:
+    linear-gradient(to top, black 0%, black 35%, transparent 100%) 0 0 / 100% 100% no-repeat,
+    linear-gradient(to top, rgb(0 0 0 / 0.55) 0%, black 22%, rgb(0 0 0 / 0.55) 50%, black 72%, rgb(0 0 0 / 0.55) 100%) 0 0 / 100% 200% repeat-y;
+  -webkit-mask-composite: source-in;
+  mask:
+    linear-gradient(to top, black 0%, black 35%, transparent 100%) 0 0 / 100% 100% no-repeat,
+    linear-gradient(to top, rgb(0 0 0 / 0.55) 0%, black 22%, rgb(0 0 0 / 0.55) 50%, black 72%, rgb(0 0 0 / 0.55) 100%) 0 0 / 100% 200% repeat-y;
+  mask-composite: intersect;
+  /* WHITE ON INK (2026-09-12, owner: "userei luce bianca che si scompone"):
+     the page's own light pole, so the only colour in the pane is what the
+     glass makes of it. The two names stay separate because the pair is what
+     beats — a product that wants coloured curtains rebinds one of them. */
   --slfx-pillar-a: var(--slfx-glint);
   --slfx-pillar-b: var(--slfx-glint);
-  /* FITTED ON lab/1y, 2026-09-12. The curtains shipped untuned ("a strong
-     first cut is easier to bring down than a faint one is to find") and they
-     were: measured over the bed, with the glass rim's own band excluded, they
-     peaked at +62 luminance where the reference's light peaks at +48. At
-     30/44/41 the peak is +49.0. The pitch is a quarter wider so the ribs
-     clear twice the blur they sit under — below that the blur erases the very
-     structure the lens needs in order to have something to bend. */
-  /* Every stop is its fitted pixel figure over 104, so the pair still beats
-     exactly as it was measured to. The bright comb's own period is 0.4231 of
-     the wide one's, which is the interval that made them cross rather than
-     march. */
-  background:
-    repeating-linear-gradient(90deg,
-      transparent 0 calc(var(--slfx-pillar-pitch) * 0.1346),
-      color-mix(in srgb, var(--slfx-glint) 32%, transparent) calc(var(--slfx-pillar-pitch) * 0.1923),
-      transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.4231)),
-    repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--slfx-pillar-a) 45%, transparent) 0 calc(var(--slfx-pillar-pitch) * 0.1154),
-      transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.5192),
-      color-mix(in srgb, var(--slfx-pillar-b) 42%, transparent) calc(var(--slfx-pillar-pitch) * 0.6346),
-      transparent calc(var(--slfx-pillar-pitch) * 0.7885) var(--slfx-pillar-pitch));
-  /* Re-fitted for white, 2026-09-12: the light pole carries far less over a
-     near-black ground than the vivid accent did, so the same alphas read
-     dimmer — at 44/41 the interior peaked at +30 where the reference's light
-     peaks at +48. At 45/42 it is +46.4. The pitch is wider again and the blur
-     larger (owner: "sembrano zebrati, li blurrerei ancora di piu'"): at 200px
-     the two combs still read as a comb, at 320 they read as light. */
-  background-size:
-    calc(var(--slfx-pillar-pitch) * 3.0769) 100%,
-    calc(var(--slfx-pillar-pitch) * 4.6154) 100%;
-  background-position: var(--slfx-pillar-x, 0px) 0, calc(var(--slfx-pillar-x, 0px) * -0.6) 0;
+}
+/* INK ON PAPER (owner, 2026-09-25, lab/pillars-organic L1 "a tad more
+   prominent"). The light pole on paper is near-white on a near-white pane,
+   and the curtains vanished. On paper they are folds of shadow instead: the
+   text ink at a fraction of the strength white carries on ink. */
+[data-sl-theme="light"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before,
+[data-sl-theme="light"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::after {
+  --slfx-pillar-a: var(--slc-text, var(--sl-text-primary));
+  --slfx-pillar-b: var(--slc-text, var(--sl-text-primary));
+  --slfx-pillar-a1: 22%;
+  --slfx-pillar-a2: 19%;
+  --slfx-pillar-b1: 18%;
+  --slfx-pillar-b2: 15%;
+}
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::before {
+  background: repeating-linear-gradient(90deg,
+    color-mix(in srgb, var(--slfx-pillar-a) var(--slfx-pillar-a1, 45%), transparent) 0 calc(var(--slfx-pillar-pitch) * 0.1154),
+    transparent calc(var(--slfx-pillar-pitch) * 0.25) calc(var(--slfx-pillar-pitch) * 0.5192),
+    color-mix(in srgb, var(--slfx-pillar-a) var(--slfx-pillar-a2, 42%), transparent) calc(var(--slfx-pillar-pitch) * 0.6346),
+    transparent calc(var(--slfx-pillar-pitch) * 0.7885) var(--slfx-pillar-pitch));
+  background-size: calc(var(--slfx-pillar-pitch) * 3.0769) 100%;
+}
+.sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:not(:has(+ .sl-fx-aurora[data-sl-fx-live="busy"]:not([style*="--slfx-progress"])))::after {
+  background: repeating-linear-gradient(90deg,
+    color-mix(in srgb, var(--slfx-pillar-b) var(--slfx-pillar-b1, 40%), transparent) 0 calc(var(--slfx-pillar-pitch) * 0.14),
+    transparent calc(var(--slfx-pillar-pitch) * 0.30) calc(var(--slfx-pillar-pitch) * 0.62),
+    color-mix(in srgb, var(--slfx-pillar-b) var(--slfx-pillar-b2, 36%), transparent) calc(var(--slfx-pillar-pitch) * 0.74),
+    transparent calc(var(--slfx-pillar-pitch) * 0.90) calc(var(--slfx-pillar-pitch) * 1.1));
+  background-size: calc(var(--slfx-pillar-pitch) * 4.6154) 100%;
+}
+/* THE BULGE, HALVED ON A CURTAINED PANE (owner's pick D). The lens's convex
+   stage displaces by a fraction of the box, so it bends straight curtains
+   into arcs — on a small card the arcs are most of what is left. 0.2 keeps
+   the pane reading as a lens and the curtains reading as curtains. Only the
+   hosts whose light is the curtains: --sweep, --beam and --rim keep 0.4. */
+.sl-fx-aurora:is(.sl-fx-aurora--pillars, :not(.sl-fx-aurora--sweep, .sl-fx-aurora--beam, .sl-fx-aurora--rim, .sl-fx-aurora--linear)) {
+  --slg-lens-bulge: 0.2;
 }
 
 /* Busy — a short travelling marker: the same arc, a fraction of the length.
@@ -1770,6 +1784,7 @@
 [data-sl-fx="on"] .sl-fx-aurora:not([data-sl-fx-near]) > .sl-fx-aurora__glow::before,
 [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:not([data-sl-fx-near])),
 [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:not([data-sl-fx-near]))::before,
+[data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-aurora:not([data-sl-fx-near]))::after,
 [data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near])::before,
 [data-sl-fx="on"] .sl-fx-glass:not([data-sl-fx-near])::after {
   animation-play-state: paused !important;
@@ -2101,49 +2116,39 @@
   /* A beam drifts ACROSS the pane, slowly, and never rotates: the prism is in
      the glass, not in the light. Registered so it interpolates. */
   @property --slfx-beam-dy { syntax: "<length>"; inherits: false; initial-value: 0px; }
-  /* The curtains drift and breathe: position on one clock, softness on another,
-     so the shimmer never repeats exactly. */
-  @property --slfx-pillar-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
-  @property --slfx-pillar-soft { syntax: "<length>"; inherits: false; initial-value: 8px; }
-  /* A SWAY, NOT A SCAN (owner: "si puo evitare l'effetto radar sui pilastri?").
-     This used to run one way at a constant rate and restart — 0 to 160px,
-     linear, forever — and a comb of light sliding steadily in one direction is
-     what a radar sweep is, whatever it is made of. The lens curving it at the
-     faces only sharpened the reading. An aurora does not scroll: it leans one
-     way and comes back, slowly, and never quite arrives. So the travel is
-     halved, the clock nearly doubled, the curve eased at both ends, and it
-     ALTERNATES — the moment it turns around is the moment it stops being a
-     sweep. The second comb still moves at -0.6 of this, so the two cross
-     rather than march. */
-  /* A fraction of the pitch, not a fixed distance: a sway of 40px across a
-     368px curtain is a twitch, and the same sway across a 104px one is the
-     lean it was fitted as. */
-  @keyframes slfx-pillars-drift {
-    from { --slfx-pillar-x: calc(var(--slfx-pillar-pitch) * -0.3654); }
-    to   { --slfx-pillar-x: calc(var(--slfx-pillar-pitch) *  0.4231); }
-  }
-  /* 3 -> 5.5px, so the fitted 4px sits in the middle of the breath rather
-     than at the bottom of a 2 -> 7 swing that softened the ribs away at its
-     top end. */
-  /* On `filter` itself, not through --slfx-pillar-soft: a registered property
-     re-resolves on the main thread and repaints the curtains every frame,
-     while a filter animation can run on the compositor. The same blur radius,
-     interpolated the same way. */
-  @keyframes slfx-pillars-breathe { from { filter: blur(7px); } to { filter: blur(10px); } }
-  /* The NEGATIVE DELAY is what keeps a row of panes from marching. Every
-     animation starts when its rule begins to match, so a surface that lights
-     all its cards at once starts all of them together; --slfx-pillar-phase,
-     written per host by seatGlow(), drops each one somewhere inside its own
-     cycle instead. Unset it and the delay is 0 and nothing changes.
+  /* Each sheet sways, leans, widens and lets its light climb, every one of
+     those on its own clock, and the two sheets on different ones (15–53s,
+     co-prime), so the formation never repeats and nothing moves as a unit.
+     transform, translate, scale and opacity only, except the climb, which
+     moves the mask. Owner's pick DEEP on lab/pillars-organic (2026-09-25),
+     over FOLD and RISE at twice the pace: an aurora moves slowly.
 
-     The two clocks take different multipliers on purpose: the breathe and the
-     drift are the pair that beats, and offsetting them by the same amount
-     would only move the formation rather than break it. */
-  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"]) {
-    animation: slfx-pillars-breathe 8.7s ease-in-out calc(var(--slfx-pillar-phase, 0) * -8.7s) infinite alternate;
+     The NEGATIVE DELAY keeps a row of panes from marching: --slfx-pillar-phase,
+     written per host by seatGlow(), drops each glow somewhere inside every
+     one of its cycles. The multipliers differ per clock, so the phase moves
+     the formation apart rather than shifting it whole. */
+  @keyframes slfx-pillar-sway-a { 0%, 100% { translate: -11% 0; } 50% { translate: 9% 0; } }
+  @keyframes slfx-pillar-sway-b { 0%, 100% { translate: 10% 0; } 50% { translate: -12% 0; } }
+  @keyframes slfx-pillar-lean-a { 0%, 100% { transform: skewX(-9deg); } 50% { transform: skewX(7deg); } }
+  @keyframes slfx-pillar-lean-b { 0%, 100% { transform: skewX(8deg); } 50% { transform: skewX(-10deg); } }
+  @keyframes slfx-pillar-width { 0%, 100% { scale: 1 1; } 50% { scale: 1.12 1; } }
+  @keyframes slfx-pillar-rise {
+    from { -webkit-mask-position: 0 0, 0 100%; mask-position: 0 0, 0 100%; }
+    to   { -webkit-mask-position: 0 0, 0 -100%; mask-position: 0 0, 0 -100%; }
   }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {
-    animation: slfx-pillars-drift 23s cubic-bezier(0.42, 0, 0.58, 1) calc(var(--slfx-pillar-phase, 0) * -23s) infinite alternate;
+    animation:
+      slfx-pillar-sway-a 41s ease-in-out calc(var(--slfx-pillar-phase, 0) * -41s) infinite,
+      slfx-pillar-lean-a 23s ease-in-out calc(var(--slfx-pillar-phase, 0) * -23s) infinite,
+      slfx-pillar-width 29s ease-in-out calc(var(--slfx-pillar-phase, 0) * -29s) infinite,
+      slfx-pillar-rise 15s linear calc(var(--slfx-pillar-phase, 0) * -15s) infinite;
+  }
+  [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-pillars]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::after {
+    animation:
+      slfx-pillar-sway-b 53s ease-in-out calc(-9s - var(--slfx-pillar-phase, 0) * 53s) infinite,
+      slfx-pillar-lean-b 31s ease-in-out calc(-5s - var(--slfx-pillar-phase, 0) * 31s) infinite,
+      slfx-pillar-width 37s ease-in-out calc(-13s - var(--slfx-pillar-phase, 0) * 37s) infinite,
+      slfx-pillar-rise 22s linear calc(-8s - var(--slfx-pillar-phase, 0) * 22s) infinite;
   }
   @keyframes slfx-beam-drift { from { --slfx-beam-dy: -60%; } to { --slfx-beam-dy: 60%; } }
   [data-sl-fx="on"] .sl-fx-aurora__glow[data-sl-fx-seated][data-sl-fx-beam]:has(+ .sl-fx-aurora[data-sl-fx-live="on"])::before {

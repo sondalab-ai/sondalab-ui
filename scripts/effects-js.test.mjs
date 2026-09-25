@@ -458,14 +458,15 @@ function blockAt(src, at) {
 }
 
 const pillarsRule = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\[data-sl-fx-pillars\]\s*\{/));
-// The combs are painted on the glow's ::before, not on the glow itself, and
-// that selector is long enough that matching it is its own trap — so find the
-// declaration and take the block around it.
-const pillarsPaint = (() => {
-  const at = css.indexOf("--slfx-pillar-a");
-  assert.ok(at > -1, "the curtains must still be painted");
+// The combs are painted on the glow's ::before (A) and ::after (B), not on
+// the glow itself, and those selectors are long enough that matching them is
+// its own trap — so find each comb's paint and take the block around it.
+const combPaint = (name) => {
+  const at = css.indexOf(`color-mix(in srgb, var(--slfx-pillar-${name})`);
+  assert.ok(at > -1, `comb ${name} must still be painted`);
   return blockAt(css, css.lastIndexOf("{", at) - 1);
-})();
+};
+const pillarsPaint = combPaint("a") + combPaint("b");
 
 test("every curtain measurement is a fraction of one pitch", () => {
   // The pattern was fitted at 104px on a 320px card and left at that length it
@@ -473,16 +474,21 @@ test("every curtain measurement is a fraction of one pitch", () => {
   // measured on showed three. Both combs, both tiles and the sway now derive
   // from one length, so changing it scales the pattern and never its
   // proportions — which is the only reason the pair still beats as measured.
-  const gradients = /background:\s*([\s\S]*?);/.exec(pillarsPaint)[1];
-  assert.match(gradients, /--slfx-pillar-pitch/, "the stops must derive from the pitch");
-  assert.doesNotMatch(gradients, /\b\d+px\b/, "no stop may keep a fitted pixel figure of its own");
-
-  const size = /background-size:\s*([\s\S]*?);/.exec(pillarsPaint)[1];
-  assert.doesNotMatch(size, /\b\d+px\b/, "the tiles scale with the pattern they carry");
-
-  const sway = /@keyframes\s+slfx-pillars-drift\s*\{[\s\S]*?\n\s*\}/.exec(css)[0];
-  assert.match(sway, /--slfx-pillar-pitch/, "a fixed sway is a twitch on a wide curtain");
-  assert.doesNotMatch(sway, /-?\d+px/, "and a lean on a narrow one");
+  for (const comb of ["a", "b"]) {
+    const paint = combPaint(comb);
+    const gradients = /background:\s*([\s\S]*?);/.exec(paint)[1];
+    assert.match(gradients, /--slfx-pillar-pitch/, `comb ${comb}: the stops must derive from the pitch`);
+    assert.doesNotMatch(gradients, /\b\d+px\b/, `comb ${comb}: no stop may keep a fitted pixel figure of its own`);
+    const size = /background-size:\s*([\s\S]*?);/.exec(paint)[1];
+    assert.doesNotMatch(size, /\b\d+px\b/, `comb ${comb}: the tiles scale with the pattern they carry`);
+  }
+  // The sway is a fraction of the sheet's own width, which is the host's:
+  // a fixed distance is a twitch on a wide curtain and a lean on a narrow one.
+  for (const k of ["a", "b"]) {
+    const sway = new RegExp(`@keyframes\\s+slfx-pillar-sway-${k}\\s*\\{[^\\n]*\\}`).exec(css)[0];
+    assert.match(sway, /translate: -?[\d.]+% 0/, `sway ${k} is a percentage`);
+    assert.doesNotMatch(sway, /-?\d+px/, `sway ${k} keeps no pixel figure`);
+  }
 });
 
 test("a page that never mounts keeps the pattern it was fitted with", () => {
@@ -512,14 +518,16 @@ test("no two panes drift in step, and the offset is stable", () => {
   assert.match(js, /function glowOrdinal/, "the ordinal is derived, not rolled");
   assert.match(js, /ordinals\.set\(id, ordinals\.size\)/, "and remembered, so a resize does not reshuffle the page");
 
-  // The delay has to reach BOTH clocks, with different multipliers: the
-  // breathe and the drift are the pair that beats, and one offset for both
-  // would move the formation rather than break it.
-  const anims = [...css.matchAll(/animation:\s*slfx-pillars-(breathe|drift)[^;]*;/g)].map((m) => m[0]);
-  assert.equal(anims.length, 2, "both pillars clocks must be declared");
-  for (const a of anims) assert.match(a, /--slfx-pillar-phase/, `${a.slice(0, 40)}… must take the phase`);
-  const mults = anims.map((a) => /\* (-[\d.]+)s/.exec(a)[1]);
-  assert.notEqual(mults[0], mults[1], "one offset for both clocks only moves the formation");
+  // The delay has to reach EVERY clock of both sheets, with different
+  // multipliers: one offset for all of them would move the formation rather
+  // than break it.
+  const decl = [...css.matchAll(/\[data-sl-fx-pillars\]:has\(\+ \.sl-fx-aurora\[data-sl-fx-live="on"\]\)::(?:before|after) \{\s*animation:([\s\S]*?);/g)].map((m) => m[1]);
+  assert.equal(decl.length, 2, "both sheets must be animated");
+  const clocks = decl.flatMap((d) => d.split(/,\s*\n/).map((c) => c.trim()));
+  assert.equal(clocks.length, 8, "sway, lean, width and rise, on each sheet");
+  for (const c of clocks) assert.match(c, /--slfx-pillar-phase/, `${c.slice(0, 40)}… must take the phase`);
+  const periods = clocks.map((c) => /\s(\d+)s\s/.exec(c)[1]);
+  assert.equal(new Set(periods).size, periods.length, "no two clocks share a period, so nothing moves as a unit");
 });
 
 test("a seated glow swells with the pane it hangs in", () => {
