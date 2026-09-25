@@ -217,8 +217,15 @@
    so a 37px field bends about 6px; a 5.9px frost erases that entirely, and
    raising the bend does not buy it back. The owner's ruling is that the lens
    must be visible on every surface, so the frost yields to it: a legible
-   ghost of the copy behind, rather than a smear with no refraction in it. */
-@property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 1.5px; }
+   ghost of the copy behind, rather than a smear with no refraction in it.
+
+   5px since 2026-09-25 (owner: blur the glass to improve the readability of
+   its content). What changed the arithmetic is the convex bulge (re-scope R5,
+   --slg-lens-bulge 0.4): a distortion tens of pixels wide survives a 5px
+   frost where the old 6px rim bend did not, so the pane still reads as a
+   lens while the copy on it reads cleanly. The rim's colour fringe softens
+   with it; that is the cost the ruling accepts. */
+@property --slg-lens-blur { syntax: "<length>"; inherits: true; initial-value: 5px; }
 @property --slg-lens-sat  { syntax: "<number>"; inherits: true; initial-value: 1.1; }
 .sl-glass.is-lensed { background-color: transparent; }
 .sl-glass.is-lensed .sl-glass__tint {

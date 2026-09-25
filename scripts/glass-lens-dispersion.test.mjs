@@ -85,3 +85,27 @@ test("the 90 default degrades silently on a small host, and that is what makes i
   assert.equal(+(b - r).toFixed(2), 21.6, "and at 64.8px it fits exactly, red landing on zero");
   assert.equal(r, 0);
 });
+
+/* ── the convex bulge (re-scope R5, owner's pick: +40%, 2026-09-25) ───────── */
+const { convexShift, BULGE } = await import(resolve(KIT, "glass-lens.js"));
+
+test("the bulge's default is the owner's 40%", () => {
+  assert.equal(BULGE, 0.4);
+});
+
+test("the bulge magnifies toward the centre, and leaves the rim alone", () => {
+  const [hw, hh] = [160, 60];
+  // A point halfway out samples from nearer the centre: a magnifier.
+  const [dx, dy] = convexShift(80, 30, hw, hh, BULGE);
+  assert.ok(dx < 0 && dy < 0, "the sample is pulled toward the centre");
+  // At the rim and beyond, nothing: it meets the rim bend without doubling it.
+  for (const [px, py] of [[hw, 0], [0, hh], [hw * 0.8, hh * 0.8], [hw * 2, 0]]) {
+    const [rx, ry] = convexShift(px, py, hw, hh, BULGE);
+    assert.equal(Math.abs(rx) + Math.abs(ry) < 1e-9 || Math.hypot(px / hw, py / hh) < 1, true,
+      `no shift at or past the rim (${px}, ${py})`);
+  }
+  // The centre itself stays put (a lens magnifies around a fixed point).
+  assert.deepEqual(convexShift(0, 0, hw, hh, BULGE).map((v) => Math.abs(v)), [0, 0]);
+  // And 0 turns it off.
+  assert.deepEqual(convexShift(80, 30, hw, hh, 0).map((v) => Math.abs(v)), [0, 0]);
+});
