@@ -516,7 +516,8 @@ test("a seated glow swells with the pane it hangs in", () => {
     assert.ok(at > -1, `the glow must mirror the pane's ${state}`);
     return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
   };
-  for (const state of [":hover", ":active"]) {
+  // The hover lift retired with re-scope R2 (2026-09-25); the press sink stays.
+  for (const state of [":active"]) {
     assert.equal(glowScale(state), paneScale(state), `${state}: the light must swell exactly as its pane does`);
   }
 
