@@ -286,7 +286,27 @@ test("the specular edge writes nothing onto the host but its two properties", ()
   for (const k of ["--slfx-spec-a", "--slfx-spec-i"]) {
     assert.match(spec, new RegExp(`removeProperty\\("${k}"\\)`), `${k} must be removed when the edge goes dark`);
   }
-  assert.match(spec, /specRafId = lit \? requestAnimationFrame\(integrateSpec\) : 0;/, "the loop must stop itself once every edge is dark");
+  assert.match(spec, /specRafId = moving \? requestAnimationFrame\(integrateSpec\) : 0;/, "the loop must stop itself once every edge is dark or at rest");
+});
+
+// 0.16.0: with the pointer resting near glass the loop ran every frame
+// forever, re-writing the same strings, each host's read after the previous
+// host's write.
+test("the specular loop reads every box before it writes, writes only changes, and rests", () => {
+  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── press:"));
+  const integrate = spec.slice(spec.indexOf("function integrateSpec("), spec.indexOf("function onSpecLayout("));
+  const read = integrate.indexOf("getBoundingClientRect");
+  const write = integrate.indexOf("stepSpec(");
+  assert.ok(read > -1 && write > read, "all reads happen in a pass before the writes");
+  const step = spec.slice(spec.indexOf("function stepSpec("), spec.indexOf("function integrateSpec("));
+  assert.doesNotMatch(step, /getBoundingClientRect/, "a step reads no layout");
+  assert.match(step, /if \(a !== s\.a\)/, "an unchanged bearing is not written");
+  assert.match(step, /if \(i !== s\.i\)/, "nor an unchanged intensity");
+  assert.match(step, /return rest \? 2 : 1;/, "a host at rest does not keep the loop alive");
+  const body = fnBody("mount");
+  assert.match(body, /addEventListener\("scroll", onSpecLayout, \{ capture: true, passive: true \}\)/, "a scroll wakes it");
+  assert.match(body, /addEventListener\("resize", onSpecLayout/, "and so does a resize");
+  assert.match(body, /collectSpecHosts\(n\);\s*\}\s*[^]*?onSpecLayout\(\);\s*\}\)\.observe\(root/, "and so does content moving the boxes");
 });
 
 test("the reduced-motion derogation is narrow, opt-in, and named so a reader cannot mistake it", async () => {
@@ -552,4 +572,20 @@ test("a keyboard press is the same act as a click", () => {
   for (const ev of ['"pointerdown", onPressDown', '"keydown", onPressKey', '"keyup", onPressKey', '"pointerup", pressEnd', '"pointercancel", pressEnd']) {
     assert.ok(mounted.includes(ev), `mount() must listen for ${ev}`);
   }
+});
+
+// 0.16.0: lenses (an <svg> in <body> each), goo fields (window listeners),
+// glass-text cuts, seated glows' observers and the near watch were held
+// strongly for hosts long gone, so a long-lived app leaked them per render.
+test("a host that leaves the document releases everything held for it", () => {
+  const prune = js.slice(js.indexOf("function pruneDetached("), js.indexOf("function injectGlassLayers("));
+  assert.match(prune, /\[lensed, glassTexts, gooFields\]/, "every handle map is pruned");
+  assert.match(prune, /handle\.destroy\(\)/, "through the handle's own destroy");
+  assert.match(prune, /watch\.disconnect\(\);\s*glow\.remove\(\);/, "a seated glow and its observer go with the host");
+  assert.match(prune, /nearObserver\?\.unobserve\(el\)/, "the near watch lets go");
+  assert.match(prune, /specHosts\.delete\(el\)/, "and so does the specular set");
+  assert.match(prune, /isConnected/, "decided at callback time, so a host moved within a task keeps it all");
+  const body = fnBody("mount");
+  assert.match(body, /if \(removed\) pruneDetached\(\);/, "the material's observer runs it on removals");
+  assert.ok(body.indexOf("pruneDetached") < body.indexOf("matchMedia(REDUCE)"), "before the motion guard: lenses exist under reduced motion too");
 });

@@ -1953,6 +1953,14 @@ A final point is architecture rather than a value, and belongs in the promotion:
 
 **Fixed in 0.15.2, found in spexr on the same day.** The run light's canvas reached 6px past its host (`PAD` in `live-light.js`, the `inset` of `.sl-fx-live__canvas`), but the shader's outer bleed still carried 46/255 alpha (18%) at that distance, measured by reading the canvas back in the browser. It stopped on a hard rectangle around the card. `PAD` is now 16px, where the bleed is under 0.5%, and the run shader fades the outer light to exactly zero at `uPad`: 0/255 at the border, same 242/255 peak. An ancestor with `overflow` other than `visible` closer than 16px to a live host now clips the light; that is the consumer's layout to fix.
 
+**0.16.0: the effects stop doing work nobody sees (2026-09-25).** Measured on `showcase/effects.html` in headless Chrome with the GPU on (1440×900 at DPR 2, main-thread task time over 5s, before → after): idle at the top 612 → 133ms, a live light in view 1372 → 517ms, the pointer resting on glass 1441 → 542ms; JS heap unchanged (~1.5 MB). What changed, none of it visible:
+- The off-screen gate lost to every rule that starts an aurora animation (a tie that came later, or a higher specificity), and never reached a seated glow; 11 of 12 running animations sat more than 200px off-screen. It is now `animation-play-state: paused !important`, seated glows included.
+- `live-light.js` drew off-screen canvases every frame and read layout, style and uniform locations per frame. It now draws near hosts only, stops when none are, and uploads everything but time on resize or theme change.
+- The specular loop ran forever while the pointer rested near glass, interleaving reads and writes. It now reads every box first, writes only changes, and rests; a scroll or resize wakes it.
+- Lenses, glass-text cuts, goo fields, seated glows and the near watch were held for hosts long gone. They are released when the host leaves the document.
+- Smaller: the liquid drop rests; a goo field ignores clicks it did not see pressed; a lensed host drops its dead child blur and its lens stands down off-screen; lens maps are shared by reference count; the curtains breathe on `filter` so the compositor can run it.
+Left running off-screen on purpose: goo drift and the live badge, which animate only compositor properties.
+
 ## Notes
 
 Open questions, and the record of the ones now closed. Each open item blocks the criteria named beside it.

@@ -243,6 +243,10 @@ function setLiquidLive(el) {
   el.classList.add("is-liquid-live");
 }
 
+function setDrop(name, value) {
+  if (skinParts.drop.getAttribute(name) !== value) skinParts.drop.setAttribute(name, value);
+}
+
 /** Rebuild the silhouette for this frame: the drop at the outline point
  *  nearest the lagged pointer, protruding by the spring's amplitude scaled
  *  by how near the pointer is to that edge; the floods in the host's own
@@ -264,9 +268,11 @@ function paintSkin() {
     y: e.qy + e.ny * (out - b.drop),
     r: visible ? b.drop : 0,
   };
-  skinParts.drop.setAttribute("cx", liquidDrop.x.toFixed(2));
-  skinParts.drop.setAttribute("cy", liquidDrop.y.toFixed(2));
-  skinParts.drop.setAttribute("r", visible ? b.drop.toFixed(2) : "0");
+  // Only what changed: an attribute written inside a filter dirties it and
+  // re-rasterises the goo even when the value is the same.
+  setDrop("cx", liquidDrop.x.toFixed(2));
+  setDrop("cy", liquidDrop.y.toFixed(2));
+  setDrop("r", visible ? b.drop.toFixed(2) : "0");
 
   const cs = getComputedStyle(el);
   if (skinParts.fill.style.floodColor !== cs.backgroundColor) skinParts.fill.style.floodColor = cs.backgroundColor;
@@ -298,6 +304,16 @@ function integrateLiquid(now) {
     setLiquidLive(null);
     return; // idle page costs nothing: the loop does not reschedule itself
   }
+  // At rest under a still pointer: nothing moves and no colour is in flight,
+  // so the frame would repaint the same drop. The next pointermove, or a
+  // transition starting on the host (a press), wakes it.
+  const resting = target === 1 && Math.abs(amp - 1) < LIQUID_SETTLE_EPS && Math.abs(ampV) < LIQUID_SETTLE_EPS
+    && Math.abs(pointerX - lagX) < 0.05 && Math.abs(pointerY - lagY) < 0.05
+    && !liquidLiveEl?.getAnimations().length;
+  if (resting) {
+    liquidRafId = 0;
+    return;
+  }
   liquidRafId = requestAnimationFrame(integrateLiquid);
 }
 
@@ -324,6 +340,11 @@ function onPointerMove(ev) {
   }
   target = 1;
   ensureLiquidLoop();
+}
+
+/** A resting drop follows its host's colours again once they start to move. */
+function onLiquidTransition(ev) {
+  if (liquidLiveEl && ev.target === liquidLiveEl) ensureLiquidLoop();
 }
 
 function onPointerLeave(ev) {
@@ -365,6 +386,9 @@ const SPEC_DIR_K = 0.06;
 const SPEC_PRES_K = 0.08;
 /** Below this the edge is dark and the host is released. */
 const SPEC_SETTLE = 0.004;
+/** Both springs closer to their targets than this, on every lit host, and the
+ *  loop stops until the pointer moves or the page scrolls or resizes. */
+const SPEC_REST = 0.001;
 /** The vector length below which the arc is off, and above which it is full:
  *  the smoothstep that dims it through a crossing. */
 const SPEC_DIM_LO = 0.12;
@@ -416,29 +440,35 @@ function releaseSpec(el) {
   if (!el.getAttribute("style")) el.removeAttribute("style");
 }
 
-/** One host, one frame.
- *  @returns {boolean} whether its edge is still lit */
-function stepSpec(el, kd, kp) {
-  let s = specState.get(el);
-  if (!s && !specIn) return false;
-  if (!s && !el.hasAttribute("data-sl-fx-near")) return false;
+/** Whether a host needs measuring this frame: lit already, or near enough
+ *  for the pointer to light it. Releases a host inside an opt-out region.
+ *  Reads no layout. */
+function specCandidate(el) {
+  const s = specState.get(el);
+  if (!s && (!specIn || !el.hasAttribute("data-sl-fx-near"))) return false;
   if (el.closest('[data-sl-fx="off"]')) {
     if (s) releaseSpec(el);
     return false;
   }
-  const r = el.getBoundingClientRect();
+  return true;
+}
+
+/** One host, one frame, from a box measured before any host was written.
+ *  @returns {0|1|2} 0 dark and released, 1 lit and still moving, 2 lit and at rest */
+function stepSpec(el, r, kd, kp) {
+  let s = specState.get(el);
   const hw = r.width / 2;
   const hh = r.height / 2;
-  if (!hw || !hh) return false;
+  if (!hw || !hh) return 0;
   const tx = specX - (r.left + hw);
   const ty = specY - (r.top + hh);
   const gap = Math.hypot(Math.max(Math.abs(tx) - hw, 0), Math.max(Math.abs(ty) - hh, 0));
   const want = specIn ? Math.max(0, 1 - gap / SPEC_REACH) : 0;
   const [nx, ny] = specDirection(tx, ty, hw, hh);
   if (!s) {
-    if (want <= 0) return false;
+    if (want <= 0) return 0;
     // Born pointing at the light, so the first frame does not sweep in.
-    s = { dx: nx, dy: ny, pres: 0 };
+    s = { dx: nx, dy: ny, pres: 0, a: "", i: "" };
     specState.set(el, s);
     el.classList.add("is-spec-lit");
   }
@@ -447,7 +477,7 @@ function stepSpec(el, kd, kp) {
   s.pres += (want - s.pres) * kp;
   if (want === 0 && s.pres < SPEC_SETTLE) {
     releaseSpec(el);
-    return false;
+    return 0;
   }
   const t = Math.min(1, Math.max(0, (Math.hypot(s.dx, s.dy) - SPEC_DIM_LO) / (SPEC_DIM_HI - SPEC_DIM_LO)));
   const lit = s.pres * t * t * (3 - 2 * t);
@@ -455,9 +485,14 @@ function stepSpec(el, kd, kp) {
   // starts at 3 o'clock, hence the quarter turn. Back in pixel space first, so
   // the bearing on a wide card is the pointer's, not the unit square's.
   const bearing = (Math.atan2(s.dy * r.height, s.dx * r.width) * 180) / Math.PI + 90;
-  el.style.setProperty("--slfx-spec-a", `${bearing.toFixed(1)}deg`);
-  el.style.setProperty("--slfx-spec-i", lit.toFixed(3));
-  return true;
+  // Unchanged strings are not written: every write restyles the host's
+  // subtree, since both properties inherit.
+  const a = `${bearing.toFixed(1)}deg`;
+  const i = lit.toFixed(3);
+  if (a !== s.a) { el.style.setProperty("--slfx-spec-a", a); s.a = a; }
+  if (i !== s.i) { el.style.setProperty("--slfx-spec-i", i); s.i = i; }
+  const rest = Math.abs(nx - s.dx) < SPEC_REST && Math.abs(ny - s.dy) < SPEC_REST && Math.abs(want - s.pres) < SPEC_REST;
+  return rest ? 2 : 1;
 }
 
 function integrateSpec(now) {
@@ -465,16 +500,28 @@ function integrateSpec(now) {
   specPrevT = now;
   const kd = 1 - (1 - SPEC_DIR_K) ** (dt * 60);
   const kp = 1 - (1 - SPEC_PRES_K) ** (dt * 60);
-  let lit = false;
+  // Every box is read before any host is written: interleaved, each read
+  // after a write forced its own style and layout pass.
+  const boxes = [];
   for (const el of specHosts) {
     if (!el.isConnected) {
       if (specState.has(el)) releaseSpec(el);
       specHosts.delete(el);
       continue;
     }
-    if (stepSpec(el, kd, kp)) lit = true;
+    if (specCandidate(el)) boxes.push(el, el.getBoundingClientRect());
   }
-  specRafId = lit ? requestAnimationFrame(integrateSpec) : 0;
+  let moving = false;
+  for (let k = 0; k < boxes.length; k += 2) {
+    if (stepSpec(boxes[k], boxes[k + 1], kd, kp) === 1) moving = true;
+  }
+  specRafId = moving ? requestAnimationFrame(integrateSpec) : 0;
+}
+
+/** A scroll or resize moves the boxes under a resting pointer: the loop
+ *  stopped at rest has to look again. */
+function onSpecLayout() {
+  if (specIn || specState.size) ensureSpecLoop();
 }
 
 function ensureSpecLoop() {
@@ -821,11 +868,14 @@ function injectGlow(el) {
     const watch = new ResizeObserver(() => seatGlow(el, glow));
     watch.observe(el);
     watch.observe(parent);
+    glowWatches.set(el, { watch, glow });
   }
 }
 
 /** @type {number} pairs a seated glow with the host it belongs to */
 let glowSerial = 0;
+/** Each seated glow's observer, so a host that leaves takes both with it. */
+const glowWatches = new Map();
 
 /* ── the glass anatomy ──────────────────────────────────────────────────────
    glass.css paints the material in three stacked layers — frost, tint, rim —
@@ -1087,6 +1137,32 @@ function watchLensTheme(root) {
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-sl-theme"] });
 }
 
+/** Release everything held for a host that has left the document: its lens
+ *  (an <svg> in <body> with two PNG maps), its glass-text cut, its goo field
+ *  (window listeners and observers), its seated glow and that glow's
+ *  observer, its near-viewport watch and its specular state. Held strongly
+ *  until now, so a long-lived app that re-renders glass leaked all of it.
+ *  A host moved within one task is still connected here and keeps it all; one
+ *  that comes back later is armed again as an added node.
+ *  @returns {void} */
+function pruneDetached() {
+  for (const held of [lensed, glassTexts, gooFields]) {
+    for (const [el, handle] of held) if (!el.isConnected) { handle.destroy(); held.delete(el); }
+  }
+  for (const [el, { watch, glow }] of glowWatches) {
+    if (el.isConnected) continue;
+    watch.disconnect();
+    glow.remove();
+    glowWatches.delete(el);
+  }
+  for (const el of nearHosts) if (!el.isConnected) { nearObserver?.unobserve(el); nearHosts.delete(el); }
+  for (const el of specHosts) {
+    if (el.isConnected) continue;
+    if (specState.has(el)) releaseSpec(el);
+    specHosts.delete(el);
+  }
+}
+
 function injectGlassLayers(root) {
   if (root instanceof Element && root.matches(GLASS_HOSTS)) injectGlass(root);
   for (const el of root.querySelectorAll(GLASS_HOSTS)) injectGlass(el);
@@ -1119,6 +1195,8 @@ function injectGlows(root) {
 const NEAR_MARGIN = "200px";
 const NEAR_HOSTS = ".sl-fx-glass, .sl-fx-aurora";
 let nearObserver = null;
+/** What nearObserver watches: it holds each target strongly until unobserved. */
+const nearHosts = new Set();
 
 /** Watch an element and mark it while it is near the viewport.
  *  @param {ParentNode} root the subtree to watch
@@ -1145,6 +1223,7 @@ function watchNear(root) {
     // improvement on that state, never a precondition for it.
     el.toggleAttribute("data-sl-fx-near", true);
     nearObserver.observe(el);
+    nearHosts.add(el);
   }
 }
 
@@ -1235,11 +1314,16 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   armGlassText(root);
   watchLensTheme(root);
   new MutationObserver((records) => {
-    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
-      injectGlassLayers(n);
-      armLenses(n);
-      armGlassText(n);
+    let removed = false;
+    for (const r of records) {
+      removed ||= r.removedNodes.length > 0;
+      for (const n of r.addedNodes) if (n instanceof Element) {
+        injectGlassLayers(n);
+        armLenses(n);
+        armGlassText(n);
+      }
     }
+    if (removed) pruneDetached();
   }).observe(root, { childList: true, subtree: true });
   if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;
 
@@ -1259,12 +1343,18 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
       watchNear(n);
       collectSpecHosts(n);
     }
+    // Content arriving or leaving can move a box under a resting pointer
+    // (a streamed card pushing the wall down): the specular loop looks again.
+    onSpecLayout();
   }).observe(root, { childList: true, subtree: true });
 
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
   root.addEventListener("pointerleave", onPointerLeave, { capture: true, passive: true });
+  root.addEventListener("transitionrun", onLiquidTransition, { passive: true });
   window.addEventListener("pointerout", onSpecOut, { passive: true });
+  window.addEventListener("scroll", onSpecLayout, { capture: true, passive: true });
+  window.addEventListener("resize", onSpecLayout, { passive: true });
   root.addEventListener("pointerdown", onPressDown, { passive: true });
   window.addEventListener("pointerup", pressEnd, { passive: true });
   window.addEventListener("pointercancel", pressEnd, { passive: true });

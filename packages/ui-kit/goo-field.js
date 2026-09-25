@@ -458,6 +458,10 @@ export function gooField(container) {
   const stop = () => { if (!onStage) halt(); };
   const onDown = () => { held = true; start(); };
   const onUp = () => {
+    // The release is caught on the window, so every click on the page reached
+    // every field and re-measured and unwelded it. Only a field that saw the
+    // press has a position to land.
+    if (!held) return;
     held = false;
     measure(true);                                // land the released position
     if (!container.matches(":hover")) stop();     // the pointer left during the drag
