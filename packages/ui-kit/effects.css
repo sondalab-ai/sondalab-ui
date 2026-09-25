@@ -3,9 +3,11 @@
    Contract: docs/specs/2026-09-08-effects-layer-design.md
 
    ── What this layer is ──────────────────────────────────────────────────────
-   Four families, each carrying one meaning (spec §Decision 1):
+   Families, each carrying one meaning (spec §Decision 1; the re-scope in
+   docs/specs/2027-improve-aesthetics.md adds press):
      glitch  — something re-resolved      liquid — you are recognised
      aurora  — attention lives here       glass  — this is a physical surface
+     press   — you acted on this          goo    — these belong to one another
    An effect that means nothing is switched off. Classes are ADDITIVE: they
    compose onto components.css classes and never replace them.
 
@@ -181,8 +183,8 @@
    subtree, compounded with the family classes so an unscoped
    `box-shadow: none !important` never strips elevation or focus rings off
    ordinary components.css elements inside the region. */
-:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
   filter: none !important;
@@ -248,6 +250,8 @@
    that rule by its first occurrence of that exact substring. */
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass::after,
+:root[data-sl-theme="high-contrast"] .sl-fx-press::before,
+:root[data-sl-theme="high-contrast"] .sl-fx-press::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora::after,
 :root[data-sl-theme="high-contrast"] .sl-fx-aurora__glow,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lens,
@@ -258,6 +262,10 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass::after,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-press::before,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-press::after,
+.sl-fx-press:is([data-sl-fx="off"], [data-sl-fx="off"] *)::before,
+.sl-fx-press:is([data-sl-fx="off"], [data-sl-fx="off"] *)::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora::after,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-aurora__glow,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lens,
@@ -977,6 +985,101 @@
    chrome follows the silhouette instead (effects-shader.js, edgeAt). Same
    placement rule as the stand-down above: a lit aurora still wins. */
 [data-sl-fx="on"] .sl-fx-glass.sl-fx-liquid.is-liquid-live::after { opacity: 0; }
+
+/* ══ PRESS — you acted on this ═══════════════════════════════════════════════
+   Re-scope R2 (docs/specs/2027-improve-aesthetics.md), owner's pick A,
+   2026-09-25; cards press-light and spring-tokens. Pressing a control lights
+   it from within — the light rises from its own lower body — and the
+   controls beside it catch that light on the edge that faces it, the way a
+   lit key lights the keys around it. Release lets both fall away on their
+   own clocks; the control's sink and return run on --sl-motion-spring.
+
+   effects.js writes three numbers per lit host and nothing else:
+   --slfx-press (how lit the pressed control is), --slfx-spill (how much a
+   neighbour catches) and --slfx-spill-a (the bearing of the edge that faces
+   the pressed control), plus the classes is-press-lit / is-spill-lit while
+   either is above zero. Ruling 4 holds: no light sits at the pointer. The
+   press light is the control's own body; the spill is an arc on a
+   neighbour's edge.
+
+   Tier 1 only. Without mount() a press is the component's own :active state
+   and the spring sink below, which is correct on its own. */
+.sl-fx-press {
+  --slfx-press: 0;
+  --slfx-spill: 0;
+  --slfx-spill-a: 0deg;
+  /* The light: the page's light pole, warmed a little toward the accent, so
+     a pressed control glows in its own register rather than in a neutral
+     white. Near-white on both themes; the sheen decides, as for the glint. */
+  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h) 82%, var(--slc-accent, var(--sl-accent-default)));
+  position: relative;
+  isolation: isolate;
+  /* The sink and the return, on the spring. The duration is a motion token,
+     so reduced motion zeroes it with the rest; the spring's shape is
+     time-normalised and plays at whatever duration it is given. */
+  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+.sl-fx-press:active:not(:disabled) {
+  transform: scale(0.965);
+  /* Going down is quick and plain; the spring is for the way back. */
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+
+/* The press light, on ::before at z-index -1: above the host's own fill (the
+   host is a stacking context), below its label. It exists only while lit, so
+   an element at rest carries no layer at all. */
+.sl-fx-press.is-press-lit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--slfx-press-light) calc(var(--slfx-press) * 34%), transparent),
+    color-mix(in srgb, var(--slfx-press-light) calc(var(--slfx-press) * 10%), transparent) 60%,
+    transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--slfx-press-light) calc(var(--slfx-press) * 30%), transparent);
+}
+
+/* The spill, on a neighbour with no edge family of its own: an arc on its
+   ::after, on the border band, facing the pressed control. */
+.sl-fx-press.is-spill-lit:not(.sl-fx-glass, .sl-fx-aurora)::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(from calc(var(--slfx-spill-a) - 40deg),
+    transparent 0deg,
+    color-mix(in srgb, var(--slfx-press-light) calc(var(--slfx-spill) * 85%), transparent) 40deg,
+    transparent 80deg);
+  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;   /* Safari below 15.4 */
+  mask-composite: exclude;
+}
+/* …and on a glass or aurora neighbour, whose ::after is already the edge: the
+   spill joins the specular arc as one more layer of the same ring. The
+   specular layers read their properties with a fallback, because an aurora
+   host that is not glass never declares them. Geometry and background only
+   while the aurora is not lit — a lit aurora keeps the edge. */
+.sl-fx-press.is-spill-lit:is(.sl-fx-glass, .sl-fx-aurora):not(:focus-visible, :focus-within, [data-sl-fx-live])::after {
+  opacity: 1;
+  inset: -1px;
+  padding: 1px;
+  background:
+    conic-gradient(from calc(var(--slfx-spill-a) - 40deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--slfx-press-light) calc(var(--slfx-spill) * 85%), transparent) 40deg,
+      transparent 80deg),
+    conic-gradient(from calc(var(--slfx-spec-a, 0deg) - 38deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--slfx-spec-light, transparent) calc(var(--slfx-spec-i, 0) * 95%), transparent) 38deg,
+      transparent 76deg);
+  transition: opacity var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
 
 /* ══ AURORA — attention lives here ═══════════════════════════════════════════
    The border-beam recipe (libraries.dev/beam): a thin arc of light riding the

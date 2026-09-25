@@ -400,8 +400,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-radius: 50%;
   background: var(--slc-raised);
   transform: translateY(-50%);
+  /* The knob travels on the spring (--sl-motion-spring): one small overshoot
+     past its seat, then settled. */
   transition:
-    transform var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-mid, 220ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-switch__input:checked + .sl-switch__track {
