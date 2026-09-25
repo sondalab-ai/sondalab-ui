@@ -306,6 +306,7 @@ test("the specular loop reads every box before it writes, writes only changes, a
   const body = fnBody("mount");
   assert.match(body, /addEventListener\("scroll", onSpecLayout, \{ capture: true, passive: true \}\)/, "a scroll wakes it");
   assert.match(body, /addEventListener\("resize", onSpecLayout/, "and so does a resize");
+  assert.match(body, /collectSpecHosts\(n\);\s*\}\s*[^]*?onSpecLayout\(\);\s*\}\)\.observe\(root/, "and so does content moving the boxes");
 });
 
 test("the reduced-motion derogation is narrow, opt-in, and named so a reader cannot mistake it", async () => {

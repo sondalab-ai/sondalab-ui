@@ -1343,6 +1343,9 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
       watchNear(n);
       collectSpecHosts(n);
     }
+    // Content arriving or leaving can move a box under a resting pointer
+    // (a streamed card pushing the wall down): the specular loop looks again.
+    onSpecLayout();
   }).observe(root, { childList: true, subtree: true });
 
   // One delegated listener for the whole subtree, not one per element.
