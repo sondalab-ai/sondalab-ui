@@ -286,7 +286,26 @@ test("the specular edge writes nothing onto the host but its two properties", ()
   for (const k of ["--slfx-spec-a", "--slfx-spec-i"]) {
     assert.match(spec, new RegExp(`removeProperty\\("${k}"\\)`), `${k} must be removed when the edge goes dark`);
   }
-  assert.match(spec, /specRafId = lit \? requestAnimationFrame\(integrateSpec\) : 0;/, "the loop must stop itself once every edge is dark");
+  assert.match(spec, /specRafId = moving \? requestAnimationFrame\(integrateSpec\) : 0;/, "the loop must stop itself once every edge is dark or at rest");
+});
+
+// 0.16.0: with the pointer resting near glass the loop ran every frame
+// forever, re-writing the same strings, each host's read after the previous
+// host's write.
+test("the specular loop reads every box before it writes, writes only changes, and rests", () => {
+  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── press:"));
+  const integrate = spec.slice(spec.indexOf("function integrateSpec("), spec.indexOf("function onSpecLayout("));
+  const read = integrate.indexOf("getBoundingClientRect");
+  const write = integrate.indexOf("stepSpec(");
+  assert.ok(read > -1 && write > read, "all reads happen in a pass before the writes");
+  const step = spec.slice(spec.indexOf("function stepSpec("), spec.indexOf("function integrateSpec("));
+  assert.doesNotMatch(step, /getBoundingClientRect/, "a step reads no layout");
+  assert.match(step, /if \(a !== s\.a\)/, "an unchanged bearing is not written");
+  assert.match(step, /if \(i !== s\.i\)/, "nor an unchanged intensity");
+  assert.match(step, /return rest \? 2 : 1;/, "a host at rest does not keep the loop alive");
+  const body = fnBody("mount");
+  assert.match(body, /addEventListener\("scroll", onSpecLayout, \{ capture: true, passive: true \}\)/, "a scroll wakes it");
+  assert.match(body, /addEventListener\("resize", onSpecLayout/, "and so does a resize");
 });
 
 test("the reduced-motion derogation is narrow, opt-in, and named so a reader cannot mistake it", async () => {
