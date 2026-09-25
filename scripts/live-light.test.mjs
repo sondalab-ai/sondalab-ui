@@ -68,3 +68,18 @@ test("a role colour is converted to sRGB by painting it, never parsed", () => {
   assert.match(fn, /getImageData\(0, 0, 1, 1\)/, "and read back as a pixel");
   assert.doesNotMatch(fn, /\.match\(/, "no parsing of the computed string");
 });
+
+// spexr, 0.15.1: the run light still carried 18% alpha (46/255) 6px out, where the
+// canvas ended, so it stopped on a hard rectangle around the card.
+test("the canvas reaches as far as PAD says, and the light is gone by its edge", () => {
+  const pad = Number(/const PAD = (\d+);/.exec(js)[1]);
+  const rule = /\.sl-fx-live__canvas\s*\{([^}]*)\}/.exec(css)[1];
+  assert.match(rule, new RegExp(`inset:\\s*-${pad}px`), "the CSS inset is -PAD");
+  assert.match(rule, new RegExp(`width:\\s*calc\\(100% \\+ ${pad * 2}px\\)`), "the width adds PAD on both sides");
+  assert.match(rule, new RegExp(`height:\\s*calc\\(100% \\+ ${pad * 2}px\\)`), "and so does the height");
+  const run = js.slice(js.indexOf("const FS_RUN"), js.indexOf("const FS_BUSY"));
+  assert.match(run, /\(1\.-smoothstep\([^,]+,uPad,d\)\)/, "the outer light fades to zero at uPad");
+  // The bleed alone (exp(-d/3)*.5) must be negligible at PAD, so the fade is a
+  // soft shoulder rather than the thing hiding a cut.
+  assert.ok(0.5 * Math.exp(-pad / 3) < 0.005, `bleed at PAD=${pad} is below 0.5%`);
+});

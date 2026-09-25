@@ -1951,6 +1951,8 @@ A final point is architecture rather than a value, and belongs in the promotion:
 
 **Fixed in 0.15.1, found adopting 0.15.0 in spexr (2026-09-25).** Two defects, both reproduced in the browser. (1) Under high contrast `mount()` refuses, so no glass layers are built, yet `.sl-fx-glass` still dropped its own background and a glass primary kept the dark label meant for a translucent pane: transparent fill, transparent border, black on black. The host now gives up its fill only once the layers exist (`:where(.sl-glass)`), and the dark label applies only on a built pane, outside high contrast and outside an opt-out region. (2) `live-light.js` read a role colour by parsing `getComputedStyle().color` as bytes; a `color-mix()` computes to `oklab(...)`, which read as near-black and drew a dark smudge on the paper theme. The colour is now painted on a one-pixel 2D canvas and read back.
 
+**Fixed in 0.15.2, found in spexr on the same day.** The run light's canvas reached 6px past its host (`PAD` in `live-light.js`, the `inset` of `.sl-fx-live__canvas`), but the shader's outer bleed still carried 46/255 alpha (18%) at that distance, measured by reading the canvas back in the browser. It stopped on a hard rectangle around the card. `PAD` is now 16px, where the bleed is under 0.5%, and the run shader fades the outer light to exactly zero at `uPad`: 0/255 at the border, same 242/255 peak. An ancestor with `overflow` other than `visible` closer than 16px to a live host now clips the light; that is the consumer's layout to fix.
+
 ## Notes
 
 Open questions, and the record of the ones now closed. Each open item blocks the criteria named beside it.
