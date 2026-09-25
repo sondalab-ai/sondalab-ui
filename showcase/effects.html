@@ -390,7 +390,7 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">child span, never the host</span>
-            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim" id="delete-branch">
+            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press" id="delete-branch">
               <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
             </button>
             <p class="cap">Click to re-resolve. The button itself is a glass pane with the aurora's rim; the glitch sits on its child, never on <b>.sl-btn</b> directly.</p>
@@ -407,14 +407,14 @@
                 <span class="sl-fx-glitch__shard" style="--slfx-i:4; --slfx-n:5">No signal</span>
               </span>
             </span>
-            <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane" id="simulate-loss">Simulate signal loss</button>
+            <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-press" id="simulate-loss">Simulate signal loss</button>
             <p class="cap">Five bands, each carrying <b>--slfx-i</b> (0…4) and <b>--slfx-n</b> (5) inline — the <b>clip-path</b> divides by them. A shard missing either variable has an invalid <b>clip-path</b> and silently does not render.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">scramble — decode readout</span>
             <div class="g-demo">
               <span class="sl-tag" id="probe-tag" data-num="8f2a">8f2a</span>
-              <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane" id="rerun-probe">Re-run</button>
+              <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-press" id="rerun-probe">Re-run</button>
             </div>
             <p class="cap"><b>scramble()</b> cycles random glyphs and locks the real characters left to right, terminal-readout style — a text change, not motion, so it is safe under reduced motion.</p>
           </div>
@@ -483,7 +483,7 @@
           </div>
           <div class="g-cell">
             <span class="g-label">busy button</span>
-            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
+            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press" data-sl-fx-live="busy" aria-busy="true" disabled>Submitting…</button>
             <p class="cap">A filled button has only a transparent border, which its fill paints under — so <b>--rim</b> steps the ring outside the box, hugging the fill, and swaps the beam to the depth companion: the accent is what the fill is made of. While busy the button keeps full opacity; it is working, not unavailable.</p>
           </div>
           <div class="g-cell" style="padding:0">
@@ -542,8 +542,8 @@
             <span class="g-label">edge — the light faces the pointer</span>
             <div class="g-demo g-demo--substrate">
               <div class="substrate__row">
-                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--sweep">Cancel</button>
-                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--sweep sl-fx-press">Cancel</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press">Run probe</button>
               </div>
             </div>
             <p class="cap">Move the pointer toward either, slowly. The pane bends and splits the substrate behind it; the arc lives on the border facing the light and turns as the pointer moves round; over the button it dims, because a light overhead grazes the edge less. The rim aurora still takes a filled button's edge when it lights.</p>
@@ -604,7 +604,7 @@
             <div class="g-demo" style="align-items:flex-end; gap:1.4rem">
               <figure class="sl-figure" style="width:9.5rem; margin:0">
                 <div class="sl-figure__media sl-fx-glass sl-fx-glass--wide" style="aspect-ratio: 16 / 9">
-                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane">Open</button>
+                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane sl-fx-press">Open</button>
                 </div>
                 <figcaption class="sl-figure__caption">stood down</figcaption>
               </figure>
@@ -612,7 +612,7 @@
                 <!-- The default put back by hand. This is the defect, not a
                      second way to write the composition. -->
                 <div class="sl-figure__media" style="aspect-ratio: 16 / 9; --slfx-pane-swell: 1.03">
-                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane">Open</button>
+                  <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane clip-pane sl-fx-press">Open</button>
                 </div>
                 <figcaption class="sl-figure__caption">swell left on</figcaption>
               </figure>
@@ -620,7 +620,7 @@
                 <span class="sl-monogram" aria-hidden="true">s</span>
               </button>
             </div>
-            <p class="cap">Hover the first two. <b>.sl-figure__media</b> sizes its contents and clips them (<b>overflow: hidden</b>), so a pane filling it has nowhere to swell into: at <b>1.03</b> its 1px rim and the glint along its top cross the wrapper's edge and are cut, and the pane loses its edge at exactly the moment it is being pointed at. <b>compositions.css</b> binds <b>--slfx-pane-swell: 1</b> there. <b>.sl-avatar</b> clips as well and is deliberately left out: its contract admits an image or the monogram rather than a pane, and the composition it does have with glass is <em>being</em> a pane — a clickable avatar — whose swell nothing clips. The property is read with its default <em>at the point of use</em> in <b>effects.css</b> — never declared on the pane — which is what lets a value set on the wrapper reach the pane and the light seated before it together.</p>
+            <p class="cap">Press the first two. Since 0.13 a pane no longer grows under the pointer (the press lights it instead, <b>sl-fx-press</b>); it only sinks while pressed, by a third of <b>--slfx-pane-swell</b>. <b>.sl-figure__media</b> clips its contents, and <b>compositions.css</b> still binds <b>--slfx-pane-swell: 1</b> there so a wrapper that scales the pane itself does not compose two scales.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">switch track — withdrawn: the track's own <code>::after</code> is the knob</span>
@@ -638,9 +638,9 @@
             <span class="g-label">button group — glass on the members, never on the group</span>
             <div class="g-demo" style="display:grid; gap:1.2rem; justify-items:start">
               <div class="sl-btn-group" role="group" aria-label="Probe">
-                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane">Run</button>
-                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane">Re-run</button>
-                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane">Save</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-press">Run</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-press">Re-run</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-press">Save</button>
               </div>
             </div>
             <p class="cap">They are text buttons, so panes are not wrong — but the glass never goes on <b>.sl-btn-group</b> itself. A group's <b>background</b> is not a surface; it <b>is</b> the 1px rule between its members, and the material clears whatever background the host had so its own tint layer can paint instead. Measured on the group: glass on it took the computed background to <b>rgba(0, 0, 0, 0)</b> — the rule between members gone, silently. Left on the members, as above, that background survives untouched (<b>--slc-border</b>). A second, independent reason stacks on top of the first: the group also clips (<b>overflow: hidden</b>), so the shared ring — drawn at <b>inset: -1px</b> — would be cut at the group's own edges regardless of the background question.</p>
@@ -724,8 +724,8 @@
             <div class="g-cell">
               <span class="g-label">button — primary · ghost · round icon-only</span>
               <div class="g-demo">
-                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
-                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora">Cancel</button>
+                <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press">Run probe</button>
+                <button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-press">Cancel</button>
                 <button class="sl-icon-btn sl-icon-btn--round sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send">
                   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
@@ -798,8 +798,8 @@
                 </span></h3>
                 <p class="sl-dialog__body">This clears the cached probe answer. The next call re-runs the tool.</p>
                 <div class="sl-dialog__actions">
-                  <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane">Keep</button>
-                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
+                  <button class="sl-btn sl-btn--ghost sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-press">Keep</button>
+                  <button class="sl-btn sl-btn--primary sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press" data-sl-fx-live="busy" aria-busy="true">Discarding…</button>
                 </div>
               </dialog>
               <p class="cap">Shatters in once on open — fired here on mount. Per the table its rim stays lit for as long as the dialog is open; this page keeps its one ambient <b>grantLive()</b> grant on the card in §03, so this dialog shows its resting and busy states only, not the sweep.</p>
@@ -857,7 +857,7 @@
         <div class="fx-off">
           <p class="sl-eyebrow">data-sl-fx="off" — subtree opt-out</p>
           <div data-sl-fx="off" class="g-demo">
-            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim">Run probe</button>
+            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press">Run probe</button>
             <article class="sl-card sl-fx-glass sl-fx-aurora" data-sl-fx-live="on" style="padding:1rem;max-width:20rem">
               <p class="sl-card__body">Inert inside this region — no pane, no ring, no glitch, regardless of the classes present.</p>
             </article>

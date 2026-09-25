@@ -249,6 +249,16 @@
       "roleVars": []
     },
     {
+      "id": "fx-press",
+      "kind": "effect",
+      "classes": [
+        "sl-fx-press"
+      ],
+      "roleVars": [
+        "--slc-accent"
+      ]
+    },
+    {
       "id": "fx-glitch",
       "kind": "effect",
       "classes": [

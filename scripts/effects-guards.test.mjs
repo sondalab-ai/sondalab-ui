@@ -293,9 +293,14 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 7,
-    `exactly seven edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 9,
+    `exactly nine edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
+  // Nine since 2026-09-25 (re-scope R2): the press's spill paints a
+  // neighbour's edge, once on a host with no edge family and once folded into
+  // the glass/aurora ring.
+  assert.ok(declaring.some((s) => s === ".sl-fx-press.is-spill-lit:not(.sl-fx-glass, .sl-fx-aurora)::after"), "the plain spill must be one");
+  assert.ok(declaring.some((s) => s.startsWith(".sl-fx-press.is-spill-lit:is(.sl-fx-glass, .sl-fx-aurora)")), "the spill on a ring must be one");
   // Seven since 2026-09-24 (re-scope R1): the pane's body and its lit,
   // dispersing edge were retired, and the glass's specular edge took one slot.
   // It was nine for part of 2026-09-12, the ninth a fringe of filaments hanging
@@ -339,7 +344,7 @@ test("only shape re-declares the ring background; states rebind the stops", () =
 // either sit behind an interaction state in its selector, or be scaled to
 // nothing by --slfx-lit, which effects.js only ever writes on the one element
 // under the pointer.
-const LIT_STATE = /:hover|:focus-visible|:focus-within|\.is-glass-lit|\.is-spec-lit|\[data-sl-fx-live/;
+const LIT_STATE = /:hover|:focus-visible|:focus-within|\.is-glass-lit|\.is-spec-lit|\.is-spill-lit|\.is-press-lit|\[data-sl-fx-live/;
 
 // The translucency mix replaces the component's own background, so the fill it
 // names has to BE that background. Nothing in the cascade catches a wrong
@@ -738,4 +743,26 @@ test("every wrapper that clips a filling glass pane stands its swell down", () =
         "the reason a glass pane cannot fill it",
     );
   }
+});
+
+test("the press lights only while lit, never at the pointer, and both kill switches hide it", () => {
+  // Re-scope R2 (owner, 2026-09-25). The light is the control's own body; the
+  // spill is an arc on a neighbour's facing edge. Neither exists at rest.
+  const body = RULES.find((r) => r.selector === ".sl-fx-press.is-press-lit::before");
+  assert.ok(body, "the press light must be its own rule, and only while lit");
+  assert.match(body.body, /z-index:\s*-1/, "under the label");
+  const mixes = (body.body.match(/color-mix\(/g) ?? []).length;
+  const gated = (body.body.match(/var\(--slfx-press\)/g) ?? []).length;
+  assert.ok(mixes > 0 && gated === mixes, `every colour term scales with --slfx-press (${gated}/${mixes})`);
+  assert.doesNotMatch(body.body, /radial-gradient/, "a disc is a brush, not a light");
+  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
+    for (const pe of ["::before", "::after"]) {
+      const killed = RULES.some(
+        (r) => r.selector.includes(attr) && r.selector.includes(`.sl-fx-press${pe}`) && /display:\s*none/.test(r.body),
+      );
+      assert.ok(killed, `[${attr}] must hide the press's ${pe}`);
+    }
+  }
+  const sink = RULES.find((r) => r.selector === ".sl-fx-press");
+  assert.match(sink.body, /var\(--sl-motion-spring/, "the return runs on the spring token");
 });

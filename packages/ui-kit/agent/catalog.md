@@ -356,7 +356,7 @@ Four things that bite, in the order they usually bite:
 
 | Component | Canonical string |
 |---|---|
-| Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane` |
+| Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-press` |
 | Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
 | Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
 | Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
@@ -449,6 +449,17 @@ These are one substance. A container carries `sl-fx-goo` and owns one injected s
 ```
 Bind `--slfx-goo-weld` (default `14px`) — the largest gap between two **members, as laid out**, that still welds, measured **edge to edge between facing sides**, so a grid's diagonals stand further apart than its `gap` and stay open. `--slfx-goo-reach` (default `3px`) is the rim the substance shows past a member with no neighbour, and a floor rather than a target. `--slfx-goo-soft` (default `5px`) caps the blur: dilation and blur both close a gap, but dilation preserves the outline while blur melts it, so raise `soft` for a more liquid neck and lower it for a crisper one. `--slfx-goo-fill` is the substance every member stands on.
 Consumes: `--slfx-goo-fill` under every member, and each member's own computed `background-color` composited over it at the component's own alpha — so a tinted member stays a tint and a member with no fill is simply the substance. A member that welds to a neighbour gives up its own **border** and its own **background**, and the substance paints it: an outline drawn across a merged mass reads as a card stacked on a blob, and an opaque rectangular box covering a neighbour's substance reads as boxes stepped over one another rather than as drops merging. Handing the paint over moves that colour boundary inside the filter, where the blur softens it. The member keeps its text. One standing alone keeps both. **Never a form control or a link.** `button`, `input`, `select`, `textarea` and `a[href]` are refused a field outright, marked or not: they paint their own chrome through layers this family does not own, so a welded control kept an outline the substance was meant to replace. Use a standard element — and a `div[role="button"][tabindex="0"]` where a member must be operable, which paints nothing of its own. Do: mark members explicitly — membership is a class, never "every child of the container". Members may also **move**: a drag or an arrow-key nudge re-welds, because the field re-measures per frame while a pointer or the focus is inside the container (and not at all otherwise). Place a movable member with insets or `margin`, never with a `transform` — a transform moves the painted element without moving the box `getBoundingClientRect()` reports, and the silhouette stays behind. Do: give the container padding — the substance reaches `--slfx-goo-reach` plus three blur sigmas (~34px at the default weld) past the outermost member, and an ancestor that clips cuts it along a straight line. Don't: expect a neck between members whose own fills are both near the ground's colour — the weld is there, but nothing separates it from the background.
+
+### Press — `sl-fx-press`
+**You acted on this.** Pressing the control lights it from within: the light rises from its own lower body. Press controls within 48px catch that light on the edge that faces it, the way a lit key lights the keys beside it. On release both fade on their own clocks, and the control's sink returns on the spring token `--sl-motion-spring`. Enter and Space press exactly like a click. Tier 1 (`mount()`); without it a press is the component's own `:active` and the spring sink. Substrate: **A** App/Page.
+```html
+<div style="display:flex; gap:0.6rem">
+  <button class="sl-btn sl-btn--primary sl-fx-press">Run probe</button>
+  <button class="sl-btn sl-btn--ghost sl-fx-press">Cancel</button>
+</div>
+```
+Put it on every control in a group, not one: the spill only reaches other `sl-fx-press` hosts. It composes with glass (the spill joins the glass edge as one more layer). `mount()` writes `--slfx-press`, `--slfx-spill` and `--slfx-spill-a`, and the classes `is-press-lit` / `is-spill-lit` while lit.
+Consumes: `--slc-accent`. Don't: put it on a switch, checkbox or radio — their own state change is the answer to the press. Don't: put it on a component whose `::before` is load-bearing; the press light paints there while lit.
 
 ### Glitch — `sl-fx-glitch` (`--shatter`)
 Something re-resolved. A finite burst, fired from JavaScript on a discrete event. Always a child span, never the component itself. Substrate: **A** App/Page.

@@ -279,7 +279,7 @@ test("the specular edge writes nothing onto the host but its two properties", ()
   // The edge is CSS drawing from two numbers: the light's bearing and how lit
   // the edge is. No colour, no filter, no geometry — so a host the light has
   // left is exactly what it was.
-  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── glitch"));
+  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── press:"));
   const writes = [...spec.matchAll(/style\.setProperty\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
   assert.deepEqual(writes.sort(), ["--slfx-spec-a", "--slfx-spec-i"], `wrote ${writes}`);
   assert.doesNotMatch(spec, /\.style\.(?:background|filter|color|border|transform)/, "no real property may be written");
@@ -412,7 +412,7 @@ test("the specular edge springs its direction as a vector, frame-rate independen
   // The owner's note on the first probe: a pointer crossing the element made
   // the light switch sides almost at once. Sprung as a vector, a crossing
   // dims, turns and re-brightens instead of snapping 180 degrees.
-  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── glitch"));
+  const spec = js.slice(js.indexOf("const SPEC_HOSTS"), js.indexOf("/* ── press:"));
   assert.match(spec, /s\.dx \+= \(nx - s\.dx\) \* kd;/, "the direction's x is sprung");
   assert.match(spec, /s\.dy \+= \(ny - s\.dy\) \* kd;/, "and its y");
   assert.match(spec, /Math\.hypot\(s\.dx, s\.dy\)/, "the vector's length dims the arc through a crossing");
@@ -516,7 +516,8 @@ test("a seated glow swells with the pane it hangs in", () => {
     assert.ok(at > -1, `the glow must mirror the pane's ${state}`);
     return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
   };
-  for (const state of [":hover", ":active"]) {
+  // The hover lift retired with re-scope R2 (2026-09-25); the press sink stays.
+  for (const state of [":active"]) {
     assert.equal(glowScale(state), paneScale(state), `${state}: the light must swell exactly as its pane does`);
   }
 
@@ -526,4 +527,29 @@ test("a seated glow swells with the pane it hangs in", () => {
   assert.match(glowRest, /transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
     "the way out is the pane's own curve");
   assert.match(glowRest, /opacity/, "and lighting up is still a fade, not a jump");
+});
+
+test("the press writes nothing but its three properties, and lets go when dark", () => {
+  const press = js.slice(js.indexOf("const PRESS_HOSTS"), js.indexOf("/* ── glitch"));
+  const writes = [...press.matchAll(/style\.setProperty\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(writes)].sort(), ["--slfx-press", "--slfx-spill", "--slfx-spill-a"], `wrote ${writes}`);
+  assert.doesNotMatch(press, /\.style\.(?:background|filter|color|border|transform)/, "no real property may be written");
+  assert.match(press, /for \(const k of \["--slfx-press", "--slfx-spill", "--slfx-spill-a"\]\) el\.style\.removeProperty\(k\);/,
+    "all three leave when the host goes dark");
+  assert.match(press, /pressRafId = lit \? requestAnimationFrame\(integratePress\) : 0;/, "the loop stops itself");
+  const reach = Number(/const PRESS_REACH = (\d+);/.exec(press)[1]);
+  assert.ok(reach > 0 && reach <= 64, `neighbours within reach only (${reach}px)`);
+  // Falls slower than it rises: a release must not snap the room dark.
+  const tin = Number(/const PRESS_TAU_IN = ([\d.]+);/.exec(press)[1]);
+  const tout = Number(/const PRESS_TAU_OUT = ([\d.]+);/.exec(press)[1]);
+  assert.ok(tout > tin, `fade (${tout}) slower than rise (${tin})`);
+});
+
+test("a keyboard press is the same act as a click", () => {
+  const press = js.slice(js.indexOf("const PRESS_HOSTS"), js.indexOf("/* ── glitch"));
+  assert.match(press, /ev\.key !== "Enter" && ev\.key !== " "/, "Enter and Space press");
+  const mounted = fnBody("mount");
+  for (const ev of ['"pointerdown", onPressDown', '"keydown", onPressKey', '"keyup", onPressKey', '"pointerup", pressEnd', '"pointercancel", pressEnd']) {
+    assert.ok(mounted.includes(ev), `mount() must listen for ${ev}`);
+  }
 });

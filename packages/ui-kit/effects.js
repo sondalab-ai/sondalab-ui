@@ -1,5 +1,6 @@
 /* @sondalab/ui-kit — effects.js
-   Hand-authored Tier 1 driver for effects.css: the glass's specular edge, the
+   Hand-authored Tier 1 driver for effects.css: the press light and its spill,
+   the glass's specular edge, the
    liquid's silhouette, the glitch's timing and the aurora's one-per-document
    grant.
    Contract: docs/specs/2026-09-08-effects-layer-design.md
@@ -480,6 +481,117 @@ function ensureSpecLoop() {
   if (specRafId) return;
   specPrevT = performance.now();
   specRafId = requestAnimationFrame(integrateSpec);
+}
+
+/* ── press: you acted on this ────────────────────────────────────────────────
+   Re-scope R2 (owner's pick A, 2026-09-25). A press lights the control from
+   within; controls within PRESS_REACH catch the light on the edge that faces
+   it. Three custom properties per lit host and nothing else — --slfx-press,
+   --slfx-spill, --slfx-spill-a — and effects.css draws from them. The light
+   rises fast and falls on a slower, light-like decay, each value on its own
+   clock, so a release does not snap the room dark. Pointer and keyboard both
+   press: Enter and Space on a focused control are the same act as a click. */
+const PRESS_HOSTS = ".sl-fx-press";
+/** How far a neighbour may sit from the pressed control and still catch it. */
+const PRESS_REACH = 48;
+/** Rise and fall time constants, in seconds: the press is quick to light and
+ *  slower to fade; the spill lags it a little both ways. */
+const PRESS_TAU_IN = 0.04;
+const PRESS_TAU_OUT = 0.22;
+const SPILL_TAU_IN = 0.05;
+const SPILL_TAU_OUT = 0.3;
+const PRESS_SETTLE = 0.004;
+
+const pressState = new Map();
+let pressedEl = null;
+let pressRafId = 0;
+let pressPrevT = 0;
+
+function pressOf(el) {
+  let s = pressState.get(el);
+  if (!s) {
+    s = { p: 0, s: 0, pt: 0, st: 0 };
+    pressState.set(el, s);
+  }
+  return s;
+}
+
+/** Light the pressed control, and every press host within reach on the edge
+ *  that faces it.
+ *  @param {Element} el the control being pressed */
+function pressStart(el) {
+  if (el.matches(":disabled") || el.closest('[data-sl-fx="off"]')) return;
+  pressedEl = el;
+  pressOf(el).pt = 1;
+  el.classList.add("is-press-lit");
+  const r = el.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  for (const n of el.ownerDocument.querySelectorAll(PRESS_HOSTS)) {
+    if (n === el || n.closest('[data-sl-fx="off"]')) continue;
+    const nr = n.getBoundingClientRect();
+    const gap = Math.max(nr.left - r.right, r.left - nr.right, nr.top - r.bottom, r.top - nr.bottom, 0);
+    if (gap > PRESS_REACH) continue;
+    pressOf(n).st = 1 - gap / PRESS_REACH;
+    // The conic bearing of the neighbour's edge that faces the pressed
+    // control: 12 o'clock is 0, clockwise, as on the specular edge.
+    const bearing = (Math.atan2(cy - (nr.top + nr.height / 2), cx - (nr.left + nr.width / 2)) * 180) / Math.PI + 90;
+    n.style.setProperty("--slfx-spill-a", `${bearing.toFixed(1)}deg`);
+    n.classList.add("is-spill-lit");
+  }
+  ensurePressLoop();
+}
+
+function pressEnd() {
+  if (!pressedEl) return;
+  pressOf(pressedEl).pt = 0;
+  for (const s of pressState.values()) s.st = 0;
+  pressedEl = null;
+  ensurePressLoop();
+}
+
+function onPressDown(ev) {
+  const el = ev.target instanceof Element ? ev.target.closest(PRESS_HOSTS) : null;
+  if (el) pressStart(el);
+}
+
+function onPressKey(ev) {
+  if (ev.key !== "Enter" && ev.key !== " ") return;
+  const el = ev.target instanceof Element ? ev.target.closest(PRESS_HOSTS) : null;
+  if (!el) return;
+  if (ev.type === "keydown" && !ev.repeat) pressStart(el);
+  else if (ev.type === "keyup") pressEnd();
+}
+
+function releasePress(el) {
+  pressState.delete(el);
+  el.classList.remove("is-press-lit", "is-spill-lit");
+  for (const k of ["--slfx-press", "--slfx-spill", "--slfx-spill-a"]) el.style.removeProperty(k);
+  if (!el.getAttribute("style")) el.removeAttribute("style");
+}
+
+function integratePress(now) {
+  const dt = Math.min((now - pressPrevT) / 1000 || 1 / 60, 1 / 20);
+  pressPrevT = now;
+  let lit = false;
+  for (const [el, s] of pressState) {
+    s.p += (s.pt - s.p) * (1 - Math.exp(-dt / (s.pt > s.p ? PRESS_TAU_IN : PRESS_TAU_OUT)));
+    s.s += (s.st - s.s) * (1 - Math.exp(-dt / (s.st > s.s ? SPILL_TAU_IN : SPILL_TAU_OUT)));
+    if (!el.isConnected || (s.pt === 0 && s.st === 0 && s.p < PRESS_SETTLE && s.s < PRESS_SETTLE)) {
+      releasePress(el);
+      continue;
+    }
+    lit = true;
+    el.style.setProperty("--slfx-press", s.p.toFixed(3));
+    el.style.setProperty("--slfx-spill", s.s.toFixed(3));
+  }
+  pressRafId = lit ? requestAnimationFrame(integratePress) : 0;
+}
+
+function ensurePressLoop() {
+  if (pressRafId) return;
+  pressPrevT = performance.now();
+  pressRafId = requestAnimationFrame(integratePress);
 }
 
 /* ── glitch ──────────────────────────────────────────────────────────────────
@@ -1137,6 +1249,11 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   root.addEventListener("pointermove", onPointerMove, { passive: true });
   root.addEventListener("pointerleave", onPointerLeave, { capture: true, passive: true });
   window.addEventListener("pointerout", onSpecOut, { passive: true });
+  root.addEventListener("pointerdown", onPressDown, { passive: true });
+  window.addEventListener("pointerup", pressEnd, { passive: true });
+  window.addEventListener("pointercancel", pressEnd, { passive: true });
+  root.addEventListener("keydown", onPressKey);
+  root.addEventListener("keyup", onPressKey);
 
   html.setAttribute("data-sl-fx", "on");
   armed = true;
