@@ -153,6 +153,54 @@ export function channelScales(capped, disperse) {
   return { r: capped - split / 2, g: capped, b: capped + split / 2 };
 }
 
+/** The convex bulge's default: magnification at the pane's centre, as a
+ *  fraction. The owner's pick (re-scope R5, 2026-09-25) was the shipped lens
+ *  "with a slightly convex distortion", looked at from 3% to 40% on
+ *  lab/r5-convex.html, and chose 40%. Readable from CSS as --slg-lens-bulge. */
+export const BULGE = 0.4;
+
+/** Where the convex stage samples from, as a shift in CSS px, for a point
+ *  (px, py) measured from the pane's centre in a box of half-size (hw, hh).
+ *  The shift pulls toward the centre by `m * (1 - rho²)`, rho the point's
+ *  elliptical radius: strongest in the middle, zero at the rim and beyond,
+ *  so it meets the rim bend without doubling it. A pure function, so the
+ *  shape can be held to its invariants by a test.
+ *  @returns {[number, number]} */
+export function convexShift(px, py, hw, hh, m) {
+  const rho2 = Math.min(1, (px / hw) ** 2 + (py / hh) ** 2);
+  const k = m * (1 - rho2);
+  return [-px * k, -py * k];
+}
+
+/** The convex stage's map for a w x h box.
+ *  @returns {{href: string, scale: number}} */
+function buildConvexMap(w, h, m) {
+  const data = new Uint8ClampedArray(w * h * 4);
+  const raw = new Float32Array(w * h * 2);
+  let max = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const [dx, dy] = convexShift(x + 0.5 - w / 2, y + 0.5 - h / 2, w / 2, h / 2, m);
+      raw[(y * w + x) * 2] = dx;
+      raw[(y * w + x) * 2 + 1] = dy;
+      max = Math.max(max, Math.abs(dx), Math.abs(dy));
+    }
+  }
+  const norm = max || 1;
+  for (let i = 0; i < w * h; i++) {
+    data[i * 4] = (raw[i * 2] / norm) * 127.5 + 127.5;
+    data[i * 4 + 1] = (raw[i * 2 + 1] / norm) * 127.5 + 127.5;
+    data[i * 4 + 3] = 255;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext("2d").putImageData(new ImageData(data, w, h), 0, 0);
+  // feDisplacementMap moves by scale * (C - 0.5): a full channel swing is
+  // `scale`, so twice the largest shift maps 0..255 onto -max..+max.
+  return { href: canvas.toDataURL(), scale: max * 2 };
+}
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /**
@@ -220,7 +268,7 @@ export function lens(el, look = {}) {
   // no room gets the widest prism it can hold instead of a red channel
   // displaced backwards. Before that bound this default would have broken ten
   // of sixteen aurora hosts.
-  const { blur = 1.5, saturate = 1.1, brightness = 1.05, disperse = 90, reach = 6 } = look;
+  const { blur = 2.5, saturate = 1.1, brightness = 1.05, disperse = 90, reach = 6 } = look;
   const id = `sl-lens-${serial++}`;
 
   const svg = document.createElementNS(SVG_NS, "svg");
@@ -283,6 +331,19 @@ export function lens(el, look = {}) {
   const dispG = displace("chG", "dG");
   const dispB = displace("chB", "dB");
 
+  /* ── THE BULGE: a slab that is convex ───────────────────────────────────
+     A second, independent stage on the prism's output: the pane magnifies
+     what is behind it, most at the centre and not at all at the rim (see
+     convexShift). Independent so the rim bend and the prism keep exactly the
+     numbers they were fitted at; only this stage's strength is new. */
+  const feConvex = document.createElementNS(SVG_NS, "feImage");
+  feConvex.setAttribute("result", "convexMap");
+  const dispConvex = document.createElementNS(SVG_NS, "feDisplacementMap");
+  dispConvex.setAttribute("in", "out");
+  dispConvex.setAttribute("in2", "convexMap");
+  dispConvex.setAttribute("xChannelSelector", "R");
+  dispConvex.setAttribute("yChannelSelector", "G");
+
   filter.append(
     feImage,
     channel("chR", 1, 0, 0), dispR,
@@ -290,6 +351,7 @@ export function lens(el, look = {}) {
     channel("chB", 0, 0, 1), dispB,
     add("dR", "dG", "dRG"),
     add("dRG", "dB", "out"),
+    feConvex, dispConvex,
   );
   const defs = document.createElementNS(SVG_NS, "defs");
   defs.append(filter);
@@ -378,6 +440,15 @@ export function lens(el, look = {}) {
     dispR.setAttribute("scale", String(bend.r));
     dispG.setAttribute("scale", String(bend.g));
     dispB.setAttribute("scale", String(bend.b));
+
+    // The bulge, read from CSS like reach and disperse; 0 turns it off.
+    const askedBulge = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-bulge"));
+    const bulge = Number.isFinite(askedBulge) ? Math.max(0, askedBulge) : BULGE;
+    const convex = buildConvexMap(w, h, bulge);
+    feConvex.setAttribute("width", String(w));
+    feConvex.setAttribute("height", String(h));
+    feConvex.setAttribute("href", convex.href);
+    dispConvex.setAttribute("scale", String(bulge > 0 ? convex.scale : 0));
   }
 
   refresh();
@@ -391,7 +462,10 @@ export function lens(el, look = {}) {
   // transition or keyframe interpolates them instead of snapping.
   el.style.backdropFilter =
     `url(#${id}_filter) blur(var(--slg-lens-blur, ${blur}px)) ` +
-    `saturate(var(--slg-lens-sat, ${saturate})) brightness(${brightness})`;
+    `saturate(var(--slg-lens-sat, ${saturate})) brightness(${brightness}) ` +
+    // The calmer backdrop (glass.css, --slg-lens-contrast): last, so it softens
+    // what the lens and the frost already made of the page behind.
+    `contrast(var(--slg-lens-contrast, 0.72))`;
 
   return {
     refresh,

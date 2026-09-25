@@ -85,3 +85,49 @@ test("the 90 default degrades silently on a small host, and that is what makes i
   assert.equal(+(b - r).toFixed(2), 21.6, "and at 64.8px it fits exactly, red landing on zero");
   assert.equal(r, 0);
 });
+
+/* ── the convex bulge (re-scope R5, owner's pick: +40%, 2026-09-25) ───────── */
+const { convexShift, BULGE } = await import(resolve(KIT, "glass-lens.js"));
+
+test("the bulge's default is the owner's 40%", () => {
+  assert.equal(BULGE, 0.4);
+});
+
+test("the bulge magnifies toward the centre, and leaves the rim alone", () => {
+  const [hw, hh] = [160, 60];
+  // A point halfway out samples from nearer the centre: a magnifier.
+  const [dx, dy] = convexShift(80, 30, hw, hh, BULGE);
+  assert.ok(dx < 0 && dy < 0, "the sample is pulled toward the centre");
+  // At the rim and beyond, nothing: it meets the rim bend without doubling it.
+  for (const [px, py] of [[hw, 0], [0, hh], [hw * 0.8, hh * 0.8], [hw * 2, 0]]) {
+    const [rx, ry] = convexShift(px, py, hw, hh, BULGE);
+    assert.equal(Math.abs(rx) + Math.abs(ry) < 1e-9 || Math.hypot(px / hw, py / hh) < 1, true,
+      `no shift at or past the rim (${px}, ${py})`);
+  }
+  // The centre itself stays put (a lens magnifies around a fixed point).
+  assert.deepEqual(convexShift(0, 0, hw, hh, BULGE).map((v) => Math.abs(v)), [0, 0]);
+  // And 0 turns it off.
+  assert.deepEqual(convexShift(80, 30, hw, hh, 0).map((v) => Math.abs(v)), [0, 0]);
+});
+
+/* ── reading on glass (owner's pick, 2026-09-25): halo + calmer backdrop ──── */
+import { readFileSync } from "node:fs";
+const lensJs = readFileSync(resolve(KIT, "glass-lens.js"), "utf8");
+const glassCss = readFileSync(resolve(KIT, "glass.css"), "utf8");
+const fxCss = readFileSync(resolve(KIT, "effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+test("the backdrop behind a pane is calmed, last in both frost chains", () => {
+  assert.match(glassCss, /@property --slg-lens-contrast \{ syntax: "<number>"; inherits: true; initial-value: 0\.72; \}/);
+  assert.match(lensJs, /brightness\(\$\{brightness\}\) ` \+[\s\S]*?`contrast\(var\(--slg-lens-contrast, 0\.72\)\)`/,
+    "the lensed chain ends with the contrast step");
+  assert.match(glassCss, /\.sl-glass__backdrop \{[^}]*contrast\(var\(--slg-lens-contrast, 0\.72\)\)/,
+    "and so does the unlensed frost, so a browser without the lens reads the same");
+});
+
+test("the text halo sits on glass surfaces only, and both kill switches remove it", () => {
+  const halo = /\.sl-fx-glass:not\(\.sl-btn, \.sl-icon-btn, \.sl-fx-glass--text\) \{\s*text-shadow:/;
+  assert.match(fxCss, halo, "surfaces, never a button's label or a letterform");
+  assert.doesNotMatch(fxCss, /text-shadow:[^;]*#[0-9a-f]{3,8}/i, "the halo is the pane's own tint, never a literal");
+  const kill = fxCss.slice(fxCss.indexOf(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
+  assert.match(kill.slice(0, kill.indexOf("}")), /text-shadow: none !important;/, "high contrast and the opt-out take it away");
+});
