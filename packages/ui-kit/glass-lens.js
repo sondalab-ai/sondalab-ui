@@ -268,7 +268,7 @@ export function lens(el, look = {}) {
   // no room gets the widest prism it can hold instead of a red channel
   // displaced backwards. Before that bound this default would have broken ten
   // of sixteen aurora hosts.
-  const { blur = 5, saturate = 1.1, brightness = 1.05, disperse = 90, reach = 6 } = look;
+  const { blur = 2.5, saturate = 1.1, brightness = 1.05, disperse = 90, reach = 6 } = look;
   const id = `sl-lens-${serial++}`;
 
   const svg = document.createElementNS(SVG_NS, "svg");

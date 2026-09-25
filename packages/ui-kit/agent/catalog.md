@@ -389,7 +389,7 @@ The edge below is chrome on the border. This is the **surface inside it**, and i
 |---|---|---|
 | `--slg-lens-reach` | `18px` on aurora hosts, `6px` otherwise | how far the light bends, in pixels |
 | `--slg-lens-bulge` | `0.4` | the convex bulge: magnification at the pane's centre, nothing at the rim; `0` turns it off |
-| `--slg-lens-blur` | `5px` | the lensed pane's own frost (raised from 1.5px for legibility once the bulge carried the distortion) |
+| `--slg-lens-blur` | `2.5px` | the lensed pane's own frost (raised from 1.5px for legibility once the bulge carried the distortion) |
 | `--slg-lens-disperse` | `90` | the prism, as a **pixel budget**: 0.24px of red-to-blue per unit, so 90 is 21.6px |
 
 Four facts that decide whether your pane looks like glass or like nothing:
@@ -401,7 +401,7 @@ Four facts that decide whether your pane looks like glass or like nothing:
 
 The prism is bounded in `glass-lens.js`, not by you: the split can never exceed twice the bend, so a box with no room gets the widest prism it can hold rather than a red channel displaced backwards. In practice a host from ~65px up gets the full 21.6px and anything smaller degrades smoothly — a 40px button to 13.3px, a 32px icon button to 10.4px.
 
-**Don't**: lower `--slg-lens-bulge` and keep the 5px frost — without the bulge the frost erases the rim bend and the pane reads as a plain frosted box.
+**Don't**: lower `--slg-lens-bulge` and raise the frost — without the bulge the frost erases the rim bend and the pane reads as a plain frosted box.
 
 ### Glass edge — `sl-fx-glass` (`--wide` · `--field`)
 The pointer is a light above the surface: a narrow arc of warm white wakes on the border facing it, from 140px before the pointer arrives, and on paper a soft shade answers on the far side. A crossing dims, turns and brightens it again rather than snapping. Nothing is lit at rest, and there is never a disc under the cursor (a test bans a pointer-positioned `radial-gradient`). Tier 1 only: `mount()` writes `--slfx-spec-a` (bearing) and `--slfx-spec-i` (how lit) and the class `is-spec-lit`. The WebGPU chrome that used to draw this edge is retired (2026-09-24); the material and the lens above are not. Width is the border's own, never spent. Substrate: **R** Page, **A** App.
