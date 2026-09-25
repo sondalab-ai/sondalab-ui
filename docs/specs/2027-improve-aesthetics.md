@@ -1961,6 +1961,11 @@ A final point is architecture rather than a value, and belongs in the promotion:
 - Smaller: the liquid drop rests; a goo field ignores clicks it did not see pressed; a lensed host drops its dead child blur and its lens stands down off-screen; lens maps are shared by reference count; the curtains breathe on `filter` so the compositor can run it.
 Left running off-screen on purpose: goo drift and the live badge, which animate only compositor properties.
 
+**0.17.0: the curtains move like light, and keep their shape on a small card (lab/pillars-organic, owner's picks 2026-09-25).** Owner: on small cards the pillars "appear too much rounded because of the distortion", and "their movement is not much organic but rather mechanical". Measured on the probe: the arcs are the lens's convex bulge alone — with the lens off the curtains are straight at every size. Picks:
+- **Shape, D:** `--slg-lens-bulge: 0.2` on hosts whose light is the curtains (0.4 elsewhere). Rejected: bulge scaled by height (B), bulge off below 120px (C).
+- **Motion, DEEP:** the two combs moved onto a layer each (`::before`, `::after`), each swaying (`translate`), leaning (`skewX`), widening (`scale`) and letting a brighter band climb (mask position) on its own clock, 15–53s, no two periods alike; each glow's phase still spread by `--slfx-pillar-phase`. The single 23s drift and the 8.7s blur breath are retired; the blur is a fixed 8.5px. Rejected: FOLD (no climb), RISE (twice the pace).
+- **Light theme, L1 ink, "a tad more prominent":** the light pole is near-white on paper and the curtains vanished; on paper they are the text ink at 22/19% and 18/15%. Dark keeps white light. Rejected: accent (L2), ink + accent (L3).
+
 ## Notes
 
 Open questions, and the record of the ones now closed. Each open item blocks the criteria named beside it.

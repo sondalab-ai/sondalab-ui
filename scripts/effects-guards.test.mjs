@@ -293,9 +293,12 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 10,
-    `exactly ten edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 11,
+    `exactly eleven edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
+  // Eleven since 2026-09-25 (lab/pillars-organic): the curtains' two combs
+  // moved onto a layer each, ::before and ::after, so each sheet moves alone.
+  assert.ok(declaring.some((s) => /\[data-sl-fx-pillars\][^,]*::after/.test(s)), "the second sheet must be one");
   // Ten since R3 (2026-09-25): a working tab's segment travels its underline.
   assert.ok(declaring.some((s) => s.startsWith(".sl-fx-aurora--linear:is([data-sl-fx-live=\"busy\"]")), "the travelling segment must be one");
   // Nine since 2026-09-25 (re-scope R2): the press's spill paints a

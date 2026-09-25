@@ -46,6 +46,15 @@ test("lens maps are shared by the lenses that show them, and freed by the last",
   assert.equal((refresh.match(/getComputedStyle\(/g) || []).length, 1, "one style read per refresh");
 });
 
-test("the curtains breathe on filter, which the compositor can run", () => {
-  assert.match(effectsCss, /@keyframes slfx-pillars-breathe \{ from \{ filter: blur\(7px\); \} to \{ filter: blur\(10px\); \} \}/);
+test("the curtains move on compositor properties; their blur is fixed", () => {
+  // The breathe animated the blur radius of every curtain at once, and the
+  // drift a registered offset, both main-thread. The sheets now move by
+  // translate, transform, scale and the mask's position only.
+  for (const k of ["sway-a", "sway-b", "lean-a", "lean-b", "width"]) {
+    const kf = new RegExp(`@keyframes slfx-pillar-${k} \\{[^\\n]*\\}`).exec(effectsCss)?.[0];
+    assert.ok(kf, `slfx-pillar-${k} must exist`);
+    assert.doesNotMatch(kf, /--slfx|filter|background/, `slfx-pillar-${k} animates no custom property, filter or background`);
+  }
+  assert.doesNotMatch(effectsCss, /slfx-pillars-breathe|slfx-pillars-drift|--slfx-pillar-x|--slfx-pillar-soft/, "the old single clock is gone");
+  assert.match(effectsCss, /filter: blur\(8\.5px\);/);
 });
