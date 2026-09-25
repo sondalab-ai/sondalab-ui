@@ -174,6 +174,28 @@ export function convexShift(px, py, hw, hh, m) {
 
 /** The convex stage's map for a w x h box.
  *  @returns {{href: string, scale: number}} */
+/** Maps depend on nothing but their arguments, and a toolbar of identical
+ *  buttons asks for the same one each: two PNG encodes per host per resize.
+ *  Kept for the most recent MAP_CACHE_MAX sizes, oldest dropped first. */
+const MAP_CACHE_MAX = 48;
+const mapCache = new Map();
+
+/** A map from the cache, built on a miss.
+ *  @param {string} key what the map depends on
+ *  @param {() => {href: string, scale: number}} build
+ *  @returns {{href: string, scale: number}} */
+function cachedMap(key, build) {
+  let hit = mapCache.get(key);
+  if (hit) {
+    mapCache.delete(key);
+  } else {
+    hit = build();
+    if (mapCache.size >= MAP_CACHE_MAX) mapCache.delete(mapCache.keys().next().value);
+  }
+  mapCache.set(key, hit);
+  return hit;
+}
+
 function buildConvexMap(w, h, m) {
   const data = new Uint8ClampedArray(w * h * 4);
   const raw = new Float32Array(w * h * 2);
@@ -374,7 +396,9 @@ export function lens(el, look = {}) {
     if (key === last) return;
     last = key;
 
-    const { href, scale } = buildMap(w, h);
+    const { href, scale } = cachedMap(`p${w}x${h}`, () => buildMap(w, h));
+    // One style read for the three custom properties below.
+    const cs = getComputedStyle(el);
     filter.setAttribute("width", String(w));
     filter.setAttribute("height", String(h));
     feImage.setAttribute("width", String(w));
@@ -391,7 +415,7 @@ export function lens(el, look = {}) {
     // Nothing is cached in a variable here: a number held in two places is the
     // first thing to drift, which is the same rule the GPU tier's thickness,
     // tint and fresnel already follow.
-    const asked = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-reach"));
+    const asked = parseFloat(cs.getPropertyValue("--slg-lens-reach"));
     // AND THE BOX CAPS IT TOO, at a sixth of its shorter side. A slab bends at
     // its edge by a fixed few pixels, which is what `reach` says; but "a few"
     // has to stay few RELATIVE TO THE PANE, and the aurora's hosts ask for
@@ -432,7 +456,7 @@ export function lens(el, look = {}) {
      // 13px of channel separation reading as a broken render rather than as a
      // prism; a surface laid over a picture or a bed has no such reader, and
      // that is the surface that should be raising it.
-     const askedSplit = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-disperse"));
+     const askedSplit = parseFloat(cs.getPropertyValue("--slg-lens-disperse"));
      // The arithmetic, and the bound on it, are channelScales() above — a pure
      // function so the invariant it holds can be executed by a guard rather
      // than read off a comment.
@@ -442,9 +466,9 @@ export function lens(el, look = {}) {
     dispB.setAttribute("scale", String(bend.b));
 
     // The bulge, read from CSS like reach and disperse; 0 turns it off.
-    const askedBulge = parseFloat(getComputedStyle(el).getPropertyValue("--slg-lens-bulge"));
+    const askedBulge = parseFloat(cs.getPropertyValue("--slg-lens-bulge"));
     const bulge = Number.isFinite(askedBulge) ? Math.max(0, askedBulge) : BULGE;
-    const convex = buildConvexMap(w, h, bulge);
+    const convex = cachedMap(`c${w}x${h}x${bulge}`, () => buildConvexMap(w, h, bulge));
     feConvex.setAttribute("width", String(w));
     feConvex.setAttribute("height", String(h));
     feConvex.setAttribute("href", convex.href);

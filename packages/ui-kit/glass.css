@@ -234,6 +234,12 @@
    effects.css; neither blurs the glass further. 1 turns it off. */
 @property --slg-lens-contrast { syntax: "<number>"; inherits: true; initial-value: 0.72; }
 .sl-glass.is-lensed { background-color: transparent; }
+/* The dead blur described above, taken away: it filtered nothing and was
+   still one more filtered surface to composite per lensed host. */
+.sl-glass.is-lensed > .sl-glass__backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 .sl-glass.is-lensed .sl-glass__tint {
   --slg-tint-a: var(--slg-tint-lens, 34%);
   --slg-tint-deep-a: calc(var(--slg-tint-lens, 34%) - 4%);

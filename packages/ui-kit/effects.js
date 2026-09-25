@@ -243,6 +243,10 @@ function setLiquidLive(el) {
   el.classList.add("is-liquid-live");
 }
 
+function setDrop(name, value) {
+  if (skinParts.drop.getAttribute(name) !== value) skinParts.drop.setAttribute(name, value);
+}
+
 /** Rebuild the silhouette for this frame: the drop at the outline point
  *  nearest the lagged pointer, protruding by the spring's amplitude scaled
  *  by how near the pointer is to that edge; the floods in the host's own
@@ -264,9 +268,11 @@ function paintSkin() {
     y: e.qy + e.ny * (out - b.drop),
     r: visible ? b.drop : 0,
   };
-  skinParts.drop.setAttribute("cx", liquidDrop.x.toFixed(2));
-  skinParts.drop.setAttribute("cy", liquidDrop.y.toFixed(2));
-  skinParts.drop.setAttribute("r", visible ? b.drop.toFixed(2) : "0");
+  // Only what changed: an attribute written inside a filter dirties it and
+  // re-rasterises the goo even when the value is the same.
+  setDrop("cx", liquidDrop.x.toFixed(2));
+  setDrop("cy", liquidDrop.y.toFixed(2));
+  setDrop("r", visible ? b.drop.toFixed(2) : "0");
 
   const cs = getComputedStyle(el);
   if (skinParts.fill.style.floodColor !== cs.backgroundColor) skinParts.fill.style.floodColor = cs.backgroundColor;
@@ -298,6 +304,16 @@ function integrateLiquid(now) {
     setLiquidLive(null);
     return; // idle page costs nothing: the loop does not reschedule itself
   }
+  // At rest under a still pointer: nothing moves and no colour is in flight,
+  // so the frame would repaint the same drop. The next pointermove, or a
+  // transition starting on the host (a press), wakes it.
+  const resting = target === 1 && Math.abs(amp - 1) < LIQUID_SETTLE_EPS && Math.abs(ampV) < LIQUID_SETTLE_EPS
+    && Math.abs(pointerX - lagX) < 0.05 && Math.abs(pointerY - lagY) < 0.05
+    && !liquidLiveEl?.getAnimations().length;
+  if (resting) {
+    liquidRafId = 0;
+    return;
+  }
   liquidRafId = requestAnimationFrame(integrateLiquid);
 }
 
@@ -324,6 +340,11 @@ function onPointerMove(ev) {
   }
   target = 1;
   ensureLiquidLoop();
+}
+
+/** A resting drop follows its host's colours again once they start to move. */
+function onLiquidTransition(ev) {
+  if (liquidLiveEl && ev.target === liquidLiveEl) ensureLiquidLoop();
 }
 
 function onPointerLeave(ev) {
@@ -1327,6 +1348,7 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
   root.addEventListener("pointerleave", onPointerLeave, { capture: true, passive: true });
+  root.addEventListener("transitionrun", onLiquidTransition, { passive: true });
   window.addEventListener("pointerout", onSpecOut, { passive: true });
   window.addEventListener("scroll", onSpecLayout, { capture: true, passive: true });
   window.addEventListener("resize", onSpecLayout, { passive: true });
