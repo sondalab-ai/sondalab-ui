@@ -293,9 +293,11 @@ test("only shape re-declares the ring background; states rebind the stops", () =
     .filter((r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && /::(?:before|after)/.test(r.selector) && PAINTS.test(r.body))
     .map((r) => r.selector);
   assert.equal(
-    declaring.length, 9,
-    `exactly nine edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
+    declaring.length, 10,
+    `exactly ten edge rules may declare a background, got: ${JSON.stringify(declaring)}`,
   );
+  // Ten since R3 (2026-09-25): a working tab's segment travels its underline.
+  assert.ok(declaring.some((s) => s.startsWith(".sl-fx-aurora--linear:is([data-sl-fx-live=\"busy\"]")), "the travelling segment must be one");
   // Nine since 2026-09-25 (re-scope R2): the press's spill paints a
   // neighbour's edge, once on a host with no edge family and once folded into
   // the glass/aurora ring.

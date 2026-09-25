@@ -197,6 +197,15 @@
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
 }
 .sl-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+/* --live: the thing this badge labels is working right now (re-scope R3). The
+   dot breathes; the state still has to be in the words ("Running"). */
+@media (prefers-reduced-motion: no-preference) {
+  .sl-badge--live::before { animation: sl-badge-live calc(var(--sl-motion-slow, 360ms) * 6) ease-in-out infinite; }
+}
+@keyframes sl-badge-live {
+  0%, 100% { opacity: 0.45; box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
+  50% { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
+}
 /* The status text sits on a 12% wash of itself; palette-contrast.test.mjs
    holds every status ink to 4.5:1 on exactly that ground. */
 .sl-badge--success { color: var(--slc-success); background: color-mix(in srgb, currentColor 12%, transparent); }
