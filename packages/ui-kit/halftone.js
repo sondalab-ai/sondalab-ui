@@ -13,6 +13,9 @@
    prints in the band's ink. Ink darker than mid-grey prints the picture's
    dark (a halftone on paper); light ink draws its light. A theme change that
    flips the polarity resamples; one that only changes the colour repaints.
+   Followed on <html> and on every section under the root: a data-sl-theme or
+   a class (an .sl-invert band) that changes after arming re-reads the ink of
+   the scenes inside it, and again when a colour transition there ends.
 
    MOTION: one frame loop for every scene, running only while one is within
    200px of the viewport and the page is visible. Under reduced motion each
@@ -194,10 +197,23 @@ export function halftone(root = document) {
 
   const ready = scan(root).then(() => {});
 
+  /** Re-read the ink of every scene inside `el`, and draw them once. */
+  function retint(el) {
+    let hit = false;
+    for (const s of scenes.values()) if (el.contains(s.canvas)) { paint(s); hit = true; }
+    if (hit) wake();
+  }
+
   const added = new MutationObserver((records) => {
-    for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) scan(n);
+    for (const r of records) {
+      if (r.type === "attributes") { if (r.target !== html) retint(r.target); continue; }
+      for (const n of r.addedNodes) if (n instanceof Element) scan(n);
+    }
   });
-  added.observe(root, { childList: true, subtree: true });
+  added.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-sl-theme", "class"] });
+
+  const faded = (e) => { if (e.propertyName === "color") retint(e.target); };
+  root.addEventListener("transitionend", faded);
 
   const theme = new MutationObserver((records) => {
     if (!records.every((r) => r.attributeName === STILL)) for (const s of scenes.values()) paint(s);
@@ -218,6 +234,7 @@ export function halftone(root = document) {
       added.disconnect();
       theme.disconnect();
       doc.removeEventListener("visibilitychange", wake);
+      root.removeEventListener("transitionend", faded);
     },
   };
 }

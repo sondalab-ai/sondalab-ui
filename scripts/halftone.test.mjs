@@ -29,6 +29,7 @@ function fakePage({ reduce = false, observe = true } = {}) {
     removeAttribute(n) { delete this.attrs[n]; }
     append(c) { c.parent = this; this.children.push(c); }
     remove() {}
+    contains(n) { for (let x = n; x; x = x.parent) if (x === this) return true; return false; }
     matches(sel) { return sel === "canvas[data-sl-halftone]" && this.tagName === "CANVAS" && "data-sl-halftone" in this.attrs; }
     closest(sel) {
       for (let n = this; n; n = n.parent) if (sel === '[data-sl-fx="off"]' && n.attrs["data-sl-fx"] === "off") return n;
@@ -312,6 +313,7 @@ test("stop() disconnects every observer, drops the listener and cancels the fram
   h.stop();
   for (const o of [...page.observers, ...page.io, ...page.ro]) assert.ok(o.off, "an observer is still connected");
   assert.ok(!page.listeners.has("visibilitychange"));
+  assert.ok(!page.listeners.has("transitionend"));
   assert.equal(page.queue.length, 0);
 });
 
@@ -395,4 +397,59 @@ test("a scene first seen while still is held gathers from the start once release
   const first = mean(page.frames.at(-1).dots);
   for (let i = 0; i < 200; i++) page.tick(16);
   assert.ok(mean(page.frames.at(-1).dots) > 2 * first, "dots have grown to their places within ~3s, not held scattered");
+});
+
+/** A section holding one canvas, drawn and gathered, with `centre` to read
+ *  which side of the fake ramp its dots print. */
+async function bandScene(t) {
+  const page = fakePage();
+  t.after(page.restore);
+  const band = page.doc.createElement("section");
+  page.doc.body.append(band);
+  const c = page.canvas({ "data-sl-grid": "32", "data-sl-seed": "1" }, band);
+  const { ready } = halftone(page.doc);
+  await ready;
+  page.show(c);
+  page.tick(5000);
+  const centre = () => { const d = page.frames.at(-1).dots; return d.reduce((s, [x, , r]) => s + x * r, 0) / d.reduce((s, [, , r]) => s + r, 0); };
+  const watch = page.observers.find((o) => o.opts?.attributeFilter?.includes("class"));
+  return { page, band, centre, watch };
+}
+
+test("a section that takes its own theme after arming re-inks the scenes inside it", async (t) => {
+  const { page, band, centre, watch } = await bandScene(t);
+  assert.ok(centre() > 100, "light ink draws the light side");
+  assert.ok(watch, "the root's themes and classes are watched");
+  page.ink = [20, 20, 20];
+  band.setAttribute("data-sl-theme", "light");
+  watch.cb([{ type: "attributes", target: band, attributeName: "data-sl-theme" }]);
+  page.tick(16);
+  assert.ok(centre() < 100, "the band's dark ink prints the dark side");
+});
+
+test("a section that becomes an inversion band re-inks the scenes inside it", async (t) => {
+  const { page, band, centre, watch } = await bandScene(t);
+  page.ink = [20, 20, 20];
+  watch.cb([{ type: "attributes", target: band, attributeName: "class" }]);
+  page.tick(16);
+  assert.ok(centre() < 100);
+});
+
+test("a class change elsewhere re-reads no scene's colour", async (t) => {
+  const { page, watch } = await bandScene(t);
+  const other = page.doc.createElement("div");
+  page.doc.body.append(other);
+  let reads = 0;
+  const read = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = (el) => { reads++; return read(el); };
+  watch.cb([{ type: "attributes", target: other, attributeName: "class" }]);
+  assert.equal(reads, 0);
+});
+
+test("a colour that transitions is re-read when the transition ends", async (t) => {
+  const { page, band, centre } = await bandScene(t);
+  page.ink = [20, 20, 20];
+  page.listeners.get("transitionend")({ propertyName: "color", target: band });
+  page.tick(16);
+  assert.ok(centre() < 100, "read at the end, not mid-way");
 });
