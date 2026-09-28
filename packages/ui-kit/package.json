@@ -69,6 +69,7 @@
     "glass-lens.js",
     "goo-field.js",
     "live-light.js",
+    "colour.js",
     "glass-text.js",
     "geom.js",
     "halftone-core.js",

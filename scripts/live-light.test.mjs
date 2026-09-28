@@ -85,10 +85,12 @@ test("a live badge breathes only where motion is welcome", () => {
 // spexr, 0.15.0: a depth companion bound to color-mix() computes to oklab(),
 // whose numbers read as bytes gave a near-black light on the paper theme.
 test("a role colour is converted to sRGB by painting it, never parsed", () => {
-  const fn = js.slice(js.indexOf("function roleColour("), js.indexOf("function compile("));
+  const colour = readFileSync(resolve(KIT, "colour.js"), "utf8");
+  const fn = colour.slice(colour.indexOf("export function toSrgb("), colour.indexOf("export function roleColour("));
   assert.match(fn, /getContext\("2d"/, "painted on a 2D canvas");
   assert.match(fn, /getImageData\(0, 0, 1, 1\)/, "and read back as a pixel");
   assert.doesNotMatch(fn, /\.match\(/, "no parsing of the computed string");
+  assert.match(js, /import \{ roleColour \} from "\.\/colour\.js";/, "live-light reads colour through it");
 });
 
 // spexr, 0.15.1: the run light still carried 18% alpha (46/255) 6px out, where the
