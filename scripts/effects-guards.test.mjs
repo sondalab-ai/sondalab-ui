@@ -794,3 +794,105 @@ test("a glass host keeps its own fill until the layers exist", () => {
   assert.match(label, /:not\(\[data-sl-theme="high-contrast"\]\)/, "and never under high contrast");
   assert.match(label, /data-sl-fx="off"/, "nor in an opt-out region");
 });
+
+// 0.18.0: data-sl-fx-still on <html> is the app's pause. Every loop the kit
+// starts has to freeze under it, or one forgotten rule keeps the compositor
+// awake on an idle window, which is the whole reason the flag exists.
+
+/** Split a selector list on its top-level commas. */
+function selectorList(sel) {
+  const out = [];
+  let depth = 0;
+  let from = 0;
+  for (let i = 0; i < sel.length; i++) {
+    if (sel[i] === "(" || sel[i] === "[") depth++;
+    else if (sel[i] === ")" || sel[i] === "]") depth--;
+    else if (sel[i] === "," && depth === 0) { out.push(sel.slice(from, i).trim()); from = i + 1; }
+  }
+  out.push(sel.slice(from).trim());
+  return out;
+}
+
+/** The element a selector lands on, as `class::pseudo` keys: its last compound,
+ *  with :has()/:not() arguments and attribute tests dropped. An :is(A, B)
+ *  compound fans out into one key per member. `block: false` for the rules
+ *  that hold: a pause on .x--a must not be read as covering .x--b. */
+function targets(sel, { block = true } = {}) {
+  let depth = 0;
+  let last = 0;
+  for (let i = 0; i < sel.length; i++) {
+    if (sel[i] === "(" || sel[i] === "[") depth++;
+    else if (sel[i] === ")" || sel[i] === "]") depth--;
+    else if (sel[i] === " " && depth === 0) last = i + 1;
+  }
+  const compound = sel.slice(last);
+  const pseudo = /::(before|after)$/.exec(compound)?.[0] ?? "";
+  const is = /^:is\(([\s\S]*)\)(?:::(?:before|after))?$/.exec(compound);
+  const members = is ? selectorList(is[1]) : [compound];
+  const keys = [];
+  for (const m of members) {
+    const bare = m.replace(/:(?:has|not)\((?:[^()]|\([^()]*\))*\)/g, "").replace(/\[[^\]]*\]/g, "");
+    const own = /::(before|after)$/.exec(bare)?.[0] ?? pseudo;
+    // A modifier never appears without its block (.sl-fx-aurora--linear is
+    // always also .sl-fx-aurora), so the block's key covers it.
+    for (const c of bare.matchAll(/\.([\w-]+)/g)) {
+      keys.push(`${c[1]}${own}`);
+      if (block) keys.push(`${c[1].split("--")[0]}${own}`);
+    }
+  }
+  return keys;
+}
+
+test("data-sl-fx-still freezes every loop the kit starts", () => {
+  const components = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const all = [...RULES, ...rules(components)];
+  const still = RULES.filter((r) => /\[data-sl-fx-still\]/.test(r.selector));
+  assert.ok(still.length, "the flag has rules");
+  for (const r of still) {
+    for (const s of selectorList(r.selector)) {
+      assert.match(s, /^:root\[data-sl-fx-still\] /, `the document holds still, not an element: ${s}`);
+    }
+    assert.match(r.body, /!important/, `a start rule is a shorthand that outranks the flag: ${r.selector}`);
+    assert.doesNotMatch(r.body, /animation-play-state:\s*running/, "nothing is exempted back into motion");
+  }
+  // A still rule lands on a paint layer the kit owns, never on a bare host:
+  // an animation the product puts on a glass or aurora host is its own, and a
+  // pause with !important would take it away for good. The exceptions are
+  // the kit's own host-level loops: a drifting goo member, and a glitch while
+  // it bursts (.is-glitching is the kit's own state).
+  for (const r of still) {
+    for (const s of selectorList(r.selector)) {
+      if (/::(?:before|after)$/.test(s)) continue;
+      if (s === ":root[data-sl-fx-still] .sl-fx-goo--drift .sl-fx-goo__member") continue;
+      assert.match(s, /\.is-glitching/, `a still rule on a bare host reaches the product's own animations: ${s}`);
+    }
+  }
+  const held = new Set();
+  for (const r of still) {
+    if (!/animation-play-state:\s*paused|animation:\s*none/.test(r.body)) continue;
+    for (const s of selectorList(r.selector)) {
+      // A pseudo-element inside :is() is invalid, and the forgiving list drops
+      // it silently: written that way the glitch's ghosts went on strobing.
+      for (const g of s.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/g)) {
+        assert.doesNotMatch(g[1], /::/, `a pseudo-element inside :is() matches nothing: ${s}`);
+      }
+      for (const k of targets(s.replace(/^:root\[data-sl-fx-still\] /, ""), { block: false })) held.add(k);
+    }
+  }
+  const starts = all.filter((r) => /(?:^|;)\s*animation\s*:\s*(?!none\b)[a-z]/.test(r.body));
+  assert.ok(starts.length > 10, `found the kit's start rules (${starts.length})`);
+  for (const r of starts) {
+    for (const s of selectorList(r.selector)) {
+      const keys = targets(s);
+      assert.ok(keys.some((k) => held.has(k)), `still does not reach ${s} (${keys.join(", ")})`);
+    }
+  }
+  // The busy/run orbit pauses with the rest: aria-busy carries that state, and
+  // the WebGL light it stands in for freezes under the same flag.
+  assert.ok(held.has("sl-fx-aurora::after"), "the busy and run arc");
+  assert.ok(held.has("sl-fx-aurora__glow::before"), "the busy orbit on the glow");
+  // A glitch is taken off, not paused mid-burst, and the shatter's label comes back.
+  const glitch = still.find((r) => /\.sl-fx-glitch__shard\)?\s*$/.test(r.selector.split(",").at(-1)) && /animation:\s*none/.test(r.body));
+  assert.ok(glitch, "the glitch stands down under still");
+  assert.ok(still.some((r) => /\.sl-fx-glitch__text$/.test(r.selector) && /opacity:\s*1\s*!important/.test(r.body)), "and the shatter's label is given back");
+});

@@ -17,6 +17,13 @@
    it is complete on its own. Under reduced motion one still frame is drawn
    and the loop never starts. High contrast takes every canvas away.
 
+   STILL: data-sl-fx-still on <html> holds the light where it is. The frame
+   that sees the flag is drawn and none is asked for after it; canvases and
+   contexts stay, showing that frame. A host that attaches or resizes meanwhile
+   is drawn once, at the frozen instant. Clearing the flag restarts the loop
+   with the time origin moved by the pause, so the light resumes where it
+   stopped (as animation-play-state does) instead of jumping ahead.
+
    COLOUR: no literal. The accent and its depth companion are read off the
    host through a probe element whose colour is the role variable, so a band
    or a product override that remaps them is followed. */
@@ -30,6 +37,7 @@ const MAX_LIVE = 8;
  *  rectangle; by 16 its bleed is under 0.5%, and FS_RUN fades it to zero here. */
 const PAD = 16;
 const REDUCE = "(prefers-reduced-motion: reduce)";
+const STILL = "data-sl-fx-still";
 
 const VS = "attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
 const HEAD = `precision highp float;
@@ -72,6 +80,8 @@ const FS_BUSY = HEAD + `void main(){
 const live = new Map();
 let rafId = 0;
 let t0 = 0;
+/** The frame time the light froze at, or null while it moves. */
+let stillAt = null;
 let motion = null;
 const UNIFORMS = ["uSize", "uR", "uT", "uPad", "uDpr", "uDark", "uA", "uB"];
 /** Same margin as effects.js's near marking: a light is drawing before it
@@ -249,11 +259,24 @@ function draw(now) {
   return drawn;
 }
 
+/** Whether the document asks the light to hold still. One attribute read per
+ *  frame; every live host shares the loop, so the first one's document says. */
+function stilled() {
+  for (const el of live.keys()) return el.ownerDocument.documentElement.hasAttribute(STILL);
+  return false;
+}
+
 function frame(now) {
   rafId = 0;
+  const hold = stilled();
+  // Held: every frame from here draws the instant it froze at. Released: the
+  // origin moves by the pause, so time picks up where it stopped.
+  if (hold) stillAt ??= now;
+  else if (stillAt !== null) { t0 += now - stillAt; stillAt = null; }
   // Nothing near, nothing to draw: the loop stops, and the observers start it
-  // again when a host comes near or resizes.
-  if (draw(now) && moving()) rafId = requestAnimationFrame(frame);
+  // again when a host comes near or resizes. Held, or under reduced motion,
+  // the frame is drawn and none follows.
+  if (draw(hold ? stillAt : now) && moving() && !hold) rafId = requestAnimationFrame(frame);
 }
 
 function ensureLoop() {
@@ -266,7 +289,8 @@ function ensureLoop() {
 /**
  * Give every live aurora host under `root` its light, and keep following:
  * hosts added later, a data-sl-fx-live that changes, a theme switch to or
- * from high contrast.
+ * from high contrast, and data-sl-fx-still on the root, which holds the light
+ * in place while set.
  * @param {Document|Element} root
  * @returns {{stop(): void}}
  */
@@ -291,14 +315,18 @@ export function liveLight(root) {
     if (removed) for (const el of [...live.keys()]) if (!el.isConnected) detach(el);
   });
   watch.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-sl-fx-live", "style"] });
-  const theme = new MutationObserver(() => {
+  const theme = new MutationObserver((records) => {
+    // The still flag changes nothing but whether the loop runs: no host to
+    // reconcile, no colour to re-read. Set, one more frame is drawn and the
+    // loop stops; cleared, the loop starts again.
+    if (records.every((r) => r.attributeName === STILL)) { ensureLoop(); return; }
     for (const el of [...live.keys()]) reconcile(el);
     scan(root);
     // A theme switch re-reads the colours on the next attach.
     for (const [el, it] of live) { it.a = roleColour(el, "--slc-accent"); it.b = roleColour(el, "--slfx-depth"); it.dirty = true; }
     ensureLoop();
   });
-  theme.observe(doc.documentElement, { attributes: true, attributeFilter: ["data-sl-theme", "style"] });
+  theme.observe(doc.documentElement, { attributes: true, attributeFilter: ["data-sl-theme", "style", STILL] });
   return {
     stop() {
       watch.disconnect();
