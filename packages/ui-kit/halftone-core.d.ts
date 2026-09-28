@@ -40,7 +40,19 @@ export interface DotFrame {
   r: number;
 }
 
+export interface SvgOptions {
+  /** Output side, px. */
+  size: number;
+  /** The grid the dots were sampled on. */
+  grid: number;
+  /** Dot fill. Default "currentColor". */
+  color?: string;
+  /** A full-size ground behind the dots. Default none (transparent). */
+  background?: string;
+}
+
 export declare function sampleDots(pixels: ArrayLike<number>, size: number, options?: SampleOptions): Dot[];
 export declare function dotFrame(dot: Dot, t: number, width: number, grid: number, motion?: Motion): DotFrame;
 export declare function settledFrame(dot: Dot, width: number, grid: number): DotFrame;
 export declare function cover(width: number, height: number): { sx: number; sy: number; s: number };
+export declare function toSVG(dots: Dot[], options: SvgOptions): string;

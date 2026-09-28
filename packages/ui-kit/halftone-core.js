@@ -111,3 +111,22 @@ export function cover(width, height) {
   const s = Math.min(width, height);
   return { sx: (width - s) / 2, sy: (height - s) / 2, s };
 }
+
+const escape = (v) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const round = (v) => Math.round(v * 100) / 100;
+
+/**
+ * The settled halftone as an SVG string, `size` px square: one circle per
+ * dot, the fill set once (`currentColor` unless given, so an inlined SVG
+ * takes the text colour), an optional full-size ground. For print and for
+ * marketing assets; the motion is the runtime's, not the file's.
+ */
+export function toSVG(dots, { size, grid, color = "currentColor", background } = {}) {
+  let circles = "";
+  for (const d of dots) {
+    const f = settledFrame(d, size, grid);
+    circles += `<circle cx="${round(f.x)}" cy="${round(f.y)}" r="${round(f.r)}"/>`;
+  }
+  const ground = background ? `<rect width="${size}" height="${size}" fill="${escape(background)}"/>` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${ground}<g fill="${escape(color)}">${circles}</g></svg>`;
+}

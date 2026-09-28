@@ -116,3 +116,30 @@ test("cover crops the centred square of any picture", () => {
   assert.deepEqual(cover(900, 1600), { sx: 0, sy: 350, s: 900 });
   assert.deepEqual(cover(512, 512), { sx: 0, sy: 0, s: 512 });
 });
+
+const { toSVG } = await import(resolve(HERE, "../packages/ui-kit/halftone-core.js"));
+
+test("toSVG: one circle per dot, the fill set once, at the dots' places", () => {
+  const dots = sampleDots(ramp, 64, { grid: 16, seed: 1 });
+  const svg = toSVG(dots, { size: 320, grid: 16, color: "var(--ink)" });
+  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 320 320" width="320" height="320">/);
+  assert.ok(svg.endsWith("</svg>"));
+  assert.equal(svg.match(/<circle /g).length, dots.length);
+  assert.equal(svg.match(/fill=/g).length, 1);
+  const first = /<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"\/>/.exec(svg);
+  assert.equal(Number(first[1]), Math.round(dots[0].x * 320 * 100) / 100);
+  assert.equal(Number(first[2]), Math.round(dots[0].y * 320 * 100) / 100);
+});
+
+test("toSVG: currentColor by default, an optional ground, and attribute values escaped", () => {
+  const dots = sampleDots(ramp, 64, { grid: 16, seed: 1 });
+  assert.match(toSVG(dots, { size: 100, grid: 16 }), /<g fill="currentColor">/);
+  const svg = toSVG(dots, { size: 100, grid: 16, color: 'a"<b', background: "paper&ink" });
+  assert.match(svg, /<rect width="100" height="100" fill="paper&amp;ink"\/><g fill="a&quot;&lt;b">/);
+});
+
+test("toSVG: same picture, grid and seed give the same bytes", () => {
+  const one = toSVG(sampleDots(ramp, 64, { grid: 32, seed: 9 }), { size: 400, grid: 32 });
+  const two = toSVG(sampleDots(ramp, 64, { grid: 32, seed: 9 }), { size: 400, grid: 32 });
+  assert.equal(one, two);
+});
