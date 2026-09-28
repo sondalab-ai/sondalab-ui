@@ -152,13 +152,18 @@ $("grid").addEventListener("input", () => { $("gridOut").value = $("grid").value
 $("ink").addEventListener("change", () => { state.pal = palette(); resample(); });
 for (const id of ["invert", "seed"]) $(id).addEventListener("change", resample);
 $("reroll").addEventListener("click", () => { $("seed").value = Math.floor(Math.random() * 1e6); resample(); });
+/** The export size, clamped to the input's declared 256–8192; empty or NaN falls back to 2048. */
+function exportSize() {
+  const n = Math.round(Number($("size").value));
+  return Number.isFinite(n) && n > 0 ? Math.min(8192, Math.max(256, n)) : 2048;
+}
 $("svg").addEventListener("click", () => {
   const pal = state.pal;
-  const size = Number($("size").value);
+  const size = exportSize();
   download(new Blob([toSVG(state.dots, { size, grid: state.grid, color: pal.ink, background: $("ground").checked ? pal.ground : undefined })], { type: "image/svg+xml" }), "svg");
 });
 $("png").addEventListener("click", () => {
-  const size = Number($("size").value);
+  const size = exportSize();
   const out = Object.assign(document.createElement("canvas"), { width: size, height: size });
   paint(out.getContext("2d"), size, 0, true, state.pal, $("ground").checked);
   out.toBlob((b) => download(b, "png"), "image/png");
