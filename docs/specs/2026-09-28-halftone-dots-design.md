@@ -93,14 +93,14 @@ A new top-level `tools/` directory for asset-making tools, distinct from `showca
 - `scripts/halftone.test.mjs` (the runtime, driven against a fake page with a rAF queue and a clock, as `scripts/live-light.test.mjs` does): still flag stops frame requests and resumes with `t0` shifted; reduced motion draws once and requests no loop, `data-sl-fx-motion="always"` restores it; `data-sl-fx="off"` subtree is skipped; `stop()` disconnects every observer it created.
 - `scripts/types-drift.test.mjs` covers `halftone-core` and `halftone`.
 - `scripts/effects-guards.test.mjs`: the high-contrast rule exists for `[data-sl-halftone]`.
-- **Visual parity (site PR)**: the Method and Thesis vignettes at 1440 and 390 px, dark and light, before and after, settled frame with a fixed seed, pixel-diffed; the difference must be zero or explained.
+- **Visual parity (site PR)**: the Method and Thesis vignettes at 1440 and 390 px, dark and light, before and after, compared by screenshot. Not a pixel diff: the site seeds nothing today, so its edge dither and scatter differ on every load. Any difference other than that is explained in the PR or fixed.
 
 ## Acceptance criteria
 
 1. The kit's tests pass, including the new ones, and `sl-audit` reports no violation for the new files.
 2. A plain HTML page with `effects.css`, one `<canvas data-sl-halftone …>` and `mount()` shows a dot scene that gathers when scrolled into view, follows the theme, freezes under `data-sl-fx-still`, and is gone under high contrast.
 3. The export page turns a PNG into an SVG and a PNG; the same image, grid, seed and ink give a byte-identical SVG on two runs.
-4. sondalab-site's vignettes look the same after the migration (visual-parity check above) and the site no longer contains `dot-scene`.
+4. sondalab-site's vignettes look the same after the migration (screenshot comparison above) and the site no longer contains `dot-scene`.
 
 ## Slices
 
