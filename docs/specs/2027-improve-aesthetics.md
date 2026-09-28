@@ -1966,6 +1966,11 @@ Left running off-screen on purpose: goo drift and the live badge, which animate 
 - **Motion, DEEP:** the two combs moved onto a layer each (`::before`, `::after`), each swaying (`translate`), leaning (`skewX`), widening (`scale`) and letting a brighter band climb (mask position) on its own clock, 15–53s, no two periods alike; each glow's phase still spread by `--slfx-pillar-phase`. The single 23s drift and the 8.7s blur breath are retired; the blur is a fixed 8.5px. Rejected: FOLD (no climb), RISE (twice the pace).
 - **Light theme, L1 ink, "a tad more prominent":** the light pole is near-white on paper and the curtains vanished; on paper they are the text ink at 22/19% and 18/15%. Dark keeps white light. Rejected: accent (L2), ink + accent (L3).
 
+**0.18.0: a still flag freezes the live light and the kit's motion in place (2026-09-28).** spexr pauses decorative motion while its window is unfocused or idle, and measured an idle 60 fps compositor loop (GPU ~50%, compositor ~42%) whose only per-frame requester was `live-light.js`; nothing outside the kit could stop it without detaching the light, which loses the contexts and changes the look. `data-sl-fx-still` on `<html>`:
+- `live-light.js` draws the frame that sees the flag and asks for no other; canvases and contexts stay. A host that attaches or resizes meanwhile is drawn once, at the frozen instant. Clearing the flag restarts the loop with the time origin moved by the pause, so the light resumes where it stopped.
+- `effects.css` pauses every animation the kit starts (`animation-play-state: paused !important`), the busy/run orbit included: `aria-busy` carries that state, and the WebGL light it stands in for freezes under the same flag. The glitch is taken off rather than frozen mid-burst, and the shatter gives its label back, as under reduced motion.
+- Left running: a drifting goo field's measuring loop in `goo-field.js`.
+
 ## Notes
 
 Open questions, and the record of the ones now closed. Each open item blocks the criteria named beside it.
