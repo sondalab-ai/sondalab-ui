@@ -284,6 +284,9 @@
   display: none !important;
 }
 
+/* A halftone is a picture made of spacing and size: high contrast shows none. */
+:root[data-sl-theme="high-contrast"] [data-sl-halftone] { display: none; }
+
 /* 3 — reduced motion is not a rule here but a structural one: every `animation:`
    declaration in this file sits inside a `prefers-reduced-motion: no-preference`
    block, and effects.js never sets data-sl-fx="on" under `reduce`. Static
@@ -2310,3 +2313,8 @@
   .sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not(.sl-fx-aurora--linear):not([style*="--slfx-progress"]) { --slfx-arc: 360deg; }
   .sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"]):not(.sl-fx-aurora--linear):not([style*="--slfx-progress"])::after { opacity: 0.55; }
 }
+
+/* A halftone canvas with no CSS width would take its own pixel width as its
+   layout width and grow with every redraw at a device pixel ratio above 1; it
+   takes its container's width, square. Zero specificity: any author width wins. */
+:where([data-sl-halftone]) { display: block; width: 100%; aspect-ratio: 1; }

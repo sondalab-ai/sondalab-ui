@@ -12,7 +12,7 @@ const KIT = resolve(HERE, "../packages/ui-kit");
    and a one-file change. The cost of that choice is drift, and this is what
    pays it — every runtime export must be declared, and nothing may be declared
    that is not exported. */
-const MODULES = ["effects", "goo-field", "geom", "glass-text"];
+const MODULES = ["effects", "goo-field", "geom", "glass-text", "halftone-core", "halftone"];
 
 /** Every name a module exports at runtime. */
 async function runtimeExports(name) {

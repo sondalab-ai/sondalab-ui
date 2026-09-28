@@ -93,7 +93,7 @@ import { mount, mountGpu, burst, autoBurst, hoverBurst, scramble, grantLive } fr
 mount();                      // Tier 1: the liquid, the goo's fields, glitch bursts, the aurora's sweep. Explicit, never automatic.
 // A product with a documented reason to animate for a visitor reporting
 // prefers-reduced-motion takes the derogation explicitly. It reaches the
-// GLITCH alone; high contrast still refuses.
+// GLITCH and the HALFTONE's motion; high contrast still refuses.
 // mount(document, { ignoreReducedMotion: true });
 // bursts: the ambient glitch ceiling, default 1. A page with several ambient
 // glitches raises it, or most of them are dropped.
@@ -115,7 +115,7 @@ mountGpu().then((ok) => {});  // Tier 2 is retired: always resolves false (kept 
 
 - **Tiers.** Without `mount()` the CSS alone is Tier 0 and correct on its own: a static glass hairline, a static aurora arc on focus, and a goo field's members simply laid out unmerged. `mount()` arms Tier 1 by setting `data-sl-fx="on"` on `<html>`. `mountGpu()` needs `vgpu` (an optional peer dependency — install it yourself if you want Tier 2; nothing breaks without it) and sets `data-sl-fx-gpu="on"` only once a frame is actually on screen.
 - **Kill switches, all honoured at every tier:** `prefers-reduced-motion: reduce` (nothing animates; `mount()` refuses), `[data-sl-theme="high-contrast"]` (every family off, the GPU tier torn down), and `data-sl-fx="off"` on any element (that element and its subtree). The focus `outline` is never replaced or removed.
-- **Holding still:** set `data-sl-fx-still` on `<html>` while the app is idle or its window is unfocused. The attribute works by presence: any value holds, `"false"` included, so remove it to resume. Motion freezes in place and resumes where it stopped when the attribute is removed: the live light (`live-light.js`) draws the frame it is on and asks for no more, keeping its canvases and WebGL contexts, and every kit animation (aurora sweep, curtains, beam, busy/run orbit, goo drift, the live badge's breath) is paused with `animation-play-state`. A glitch stands down to its label instead of freezing mid-burst. It is a pause, not a kill switch: nothing is detached, and apart from the glitch nothing changes how it looks. Not reached: the pointer-driven loops in `effects.js` (liquid, specular, press), which run only while the pointer moves; the glitch's `autoBurst` timers, which keep starting bursts that the flag then takes off; a drifting goo field's `goo-field.js` measuring loop; and anything the product animates itself, including animations it puts on a glass or aurora host.
+- **Holding still:** set `data-sl-fx-still` on `<html>` while the app is idle or its window is unfocused. The attribute works by presence: any value holds, `"false"` included, so remove it to resume. Motion freezes in place and resumes where it stopped when the attribute is removed: the live light (`live-light.js`) draws the frame it is on and asks for no more, keeping its canvases and WebGL contexts; the halftone (`halftone.js`) freezes on the frame it is on and resumes from it; and every kit animation (aurora sweep, curtains, beam, busy/run orbit, goo drift, the live badge's breath) is paused with `animation-play-state`. A glitch stands down to its label instead of freezing mid-burst. It is a pause, not a kill switch: nothing is detached, and apart from the glitch nothing changes how it looks. Not reached: the pointer-driven loops in `effects.js` (liquid, specular, press), which run only while the pointer moves; the glitch's `autoBurst` timers, which keep starting bursts that the flag then takes off; a drifting goo field's `goo-field.js` measuring loop; and anything the product animates itself, including animations it puts on a glass or aurora host.
 - **Replaced controls** (`<input>`, `<textarea>`, `<select>`) render no pseudo-element: wrap them in `<span class="sl-field__control sl-fx-…">` and put the effect classes on the wrapper.
 - **Filled elements** (`sl-btn--primary`) take `sl-fx-aurora--rim`, which steps the arc just outside the fill — and tells a glass pane that its ground is the fill.
 
@@ -133,5 +133,16 @@ mountGpu().then((ok) => {});  // Tier 2 is retired: always resolves false (kept 
 Read every one of them with `var(--name, default)` at the point of use if you extend this layer: a default **declared** on the pane or the glow would shadow the value an ancestor inherits down, and be unreachable from there.
 
 The reference page is `showcase/effects.html`; the contract is `docs/specs/2026-09-08-effects-layer-design.md`; the per-component declension (which family goes on which component, and which never do) is `agent/catalog.md` § Effects.
+
+### Halftone — `data-sl-halftone` (0.19.0)
+
+A picture drawn in round dots whose size follows its light, inside a circle that dissolves at its edge — sondalab.eu's stance and method vignettes. The dots gather the first time the canvas is 40% in view, then float. The ink is the canvas's own `color`: dark ink prints the picture's dark (a halftone on paper), light ink its light. Armed by `mount()`, or by `halftone(root)` from `@sondalab/ui-kit/halftone.js` without it. Under reduced motion the settled picture is drawn, still; `data-sl-fx-still` holds it; high contrast hides it.
+
+```html
+<canvas data-sl-halftone data-sl-src="/art/kinship.png" data-sl-grid="130" aria-hidden="true"
+        style="width: 22rem; aspect-ratio: 1"></canvas>
+```
+
+`data-sl-grid` is cells per side (16–256, default 96); `data-sl-seed` fixes which edge dots survive and how they scatter. A non-square picture is centre-cropped. **What reads as dots:** one iconic subject with near-binary contrast, drawn at ≥ 320px with a grid near 130; busy photos and dark renders do not. The engine is `@sondalab/ui-kit/halftone-core.js` (`sampleDots`, `dotFrame`, `settledFrame`, `toSVG`, `cover`), and `tools/halftone/` in the repo turns any picture into an SVG or PNG with the same dots.
 
 Generated tokens (`tokens.css`, `themes/*.css`) come from the canonical `sondalab.tokens.json` — do not hand-edit them. `components.css` is hand-authored.
