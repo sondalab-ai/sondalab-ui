@@ -20,6 +20,7 @@
   .ht__drop { position: absolute; inset: 1.5rem; border: 1px dashed var(--slc-border-strong); display: none; place-items: center; }
   .ht.is-over .ht__drop { display: grid; }
   .ht__row { display: flex; gap: .75rem; flex-wrap: wrap; }
+  #grid { accent-color: var(--slc-accent); }
   .ht__note { font-size: var(--sl-text-sm); color: var(--slc-text-muted); margin: 0; }
   .ht__side label.sl-field { gap: .35rem; }
   @media (max-width: 52rem) { .ht { grid-template-columns: minmax(0, 1fr); } .ht__side { padding: 2rem 1.25rem; } .ht__stage { padding: 1.25rem; } .ht__side { border-right: 0; border-bottom: 1px solid var(--slc-border-subtle); } }
@@ -35,17 +36,17 @@
     <label class="sl-field"><span class="sl-field__label">Grid — <output id="gridOut">130</output> cells</span>
       <input id="grid" type="range" min="48" max="200" value="130"></label>
     <label class="sl-field"><span class="sl-field__label">Ink</span>
-      <select class="sl-select" id="ink">
+      <span class="sl-field__control sl-select"><select class="sl-field__input" id="ink">
         <option value="paper">Light dots on the dark ground</option>
         <option value="ink">Ink dots on paper</option>
         <option value="accent">Accent dots on the dark ground</option>
-      </select></label>
+      </select></span></label>
     <label class="sl-field"><span class="sl-field__label">Invert</span>
-      <select class="sl-select" id="invert">
+      <span class="sl-field__control sl-select"><select class="sl-field__input" id="invert">
         <option value="auto">Auto — from the ink</option>
         <option value="on">Print the dark</option>
         <option value="off">Print the light</option>
-      </select></label>
+      </select></span></label>
     <label class="sl-check"><input class="sl-check__input" id="ground" type="checkbox"><span class="sl-check__box"></span><span class="sl-check__label">Include the ground in exports</span></label>
     <label class="sl-field"><span class="sl-field__label">Export size, px</span>
       <input class="sl-field__input" id="size" type="number" min="256" max="8192" step="64" value="2048"></label>
