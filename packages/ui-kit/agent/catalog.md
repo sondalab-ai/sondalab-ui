@@ -459,6 +459,7 @@ A picture in round dots whose size follows its light, in a circle that dissolves
 <canvas data-sl-halftone data-sl-src="/art/subject.png" data-sl-grid="130" aria-hidden="true"
         style="width: 22rem; aspect-ratio: 1; color: var(--slc-text)"></canvas>
 ```
+Attributes: `data-sl-grid` is cells per side (16–256, default 96); `data-sl-seed` (optional) makes the scatter reproducible; a non-square picture is centre-cropped.
 Consumes: the canvas's inherited `color` (set it with a role-var, e.g. `var(--slc-text)` or `var(--slc-accent)`). Don't: feed it a busy photo or a dark render — only one iconic subject with near-binary contrast reads, at ≥ 320px with a grid near 130. Don't: give it meaning — it is a picture, so a label or caption says what it shows; keep `aria-hidden` when the text beside it already does.
 
 ### Press — `sl-fx-press`
