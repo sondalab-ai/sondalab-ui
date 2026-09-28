@@ -974,11 +974,11 @@ test("a theme flip to dark ink resamples as a print of the picture's dark", asyn
   // The fake picture is a ramp, dark on the left, light on the right; the
   // weight of the dots (their radius) says which side is being printed.
   const centre = (dots) => dots.reduce((s, [x, , r]) => s + x * r, 0) / dots.reduce((s, [, , r]) => s + r, 0);
-  page.tick();
+  page.tick(5000);                               // gathered: dots at their places
   assert.ok(centre(page.frames.at(-1).dots) > 100, "light ink draws the light side");
   page.ink = [20, 20, 20];
   page.attr("data-sl-theme", "light");
-  page.tick();
+  page.tick(16);
   assert.ok(centre(page.frames.at(-1).dots) < 100, "dark ink prints the dark side");
 });
 ```
@@ -1094,7 +1094,7 @@ export function halftone(root = document) {
   function draw(s, now) {
     const w = s.width;
     if (!w) return false;
-    const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+    const dpr = globalThis.devicePixelRatio || 1;
     const side = Math.round(w * dpr);
     if (s.canvas.width !== side) s.canvas.width = s.canvas.height = side;
     const g = s.canvas.getContext("2d");
@@ -1264,6 +1264,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 - Modify: `scripts/effects-guards.test.mjs` (append two tests)
 - Modify: `packages/ui-kit/README.md` (Effects section; the `ignoreReducedMotion` comment in the code block ~line 94)
 - Modify: `packages/ui-kit/agent/catalog.md` (`## Effects`, new `### Halftone` entry)
+- Modify: `packages/ui-kit/agent/catalog.json` (new `fx-halftone` entry)
 - Modify: `packages/ui-kit/package.json` (`"version": "0.19.0"`)
 
 **Interfaces:**
@@ -1366,6 +1367,12 @@ A picture in round dots whose size follows its light, in a circle that dissolves
 Consumes: the canvas's inherited `color` (set it with a role-var, e.g. `var(--slc-text)` or `var(--slc-accent)`). Don't: feed it a busy photo or a dark render — only one iconic subject with near-binary contrast reads, at ≥ 320px with a grid near 130. Don't: give it meaning — it is a picture, so a label or caption says what it shows; keep `aria-hidden` when the text beside it already does.
 ````
 
+In `packages/ui-kit/agent/catalog.json`, add to `components` after the `fx-glitch` entry (`catalog-audit.test.mjs` checks json ↔ md parity; an effect with no class is matched on its id words):
+
+```json
+    { "id": "fx-halftone", "kind": "effect", "classes": [], "roleVars": [] },
+```
+
 Set `"version": "0.19.0"` in `packages/ui-kit/package.json`.
 
 - [ ] **Step 5: Full suite and audit**
@@ -1379,7 +1386,7 @@ Expected: all tests PASS (including `catalog-audit.test.mjs`, which audits every
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/ui-kit/effects.js packages/ui-kit/effects.css packages/ui-kit/README.md packages/ui-kit/agent/catalog.md packages/ui-kit/package.json scripts/effects-guards.test.mjs
+git add packages/ui-kit/effects.js packages/ui-kit/effects.css packages/ui-kit/README.md packages/ui-kit/agent/catalog.md packages/ui-kit/agent/catalog.json packages/ui-kit/package.json scripts/effects-guards.test.mjs
 git commit -m "feat(effects): 0.19.0 — mount() draws halftone canvases; high contrast hides them
 
 Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
@@ -1394,7 +1401,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 - Create: `tools/README.md`
 
 **Interfaces:**
-- Consumes: `sampleDots`, `dotFrame`, `settledFrame`, `cover`, `toSVG` from `../../packages/ui-kit/halftone-core.js`; the kit's `tokens.css`, `components.css`, `fonts.css`, `themes/*.css`.
+- Consumes: `sampleDots`, `dotFrame`, `settledFrame`, `cover`, `toSVG` from `../../packages/ui-kit/halftone-core.js`; `roleColour` from `../../packages/ui-kit/colour.js` (internal to the kit, reachable here because the page runs from the repo); the kit's `tokens.css`, `components.css`, `fonts.css`, `themes/*.css`.
 
 - [ ] **Step 1: Write the page**
 
@@ -1413,7 +1420,7 @@ Create `tools/halftone/index.html`:
 <link rel="stylesheet" href="../../packages/ui-kit/themes/light.css">
 <link rel="stylesheet" href="../../packages/ui-kit/components.css">
 <style>
-  body { margin: 0; background: var(--slc-bg); color: var(--slc-text); font-family: var(--sl-font-sans); }
+  body { margin: 0; background: var(--slc-canvas); color: var(--slc-text); font-family: var(--sl-font-sans); }
   .ht { display: grid; grid-template-columns: minmax(18rem, 26rem) 1fr; min-height: 100vh; }
   .ht__side { padding: 3rem 2.5rem; border-right: 1px solid var(--slc-border-subtle); display: flex; flex-direction: column; gap: 1.5rem; }
   .ht__title { font-family: var(--sl-font-display); font-size: clamp(3.5rem, 7vw, 6rem); line-height: .9; letter-spacing: -.03em; margin: 0; }
@@ -1470,23 +1477,22 @@ Create `tools/halftone/index.html`:
 </main>
 <script type="module">
 import { sampleDots, dotFrame, settledFrame, cover, toSVG } from "../../packages/ui-kit/halftone-core.js";
+import { roleColour } from "../../packages/ui-kit/colour.js";
 
 const $ = (id) => document.getElementById(id);
 const view = $("view");
-const state = { img: null, name: "halftone", px: null, grid: 130, dots: [], t0: 0 };
+const state = { img: null, name: "halftone", px: null, grid: 130, dots: [], t0: 0, pal: null };
 const THEMES = { paper: ["dark", "--slc-text"], ink: ["light", "--slc-text"], accent: ["dark", "--slc-accent"] };
+const hex = (rgb) => "#" + rgb.map((v) => Math.round(v * 255).toString(16).padStart(2, "0")).join("");
 
-/** The chosen ink's resolved colour and ground, read off the kit's tokens. */
+/** The chosen ink and ground as #rrggbb, read off the kit's role variables:
+ *  a computed colour can serialise as oklab() or color(), which design tools
+ *  do not reliably read, so every exported fill is plain sRGB hex. */
 function palette() {
   const [theme, role] = THEMES[$("ink").value];
   document.documentElement.setAttribute("data-sl-theme", theme);
-  const cs = getComputedStyle(document.documentElement);
-  const probe = Object.assign(document.createElement("span"), { hidden: true });
-  probe.style.color = `var(${role})`;
-  document.body.append(probe);
-  const ink = getComputedStyle(probe).color;
-  probe.remove();
-  return { ink, ground: cs.getPropertyValue("--slc-bg").trim(), theme };
+  const root = document.body;
+  return { ink: hex(roleColour(root, role)), ground: hex(roleColour(root, "--slc-canvas")), theme };
 }
 
 function invert(pal) {
@@ -1503,7 +1509,7 @@ function resample() {
   const c = cover(state.img.naturalWidth, state.img.naturalHeight);
   g.drawImage(state.img, c.sx, c.sy, c.s, c.s, 0, 0, size, size);
   state.px = g.getImageData(0, 0, size, size).data;
-  state.dots = sampleDots(state.px, size, { grid: state.grid, invert: invert(palette()), seed: Number($("seed").value) });
+  state.dots = sampleDots(state.px, size, { grid: state.grid, invert: invert(state.pal), seed: Number($("seed").value) });
   state.t0 = performance.now();
   $("svg").disabled = $("png").disabled = false;
 }
@@ -1529,7 +1535,7 @@ function frame(now) {
   if (view.width !== Math.round(w * dpr)) view.width = view.height = Math.round(w * dpr);
   const g = view.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  paint(g, w, (now - state.t0) / 1000, $("settled").checked, palette(), false);
+  paint(g, w, (now - state.t0) / 1000, $("settled").checked, state.pal, false);
   requestAnimationFrame(frame);
 }
 
@@ -1551,23 +1557,25 @@ async function open(file) {
 
 $("file").addEventListener("change", (e) => open(e.target.files[0]));
 $("grid").addEventListener("input", () => { $("gridOut").value = $("grid").value; resample(); });
-for (const id of ["ink", "invert", "seed"]) $(id).addEventListener("change", resample);
+$("ink").addEventListener("change", () => { state.pal = palette(); resample(); });
+for (const id of ["invert", "seed"]) $(id).addEventListener("change", resample);
 $("reroll").addEventListener("click", () => { $("seed").value = Math.floor(Math.random() * 1e6); resample(); });
 $("svg").addEventListener("click", () => {
-  const pal = palette();
+  const pal = state.pal;
   const size = Number($("size").value);
   download(new Blob([toSVG(state.dots, { size, grid: state.grid, color: pal.ink, background: $("ground").checked ? pal.ground : undefined })], { type: "image/svg+xml" }), "svg");
 });
 $("png").addEventListener("click", () => {
   const size = Number($("size").value);
   const out = Object.assign(document.createElement("canvas"), { width: size, height: size });
-  paint(out.getContext("2d"), size, 0, true, palette(), $("ground").checked);
+  paint(out.getContext("2d"), size, 0, true, state.pal, $("ground").checked);
   out.toBlob((b) => download(b, "png"), "image/png");
 });
 const stage = $("stage");
 stage.addEventListener("dragover", (e) => { e.preventDefault(); document.querySelector(".ht").classList.add("is-over"); });
 stage.addEventListener("dragleave", () => document.querySelector(".ht").classList.remove("is-over"));
 stage.addEventListener("drop", (e) => { e.preventDefault(); document.querySelector(".ht").classList.remove("is-over"); open(e.dataTransfer.files[0]); });
+state.pal = palette();
 requestAnimationFrame(frame);
 </script>
 </body>
@@ -1590,7 +1598,7 @@ Serve the repo root over http (ES modules do not load from `file://`):
 
 - [ ] **Step 2: Check the token names the page uses exist**
 
-Run: `grep -oE -- "--slc-(bg|text|text-muted|accent|border-subtle|border-strong)|--sl-font-(sans|display)|--sl-text-sm" packages/ui-kit/tokens.css packages/ui-kit/themes/dark.css | sort -u`
+Run: `grep -ohE -- "--slc-(canvas|text|text-muted|accent|border-subtle|border-strong):|--sl-font-(sans|display):|--sl-text-sm:" packages/ui-kit/tokens.css packages/ui-kit/components.css packages/ui-kit/themes/dark.css packages/ui-kit/themes/light.css | sort -u`
 Expected: every name used in the page's `<style>` and `THEMES` appears. Replace any that does not with the kit's actual name for that role before going on.
 
 - [ ] **Step 3: Verify in the browser**
@@ -1598,7 +1606,7 @@ Expected: every name used in the page's `<style>` and `THEMES` appears. Replace 
 Run: `python3 lab/_serve.py` (background), open `http://localhost:8891/tools/halftone/`. Load a high-contrast single-subject PNG (e.g. `packages/ui-kit/assets/sondalab-avatar-ink.png`). Check, with screenshots:
 - the preview gathers then floats; "Show the exported frame" freezes it at rest;
 - each ink option changes the ground and dot colour, and "Ink dots on paper" prints the dark;
-- Download SVG: open the file, it renders the settled frame; download twice with the same seed and `cmp` the two files: identical;
+- Download SVG: open the file, it renders the settled frame; download twice with the same seed and `cmp` the two files: identical; `grep -oE 'fill="[^"]+"' <file>.svg` shows only `#rrggbb` values (ink, and ground when included);
 - Download PNG at 2048: the file is 2048×2048 (`sips -g pixelWidth -g pixelHeight <file>`);
 - a 16:9 picture is centre-cropped, not squashed;
 - at 390px viewport width the layout stacks with no horizontal scroll.
@@ -1641,7 +1649,9 @@ With `lab/_serve.py` running, open `http://localhost:8891/lab/halftone-runtime.h
 - `npm run audit`
 - `git diff main --stat` (only the files named in this plan)
 
-- [ ] **Step 4: Push and open the PR**
+- [ ] **Step 4: Ask the owner, then push and open the PR**
+
+Ask the owner before pushing. On a yes:
 
 ```bash
 git push -u origin feat/halftone

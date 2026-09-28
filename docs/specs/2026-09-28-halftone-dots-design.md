@@ -38,15 +38,21 @@ One dot engine in the kit. A web surface gets a live dot scene from one attribut
 Pure ES module, no DOM, runs in a browser and in Node. Ported from the site's `dot-scene.ts` with its behaviour unchanged at default options.
 
 ```js
-sampleDots(pixels, size, { grid = 96, invert = false, seed } = {}) → Dot[]
+sampleDots(pixels, size, { grid = 96, invert = false, seed, floor = 0.03 } = {}) → Dot[]
 dotFrame(dot, t, width, grid, motion?) → { x, y, r }
+settledFrame(dot, width, grid) → { x, y, r }
+cover(width, height) → { sx, sy, s }
 toSVG(dots, { size, grid, color, background }) → string
 ```
 
 - `pixels` is RGBA bytes of a `size`×`size` square picture (callers sample at `2 × grid`, as the site does).
 - **`sampleDots`**: the picture's 2nd–99th luminance percentile becomes the full range; smoothstep on the stretched value; the outer half of the inscribed circle dissolves (dots shrink, and thin out at random); cells under the floor (0.03) are dropped. `invert` prints the dark of the picture: `(1 − lum)^1.8`. Each dot carries its place, light `L`, a scatter start inside the circle, a delay and a phase.
-- **`seed`** (new): a number seeding a small deterministic PRNG (mulberry32) used for the edge thinning, scatter, delays and phases. Omitted → `Math.random`, as the site does today. Same pixels + grid + invert + seed → identical dots.
+- **Transparency** (new): a transparent pixel counts as the ground (dark when printing light, light when printing dark), so a logo on a transparent PNG prints the logo, not a disc.
+- **`seed`** (new): a number seeding a small deterministic pseudo-random number generator (PRNG; mulberry32) used for the edge thinning, scatter, delays and phases. Omitted → `Math.random`, as the site does today. Same pixels + grid + invert + seed → identical dots.
 - **`dotFrame`**: gather from the scatter (cubic ease-out over 1.1 s, delayed by distance from the centre), then float on an orbit of 0.15 cell, light breathing ±7.5 %, a scan band every 6 s; radius `0.56 × cell × √L × (0.4 + 0.6e)`. The site's constants become the fields of an optional `motion` object whose defaults are the site's values. The site's `a` (alpha) field is dropped: it is always 1.
+- **`settledFrame`** (new): the dot at rest, at its place and full size, with no float, breath or scan band. What reduced motion draws, and what an export prints.
+- **`cover`** (new): the centred square of any picture, as `drawImage` source coordinates: a wide or tall picture is cropped, never squashed. Used by the runtime and the export page.
+- **`floor`**: the site's 0.03 threshold, exposed as an option.
 - **`toSVG`** (new): the settled frame only: each dot at its place, radius `0.56 × cell × √L`, with no scatter, float, shimmer or scan band. One `<svg viewBox="0 0 size size">`, one `<circle>` per dot, coordinates rounded to 2 decimals, `fill` set once on a `<g>`. Optional `background` adds a full-size `<rect>`. Animated exports (video, GIF) are out of scope.
 - `halftone-core.d.ts`: hand-written types, covered by `scripts/types-drift.test.mjs`.
 
@@ -56,12 +62,14 @@ toSVG(dots, { size, grid, color, background }) → string
 <canvas data-sl-halftone data-sl-src="/art/kinship.png" data-sl-grid="130" aria-hidden="true"></canvas>
 ```
 
-`halftone(root = document) → { stop() }`. It loads every `canvas[data-sl-halftone]` under `root` and follows ones added later.
+`halftone(root = document) → { stop(), ready }`. It loads every `canvas[data-sl-halftone]` under `root` and follows ones added later; `ready` settles once the canvases present at the call have loaded.
 
-- **Loading**: decode the image, draw it at `2 × grid` on an offscreen canvas, keep the bytes so a theme change can resample without refetching. A failed image leaves its own canvas empty and nothing else (`Promise.allSettled`, as today).
+- **Attributes**: `data-sl-src` (required); `data-sl-grid`, cells per side, clamped to 16–256, missing or invalid → 96; `data-sl-seed` (optional), the same seed as the export page, for a reproducible scene.
+
+- **Loading**: decode the image, crop its centred square (`cover`), draw it at `2 × grid` on an offscreen canvas, keep the bytes so a theme change can resample without refetching. A failed image, or one from another origin without CORS (whose canvas cannot be read), leaves its own canvas empty and nothing else (`Promise.allSettled`, as today).
 - **Colour**: the canvas's inherited `color`, resolved to sRGB through the kit's one colour reader (below). Ink darker than mid-grey (luminance < 128) sets `invert`. The theme is followed by a MutationObserver on `data-sl-theme`; a polarity flip resamples, a colour change only repaints.
 - **Shared colour reader**: `roleColour` in `live-light.js` (probe element + 1 px canvas) moves to an internal `packages/ui-kit/colour.js` taking any CSS colour expression; `live-light.js` passes `var(--slc-accent)`, `halftone.js` passes `currentColor`. `colour.js` ships in `files` but is not a public export.
-- **Loop**: one shared `requestAnimationFrame` loop for all scenes, running only while a scene is within 200 px of the viewport and the page is visible. A scene starts gathering the first time it is 40 % in view.
+- **Loop**: one shared `requestAnimationFrame` (rAF) loop, at the device's full pixel ratio as on the site, for all scenes, running only while a scene is within 200 px of the viewport and the page is visible. A scene starts gathering the first time it is 40 % in view.
 - **Reduced motion**: when `prefers-reduced-motion: reduce` matches and `<html>` does not carry `data-sl-fx-motion="always"` (what `mount({ ignoreReducedMotion: true })` writes), each scene draws its settled frame once when first seen, and redraws once on resize or theme change. No loop. sondalab-site already mounts with `ignoreReducedMotion` (`src/layouts/Base.astro`), so it keeps its motion.
 - **Still**: `data-sl-fx-still` on `<html>` behaves as in `live-light.js`: the frame that sees it is drawn and no further frame is requested; a scene that resizes meanwhile is drawn once at the frozen instant; clearing the flag moves every `t0` forward by the pause, so scenes resume where they stopped.
 - **Off / high contrast**: a canvas inside `[data-sl-fx="off"]` is not armed. Under `data-sl-theme="high-contrast"` `effects.css` hides `[data-sl-halftone]` (`display: none`); the runtime draws nothing while that theme is set.
@@ -77,6 +85,7 @@ A new top-level `tools/` directory for asset-making tools, distinct from `showca
 - Built with the kit itself (`tokens.css`, `components.css`, themes), in the house style.
 - Controls: image (drop or pick), grid (48–200, default 130), invert (auto from ink / on / off), ink (paper-on-ink, ink-on-paper, accent; read from the kit's tokens), background (transparent / ground), output size (px), seed (number, with a "reroll" button).
 - A live preview canvas runs the same gather-and-float as the runtime, and a "settled" toggle shows the frame that will be exported.
+- Colours in exports are plain `#rrggbb`, resolved from the kit's role variables through `colour.js`: a computed colour can serialise as `oklab()` or `color()`, which design tools do not reliably read.
 - Downloads: **SVG** from `toSVG` (the settled frame), **PNG** from an offscreen canvas at the chosen output size and device-independent (1×).
 - The photo-fit rule, stated on the page and in the kit README: *a photo reads as dots only when its subject is one iconic outline with near-binary contrast, drawn at ≥ 320 px with a grid near 130* (sondalab-site memory `photos-as-dot-halftones-only-read-when-the-subject-is-one-ic`: three rounds of noir renders and busy stock photos were rejected at 280 px).
 
