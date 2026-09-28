@@ -1,6 +1,6 @@
 /* @sondalab/ui-kit — halftone.js
    The live half of the halftone: every canvas[data-sl-halftone] under a root
-   becomes its picture in dots, gathering the first time it is 40% in view,
+   becomes its picture in dots, gathering the first time it is 40% in view (or fills 40% of the viewport),
    then floating. The maths is halftone-core.js, the same an export prints.
 
      <canvas data-sl-halftone data-sl-src="/art/kinship.png"
@@ -153,10 +153,12 @@ export function halftone(root = document) {
   const seen = hasIO && new IntersectionObserver((entries) => {
     for (const e of entries) {
       const s = scenes.get(e.target);
-      if (s && e.isIntersecting && e.intersectionRatio >= 0.4 && s.t0 === null) s.t0 = performance.now();
+      if (s && s.t0 === null && e.isIntersecting && (e.intersectionRatio >= 0.4 || (e.rootBounds && e.intersectionRect.height >= 0.4 * e.rootBounds.height))) {
+        s.t0 = stillAt ?? performance.now();
+      }
     }
     wake();
-  }, { threshold: 0.4 });
+  }, { threshold: [0, 0.1, 0.2, 0.3, 0.4] });
   const size = typeof ResizeObserver === "function" && new ResizeObserver((entries) => {
     for (const e of entries) { const s = scenes.get(e.target); if (s) s.width = e.contentRect.width; }
     wake();
@@ -167,7 +169,7 @@ export function halftone(root = document) {
     paint(s);
     scenes.set(s.canvas, s);
     if (hasIO) { near.observe(s.canvas); seen.observe(s.canvas); }
-    else { s.near = true; s.t0 = performance.now(); }
+    else { s.near = true; s.t0 = stillAt ?? performance.now(); }
     if (size) size.observe(s.canvas);
     wake();
   }

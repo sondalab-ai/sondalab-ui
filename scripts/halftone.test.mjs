@@ -121,7 +121,7 @@ function fakePage({ reduce = false, observe = true } = {}) {
   };
   /** Every scene near and seen, as IntersectionObserver would report once scrolled to. */
   page.show = (canvas) => {
-    for (const o of page.io) o.cb([{ target: canvas, isIntersecting: true, intersectionRatio: 1 }]);
+    for (const o of page.io) o.cb([{ target: canvas, isIntersecting: true, intersectionRatio: 1, intersectionRect: { height: 200 }, rootBounds: { height: 800 } }]);
   };
   page.tick = (ms = 16) => {
     page.clock += ms;
@@ -349,7 +349,7 @@ test("a scene gathers only once 40% of it is in view, not at the first pixel", a
   const c = page.canvas({ "data-sl-grid": "32" });
   const { ready } = halftone(page.doc);
   await ready;
-  for (const o of page.io) o.cb([{ target: c, isIntersecting: true, intersectionRatio: 0.1 }]);
+  for (const o of page.io) o.cb([{ target: c, isIntersecting: true, intersectionRatio: 0.1, intersectionRect: { height: 20 }, rootBounds: { height: 800 } }]);
   page.tick();
   assert.equal(page.frames.length, 0, "a sliver does not start the gather");
   page.show(c);
@@ -365,4 +365,34 @@ test("pictures are requested with CORS so a cross-origin one can be read", async
   await ready;
   assert.ok(page.images.length > 0);
   for (const img of page.images) assert.equal(img.crossOrigin, "anonymous");
+});
+
+test("a canvas taller than 2.5 viewports gathers once 40% of the viewport is filled by it", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  const c = page.canvas({ "data-sl-grid": "32" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  for (const o of page.io) o.cb([{ target: c, isIntersecting: true, intersectionRatio: 0.35, intersectionRect: { height: 400 }, rootBounds: { height: 800 } }]);
+  page.tick();
+  assert.ok(page.frames.length > 0, "a ratio that can never reach 0.4 still gathers");
+});
+
+test("a scene first seen while still is held gathers from the start once released", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  const c = page.canvas({ "data-sl-grid": "32", "data-sl-seed": "5" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  page.attr("data-sl-fx-still", "");
+  page.tick(16);
+  page.tick(60_000);
+  page.show(c);
+  page.tick(60_000);
+  page.attr("data-sl-fx-still", null);
+  page.tick(0);
+  const mean = (dots) => dots.reduce((s, [, , r]) => s + r, 0) / dots.length;
+  const first = mean(page.frames.at(-1).dots);
+  for (let i = 0; i < 200; i++) page.tick(16);
+  assert.ok(mean(page.frames.at(-1).dots) > 2 * first, "dots have grown to their places within ~3s, not held scattered");
 });
