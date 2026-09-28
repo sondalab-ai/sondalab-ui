@@ -900,3 +900,19 @@ test("data-sl-fx-still freezes every loop the kit starts", () => {
 test("an unsized halftone canvas takes its container's width, square, at zero specificity", () => {
   assert.match(effects, /:where\(\[data-sl-halftone\]\)\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*aspect-ratio:\s*1;[^}]*\}/);
 });
+
+test("mount() arms the halftone before the reduced-motion guard: the picture is content", () => {
+  const start = effectsJs.indexOf("export function mount(");
+  const end = effectsJs.indexOf("\nexport function", start + 1);
+  const body = effectsJs.slice(start, end === -1 ? undefined : end).replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const arm = body.indexOf("armHalftone(root)");
+  const guard = body.indexOf("window.matchMedia(REDUCE)");
+  assert.ok(guard > -1, "the slice contains the motion guard");
+  assert.ok(arm > -1, "mount() calls armHalftone(root)");
+  assert.ok(arm < guard, "and before the motion guard");
+  assert.match(jsFnBody("armHalftone"), /import\("\.\/halftone\.js"\)/, "lazily, like the goo and the live light");
+});
+
+test("high contrast hides every halftone canvas", () => {
+  assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \[data-sl-halftone\]\s*\{\s*display:\s*none;?\s*\}/);
+});

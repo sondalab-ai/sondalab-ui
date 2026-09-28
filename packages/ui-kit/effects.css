@@ -284,6 +284,9 @@
   display: none !important;
 }
 
+/* A halftone is a picture made of spacing and size: high contrast shows none. */
+:root[data-sl-theme="high-contrast"] [data-sl-halftone] { display: none; }
+
 /* 3 — reduced motion is not a rule here but a structural one: every `animation:`
    declaration in this file sits inside a `prefers-reduced-motion: no-preference`
    block, and effects.js never sets data-sl-fx="on" under `reduce`. Static

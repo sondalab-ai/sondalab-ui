@@ -93,7 +93,7 @@ import { mount, mountGpu, burst, autoBurst, hoverBurst, scramble, grantLive } fr
 mount();                      // Tier 1: the liquid, the goo's fields, glitch bursts, the aurora's sweep. Explicit, never automatic.
 // A product with a documented reason to animate for a visitor reporting
 // prefers-reduced-motion takes the derogation explicitly. It reaches the
-// GLITCH alone; high contrast still refuses.
+// GLITCH and the HALFTONE's motion; high contrast still refuses.
 // mount(document, { ignoreReducedMotion: true });
 // bursts: the ambient glitch ceiling, default 1. A page with several ambient
 // glitches raises it, or most of them are dropped.
@@ -135,3 +135,14 @@ Read every one of them with `var(--name, default)` at the point of use if you ex
 The reference page is `showcase/effects.html`; the contract is `docs/specs/2026-09-08-effects-layer-design.md`; the per-component declension (which family goes on which component, and which never do) is `agent/catalog.md` § Effects.
 
 Generated tokens (`tokens.css`, `themes/*.css`) come from the canonical `sondalab.tokens.json` — do not hand-edit them. `components.css` is hand-authored.
+
+### Halftone — `data-sl-halftone` (0.19.0)
+
+A picture drawn in round dots whose size follows its light, inside a circle that dissolves at its edge — sondalab.eu's stance and method vignettes. The dots gather the first time the canvas is 40% in view, then float. The ink is the canvas's own `color`: dark ink prints the picture's dark (a halftone on paper), light ink its light. Armed by `mount()`, or by `halftone(root)` from `@sondalab/ui-kit/halftone.js` without it. Under reduced motion the settled picture is drawn, still; `data-sl-fx-still` holds it; high contrast hides it.
+
+```html
+<canvas data-sl-halftone data-sl-src="/art/kinship.png" data-sl-grid="130" aria-hidden="true"
+        style="width: 22rem; aspect-ratio: 1"></canvas>
+```
+
+`data-sl-grid` is cells per side (16–256, default 96); `data-sl-seed` fixes which edge dots survive and how they scatter. A non-square picture is centre-cropped. **What reads as dots:** one iconic subject with near-binary contrast, drawn at ≥ 320px with a grid near 130; busy photos and dark renders do not. The engine is `@sondalab/ui-kit/halftone-core.js` (`sampleDots`, `dotFrame`, `settledFrame`, `toSVG`, `cover`), and `tools/halftone/` in the repo turns any picture into an SVG or PNG with the same dots.

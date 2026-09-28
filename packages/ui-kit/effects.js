@@ -1011,6 +1011,20 @@ async function armLiveLight(root) {
   liveLight(root);
 }
 
+let halftoneArmed = false;
+/** Every canvas[data-sl-halftone] drawn in dots (halftone.js). Dynamically
+ *  imported, like the goo and the live light; it follows canvases added
+ *  later and owns its own reduced-motion rule (a settled frame, not nothing).
+ *  @param {ParentNode} root
+ *  @returns {Promise<void>} */
+async function armHalftone(root) {
+  if (halftoneArmed) return;
+  halftoneArmed = true;
+  let halftone;
+  try { ({ halftone } = await import("./halftone.js")); } catch { return; }
+  halftone(root);
+}
+
 /** The goo fields currently bound, for the same two reasons as `lensed`:
  *  mount() may be called twice, and a container may leave the document. */
 const gooFields = new Map();
@@ -1262,7 +1276,7 @@ function suppressed() {
  *
  * `ignoreReducedMotion` is a derogation, not a convenience, and a consumer
  * takes it on their own evidence. It arms Tier 1 for a visitor reporting
- * `prefers-reduced-motion: reduce` and lets the GLITCH animate for them; every
+ * `prefers-reduced-motion: reduce` and lets the GLITCH and the HALFTONE's gather-and-float animate for them; every
  * other family's motion stays inside the media query in effects.css, where
  * nothing can overrule it. It has no effect on high contrast, which refuses
  * regardless. The case it exists for: sondalab.eu, where Windows reports the
@@ -1287,6 +1301,9 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // refusing it for a motion preference would take away material rather than
   // movement. mountGoo() owns its own observers and its own armed flag.
   mountGoo(root);
+  // The halftone goes with the goo, on the goo's argument: the picture is
+  // content. Under reduced motion it draws its settled frame, not nothing.
+  armHalftone(root);
   // The lens goes with it, and for the reason lensRefused() has argued in its
   // own comment since it was written: a lens is not motion. It is a static
   // property of a surface — it does not animate, and it does not redraw on

@@ -274,6 +274,7 @@
         "--slc-accent-hover"
       ]
     },
+    { "id": "fx-halftone", "kind": "effect", "classes": [], "roleVars": [] },
     {
       "id": "sticky-header",
       "kind": "signature",
