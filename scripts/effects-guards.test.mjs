@@ -896,3 +896,7 @@ test("data-sl-fx-still freezes every loop the kit starts", () => {
   assert.ok(glitch, "the glitch stands down under still");
   assert.ok(still.some((r) => /\.sl-fx-glitch__text$/.test(r.selector) && /opacity:\s*1\s*!important/.test(r.body)), "and the shatter's label is given back");
 });
+
+test("an unsized halftone canvas takes its container's width, square, at zero specificity", () => {
+  assert.match(effects, /:where\(\[data-sl-halftone\]\)\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*aspect-ratio:\s*1;[^}]*\}/);
+});

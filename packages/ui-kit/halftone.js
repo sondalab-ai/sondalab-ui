@@ -6,6 +6,9 @@
      <canvas data-sl-halftone data-sl-src="/art/kinship.png"
              data-sl-grid="130" aria-hidden="true"></canvas>
 
+   SIZE: the canvas takes its CSS width (effects.css gives an unsized one its
+   container's width, square).
+
    COLOUR: the canvas's own inherited `color`, so a scene on an inversion band
    prints in the band's ink. Ink darker than mid-grey prints the picture's
    dark (a halftone on paper); light ink draws its light. A theme change that
@@ -52,6 +55,7 @@ function darkInk([r, g, b]) {
 async function load(canvas) {
   const doc = canvas.ownerDocument;
   const img = new Image();
+  img.crossOrigin = "anonymous";
   img.src = canvas.getAttribute("data-sl-src");
   await img.decode();
   const grid = gridOf(canvas);
@@ -149,7 +153,7 @@ export function halftone(root = document) {
   const seen = hasIO && new IntersectionObserver((entries) => {
     for (const e of entries) {
       const s = scenes.get(e.target);
-      if (s && e.isIntersecting && s.t0 === null) s.t0 = performance.now();
+      if (s && e.isIntersecting && e.intersectionRatio >= 0.4 && s.t0 === null) s.t0 = performance.now();
     }
     wake();
   }, { threshold: 0.4 });

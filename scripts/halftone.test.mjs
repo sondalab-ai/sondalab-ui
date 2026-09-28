@@ -18,7 +18,7 @@ const { halftone } = await import(pathToFileURL(resolve(KIT, "halftone.js")).hre
 function fakePage({ reduce = false, observe = true } = {}) {
   const keys = ["Element", "Image", "MutationObserver", "IntersectionObserver", "ResizeObserver", "getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame", "matchMedia", "performance", "devicePixelRatio"];
   const saved = Object.fromEntries(keys.map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
-  const page = { clock: 1000, queue: [], observers: [], io: [], ro: [], frames: [], listeners: new Map(), offscreen: [], ink: [240, 240, 240] };
+  const page = { clock: 1000, queue: [], observers: [], io: [], ro: [], frames: [], listeners: new Map(), offscreen: [], images: [], ink: [240, 240, 240] };
   class Element {
     constructor(doc, tag, attrs = {}) {
       Object.assign(this, { ownerDocument: doc, tagName: tag.toUpperCase(), attrs: { ...attrs }, children: [], parent: null, isConnected: true, clientWidth: 200, style: {} });
@@ -75,6 +75,7 @@ function fakePage({ reduce = false, observe = true } = {}) {
   doc.documentElement.append(doc.body);
   globalThis.Element = Element;
   globalThis.Image = class {
+    constructor() { page.images.push(this); }
     set src(v) { this._src = v; }
     get src() { return this._src; }
     get naturalWidth() { return 400; }
@@ -120,7 +121,7 @@ function fakePage({ reduce = false, observe = true } = {}) {
   };
   /** Every scene near and seen, as IntersectionObserver would report once scrolled to. */
   page.show = (canvas) => {
-    for (const o of page.io) o.cb([{ target: canvas, isIntersecting: true }]);
+    for (const o of page.io) o.cb([{ target: canvas, isIntersecting: true, intersectionRatio: 1 }]);
   };
   page.tick = (ms = 16) => {
     page.clock += ms;
@@ -340,4 +341,28 @@ test("a theme flip to dark ink resamples as a print of the picture's dark", asyn
   page.attr("data-sl-theme", "light");
   page.tick(16);
   assert.ok(centre(page.frames.at(-1).dots) < 100, "dark ink prints the dark side");
+});
+
+test("a scene gathers only once 40% of it is in view, not at the first pixel", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  const c = page.canvas({ "data-sl-grid": "32" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  for (const o of page.io) o.cb([{ target: c, isIntersecting: true, intersectionRatio: 0.1 }]);
+  page.tick();
+  assert.equal(page.frames.length, 0, "a sliver does not start the gather");
+  page.show(c);
+  page.tick();
+  assert.ok(page.frames.length > 0, "a ratio of 1 does");
+});
+
+test("pictures are requested with CORS so a cross-origin one can be read", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  page.canvas({ "data-sl-grid": "32" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  assert.ok(page.images.length > 0);
+  for (const img of page.images) assert.equal(img.crossOrigin, "anonymous");
 });
