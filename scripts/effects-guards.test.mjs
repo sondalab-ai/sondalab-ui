@@ -151,10 +151,12 @@ test("every glass control carries the two-line edge, with or without mount()", (
   assert.ok(rule, "buttons: the control edge rule exists");
   assert.doesNotMatch(rule[1], /\.sl-glass\b/, "buttons: the edge must not wait for mount()'s .sl-glass");
   assert.match(rule[2], /border-color:\s*var\(--slfx-edge-mid\)/, "buttons: sharp line on the border");
-  assert.match(rule[2], /box-shadow:\s*inset 0 0 0 1px var\(--slfx-edge-lo\)/, "buttons: soft line on the host");
+  assert.match(rule[2], /box-shadow:\s*inset 0 0 0 1px var\(--slfx-edge-soft\)/, "buttons: soft line on the host");
+  assert.match(rule[2], /--slg-rim-hi:\s*transparent/, "buttons: flat like a field, no __shine rim");
+  assert.match(rule[2], /--slg-rim-lo:\s*transparent/, "buttons: flat like a field, no __shine rim");
   const input = [...effects.matchAll(/\.sl-field__control:is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)[^{]*\.sl-field__input(:[^{]*)?\s*\{([^}]*)\}/g)]
     .map((m) => (m[1] ?? "") + m[2]).join("\n");
-  assert.match(input, /inset 0 0 0 1px var\(--slfx-edge-lo\)/, "fields: soft line on the input");
+  assert.match(input, /inset 0 0 0 1px var\(--slfx-edge-soft\)/, "fields: soft line on the input");
   assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slfx-edge-mid\)/, "fields: sharp line, focus keeps the accent");
   assert.match(input, /:focus\s*box-shadow:[^;]*0 0 0 3px var\(--slc-accent-subtle\)/, "fields: focus keeps its halo");
 });

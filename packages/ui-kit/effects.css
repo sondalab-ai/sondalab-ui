@@ -505,6 +505,9 @@
   --slfx-edge-hi: color-mix(in srgb, var(--slfx-glint) 55%, var(--slc-border-strong, var(--sl-border-strong)));
   --slfx-edge-lo: var(--slc-border-subtle, var(--sl-border-subtle));
   --slfx-edge-mid: var(--slc-border-strong, var(--sl-border-strong));
+  /* The control edge's inner line. --slfx-edge-lo (the subtle border, 7% on
+     ink) did not read as a line at 1px; the default border does. */
+  --slfx-edge-soft: var(--slc-border, var(--sl-border-default));
   --slfx-edge-tint: color-mix(in srgb, var(--slfx-accent-vivid) 40%, var(--slfx-edge-hi));
   position: relative;
   isolation: isolate;
@@ -684,10 +687,17 @@
    pane's label: high contrast and an opt-out region keep the shipped borders. */
 :is(.sl-btn, .sl-icon-btn).sl-fx-glass:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   border-color: var(--slfx-edge-mid);
-  box-shadow: inset 0 0 0 1px var(--slfx-edge-lo);
+  box-shadow: inset 0 0 0 1px var(--slfx-edge-soft);
+  /* Flat, like the field beside it (the owner, 2026-09-29: "make the buttons
+     be like the select"). __shine's resting rim — a bright line along the top
+     and down the left — was a third line only buttons showed: a field's input
+     paints over its wrapper's __shine. Overrides the AC-33 exception of
+     2026-09-11 for controls only; cards and panes keep their rim. */
+  --slg-rim-hi: transparent;
+  --slg-rim-lo: transparent;
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
-  box-shadow: inset 0 0 0 1px var(--slfx-edge-lo);
+  box-shadow: inset 0 0 0 1px var(--slfx-edge-soft);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
   border-color: var(--slfx-edge-mid);
@@ -698,7 +708,7 @@
   border-color: var(--slfx-edge-hi);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:focus {
-  box-shadow: inset 0 0 0 1px var(--slfx-edge-lo), 0 0 0 3px var(--slc-accent-subtle);
+  box-shadow: inset 0 0 0 1px var(--slfx-edge-soft), 0 0 0 3px var(--slc-accent-subtle);
 }
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
