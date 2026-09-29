@@ -598,6 +598,14 @@
   inset: -1px;
   padding: 1px;
 }
+/* A field's host is the wrapper, which has no border: the input's own border
+   is the wrapper's outermost pixel. At -1px the arc landed one pixel OUTSIDE
+   it and the two read as one bold 2px line — the owner saw it in Spexr's
+   launcher. At 0 the light sits on the input's border, the sharp line, and
+   nowhere else. Placed after the rule above: same specificity, later wins. */
+.sl-field__control:is(.sl-fx-glass, .sl-fx-aurora):is(.sl-fx-glass--field, .sl-fx-aurora--field)::after {
+  inset: 0;
+}
 
 
 /* ── Translucency ───────────────────────────────────────────────────────────
@@ -662,10 +670,36 @@
 .sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
 .sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
 .sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
-/* The pane brings its own rim and light. The primary's ink edge and lit top
-   line (components.css, 0.11, both border colours) would draw an outline
-   around the glass. */
-.sl-btn--primary.sl-fx-glass:where(.sl-glass) { border-color: transparent; }
+/* THE CONTROL EDGE — two lines, one recipe for every glass control: a sharp
+   1px line on the border and a softer 1px line just inside it (the owner,
+   2026-09-29: "1px sharp and 1px softer, not a single bold border"). The
+   sharp line is the border, so the pointer's arc and the aurora's lit arc
+   land on it and only on it; the soft one is the pane's inner thickness.
+   It replaces the primary's ink edge and lit top line (components.css, 0.11),
+   which drew a second, different outline around the glass, and the pane's
+   transparent border, which left a button with no line at all while a field
+   beside it had one. Both lines are on the control itself, never on the
+   layers mount() injects, so the edge is the same with or without JavaScript;
+   on a field that is the input, which paints over its wrapper. Gated like the
+   pane's label: high contrast and an opt-out region keep the shipped borders. */
+:is(.sl-btn, .sl-icon-btn).sl-fx-glass:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
+  border-color: var(--slfx-edge-mid);
+  box-shadow: inset 0 0 0 1px var(--slfx-edge-lo);
+}
+.sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
+  box-shadow: inset 0 0 0 1px var(--slfx-edge-lo);
+}
+.sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
+  border-color: var(--slfx-edge-mid);
+}
+/* The rest line is already the strong border the shipped hover used, so hover
+   brightens it toward the glint instead — the same light the arc is made of. */
+.sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:hover:not(:disabled, :focus) {
+  border-color: var(--slfx-edge-hi);
+}
+.sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:focus {
+  box-shadow: inset 0 0 0 1px var(--slfx-edge-lo), 0 0 0 3px var(--slc-accent-subtle);
+}
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
 .sl-btn--ghost.sl-fx-glass,
@@ -910,8 +944,10 @@
    classes an emphasis edge as a blessed category, so this is not an L2 breach. */
 .sl-fx-glass--wide,
 .sl-fx-aurora--wide { --slfx-ring-w: 2px; }
-.sl-fx-glass--field,
-.sl-fx-aurora--field { --slfx-ring-w: 2px; }
+/* A field has no --slfx-ring-w of its own since 0.20: it was 2px, a solid band
+   over the input's border and the pixel outside it, and that band was the
+   bold edge. Its edge is the control edge above; its lit arc is 1px, on the
+   sharp line. */
 
 /* There is no --thick. It existed for one afternoon on 2026-09-15, to scope
    the 21.6px prism to large panels while small hosts kept a fitted 4.32; the
