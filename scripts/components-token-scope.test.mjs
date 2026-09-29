@@ -99,10 +99,11 @@ test("the primary button's chrome survives a background + border reset", () => {
   const primary = [...bare.matchAll(/\.sl-btn--primary[^{,]*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
   assert.ok(primary.includes("background-color"), "parser found the primary rules");
   assert.doesNotMatch(primary, /box-shadow|background-image/);
-  // …and the glass pane brings its own rim, so the family clears the edge.
+  // …and on glass the family replaces the primary's two border colours with
+  // the one control edge every glass button shares.
   const fx = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  const clear = fx.match(/\.sl-btn--primary\.sl-fx-glass(?::where\(\.sl-glass\))?\s*\{([^}]*)\}/g)?.join("\n") ?? "";
-  assert.match(clear, /border-color:\s*transparent/);
+  const edge = fx.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass[^{]*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(edge, /border-color:\s*var\(--slfx-edge-mid\)/);
 });
 
 // Reduced motion zeroes --sl-motion-*; a literal duration would escape it. A

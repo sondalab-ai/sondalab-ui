@@ -129,6 +129,36 @@ test("the ring grows inward — padding is the width, inset stays at the border 
   assert.match(block.slice(0, 600), /padding:\s*var\(--slfx-ring-w/, "ring width must be padding, so it grows inward");
 });
 
+// The control edge (0.20): a sharp 1px line on the border and a softer 1px
+// line inside it. Spexr's launcher showed the regression this guards: a field's
+// arc sat one pixel OUTSIDE the input's border and read as one bold 2px line.
+test("a field's ring sits on the input's border, 1px wide", () => {
+  assert.doesNotMatch(effects, /\.sl-fx-(?:glass|aurora)--field[^{]*\{[^}]*--slfx-ring-w:\s*2px/,
+    "a field must not widen the ring to 2px");
+  assert.match(effects,
+    /\.sl-field__control:is\(\.sl-fx-glass, \.sl-fx-aurora\):is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)::after\s*\{\s*inset:\s*0;/,
+    "a field's ::after must sit at inset 0, on the input's border");
+  // Same specificity as the spec-lit geometry rule, so it must come after it.
+  assert.ok(
+    effects.indexOf(".sl-field__control:is(.sl-fx-glass, .sl-fx-aurora):is(.sl-fx-glass--field")
+      > effects.indexOf(".sl-fx-glass.is-spec-lit:not(:focus-visible, :focus-within, [data-sl-fx-live])::after"),
+    "the field placement must follow the spec-lit geometry rule",
+  );
+});
+
+test("every glass control carries the two-line edge, with or without mount()", () => {
+  const rule = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass(:[^{]*)\{([^}]*)\}/);
+  assert.ok(rule, "buttons: the control edge rule exists");
+  assert.doesNotMatch(rule[1], /\.sl-glass\b/, "buttons: the edge must not wait for mount()'s .sl-glass");
+  assert.match(rule[2], /border-color:\s*var\(--slfx-edge-mid\)/, "buttons: sharp line on the border");
+  assert.match(rule[2], /box-shadow:\s*inset 0 0 0 1px var\(--slfx-edge-lo\)/, "buttons: soft line on the host");
+  const input = [...effects.matchAll(/\.sl-field__control:is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)[^{]*\.sl-field__input(:[^{]*)?\s*\{([^}]*)\}/g)]
+    .map((m) => (m[1] ?? "") + m[2]).join("\n");
+  assert.match(input, /inset 0 0 0 1px var\(--slfx-edge-lo\)/, "fields: soft line on the input");
+  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slfx-edge-mid\)/, "fields: sharp line, focus keeps the accent");
+  assert.match(input, /:focus\s*box-shadow:[^;]*0 0 0 3px var\(--slc-accent-subtle\)/, "fields: focus keeps its halo");
+});
+
 test("--slfx-angle is registered with @property", () => {
   assert.match(effects, /@property\s+--slfx-angle\s*\{[^}]*syntax:\s*"<angle>"/);
 });
