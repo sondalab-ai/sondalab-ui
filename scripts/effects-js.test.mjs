@@ -537,16 +537,20 @@ test("a seated glow swells with the pane it hangs in", () => {
   const paneScale = (state) => {
     const at = css.search(new RegExp(`\\.sl-fx-glass--pane${state}[^{]*\\{`));
     assert.ok(at > -1, `the pane must still have a ${state} scale`);
-    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+    return /transform:\s*([^;]+)/.exec(blockAt(css, at))?.[1]?.trim();
   };
   const glowScale = (state) => {
     const at = css.search(new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-fx-glass--pane${state}`));
     assert.ok(at > -1, `the glow must mirror the pane's ${state}`);
-    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+    return /transform:\s*([^;]+)/.exec(blockAt(css, at))?.[1]?.trim();
   };
   // The hover lift retired with re-scope R2 (2026-09-25); the press sink stays.
   for (const state of [":active"]) {
-    assert.equal(glowScale(state), paneScale(state), `${state}: the light must swell exactly as its pane does`);
+    const paneVal = paneScale(state);
+    const glowVal = glowScale(state);
+    assert.ok(paneVal, `pane must have a transform for ${state}`);
+    assert.ok(glowVal, `glow must have a transform for ${state}`);
+    assert.equal(glowVal, paneVal, `${state}: the light must swell exactly as its pane does`);
   }
 
   // …and on the same curves. A glow easing differently from the pane it hangs
