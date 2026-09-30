@@ -782,31 +782,18 @@
 .sl-icon-btn--round.sl-fx-glass { --slg-radius: 50%; }
 
 /* A filled brand button is the one surface whose own content constrains how
-   translucent it may be: thinning the fill on paper moves the amber toward
-   cream and the label goes with it. The owner's ruling is to carry the label
-   rather than thin the glass less — a shadow in the accent's own hue, 2px and
-   softly blurred, so the letterform keeps an edge whatever the fill is doing
-   behind it.
+   translucent it may be: thinning the fill on paper moves the accent toward
+   the ground and the label goes with it. What carries the label is Ruling 8
+   below — the label is the DARK pole (--slfx-shade), because --slc-on-accent's
+   white is built for an opaque accent and goes the wrong way under a
+   translucent one. On the 72% pane it clears 4.5:1 on every light ground for
+   every registered accent (lowest: the default amber, 4.89:1 on canvas).
 
-   Said plainly: this is a LEGIBILITY aid, not a contrast fix. WCAG measures
-   foreground against background and a shadow changes neither. Ruling 8 below
-   is what fixed the contrast, by making the label the DARK pole
-   (--slfx-shade); --slc-on-accent's white is built for an opaque accent and
-   goes the wrong way under a translucent one. */
+   NO LABEL SHADOW (owner, 2026-09-30). This rule used to add a 0 1px 2px
+   shadow in the accent/sheen mix as a "legibility aid". On the 0.21 paper it
+   landed at L≈0.44, α≈0.8 — a dark smudge under a dark label — and a shadow
+   changes neither side of the contrast ratio. Removed, with a guard. */
 .sl-btn--primary.sl-fx-glass {
-  /* THE SHADOW IS THE MIX'S OWN LIGHTNESS, not a fixed dark. This read `0.24`
-     from the era when the label was white, where anything dark behind it was
-     an edge. Ruling 8 then made the label dark — 0.236 on paper — and 0.24
-     under 0.236 is not an edge, it is mud, which is what the owner saw.
-     Keeping `l` puts the shadow at 0.44: below the composited fill it sits on
-     (~0.63) and well above the label, so it reads as the fill's own colour
-     deepened under the letterform rather than as a black halo.
-
-     Gated to paper by that same lightness. The colour is a 55/45 mix of the
-     accent and the sheen, so it keeps the accent's hue while its LIGHTNESS
-     reports the theme: 0.84 on ink (alpha 0), 0.44 on paper (alpha 0.8). */
-  text-shadow: 0 1px 2px oklch(from color-mix(in oklab, var(--slc-accent) 55%, var(--slfx-sheen))
-                               l c h / clamp(0, (0.6 - l) * 5, 1));
   /* A saturated brand fill cannot be thinned far on a dark page: at 48% over
      near-black the amber read as dark olive, and no veil recovers a hue that
      has been mixed away. This is not a compromise but the way the register
