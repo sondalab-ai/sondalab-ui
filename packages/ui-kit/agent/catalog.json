@@ -594,6 +594,81 @@
       ]
     },
     {
+      "id": "nav",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-nav",
+        "sl-nav__group",
+        "sl-nav__item",
+        "sl-nav__count"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text-secondary",
+        "--slc-text",
+        "--slc-accent",
+        "--slc-accent-subtle",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "list",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-list",
+        "sl-list__row",
+        "sl-list__meta",
+        "sl-list--dense"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-text-muted",
+        "--slc-accent",
+        "--slc-accent-subtle",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "disclosure",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-disclosure"
+      ],
+      "roleVars": [
+        "--slc-text-secondary",
+        "--slc-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "kv",
+      "kind": "primitive",
+      "classes": [
+        "sl-kv"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text"
+      ]
+    },
+    {
+      "id": "resizer",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-resizer",
+        "sl-resizer--horizontal"
+      ],
+      "roleVars": [
+        "--slc-border-subtle",
+        "--slc-accent",
+        "--slc-focus"
+      ]
+    },
+    {
       "id": "wordmark",
       "kind": "signature",
       "classes": [

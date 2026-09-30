@@ -507,6 +507,29 @@
           </div>
 
           <div class="g-cell">
+            <span class="g-label">nav &middot; list &middot; disclosure &middot; key-value &middot; resizer</span>
+            <div class="g-demo" style="display:flex;align-items:stretch;gap:0">
+              <nav class="sl-nav" aria-label="Sections" style="min-width:9rem">
+                <div class="sl-nav__group">Observe</div>
+                <a class="sl-nav__item" href="#" aria-current="page">Live <span class="sl-nav__count">12</span></a>
+                <a class="sl-nav__item" href="#">Sessions <span class="sl-nav__count">340</span></a>
+              </nav>
+              <div class="sl-resizer" role="separator" aria-orientation="vertical" aria-label="Resize the sections" aria-valuenow="144" aria-valuemin="120" aria-valuemax="240" tabindex="0"></div>
+              <div style="display:grid;gap:0.75rem;align-content:start;flex:1;padding-left:0.75rem">
+                <div class="sl-list" role="listbox" aria-label="Sessions">
+                  <button class="sl-list__row" role="option" aria-selected="true">Refactor the audit<span class="sl-list__meta">2m ago &middot; 14 tools</span></button>
+                  <button class="sl-list__row" role="option" aria-selected="false">Prism light theme<span class="sl-list__meta">1h ago &middot; 212 tools</span></button>
+                </div>
+                <button class="sl-disclosure" aria-expanded="true" aria-controls="demo-kv">Details</button>
+                <dl class="sl-kv" id="demo-kv">
+                  <dt>Model</dt><dd>claude-opus-5-5</dd>
+                  <dt>Started</dt><dd>2026-09-30 17:52</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+
+          <div class="g-cell">
             <span class="g-label">icon button &middot; pagination</span>
             <div class="g-demo g-demo--col">
               <div style="display:flex;gap:0.5rem">

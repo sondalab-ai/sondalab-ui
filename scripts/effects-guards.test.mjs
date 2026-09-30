@@ -751,6 +751,7 @@ const SWELL_EXEMPT = new Map([
   ["sl-radio__input", "same visually-hidden-input technique as .sl-check__input"],
   ["sl-switch__input", "same visually-hidden-input technique as .sl-check__input"],
   ["sl-progress", "a track whose only child is its own bar; a pane is never put inside it"],
+  ["sl-list__meta", "one line of truncated text under a row's title; it holds no element, let alone a pane"],
 ]);
 
 test("every wrapper that clips a filling glass pane stands its swell down", () => {
