@@ -65,7 +65,12 @@ function main() {
     const entries = [
       ...Object.entries(theme).map(([k, v]) => [`--sl-${k}`, v]),
       ...Object.entries(accent).flatMap(([k, v]) => accentDecls(`--sl-accent-${k}`, v)),
-      ["--sl-focus-ring", accent.default],
+      // A theme whose accent is a fill (it caps the text lightness) focuses in
+      // the accent's text-safe derivation: a ring must clear 3:1, and the
+      // bright fill does not on its own ground.
+      ["--sl-focus-ring", accent["text-lmax"] === undefined
+        ? accent.default
+        : "oklch(from var(--sl-accent-default) min(l, var(--sl-accent-text-lmax)) c h)"],
       // Syntax palette (--sl-code-*): per-theme, atom-one. Omitted where the
       // token file has no entry for the theme (e.g. high-contrast).
       ...(code ? Object.entries(code).map(([k, v]) => [`--sl-code-${k}`, v]) : []),

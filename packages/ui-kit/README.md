@@ -77,6 +77,11 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
 }
 ```
 
+**Derived roles — never map these.** Two families are computed from the ones above, so a Tier B product gets them in its own colours for free:
+
+- `--slc-accent-text` is the accent as text or a thin line: `oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h)`. On the light theme the accent is a *fill* and the cap (`0.5`) darkens it until it reads at 4.5:1; elsewhere it is the accent. Links, tags, tabs, pressed labels and the focus ring use it.
+- `--slc-edge-*` (`ground`, `surface`, `raised`, `wash`, `accent`, `pressed`, `control`) is each edge as its own fill one step less bright (`--slc-shade-step`, 0.075 of oklch lightness). Every bordered component uses them instead of the neutral `--slc-border*` lines; high contrast maps them back to its drawn border, the inversion band to its re-derived neutrals.
+
 **Inversion bands.** `.sl-invert` ships the fix. Inside a band whose background is the strongest neutral, `--slc-border`'s alpha-over-canvas value sits on the wrong ground and the hairline disappears — and a component that paints its own surface keeps the light one under re-derived light text. The class re-derives the border, text **and surface** role-vars from the band's own foreground, on its children, so any component placed inside keeps a visible edge and a ground it can be read against. A product rolling its own band does the same by hand:
 
 ```css

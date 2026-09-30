@@ -150,14 +150,14 @@ test("every glass control carries the two-line edge, with or without mount()", (
   const rule = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass(:[^{]*)\{([^}]*)\}/);
   assert.ok(rule, "buttons: the control edge rule exists");
   assert.doesNotMatch(rule[1], /\.sl-glass\b/, "buttons: the edge must not wait for mount()'s .sl-glass");
-  assert.match(rule[2], /border-color:\s*var\(--slfx-edge-mid\)/, "buttons: sharp line on the border");
-  assert.match(rule[2], /box-shadow:\s*inset 0 0 0 1px var\(--slfx-edge-soft\)/, "buttons: soft line on the host");
+  assert.match(rule[2], /border-color:\s*var\(--slfx-control-edge, var\(--slfx-edge-mid\)\)/, "buttons: sharp line on the border, the fill in shade");
+  assert.match(rule[2], /box-shadow:\s*inset 0 0 0 1px var\(--slfx-control-edge-soft, var\(--slfx-edge-soft\)\)/, "buttons: soft line on the host");
   assert.match(rule[2], /--slg-rim-hi:\s*transparent/, "buttons: flat like a field, no __shine rim");
   assert.match(rule[2], /--slg-rim-lo:\s*transparent/, "buttons: flat like a field, no __shine rim");
   const input = [...effects.matchAll(/\.sl-field__control:is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)[^{]*\.sl-field__input(:[^{]*)?\s*\{([^}]*)\}/g)]
     .map((m) => (m[1] ?? "") + m[2]).join("\n");
-  assert.match(input, /inset 0 0 0 1px var\(--slfx-edge-soft\)/, "fields: soft line on the input");
-  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slfx-edge-mid\)/, "fields: sharp line, focus keeps the accent");
+  assert.match(input, /inset 0 0 0 1px oklch\(from var\(--slc-edge-raised, var\(--slfx-edge-soft\)\)/, "fields: soft line on the input");
+  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-raised, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
   assert.match(input, /:focus\s*box-shadow:[^;]*0 0 0 3px var\(--slc-accent-subtle\)/, "fields: focus keeps its halo");
 });
 
@@ -441,7 +441,7 @@ test("a pressed toggle on glass keeps the pressed fill components.css ships", ()
   assert.ok(shippedRule, "components.css must ship a pressed state");
   const shipped = shippedRule.body.match(/background-color\s*:\s*([^;]+)/)[1].trim();
   for (const host of [".sl-btn", ".sl-icon-btn"]) {
-    const r = RULES.find((r) => r.selector.split(",").some((s) => s.trim().startsWith(`${host}.sl-fx-glass[aria-pressed="true"]`)));
+    const r = RULES.find((r) => /--slfx-fill\s*:/.test(r.body) && r.selector.split(",").some((s) => s.trim().startsWith(`${host}.sl-fx-glass[aria-pressed="true"]`)));
     assert.ok(r, `${host}: no pressed fill on glass — the pane would clear the pressed wash`);
     assert.equal(r.body.match(/--slfx-fill\s*:\s*([^;]+)/)[1].trim(), shipped, `${host}: the glass pressed fill must be the shipped one`);
   }
@@ -1013,4 +1013,15 @@ test("the glass primary's label has no text-shadow", () => {
   const primary = RULES.filter((r) => /\.sl-btn--primary\.sl-fx-glass/.test(r.selector) && !/::/.test(r.selector));
   assert.ok(primary.length > 0, "the parser must find the glass primary rules");
   for (const r of primary) assert.doesNotMatch(r.body, /text-shadow\s*:/, r.selector);
+});
+
+// Owner, 2026-09-30: "glass buttons are too pale when not hovered". The glass
+// primary's resting share follows its fill's lightness (the label's pole):
+// 90% where the label is the dark pole, 72% (Ruling 8's measurement) where it
+// is not, and the tint takes the fill in effect rather than the default accent.
+test("the glass primary rests at 90% on a light fill, 72% on a dark one, in its own colour", () => {
+  const r = RULES.find((r) => r.selector.trim() === ".sl-btn--primary.sl-fx-glass" && /--slg-accent\s*:/.test(r.body));
+  assert.ok(r, "the glass primary binds --slg-accent");
+  assert.match(r.body, /--slg-accent:\s*oklch\(from var\(--slfx-fill\) l c h \/ clamp\(0\.72, 0\.72 \+ \(l - 0\.61\) \* 1000, 0\.9\)\)/);
+  assert.match(r.body, /--slg-accent-a:\s*100%/);
 });
