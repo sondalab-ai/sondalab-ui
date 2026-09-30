@@ -315,6 +315,54 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
 ```
 Consumes: `--slc-text`, `--slc-text-muted`. Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected). Don't: set a stat you have not measured.
 
+## App structure
+
+### Sidebar nav — `sl-nav` (`__group` · `__item` · `__count`)
+A vertical list of destinations under mono group titles. The current one is `aria-current="page"` and takes a 2px accent edge on the leading side over the accent wash. Substrate: **R** App/IDE, **N/A** Page.
+```html
+<nav class="sl-nav" aria-label="Sections">
+  <div class="sl-nav__group">Observe</div>
+  <a class="sl-nav__item" href="/live" aria-current="page">Live <span class="sl-nav__count">12</span></a>
+  <a class="sl-nav__item" href="/sessions">Sessions <span class="sl-nav__count">340</span></a>
+</nav>
+```
+Consumes: `--slc-text-muted`, `--slc-text-secondary`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current destination with `aria-current`, not a class. Don't: use it as the page's only navigation on a marketing page — that is the header's job.
+
+### List — `sl-list` (`__row` · `__meta` · `--dense`)
+Selectable rows for a master-detail pane or a feed. A row is a `<button>`/`<a>`, or `role="option"` inside `role="listbox"`; the selected one is `aria-selected="true"` (or `aria-current` on a link). `--dense` is the IDE register: mono, tighter. Substrate: **R** App/IDE, **A** Page.
+```html
+<div class="sl-list" role="listbox" aria-label="Sessions">
+  <button class="sl-list__row" role="option" aria-selected="true">Refactor the audit<span class="sl-list__meta">2m ago · 14 tools</span></button>
+  <button class="sl-list__row" role="option" aria-selected="false">Prism light theme<span class="sl-list__meta">1h ago · 212 tools</span></button>
+</div>
+```
+Consumes: `--slc-text`, `--slc-text-muted`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: let the row's own markup carry its columns (a grid inside the row is fine). Don't: use it for tabular data with comparable columns — that is `sl-table`.
+
+### Disclosure — `sl-disclosure`
+The expand/collapse control: a `<button aria-expanded>` whose chevron points right when closed and down when open. The panel is the consumer's (`aria-controls` + `hidden`). Substrate: **R** App/IDE, **A** Page.
+```html
+<button class="sl-disclosure" aria-expanded="false" aria-controls="raw-1">Raw payload</button>
+<pre id="raw-1" hidden>…</pre>
+```
+Consumes: `--slc-text-secondary`, `--slc-text`, `--slc-focus`. Do: flip `aria-expanded` and `hidden` together. Don't: animate the panel's height — the chevron is the motion.
+
+### Key-value list — `sl-kv`
+A `<dl>` of labelled facts on a two-column grid; labels in the muted ink, values in the text ink, long values wrap under themselves. Substrate: **R** App/IDE, **A** Page.
+```html
+<dl class="sl-kv">
+  <dt>Model</dt><dd>claude-opus-5-5</dd>
+  <dt>Started</dt><dd>2026-09-30 17:52</dd>
+</dl>
+```
+Consumes: `--slc-text-muted`, `--slc-text`. Don't: nest a table in a value; a fact that needs columns is not a fact.
+
+### Resizer — `sl-resizer` (`--horizontal`)
+The drag handle between two panes: a 9px hit area around a 1px rule, turning to a 2px accent line on hover, drag and keyboard focus. Vertical (a column split) by default, `--horizontal` for a row split. The dragging is the consumer's. Substrate: **R** App/IDE, **N/A** Page.
+```html
+<div class="sl-resizer" role="separator" aria-orientation="vertical" aria-label="Resize the list" aria-valuenow="320" aria-valuemin="200" aria-valuemax="640" tabindex="0"></div>
+```
+Consumes: `--slc-border-subtle`, `--slc-accent`, `--slc-focus`. Do: make it keyboard-operable (`tabindex="0"`, arrow keys move it, `aria-valuenow` tracks it). Don't: draw a second line beside it; the handle is the rule between the panes.
+
 ## Identity & media
 
 ### Wordmark — `sl-wordmark` (`__dot`)

@@ -83,6 +83,10 @@
 .sl-icon-btn:focus-visible,
 .sl-pagination__item:focus-visible,
 .sl-chip:focus-visible,
+.sl-nav__item:focus-visible,
+.sl-list__row:focus-visible,
+.sl-disclosure:focus-visible,
+.sl-resizer:focus-visible,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
@@ -1171,6 +1175,180 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 }
 .sl-avatar--sm { --sl-avatar-size: 1.75rem; }
 .sl-avatar--lg { --sl-avatar-size: 4rem; }
+
+/* ══ APP STRUCTURE (sidebars, master-detail, panes) ══════════════════════════ */
+
+/* Sidebar nav — a vertical list of destinations under mono group titles.
+   The current one is marked aria-current="page" (a route) and takes the
+   accent edge on the leading side, the same 2px emphasis accent the tabs'
+   underline is — an edge, never a filled pill. */
+.sl-nav {
+  display: flex;
+  flex-direction: column;
+}
+.sl-nav__group {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+  padding: var(--sl-space-4, 1rem) var(--sl-space-4, 1rem) var(--sl-space-2, 0.5rem);
+}
+.sl-nav__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  color: var(--slc-text-secondary);
+  text-decoration: none;
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-nav__item:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 4%, transparent); }
+.sl-nav__item[aria-current] {
+  color: var(--slc-text);
+  border-left-color: var(--slc-accent);
+  background-color: var(--slc-accent-subtle);
+}
+.sl-nav__count {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--slc-text-muted);
+}
+
+/* List — selectable rows for a master-detail pane or a feed. Each row is a
+   <button>/<a>, or an element with role="option" in a role="listbox"; the
+   selected one carries aria-selected="true" (or aria-current for a link) and
+   the CSS reads it. --dense is the IDE register: mono, tighter. */
+.sl-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-space-1, 0.25rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sl-list__row {
+  appearance: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  color: var(--slc-text);
+  text-decoration: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--sl-radius-sm, 6px);
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-3, 0.75rem);
+  cursor: pointer;
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-list__row:hover { background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+.sl-list__row:is([aria-selected="true"], [aria-current]) {
+  background-color: var(--slc-accent-subtle);
+  border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
+}
+.sl-list__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--sl-text-xs, 0.75rem);
+  color: var(--slc-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sl-list--dense .sl-list__row {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
+}
+
+/* Disclosure — the expand/collapse control. A <button aria-expanded> with a
+   chevron drawn from two borders (the kit ships no icon set); the chevron
+   turns to point down when open, and the attribute is the state. The panel
+   it controls is the consumer's: aria-controls + hidden. */
+.sl-disclosure {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  font: inherit;
+  color: var(--slc-text-secondary);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.sl-disclosure:hover { color: var(--slc-text); }
+.sl-disclosure::before {
+  content: "";
+  width: 0.4em;
+  height: 0.4em;
+  flex: none;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-disclosure[aria-expanded="true"]::before { transform: rotate(45deg); }
+
+/* Key-value list — a <dl> of labelled facts. Labels in the muted ink, values
+   in the text ink, on a two-column grid that never lets a long value push its
+   label out of line. */
+.sl-kv {
+  display: grid;
+  grid-template-columns: minmax(6rem, max-content) 1fr;
+  gap: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
+  margin: 0;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+}
+.sl-kv > dt { color: var(--slc-text-muted); }
+.sl-kv > dd { margin: 0; color: var(--slc-text); overflow-wrap: anywhere; }
+
+/* Resizer — the drag handle between two panes. A 9px hit area around a 1px
+   rule in the line colour; hover, drag and keyboard focus turn it to a 2px
+   accent line. role="separator" + aria-orientation + aria-valuenow, and
+   tabindex="0" so arrow keys can move it; the dragging is the consumer's.
+   Vertical (a column split) by default, --horizontal for a row split. */
+.sl-resizer {
+  position: relative;
+  flex: none;
+  width: 9px;
+  align-self: stretch;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+.sl-resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0 4px;
+  background-color: var(--slc-border-subtle);
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    inset var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-resizer:is(:hover, :active, :focus-visible)::after {
+  inset: 0 3.5px;
+  background-color: var(--slc-accent);
+}
+.sl-resizer--horizontal { width: auto; height: 9px; cursor: row-resize; }
+.sl-resizer--horizontal::after { inset: 4px 0; }
+.sl-resizer--horizontal:is(:hover, :active, :focus-visible)::after { inset: 3.5px 0; }
 
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
 

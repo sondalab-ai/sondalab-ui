@@ -46,6 +46,8 @@ Identity & media: `.sl-wordmark` (`__dot`), `.sl-lockup` (`__dot`), `.sl-monogra
 
 Patterns (page-level composition, shipped classes since 0.10.0): `.sl-wrap`, `.sl-prose`, `.sl-header`, `.sl-invert`, `.sl-hgrid`, `.sl-section` (`__head` / `__idx`), `.sl-anchor`.
 
+App structure: `.sl-nav` (`__group` / `__item` / `__count`; current item via `aria-current`), `.sl-list` (`__row` / `__meta`, `--dense`; selection via `aria-selected` or `aria-current`), `.sl-disclosure` (`aria-expanded`), `.sl-kv` (a `<dl>`), `.sl-resizer` (`--horizontal`; `role="separator"`, the drag is the consumer's).
+
 Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`).
 
 ### Colour contract — role-vars (`--slc-*`)
