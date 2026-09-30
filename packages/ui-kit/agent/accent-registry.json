@@ -2,7 +2,7 @@
   "$note": "Machine source of the per-product accent table in design-language.md §Decision 2. The prose table stays authoritative for reasoning; this file is the values. scripts/accent-registry.test.mjs asserts product-set parity between the two.",
   "products": {
     "default": {
-      "light": "#B56A0C",
+      "light": "#9A5300",
       "dark": "#F5A83C",
       "depth": { "light": "#14606C", "dark": "#35A0B4" }
     },

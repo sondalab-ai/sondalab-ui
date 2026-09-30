@@ -24,7 +24,7 @@
 
 :root {
   /* accent */
-  --slc-accent:        var(--sl-accent-default, #B56A0C);
+  --slc-accent:        var(--sl-accent-default, #9A5300);
   /* Steps derive from --slc-accent so a bare --sl-accent-default override
      (or a Tier-B product that maps only --slc-accent) re-derives the whole
      family — no amber leak. The theme layer still wins when it sets the step. */
@@ -33,17 +33,17 @@
   --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
-  --slc-canvas:        var(--sl-bg-canvas,         #ECE4D4);
-  --slc-surface:       var(--sl-bg-surface,        #F6F1E6);
+  --slc-canvas:        var(--sl-bg-canvas,         #F4F4F8);
+  --slc-surface:       var(--sl-bg-surface,        #FAFAFC);
   --slc-raised:        var(--sl-bg-surface-raised, #FFFFFF);
-  --slc-overlay:       var(--sl-bg-overlay,        rgba(21,33,31,0.4));
-  --slc-text:          var(--sl-text-primary,   #15211F);
-  --slc-text-secondary:var(--sl-text-secondary, #475754);
-  --slc-text-muted:    var(--sl-text-muted,     #6E7B78);
+  --slc-overlay:       var(--sl-bg-overlay,        rgba(28,29,34,0.4));
+  --slc-text:          var(--sl-text-primary,   #1C1D22);
+  --slc-text-secondary:var(--sl-text-secondary, #454857);
+  --slc-text-muted:    var(--sl-text-muted,     #5F6374);
   /* lines */
-  --slc-border:        var(--sl-border-default, rgba(21,33,31,0.16));
-  --slc-border-subtle: var(--sl-border-subtle,  rgba(21,33,31,0.09));
-  --slc-border-strong: var(--sl-border-strong,  rgba(21,33,31,0.28));
+  --slc-border:        var(--sl-border-default, rgba(28,29,34,0.16));
+  --slc-border-subtle: var(--sl-border-subtle,  rgba(28,29,34,0.09));
+  --slc-border-strong: var(--sl-border-strong,  rgba(28,29,34,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent));
   /* status */
   --slc-success: var(--sl-status-success, #4a6205);
@@ -51,9 +51,9 @@
   --slc-danger:  var(--sl-status-danger,  #a72b05);
   --slc-info:    var(--sl-status-info,    #3853af);
   /* depth — cast in the ground's ink, so per theme */
-  --slc-shadow-sm: var(--sl-shadow-sm, 0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03));
-  --slc-shadow-md: var(--sl-shadow-md, 0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12));
-  --slc-shadow-lg: var(--sl-shadow-lg, 0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22));
+  --slc-shadow-sm: var(--sl-shadow-sm, 0 1px 2px rgba(28,29,34,0.08), 0 0 0 1px rgba(28,29,34,0.03));
+  --slc-shadow-md: var(--sl-shadow-md, 0 2px 4px rgba(28,29,34,0.06), 0 10px 28px rgba(28,29,34,0.12));
+  --slc-shadow-lg: var(--sl-shadow-lg, 0 4px 8px rgba(28,29,34,0.08), 0 28px 72px rgba(28,29,34,0.22));
 }
 
 /* Shared focus ring for keyboard nav — every interactive component uses it. */
