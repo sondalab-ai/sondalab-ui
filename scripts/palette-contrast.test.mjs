@@ -85,3 +85,14 @@ for (const theme of ["light", "dark"]) {
   test("light: the label on a primary button reads (4.5:1)", () =>
     assert.ok(ratio(t["--sl-text-on-accent"], t["--sl-accent-default"]) >= 4.5));
 }
+
+// Muted text is text: it reads at 4.5:1 on every dark ground too.
+{
+  const t = { ...shared, ...vars("themes/dark.css") };
+  for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
+    test(`dark ${bg}: muted text reads as text (4.5:1)`, () => {
+      const r = ratio(t["--sl-text-muted"], t[bg]);
+      assert.ok(r >= 4.5, `--sl-text-muted ${r.toFixed(2)}`);
+    });
+  }
+}

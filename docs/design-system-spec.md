@@ -111,14 +111,16 @@ Spacing `0/1/2/3/4/5/6/8` (4px base), radii `sm 4 / md 6 / lg 10 / pill`, motion
 
 | Role token | light | dark |
 |---|---|---|
-| `--sl-bg-canvas` | `#ECE4D4` | `#070A0D` |
-| `--sl-bg-surface` | `#F6F1E6` | `#0F151A` |
+| `--sl-bg-canvas` | `#F4F4F8` | `#070A0D` |
+| `--sl-bg-surface` | `#FAFAFC` | `#0F151A` |
 | `--sl-bg-surface-raised` | `#FFFFFF` | `#131C23` |
-| `--sl-text-primary` | `#15211F` | `#DAE3E4` |
-| `--sl-text-secondary` | `#475754` | `#9AA9AD` |
-| `--sl-text-muted` | `#6E7B78` | `#6E8088` |
-| `--sl-border-subtle` | `rgba(21,33,31,0.09)` | `rgba(218,227,228,0.07)` |
-| `--sl-border-default` | `rgba(21,33,31,0.16)` | `rgba(218,227,228,0.13)` |
+| `--sl-text-primary` | `#1C1D22` | `#DAE3E4` |
+| `--sl-text-secondary` | `#454857` | `#9AA9AD` |
+| `--sl-text-muted` | `#5F6374` | `#7C8D95` |
+| `--sl-border-subtle` | `rgba(28,29,34,0.09)` | `rgba(218,227,228,0.07)` |
+| `--sl-border-default` | `rgba(28,29,34,0.16)` | `rgba(218,227,228,0.13)` |
+
+> **Values as of ui-kit 0.21.1.** The light column is the Prism ground (0.21.0, `docs/specs/2026-09-30-light-prism-design.md`), which replaced the warm paper described below; dark muted text moved from `#6E8088` to `#7C8D95` in 0.21.1 to pass 4.5:1 on every dark ground. `sondalab.tokens.json` is the source of truth.
 
 > **Note — spexr surfaces warm up.** Shared neutrals adopt the brand-board warm paper/abyss. spexr moves from cool zinc (`#fafafa`/`#0c0d10`) to warm paper (`#ECE4D4`/`#070A0D`); introspect is already warm and barely moves. This is the intended brand convergence (shared neutrals, per-product accent). High-contrast theme is exempt.
 
