@@ -45,3 +45,13 @@ test("an effect host keeps its own edge: effects.css turns the rim off on it", (
   for (const fx of [".sl-fx-glass", ".sl-fx-aurora", ".sl-fx-press", ".sl-fx-glitch", ".sl-fx-liquid", ".sl-fx-goo__member"]) assert.ok(r[1].includes(fx), fx);
   assert.match(r[0], /--slc-rim-edge:\s*initial/);
 });
+
+test("inside an inversion band the rim and spectral text stand down", () => {
+  // The band makes surfaces translucent (currentColor at 7-12%), so a rim
+  // painted under the padding box would show through the whole body, and the
+  // spectrum ink does not clear 3:1 on the band's ink. Both reset there.
+  const band = rule(".sl-invert > *");
+  for (const p of ["--slc-rim", "--slc-rim-edge", "--slc-spectral-ink", "--slc-spectral-fill"]) {
+    assert.match(band, new RegExp(`${p}:\\s*initial`), p);
+  }
+});

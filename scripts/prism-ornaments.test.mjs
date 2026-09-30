@@ -32,3 +32,9 @@ test("spectral text is plain text under forced colours", () => {
 test("the fill switch is transparent only where the spectrum exists", () => {
   assert.match(css, /--slc-spectral-fill:\s*color-mix\(in srgb,\s*var\(--sl-spectrum-ink-0\)\s*0%,\s*transparent\)/);
 });
+
+test("haze stays inside its section's box, so it never widens the page", () => {
+  const inset = rule(".sl-haze::before").match(/inset:\s*([^;]+)/)?.[1] ?? "";
+  assert.ok(inset, "haze declares its inset");
+  assert.doesNotMatch(inset, /-/, `inset ${inset} reaches outside the section`);
+});

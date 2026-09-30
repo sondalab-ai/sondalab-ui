@@ -59,6 +59,15 @@
 .sl-field__control { display: block; position: relative; }
 .sl-field__control > :is(input, textarea, select) { box-sizing: border-box; width: 100%; }
 
+/* The live light's two bodies (live-light.js, run mode). On light they are
+   two stops of the spectrum (Prism); where a theme resets the spectrum, the
+   accent and its depth companion, as before. Declared on the live host, not on
+   :root, so they follow the host's own theme. */
+[data-sl-fx-live] {
+  --slfx-light-a: var(--sl-spectrum-0, var(--slc-accent, var(--sl-accent-default)));
+  --slfx-light-b: var(--sl-spectrum-4, var(--slfx-depth));
+}
+
 /* An effect host keeps its effect's edge: the Prism rim (components.css,
    light theme) steps aside on it and on what it contains. */
 :is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-press, .sl-fx-glitch, .sl-fx-liquid, .sl-fx-goo__member) {
@@ -70,11 +79,6 @@
   /* colour roles */
   --slfx-depth: var(--sl-accent-depth, var(--slc-accent, var(--sl-accent-default)));
   --slfx-sheen: var(--slc-text, var(--sl-text-primary));
-  /* The live light's two bodies (live-light.js, run mode). On light they are
-     two stops of the spectrum (Prism); where a theme resets the spectrum, the
-     accent and its depth companion, as before. */
-  --slfx-light-a: var(--sl-spectrum-0, var(--slc-accent, var(--sl-accent-default)));
-  --slfx-light-b: var(--sl-spectrum-4, var(--slfx-depth));
 
   /* edge geometry — the ring grows INWARD so it never meets the focus outline */
   --slfx-ring-w: 1px;
@@ -1700,6 +1704,23 @@
    renders as a smear. A linear aurora has no busy mode — report work on a
    ring aurora, not on an underline. */
 .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
+/* Busy is a state, and state is the accent's (design-language Decision 2): on
+   light the ring keeps its pre-Prism colours instead of the spectrum. The rim
+   variant's own colours come after, at the same weight, so they win on it. */
+.sl-fx-aurora[data-sl-fx-live="busy"] {
+  --slfx-beam: var(--slfx-accent-vivid);
+  --slfx-beam-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
+  --slfx-beam-c: oklch(from var(--slfx-accent-vivid) l c calc(h + 150));
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth-vivid) 75%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
+}
+.sl-fx-aurora--rim[data-sl-fx-live="busy"] {
+  --slfx-beam: var(--slfx-rim-beam);
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-depth-bloom) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
+}
 
 /* Determinate — the arc length is the value; nothing rotates. The edge of a
    card IS its progress bar: no extra widget, no layout.

@@ -181,5 +181,7 @@ Both are catalogued (`agent/catalog.md` / `catalog.json`) with the rule: at most
 
 - **Everyone's light theme changes at once.** That is the request; `theme-isolation`, the effects fallback guard and a pixel diff of dark and high-contrast pages against 0.20.1 (0 px) guard the rest.
 - **Product CSS on rim hosts.** A product that sets only `background-color` on a card, primary button or field sees it covered by the rim's fill layer in light. Noted in the README; the rim can be removed per element with `--slc-rim: none`.
+- **Opt-out.** `--slc-rim: initial; --slc-rim-edge: initial` restores the 0.20 border on one element; either alone, or a `background:` shorthand override, leaves the border transparent on light (README).
+- **Inversion band.** The rim and spectral text stand down inside `sl-invert` (translucent surfaces; the ink fails 3:1 on the band's ink); effects stay spectral there. Busy auroras keep their accent colours on light, rim variant included (final review, 2026-09-30).
 - **Nested theme regions.** A light region inside a dark page gets spectral effects (they read the spectrum on the host) but not the rims, and a dark region inside a light page keeps the light rims: like every `--slc-*` role, the rim resolves on `:root`. Pre-existing for all roles (a card's surface behaves the same on 0.20.1).
 - **Brand drift.** Cream paper was a family trait. The design-language amendment makes the new rule explicit, so reviewers don't flag cool white as a defect.

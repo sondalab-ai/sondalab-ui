@@ -678,6 +678,13 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    one generation is enough to reach the whole subtree. */
 .sl-invert > * {
   --slc-text:           var(--slc-canvas);
+  /* Prism stands down in the band: its surfaces are translucent, so a rim
+     painted under the padding box would show through the whole body, and the
+     spectrum ink does not clear 3:1 on the band's ink. Effects keep theirs. */
+  --slc-rim:            initial;
+  --slc-rim-edge:       initial;
+  --slc-spectral-ink:   initial;
+  --slc-spectral-fill:  initial;
   /* Surfaces are re-derived too, not just text and lines: a component that
      paints its own ground (card, dialog, field, checkbox) would otherwise keep
      the light surface and render the re-derived light text on top of it. */
@@ -750,7 +757,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-haze::before {
   content: "";
   position: absolute;
-  inset: -10% -5% 0 25%;
+  inset: 0 0 0 20%;
   z-index: -1;
   background: var(--slc-haze, none);
   filter: blur(12px);

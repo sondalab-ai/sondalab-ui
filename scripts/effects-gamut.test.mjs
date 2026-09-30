@@ -162,3 +162,17 @@ test("the evaluator treats a property set to initial as guaranteed-invalid", () 
   assert.equal(substitute("var(--sl-spectrum-0, var(--a))", e), "#112233");
   assert.throws(() => substitute("var(--sl-spectrum-0)", e), /unresolved --sl-spectrum-0/);
 });
+
+test("busy stays the accent on light: the ring resolves as if the spectrum were reset", () => {
+  // Busy is a state, and state is the accent's job (design-language Decision 2).
+  const COLOURS = ["--slfx-beam", "--slfx-beam-b", "--slfx-beam-c", "--slfx-beam-tail", "--slfx-bloom-hi", "--slfx-bloom-lo"];
+  const noSpectrum = new Map([...THEMES.light].map(([k, v]) => [k, /^--sl-spectrum-/.test(k) ? "initial" : v]));
+  for (const [name, sel] of [["ghost", GHOST], ["rim", RIM]]) {
+    const busy = [...sel, '.sl-fx-aurora[data-sl-fx-live="busy"]', ...(name === "rim" ? ['.sl-fx-aurora--rim[data-sl-fx-live="busy"]'] : [])];
+    const cascade = declarations(effects, busy);
+    const at = (themeMap) => { const e = new Map(themeMap); for (const [k, v] of cascade) e.set(k, v); return e; };
+    for (const p of COLOURS) {
+      assert.equal(toHex(evaluate(`var(${p})`, at(THEMES.light))), toHex(evaluate(`var(${p})`, at(noSpectrum))), `${name} busy ${p}`);
+    }
+  }
+});

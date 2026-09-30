@@ -976,3 +976,15 @@ test("busy stays the accent: state is the accent's job, not the spectrum's", () 
   assert.ok(busy.length > 0);
   for (const r of busy) assert.doesNotMatch(r.body, /--sl-spectrum/, r.selector);
 });
+
+test("the run light's two bodies resolve on the live host, not on :root", () => {
+  // Declared on :root, var(--sl-spectrum-0, …) is substituted once at the root:
+  // a dark island in a light page would inherit the spectrum, a light one in a
+  // dark page would not get it. On the host it follows the host's theme.
+  const decl = RULES.filter((r) => /--slfx-light-[ab]\s*:/.test(r.body));
+  assert.ok(decl.length > 0);
+  for (const r of decl) {
+    assert.doesNotMatch(r.selector, /^:root$/, "declared on :root");
+    assert.match(r.selector, /\[data-sl-fx-live/, r.selector);
+  }
+});
