@@ -45,6 +45,13 @@
   --slc-border-subtle: var(--sl-border-subtle,  rgba(28,29,34,0.09));
   --slc-border-strong: var(--sl-border-strong,  rgba(28,29,34,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent));
+  /* Prism (light): the spectrum as a 1px hairline on cards, the primary button
+     and text fields. Both are built from theme tokens, so where a theme resets
+     the spectrum they are invalid and every consumer's fallback — today's
+     border and no image — wins. --slc-rim-edge is transparent where the rim
+     shows (a colour mixed at 0%), so the host's border lets it through. */
+  --slc-rim: linear-gradient(120deg, var(--sl-spectrum-ink-0), var(--sl-spectrum-ink-1), var(--sl-spectrum-ink-2), var(--sl-spectrum-ink-3), var(--sl-spectrum-ink-4));
+  --slc-rim-edge: color-mix(in srgb, var(--sl-spectrum-ink-0) 0%, transparent);
   /* status */
   --slc-success: var(--sl-status-success, #4a6205);
   --slc-warning: var(--sl-status-warning, #795305);
@@ -147,11 +154,20 @@
      consumer already resets when it strips a button to text — never
      box-shadow, which such an override does not think of. The glass family
      clears it on its pane (effects.css). */
-  border-color: color-mix(in srgb, var(--slc-accent) 88%, black);
-  border-top-color: color-mix(in srgb, var(--slc-accent) 80%, white);
+  border-color: var(--slc-rim-edge, color-mix(in srgb, var(--slc-accent) 88%, black));
+  border-top-color: var(--slc-rim-edge, color-mix(in srgb, var(--slc-accent) 80%, white));
+  --slc-rim-fill: var(--slc-accent);
+  --slc-rim-layers: linear-gradient(var(--slc-rim-fill) 0 0), var(--slc-rim);
+  /* Prism rim: the fill as an image over the padding box, the spectrum under
+     it across the border box, seen through a transparent border. Where the
+     spectrum is reset the layers are invalid and the fallback is two empty
+     images, so the colour keeps the border-box clip it always had. */
+  background-image: var(--slc-rim-layers, none, none);
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
 }
-.sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); }
-.sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); }
+.sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); --slc-rim-fill: var(--slc-accent-hover); }
+.sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); --slc-rim-fill: var(--slc-accent-active); }
 .sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); }
 .sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
 .sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.35rem 0.6rem; }
@@ -159,7 +175,15 @@
 /* Card — surface panel. Compose with __title / __body. */
 .sl-card {
   background: var(--slc-surface);
-  border: 1px solid var(--slc-border-subtle);
+  border: 1px solid var(--slc-rim-edge, var(--slc-border-subtle));
+  --slc-rim-layers: linear-gradient(var(--slc-surface) 0 0), var(--slc-rim);
+  /* Prism rim: the fill as an image over the padding box, the spectrum under
+     it across the border box, seen through a transparent border. Where the
+     spectrum is reset the layers are invalid and the fallback is two empty
+     images, so the colour keeps the border-box clip it always had. */
+  background-image: var(--slc-rim-layers, none, none);
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
   border-radius: var(--sl-radius-lg, 16px);
   padding: var(--sl-space-5, 1.5rem);
 }
@@ -228,9 +252,17 @@
   font-size: var(--sl-text-sm, 0.875rem);
   color: var(--slc-text);
   background: color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised));
-  border: 1px solid var(--slc-border-subtle);
+  border: 1px solid var(--slc-rim-edge, var(--slc-border-subtle));
   border-radius: var(--sl-radius-md, 10px);
   padding: 0.55rem 0.75rem;
+  --slc-rim-layers: linear-gradient(color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised)) 0 0), var(--slc-rim);
+  /* Prism rim: the fill as an image over the padding box, the spectrum under
+     it across the border box, seen through a transparent border. Where the
+     spectrum is reset the layers are invalid and the fallback is two empty
+     images, so the colour keeps the border-box clip it always had. */
+  background-image: var(--slc-rim-layers, none, none);
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
   transition: border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }

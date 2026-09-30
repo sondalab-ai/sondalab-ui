@@ -59,6 +59,13 @@
 .sl-field__control { display: block; position: relative; }
 .sl-field__control > :is(input, textarea, select) { box-sizing: border-box; width: 100%; }
 
+/* An effect host keeps its effect's edge: the Prism rim (components.css,
+   light theme) steps aside on it and on what it contains. */
+:is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-press, .sl-fx-glitch, .sl-fx-liquid, .sl-fx-goo__member) {
+  --slc-rim: initial;
+  --slc-rim-edge: initial;
+}
+
 :root {
   /* colour roles */
   --slfx-depth: var(--sl-accent-depth, var(--slc-accent, var(--sl-accent-default)));
