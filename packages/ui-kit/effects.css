@@ -1133,7 +1133,9 @@
   transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-fx-press:active:not(:disabled) {
-  transform: scale(0.965);
+  /* The same squash as components.css's TACTILE block: a control moves the
+     same way with or without the effects layer; the light is this file's job. */
+  transform: scale(1.02, 0.968);
   /* Going down is quick and plain; the spring is for the way back. */
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);

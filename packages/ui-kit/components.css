@@ -195,7 +195,8 @@
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-chip::before {
   content: "";
@@ -261,7 +262,8 @@
   transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-              color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+              color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .sl-btn--primary {
@@ -986,7 +988,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-sm, 6px);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-segmented__item:hover { color: var(--slc-text); }
 /* The CSS reads the state attribute, so the accessible state and the visible
@@ -1014,7 +1017,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-md, 10px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-icon-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--slc-text) 11%, transparent);
@@ -1046,7 +1050,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-sm, 6px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-pagination__item:hover { color: var(--slc-text); border-color: var(--slc-border); }
 .sl-pagination__item[aria-current] {
@@ -1405,6 +1410,21 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-resizer--horizontal { width: auto; height: 9px; cursor: row-resize; }
 .sl-resizer--horizontal::after { inset: 4px 0; }
 .sl-resizer--horizontal:is(:hover, :active, :focus-visible)::after { inset: 3.5px 0; }
+
+/* ══ TACTILE — the controls give under the finger ══════════════════════════════
+   The owner, 2026-09-30: "a slight bump to the toggle, like if they are
+   gummies" — the Quiet strength (docs/specs/2026-09-30-gummy-controls-design.md).
+   Held, a control squashes a little and keeps its volume (wider by 2%,
+   shorter by 3.2%); let go, it returns on --sl-motion-spring, whose one small
+   overshoot IS the bump. Going down is quick and plain; the spring is for
+   the way back. Transform-only and transition-only: no keyframe, so nothing
+   plays when a page loads with a box already checked, and the motion tokens
+   are zeroed under reduced motion, which stops all of it. */
+:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled) {
+  transform: scale(1.02, 0.968);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
 
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
 /* High contrast draws every edge in its own border colour: shade is a
