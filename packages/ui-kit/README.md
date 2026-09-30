@@ -52,7 +52,7 @@ Complex (composed shells — no behaviour JS; the consumer wires interaction): `
 
 ### Colour contract — role-vars (`--slc-*`)
 
-Components never read theme tokens directly (those resolve only under `[data-sl-theme]`). They read role-vars that default through a fallback chain to the `--sl-*` token, then to a brand literal. **Tier A** products (full `data-sl-theme`, e.g. spexr) need zero wiring — the role-vars pick up the live theme automatically. **Tier B** products (value-pinned, e.g. daos, introspect) map the role-vars **once** to their own colour layer. That block is the *entire* integration surface:
+Components never read theme tokens directly (those resolve only under `[data-sl-theme]`). They read role-vars that default through a fallback chain to the `--sl-*` token, then to a brand literal. **Tier A** products (full `data-sl-theme`, e.g. spexr, daos) need zero wiring — the role-vars pick up the live theme automatically. **Tier B** products (value-pinned, e.g. introspect) map the role-vars **once** to their own colour layer. That block is the *entire* integration surface:
 
 ```css
 :root {

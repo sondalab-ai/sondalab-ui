@@ -23,14 +23,14 @@ The reference implementation is **daos landing** (`daos/docs/daos-landing.html`)
 
 Products reach Sondalab colour through one of two blessed patterns. This was previously decided twice, inconsistently (spexr uses `data-sl-theme`; introspect and daos use `[data-theme]`); it is now a policy keyed on substrate, not an ad-hoc per-product call.
 
-- **Tier A — full theme adoption.** Set `data-sl-theme="light|dark|high-contrast"` on the root and consume the generated theme layer (`themes/*.css`) wholesale. Best for greenfield surfaces and chrome-heavy hosts that need every neutral. **Adopter:** spexr (its Theia chrome needs the full neutral set; see `spexr-theme-contribution.ts`).
-- **Tier B — shared-root adoption.** Vendor only the shared `:root` layer of the token CSS (`--sl-*` type/space/radius/motion/etc., theme-independent). The product keeps its own `[data-theme]` colour layer, but **every colour value in that layer must resolve to a Sondalab value** (a product token equals an `--sl-*` value or an accent-registry value; no free-floating hex). Best for surfaces with an existing editorial palette. **Adopters:** introspect, daos.
+- **Tier A — full theme adoption.** Set `data-sl-theme="light|dark|high-contrast"` on the root and consume the generated theme layer (`themes/*.css`) wholesale. Best for greenfield surfaces and chrome-heavy hosts that need every neutral. **Adopters:** spexr (its Theia chrome needs the full neutral set; see `spexr-theme-contribution.ts`); daos, since 2026-09-30 (its landing dropped its own colour layer and loads the kit's themes from the CDN — https://github.com/sondalab-ai/daos/pull/2).
+- **Tier B — shared-root adoption.** Vendor only the shared `:root` layer of the token CSS (`--sl-*` type/space/radius/motion/etc., theme-independent). The product keeps its own `[data-theme]` colour layer, but **every colour value in that layer must resolve to a Sondalab value** (a product token equals an `--sl-*` value or an accent-registry value; no free-floating hex). Best for surfaces with an existing editorial palette. **Adopter:** introspect.
 
-**Why not one tier:** the generated theme layer is scoped `[data-sl-theme]`; a product on `[data-theme]` can never match that selector, so forcing Tier A on introspect/daos would mean rewriting their working colour layers for no visual gain. Tier B keeps their selector and pins their *values*.
+**Why not one tier:** the generated theme layer is scoped `[data-sl-theme]`; a product on `[data-theme]` can never match that selector, so forcing Tier A on introspect would mean rewriting their working colour layers for no visual gain. Tier B keeps their selector and pins their *values*.
 
 **Compliance test (both tiers):** open the surface, sample any surface/text/accent colour, and confirm it equals a value in `sondalab.tokens.json` or the accent registry below. Tier is an implementation detail; value-equality is the invariant.
 
-**Migration note (the loser):** Tier B is the default for products with a pre-existing palette. A Tier-B product should migrate to Tier A only if it later drops its own colour layer entirely (unlikely for introspect/daos). No forced migration.
+**Migration note (the loser):** Tier B is the default for products with a pre-existing palette. A Tier-B product should migrate to Tier A only if it later drops its own colour layer entirely. daos did so on 2026-09-30; introspect has not. No forced migration.
 
 ## Decision 2 — Product accent registry
 
@@ -202,7 +202,7 @@ Full task breakdown lives in the implementation plan (writing-plans). Order (dao
 1. **Extract from daos** → this spec. *(Done at authoring.)*
 2. **Write this spec** (`design-language.md`). *(This file.)*
 3. **sondalab-ui showcase** — a page that renders the tokens + L3 signature components against this spec. Proves the language at zero user-facing risk. Status target: **PoC implemented (not delivered)**.
-4. **Re-baseline daos landing** — swap its local palette vars onto Sondalab values (Tier B), align accent to the registry, mono-label/measure already conformant. Low risk; aesthetics already correct.
+4. **Re-baseline daos landing** — swap its local palette vars onto Sondalab values (Tier B), align accent to the registry, mono-label/measure already conformant. Low risk; aesthetics already correct. *Superseded 2026-09-30: daos moved to Tier A and was rebuilt on kit classes (https://github.com/sondalab-ai/daos/pull/2).*
 5. **introspect** — apply beyond the type swap: mono structural labels, hairline structure, section indices, signature header, editorial voice. Most work, most regression surface; done last.
 
 spexr is out of pass 1 (token + chrome already delivered); its remaining margin is L3 signature components inside SPEXR panels, tracked separately.
