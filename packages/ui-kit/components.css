@@ -239,6 +239,93 @@
 .sl-progress--success .sl-progress__bar { background-color: var(--slc-success); }
 .sl-progress--danger  .sl-progress__bar { background-color: var(--slc-danger); }
 
+/* Slider — a styled native range input, so keyboard, screen readers and
+   touch are the browser's. The value is written twice, like sl-progress:
+   the input's own value, and --sl-slider-value (a percentage) for the fill in
+   Chromium/Safari, which have no fill pseudo-element; Firefox fills with
+   ::-moz-range-progress. Without --sl-slider-value the track reads unfilled
+   and nothing else changes.
+     <input class="sl-slider" type="range" style="--sl-slider-value: 40%"
+            oninput="this.style.setProperty('--sl-slider-value', this.value + '%')">
+   The thumb is the page's light pole — near-white on light, light grey on
+   dark, white on high contrast — never the raised surface, which on dark is
+   the page's own near-black (owner, 2026-09-30: "hard to see"). Its edge is
+   its own fill in shade. Hovered it grows; grabbed it grows and flattens, and
+   springs back when let go (owner: "the slider should scale up not only
+   squash"). EVERY engine pseudo-element is a rule of its own: an unknown
+   pseudo-element drops the whole selector list it sits in. */
+.sl-slider {
+  --sl-slider-thumb: oklch(from var(--slc-canvas) max(l, 1 - l) 0 h);
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 1.25rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.sl-slider:disabled { opacity: 0.5; cursor: not-allowed; }
+.sl-slider:focus-visible { outline: none; }
+.sl-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--sl-radius-pill, 9999px);
+  background:
+    linear-gradient(var(--slc-accent) 0 0) 0 / var(--sl-slider-value, 0%) 100% no-repeat,
+    color-mix(in srgb, var(--slc-text) 12%, transparent);
+}
+.sl-slider::-moz-range-track {
+  height: 4px;
+  border-radius: var(--sl-radius-pill, 9999px);
+  background: color-mix(in srgb, var(--slc-text) 12%, transparent);
+}
+.sl-slider::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--sl-radius-pill, 9999px);
+  background: var(--slc-accent);
+}
+.sl-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: calc((4px - 1.1rem) / 2);
+  border-radius: 50%;
+  background: var(--sl-slider-thumb);
+  border: 1px solid oklch(from var(--sl-slider-thumb) calc(l - var(--slc-shade-step) * 3) 0 h);
+  box-shadow: var(--slc-shadow-sm);
+  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+.sl-slider::-moz-range-thumb {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--sl-slider-thumb);
+  border: 1px solid oklch(from var(--sl-slider-thumb) calc(l - var(--slc-shade-step) * 3) 0 h);
+  box-shadow: var(--slc-shadow-sm);
+  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+.sl-slider:hover:not(:disabled)::-webkit-slider-thumb { transform: scale(1.1); }
+.sl-slider:hover:not(:disabled)::-moz-range-thumb { transform: scale(1.1); }
+.sl-slider:active:not(:disabled)::-webkit-slider-thumb {
+  transform: scale(1.35, 1.22);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+.sl-slider:active:not(:disabled)::-moz-range-thumb {
+  transform: scale(1.35, 1.22);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+.sl-slider:focus-visible::-webkit-slider-thumb {
+  outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
+  outline-offset: var(--sl-focus-ring-offset, 2px);
+}
+.sl-slider:focus-visible::-moz-range-thumb {
+  outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
+  outline-offset: var(--sl-focus-ring-offset, 2px);
+}
+
 /* Button — primary (filled accent), ghost (6% ink wash, no border), and a small size. */
 .sl-btn {
   display: inline-flex;
@@ -1471,3 +1558,6 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 ) { border-color: var(--slc-border); }
 :root[data-sl-theme="high-contrast"] :is(.sl-kbd, .sl-empty, .sl-progress) { border: 1px solid var(--slc-border); }
 :root[data-sl-theme="high-contrast"] .sl-table thead th { border-bottom-color: var(--slc-border); }
+/* A 12% wash vanishes on black: the slider track gets the theme's line. */
+:root[data-sl-theme="high-contrast"] .sl-slider::-webkit-slider-runnable-track { box-shadow: inset 0 0 0 1px var(--slc-border); }
+:root[data-sl-theme="high-contrast"] .sl-slider::-moz-range-track { box-shadow: inset 0 0 0 1px var(--slc-border); }

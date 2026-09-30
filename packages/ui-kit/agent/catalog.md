@@ -260,6 +260,15 @@ A determinate 4px bar. Write the value twice: `aria-valuenow` for assistive tech
 ```
 Consumes: `--slc-text`, `--slc-accent`, `--slc-success`, `--slc-danger`. `--success`/`--danger` are for a finished or failed run, not for decoration. Don't: fake an indeterminate bar — work with no measurable value is `aria-busy="true"` (with effects, the aurora's busy reading), and a bar that moves without a value is L5's "structure encodes truth" broken.
 
+### Slider — `sl-slider`
+A styled native range input: keyboard, screen readers and touch are the browser's. The thumb is the page's light pole (near-white on light, light grey on dark); it grows when hovered, grows and flattens when grabbed, and springs back when let go. Write the value twice: the input's own, and `--sl-slider-value` (a percentage) for the fill — Chromium and Safari have no fill pseudo-element; Firefox fills itself. Substrate: **R** App/IDE, **A** Page.
+```html
+<input class="sl-slider" type="range" min="0" max="100" value="40" aria-label="Volume"
+       style="--sl-slider-value: 40%"
+       oninput="this.style.setProperty('--sl-slider-value', this.value + '%')">
+```
+Consumes: `--slc-canvas`, `--slc-text`, `--slc-accent`, `--slc-shade-step`, `--slc-shadow-sm`, `--slc-focus`, `--slc-border`. Do: give it an accessible name (`aria-label` or a `<label for>`). Don't: use it for a value the user must set exactly — pair it with a number field, or use one instead.
+
 ### Icon button — `sl-icon-btn` (`--round`)
 A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
 ```html

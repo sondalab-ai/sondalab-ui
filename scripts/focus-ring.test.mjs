@@ -32,7 +32,11 @@ test("the focus-ring rule names at least one selector", () => {
 
 for (const c of index.components.filter((c) => c.interactive)) {
   test(`focus ring covers "${c.id}"`, () => {
-    const hit = c.classes.some((cls) => selector.includes(`.${cls}`));
+    const hit = c.classes.some((cls) => selector.includes(`.${cls}`))
+      // A native range input draws its focus on the thumb, in a rule of its
+      // own per engine: an engine pseudo-element cannot join the shared list
+      // without dropping the whole list in the other engine.
+      || c.classes.some((cls) => css.includes(`.${cls}:focus-visible::-webkit-slider-thumb`));
     assert.ok(
       hit,
       `"${c.id}" is marked interactive but none of ${JSON.stringify(c.classes)} ` +

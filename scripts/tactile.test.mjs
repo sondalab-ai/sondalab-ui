@@ -99,4 +99,45 @@ test("the check and radio box shrinks while held and springs back, never when di
   assert.match(held.body, /transition-duration:\s*var\(--sl-motion-fast/);
 });
 
+test("every engine pseudo-element sits in a rule of its own", () => {
+  // A selector list containing a pseudo-element one engine does not know is
+  // dropped WHOLE by that engine: a ::-moz- next to a ::-webkit- thumb would
+  // style no thumb anywhere.
+  for (const r of R) {
+    const parts = r.selector.split(",").map((s) => s.trim());
+    if (!parts.some((p) => /::-(webkit|moz)-/.test(p))) continue;
+    assert.equal(parts.length, 1, `engine pseudo-element shares a selector list: ${r.selector}`);
+  }
+});
+
+test("the slider thumb grows when hovered and grows and flattens when grabbed, per engine", () => {
+  for (const thumb of ["::-webkit-slider-thumb", "::-moz-range-thumb"]) {
+    const base = R.find((r) => r.selector === `.sl-slider${thumb}`);
+    assert.ok(base, `no .sl-slider${thumb}`);
+    assert.match(base.body, /background:\s*var\(--sl-slider-thumb\)/);
+    assert.match(base.body, /transform var\(--sl-motion-slow, 360ms\) var\(--sl-motion-spring/);
+    const hover = R.find((r) => r.selector === `.sl-slider:hover:not(:disabled)${thumb}`);
+    const grab = R.find((r) => r.selector === `.sl-slider:active:not(:disabled)${thumb}`);
+    assert.match(hover?.body ?? "", /transform:\s*scale\(1\.1\)/, `${thumb} hover`);
+    assert.match(grab?.body ?? "", /transform:\s*scale\(1\.35, 1\.22\)/, `${thumb} grab`);
+    // hover must come first: while grabbed, both match, and the later rule wins.
+    assert.ok(R.indexOf(hover) < R.indexOf(grab), `${thumb}: the hover rule must precede the grab rule`);
+  }
+  const host = R.find((r) => r.selector === ".sl-slider");
+  assert.match(host.body, /--sl-slider-thumb:\s*oklch\(from var\(--slc-canvas\) max\(l, 1 - l\) 0 h\)/);
+});
+
+test("the slider fill reads the consumer's value and survives its absence", () => {
+  const track = R.find((r) => r.selector === ".sl-slider::-webkit-slider-runnable-track");
+  assert.match(track.body, /var\(--sl-slider-value, 0%\)/);
+  assert.ok(R.find((r) => r.selector === ".sl-slider::-moz-range-progress"), "Firefox fills with ::-moz-range-progress");
+});
+
+test("the slider's focus ring is on its thumb, in each engine", () => {
+  for (const thumb of ["::-webkit-slider-thumb", "::-moz-range-thumb"]) {
+    const ring = R.find((r) => r.selector === `.sl-slider:focus-visible${thumb}`);
+    assert.match(ring?.body ?? "", /outline:\s*var\(--sl-focus-ring-width, 2px\) solid var\(--slc-focus\)/, thumb);
+  }
+});
+
 export { rules, bare };
