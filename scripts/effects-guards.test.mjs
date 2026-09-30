@@ -1014,3 +1014,14 @@ test("the glass primary's label has no text-shadow", () => {
   assert.ok(primary.length > 0, "the parser must find the glass primary rules");
   for (const r of primary) assert.doesNotMatch(r.body, /text-shadow\s*:/, r.selector);
 });
+
+// Owner, 2026-09-30: "glass buttons are too pale when not hovered". The glass
+// primary's resting share follows its fill's lightness (the label's pole):
+// 90% where the label is the dark pole, 72% (Ruling 8's measurement) where it
+// is not, and the tint takes the fill in effect rather than the default accent.
+test("the glass primary rests at 90% on a light fill, 72% on a dark one, in its own colour", () => {
+  const r = RULES.find((r) => r.selector.trim() === ".sl-btn--primary.sl-fx-glass" && /--slg-accent\s*:/.test(r.body));
+  assert.ok(r, "the glass primary binds --slg-accent");
+  assert.match(r.body, /--slg-accent:\s*oklch\(from var\(--slfx-fill\) l c h \/ clamp\(0\.72, 0\.72 \+ \(l - 0\.61\) \* 1000, 0\.9\)\)/);
+  assert.match(r.body, /--slg-accent-a:\s*100%/);
+});

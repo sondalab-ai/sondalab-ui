@@ -943,7 +943,23 @@
 /* 0.72 is a CONTRAST result, so it is the share the accent layer carries too —
    the pane it measured is the one the anatomy now composites. It supersedes the
    0.80 the general rule above still names for non-button surfaces. */
-.sl-btn--primary.sl-fx-glass { --slfx-fill-a: 72%; --slg-accent-a: 72%; }
+/* RESTING SHARE, owner 2026-09-30 ("glass buttons are too pale when not
+   hovered"): 72% of the fill with the page under the rest read as the brand
+   colour muddied, not as the brand colour in glass. Where the label is the
+   dark pole — the fill is light, oklch L > 0.61: every dark-theme accent and
+   the light theme's orange — the share is 90%, which only RAISES the dark
+   label's contrast (amber on ink 5.2 -> 7.7:1, spexr 4.0 -> 5.8:1). A darker
+   fill (spexr's and local-agents' light accents) keeps 72%, where Ruling 8
+   measured it. The branch is on the fill's own lightness, read through the
+   alpha of a relative colour, so it follows the accent in effect — hover
+   included — and names no theme. It also binds --slg-accent to the fill,
+   which until now fell back to --sl-accent-default: a Tier B product's glass
+   primary was tinted with the default accent. */
+.sl-btn--primary.sl-fx-glass {
+  --slfx-fill-a: 72%;
+  --slg-accent: oklch(from var(--slfx-fill) l c h / clamp(0.72, 0.72 + (l - 0.61) * 1000, 0.9));
+  --slg-accent-a: 100%;
+}
 
 /* Ruling 8 — the label is the pole that contrasts with the composited pane, and
    at 0.72 that is the DARK pole on both themes, because the composited pane
