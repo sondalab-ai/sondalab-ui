@@ -62,7 +62,7 @@ The light theme defines the spectrum. Dark and high-contrast reset it to `initia
 - A property built from the spectrum (e.g. a rim gradient) is itself invalid wherever a stop is invalid, so `var(--slc-rim, none)` paints nothing in dark without a second switch.
 - A Tier-B product opts in by declaring the eleven `--sl-spectrum-*` values in its light layer; value-equality with `sondalab.tokens.json` keeps it compliant.
 - JavaScript effects read the same properties through the existing `roleColour()` probe (`colour.js`), which resolves fallbacks.
-- **Inversion band on light** (`sl-invert`, an ink block): it inherits the spectrum, so effects inside it are spectral too. Open decision, see §Decisions on the open points.
+- **Inversion band on light** (`sl-invert`, an ink block): it inherits the spectrum, so effects inside it are spectral too. Kept (owner, 2026-09-30).
 
 ## Tokens (`sondalab.tokens.json`)
 
