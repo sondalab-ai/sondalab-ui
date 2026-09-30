@@ -113,6 +113,16 @@
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
+}
+/* The outline follows the element's own corners, so the ring sets no radius
+   on anything that has one (a 10px field used to snap to 6px on focus). Only
+   the hosts with square corners of their own get a soft ring. */
+.sl-link:focus-visible,
+.sl-tabs__tab:focus-visible,
+.sl-breadcrumb__item:focus-visible,
+.sl-disclosure:focus-visible,
+.sl-nav__item:focus-visible,
+[data-sl-tooltip]:focus-visible {
   border-radius: var(--sl-radius-sm, 6px);
 }
 
@@ -1228,6 +1238,13 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   padding: var(--sl-space-4, 1rem) var(--sl-space-4, 1rem) var(--sl-space-2, 0.5rem);
 }
 .sl-nav__item {
+  /* A <button> as much as an <a>: the native chrome goes. */
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

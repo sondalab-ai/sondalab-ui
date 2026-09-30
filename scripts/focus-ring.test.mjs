@@ -40,3 +40,20 @@ for (const c of index.components.filter((c) => c.interactive)) {
     );
   });
 }
+
+// Regression (spexr migration, 2026-09-30): the shared ring set border-radius:
+// 6px, so a 10px field or row snapped its corners on keyboard focus.
+test("the shared focus ring sets no radius; the outline follows the element's own", () => {
+  const decl = css.indexOf("outline: var(--sl-focus-ring-width");
+  const body = css.slice(css.lastIndexOf("{", decl), css.indexOf("}", decl));
+  assert.doesNotMatch(body, /border-radius/);
+});
+
+// Regression (introspect migration, 2026-09-30): a <button class="sl-nav__item">
+// kept the native button chrome.
+test("a nav item resets native button chrome", () => {
+  const rule = css.match(/\.sl-nav__item \{([^}]*)\}/)[1];
+  for (const d of [/appearance:\s*none/, /background:\s*none/, /border:\s*0/, /font:\s*inherit/, /text-align:\s*left/]) {
+    assert.match(rule, d);
+  }
+});
