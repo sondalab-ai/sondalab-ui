@@ -19,15 +19,9 @@
         "rgba(8,12,16,0.55)",
         "rgba(90,209,200,0.14)",
         "#162535",
-        "#1a2a36",
-        "#D8CEBC",
-        "rgba(255,253,248,0.66)",
-        "rgba(236,232,222,0.66)",
-        "rgba(60,52,38,0.05)",
-        "rgba(45,40,30,0.06)",
-        "#c7bfae"
+        "#1a2a36"
       ],
-      "why": "design-language.md §Decision 1 (Tier B, App substrate) + the daos --bg-grad precedent: introspect's blue-slate glassmorphism neutral layer (--line/--grid/--scroll/--glass-*/--field/--code-bg, per theme) is its editorial identity. Its base --bg/--txt/--mut ARE the Sondalab tokens, but these slates carry a blue undertone those near-neutral tokens cannot derive — deriving off them would neutralise the identity. Blessed by value (audit normalises each rgba to its opaque base, so every alpha of a given surface is covered). App adapts the strict Tier-B value-equality the way daos's atmospheric field does."
+      "why": "design-language.md §Decision 1 (Tier B, App substrate) + the daos --bg-grad precedent: introspect's blue-slate glassmorphism neutral layer (--line/--grid/--scroll/--glass-*/--field/--code-bg in the dark theme; since ui-kit 0.21 the light layer derives from the kit's cool ground and needs no blessing) is its editorial identity. Its base --bg/--txt/--mut ARE the Sondalab tokens, but these slates carry a blue undertone those near-neutral tokens cannot derive — deriving off them would neutralise the identity. Blessed by value (audit normalises each rgba to its opaque base, so every alpha of a given surface is covered). App adapts the strict Tier-B value-equality the way daos's atmospheric field does."
     },
     {
       "kind": "color",
@@ -37,7 +31,7 @@
         "#8fa3b0",
         "#b5c5cd"
       ],
-      "why": "design-language.md §Decision 1 (Tier B, App): four muted-text tints that sit between --sl-text-muted (#6E8088) and --txt on introspect's blue-slate surfaces (nav items, rail headers, kind labels, blockquote). They track the same blue undertone as the neutral layer above, so they are part of that editorial identity rather than free-floating hex. Blessed by value."
+      "why": "design-language.md §Decision 1 (Tier B, App): four muted-text tints that sit between --sl-text-muted (dark #7C8D95 since 0.21.1) and --txt on introspect's blue-slate surfaces (nav items, rail headers, kind labels, blockquote). They track the same blue undertone as the neutral layer above, so they are part of that editorial identity rather than free-floating hex. Blessed by value."
     }
   ]
 }
