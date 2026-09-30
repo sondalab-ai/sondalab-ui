@@ -834,6 +834,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-shadow-sm: 0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08);
   --slc-shadow-md: 0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31);
   --slc-shadow-lg: 0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57);
+  /* The band's ground is the page's ink, where the uncapped accent is the one
+     that reads (light: the orange is ~7.8:1 on ink, the capped text ~2.7). */
+  --slc-accent-text:   var(--slc-accent);
+  --slc-focus:         var(--slc-accent);
   /* Edges in shade were resolved against the page's grounds on :root; here
      the grounds are currentColor washes, so the band keeps its re-derived
      neutral lines instead. */
