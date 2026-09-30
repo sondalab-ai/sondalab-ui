@@ -16,6 +16,7 @@
   --sl-status-danger: #ff5555;
   --sl-status-info: #00ffff;
   --sl-accent-default: #ffff00;
+  --sl-accent-band-text-lmax: 0.45;
   --sl-accent-hover: color-mix(in srgb, var(--sl-accent-default) 37%, white);
   --sl-accent-active: color-mix(in srgb, var(--sl-accent-default) 80%, black);
   --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 10%, black);
