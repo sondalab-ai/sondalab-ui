@@ -503,6 +503,9 @@
               <div class="sl-progress" role="progressbar" aria-label="Spec steps" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" style="--sl-progress: 60%">
                 <span class="sl-progress__bar"></span>
               </div>
+              <input class="sl-slider" type="range" min="0" max="100" value="40" aria-label="Volume"
+                     style="--sl-slider-value: 40%"
+                     oninput="this.style.setProperty('--sl-slider-value', this.value + '%')">
             </div>
           </div>
 
