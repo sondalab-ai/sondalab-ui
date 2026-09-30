@@ -141,7 +141,15 @@ function accentColorStrings(accentEntry) {
 // --- tier detection -------------------------------------------------------
 
 /** 'A' (data-sl-theme), 'B' (data-theme), or null if neither appears. */
-export function detectTier(css) {
+/** The text with every block and HTML comment blanked to spaces, newlines
+ * kept, so offsets and line numbers still point into the original. A comment
+ * that names a selector convention is prose, not a selector. */
+function blankComments(text) {
+  return text.replace(/\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->/g, (c) => c.replace(/[^\n]/g, " "));
+}
+
+export function detectTier(source) {
+  const css = blankComments(source);
   if (/\[data-sl-theme[\]=~|^$*\s]/.test(css)) return "A";
   // A DELIMITER after the name, not a bare prefix. `[data-theme-toggle]` is a
   // JavaScript hook, not a theme selector, and matching the prefix reported a
@@ -320,7 +328,7 @@ export function auditCss({
         rule: "theme-selector",
         level,
         file,
-        line: css.slice(0, css.indexOf(detected === "A" ? "[data-sl-theme" : "[data-theme")).split("\n").length,
+        line: css.slice(0, blankComments(css).search(detected === "A" ? /\[data-sl-theme[\]=~|^$*\s]/ : /\[data-theme[\]=~|^$*\s]/)).split("\n").length,
         message: `selector implies Tier ${detected} but product declared Tier ${declaredTier}`,
       });
   }

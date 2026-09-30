@@ -310,3 +310,20 @@ test("effects-runtime: a surface with no effect classes is silent", () => {
   const out = auditEffectsRuntime([markup("sl-btn sl-btn--primary")]);
   assert.deepEqual(out, []);
 });
+
+// A comment that names a selector convention is prose, not a selector: found
+// on introspect (2026-09-30), where a comment explaining why the product does
+// NOT use the kit's theme attribute made the audit report Tier A.
+test("detectTier ignores selectors named only in comments", () => {
+  assert.equal(detectTier(`/* we do not use [data-sl-theme] here */\n[data-theme="dark"] { --x: 1 }`), "B");
+  assert.equal(detectTier(`<!-- not [data-sl-theme] -->\n<style>[data-theme="dark"] { --x: 1 }</style>`), "B");
+  assert.equal(detectTier(`/* [data-theme] and [data-sl-theme] */ .x { --x: 1 }`), null);
+});
+
+test("the tier finding points at the real selector, not at a comment", () => {
+  const css = `/* unlike [data-sl-theme], … */\n.a { --x: 1 }\n[data-sl-theme="dark"] .b { --x: 1 }`;
+  const r = auditCss({ css, tokens: TOKENS, blessed: { tier: "B", deviations: [] }, declaredTier: "B" });
+  const tier = r.findings.filter((f) => f.rule === "theme-selector");
+  assert.equal(tier.length, 1);
+  assert.equal(tier[0].line, 3);
+});
