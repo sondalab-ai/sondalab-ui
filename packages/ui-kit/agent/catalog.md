@@ -24,6 +24,17 @@ Accent-tinted pill with a leading dot; classification/status. Substrate: **R** A
 ```
 Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags.
 
+### Filter chip — `sl-chip` (`__count`) in `sl-chips`
+A toggleable filter; a row of them is a multi-select where any number may be on. Off: an outlined pill in the muted ink with a hollow dot. On: the tag's accent dress, dot filled — so the state reads by colour, fill and glyph. Substrate: **R** App/IDE, **A** Page.
+```html
+<div class="sl-chips" role="group" aria-label="Event kinds">
+  <button class="sl-chip" aria-pressed="true">Tool <span class="sl-chip__count">42</span></button>
+  <button class="sl-chip" aria-pressed="false">Spawn <span class="sl-chip__count">3</span></button>
+  <button class="sl-chip" aria-pressed="true">Result</button>
+</div>
+```
+Consumes: `--slc-text-muted`, `--slc-text`, `--slc-border`, `--slc-border-strong`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: drive it with `aria-pressed` and label the group. Don't: use chips for one-of-N (that is `sl-segmented`), or for a label that does nothing (that is `sl-tag`).
+
 ### Button — `sl-btn` (`--primary` · `--ghost` · `--sm`)
 Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary hover/active track the accent hue; ghost hover deepens the wash. Substrate: **R** App/IDE, **A** Page.
 ```html
@@ -31,7 +42,14 @@ Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary 
 <button class="sl-btn sl-btn--ghost">Cancel</button>
 <button class="sl-btn sl-btn--primary sl-btn--sm">Add</button>
 ```
-Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-on-accent`, `--slc-border`, `--slc-text`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
+Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-accent-subtle`, `--slc-on-accent`, `--slc-border`, `--slc-text`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
+
+**Toggle button.** An on/off button is a plain or ghost `sl-btn` carrying `aria-pressed`; "on" takes the accent text, an accent wash and an accent edge. The CSS reads the attribute, so flip `aria-pressed` and nothing else — no `.on`/`.active` class.
+```html
+<button class="sl-btn sl-btn--ghost sl-btn--sm" aria-pressed="true">Pause</button>
+<button class="sl-btn sl-btn--ghost sl-btn--sm" aria-pressed="false">Follow</button>
+```
+Do: keep the label constant and let the state show it (a label that flips between "Pause" and "Resume" is a plain button, not a toggle). Don't: put `aria-pressed` on `sl-btn--primary` — its fill already reads as "on", so there is nothing to switch to. On glass the pressed wash is carried as the pane's fill (effects.css), so the state survives the material.
 
 ### Link — `sl-link`
 Underlined, accent on hover. Substrate: **R** App/Page.
@@ -161,6 +179,14 @@ Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px 
 ```
 Consumes: `--slc-accent`, `--slc-text`, `--slc-text-muted`, `--slc-border`. Active state is the accent (never a neutral).
 
+### Tooltip — `sl-tooltip`
+A CSS-only label above its host, in the inverted ink. The text lives in `data-sl-tooltip`; a host that is not already focusable takes `tabindex="0"` so the keyboard reveals it too. Substrate: **R** App/IDE, **A** Page.
+```html
+<span class="sl-tooltip" data-sl-tooltip="Measured on the canvas ground" tabindex="0">4.89:1</span>
+<button class="sl-icon-btn sl-tooltip" data-sl-tooltip="Re-run the audit" aria-label="Re-run the audit">↻</button>
+```
+Consumes: `--slc-text`, `--slc-raised`. Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
+
 ### Kbd / inline code — `sl-kbd` · `sl-code`
 Keyboard key and inline monospace code. Substrate: **A**.
 ```html
@@ -217,7 +243,22 @@ A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: *
   <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. Don't: use it for more than about four options; that is a `select`.
+Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. When it switches a setting rather than a view, it is a group of toggle buttons: `role="group"` on the control and `aria-pressed` on the items, which the CSS reads the same way. Don't: use it for more than about four options; that is a `select`.
+```html
+<div class="sl-segmented" role="group" aria-label="Language">
+  <button class="sl-segmented__item" aria-pressed="true">EN</button>
+  <button class="sl-segmented__item" aria-pressed="false">IT</button>
+</div>
+```
+
+### Progress — `sl-progress` (`__bar` · `--success` · `--danger`)
+A determinate 4px bar. Write the value twice: `aria-valuenow` for assistive tech and `--sl-progress` (a percentage) for the paint — CSS cannot yet read a number out of an attribute. Substrate: **R** App/IDE, **A** Page.
+```html
+<div class="sl-progress" role="progressbar" aria-label="Spec steps" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" style="--sl-progress: 60%">
+  <span class="sl-progress__bar"></span>
+</div>
+```
+Consumes: `--slc-text`, `--slc-accent`, `--slc-success`, `--slc-danger`. `--success`/`--danger` are for a finished or failed run, not for decoration. Don't: fake an indeterminate bar — work with no measurable value is `aria-busy="true"` (with effects, the aurora's busy reading), and a bar that moves without a value is L5's "structure encodes truth" broken.
 
 ### Icon button — `sl-icon-btn` (`--round`)
 A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
@@ -233,7 +274,7 @@ A square icon-only control. The kit ships no icon set: supply your own `<svg>` a
   </svg>
 </button>
 ```
-Consumes: `--slc-border`, `--slc-text`, `--slc-accent`, `--slc-focus`. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
+Consumes: `--slc-border`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. As a toggle it takes `aria-pressed`, painted like the toggle button's. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
 
 ### Pagination — `sl-pagination` (`__item`)
 Numbered navigation across pages of results. Mono tabular figures (L1). Substrate: **R** App, **A** Page, **N/A** IDE.
