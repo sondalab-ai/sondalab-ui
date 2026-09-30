@@ -507,7 +507,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border: 1px solid var(--slc-edge-control);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-check__box { border-radius: var(--sl-radius-sm, 6px); }
 .sl-radio__box { border-radius: 50%; }
@@ -575,13 +576,14 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   left: 2px;
   width: 0.75rem;
   height: 0.75rem;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--slc-raised);
   transform: translateY(-50%);
   /* The knob travels on the spring (--sl-motion-spring): one small overshoot
      past its seat, then settled. */
   transition:
     transform var(--sl-motion-mid, 220ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
+    width var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-switch__input:checked + .sl-switch__track {
@@ -1422,6 +1424,21 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    are zeroed under reduced motion, which stops all of it. */
 :is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled) {
   transform: scale(1.02, 0.968);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+
+/* The switch knob stretches toward the side it will travel to while held —
+   rightward from off, leftward from on (it sits at 0.85rem, and grows by
+   0.075rem) — then springs across on release, as it always has. */
+.sl-switch:active:not(:has(:disabled)) .sl-switch__track::after { width: 0.825rem; }
+.sl-switch:active:not(:has(:disabled)) .sl-switch__input:checked + .sl-switch__track::after {
+  transform: translateY(-50%) translateX(0.775rem);
+}
+/* A box shrinks under the finger; the spring-back overshoots a little, which
+   is the "pop" a newly checked box gets. */
+:is(.sl-check, .sl-radio):active:not(:has(:disabled)) :is(.sl-check__box, .sl-radio__box) {
+  transform: scale(0.96);
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }

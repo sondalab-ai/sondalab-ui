@@ -78,4 +78,25 @@ test("glass glow mirrors pane press with the kit squash formula", () => {
   assert.match(glowActive.body, /transition-duration:\s*var\(--sl-motion-fast/, "glow active not using motion-fast");
 });
 
+test("the switch knob is a pill that stretches toward where it will travel, never when disabled", () => {
+  const knob = R.find((r) => r.selector === ".sl-switch__track::after");
+  assert.match(knob.body, /border-radius:\s*999px/);
+  assert.match(knob.body, /width var\(--sl-motion-slow, 360ms\) var\(--sl-motion-spring/);
+  const held = R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*0\.825rem/.test(r.body));
+  assert.ok(held, "no held-knob rule");
+  assert.match(held.selector, /:not\(:has\(:disabled\)\)/);
+  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(0\.775rem\)/.test(r.body));
+  assert.ok(heldOn, "a checked knob must grow leftward (translateX 0.775rem)");
+  assert.match(heldOn.selector, /:not\(:has\(:disabled\)\)/);
+});
+
+test("the check and radio box shrinks while held and springs back, never when disabled", () => {
+  const box = R.find((r) => r.selector.replace(/\s+/g, " ") === ".sl-check__box, .sl-radio__box");
+  assert.match(box.body, /transform var\(--sl-motion-slow, 360ms\) var\(--sl-motion-spring/);
+  const held = R.find((r) => /scale\(0\.96\)/.test(r.body) && r.selector.includes(":active"));
+  assert.ok(held, "no held-box rule");
+  assert.match(held.selector, /:not\(:has\(:disabled\)\)/);
+  assert.match(held.body, /transition-duration:\s*var\(--sl-motion-fast/);
+});
+
 export { rules, bare };
