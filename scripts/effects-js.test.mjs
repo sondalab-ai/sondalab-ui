@@ -534,26 +534,36 @@ test("a seated glow swells with the pane it hangs in", () => {
   // The glow is the host's previous SIBLING, so a transform on the host reaches
   // it not at all: the pane grew under the pointer and its curtains stayed the
   // size they were, which reads as the light sliding out from under the glass.
-  const paneScale = (state) => {
-    const at = css.search(new RegExp(`\\.sl-fx-glass--pane${state}[^{]*\\{`));
-    assert.ok(at > -1, `the pane must still have a ${state} scale`);
-    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+  const OFF = ':not\\(:disabled, \\[aria-disabled="true"\\]\\)';
+  const CONTROLS = "\\:is\\(\\.sl-btn, \\.sl-icon-btn, \\.sl-chip, \\.sl-segmented__item, \\.sl-pagination__item\\)";
+  const scaleAt = (re) => {
+    const at = css.search(re);
+    assert.ok(at > -1, `no rule for ${re}`);
+    return /transform:\s*([^;]+)/.exec(blockAt(css, at))?.[1]?.trim();
   };
-  const glowScale = (state) => {
-    const at = css.search(new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-fx-glass--pane${state}`));
-    assert.ok(at > -1, `the glow must mirror the pane's ${state}`);
-    return /transform:\s*scale\(([\d.]+)\)/.exec(blockAt(css, at))?.[1];
+  // Two variants: a control pane squashes, every other pane sinks uniformly.
+  // The glow mirrors each, and each value must be defined (a missing one would
+  // make undefined === undefined pass).
+  const variants = {
+    plain: [new RegExp(`(?<!\\))\\.sl-fx-glass--pane:active${OFF}[^{]*\\{`),
+            new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-fx-glass--pane:active${OFF}`)],
+    control: [new RegExp(`${CONTROLS}\\.sl-fx-glass--pane:active${OFF}[^{]*\\{`),
+              new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ ${CONTROLS}\\.sl-fx-glass--pane:active${OFF}`)],
   };
-  // The hover lift retired with re-scope R2 (2026-09-25); the press sink stays.
-  for (const state of [":active"]) {
-    assert.equal(glowScale(state), paneScale(state), `${state}: the light must swell exactly as its pane does`);
+  for (const [name, [paneRe, glowRe]] of Object.entries(variants)) {
+    const paneVal = scaleAt(paneRe);
+    const glowVal = scaleAt(glowRe);
+    assert.ok(paneVal, `${name}: pane must have a transform`);
+    assert.ok(glowVal, `${name}: glow must have a transform`);
+    assert.equal(glowVal, paneVal, `${name}: the light must swell exactly as its pane does`);
   }
+  assert.notEqual(scaleAt(variants.plain[0]), scaleAt(variants.control[0]), "the two variants must differ");
 
   // …and on the same curves. A glow easing differently from the pane it hangs
-  // in is the same defect one step smaller.
+  // in is the same defect one step smaller. Both now use the kit-wide spring.
   const glowRest = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\s*\{\s*\n?\s*transition:/));
-  assert.match(glowRest, /transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
-    "the way out is the pane's own curve");
+  assert.match(glowRest, /--sl-motion-spring/,
+    "the way out is the kit-wide spring");
   assert.match(glowRest, /opacity/, "and lighting up is still a fade, not a jump");
 });
 

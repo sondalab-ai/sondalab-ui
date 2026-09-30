@@ -525,6 +525,23 @@
       ]
     },
     {
+      "id": "slider",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-slider"
+      ],
+      "roleVars": [
+        "--slc-canvas",
+        "--slc-text",
+        "--slc-accent-text",
+        "--slc-shade-step",
+        "--slc-shadow-sm",
+        "--slc-focus",
+        "--slc-border"
+      ]
+    },
+    {
       "id": "icon-button",
       "kind": "primitive",
       "interactive": true,

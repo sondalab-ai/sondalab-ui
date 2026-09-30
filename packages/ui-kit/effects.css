@@ -1132,8 +1132,10 @@
      time-normalised and plays at whatever duration it is given. */
   transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
-.sl-fx-press:active:not(:disabled) {
-  transform: scale(0.965);
+.sl-fx-press:active:not(:disabled, [aria-disabled="true"]) {
+  /* The same squash as components.css's TACTILE block: a control moves the
+     same way with or without the effects layer; the light is this file's job. */
+  transform: scale(1.02, 0.968);
   /* Going down is quick and plain; the spring is for the way back. */
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
@@ -2147,94 +2149,109 @@
 .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__text { opacity: 0; }
 .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 1; }
 
+/* ══ LIQUID HOVER — the pane has mass ══════════════════════════════════════
+   The owner: a button should swell slightly under the pointer, with a very
+   light bounce, and settle back the same way on the way out.
+
+   SCALE, not size. A transform costs no layout and no repaint of anything
+   around it, and — the part that matters here — it does not change the
+   element's border box, so the lens's displacement map stays valid. Animating
+   width or padding would invalidate it on every frame and rebuild a canvas
+   each time.
+
+   3% is the movement, and the walk to it is worth recording because the first
+   reading was of a broken effect: 0.5% read as nothing, 10% broke a row's
+   alignment, 5% was still too much once the animation actually ran, 0.25% was
+   below a device pixel. On a 96px button 3% is about 1.5px at each edge — a
+   lift that is seen without the row around it moving.
+
+   GUMMY PRESS (owner 2026-09-30). A control pane squashes like every control
+   (2% wider, 3.2% shorter) and springs back on --sl-motion-spring; any other
+   pane sinks uniformly. The stand-down knob reaches both. These rules sit
+   outside the no-preference block on purpose: their durations are motion
+   tokens, so reduced motion zeroes them, and the kit's always-on squash is
+   stood down with the rest. */
+.sl-fx-glass--pane {
+  /* Kit-wide press and spring return: the pane moves exactly like a plain
+     control. The stand-down knob still works — a wrapper that sets
+     --slfx-pane-swell: 1 yields k = 0 and no press. */
+  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+/* THE AMOUNT IS A KNOB, AND IT IS READ WITH A FALLBACK, NOT DECLARED. A
+   surface that wraps the pane and its seated glow in a box of its own and
+   scales THAT has already moved both; the pane's own scale then composes
+   with the wrapper's rather than agreeing with it — 1.03 x 1.03 put a card's
+   curtains 34 px wider than the card they are clipped to, which reads as the
+   light spilling past the glass. Such a wrapper sets --slfx-pane-swell: 1
+   and the pane and its glow both stand down, because the property inherits
+   to both from the wrapper they share. That only works while nothing
+   declares a default ON the pane or the glow: a declaration there would
+   shadow the wrapper's value and be unreachable. The default lives at the
+   point of use. */
+/* The hover lift (scale 1.03 under the pointer) retired on 2026-09-25 with
+   re-scope R2: a control answers the press, not the hover — the press
+   lights it (sl-fx-press) and it sinks below. The knob keeps its name and
+   its default because the uniform sink still reads it. */
+.sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"]) {
+  /* Any pane that is not a control (a card, a text pane) sinks uniformly: a third
+     of the swell, the other way. :active also matches the ancestors of a pressed
+     child, so a squash here would wobble a whole card under a click on its button.
+     --slfx-pane-swell: 1 yields no sink at all. */
+  transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+/* A control pane (glass button, icon button, chip, segmented or pagination item)
+   squashes like every control (owner 2026-09-30,
+   docs/specs/2026-09-30-gummy-controls-design.md): 2% wider, 3.2% shorter,
+   springing back on --sl-motion-spring. --slfx-pane-swell scales it (k = 0 at 1,
+   no press). Outranks the uniform sink above by specificity. */
+:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item).sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"]) {
+  --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
+  transform: scale(calc(1 + 0.02 * var(--slfx-pane-k)), calc(1 - 0.032 * var(--slfx-pane-k)));
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+
+/* AND THE LIGHT INSIDE IT SWELLS TOO. A seated glow is the host's previous
+   SIBLING, not its child, so a transform on the host reaches it not at all:
+   the pane grew under the pointer and its curtains stayed exactly the size
+   they were, which reads as the light sliding out from under the glass. The
+   owner saw it as the effect not following the container.
+
+   So the glow mirrors the host's scale, on the host's own curves. Mirrored
+   rather than inherited because there is nothing to inherit from — and it is
+   three rules rather than one because each of the pane's three states has a
+   curve of its own, and a glow easing differently from the pane it hangs in
+   is the same defect one step smaller.
+
+   Both boxes scale about their centres and the glow's box IS the host's, so
+   they stay registered; the curtains' own drift is a background-position and
+   is untouched by a transform.
+
+   The mirror reads the same --slfx-pane-swell the pane does, so a wrapper
+   that owns the scale cancels both with one declaration. */
+.sl-fx-aurora__glow[data-sl-fx-seated] {
+  transition:
+    opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"])) {
+  /* Mirror the pane's uniform sink. */
+  transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+/* Mirror the control pane's squash, with the same stand-down knob. */
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ :is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item).sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"])) {
+  --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
+  transform: scale(calc(1 + 0.02 * var(--slfx-pane-k)), calc(1 - 0.032 * var(--slfx-pane-k)));
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+
+
 @media (prefers-reduced-motion: no-preference) {
-  /* ══ LIQUID HOVER — the pane has mass ══════════════════════════════════════
-     The owner: a button should swell slightly under the pointer, with a very
-     light bounce, and settle back the same way on the way out.
-
-     SCALE, not size. A transform costs no layout and no repaint of anything
-     around it, and — the part that matters here — it does not change the
-     element's border box, so the lens's displacement map stays valid. Animating
-     width or padding would invalidate it on every frame and rebuild a canvas
-     each time.
-
-     3% is the movement, and the walk to it is worth recording because the first
-     reading was of a broken effect: 0.5% read as nothing, 10% broke a row's
-     alignment, 5% was still too much once the animation actually ran, 0.25% was
-     below a device pixel. On a 96px button 3% is about 1.5px at each edge — a
-     lift that is seen without the row around it moving.
-
-     SOFT, not snappy. The first pass used 120ms with a hard overshoot and read
-     as a tick. Glass is heavy: it takes its time both ways, and the rebound is
-     small and late rather than sharp. 320ms in on a curve whose overshoot is
-     gentle, 420ms out with none at all — a mass settles more lazily than it is
-     pushed, and never bounces back past rest.
-
-     THE BOUNCE IS IN THE EASING, not in a keyframe. An overshooting cubic
-     — the last control point past 1 — gives one small rebound and settles,
-     which is what a spring does; a keyframe animation would re-run from the
-     start if the pointer crossed the edge twice quickly, and read as a twitch.
-     The way out is the same curve reversed and slower: a mass settles more
-     lazily than it is pushed. */
-  .sl-fx-glass--pane {
-    /* Out: no overshoot. Coming back to rest should not bounce past it. */
-    transition: transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
-  }
-  /* THE AMOUNT IS A KNOB, AND IT IS READ WITH A FALLBACK, NOT DECLARED. A
-     surface that wraps the pane and its seated glow in a box of its own and
-     scales THAT has already moved both; the pane's own scale then composes
-     with the wrapper's rather than agreeing with it — 1.03 x 1.03 put a card's
-     curtains 34 px wider than the card they are clipped to, which reads as the
-     light spilling past the glass. Such a wrapper sets --slfx-pane-swell: 1
-     and the pane and its glow both stand down, because the property inherits
-     to both from the wrapper they share. That only works while nothing
-     declares a default ON the pane or the glow: a declaration there would
-     shadow the wrapper's value and be unreachable. The default lives at the
-     point of use. */
-  /* The hover lift (scale 1.03 under the pointer) retired on 2026-09-25 with
-     re-scope R2: a control answers the press, not the hover — the press
-     lights it (sl-fx-press) and it sinks below. The knob keeps its name and
-     its default because the sink still reads it. */
-  /* Pressed, the mass goes the other way and the bounce is gone: a press is
-     an arrival, not a launch. */
-  .sl-fx-glass--pane:active:not(:disabled) {
-    /* The press is the swell's third, the other way: 1.03 -> 0.99, 1 -> 1. One
-       declaration governs both states, so standing the swell down cannot leave
-       a press behind. */
-    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
-    transition-duration: 140ms;
-    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
-  }
-
-  /* AND THE LIGHT INSIDE IT SWELLS TOO. A seated glow is the host's previous
-     SIBLING, not its child, so a transform on the host reaches it not at all:
-     the pane grew under the pointer and its curtains stayed exactly the size
-     they were, which reads as the light sliding out from under the glass. The
-     owner saw it as the effect not following the container.
-
-     So the glow mirrors the host's scale, on the host's own curves. Mirrored
-     rather than inherited because there is nothing to inherit from — and it is
-     three rules rather than one because each of the pane's three states has a
-     curve of its own, and a glow easing differently from the pane it hangs in
-     is the same defect one step smaller.
-
-     Both boxes scale about their centres and the glow's box IS the host's, so
-     they stay registered; the curtains' own drift is a background-position and
-     is untouched by a transform.
-
-     The mirror reads the same --slfx-pane-swell the pane does, so a wrapper
-     that owns the scale cancels both with one declaration. */
-  .sl-fx-aurora__glow[data-sl-fx-seated] {
-    transition:
-      opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
-      transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
-  }
-  .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled)) {
-    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
-    transition-duration: 140ms;
-    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
-  }
-
   /* The working tab's segment travels; under reduced motion it rests at its
      start, off the strip. */
   [data-sl-fx="on"] .sl-fx-aurora--linear:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"])::after {

@@ -195,7 +195,8 @@
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-chip::before {
   content: "";
@@ -238,6 +239,100 @@
 .sl-progress--success .sl-progress__bar { background-color: var(--slc-success); }
 .sl-progress--danger  .sl-progress__bar { background-color: var(--slc-danger); }
 
+/* Slider — a styled native range input, so keyboard, screen readers and
+   touch are the browser's. The value is written twice, like sl-progress:
+   the input's own value, and --sl-slider-value (a percentage) for the fill in
+   Chromium/Safari, which have no fill pseudo-element; Firefox fills with
+   ::-moz-range-progress. Without --sl-slider-value the track reads unfilled
+   and nothing else changes.
+     <input class="sl-slider" type="range" min="0" max="100" style="--sl-slider-value: 40%"
+            oninput="this.style.setProperty('--sl-slider-value',
+                     (this.value - this.min) / (this.max - this.min) * 100 + '%')">
+   The thumb is the page's light pole — near-white on light, light grey on
+   dark, white on high contrast — never the raised surface, which on dark is
+   the page's own near-black (owner, 2026-09-30: "hard to see"). Its edge is
+   its own fill in shade. Hovered it grows; grabbed it grows and flattens, and
+   springs back when let go (owner: "the slider should scale up not only
+   squash"). EVERY engine pseudo-element is a rule of its own: an unknown
+   pseudo-element drops the whole selector list it sits in. */
+.sl-slider {
+  --sl-slider-thumb: oklch(from var(--slc-canvas) max(l, 1 - l) 0 h);
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 1.25rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.sl-slider:disabled { opacity: 0.5; cursor: not-allowed; }
+.sl-slider:focus-visible { outline: none; }
+.sl-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--sl-radius-pill, 9999px);
+  background:
+    linear-gradient(var(--slc-accent-text) 0 0) 0 / var(--sl-slider-value, 0%) 100% no-repeat,
+    color-mix(in srgb, var(--slc-text) 12%, transparent);
+}
+.sl-slider::-moz-range-track {
+  height: 4px;
+  border-radius: var(--sl-radius-pill, 9999px);
+  background: color-mix(in srgb, var(--slc-text) 12%, transparent);
+}
+.sl-slider::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--sl-radius-pill, 9999px);
+  background: var(--slc-accent-text);
+}
+.sl-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: calc((4px - 1.1rem) / 2);
+  border-radius: 50%;
+  background: var(--sl-slider-thumb);
+  border: 1px solid oklch(from var(--sl-slider-thumb) calc(l - var(--slc-shade-step) * 3) 0 h);
+  box-shadow: var(--slc-shadow-sm);
+  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+.sl-slider::-moz-range-thumb {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--sl-slider-thumb);
+  border: 1px solid oklch(from var(--sl-slider-thumb) calc(l - var(--slc-shade-step) * 3) 0 h);
+  box-shadow: var(--slc-shadow-sm);
+  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+}
+/* Hover only where a pointer hovers: on touch, :hover sticks after a tap and
+   would leave the thumb grown. Hover stays ahead of grab: both match while held. */
+@media (hover: hover) {
+  .sl-slider:hover:not(:disabled)::-webkit-slider-thumb { transform: scale(1.1); }
+  .sl-slider:hover:not(:disabled)::-moz-range-thumb { transform: scale(1.1); }
+}
+.sl-slider:active:not(:disabled)::-webkit-slider-thumb {
+  transform: scale(1.35, 1.22);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+.sl-slider:active:not(:disabled)::-moz-range-thumb {
+  transform: scale(1.35, 1.22);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+.sl-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 2px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 2px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
+}
+.sl-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 2px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 2px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
+}
+/* Inside an inversion band the ground is the page's text colour, which --slc-canvas
+   is not re-derived for: the canvas-derived thumb would vanish into it. On the slider
+   itself, not .sl-invert > *: the slider declares the property on itself. */
+.sl-invert .sl-slider { --sl-slider-thumb: var(--slc-canvas); }
+
 /* Button — primary (filled accent), ghost (6% ink wash, no border), and a small size. */
 .sl-btn {
   display: inline-flex;
@@ -261,7 +356,8 @@
   transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-              color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+              color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .sl-btn--primary {
@@ -505,7 +601,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border: 1px solid var(--slc-edge-control);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-check__box { border-radius: var(--sl-radius-sm, 6px); }
 .sl-radio__box { border-radius: 50%; }
@@ -573,13 +670,14 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   left: 2px;
   width: 0.75rem;
   height: 0.75rem;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--slc-raised);
   transform: translateY(-50%);
   /* The knob travels on the spring (--sl-motion-spring): one small overshoot
      past its seat, then settled. */
   transition:
     transform var(--sl-motion-mid, 220ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
+    width var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-switch__input:checked + .sl-switch__track {
@@ -986,7 +1084,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-sm, 6px);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-segmented__item:hover { color: var(--slc-text); }
 /* The CSS reads the state attribute, so the accessible state and the visible
@@ -1014,7 +1113,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-md, 10px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-icon-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--slc-text) 11%, transparent);
@@ -1046,7 +1146,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-sm, 6px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-pagination__item:hover { color: var(--slc-text); border-color: var(--slc-border); }
 .sl-pagination__item[aria-current] {
@@ -1406,6 +1507,42 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-resizer--horizontal::after { inset: 4px 0; }
 .sl-resizer--horizontal:is(:hover, :active, :focus-visible)::after { inset: 3.5px 0; }
 
+/* ══ TACTILE — the controls give under the finger ══════════════════════════════
+   The owner, 2026-09-30: "a slight bump to the toggle, like if they are
+   gummies" — the Quiet strength (docs/specs/2026-09-30-gummy-controls-design.md).
+   Held, a control squashes a little and keeps its volume (wider by 2%,
+   shorter by 3.2%); let go, it returns on --sl-motion-spring, whose one small
+   overshoot IS the bump. Going down is quick and plain; the spring is for
+   the way back. Transitions only, never a keyframe, so nothing
+   plays when a page loads with a box already checked, and the motion tokens
+   are zeroed under reduced motion, which stops all of it. */
+:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(1.02, 0.968);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+
+/* The switch knob stretches toward the side it will travel to while held —
+   rightward from off, leftward from on (it sits at 0.85rem, and grows by
+   0.075rem) — then springs across on release, as it always has. */
+.sl-switch:active:not(:has(:disabled)) .sl-switch__track::after {
+  width: 0.825rem;
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+.sl-switch:active:not(:has(:disabled)) .sl-switch__input:checked + .sl-switch__track::after {
+  transform: translateY(-50%) translateX(0.775rem);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+/* A box shrinks under the finger; the spring-back overshoots a little, which
+   is the "pop" a newly checked box gets. */
+:is(.sl-check, .sl-radio):active:not(:has(:disabled)) :is(.sl-check__box, .sl-radio__box) {
+  transform: scale(0.96);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
 /* High contrast draws every edge in its own border colour: shade is a
    subtlety the theme exists to remove. */
@@ -1434,3 +1571,6 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 ) { border-color: var(--slc-border); }
 :root[data-sl-theme="high-contrast"] :is(.sl-kbd, .sl-empty, .sl-progress) { border: 1px solid var(--slc-border); }
 :root[data-sl-theme="high-contrast"] .sl-table thead th { border-bottom-color: var(--slc-border); }
+/* A 12% wash vanishes on black: the slider track gets the theme's line. */
+:root[data-sl-theme="high-contrast"] .sl-slider::-webkit-slider-runnable-track { box-shadow: inset 0 0 0 1px var(--slc-border); }
+:root[data-sl-theme="high-contrast"] .sl-slider::-moz-range-track { box-shadow: inset 0 0 0 1px var(--slc-border); }
