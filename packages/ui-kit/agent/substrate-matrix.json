@@ -12,7 +12,7 @@
     "$note": "Theme-selector tier per product (design-language.md §Decision 1). Authoritative machine source for the audit's tier-consistency check. Term products have no tier (no theme selector).",
     "spexr": "A",
     "introspect": "B",
-    "daos": "B",
+    "daos": "A",
     "default": "A",
     "local-agents": "B"
   },

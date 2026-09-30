@@ -1,15 +1,5 @@
 {
-  "$note": "Authorized deviations for daos. Each entry cites the design-language.md rule that blesses it. An entry without a justifying rule is a defect in disguise. Populated further during migrate calibration.",
+  "$note": "Authorized deviations for daos. Each entry cites the design-language.md rule that blesses it. An entry without a justifying rule is a defect in disguise. Populated further during migrate calibration. 2026-09-30: the .artifact .ok/.no on-ink status pair was retired when daos moved to Tier A — the rebuilt landing derives it with color-mix over --slc-success/--slc-danger.",
   "substrate": "Page",
-  "deviations": [
-    {
-      "kind": "color",
-      "selectors": [
-        ".artifact .ok",
-        ".artifact .no"
-      ],
-      "value": "light-on-ink status greens/reds",
-      "why": "design-language.md §Decision 2: on an inverted surface, derive an on-ink status pair locally rather than using the canvas --sl-status-* tokens. Cited there as a correct instance."
-    }
-  ]
+  "deviations": []
 }
