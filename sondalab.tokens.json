@@ -14,16 +14,16 @@
     "$motion-spring-note": "--sl-motion-spring: a damped spring (stiffness 170, damping 18) sampled into a CSS linear() easing — one ~5% overshoot, then settles. Time-normalised, so it plays at whatever duration token the transition uses. Only for transforms: on a colour the overshoot has no meaning. Re-scope R2 (card spring-tokens), 2026-09-25.",
     "motion": { "fast": "120ms", "mid": "220ms", "slow": "360ms", "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)", "spring": "linear(0, 0.024, 0.087, 0.174, 0.275, 0.382, 0.488, 0.588, 0.68, 0.761, 0.831, 0.89, 0.937, 0.975, 1.003, 1.023, 1.037, 1.045, 1.049, 1.05, 1.048, 1.044, 1.04, 1.035, 1.029, 1.024, 1.019, 1.015, 1.011, 1.007, 1.005, 1.003, 1)" },
     "$shadow-note": "Layered contact + ambient cast (soft cast, 2026-09-24). The :root value is the light ramp, tinted with the light ground ink; each theme re-declares its own in the top-level shadow block.",
-    "shadow": { "sm": "0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03)", "md": "0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12)", "lg": "0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22)" },
+    "shadow": { "sm": "0 1px 2px rgba(28,29,34,0.08), 0 0 0 1px rgba(28,29,34,0.03)", "md": "0 2px 4px rgba(28,29,34,0.06), 0 10px 28px rgba(28,29,34,0.12)", "lg": "0 4px 8px rgba(28,29,34,0.08), 0 28px 72px rgba(28,29,34,0.22)" },
     "focus": { "ring-width": "2px", "ring-offset": "2px" },
     "$viz-note": "Categorical data-viz ramp (--sl-viz-0..7): distinct hues for arbitrary series / one-per-item colouring (agent walls, event kinds). Print-ink hues (vermilion, ultramarine, olive, ochre, …). The value here is the no-theme default (the dark ramp) emitted on :root; each theme re-declares the ramp at the lightness that clears 3:1 on its own grounds — see the top-level `viz` block. Not brand accents; independent of --sl-accent-*.",
     "viz": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
   },
   "themes": {
     "light": {
-      "bg-canvas": "#ECE4D4", "bg-surface": "#F6F1E6", "bg-surface-raised": "#FFFFFF", "bg-overlay": "rgba(21,33,31,0.4)",
-      "border-subtle": "rgba(21,33,31,0.09)", "border-default": "rgba(21,33,31,0.16)", "border-strong": "rgba(21,33,31,0.28)",
-      "text-primary": "#15211F", "text-secondary": "#475754", "text-muted": "#6E7B78", "text-on-accent": "#FFFFFF",
+      "bg-canvas": "#F4F4F8", "bg-surface": "#FAFAFC", "bg-surface-raised": "#FFFFFF", "bg-overlay": "rgba(28,29,34,0.4)",
+      "border-subtle": "rgba(28,29,34,0.09)", "border-default": "rgba(28,29,34,0.16)", "border-strong": "rgba(28,29,34,0.28)",
+      "text-primary": "#1C1D22", "text-secondary": "#454857", "text-muted": "#5F6374", "text-on-accent": "#FFFFFF",
       "status-success": "#4a6205", "status-warning": "#795305", "status-danger": "#a72b05", "status-info": "#3853af"
     },
     "dark": {
@@ -40,7 +40,7 @@
     }
   },
   "accent": {
-    "light": { "default": "#B56A0C", "hover": { "mix": [89, "black"] }, "active": { "mix": [76, "black"] }, "subtle": { "mix": [12, "transparent"] }, "depth": "#14606C" },
+    "light": { "default": "#9A5300", "hover": { "mix": [89, "black"] }, "active": { "mix": [76, "black"] }, "subtle": { "mix": [12, "transparent"] }, "depth": "#14606C" },
     "dark": { "default": "#F5A83C", "hover": { "mix": [80, "white"] }, "active": { "oklch": ["calc(l * 0.92)", "calc(c * 0.96)", "h"], "fallback": "#E0942A" }, "subtle": { "mix": [16, "transparent"] }, "depth": "#35A0B4" },
     "high-contrast": { "default": "#ffff00", "hover": { "mix": [37, "white"] }, "active": { "mix": [80, "black"] }, "subtle": { "mix": [10, "black"] }, "depth": "#00ffff" }
   },
@@ -51,13 +51,20 @@
   },
   "$viz-theme-note": "Per-theme --sl-viz-0..7, emitted into each theme file after shared.viz on :root. High-contrast reuses the dark ramp (its ground is black).",
   "viz": {
-    "light": ["#cb6050", "#4182d3", "#74890a", "#ac750a", "#be5f98", "#0c8e8f", "#066b4d", "#916ecb"],
+    "light": ["#E0405E", "#2F6FE0", "#0E958A", "#D26A00", "#7A35E0", "#2E8540", "#A57C00", "#C93FC4"],
     "dark": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"],
     "high-contrast": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
   },
+  "$spectrum-note": "Prism (light theme only). --sl-spectrum-0..5 is light (glow: aurora bloom, press, haze), never text, never the only carrier of a meaning. --sl-spectrum-ink-0..4 is the same wheel darkened to >= 3:1 on the light grounds, for anything seen at 1px or as text (rims, aurora --rim/--linear, glitch, halftone, spectral text). Other themes reset both to `initial` so consumers fall back to their accent-derived colour. Not an accent: it never tracks the product hue and never marks state.",
+  "spectrum": {
+    "light": {
+      "light": ["#FF4D6D", "#FF9F1C", "#FFD60A", "#2EC4B6", "#3A86FF", "#8338EC"],
+      "ink": ["#D6264A", "#B85A00", "#0B857A", "#2A62D8", "#7A2FE0"]
+    }
+  },
   "$shadow-theme-note": "Per-theme --sl-shadow-*: the cast takes the ground ink (teal-black on paper, black on the abyss, where it needs ~2.6x the alpha to read). High-contrast reuses dark.",
   "shadow": {
-    "light": { "sm": "0 1px 2px rgba(21,33,31,0.08), 0 0 0 1px rgba(21,33,31,0.03)", "md": "0 2px 4px rgba(21,33,31,0.06), 0 10px 28px rgba(21,33,31,0.12)", "lg": "0 4px 8px rgba(21,33,31,0.08), 0 28px 72px rgba(21,33,31,0.22)" },
+    "light": { "sm": "0 1px 2px rgba(28,29,34,0.08), 0 0 0 1px rgba(28,29,34,0.03)", "md": "0 2px 4px rgba(28,29,34,0.06), 0 10px 28px rgba(28,29,34,0.12)", "lg": "0 4px 8px rgba(28,29,34,0.08), 0 28px 72px rgba(28,29,34,0.22)" },
     "dark": { "sm": "0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08)", "md": "0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31)", "lg": "0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57)" },
     "high-contrast": { "sm": "0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08)", "md": "0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31)", "lg": "0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57)" }
   },

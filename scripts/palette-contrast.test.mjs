@@ -64,3 +64,24 @@ for (const theme of ["light", "dark"]) {
     assert.deepEqual(close, []);
   });
 }
+
+// Prism (light only): the neutrals and the accent that read as text, and the
+// spectrum ink that must be seen at 1px and as display text. The dark accent
+// is out of scope here.
+{
+  const t = { ...shared, ...vars("themes/light.css") };
+  const INK = [...Array(5).keys()].map((i) => `--sl-spectrum-ink-${i}`);
+  for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
+    test(`light ${bg}: muted text and the accent read as text (4.5:1)`, () => {
+      const bad = ["--sl-text-muted", "--sl-accent-default"]
+        .filter((n) => ratio(t[n], t[bg]) < 4.5).map((n) => `${n} ${ratio(t[n], t[bg]).toFixed(2)}`);
+      assert.deepEqual(bad, []);
+    });
+    test(`light ${bg}: spectrum ink is visible at 1px and as display text (3:1)`, () => {
+      const bad = INK.filter((n) => !t[n] || ratio(t[n], t[bg]) < 3).map((n) => `${n} ${t[n] && ratio(t[n], t[bg]).toFixed(2)}`);
+      assert.deepEqual(bad, []);
+    });
+  }
+  test("light: the label on a primary button reads (4.5:1)", () =>
+    assert.ok(ratio(t["--sl-text-on-accent"], t["--sl-accent-default"]) >= 4.5));
+}

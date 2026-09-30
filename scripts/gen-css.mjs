@@ -35,6 +35,17 @@ function accentDecls(name, v) {
   return [[name, v]];
 }
 
+/** --sl-spectrum-N / --sl-spectrum-ink-N: the theme's own values, or an
+ * `initial` reset for each name the light theme declares when this theme has
+ * none. Returns [name, value] declarations. */
+function spectrumDecls(own, light) {
+  const names = (s) => [
+    ...(s?.light ?? []).map((v, i) => [`--sl-spectrum-${i}`, v]),
+    ...(s?.ink ?? []).map((v, i) => [`--sl-spectrum-ink-${i}`, v]),
+  ];
+  return own ? names(own) : names(light).map(([n]) => [n, "initial"]);
+}
+
 function main() {
   const t = loadTokens();
 
@@ -63,6 +74,10 @@ function main() {
       ...(t.viz?.[id] ?? []).map((v, i) => [`--sl-viz-${i}`, v]),
       // Shadows cast in the ground's own ink, so they are per theme too.
       ...Object.entries(t.shadow?.[id] ?? {}).map(([k, v]) => [`--sl-shadow-${k}`, v]),
+      // Prism: the spectrum is the light theme's own. Every other theme resets
+      // it to `initial`, so a consumer's var() fallback wins there and a nested
+      // island of that theme does not inherit the light theme's value.
+      ...spectrumDecls(t.spectrum?.[id], t.spectrum?.light),
     ];
     const css = HEADER + block(`[data-sl-theme="${id}"]`, entries);
     writeFileSync(resolve(OUT, `themes/${id}.css`), css);

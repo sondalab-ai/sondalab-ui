@@ -565,6 +565,20 @@ One oversized display heading per screen, sized by a fluid clamp — a documente
 ```
 Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't reach for the display serif on a numeral — a display-scale numeral is a structural label and stays mono (L1).
 
+### Haze — `sl-haze`
+A soft field of the spectrum behind a section: the light theme's colour as atmosphere (Prism). Substrate: **A** Page/App, **N/A** IDE.
+```html
+<section class="sl-haze"> … </section>
+```
+Consumes: `--slc-haze`. Paints nothing in dark and high-contrast. Do: one per screen, behind a hero. Don't: put it behind body text that must be read at a glance, or stack two.
+
+### Spectral text — `sl-spectral`
+A word or phrase of a display heading painted in the spectrum ink (Prism). Substrate: **A** Page/App, **N/A** IDE.
+```html
+<h1 class="sl-anchor">Everything measured, <span class="sl-spectral">nothing asserted.</span></h1>
+```
+Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-contrast and forced colours. Do: display sizes only (`sl-anchor`, `h1`, `h2`). Don't: body text — the ink clears 3:1, not 4.5.
+
 ## Rules of use (all components)
 
 - **Bind role-vars, never literals.** A component's colour comes from a `--slc-*`/`--sl-*` var. A raw hex fails `sl-audit`.

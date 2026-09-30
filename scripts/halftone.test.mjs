@@ -18,7 +18,7 @@ const { halftone } = await import(pathToFileURL(resolve(KIT, "halftone.js")).hre
 function fakePage({ reduce = false, observe = true } = {}) {
   const keys = ["Element", "Image", "MutationObserver", "IntersectionObserver", "ResizeObserver", "getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame", "matchMedia", "performance", "devicePixelRatio"];
   const saved = Object.fromEntries(keys.map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
-  const page = { clock: 1000, queue: [], observers: [], io: [], ro: [], frames: [], listeners: new Map(), offscreen: [], images: [], ink: [240, 240, 240] };
+  const page = { clock: 1000, queue: [], observers: [], io: [], ro: [], frames: [], listeners: new Map(), offscreen: [], images: [], ink: [240, 240, 240], vars: {} };
   class Element {
     constructor(doc, tag, attrs = {}) {
       Object.assign(this, { ownerDocument: doc, tagName: tag.toUpperCase(), attrs: { ...attrs }, children: [], parent: null, isConnected: true, clientWidth: 200, style: {} });
@@ -52,7 +52,8 @@ function fakePage({ reduce = false, observe = true } = {}) {
           return {
             setTransform() {}, clearRect() { if (el.isConnected) { frame.length = 0; } }, beginPath() {}, moveTo() {},
             arc(x, y, r) { frame.push([x, y, r]); },
-            fill() { if (el.visible) page.frames.push({ canvas: el, dots: frame.slice() }); },
+            fill() { if (el.visible) page.frames.push({ canvas: el, dots: frame.slice(), fill: this.fillStyle }); },
+            createLinearGradient(...args) { return { args, stops: [], addColorStop(o, c) { this.stops.push([o, c]); } }; },
             fillRect() {}, drawImage(...a) { el.drawn = a; },
             getImageData: (_x, _y, w) => {
               if (w === 1) return { data: [...page.ink, 255] };
@@ -105,7 +106,7 @@ function fakePage({ reduce = false, observe = true } = {}) {
     delete globalThis.IntersectionObserver;
     delete globalThis.ResizeObserver;
   }
-  globalThis.getComputedStyle = () => ({ color: "ink" });
+  globalThis.getComputedStyle = () => ({ color: "ink", getPropertyValue: (n) => page.vars[n] ?? "" });
   globalThis.matchMedia = () => ({ matches: reduce });
   let id = 0;
   globalThis.requestAnimationFrame = (cb) => { page.queue.push(cb); return ++id; };
@@ -452,4 +453,52 @@ test("a colour that transitions is re-read when the transition ends", async (t) 
   page.listeners.get("transitionend")({ propertyName: "color", target: band });
   page.tick(16);
   assert.ok(centre() < 100, "read at the end, not mid-way");
+});
+
+// Prism: on the light theme the dots take the spectrum ink as one gradient
+// across the scene; where a theme resets it, or the author asks for one ink,
+// they keep the canvas's own colour.
+const INK = ["#D6264A", "#B85A00", "#0B857A", "#2A62D8", "#7A2FE0"];
+const withSpectrum = (page) => INK.forEach((c, i) => (page.vars[`--sl-spectrum-ink-${i}`] = c));
+
+test("on a theme with the spectrum the dots are one gradient through its five inks", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  withSpectrum(page);
+  const c = page.canvas({ "data-sl-grid": "32" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  page.show(c);
+  page.tick();
+  const fill = page.frames.at(-1).fill;
+  assert.equal(typeof fill, "object", "a gradient, not a colour string");
+  assert.deepEqual(fill.stops, INK.map((col, i) => [i / 4, col]));
+});
+
+test("data-sl-ink=mono keeps the single ink even where the spectrum exists", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  withSpectrum(page);
+  const c = page.canvas({ "data-sl-grid": "32", "data-sl-ink": "mono" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  page.show(c);
+  page.tick();
+  assert.equal(page.frames.at(-1).fill, "ink");
+});
+
+test("a switch to a theme that resets the spectrum repaints in the single ink", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  withSpectrum(page);
+  const c = page.canvas({ "data-sl-grid": "32" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  page.show(c);
+  page.tick();
+  assert.equal(typeof page.frames.at(-1).fill, "object");
+  page.vars = {};
+  page.attr("data-sl-theme", "dark");
+  page.tick();
+  assert.equal(page.frames.at(-1).fill, "ink");
 });

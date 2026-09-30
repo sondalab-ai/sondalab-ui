@@ -83,7 +83,10 @@ export function substitute(text, env, seen = new Set()) {
     const name = (comma < 0 ? inner : inner.slice(0, comma)).trim();
     const fallback = comma < 0 ? null : inner.slice(comma + 1).trim();
     if (seen.has(name)) throw new Error(`var() cycle through ${name}`);
-    const value = env.get(name);
+    // `initial` on a custom property is the guaranteed-invalid value: var()
+    // takes its fallback exactly as if the property were never declared.
+    const declared = env.get(name);
+    const value = declared?.trim() === "initial" ? undefined : declared;
     if (value === undefined) {
       if (fallback === null) throw new Error(`unresolved ${name}`);
       out += substitute(fallback, env, seen);

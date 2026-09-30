@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromOklch, toHex, fromHex, toOklch, gamutExcess, maxChroma } from "./lib/css-color.mjs";
+import { declarations, evaluate, substitute, fromOklch, toHex, fromHex, toOklch, gamutExcess, maxChroma } from "./lib/css-color.mjs";
 
 // Every hue an effect emits is a derivation over the accent and the depth
 // companion, and a derivation that lifts chroma can ask for more than sRGB
@@ -121,6 +121,12 @@ test("the vivid tier keeps its lightness and hue and pays chroma only to the gam
 test("a lifted colour is never paler than its source unless the gamut forbids it", () => {
   const failures = [];
   for (const c of cases()) {
+    // Where a theme declares the spectrum (light, Prism) the bloom and the beam
+    // are two spectrum tokens, not a colour and its lift, so there is no lift to
+    // hold; the in-gamut test above still covers them. Themes that reset the
+    // spectrum keep the derivation, and this check.
+    const spectrum = THEMES[c.theme].get("--sl-spectrum-0");
+    if (spectrum && spectrum !== "initial") continue;
     const out = resolveAll(env(c.theme, c.overrides, c.cascade));
     for (const [prop, from] of Object.entries(LIFTS)) {
       const got = toOklch(out[prop]);
@@ -147,4 +153,26 @@ test("the evaluator agrees with Chrome on the colours it is trusted with", () =>
   const sel = toOklch(evaluate("oklch(from color-mix(in oklch, oklch(0.6 0.2 100 / 1), oklch(0.6 0.05 100 / 0.001)) l c h / 1)", e));
   assert.ok(Math.abs(sel[1] - 0.19985) < 1e-4, `select ${sel}`);
   assert.equal(toHex(fromHex("#B56A0C")), "#b56a0c");
+});
+
+test("the evaluator treats a property set to initial as guaranteed-invalid", () => {
+  // CSS Variables §2.2: `initial` makes a custom property guaranteed-invalid,
+  // so var() takes its fallback — how dark and high-contrast reset the spectrum.
+  const e = new Map([["--sl-spectrum-0", "initial"], ["--a", "#112233"]]);
+  assert.equal(substitute("var(--sl-spectrum-0, var(--a))", e), "#112233");
+  assert.throws(() => substitute("var(--sl-spectrum-0)", e), /unresolved --sl-spectrum-0/);
+});
+
+test("busy stays the accent on light: the ring resolves as if the spectrum were reset", () => {
+  // Busy is a state, and state is the accent's job (design-language Decision 2).
+  const COLOURS = ["--slfx-beam", "--slfx-beam-b", "--slfx-beam-c", "--slfx-beam-tail", "--slfx-bloom-hi", "--slfx-bloom-lo"];
+  const noSpectrum = new Map([...THEMES.light].map(([k, v]) => [k, /^--sl-spectrum-/.test(k) ? "initial" : v]));
+  for (const [name, sel] of [["ghost", GHOST], ["rim", RIM]]) {
+    const busy = [...sel, '.sl-fx-aurora[data-sl-fx-live="busy"]', ...(name === "rim" ? ['.sl-fx-aurora--rim[data-sl-fx-live="busy"]'] : [])];
+    const cascade = declarations(effects, busy);
+    const at = (themeMap) => { const e = new Map(themeMap); for (const [k, v] of cascade) e.set(k, v); return e; };
+    for (const p of COLOURS) {
+      assert.equal(toHex(evaluate(`var(${p})`, at(THEMES.light))), toHex(evaluate(`var(${p})`, at(noSpectrum))), `${name} busy ${p}`);
+    }
+  }
 });
