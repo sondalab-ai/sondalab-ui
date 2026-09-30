@@ -31,6 +31,13 @@
   --slc-accent-hover:  var(--sl-accent-hover,   color-mix(in srgb, var(--slc-accent) 89%, black));
   --slc-accent-active: var(--sl-accent-active,  color-mix(in srgb, var(--slc-accent) 76%, black));
   --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
+  /* The accent as TEXT or a thin line. On the light theme the accent is a fill
+     (the bright spectrum orange for the default), too light to read as text;
+     the theme caps the lightness with a number, --sl-accent-text-lmax, and the
+     text is re-derived here from whatever accent is in effect — so a product
+     that maps only --slc-accent (Tier B) gets its own hue darkened, never the
+     default's. Where no cap is set (dark, high contrast) it is the accent. */
+  --slc-accent-text:   oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
   --slc-canvas:        var(--sl-bg-canvas,         #F4F4F8);
@@ -44,7 +51,7 @@
   --slc-border:        var(--sl-border-default, rgba(28,29,34,0.16));
   --slc-border-subtle: var(--sl-border-subtle,  rgba(28,29,34,0.09));
   --slc-border-strong: var(--sl-border-strong,  rgba(28,29,34,0.28));
-  --slc-focus:         var(--sl-focus-ring, var(--slc-accent));
+  --slc-focus:         var(--sl-focus-ring, var(--slc-accent-text));
   /* Prism (light): the spectrum as a 1px hairline on cards, the primary button
      and text fields. Both are built from theme tokens, so where a theme resets
      the spectrum they are invalid and every consumer's fallback — today's
@@ -116,7 +123,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   line-height: 1;
-  color: var(--slc-accent);
+  color: var(--slc-accent-text);
   background: var(--slc-accent-subtle);
   border: 1px solid var(--slc-accent-subtle);
   border-radius: var(--sl-radius-pill, 9999px);
@@ -126,7 +133,7 @@
   content: "";
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--slc-accent);
+  background: var(--slc-accent-text);
   flex: none;
 }
 .sl-tag--plain { color: var(--slc-text-muted); background: transparent; border-color: var(--slc-border); }
@@ -173,7 +180,7 @@
 }
 .sl-chip:hover:not(:disabled) { color: var(--slc-text); border-color: var(--slc-border-strong); }
 .sl-chip[aria-pressed="true"] {
-  color: var(--slc-accent);
+  color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
   border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
 }
@@ -198,7 +205,7 @@
   display: block;
   height: 100%;
   width: var(--sl-progress, 0%);
-  background-color: var(--slc-accent);
+  background-color: var(--slc-accent-text);
   border-radius: inherit;
   transition: width var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
 }
@@ -265,7 +272,7 @@
    its fill already reads as "on", so there would be nothing left to switch to. */
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"],
 .sl-icon-btn[aria-pressed="true"] {
-  color: var(--slc-accent);
+  color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
   border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
 }
@@ -371,7 +378,7 @@
 /* Focus is a halo around the box. The shared outline still draws on
    keyboard focus, so the halo adds to the contract, never replaces it. */
 .sl-field__input:focus {
-  border-color: var(--slc-accent);
+  border-color: var(--slc-accent-text);
   box-shadow: 0 0 0 3px var(--slc-accent-subtle);
 }
 .sl-field__input::placeholder { color: var(--slc-text-muted); }
@@ -397,7 +404,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-code {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
   font-size: 0.875em;
-  color: var(--slc-accent);
+  color: var(--slc-accent-text);
   background: var(--slc-accent-subtle);
   border-radius: var(--sl-radius-sm, 6px);
   padding: 0.12em 0.36em;
@@ -412,7 +419,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   transition: color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               text-decoration-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-.sl-link:hover { color: var(--slc-accent); text-decoration-color: var(--slc-accent); }
+.sl-link:hover { color: var(--slc-accent-text); text-decoration-color: var(--slc-accent-text); }
 
 /* Rule — hairline divider. --labeled centres a caption over the line. */
 .sl-rule { border: none; border-top: 1px solid var(--slc-border); margin: var(--sl-space-6, 2rem) 0; }
@@ -602,7 +609,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   left: var(--sl-space-5, 1.5rem);    /* align with the title / padding */
   width: 2.75rem;
   height: 3px;
-  background: var(--slc-accent);
+  background: var(--slc-accent-text);
   border-radius: 0 0 var(--sl-radius-sm, 6px) var(--sl-radius-sm, 6px);
 }
 .sl-callout__title {
@@ -705,7 +712,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
               border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-tabs__tab:hover { color: var(--slc-text); }
-.sl-tabs__tab[aria-selected="true"] { color: var(--slc-accent); border-bottom-color: var(--slc-accent); }
+.sl-tabs__tab[aria-selected="true"] { color: var(--slc-accent-text); border-bottom-color: var(--slc-accent-text); }
 
 /* Tooltip — CSS-only. Put text in data-sl-tooltip; give the host tabindex="0"
    for keyboard reveal. <span class="sl-tooltip" data-sl-tooltip="…" tabindex="0">…</span> */
@@ -889,7 +896,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   text-decoration: none;
   transition: color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
+a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-breadcrumb__item[aria-current] { color: var(--slc-text); }
 .sl-breadcrumb__sep { color: var(--slc-text-muted); opacity: 0.6; }
 
@@ -1214,7 +1221,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 .sl-nav__item:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 4%, transparent); }
 .sl-nav__item[aria-current] {
   color: var(--slc-text);
-  border-left-color: var(--slc-accent);
+  border-left-color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
 }
 .sl-nav__count {
@@ -1344,7 +1351,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
 }
 .sl-resizer:is(:hover, :active, :focus-visible)::after {
   inset: 0 3.5px;
-  background-color: var(--slc-accent);
+  background-color: var(--slc-accent-text);
 }
 .sl-resizer--horizontal { width: auto; height: 9px; cursor: row-resize; }
 .sl-resizer--horizontal::after { inset: 4px 0; }

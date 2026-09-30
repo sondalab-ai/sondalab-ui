@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { fromHex, linToOklab } from "./lib/css-color.mjs";
+import { fromHex, fromOklch, linToOklab, maxChroma, toHex, toOklch } from "./lib/css-color.mjs";
 
 // Reads the GENERATED css, so it follows a token wherever gen-css emits it
 // (the viz ramp may live in tokens.css or in the theme files). Status text sits
@@ -65,25 +65,73 @@ for (const theme of ["light", "dark"]) {
   });
 }
 
-// Prism (light only): the neutrals and the accent that read as text, and the
-// spectrum ink that must be seen at 1px and as display text. The dark accent
-// is out of scope here.
+// Prism (light only): the neutrals, and the spectrum ink that must be seen at
+// 1px and as display text. The accent is a FILL on light since 0.24; what
+// reads as text is its derivation, checked below. The dark accent is out of
+// scope here.
 {
   const t = { ...shared, ...vars("themes/light.css") };
   const INK = [...Array(5).keys()].map((i) => `--sl-spectrum-ink-${i}`);
   for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
-    test(`light ${bg}: muted text and the accent read as text (4.5:1)`, () => {
-      const bad = ["--sl-text-muted", "--sl-accent-default"]
-        .filter((n) => ratio(t[n], t[bg]) < 4.5).map((n) => `${n} ${ratio(t[n], t[bg]).toFixed(2)}`);
-      assert.deepEqual(bad, []);
+    test(`light ${bg}: muted text reads as text (4.5:1)`, () => {
+      const r = ratio(t["--sl-text-muted"], t[bg]);
+      assert.ok(r >= 4.5, `--sl-text-muted ${r.toFixed(2)}`);
     });
     test(`light ${bg}: spectrum ink is visible at 1px and as display text (3:1)`, () => {
       const bad = INK.filter((n) => !t[n] || ratio(t[n], t[bg]) < 3).map((n) => `${n} ${t[n] && ratio(t[n], t[bg]).toFixed(2)}`);
       assert.deepEqual(bad, []);
     });
   }
-  test("light: the label on a primary button reads (4.5:1)", () =>
-    assert.ok(ratio(t["--sl-text-on-accent"], t["--sl-accent-default"]) >= 4.5));
+}
+
+// The light accent split (0.24): every registered product's light accent is a
+// fill, its text is re-derived from it with the theme's lightness cap, and its
+// label is the pole its lightness picks. These mirror the CSS formulas:
+//   --slc-accent-text   oklch(from accent min(l, lmax) c h)   (gamut-mapped by chroma)
+//   --sl-text-on-accent oklch(from accent clamp(0.22, (0.61 - l) * 1000, 1) 0 h)
+{
+  const light = readFileSync(resolve(KIT, "themes/light.css"), "utf8");
+  const lmax = Number(light.match(/--sl-accent-text-lmax:\s*([0-9.]+)/)[1]);
+  const onAccent = light.match(/--sl-text-on-accent:\s*([^;]+);/)[1];
+  const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
+  const t = { ...shared, ...vars("themes/light.css") };
+  const textOf = (hex) => {
+    const [L, C, h] = toOklch(fromHex(hex));
+    const l = Math.min(L, lmax);
+    return toHex(fromOklch([l, Math.min(C, maxChroma(l, h)), h]));
+  };
+  const labelOf = (hex) => {
+    const [L, , h] = toOklch(fromHex(hex));
+    return toHex(fromOklch([Math.min(1, Math.max(0.22, (0.61 - L) * 1000)), 0, h]));
+  };
+  const accents = Object.entries(registry.products)
+    .map(([name, p]) => [name, p.light ?? registry.products[p.inherits]?.light ?? t["--sl-accent-default"]]);
+
+  test("light: the theme's own accent is the bright fill, and derives both pole and text", () => {
+    assert.equal(t["--sl-accent-default"], "#FF9F1C");
+    assert.match(onAccent, /oklch\(from var\(--sl-accent-default\) clamp\(0\.22, \(0\.61 - l\) \* 1000, 1\) 0 h\)/);
+    assert.match(light, /--sl-focus-ring: oklch\(from var\(--sl-accent-default\) min\(l, var\(--sl-accent-text-lmax\)\) c h\)/);
+  });
+  for (const [name, hex] of accents) {
+    test(`light ${name}: accent text reads on every ground and on its own 12% wash (4.5:1)`, () => {
+      const text = textOf(hex);
+      const grounds = ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"].map((n) => t[n]);
+      const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
+        return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
+      const bad = [...grounds, lerp(t["--sl-bg-canvas"], hex, 0.12)]
+        .map((bg) => [bg, ratio(text, bg)]).filter(([, r]) => r < 4.5).map(([bg, r]) => `${text} on ${bg} ${r.toFixed(2)}`);
+      assert.deepEqual(bad, []);
+    });
+    test(`light ${name}: the derived label is the better pole on the fill`, () => {
+      const label = labelOf(hex);
+      const other = label === "#ffffff" ? toHex(fromOklch([0.22, 0, 0])) : "#ffffff";
+      assert.ok(ratio(label, hex) >= ratio(other, hex), `${label} ${ratio(label, hex).toFixed(2)} < ${other} ${ratio(other, hex).toFixed(2)} on ${hex}`);
+    });
+  }
+  test("light default: the label on the primary fill reads (4.5:1)", () => {
+    const r = ratio(labelOf(t["--sl-accent-default"]), t["--sl-accent-default"]);
+    assert.ok(r >= 4.5, r.toFixed(2));
+  });
 }
 
 // Muted text is text: it reads at 4.5:1 on every dark ground too.

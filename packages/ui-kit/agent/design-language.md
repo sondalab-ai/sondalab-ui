@@ -38,10 +38,12 @@ Shared grammar, per-product accent. The brand default is amber (with a teal *dep
 
 | Product | Accent (light / dark) | Source | Note |
 |---|---|---|---|
-| **Sondalab default / daos** | `#9A5300` / `#F5A83C` (depth `#14606C` / `#35A0B4`) | `sondalab.tokens.json` `accent.*.default` | daos re-baselines from its near-amber `#9a6a15`/`#d29a44` to the exact token values. |
+| **Sondalab default / daos** | `#FF9F1C` / `#F5A83C` (depth `#14606C` / `#35A0B4`) | `sondalab.tokens.json` `accent.*.default` | daos re-baselines from its near-amber `#9a6a15`/`#d29a44` to the exact token values. Since 0.24 the light value is a **fill** (the spectrum orange, dark label on it); its text is derived, `#8D5403` (owner, 2026-09-30: "amber is crap in light mode" — the deep `#9A5300` read brown as a fill). |
 | **spexr** | `#5b6cff` / `#8b96ff` | `spexr-overrides.css` | Delivered. |
 | **introspect** | `#0e9c84` / `#2ee6c0` | introspect `--cy` | Teal-to-mint cyan, per theme. Registered as its product accent; not required to match the default's `depth` teal `#35A0B4` (`depth` constrains the default product, not cyan-accented ones). Its secondary sky-blue (`--cy2`) is **not** a second accent — it maps to `--sl-status-info`. |
 | **local-agents** | `#1d63d8` / `#58a6ff` | local-agents `--accent-coder` | Coder-blue, per theme. The de-facto primary accent (`--accent-coder → var(--sl-accent-default)`); its rgb() literals matched the pre-adoption values exactly, so tints derive via `color-mix` with no registered steps. The other three agent hues (creative/home/system) are a blessed **categorical identity**, not a second accent (`--sl-viz-*` was rejected: they carry theme-distinct pairs). |
+
+**Fill and text are one accent, two readings.** `--slc-accent` is the colour a control *fills* with. `--slc-accent-text` is the same hue as text or a thin line: `oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h)`. The light theme sets the cap to `0.5`, so every registered accent's text clears 4.5:1 on the light grounds and on its own 12% wash; dark and high contrast set none, and there the text is the accent. The label on a fill (`--sl-text-on-accent`) is derived on light too: white below oklch L 0.61, near-black above — whichever pole reads better. The theme supplies only a *number*, never a second colour, so a product that overrides only its accent (Tier A) or maps only `--slc-accent` (Tier B) gets its own hue in all three roles.
 
 Machine values of this table: `packages/ui-kit/agent/accent-registry.json` (consumed by the compliance audit). The table above stays authoritative for the reasoning; `scripts/accent-registry.test.mjs` asserts product-set parity between the two.
 

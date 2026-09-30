@@ -110,10 +110,10 @@
 
      What bounds it is label contrast on a filled brand button. Until 0.21
      white on the amber accent was below 4.5:1 with every effect off; the
-     token decision has since been taken (0.21, Prism): the light accent is
-     #9A5300 and white on it measures 5.8:1. Thinning the fill on paper still
-     moves the amber toward the ground and lowers that figure, which is why a
-     translucent primary takes the dark pole as its label (Ruling 8). */
+     token decision has since been taken twice: 0.21 deepened the light
+     accent until white read on it, and 0.24 made it a bright fill with the
+     dark label on it (the deep amber read brown). A translucent primary
+     takes the dark pole as its label either way (Ruling 8). */
   --slfx-fill-a: 30%;
   /* ── the glass parameters, and the backdrop it bends ─────────────────────
      A surface names what lies behind a region and the pane refracts THAT;
