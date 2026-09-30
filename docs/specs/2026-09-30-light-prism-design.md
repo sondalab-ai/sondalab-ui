@@ -1,7 +1,7 @@
 ---
 slug: 2026-09-30-light-prism-design
 title: Light Prism — a playful, colourful light theme
-status: draft
+status: accepted
 createdAt: 2026-09-30
 ---
 > **What this file is:** the design contract for turning the kit's light theme into **Prism**: a clean cool-white ground on which colour arrives as light — a shared six-hue spectrum on effects, hairline rims and a few opt-in ornaments — while each product keeps its one accent for meaning.
@@ -73,16 +73,16 @@ The light theme defines the spectrum. Dark and high-contrast reset it to `initia
 | `bg-canvas` | `#ECE4D4` | `#F4F4F8` | — |
 | `bg-surface` | `#F6F1E6` | `#FAFAFC` | — |
 | `bg-surface-raised` | `#FFFFFF` | `#FFFFFF` | — |
-| `bg-overlay` | `rgba(21,33,31,0.4)` | `rgba(19,20,28,0.4)` | — |
-| `border-subtle / default / strong` | `rgba(21,33,31, .09/.16/.28)` | `rgba(19,20,28, .09/.16/.28)` | — |
-| `text-primary` | `#15211F` | `#13141C` | 16.7:1 |
+| `bg-overlay` | `rgba(21,33,31,0.4)` | `rgba(28,29,34,0.4)` | — |
+| `border-subtle / default / strong` | `rgba(21,33,31, .09/.16/.28)` | `rgba(28,29,34, .09/.16/.28)` | — |
+| `text-primary` | `#15211F` | `#1C1D22` | 14.9:1 |
 | `text-secondary` | `#475754` | `#454857` | 8.3:1 |
 | `text-muted` | `#6E7B78` (3.5:1) | `#5F6374` | 5.4:1 |
 | `accent.light.default` | `#B56A0C` (3.8:1) | `#9A5300` | 5.3:1; white on it 5.8:1 |
 | `accent.light.depth` | `#14606C` | unchanged | — |
-| `shadow.light.*` and the shared `:root` shadow (documented as "the light ramp") | ink `21,33,31` | ink `19,20,28`, same alphas | — |
+| `shadow.light.*` and the shared `:root` shadow (documented as "the light ramp") | ink `21,33,31` | ink `28,29,34`, same alphas | — |
 
-Status and code palettes keep their values; the existing `palette-contrast` test re-proves them on the new ground.
+**Moved during implementation (2026-09-30):** the ink was specified as `#13141C`; the glass glint mirrors the ink's lightness (`1.2 − L`), and at L 0.19 with a blue cast the glint fell outside sRGB, so the ink is the more neutral `#1C1D22` (L 0.23, chroma 0.010). Status and code palettes keep their values; the existing `palette-contrast` test re-proves them on the new ground.
 
 **Literals that follow the tokens** (same commit): the fallbacks in the `components.css` `:root` role block, `agent/accent-registry.json` (default light accent), and the contrast figures quoted in `effects.css` / `glass.css` comments. The alphas behind those figures (glass tint 34% → 4.94:1, primary 72% share → 5.67:1, ghost label 4.24 → 5.19) were tuned on cream and are **re-measured** on `#F4F4F8`, not just renumbered. `sl-audit.test.mjs` fixtures keep the old hexes: they test the audit, not the theme.
 
@@ -95,7 +95,7 @@ Emitted from a new top-level `spectrum.light` block: values into `themes/light.c
 
 ### Chart ramp (`viz.light`)
 
-The probe's brighter ramp, tuned so every hue clears the existing 3:1 floor and the 0.08 OKLab pairwise distance. Starting points: `#E0405E`, `#2F6FE0`, `#0E958A`, `#D26A00`, `#7A35E0`, `#08875F`, `#A57C00`, `#C93FC4` (yellow darkened from the probe's `#FFD60A`).
+The probe's brighter ramp, tuned so every hue clears the existing 3:1 floor and the 0.08 OKLab pairwise distance. Shipped: `#E0405E`, `#2F6FE0`, `#0E958A`, `#D26A00`, `#7A35E0`, `#2E8540`, `#A57C00`, `#C93FC4` (yellow darkened from the probe's `#FFD60A`; slot 5 moved from `#08875F`, 0.067 OKLab from the teal).
 
 ## Effects (`effects.css`)
 
@@ -121,14 +121,15 @@ Each row is one `var(--sl-spectrum…, <today's expression>)`. The sweep's `hue-
 
 ### Rainbow rims
 
-Cards (`sl-card`), the primary button (`sl-btn--primary`) and wrapped fields (`sl-field__control`) get a 1px spectrum-ink hairline over their existing border.
+Cards (`sl-card`), the primary button (`sl-btn--primary`) and text fields (`sl-field__input`) get a 1px spectrum-ink hairline.
 
-- A role property in the `:root` role block: `--slc-rim: linear-gradient(<angle>, var(--sl-spectrum-ink-0), …, var(--sl-spectrum-ink-4))`. Invalid wherever the spectrum is reset, as above.
-- Painted by a `::after` ring (`inset: -1px`, `border-radius: inherit`, `padding: 1px`, masked to the ring, `pointer-events: none`) whose background is `var(--slc-rim, none)`. The element's own border and background are **not** touched, so dark and high-contrast paint exactly what they paint today and no state (hover, focus, active) loses its cue.
-- **Bare inputs get no rim.** An `<input>` cannot host a pseudo-element; the rim needs the `sl-field__control` wrapper — the same wrapper the effects layer already requires (`components.css:306`).
-- **An effect host keeps its effect's edge.** On `.sl-fx-glass` / `.sl-fx-aurora` the rim is off: those pseudo-elements are the effect's, and the 0.20.0 two-line edge (1px sharp + 1px soft) is the edge. Its colour turns spectral through the rows in §Effects instead.
+- Two role properties in the `:root` role block: `--slc-rim: linear-gradient(120deg, var(--sl-spectrum-ink-0), …, var(--sl-spectrum-ink-4))`, and `--slc-rim-edge: color-mix(in srgb, var(--sl-spectrum-ink-0) 0%, transparent)` — transparent where the spectrum exists. Both are invalid wherever the spectrum is reset.
+- Painted through the host's own border box: `--slc-rim-layers` (declared on the host) is a fill image of the host's own colour over the padding box, above the rim across the border box; `background-image: var(--slc-rim-layers, none, none)`; `border-color: var(--slc-rim-edge, <today's border>)`. Where the spectrum is reset the image is two empty layers — two, so the background colour keeps the border-box clip it always had — and the border is today's. Dark and high-contrast pages were diffed against 0.20.1: 0 differing pixels.
+- States keep their cues: the primary's hover/active move the fill layer with the background colour (`--slc-rim-fill`); a field's hover and focus recolour its border, which covers the rim while they last.
+- **An effect host keeps its effect's edge.** `effects.css` (which may name components; `components.css` may not name effects) resets `--slc-rim` and `--slc-rim-edge` to `initial` on glass, aurora, press, glitch, liquid and goo-member hosts, and so on everything they contain.
+- A `background:` shorthand reset (the site un-buttons its hero button this way) clears the rim with the fill. A product that sets only `background-color` sees it covered by the fill layer in light.
 
-This is the riskiest part of the change. Its commit is separate so it can be dropped from the PR without touching the rest.
+*Changed during implementation:* this spec first placed the rim on a `::before` ring. That would out-specify the effects' own `::before` rules (0,2,1 against 0,1,1) and could not exclude effect hosts without `components.css` naming them, which a guard forbids. The border-box technique also gives bare inputs a rim, where the ring needed the `sl-field__control` wrapper.
 
 ### New opt-in classes
 
@@ -160,7 +161,7 @@ Both are catalogued (`agent/catalog.md` / `catalog.json`) with the rule: at most
 | Test | What it proves |
 |---|---|
 | `palette-contrast` (extended) | light `text-muted` ≥ 4.5, `accent.default` ≥ 4.5 as text, `text-on-accent` on accent ≥ 4.5, `spectrum-ink-*` ≥ 3 — on canvas, surface, raised; existing status / code / viz checks re-run on the new ground |
-| `dark-unchanged` (new) | every colour property the effects and components cascade resolves under `themes/dark.css` and `themes/high-contrast.css` equals its 0.20.1 value (a fixture captured before the first change) |
+| `theme-isolation` (new) | light declares every spectrum property; dark and high-contrast reset each to `initial` and are otherwise byte-identical to 0.20.1 (fixtures `scripts/fixtures/theme-*-0.20.1.css`); every spectrum read in `effects.css` has a fallback (`effects-guards`); the test evaluator treats `initial` as guaranteed-invalid (`effects-gamut`) |
 | `effects-gamut`, `effects-guards`, `effects-audit` (updated) | the spectrum joins the allowed colour set; the glitch / live-light source pins move to the new roles, whose fallbacks are the old ones |
 | `halftone` (extended) | spectrum ink paints with a gradient; `mono` and dark paint `currentColor`; export unchanged |
 | `components-token-scope` | `--slc-rim` reads theme tokens only in the role block |
@@ -178,6 +179,7 @@ Both are catalogued (`agent/catalog.md` / `catalog.json`) with the rule: at most
 
 ## Risks
 
-- **Everyone's light theme changes at once.** That is the request; `dark-unchanged` guards the rest.
-- **Product CSS on rim hosts.** A product that already uses `::after` on a card or primary button loses the rim or overlaps it. Noted in the README; the rim can be removed per element with `--slc-rim: none`.
+- **Everyone's light theme changes at once.** That is the request; `theme-isolation`, the effects fallback guard and a pixel diff of dark and high-contrast pages against 0.20.1 (0 px) guard the rest.
+- **Product CSS on rim hosts.** A product that sets only `background-color` on a card, primary button or field sees it covered by the rim's fill layer in light. Noted in the README; the rim can be removed per element with `--slc-rim: none`.
+- **Nested theme regions.** A light region inside a dark page gets spectral effects (they read the spectrum on the host) but not the rims, and a dark region inside a light page keeps the light rims: like every `--slc-*` role, the rim resolves on `:root`. Pre-existing for all roles (a card's surface behaves the same on 0.20.1).
 - **Brand drift.** Cream paper was a family trait. The design-language amendment makes the new rule explicit, so reviewers don't flag cool white as a defect.

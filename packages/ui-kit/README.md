@@ -21,6 +21,14 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 [data-sl-theme="light"] { --sl-accent-default: #0e9c84; --sl-focus-ring: #0e9c84; }
 ```
 
+**Light theme: Prism (0.21).** The light theme is a cool near-white ground (`#F4F4F8`) on which colour arrives as light: a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen at 1px or as text) paints the effects, a 1px hairline on cards, primary buttons and text fields, and two opt-in ornaments (`sl-haze`, `sl-spectral`). The spectrum is not an accent: it is the same in every product and never marks state — the product's accent still does. Dark and high-contrast reset it to `initial`, so they paint exactly what they did.
+
+- Drop the rim on one element with `--slc-rim: none`. A product that sets `background:` on a card, primary button or field clears the rim with it; one that sets only `background-color` sees it covered by the rim's fill layer in light — set `background` instead.
+- Keep a halftone single-ink with `data-sl-ink="mono"` on its canvas.
+- An effect host (glass, aurora, press, glitch, liquid, a goo member) keeps its effect's edge and takes no rim; neither does what it contains.
+- A light region nested inside a dark page gets spectral effects but not the rims: like every `--slc-*` role, the rim is resolved on `:root`.
+- Tier B: declare the eleven `--sl-spectrum-*` values from `themes/light.css` in your light layer to opt in; without them nothing is spectral.
+
 **Fonts** (load separately, e.g. Google Fonts): Fraunces (display), Instrument Sans (body), Martian Mono (mono).
 
 ## Components (`components.css`)
