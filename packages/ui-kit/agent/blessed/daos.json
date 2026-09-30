@@ -5,15 +5,6 @@
     {
       "kind": "color",
       "selectors": [
-        "--rule",
-        "--rule-2"
-      ],
-      "value": "color-mix alpha-on-canvas hairline",
-      "why": "design-language.md L2 hairline structure: hairlines need alpha over canvas. Dark-invert visibility already handled in daos .invert CSS."
-    },
-    {
-      "kind": "color",
-      "selectors": [
         ".artifact .ok",
         ".artifact .no"
       ],
