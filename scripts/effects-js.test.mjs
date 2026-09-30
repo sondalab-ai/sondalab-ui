@@ -550,10 +550,10 @@ test("a seated glow swells with the pane it hangs in", () => {
   }
 
   // …and on the same curves. A glow easing differently from the pane it hangs
-  // in is the same defect one step smaller.
+  // in is the same defect one step smaller. Both now use the kit-wide spring.
   const glowRest = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\s*\{\s*\n?\s*transition:/));
-  assert.match(glowRest, /transform 420ms cubic-bezier\(0\.22, 0\.61, 0\.28, 1\)/,
-    "the way out is the pane's own curve");
+  assert.match(glowRest, /--sl-motion-spring/,
+    "the way out is the kit-wide spring");
   assert.match(glowRest, /opacity/, "and lighting up is still a fade, not a jump");
 });
 

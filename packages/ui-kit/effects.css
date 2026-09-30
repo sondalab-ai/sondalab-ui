@@ -2166,21 +2166,16 @@
      below a device pixel. On a 96px button 3% is about 1.5px at each edge — a
      lift that is seen without the row around it moving.
 
-     SOFT, not snappy. The first pass used 120ms with a hard overshoot and read
-     as a tick. Glass is heavy: it takes its time both ways, and the rebound is
-     small and late rather than sharp. 320ms in on a curve whose overshoot is
-     gentle, 420ms out with none at all — a mass settles more lazily than it is
-     pushed, and never bounces back past rest.
-
-     THE BOUNCE IS IN THE EASING, not in a keyframe. An overshooting cubic
-     — the last control point past 1 — gives one small rebound and settles,
-     which is what a spring does; a keyframe animation would re-run from the
-     start if the pointer crossed the edge twice quickly, and read as a twitch.
-     The way out is the same curve reversed and slower: a mass settles more
-     lazily than it is pushed. */
+     GUMMY PRESS (owner 2026-09-30). The pane now squashes like every control
+     (2% wider, 3.2% shorter) and springs back on --sl-motion-spring, not its
+     own curve. The stand-down knob still works: --slfx-pane-k is derived inside
+     the :active rule, so a wrapper setting --slfx-pane-swell: 1 yields k = 0
+     and no press. The spring carries the same small overshoot as all controls. */
   .sl-fx-glass--pane {
-    /* Out: no overshoot. Coming back to rest should not bounce past it. */
-    transition: transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
+    /* Kit-wide press and spring return: the pane moves exactly like a plain
+       control. The stand-down knob still works — a wrapper that sets
+       --slfx-pane-swell: 1 yields k = 0 and no press. */
+    transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
   }
   /* THE AMOUNT IS A KNOB, AND IT IS READ WITH A FALLBACK, NOT DECLARED. A
      surface that wraps the pane and its seated glow in a box of its own and
@@ -2197,15 +2192,16 @@
      re-scope R2: a control answers the press, not the hover — the press
      lights it (sl-fx-press) and it sinks below. The knob keeps its name and
      its default because the sink still reads it. */
-  /* Pressed, the mass goes the other way and the bounce is gone: a press is
-     an arrival, not a launch. */
   .sl-fx-glass--pane:active:not(:disabled) {
-    /* The press is the swell's third, the other way: 1.03 -> 0.99, 1 -> 1. One
-       declaration governs both states, so standing the swell down cannot leave
-       a press behind. */
-    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
-    transition-duration: 140ms;
-    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
+    /* Gummy squash (owner 2026-09-30, docs/specs/2026-09-30-gummy-controls-design.md):
+       the pane squashes like all controls (2% wider, 3.2% shorter) and springs back on
+       --sl-motion-spring. The stand-down knob still works: derived k = 0 when the wrapper
+       sets --slfx-pane-swell: 1, yielding a final transform with no press. One declaration
+       governs both states, so standing the swell down cannot leave a press behind. */
+    --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
+    transform: scale(calc(1 + 0.02 * var(--slfx-pane-k)), calc(1 - 0.032 * var(--slfx-pane-k)));
+    transition-duration: var(--sl-motion-fast, 120ms);
+    transition-timing-function: var(--sl-motion-ease, ease);
   }
 
   /* AND THE LIGHT INSIDE IT SWELLS TOO. A seated glow is the host's previous
@@ -2229,12 +2225,14 @@
   .sl-fx-aurora__glow[data-sl-fx-seated] {
     transition:
       opacity var(--sl-motion-slow, 360ms) var(--sl-motion-ease, ease),
-      transform 420ms cubic-bezier(0.22, 0.61, 0.28, 1);
+      transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
   }
   .sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled)) {
-    transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1) / 3));
-    transition-duration: 140ms;
-    transition-timing-function: cubic-bezier(0.22, 0.61, 0.28, 1);
+    /* Mirror the pane's gummy squash with the same stand-down knob. */
+    --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
+    transform: scale(calc(1 + 0.02 * var(--slfx-pane-k)), calc(1 - 0.032 * var(--slfx-pane-k)));
+    transition-duration: var(--sl-motion-fast, 120ms);
+    transition-timing-function: var(--sl-motion-ease, ease);
   }
 
   /* The working tab's segment travels; under reduced motion it rests at its
