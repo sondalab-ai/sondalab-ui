@@ -245,7 +245,7 @@
    Chromium/Safari, which have no fill pseudo-element; Firefox fills with
    ::-moz-range-progress. Without --sl-slider-value the track reads unfilled
    and nothing else changes.
-     <input class="sl-slider" type="range" style="--sl-slider-value: 40%"
+     <input class="sl-slider" type="range" min="0" max="100" style="--sl-slider-value: 40%"
             oninput="this.style.setProperty('--sl-slider-value',
                      (this.value - this.min) / (this.max - this.min) * 100 + '%')">
    The thumb is the page's light pole — near-white on light, light grey on
