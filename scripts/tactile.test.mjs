@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 // Gummy controls (docs/specs/2026-09-30-gummy-controls-design.md): every
-// control squashes while held and springs back on release, transform-only,
-// on the motion tokens, never on a keyframe.
+// control squashes while held and springs back on release, on the motion
+// tokens, by transition only, never on a keyframe.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const KIT = resolve(HERE, "../packages/ui-kit");
 const bare = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -24,7 +24,7 @@ test("every pressable control squashes while held, and never when disabled", () 
   const press = R.find((r) => r.body.includes(`transform: ${SQUASH}`) && r.selector.includes(":active"));
   assert.ok(press, `no :active rule squashes with ${SQUASH}`);
   for (const cls of PRESSABLE) assert.ok(press.selector.includes(`.${cls}`), `${cls} is not in the press rule`);
-  assert.match(press.selector, /:not\(:disabled\)/);
+  assert.match(press.selector, /:not\(:disabled, \[aria-disabled="true"\]\)/);
   assert.match(press.body, /transition-duration:\s*var\(--sl-motion-fast/);
   assert.match(press.body, /transition-timing-function:\s*var\(--sl-motion-ease/);
 });
@@ -38,7 +38,7 @@ test("every pressable control springs its transform back on the spring token", (
 });
 
 test("the effects layer's press sinks exactly like the base squash", () => {
-  const sink = rules(effects).find((r) => r.selector === ".sl-fx-press:active:not(:disabled)");
+  const sink = rules(effects).find((r) => r.selector === ".sl-fx-press:active:not(:disabled, [aria-disabled=\"true\"])");
   assert.ok(sink);
   assert.match(sink.body, new RegExp(`transform:\\s*${SQUASH.replace(/[().]/g, "\\$&")}`));
 });
@@ -50,32 +50,81 @@ test("no gummy rule animates: transitions only, so nothing plays on page load", 
   assert.deepEqual([...components.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]), ["sl-badge-live"]);
 });
 
-test("glass pane presses with the kit squash formula, keeping the swell knob", () => {
+const CONTROLS = ":is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item)";
+const OFF = ":not(:disabled, [aria-disabled=\"true\"])";
+const K = /--slfx-pane-k:\s*calc\(\s*\(\s*var\(\s*--slfx-pane-swell\s*,\s*1\.03\s*\)\s*-\s*1\s*\)\s*\/\s*0\.03\s*\)/;
+const SQUASH_K = /transform:\s*scale\(\s*calc\(\s*1\s*\+\s*0\.02\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*,\s*calc\(\s*1\s*-\s*0\.032\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*\)/;
+const SINK = /transform:\s*scale\(calc\(1 - \(var\(--slfx-pane-swell, 1\.03\) - 1\) \/ 3\)\)/;
+const FAST = /transition-duration:\s*var\(--sl-motion-fast, 120ms\)/;
+const EASE = /transition-timing-function:\s*var\(--sl-motion-ease, ease\)/;
+
+test("glass control panes press with the kit squash formula, keeping the swell knob", () => {
   const Reffects = rules(effects);
   const paneBase = Reffects.find((r) => r.selector === ".sl-fx-glass--pane" && /transition/.test(r.body));
   assert.ok(paneBase, ".sl-fx-glass--pane has no transition");
   assert.match(paneBase.body, /transition.*transform.*var\(--sl-motion-spring/, "pane base does not use spring");
 
-  const paneActive = Reffects.find((r) => r.selector === ".sl-fx-glass--pane:active:not(:disabled)");
-  assert.ok(paneActive, ".sl-fx-glass--pane:active:not(:disabled) not found");
-  assert.match(paneActive.body, /--slfx-pane-k:\s*calc\(\s*\(\s*var\(\s*--slfx-pane-swell\s*,\s*1\.03\s*\)\s*-\s*1\s*\)\s*\/\s*0\.03\s*\)/, "pane active missing k formula");
-  assert.match(paneActive.body, /transform:\s*scale\(\s*calc\(\s*1\s*\+\s*0\.02\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*,\s*calc\(\s*1\s*-\s*0\.032\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*\)/, "pane active transform is not the squash formula");
-  assert.match(paneActive.body, /transition-duration:\s*var\(--sl-motion-fast/, "pane active not using motion-fast");
-  assert.match(paneActive.body, /transition-timing-function:\s*var\(--sl-motion-ease/, "pane active not using motion-ease");
+  const paneActive = Reffects.find((r) => r.selector === `${CONTROLS}.sl-fx-glass--pane:active${OFF}`);
+  assert.ok(paneActive, "control-pane press rule not found");
+  assert.match(paneActive.body, K, "pane active missing k formula");
+  assert.match(paneActive.body, SQUASH_K, "pane active transform is not the squash formula");
+  assert.match(paneActive.body, FAST);
+  assert.match(paneActive.body, EASE);
 });
 
-test("glass glow mirrors pane press with the kit squash formula", () => {
+test("every other glass pane sinks uniformly, on tokens, and stands down with the knob", () => {
+  const sink = rules(effects).find((r) => r.selector === `.sl-fx-glass--pane:active${OFF}`);
+  assert.ok(sink, "plain pane press rule not found");
+  assert.match(sink.body, SINK);
+  assert.match(sink.body, FAST);
+  assert.match(sink.body, EASE);
+  const Reffects = rules(effects);
+  assert.ok(Reffects.indexOf(sink) < Reffects.indexOf(Reffects.find((r) => r.selector === `${CONTROLS}.sl-fx-glass--pane:active${OFF}`)),
+    "the control variant must follow (and outrank) the plain one");
+});
+
+test("glass glow mirrors each pane press variant", () => {
   const Reffects = rules(effects);
   const glowBase = Reffects.find((r) => r.selector === ".sl-fx-aurora__glow[data-sl-fx-seated]" && /transition/.test(r.body));
   assert.ok(glowBase, "glow base not found");
   assert.match(glowBase.body, /opacity.*var\(--sl-motion-slow/, "glow base missing opacity on motion-slow");
   assert.match(glowBase.body, /transform.*var\(--sl-motion-spring/, "glow base does not use spring for transform");
 
-  const glowActive = Reffects.find((r) => r.selector === ".sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active:not(:disabled))");
-  assert.ok(glowActive, "glow active rule not found");
-  assert.match(glowActive.body, /--slfx-pane-k:\s*calc\(\s*\(\s*var\(\s*--slfx-pane-swell\s*,\s*1\.03\s*\)\s*-\s*1\s*\)\s*\/\s*0\.03\s*\)/, "glow active missing k formula");
-  assert.match(glowActive.body, /transform:\s*scale\(\s*calc\(\s*1\s*\+\s*0\.02\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*,\s*calc\(\s*1\s*-\s*0\.032\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*\)/, "glow active transform is not the squash formula");
-  assert.match(glowActive.body, /transition-duration:\s*var\(--sl-motion-fast/, "glow active not using motion-fast");
+  const glowControl = Reffects.find((r) => r.selector === `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ ${CONTROLS}.sl-fx-glass--pane:active${OFF})`);
+  assert.ok(glowControl, "control glow rule not found");
+  assert.match(glowControl.body, K);
+  assert.match(glowControl.body, SQUASH_K);
+  assert.match(glowControl.body, FAST);
+  assert.match(glowControl.body, EASE);
+
+  const glowPlain = Reffects.find((r) => r.selector === `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active${OFF})`);
+  assert.ok(glowPlain, "plain glow rule not found");
+  assert.match(glowPlain.body, SINK);
+  assert.match(glowPlain.body, FAST);
+  assert.match(glowPlain.body, EASE);
+});
+
+test("the pane and glow press rules do not hide inside no-preference: reduced motion must reach them", () => {
+  // Their durations are motion tokens, which reduced motion zeroes; inside
+  // the block the kit squash would stay as a snap under reduced motion.
+  const open = [...effects.matchAll(/@media \(prefers-reduced-motion: no-preference\)\s*\{/g)];
+  const spans = open.map((m) => {
+    let depth = 1, i = m.index + m[0].length;
+    while (depth && i < effects.length) depth += effects[i] === "{" ? 1 : effects[i] === "}" ? -1 : 0, i++;
+    return [m.index, i];
+  });
+  const inside = (needle) => {
+    const at = effects.indexOf(needle);
+    assert.ok(at > -1, needle);
+    return spans.some(([a, b]) => at > a && at < b);
+  };
+  for (const needle of [
+    `.sl-fx-glass--pane:active${OFF} {`,
+    `${CONTROLS}.sl-fx-glass--pane:active${OFF} {`,
+    ".sl-fx-glass--pane {\n",
+    ".sl-fx-aurora__glow[data-sl-fx-seated] {\n  transition:",
+    `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active${OFF}) {`,
+  ]) assert.equal(inside(needle), false, `${needle.trim()} sits inside no-preference`);
 });
 
 test("the switch knob is a pill that stretches toward where it will travel, never when disabled", () => {
@@ -88,6 +137,10 @@ test("the switch knob is a pill that stretches toward where it will travel, neve
   const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(0\.775rem\)/.test(r.body));
   assert.ok(heldOn, "a checked knob must grow leftward (translateX 0.775rem)");
   assert.match(heldOn.selector, /:not\(:has\(:disabled\)\)/);
+  for (const r of [held, heldOn]) {
+    assert.match(r.body, FAST, "a held knob goes down on fast");
+    assert.match(r.body, EASE, "a held knob goes down on ease");
+  }
 });
 
 test("the check and radio box shrinks while held and springs back, never when disabled", () => {
@@ -127,17 +180,43 @@ test("the slider thumb grows when hovered and grows and flattens when grabbed, p
   assert.match(host.body, /--sl-slider-thumb:\s*oklch\(from var\(--slc-canvas\) max\(l, 1 - l\) 0 h\)/);
 });
 
+test("the slider's hover growth only applies where hover exists, so a tap does not leave it grown", () => {
+  const at = components.search(/@media \(hover: hover\)\s*\{/);
+  assert.ok(at > -1, "no @media (hover: hover) block");
+  const block = components.slice(at, components.indexOf("\n}", at));
+  for (const thumb of ["::-webkit-slider-thumb", "::-moz-range-thumb"]) {
+    assert.ok(block.includes(`.sl-slider:hover:not(:disabled)${thumb}`), `${thumb} hover is outside @media (hover: hover)`);
+  }
+  assert.ok(!block.includes(":active"), "the grab must stay outside the hover query");
+});
+
+test("the slider thumb stays visible inside an inversion band", () => {
+  const r = R.find((x) => x.selector === ".sl-invert .sl-slider");
+  assert.ok(r, "no .sl-invert .sl-slider rule");
+  assert.match(r.body, /--sl-slider-thumb:\s*var\(--slc-canvas\)/);
+});
+
+test("the slider fill is the text-weight accent, never the raw accent", () => {
+  const track = R.find((r) => r.selector === ".sl-slider::-webkit-slider-runnable-track");
+  const prog = R.find((r) => r.selector === ".sl-slider::-moz-range-progress");
+  for (const r of [track, prog]) {
+    assert.match(r.body, /var\(--slc-accent-text\)/, r.selector);
+    assert.doesNotMatch(r.body, /var\(--slc-accent\)/, r.selector);
+  }
+});
+
 test("the slider fill reads the consumer's value and survives its absence", () => {
   const track = R.find((r) => r.selector === ".sl-slider::-webkit-slider-runnable-track");
   assert.match(track.body, /var\(--sl-slider-value, 0%\)/);
   assert.ok(R.find((r) => r.selector === ".sl-slider::-moz-range-progress"), "Firefox fills with ::-moz-range-progress");
 });
 
-test("the slider's focus ring is on its thumb, in each engine", () => {
+test("the slider's focus ring is a box-shadow on its thumb, in each engine, not an outline", () => {
   for (const thumb of ["::-webkit-slider-thumb", "::-moz-range-thumb"]) {
     const ring = R.find((r) => r.selector === `.sl-slider:focus-visible${thumb}`);
-    assert.match(ring?.body ?? "", /outline:\s*var\(--sl-focus-ring-width, 2px\) solid var\(--slc-focus\)/, thumb);
+    assert.ok(ring, thumb);
+    assert.match(ring.body, /box-shadow:\s*0 0 0 var\(--sl-focus-ring-offset, 2px\) var\(--slc-canvas\), 0 0 0 calc\(var\(--sl-focus-ring-offset, 2px\) \+ var\(--sl-focus-ring-width, 2px\)\) var\(--slc-focus\), var\(--slc-shadow-sm\)/, thumb);
+    assert.doesNotMatch(ring.body, /outline/, thumb);
   }
 });
 
-export { rules, bare };

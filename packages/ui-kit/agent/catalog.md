@@ -261,13 +261,14 @@ A determinate 4px bar. Write the value twice: `aria-valuenow` for assistive tech
 Consumes: `--slc-text`, `--slc-accent`, `--slc-success`, `--slc-danger`. `--success`/`--danger` are for a finished or failed run, not for decoration. Don't: fake an indeterminate bar — work with no measurable value is `aria-busy="true"` (with effects, the aurora's busy reading), and a bar that moves without a value is L5's "structure encodes truth" broken.
 
 ### Slider — `sl-slider`
-A styled native range input: keyboard, screen readers and touch are the browser's. The thumb is the page's light pole (near-white on light, light grey on dark); it grows when hovered, grows and flattens when grabbed, and springs back when let go. Write the value twice: the input's own, and `--sl-slider-value` (a percentage) for the fill — Chromium and Safari have no fill pseudo-element; Firefox fills itself. Substrate: **R** App/IDE, **A** Page.
+A styled native range input: keyboard, screen readers and touch are the browser's. The thumb is the page's light pole (near-white on light, light grey on dark); it grows when hovered, grows and flattens when grabbed, and springs back when let go. Write the value twice: the input's own, and `--sl-slider-value` (a percentage) for the fill — Chromium and Safari have no fill pseudo-element; Firefox fills itself. A unitless `--sl-slider-value` drops the whole track background, and setting `.value` from code fires no `input` event, so write the property too. Substrate: **R** App/IDE, **A** Page.
 ```html
 <input class="sl-slider" type="range" min="0" max="100" value="40" aria-label="Volume"
        style="--sl-slider-value: 40%"
-       oninput="this.style.setProperty('--sl-slider-value', this.value + '%')">
+       oninput="this.style.setProperty('--sl-slider-value',
+               (this.value - this.min) / (this.max - this.min) * 100 + '%')">
 ```
-Consumes: `--slc-canvas`, `--slc-text`, `--slc-accent`, `--slc-shade-step`, `--slc-shadow-sm`, `--slc-focus`, `--slc-border`. Do: give it an accessible name (`aria-label` or a `<label for>`). Don't: use it for a value the user must set exactly — pair it with a number field, or use one instead.
+Consumes: `--slc-canvas`, `--slc-text`, `--slc-accent-text`, `--slc-shade-step`, `--slc-shadow-sm`, `--slc-focus`, `--slc-border`. Do: give it an accessible name (`aria-label` or a `<label for>`). Don't: use it for a value the user must set exactly — pair it with a number field, or use one instead.
 
 ### Icon button — `sl-icon-btn` (`--round`)
 A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
@@ -561,7 +562,7 @@ Attributes: `data-sl-grid` is cells per side (16–256, default 96); `data-sl-se
 Consumes: the canvas's inherited `color` (set it with a role-var, e.g. `var(--slc-text)` or `var(--slc-accent)`). Don't: feed it a busy photo or a dark render — only one iconic subject with near-binary contrast reads, at ≥ 320px with a grid near 130. Don't: give it meaning — it is a picture, so a label or caption says what it shows; keep `aria-hidden` when the text beside it already does.
 
 ### Press — `sl-fx-press`
-**You acted on this.** Pressing the control lights it from within: the light rises from its own lower body. Press controls within 48px catch that light on the edge that faces it, the way a lit key lights the keys beside it. On release both fade on their own clocks, and the control's sink returns on the spring token `--sl-motion-spring`. Enter and Space press exactly like a click. Tier 1 (`mount()`); without it a press is the component's own `:active` and the spring sink. Substrate: **A** App/Page.
+**You acted on this.** Pressing the control lights it from within: the light rises from its own lower body. Press controls within 48px catch that light on the edge that faces it, the way a lit key lights the keys beside it. On release both fade on their own clocks, and the control squashes like every control while held, returning on the spring token `--sl-motion-spring`. Enter and Space press exactly like a click. Tier 1 (`mount()`); without it a press is the component's own `:active` and the spring squash. Substrate: **A** App/Page.
 ```html
 <div style="display:flex; gap:0.6rem">
   <button class="sl-btn sl-btn--primary sl-fx-press">Run probe</button>

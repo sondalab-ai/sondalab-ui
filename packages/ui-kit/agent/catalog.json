@@ -534,7 +534,7 @@
       "roleVars": [
         "--slc-canvas",
         "--slc-text",
-        "--slc-accent",
+        "--slc-accent-text",
         "--slc-shade-step",
         "--slc-shadow-sm",
         "--slc-focus",

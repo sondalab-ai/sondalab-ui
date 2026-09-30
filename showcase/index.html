@@ -505,7 +505,7 @@
               </div>
               <input class="sl-slider" type="range" min="0" max="100" value="40" aria-label="Volume"
                      style="--sl-slider-value: 40%"
-                     oninput="this.style.setProperty('--sl-slider-value', this.value + '%')">
+                     oninput="this.style.setProperty('--sl-slider-value', (this.value - this.min) / (this.max - this.min) * 100 + '%')">
             </div>
           </div>
 

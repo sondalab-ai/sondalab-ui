@@ -246,7 +246,8 @@
    ::-moz-range-progress. Without --sl-slider-value the track reads unfilled
    and nothing else changes.
      <input class="sl-slider" type="range" style="--sl-slider-value: 40%"
-            oninput="this.style.setProperty('--sl-slider-value', this.value + '%')">
+            oninput="this.style.setProperty('--sl-slider-value',
+                     (this.value - this.min) / (this.max - this.min) * 100 + '%')">
    The thumb is the page's light pole — near-white on light, light grey on
    dark, white on high contrast — never the raised surface, which on dark is
    the page's own near-black (owner, 2026-09-30: "hard to see"). Its edge is
@@ -271,7 +272,7 @@
   height: 4px;
   border-radius: var(--sl-radius-pill, 9999px);
   background:
-    linear-gradient(var(--slc-accent) 0 0) 0 / var(--sl-slider-value, 0%) 100% no-repeat,
+    linear-gradient(var(--slc-accent-text) 0 0) 0 / var(--sl-slider-value, 0%) 100% no-repeat,
     color-mix(in srgb, var(--slc-text) 12%, transparent);
 }
 .sl-slider::-moz-range-track {
@@ -282,7 +283,7 @@
 .sl-slider::-moz-range-progress {
   height: 4px;
   border-radius: var(--sl-radius-pill, 9999px);
-  background: var(--slc-accent);
+  background: var(--slc-accent-text);
 }
 .sl-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -305,8 +306,12 @@
   box-shadow: var(--slc-shadow-sm);
   transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
-.sl-slider:hover:not(:disabled)::-webkit-slider-thumb { transform: scale(1.1); }
-.sl-slider:hover:not(:disabled)::-moz-range-thumb { transform: scale(1.1); }
+/* Hover only where a pointer hovers: on touch, :hover sticks after a tap and
+   would leave the thumb grown. Hover stays ahead of grab: both match while held. */
+@media (hover: hover) {
+  .sl-slider:hover:not(:disabled)::-webkit-slider-thumb { transform: scale(1.1); }
+  .sl-slider:hover:not(:disabled)::-moz-range-thumb { transform: scale(1.1); }
+}
 .sl-slider:active:not(:disabled)::-webkit-slider-thumb {
   transform: scale(1.35, 1.22);
   transition-duration: var(--sl-motion-fast, 120ms);
@@ -318,13 +323,15 @@
   transition-timing-function: var(--sl-motion-ease, ease);
 }
 .sl-slider:focus-visible::-webkit-slider-thumb {
-  outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
-  outline-offset: var(--sl-focus-ring-offset, 2px);
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 2px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 2px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
 }
 .sl-slider:focus-visible::-moz-range-thumb {
-  outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
-  outline-offset: var(--sl-focus-ring-offset, 2px);
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 2px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 2px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
 }
+/* Inside an inversion band the ground is the page's text colour, which --slc-canvas
+   is not re-derived for: the canvas-derived thumb would vanish into it. On the slider
+   itself, not .sl-invert > *: the slider declares the property on itself. */
+.sl-invert .sl-slider { --sl-slider-thumb: var(--slc-canvas); }
 
 /* Button — primary (filled accent), ghost (6% ink wash, no border), and a small size. */
 .sl-btn {
@@ -1506,10 +1513,10 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    Held, a control squashes a little and keeps its volume (wider by 2%,
    shorter by 3.2%); let go, it returns on --sl-motion-spring, whose one small
    overshoot IS the bump. Going down is quick and plain; the spring is for
-   the way back. Transform-only and transition-only: no keyframe, so nothing
+   the way back. Transitions only, never a keyframe, so nothing
    plays when a page loads with a box already checked, and the motion tokens
    are zeroed under reduced motion, which stops all of it. */
-:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled) {
+:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled, [aria-disabled="true"]) {
   transform: scale(1.02, 0.968);
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
@@ -1518,9 +1525,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* The switch knob stretches toward the side it will travel to while held —
    rightward from off, leftward from on (it sits at 0.85rem, and grows by
    0.075rem) — then springs across on release, as it always has. */
-.sl-switch:active:not(:has(:disabled)) .sl-switch__track::after { width: 0.825rem; }
+.sl-switch:active:not(:has(:disabled)) .sl-switch__track::after {
+  width: 0.825rem;
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
 .sl-switch:active:not(:has(:disabled)) .sl-switch__input:checked + .sl-switch__track::after {
   transform: translateY(-50%) translateX(0.775rem);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
 }
 /* A box shrinks under the finger; the spring-back overshoots a little, which
    is the "pop" a newly checked box gets. */

@@ -36,7 +36,7 @@ for (const c of index.components.filter((c) => c.interactive)) {
       // A native range input draws its focus on the thumb, in a rule of its
       // own per engine: an engine pseudo-element cannot join the shared list
       // without dropping the whole list in the other engine.
-      || c.classes.some((cls) => css.includes(`.${cls}:focus-visible::-webkit-slider-thumb`));
+      || c.classes.some((cls) => /\.sl-slider:focus-visible::-webkit-slider-thumb\s*\{[^}]*box-shadow/.test(css) && css.includes(`.${cls}:focus-visible::-moz-range-thumb`));
     assert.ok(
       hit,
       `"${c.id}" is marked interactive but none of ${JSON.stringify(c.classes)} ` +
