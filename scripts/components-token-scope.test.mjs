@@ -53,8 +53,9 @@ test("no selector outside the :root role-var block reads a theme colour token", 
 //   --slc-overlay — a scrim over the whole page, not over the band.
 // Chromatic roles (accent, focus, status, on-accent) stay themselves on ink:
 // design-language.md Decision 2 — a product has one accent, whatever the ground.
-const BAND_INDEPENDENT = new Set(["--slc-canvas", "--slc-overlay"]);
-const CHROMATIC = /^--slc-(accent|focus|on-accent|success|warning|danger|info|rim|haze|spectral)/;
+// --slc-shade-step is a number (how much less bright an edge is), not a colour.
+const BAND_INDEPENDENT = new Set(["--slc-canvas", "--slc-overlay", "--slc-shade-step"]);
+const CHROMATIC = /^--slc-(accent|edge-accent|focus|on-accent|success|warning|danger|info|rim|haze|spectral)/;
 
 test("the inversion band re-derives every neutral role its subtree paints with", () => {
   const readOutside = new Set(
@@ -107,7 +108,7 @@ test("the primary button's chrome survives a background + border reset", () => {
   // the one control edge every glass button shares.
   const fx = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const edge = fx.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass[^{]*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(edge, /border-color:\s*var\(--slfx-edge-mid\)/);
+  assert.match(edge, /border-color:\s*var\(--slfx-control-edge, var\(--slfx-edge-mid\)\)/);
 });
 
 // Reduced motion zeroes --sl-motion-*; a literal duration would escape it. A

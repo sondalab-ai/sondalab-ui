@@ -38,6 +38,22 @@
      that maps only --slc-accent (Tier B) gets its own hue darkened, never the
      default's. Where no cap is set (dark, high contrast) it is the accent. */
   --slc-accent-text:   oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h);
+  /* EDGES IN SHADE (owner, 2026-09-30: "something the same colour of the
+     background just slightly darker — how it happens in the real world where
+     something in shadow is not black but just less bright"). An edge is its
+     own fill one step less bright: same hue, same chroma, lower oklch
+     lightness. A wash is composited on the canvas first, so its edge is the
+     wash's colour in shade, not the ink's. High contrast keeps its drawn
+     edges (below); the inversion band keeps its re-derived neutrals. */
+  --slc-shade-step:    0.075;
+  --slc-edge-ground:   oklch(from var(--slc-canvas) calc(l - var(--slc-shade-step)) c h);
+  --slc-edge-surface:  oklch(from var(--slc-surface) calc(l - var(--slc-shade-step)) c h);
+  --slc-edge-raised:   oklch(from var(--slc-raised) calc(l - var(--slc-shade-step)) c h);
+  --slc-edge-wash:     oklch(from color-mix(in srgb, var(--slc-text) 6%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
+  --slc-edge-accent:   oklch(from var(--slc-accent) calc(l - var(--slc-shade-step)) c h);
+  --slc-edge-pressed:  oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
+  /* A form control's box must be found before it is read: three steps. */
+  --slc-edge-control:  oklch(from var(--slc-surface) calc(l - var(--slc-shade-step) * 3) c h);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
   --slc-canvas:        var(--sl-bg-canvas,         #F4F4F8);
@@ -136,7 +152,7 @@
   background: var(--slc-accent-text);
   flex: none;
 }
-.sl-tag--plain { color: var(--slc-text-muted); background: transparent; border-color: var(--slc-border); }
+.sl-tag--plain { color: var(--slc-text-muted); background: transparent; border-color: var(--slc-edge-ground); }
 .sl-tag--plain::before { background: var(--slc-text-muted); }
 
 /* Chip — a toggleable filter. A row of them (.sl-chips) is a multi-select:
@@ -162,7 +178,7 @@
   line-height: 1;
   color: var(--slc-text-muted);
   background-color: transparent;
-  border: 1px solid var(--slc-border);
+  border: 1px solid var(--slc-edge-ground);
   border-radius: var(--sl-radius-pill, 9999px);
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
   cursor: pointer;
@@ -178,11 +194,11 @@
   box-shadow: inset 0 0 0 1px currentColor;
   flex: none;
 }
-.sl-chip:hover:not(:disabled) { color: var(--slc-text); border-color: var(--slc-border-strong); }
+.sl-chip:hover:not(:disabled) { color: var(--slc-text); border-color: oklch(from var(--slc-canvas) calc(l - var(--slc-shade-step) * 2) c h); }
 .sl-chip[aria-pressed="true"] {
   color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
-  border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
+  border-color: var(--slc-edge-pressed);
 }
 .sl-chip[aria-pressed="true"]::before { background-color: currentColor; }
 .sl-chip__count { font-variant-numeric: tabular-nums; }
@@ -246,7 +262,7 @@
      consumer already resets when it strips a button to text — never
      box-shadow, which such an override does not think of. The glass family
      clears it on its pane (effects.css). */
-  border-color: var(--slc-rim-edge, color-mix(in srgb, var(--slc-accent) 88%, black));
+  border-color: var(--slc-rim-edge, var(--slc-edge-accent));
   border-top-color: var(--slc-rim-edge, color-mix(in srgb, var(--slc-accent) 80%, white));
   --slc-rim-fill: var(--slc-accent);
   --slc-rim-layers: linear-gradient(var(--slc-rim-fill) 0 0), var(--slc-rim);
@@ -260,7 +276,7 @@
 }
 .sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); --slc-rim-fill: var(--slc-accent-hover); }
 .sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); --slc-rim-fill: var(--slc-accent-active); }
-.sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); }
+.sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); border-color: var(--slc-edge-wash); }
 .sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
 .sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.35rem 0.6rem; }
 
@@ -274,7 +290,7 @@
 .sl-icon-btn[aria-pressed="true"] {
   color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
-  border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
+  border-color: var(--slc-edge-pressed);
 }
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:hover:not(:disabled),
 .sl-icon-btn[aria-pressed="true"]:hover:not(:disabled) {
@@ -284,7 +300,7 @@
 /* Card — surface panel. Compose with __title / __body. */
 .sl-card {
   background: var(--slc-surface);
-  border: 1px solid var(--slc-rim-edge, var(--slc-border-subtle));
+  border: 1px solid var(--slc-rim-edge, var(--slc-edge-surface));
   --slc-rim-layers: linear-gradient(var(--slc-surface) 0 0), var(--slc-rim);
   /* Prism rim: the fill as an image over the padding box, the spectrum under
      it across the border box, seen through a transparent border. Where the
@@ -361,7 +377,7 @@
   font-size: var(--sl-text-sm, 0.875rem);
   color: var(--slc-text);
   background: color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised));
-  border: 1px solid var(--slc-rim-edge, var(--slc-border-subtle));
+  border: 1px solid var(--slc-rim-edge, var(--slc-edge-raised));
   border-radius: var(--sl-radius-md, 10px);
   padding: 0.55rem 0.75rem;
   --slc-rim-layers: linear-gradient(color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised)) 0 0), var(--slc-rim);
@@ -476,7 +492,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 1rem;
   height: 1rem;
   background: var(--slc-surface);
-  border: 1px solid var(--slc-border);
+  border: 1px solid var(--slc-edge-control);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
@@ -487,7 +503,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-check__input:checked + .sl-check__box,
 .sl-radio__input:checked + .sl-radio__box {
   background: var(--slc-accent);
-  border-color: var(--slc-accent);
+  border-color: var(--slc-edge-accent);
 }
 
 /* The tick is a rotated border corner — no asset, no data URI, nothing to
@@ -534,7 +550,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 1.9rem;
   height: 1.05rem;
   background: color-mix(in srgb, var(--slc-text) 14%, transparent);
-  border: 1px solid transparent;
+  border: 1px solid oklch(from color-mix(in srgb, var(--slc-text) 14%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
   border-radius: 999px;
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -558,7 +574,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-switch__input:checked + .sl-switch__track {
   background: var(--slc-accent);
-  border-color: var(--slc-accent);
+  border-color: var(--slc-edge-accent);
 }
 .sl-switch__input:checked + .sl-switch__track::after {
   background: var(--slc-on-accent);
@@ -670,7 +686,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-dialog {
   background: var(--slc-raised);
   color: var(--slc-text);
-  border: 1px solid var(--slc-border);
+  border: 1px solid var(--slc-edge-raised);
   border-radius: var(--sl-radius-lg, 16px);
   box-shadow: var(--slc-shadow-lg);
   padding: var(--sl-space-6, 2rem);
@@ -808,6 +824,15 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-shadow-sm: 0 1px 2px rgba(0,0,0,0.21), 0 0 0 1px rgba(0,0,0,0.08);
   --slc-shadow-md: 0 2px 4px rgba(0,0,0,0.16), 0 10px 28px rgba(0,0,0,0.31);
   --slc-shadow-lg: 0 4px 8px rgba(0,0,0,0.21), 0 28px 72px rgba(0,0,0,0.57);
+  /* Edges in shade were resolved against the page's grounds on :root; here
+     the grounds are currentColor washes, so the band keeps its re-derived
+     neutral lines instead. */
+  --slc-edge-ground:   var(--slc-border-subtle);
+  --slc-edge-surface:  var(--slc-border-subtle);
+  --slc-edge-raised:   var(--slc-border-subtle);
+  --slc-edge-wash:     var(--slc-border-subtle);
+  --slc-edge-control:  var(--slc-border-strong);
+  --slc-edge-pressed:  color-mix(in srgb, var(--slc-accent) 35%, transparent);
 }
 
 /* Cells paint their own surface; the 1px gap over the line colour IS the rule.
@@ -927,7 +952,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   gap: 1px;
   padding: 2px;
   background: color-mix(in srgb, var(--slc-text) 6%, transparent);
-  border: 1px solid transparent;
+  border: 1px solid var(--slc-edge-wash);
   border-radius: var(--sl-radius-md, 10px);
 }
 .sl-segmented__item {
@@ -955,7 +980,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-segmented__item[aria-pressed="true"] {
   background: var(--slc-raised);
   color: var(--slc-text);
-  box-shadow: 0 0 0 1px var(--slc-border-subtle);
+  box-shadow: 0 0 0 1px var(--slc-edge-raised);
 }
 
 .sl-icon-btn {
@@ -968,7 +993,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   cursor: pointer;
   color: var(--slc-text);
   background: color-mix(in srgb, var(--slc-text) 6%, transparent);
-  border: 1px solid transparent;
+  border: 1px solid var(--slc-edge-wash);
   border-radius: var(--sl-radius-md, 10px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1265,7 +1290,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-list__row:hover { background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
 .sl-list__row:is([aria-selected="true"], [aria-current]) {
   background-color: var(--slc-accent-subtle);
-  border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
+  border-color: var(--slc-edge-pressed);
 }
 .sl-list__meta {
   display: block;
@@ -1358,6 +1383,17 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-resizer--horizontal:is(:hover, :active, :focus-visible)::after { inset: 3.5px 0; }
 
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
+/* High contrast draws every edge in its own border colour: shade is a
+   subtlety the theme exists to remove. */
+:root[data-sl-theme="high-contrast"] {
+  --slc-edge-ground:  var(--slc-border);
+  --slc-edge-surface: var(--slc-border);
+  --slc-edge-raised:  var(--slc-border);
+  --slc-edge-wash:    var(--slc-border);
+  --slc-edge-control: var(--slc-border);
+  --slc-edge-accent:  var(--slc-accent);
+  --slc-edge-pressed: var(--slc-accent);
+}
 
 /* Since 0.11 several components are washes with no edge. On high contrast's
    black a 6–12% wash is invisible, and the theme exists to draw every edge —

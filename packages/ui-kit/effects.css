@@ -701,10 +701,14 @@
    beside it had one. Both lines are on the control itself, never on the
    layers mount() injects, so the edge is the same with or without JavaScript;
    on a field that is the input, which paints over its wrapper. Gated like the
-   pane's label: high contrast and an opt-out region keep the shipped borders. */
+   pane's label: high contrast and an opt-out region keep the shipped borders.
+   EDGES IN SHADE (owner, 2026-09-30): both lines are the control's own fill,
+   less bright — the sharp one a full shade step (--slfx-control-edge, bound
+   per fill below), the soft one the same colour at half strength — instead
+   of the neutral strong/default pair, which read as a grey line on colour. */
 :is(.sl-btn, .sl-icon-btn).sl-fx-glass:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
-  border-color: var(--slfx-edge-mid);
-  box-shadow: inset 0 0 0 1px var(--slfx-edge-soft);
+  border-color: var(--slfx-control-edge, var(--slfx-edge-mid));
+  box-shadow: inset 0 0 0 1px var(--slfx-control-edge-soft, var(--slfx-edge-soft));
   /* Flat, like the field beside it (the owner, 2026-09-29: "make the buttons
      be like the select"). __shine's resting rim — a bright line along the top
      and down the left — was a third line only buttons showed: a field's input
@@ -714,10 +718,10 @@
   --slg-rim-lo: transparent;
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
-  box-shadow: inset 0 0 0 1px var(--slfx-edge-soft);
+  box-shadow: inset 0 0 0 1px oklch(from var(--slc-edge-raised, var(--slfx-edge-soft)) calc(l + var(--slc-shade-step, 0.075) / 2) c h);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
-  border-color: var(--slfx-edge-mid);
+  border-color: var(--slc-edge-raised, var(--slfx-edge-mid));
 }
 /* The rest line is already the strong border the shipped hover used, so hover
    brightens it toward the glint instead — the same light the arc is made of. */
@@ -725,12 +729,22 @@
   border-color: var(--slfx-edge-hi);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:focus {
-  box-shadow: inset 0 0 0 1px var(--slfx-edge-soft), 0 0 0 3px var(--slc-accent-subtle);
+  box-shadow: inset 0 0 0 1px oklch(from var(--slc-edge-raised, var(--slfx-edge-soft)) calc(l + var(--slc-shade-step, 0.075) / 2) c h), 0 0 0 3px var(--slc-accent-subtle);
 }
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
 .sl-btn--ghost.sl-fx-glass,
 .sl-icon-btn.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 6%, transparent); }
+/* The edge in shade each glass control's fill casts (see the control edge above). */
+.sl-btn.sl-fx-glass,
+.sl-icon-btn.sl-fx-glass {
+  --slfx-control-edge: var(--slc-edge-wash);
+  /* The soft inner line: half a step, between the fill and its edge. */
+  --slfx-control-edge-soft: oklch(from var(--slfx-control-edge) calc(l + var(--slc-shade-step, 0.075) / 2) c h);
+}
+.sl-btn--primary.sl-fx-glass { --slfx-control-edge: var(--slc-edge-accent); }
+.sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
+.sl-icon-btn.sl-fx-glass[aria-pressed="true"] { --slfx-control-edge: var(--slc-edge-pressed); }
 /* A pressed toggle keeps its "on" fill on glass: the pane clears the host's
    background, so the pressed wash is rebound as the pane's fill instead. */
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
