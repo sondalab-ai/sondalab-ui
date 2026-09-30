@@ -105,15 +105,16 @@ The probe's brighter ramp, tuned so every hue clears the existing 3:1 floor and 
 | Aurora bloom | accent-bloom 44% / depth-bloom 33% | spectrum stops at the same alphas |
 | Aurora `--rim`, `--linear` | depth companion / depth + accent gradient | spectrum-ink gradient |
 | Aurora busy | accent only | unchanged — busy is a *state*, and state is the accent's job |
-| Glass pane hairline under the pointer | accent fringe on one side, depth on the other | spectrum-ink fringe (dispersion reads as a full rainbow) |
 | Press light | light pole 82% + accent | light pole 82% + a spectrum stop |
 | Glitch channels | accent / depth | `spectrum-ink-0` / `spectrum-ink-3` (rose / blue, the classic split) |
 
-Each row is one `var(--sl-spectrum…, <today's expression>)`. The sweep's `hue-rotate(±16deg)` drift stays. Glass hosts copy some of these properties onto their seated glow as inline style (`effects.js:741-777`); the spectral values are set on the host, where that copy reads them.
+Each row is one `var(--sl-spectrum…, <today's expression>)`. The sweep's `hue-rotate(±16deg)` drift stays. Aurora hosts copy their bloom and beam properties onto the seated glow as inline style (`effects.js:741-777`); the spectral values are set on the host, where that copy reads them.
+
+**Glass is not in this table.** Its pointer light is the neutral specular edge (`--slfx-spec-light` / `--slfx-spec-shade`); the accent/depth fringe it once had was retired on 2026-09-24 (`effects.css:855-873`), and its lens already splits the backdrop into RGB channels. Glass stays neutral; Prism reaches it only through the aurora and live light it can carry.
 
 ## Effects (JavaScript)
 
-- **Live light** (`live-light.js`) reads two new role properties, `--slfx-light-a` / `--slfx-light-b`, declared in `effects.css` as `var(--sl-spectrum-0, var(--slc-accent))` / `var(--sl-spectrum-4, var(--slfx-depth))`, instead of the accent roles directly. Busy keeps `--slc-accent`.
+- **Live light** (`live-light.js`) reads two new role properties, `--slfx-light-a` / `--slfx-light-b`, declared in `effects.css` as `var(--sl-spectrum-0, var(--slc-accent))` / `var(--sl-spectrum-4, var(--slfx-depth))`, instead of the accent roles directly, for `data-sl-fx-live="run"` (two bodies of light: an agent working). `busy` keeps reading `--slc-accent` for both — busy is a state.
 - **Halftone** (`halftone.js`): when `--sl-spectrum-ink-0` resolves on the canvas, dots are filled with one canvas `linearGradient` across the scene through `spectrum-ink-0..4`; otherwise today's single `currentColor` ink. One fill call, no per-dot colour, so `halftone-core` and its SVG export are unchanged. An author forces the single ink with `data-sl-ink="mono"`.
 
 ## Base components (`components.css`)
