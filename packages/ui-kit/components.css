@@ -52,6 +52,13 @@
      shows (a colour mixed at 0%), so the host's border lets it through. */
   --slc-rim: linear-gradient(120deg, var(--sl-spectrum-ink-0), var(--sl-spectrum-ink-1), var(--sl-spectrum-ink-2), var(--sl-spectrum-ink-3), var(--sl-spectrum-ink-4));
   --slc-rim-edge: color-mix(in srgb, var(--sl-spectrum-ink-0) 0%, transparent);
+  /* The two opt-in ornaments (sl-haze, sl-spectral), invalid in the same way. */
+  --slc-haze:
+    radial-gradient(closest-side at 28% 42%, color-mix(in srgb, var(--sl-spectrum-0) 30%, transparent), transparent),
+    radial-gradient(closest-side at 70% 30%, color-mix(in srgb, var(--sl-spectrum-4) 26%, transparent), transparent),
+    radial-gradient(closest-side at 58% 76%, color-mix(in srgb, var(--sl-spectrum-2) 32%, transparent), transparent);
+  --slc-spectral-ink: linear-gradient(90deg, var(--sl-spectrum-ink-0), var(--sl-spectrum-ink-1), var(--sl-spectrum-ink-2), var(--sl-spectrum-ink-3), var(--sl-spectrum-ink-4));
+  --slc-spectral-fill: color-mix(in srgb, var(--sl-spectrum-ink-0) 0%, transparent);
   /* status */
   --slc-success: var(--sl-status-success, #4a6205);
   --slc-warning: var(--sl-status-warning, #795305);
@@ -735,6 +742,32 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   line-height: var(--sl-line-tight, 1.2);
   text-wrap: balance;
   font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
+}
+
+/* Haze — a soft field of the spectrum behind a section (Prism, light theme).
+   One per screen at most. Static: it is light, not motion. */
+.sl-haze { position: relative; isolation: isolate; }
+.sl-haze::before {
+  content: "";
+  position: absolute;
+  inset: -10% -5% 0 25%;
+  z-index: -1;
+  background: var(--slc-haze, none);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+/* Spectral — a word or phrase of a display heading in the spectrum ink.
+   Display sizes only: the ink clears 3:1, the large-text floor, not 4.5.
+   Where the spectrum is reset the fill falls back to currentColor: plain text. */
+.sl-spectral {
+  background-image: var(--slc-spectral-ink, none);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: var(--slc-spectral-fill, currentColor);
+}
+@media (forced-colors: active) {
+  .sl-spectral { background-image: none; -webkit-text-fill-color: currentColor; }
 }
 
 /* ══ NAVIGATION & STATE ══════════════════════════════════════════════════════ */

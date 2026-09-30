@@ -330,6 +330,27 @@
       "roleVars": []
     },
     {
+      "id": "haze",
+      "kind": "signature",
+      "classes": [
+        "sl-haze"
+      ],
+      "roleVars": [
+        "--slc-haze"
+      ]
+    },
+    {
+      "id": "spectral-text",
+      "kind": "signature",
+      "classes": [
+        "sl-spectral"
+      ],
+      "roleVars": [
+        "--slc-spectral-ink",
+        "--slc-spectral-fill"
+      ]
+    },
+    {
       "id": "checkbox",
       "kind": "primitive",
       "interactive": true,
