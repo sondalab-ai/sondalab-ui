@@ -36,9 +36,11 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 Primitives: `.sl-eyebrow`, `.sl-tag` (`--plain`), `.sl-btn` (`--primary` / `--ghost` / `--sm`), `.sl-card` (`__title` / `__body`), `.sl-badge` (`--success` / `--warning` / `--danger` / `--info`), `.sl-field` (`__label` / `__input` / `__control`), `.sl-kbd`, `.sl-code`, `.sl-link`, `.sl-rule` (`--labeled`).
 
+Toggle buttons: any non-primary `.sl-btn` or `.sl-icon-btn` with `aria-pressed` — the attribute is the state, no extra class.
+
 Form controls: `.sl-check`, `.sl-radio`, `.sl-switch` (each `__input` / `__box`-or-`__track` / `__label`), `.sl-select` (a wrapper on `.sl-field__control`).
 
-Navigation & state: `.sl-breadcrumb` (`__item` / `__sep`), `.sl-btn-group`, `.sl-segmented` (`__item`), `.sl-icon-btn` (`--round`), `.sl-pagination` (`__item`), `.sl-empty` (`__title` / `__body`), `.sl-skeleton`, `.sl-stat` (`__value` / `__label`).
+Navigation & state: `.sl-breadcrumb` (`__item` / `__sep`), `.sl-btn-group`, `.sl-segmented` (`__item`; `aria-selected` for views, `aria-pressed` for a setting), `.sl-chips` / `.sl-chip` (`__count`; a multi-select filter row driven by `aria-pressed`), `.sl-progress` (`__bar`, `--success`/`--danger`; set `aria-valuenow` and `--sl-progress`), `.sl-icon-btn` (`--round`), `.sl-pagination` (`__item`), `.sl-empty` (`__title` / `__body`), `.sl-skeleton`, `.sl-stat` (`__value` / `__label`).
 
 Identity & media: `.sl-wordmark` (`__dot`), `.sl-lockup` (`__dot`), `.sl-monogram`, `.sl-figure` (`__media` / `__caption`), `.sl-avatar` (`--sm` / `--lg`).
 

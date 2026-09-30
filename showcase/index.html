@@ -480,6 +480,33 @@
           </div>
 
           <div class="g-cell">
+            <span class="g-label">toggle &middot; chips &middot; progress &middot; tooltip</span>
+            <div class="g-demo g-demo--col">
+              <div style="display:flex;gap:0.5rem;align-items:center">
+                <button class="sl-btn sl-btn--ghost sl-btn--sm" aria-pressed="true">Pause</button>
+                <button class="sl-btn sl-btn--ghost sl-btn--sm" aria-pressed="false">Follow</button>
+                <button class="sl-icon-btn sl-tooltip" aria-pressed="true" aria-label="Pin" data-sl-tooltip="Pin">
+                  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                    <path d="M6 2h4l-1 4 3 3H4l3-3zM8 9v5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+                  </svg>
+                </button>
+                <div class="sl-segmented" role="group" aria-label="Language">
+                  <button class="sl-segmented__item" aria-pressed="true">EN</button>
+                  <button class="sl-segmented__item" aria-pressed="false">IT</button>
+                </div>
+              </div>
+              <div class="sl-chips" role="group" aria-label="Event kinds">
+                <button class="sl-chip" aria-pressed="true">Tool <span class="sl-chip__count">42</span></button>
+                <button class="sl-chip" aria-pressed="false">Spawn <span class="sl-chip__count">3</span></button>
+                <button class="sl-chip" aria-pressed="true">Result</button>
+              </div>
+              <div class="sl-progress" role="progressbar" aria-label="Spec steps" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" style="--sl-progress: 60%">
+                <span class="sl-progress__bar"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="g-cell">
             <span class="g-label">icon button &middot; pagination</span>
             <div class="g-demo g-demo--col">
               <div style="display:flex;gap:0.5rem">

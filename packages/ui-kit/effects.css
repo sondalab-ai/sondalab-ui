@@ -731,6 +731,10 @@
    what ships; the tint stays the page's ground from the group above. */
 .sl-btn--ghost.sl-fx-glass,
 .sl-icon-btn.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 6%, transparent); }
+/* A pressed toggle keeps its "on" fill on glass: the pane clears the host's
+   background, so the pressed wash is rebound as the pane's fill instead. */
+.sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
+.sl-icon-btn.sl-fx-glass[aria-pressed="true"] { --slfx-fill: var(--slc-accent-subtle); }
 .sl-badge.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 7%, transparent); }
 .sl-badge--success.sl-fx-glass,
 .sl-badge--warning.sl-fx-glass,

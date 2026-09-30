@@ -416,7 +416,9 @@ test("--slfx-fill names the background the component actually ships", () => {
     const value = r.body.match(/--slfx-fill\s*:\s*([^;]+)/)[1].trim();
     for (const sel of r.selector.split(",")) {
       const s = sel.trim();
-      if (!/\.sl-fx-glass/.test(s) || /:(?:hover|active|focus)/.test(s)) continue;
+      // A state (pointer or ARIA) rebinds the fill for that state; the rest
+      // fill is what this test compares. The pressed state has its own below.
+      if (!/\.sl-fx-glass/.test(s) || /:(?:hover|active|focus)|\[aria-/.test(s)) continue;
       const own = s.replace(/\.sl-fx-glass.*$/, "").replace(/^\./, "");
       bound.set(own || "*", value);
     }
@@ -430,6 +432,18 @@ test("--slfx-fill names the background the component actually ships", () => {
     const want = shipped.get(host) ?? shipped.get(base) ?? "transparent";
     const got = bound.get(host) ?? bound.get(base) ?? fallback;
     assert.equal(got, want, `.${host}: components.css fills it ${want}, the family binds ${got}`);
+  }
+});
+
+test("a pressed toggle on glass keeps the pressed fill components.css ships", () => {
+  const components = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const shippedRule = rules(components).find((r) => r.selector.includes('.sl-icon-btn[aria-pressed="true"]') && !r.selector.includes(":hover"));
+  assert.ok(shippedRule, "components.css must ship a pressed state");
+  const shipped = shippedRule.body.match(/background-color\s*:\s*([^;]+)/)[1].trim();
+  for (const host of [".sl-btn", ".sl-icon-btn"]) {
+    const r = RULES.find((r) => r.selector.split(",").some((s) => s.trim().startsWith(`${host}.sl-fx-glass[aria-pressed="true"]`)));
+    assert.ok(r, `${host}: no pressed fill on glass — the pane would clear the pressed wash`);
+    assert.equal(r.body.match(/--slfx-fill\s*:\s*([^;]+)/)[1].trim(), shipped, `${host}: the glass pressed fill must be the shipped one`);
   }
 });
 
@@ -736,6 +750,7 @@ const SWELL_EXEMPT = new Map([
   ["sl-check__input", "the visually-hidden-input technique (position/size/clip-path to one pixel) — nothing ever fills it"],
   ["sl-radio__input", "same visually-hidden-input technique as .sl-check__input"],
   ["sl-switch__input", "same visually-hidden-input technique as .sl-check__input"],
+  ["sl-progress", "a track whose only child is its own bar; a pane is never put inside it"],
 ]);
 
 test("every wrapper that clips a filling glass pane stands its swell down", () => {

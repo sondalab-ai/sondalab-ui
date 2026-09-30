@@ -26,6 +26,25 @@
       ]
     },
     {
+      "id": "chip",
+      "kind": "primitive",
+      "interactive": true,
+      "classes": [
+        "sl-chip",
+        "sl-chips",
+        "sl-chip__count"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-border",
+        "--slc-border-strong",
+        "--slc-accent",
+        "--slc-accent-subtle",
+        "--slc-focus"
+      ]
+    },
+    {
       "id": "button",
       "kind": "primitive",
       "interactive": true,
@@ -39,6 +58,7 @@
         "--slc-accent",
         "--slc-accent-hover",
         "--slc-accent-active",
+        "--slc-accent-subtle",
         "--slc-on-accent",
         "--slc-border",
         "--slc-text"
@@ -167,6 +187,17 @@
         "--slc-text",
         "--slc-text-muted",
         "--slc-border"
+      ]
+    },
+    {
+      "id": "tooltip",
+      "kind": "primitive",
+      "classes": [
+        "sl-tooltip"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-raised"
       ]
     },
     {
@@ -478,6 +509,22 @@
       ]
     },
     {
+      "id": "progress",
+      "kind": "primitive",
+      "classes": [
+        "sl-progress",
+        "sl-progress__bar",
+        "sl-progress--success",
+        "sl-progress--danger"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent",
+        "--slc-success",
+        "--slc-danger"
+      ]
+    },
+    {
       "id": "icon-button",
       "kind": "primitive",
       "interactive": true,
@@ -489,7 +536,8 @@
         "--slc-border",
         "--slc-text",
         "--slc-accent",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-accent-subtle"
       ]
     },
     {

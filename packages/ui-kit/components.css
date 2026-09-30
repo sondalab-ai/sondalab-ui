@@ -82,6 +82,7 @@
 .sl-breadcrumb__item:focus-visible,
 .sl-icon-btn:focus-visible,
 .sl-pagination__item:focus-visible,
+.sl-chip:focus-visible,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 2px);
@@ -126,6 +127,79 @@
 }
 .sl-tag--plain { color: var(--slc-text-muted); background: transparent; border-color: var(--slc-border); }
 .sl-tag--plain::before { background: var(--slc-text-muted); }
+
+/* Chip — a toggleable filter. A row of them (.sl-chips) is a multi-select:
+   each is a <button aria-pressed> and any number may be on (one-of-N is
+   sl-segmented). Off, it is an outlined pill in the muted ink with a hollow
+   dot; on, it takes the tag's accent dress and the dot fills — so "on" reads
+   by colour, fill and glyph, never by colour alone. */
+.sl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sl-space-2, 0.5rem);
+}
+.sl-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--slc-text-muted);
+  background-color: transparent;
+  border: 1px solid var(--slc-border);
+  border-radius: var(--sl-radius-pill, 9999px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+  cursor: pointer;
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-chip::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px currentColor;
+  flex: none;
+}
+.sl-chip:hover:not(:disabled) { color: var(--slc-text); border-color: var(--slc-border-strong); }
+.sl-chip[aria-pressed="true"] {
+  color: var(--slc-accent);
+  background-color: var(--slc-accent-subtle);
+  border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
+}
+.sl-chip[aria-pressed="true"]::before { background-color: currentColor; }
+.sl-chip__count { font-variant-numeric: tabular-nums; }
+.sl-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Progress — a determinate bar. The value is written twice, on purpose:
+   aria-valuenow for assistive tech and --sl-progress (a percentage) for the
+   paint, because CSS cannot yet read a number out of an attribute. Nothing
+   moves on its own: work with no measurable value is aria-busy (with effects,
+   the aurora's busy reading), not a bar pretending to know. */
+.sl-progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--slc-text) 10%, transparent);
+  border-radius: var(--sl-radius-pill, 9999px);
+}
+.sl-progress__bar {
+  display: block;
+  height: 100%;
+  width: var(--sl-progress, 0%);
+  background-color: var(--slc-accent);
+  border-radius: inherit;
+  transition: width var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
+}
+.sl-progress--success .sl-progress__bar { background-color: var(--slc-success); }
+.sl-progress--danger  .sl-progress__bar { background-color: var(--slc-danger); }
 
 /* Button — primary (filled accent), ghost (6% ink wash, no border), and a small size. */
 .sl-btn {
@@ -178,6 +252,23 @@
 .sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); }
 .sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
 .sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.35rem 0.6rem; }
+
+/* Toggle state — an on/off button is a plain or ghost button, or an icon
+   button, carrying aria-pressed. The CSS reads the attribute, so the
+   accessible state and the visible one cannot drift apart. Colour and edge
+   carry "on" as well as the fill: a glass host clears its own background and
+   gets the fill back through its pane (effects.css). A primary never toggles —
+   its fill already reads as "on", so there would be nothing left to switch to. */
+.sl-btn:not(.sl-btn--primary)[aria-pressed="true"],
+.sl-icon-btn[aria-pressed="true"] {
+  color: var(--slc-accent);
+  background-color: var(--slc-accent-subtle);
+  border-color: color-mix(in srgb, var(--slc-accent) 35%, transparent);
+}
+.sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:hover:not(:disabled),
+.sl-icon-btn[aria-pressed="true"]:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--slc-accent) 20%, transparent);
+}
 
 /* Card — surface panel. Compose with __title / __body. */
 .sl-card {
@@ -845,9 +936,12 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-segmented__item:hover { color: var(--slc-text); }
-/* The CSS reads aria-selected, so the accessible state and the visible one
-   cannot drift apart. */
-.sl-segmented__item[aria-selected="true"] {
+/* The CSS reads the state attribute, so the accessible state and the visible
+   one cannot drift apart: aria-selected when the control switches views
+   (role="tablist"), aria-pressed when it is a group of toggle buttons that
+   switches a setting (role="group"). */
+.sl-segmented__item[aria-selected="true"],
+.sl-segmented__item[aria-pressed="true"] {
   background: var(--slc-raised);
   color: var(--slc-text);
   box-shadow: 0 0 0 1px var(--slc-border-subtle);
@@ -1093,5 +1187,5 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent); }
   .sl-switch__track,
   .sl-pagination__item[aria-current]
 ) { border-color: var(--slc-border); }
-:root[data-sl-theme="high-contrast"] :is(.sl-kbd, .sl-empty) { border: 1px solid var(--slc-border); }
+:root[data-sl-theme="high-contrast"] :is(.sl-kbd, .sl-empty, .sl-progress) { border: 1px solid var(--slc-border); }
 :root[data-sl-theme="high-contrast"] .sl-table thead th { border-bottom-color: var(--slc-border); }
