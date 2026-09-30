@@ -637,7 +637,7 @@
                 <span class="sl-monogram" aria-hidden="true">s</span>
               </button>
             </div>
-            <p class="cap">Press the first two. Since 0.13 a pane no longer grows under the pointer (the press lights it instead, <b>sl-fx-press</b>); it only sinks while pressed, by a third of <b>--slfx-pane-swell</b>. <b>.sl-figure__media</b> clips its contents, and <b>compositions.css</b> still binds <b>--slfx-pane-swell: 1</b> there so a wrapper that scales the pane itself does not compose two scales.</p>
+            <p class="cap">Press the first two. Since 0.13 a pane no longer grows under the pointer (the press lights it instead, <b>sl-fx-press</b>); it moves only while pressed: a control pane (button, chip) squashes like every control, scaled by <b>--slfx-pane-swell</b>, and any other pane sinks by a third of it. <b>.sl-figure__media</b> clips its contents, and <b>compositions.css</b> still binds <b>--slfx-pane-swell: 1</b> there so a wrapper that scales the pane itself does not compose two scales.</p>
           </div>
           <div class="g-cell">
             <span class="g-label">switch track — withdrawn: the track's own <code>::after</code> is the knob</span>

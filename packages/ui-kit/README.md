@@ -40,7 +40,7 @@ Toggle buttons: any non-primary `.sl-btn` or `.sl-icon-btn` with `aria-pressed` 
 
 Form controls: `.sl-check`, `.sl-radio`, `.sl-switch` (each `__input` / `__box`-or-`__track` / `__label`), `.sl-select` (a wrapper on `.sl-field__control`), `.sl-slider` (a native range; write `--sl-slider-value` for the fill).
 
-Motion: every control squashes a little while held and springs back when let go (`--sl-motion-spring`), transform-only; reduced motion stops it.
+Motion: buttons, icon buttons, chips, segmented and pagination items squash a little while held, the switch knob stretches, a check or radio box shrinks, a slider thumb grows; each springs back when let go (`--sl-motion-spring`). Transitions only, never a keyframe; tabs, nav items, list rows, fields and cards don't move. Glass control panes press with the same squash, and a wrapper's `--slfx-pane-swell: 1` still stands them down. Reduced motion stops it all.
 
 Navigation & state: `.sl-breadcrumb` (`__item` / `__sep`), `.sl-btn-group`, `.sl-segmented` (`__item`; `aria-selected` for views, `aria-pressed` for a setting), `.sl-chips` / `.sl-chip` (`__count`; a multi-select filter row driven by `aria-pressed`), `.sl-progress` (`__bar`, `--success`/`--danger`; set `aria-valuenow` and `--sl-progress`), `.sl-icon-btn` (`--round`), `.sl-pagination` (`__item`), `.sl-empty` (`__title` / `__body`), `.sl-skeleton`, `.sl-stat` (`__value` / `__label`).
 
@@ -144,7 +144,7 @@ mountGpu().then((ok) => {});  // Tier 2 is retired: always resolves false (kept 
 | Property | On | Default | What it does |
 |---|---|---|---|
 | `--slfx-pillar-count` | an aurora host | `3` | how many curtains cross the host. The intensity control: fewer bands are wider bands. The pitch follows from the host's own width, so the pattern scales with the element rather than holding a fixed pixel size. |
-| `--slfx-pane-swell` | a glass pane, **or any ancestor of it** | `1.03` | the pane's press sink, a third of this the other way (0.99 at the default); `1` stands it down. The hover growth this used to drive retired in 0.13 with `sl-fx-press`. Set it to `1` on a wrapper that scales the pane itself — otherwise the two scales compose and the pane's seated light spills past its edge. |
+| `--slfx-pane-swell` | a glass pane, **or any ancestor of it** | `1.03` | on a control pane (button, icon button, chip, segmented or pagination item) it scales the kit squash (k = (swell − 1) / 0.03); on any other pane it drives the uniform press sink, a third of the swell the other way (0.99 at the default). `1` stands either down. The hover growth this used to drive retired in 0.13 with `sl-fx-press`. Set it to `1` on a wrapper that scales the pane itself — otherwise the two scales compose and the pane's seated light spills past its edge. |
 | `--slg-lens-disperse` | a lens host | `18` | the lens's red-to-blue separation, in px. Not raised in the default because it applies to everything behind the pane — at 60 the page's own text splits into visible RGB copies — so raise it per surface. |
 | `--slg-lens-reach` | a lens host | `6` (`18` on an aurora host) | how far the lens is allowed to bend. A pane shorter than six times this is refused the lens and keeps the material. |
 | `--slg-lens-bulge` | a lens host | `0.4` | the pane's convex bulge: magnification at its centre as a fraction, falling to nothing at the rim; `0` turns it off. The owner's pick, 2026-09-25. |
