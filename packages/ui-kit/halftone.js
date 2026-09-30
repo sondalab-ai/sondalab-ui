@@ -16,6 +16,9 @@
    Followed on <html> and on every section under the root: a data-sl-theme or
    a class (an .sl-invert band) that changes after arming re-reads the ink of
    the scenes inside it, and again when a colour transition there ends.
+   On a theme that declares the spectrum (light, Prism) the dots are filled
+   with one gradient through --sl-spectrum-ink-0..4 instead; the polarity
+   still follows `color`. data-sl-ink="mono" keeps the single ink.
 
    MOTION: one frame loop for every scene, running only while one is within
    200px of the viewport and the page is visible. Under reduced motion each
@@ -49,6 +52,22 @@ function seedOf(canvas) {
   return raw === null || !Number.isFinite(Number(raw)) ? undefined : Number(raw);
 }
 
+const INK_STOPS = 5;
+
+/** The light theme's spectrum ink as read on the canvas, or null where the
+ * theme resets it (dark, high-contrast) or the author asked for one ink. */
+function spectrumOf(canvas) {
+  if (canvas.getAttribute("data-sl-ink") === "mono") return null;
+  const cs = getComputedStyle(canvas);
+  const stops = [];
+  for (let i = 0; i < INK_STOPS; i++) {
+    const v = cs.getPropertyValue(`--sl-spectrum-ink-${i}`).trim();
+    if (!v) return null;
+    stops.push(v);
+  }
+  return stops;
+}
+
 /** Ink darker than mid-grey prints the picture's dark. */
 function darkInk([r, g, b]) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.5;
@@ -70,7 +89,7 @@ async function load(canvas) {
   g.drawImage(img, c.sx, c.sy, c.s, c.s, 0, 0, size, size);
   // Throws on a picture from another origin without CORS: the scene is dropped.
   const px = g.getImageData(0, 0, size, size).data;
-  return { canvas, grid, px, seed: seedOf(canvas), dots: [], ink: "", dark: false, t0: null, near: false, width: canvas.clientWidth };
+  return { canvas, grid, px, seed: seedOf(canvas), dots: [], ink: "", spectrum: null, dark: false, t0: null, near: false, width: canvas.clientWidth };
 }
 
 /**
@@ -96,6 +115,7 @@ export function halftone(root = document) {
 
   function paint(s) {
     s.ink = getComputedStyle(s.canvas).color;
+    s.spectrum = spectrumOf(s.canvas);
     const dark = darkInk(toSrgb(doc, s.ink));
     if (dark !== s.dark || s.dots.length === 0) {
       s.dark = dark;
@@ -115,7 +135,15 @@ export function halftone(root = document) {
     if (contrast()) return false;
     const still = !moving();
     const t = (now - s.t0) / 1000;
-    g.fillStyle = s.ink;
+    if (s.spectrum) {
+      // Prism: one gradient across the scene through the spectrum ink, so the
+      // dots stay a single fill and the export stays single-ink.
+      const grad = g.createLinearGradient(0, 0, w, w);
+      s.spectrum.forEach((c, i) => grad.addColorStop(i / (s.spectrum.length - 1), c));
+      g.fillStyle = grad;
+    } else {
+      g.fillStyle = s.ink;
+    }
     g.beginPath();
     for (const d of s.dots) {
       const f = still ? settledFrame(d, w, s.grid) : dotFrame(d, t, w, s.grid);

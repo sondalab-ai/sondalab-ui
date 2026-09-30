@@ -18,8 +18,8 @@ const COLOUR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})
 
 test("live-light.js contains no colour literal: hues come from role variables", () => {
   assert.deepEqual(js.match(COLOUR) || [], []);
-  assert.match(js, /roleColour\(el, "--slc-accent"\)/, "the accent is read off the host");
-  assert.match(js, /roleColour\(el, "--slfx-depth"\)/, "and its depth companion");
+  assert.match(js, /roleColour\(el, mode === "run" \? "--slfx-light-a" : "--slc-accent"\)/, "run takes the light, busy the accent");
+  assert.match(js, /roleColour\(el, mode === "run" \? "--slfx-light-b" : "--slfx-depth"\)/, "and its second body");
 });
 
 test("importing the module has no side effects", async () => {

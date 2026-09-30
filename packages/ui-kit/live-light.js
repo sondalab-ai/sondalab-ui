@@ -170,7 +170,8 @@ function attach(el) {
   const u = Object.fromEntries(UNIFORMS.map((n) => [n, gl.getUniformLocation(prog, n)]));
   live.set(el, {
     canvas, gl, u, mode,
-    a: roleColour(el, "--slc-accent"), b: roleColour(el, "--slfx-depth"),
+    a: roleColour(el, mode === "run" ? "--slfx-light-a" : "--slc-accent"),
+    b: roleColour(el, mode === "run" ? "--slfx-light-b" : "--slfx-depth"),
     near: true, dirty: true, w: el.offsetWidth, h: el.offsetHeight, dpr: 0,
   });
   observers();
@@ -302,7 +303,12 @@ export function liveLight(root) {
     for (const el of [...live.keys()]) reconcile(el);
     scan(root);
     // A theme switch re-reads the colours on the next attach.
-    for (const [el, it] of live) { it.a = roleColour(el, "--slc-accent"); it.b = roleColour(el, "--slfx-depth"); it.dirty = true; }
+    for (const [el, it] of live) {
+      const mode = it.mode;
+      it.a = roleColour(el, mode === "run" ? "--slfx-light-a" : "--slc-accent");
+      it.b = roleColour(el, mode === "run" ? "--slfx-light-b" : "--slfx-depth");
+      it.dirty = true;
+    }
     ensureLoop();
   });
   theme.observe(doc.documentElement, { attributes: true, attributeFilter: ["data-sl-theme", "style", STILL] });
