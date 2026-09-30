@@ -948,3 +948,31 @@ test("mount() arms the halftone before the reduced-motion guard: the picture is 
 test("high contrast hides every halftone canvas", () => {
   assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \[data-sl-halftone\]\s*\{\s*display:\s*none;?\s*\}/);
 });
+
+// Prism (light theme): the spectrum is declared by the light theme only; the
+// other themes reset it, so every read must carry today's colour as fallback.
+test("every spectrum read in effects.css falls back to today's colour", () => {
+  const bare = [...effects.matchAll(/var\(\s*(--sl-spectrum-[a-z0-9-]+)\s*\)/g)].map((m) => m[1]);
+  assert.deepEqual(bare, [], "a spectrum var() without a fallback paints nothing in dark");
+});
+
+test("Prism reaches the aurora, the press light, glitch and the live light", () => {
+  for (const [prop, stop] of [
+    ["--slfx-beam", "--sl-spectrum-4"], ["--slfx-beam-b", "--sl-spectrum-0"],
+    ["--slfx-beam-c", "--sl-spectrum-2"], ["--slfx-beam-tail", "--sl-spectrum-5"],
+    ["--slfx-bloom-hi", "--sl-spectrum-0"], ["--slfx-bloom-lo", "--sl-spectrum-4"],
+    ["--slfx-press-light", "--sl-spectrum-1"],
+    ["--slfx-light-a", "--sl-spectrum-0"], ["--slfx-light-b", "--sl-spectrum-4"],
+  ]) {
+    assert.match(effects, new RegExp(`${prop}:[^;]*var\\(${stop},`), `${prop} reads ${stop}`);
+  }
+  const channel = (side) => RULES.find((r) => r.selector === `.sl-fx-glitch.is-glitching::${side}`)?.body ?? "";
+  assert.match(channel("before"), /var\(--sl-spectrum-ink-0,\s*var\(--slc-accent/);
+  assert.match(channel("after"), /var\(--sl-spectrum-ink-3,\s*var\(--slfx-depth\)\)/);
+});
+
+test("busy stays the accent: state is the accent's job, not the spectrum's", () => {
+  const busy = RULES.filter((r) => /data-sl-fx-live="busy"/.test(r.selector));
+  assert.ok(busy.length > 0);
+  for (const r of busy) assert.doesNotMatch(r.body, /--sl-spectrum/, r.selector);
+});

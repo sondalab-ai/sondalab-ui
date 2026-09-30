@@ -63,6 +63,11 @@
   /* colour roles */
   --slfx-depth: var(--sl-accent-depth, var(--slc-accent, var(--sl-accent-default)));
   --slfx-sheen: var(--slc-text, var(--sl-text-primary));
+  /* The live light's two bodies (live-light.js, run mode). On light they are
+     two stops of the spectrum (Prism); where a theme resets the spectrum, the
+     accent and its depth companion, as before. */
+  --slfx-light-a: var(--sl-spectrum-0, var(--slc-accent, var(--sl-accent-default)));
+  --slfx-light-b: var(--sl-spectrum-4, var(--slfx-depth));
 
   /* edge geometry — the ring grows INWARD so it never meets the focus outline */
   --slfx-ring-w: 1px;
@@ -92,13 +97,12 @@
      blurred and pushed in saturation because a blur washes colour out of
      what it blurs. A pane is a lens, not a tinted panel.
 
-     What bounds it is label contrast on a filled brand button, and there the
-     layer has inherited a defect it did not cause: --sl-text-on-accent is
-     white, and white on the amber accent measures 1.99:1 on the plain
-     component with every effect off — already below 4.5:1 before anything
-     here runs. Thinning the fill on paper moves the amber toward cream and
-     makes it worse (1.63:1 at 58%). That is a token decision, not one this
-     layer may take on its own; it is recorded rather than worked around. */
+     What bounds it is label contrast on a filled brand button. Until 0.21
+     white on the amber accent was below 4.5:1 with every effect off; the
+     token decision has since been taken (0.21, Prism): the light accent is
+     #9A5300 and white on it measures 5.8:1. Thinning the fill on paper still
+     moves the amber toward the ground and lowers that figure, which is why a
+     translucent primary takes the dark pole as its label (Ruling 8). */
   --slfx-fill-a: 30%;
   /* ── the glass parameters, and the backdrop it bends ─────────────────────
      A surface names what lies behind a region and the pane refracts THAT;
@@ -656,7 +660,9 @@
    telemetry substrate, 4.24:1 where WCAG AA asks 4.5. At 25% the same
    measurement reads 4.74 and the pane is all but indistinguishable; 32% reads
    5.19. The material's fitted 18% is untouched for every surface that has a
-   fill to carry its own label. */
+   fill to carry its own label. (Measured on the 0.20 cream ground. The 0.21
+   ground is lighter, and a lighter veil under the dark ink can only raise
+   these figures.) */
 .sl-btn.sl-fx-glass,
 .sl-badge.sl-fx-glass,
 .sl-field__control.sl-fx-glass,
@@ -915,8 +921,9 @@
 /* Ruling 8 — the filled share is 72%, not the shared 80%. The dark theme has two
    viable regions and one dead band: --slc-text clears 4.5:1 up to share 0.42,
    the dark pole clears it from 0.65 up, and between 0.50 and 0.58 neither does.
-   0.72 sits inside the high region on BOTH themes — 5.48:1 on ink, 5.67:1 on
-   paper — so the share does not branch on the theme. */
+   0.72 sits inside the high region on BOTH themes — 5.48:1 on ink, 4.89:1 on
+   paper (the 0.21 cool ground; 5.67 on the 0.20 cream) — so the share does not
+   branch on the theme. */
 /* 0.72 is a CONTRAST result, so it is the share the accent layer carries too —
    the pane it measured is the one the anatomy now composites. It supersedes the
    0.80 the general rule above still names for non-button surfaces. */
@@ -927,10 +934,12 @@
    lands mid-light either way. --slfx-shade is already exactly that
    derivation — oklch(from sheen min(l, 1 - l) c h) — so this needs no new token
    (AC-11), no literal (AC-18) and no [data-sl-theme] branch. Measured against
-   the pane over canvas, surface and raised: 5.72:1 on ink, 5.67:1 on paper.
+   the pane over canvas, surface and raised: 5.72:1 on ink, 4.89:1 on paper
+   (0.21 cool ground, worst of the three; 5.67 on the 0.20 cream).
 
    It replaces --slc-on-accent, which is built for an OPAQUE accent and goes the
-   wrong way under a translucent one: #FFFFFF on paper measures 1.92:1. */
+   wrong way under a translucent one: #FFFFFF on paper measures 3.44:1 (0.21;
+   1.92 on the 0.20 cream). */
 /* Only on a translucent pane: without the layers, under high contrast and in an
    opt-out region the primary is its own opaque fill again, and its label goes
    back to --slc-on-accent. */
@@ -1082,7 +1091,7 @@
   /* The light: the page's light pole, warmed a little toward the accent, so
      a pressed control glows in its own register rather than in a neutral
      white. Near-white on both themes; the sheen decides, as for the glint. */
-  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h) 82%, var(--slc-accent, var(--sl-accent-default)));
+  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h) 82%, var(--sl-spectrum-1, var(--slc-accent, var(--sl-accent-default))));
   position: relative;
   isolation: isolate;
   /* The sink and the return, on the spring. The duration is a motion token,
@@ -1229,14 +1238,15 @@
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */
-  --slfx-beam: var(--slfx-accent-vivid);
+  --slfx-beam: var(--sl-spectrum-4, var(--slfx-accent-vivid));
   /* The beam's companions, border-beam's "colorful" read in our own terms:
      the complement (180°) and a split (150°) of the vivid accent, turned in
      oklch so lightness and chroma are the accent's own — a product that
-     re-registers its accent gets its own trio (AC-18). */
-  --slfx-beam-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
-  --slfx-beam-c: oklch(from var(--slfx-accent-vivid) l c calc(h + 150));
-  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth-vivid) 75%, transparent);
+     re-registers its accent gets its own trio (AC-18). On light, the
+     spectrum replaces the trio (Prism, 2026-09-30). */
+  --slfx-beam-b: var(--sl-spectrum-0, oklch(from var(--slfx-accent-vivid) l c calc(h + 180)));
+  --slfx-beam-c: var(--sl-spectrum-2, oklch(from var(--slfx-accent-vivid) l c calc(h + 150)));
+  --slfx-beam-tail: color-mix(in srgb, var(--sl-spectrum-5, var(--slfx-depth-vivid)) 75%, transparent);
   /* was 86%: the white core is the lighthouse's lamp, and it is gone */
   --slfx-core: 0%;
   /* The bloom's two colours are the vivid beam and the vivid depth companion
@@ -1263,8 +1273,8 @@
      +26.5, +19.9, +11.8, +4.0, +0.4, 0. The tail's alpha keeps the 0.75
      ratio (the reference's rose against its green at the edge); only the
      plateau's colour lies on the profiled edge. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 44%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--sl-spectrum-0, var(--slfx-accent-bloom)) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--sl-spectrum-4, var(--slfx-depth-bloom)) 33%, transparent);
   /* How far the bloom's band reaches INWARD from the host's border, before
      the blur. Declared here, on the host, so a component can rebind it and
      the seated glow follows (effects.js copies it across). */
@@ -1307,7 +1317,7 @@
      rather than as light, on paper especially, where the two tokens sit
      within 0.06 of each other. Fitted to the gamut at the lifted lightness
      like every pushed colour (the fit, above). */
-  --slfx-beam: var(--slfx-rim-beam);
+  --slfx-beam: var(--sl-spectrum-ink-3, var(--slfx-rim-beam));
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
   --slfx-core: 40%;
   /* The HUE stays the depth companion, and the declension's reason for it
@@ -1318,8 +1328,8 @@
      glow — the owner reported it as a defect on a busy control. 44/33% is the
      register every other bloom in this file uses since the 2026-09-12 fit, and
      it is a halo at that strength. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-depth-bloom) 44%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--sl-spectrum-3, var(--slfx-depth-bloom)) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--sl-spectrum-5, var(--slfx-depth-bloom)) 33%, transparent);
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
@@ -1703,9 +1713,9 @@
   mask: none;
   background: linear-gradient(90deg,
     transparent 0%,
-    color-mix(in srgb, var(--slfx-depth) 80%, transparent) 30%,
-    color-mix(in srgb, var(--slfx-sheen) 70%, var(--slc-accent, var(--sl-accent-default))) 50%,
-    color-mix(in srgb, var(--slfx-depth) 80%, transparent) 70%,
+    color-mix(in srgb, var(--sl-spectrum-ink-0, var(--slfx-depth)) 80%, transparent) 30%,
+    color-mix(in srgb, var(--slfx-sheen) 70%, var(--sl-spectrum-ink-2, var(--slc-accent, var(--sl-accent-default)))) 50%,
+    color-mix(in srgb, var(--sl-spectrum-ink-4, var(--slfx-depth)) 80%, transparent) 70%,
     transparent 100%);
 }
 
@@ -2061,8 +2071,8 @@
   white-space: inherit;
   mix-blend-mode: screen;
 }
-.sl-fx-glitch.is-glitching::before { color: var(--slc-accent, var(--sl-accent-default)); }
-.sl-fx-glitch.is-glitching::after  { color: var(--slfx-depth); }
+.sl-fx-glitch.is-glitching::before { color: var(--sl-spectrum-ink-0, var(--slc-accent, var(--sl-accent-default))); }
+.sl-fx-glitch.is-glitching::after  { color: var(--sl-spectrum-ink-3, var(--slfx-depth)); }
 
 /* Shatter variant — during a burst the text breaks into horizontal bands that
    jump sideways. Bands are stacked copies clipped to one strip each; JS sets a
@@ -2272,8 +2282,8 @@
     50%  {
       transform: translate(calc(-0.4 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0);
       text-shadow:
-        calc(0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--slc-accent-hover, var(--sl-accent-hover)) 55%, transparent),
-        calc(-0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--slfx-depth) 40%, transparent);
+        calc(0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--sl-spectrum-ink-0, var(--slc-accent-hover, var(--sl-accent-hover))) 55%, transparent),
+        calc(-0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--sl-spectrum-ink-3, var(--slfx-depth)) 40%, transparent);
     }
     100% { transform: translate(calc(0.4 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0); text-shadow: none; }
   }
