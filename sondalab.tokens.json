@@ -29,7 +29,7 @@
     "dark": {
       "bg-canvas": "#070A0D", "bg-surface": "#0F151A", "bg-surface-raised": "#131C23", "bg-overlay": "rgba(0,0,0,0.6)",
       "border-subtle": "rgba(218,227,228,0.07)", "border-default": "rgba(218,227,228,0.13)", "border-strong": "rgba(218,227,228,0.28)",
-      "text-primary": "#DAE3E4", "text-secondary": "#9AA9AD", "text-muted": "#6E8088", "text-on-accent": "#0A0A0B",
+      "text-primary": "#DAE3E4", "text-secondary": "#9AA9AD", "text-muted": "#7C8D95", "text-on-accent": "#0A0A0B",
       "status-success": "#98b958", "status-warning": "#db9e2e", "status-danger": "#fe8263", "status-info": "#87a7fd"
     },
     "high-contrast": {
