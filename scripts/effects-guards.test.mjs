@@ -988,3 +988,13 @@ test("the run light's two bodies resolve on the live host, not on :root", () => 
     assert.match(r.selector, /\[data-sl-fx-live/, r.selector);
   }
 });
+
+// The glass primary's label carries no shadow (owner, 2026-09-30): on paper the
+// accent/sheen mix landed at L≈0.44, α≈0.8 — a dark smudge under a dark label.
+// Contrast is carried by the label being the dark pole (Ruling 8), which the
+// shadow never changed; the label clears 4.5:1 on the 72% pane without it.
+test("the glass primary's label has no text-shadow", () => {
+  const primary = RULES.filter((r) => /\.sl-btn--primary\.sl-fx-glass/.test(r.selector) && !/::/.test(r.selector));
+  assert.ok(primary.length > 0, "the parser must find the glass primary rules");
+  for (const r of primary) assert.doesNotMatch(r.body, /text-shadow\s*:/, r.selector);
+});
