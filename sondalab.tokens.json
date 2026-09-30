@@ -41,8 +41,8 @@
   },
   "accent": {
     "light": { "default": "#FF9F1C", "text-lmax": 0.5, "hover": { "mix": [89, "black"] }, "active": { "mix": [76, "black"] }, "subtle": { "mix": [12, "transparent"] }, "depth": "#14606C" },
-    "dark": { "default": "#F5A83C", "hover": { "mix": [80, "white"] }, "active": { "oklch": ["calc(l * 0.92)", "calc(c * 0.96)", "h"], "fallback": "#E0942A" }, "subtle": { "mix": [16, "transparent"] }, "depth": "#35A0B4" },
-    "high-contrast": { "default": "#ffff00", "hover": { "mix": [37, "white"] }, "active": { "mix": [80, "black"] }, "subtle": { "mix": [10, "black"] }, "depth": "#00ffff" }
+    "dark": { "default": "#F5A83C", "band-text-lmax": 0.45, "hover": { "mix": [80, "white"] }, "active": { "oklch": ["calc(l * 0.92)", "calc(c * 0.96)", "h"], "fallback": "#E0942A" }, "subtle": { "mix": [16, "transparent"] }, "depth": "#35A0B4" },
+    "high-contrast": { "default": "#ffff00", "band-text-lmax": 0.45, "hover": { "mix": [37, "white"] }, "active": { "mix": [80, "black"] }, "subtle": { "mix": [10, "black"] }, "depth": "#00ffff" }
   },
   "$code-note": "Syntax-highlight palette (--sl-code-<role>): code is viz, out of the single-brand-accent scope — a code token stays semantically stable and readable, it does not track the product hue. Print inks, the same family as status and viz; every role clears 4.5:1 (comment/null 3:1) on canvas, surface and raised. Emitted per theme; high-contrast intentionally omitted (undefined there, consumers fall back).",
   "code": {

@@ -144,3 +144,29 @@ for (const theme of ["light", "dark"]) {
     });
   }
 }
+
+// Inside an inversion band the ground is the theme's text colour — LIGHT on the
+// dark and high-contrast themes — so the band caps the accent text with its own
+// number (--sl-accent-band-text-lmax). Every registered accent must read there.
+{
+  const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
+  for (const theme of ["dark", "high-contrast"]) {
+    const css = readFileSync(resolve(KIT, `themes/${theme}.css`), "utf8");
+    const t = { ...shared, ...vars(`themes/${theme}.css`) };
+    const cap = Number(css.match(/--sl-accent-band-text-lmax:\s*([0-9.]+)/)?.[1]);
+    const band = t["--sl-text-primary"];
+    const accents = theme === "dark"
+      ? Object.entries(registry.products).map(([n, p]) => [n, p.dark ?? registry.products[p.inherits]?.dark])
+      : [["default", t["--sl-accent-default"]]];
+    for (const [name, hex] of accents) {
+      test(`${theme} ${name}: accent text inside the inversion band reads (4.5:1)`, () => {
+        assert.ok(cap > 0 && cap < 1, `${theme} declares no band cap`);
+        const [L, C, h] = toOklch(fromHex(hex));
+        const l = Math.min(L, cap);
+        const text = toHex(fromOklch([l, Math.min(C, maxChroma(l, h)), h]));
+        const r = ratio(text, band);
+        assert.ok(r >= 4.5, `${text} on ${band} ${r.toFixed(2)}`);
+      });
+    }
+  }
+}
