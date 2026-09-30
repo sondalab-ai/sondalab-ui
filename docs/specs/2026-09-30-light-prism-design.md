@@ -62,7 +62,7 @@ The light theme defines the spectrum. Dark and high-contrast reset it to `initia
 - A property built from the spectrum (e.g. a rim gradient) is itself invalid wherever a stop is invalid, so `var(--slc-rim, none)` paints nothing in dark without a second switch.
 - A Tier-B product opts in by declaring the eleven `--sl-spectrum-*` values in its light layer; value-equality with `sondalab.tokens.json` keeps it compliant.
 - JavaScript effects read the same properties through the existing `roleColour()` probe (`colour.js`), which resolves fallbacks.
-- **Inversion band on light** (`sl-invert`, an ink block): it inherits the spectrum, so effects inside it are spectral too. Open decision, see §Open decisions.
+- **Inversion band on light** (`sl-invert`, an ink block): it inherits the spectrum, so effects inside it are spectral too. Open decision, see §Decisions on the open points.
 
 ## Tokens (`sondalab.tokens.json`)
 
@@ -151,7 +151,7 @@ Both are catalogued (`agent/catalog.md` / `catalog.json`) with the rule: at most
 |---|---|---|
 | sondalab-site | Tier A (`:root[data-sl-theme='light']`, e.g. `src/components/Thesis.astro:63`) | whole light theme; its six halftone canvases turn spectral |
 | spexr | Tier A (design-language Decision 1) | whole light theme; the photo backdrop's halftone turns spectral |
-| daos (`docs/daos-landing.html`), introspect (`web/src/theme.css`) | Tier B, pinned to today's light values | **their `sl-audit` fails** on the old hexes once they bump — see §Open decisions |
+| daos (`docs/daos-landing.html`), introspect (`web/src/theme.css`) | Tier B, pinned to today's light values | **their `sl-audit` fails** on the old hexes once they bump — see §Decisions on the open points |
 | local-agents | Tier B | no old light literal found; unaffected |
 
 ## Testing
@@ -170,10 +170,10 @@ Both are catalogued (`agent/catalog.md` / `catalog.json`) with the rule: at most
 
 `@sondalab/ui-kit` **0.21.0** (minor: new tokens and classes; light-theme values change). `palette-py` bumped in the same PR per the new-token policy (`AGENTS.md`).
 
-## Open decisions (owner)
+## Decisions on the open points (owner, 2026-09-30)
 
-1. **Tier-B products after the bump.** (a) The audit accepts the 0.20 light values as a registered legacy set for one release, so daos and introspect migrate at their own pace; or (b) no allowlist — they fail until migrated, in follow-up PRs in their repos.
-2. **Spectrum inside the ink band on light.** (a) Yes — effects inside `sl-invert` stay spectral (the probe showed rainbow halftone on the ink band); or (b) no — the band resets the spectrum and its effects fall back to the accent.
+1. **Tier-B products after the bump: no legacy allowlist.** daos and introspect fail `sl-audit` on the old light values until migrated, in follow-up PRs in their repos (no backwards-compat shim in the audit).
+2. **Spectrum inside the ink band on light: kept.** Effects inside `sl-invert` stay spectral, as in the probe.
 
 ## Risks
 
