@@ -85,3 +85,18 @@ test("each solid status fill has its own contrast-picked label", () => {
     assert.match(css, new RegExp(`--slc-on-${s}:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*clamp\\(0\\.16, \\(0\\.61 - l\\) \\* 1000, 1\\) 0 h\\);`), s);
   }
 });
+
+// Regression, 2026-10-01: the checkbox/radio edge was the surface three steps
+// darker, which on the dark theme is near-black on near-black (1.06:1). It
+// steps away from the surface toward contrast, five steps: >= 3:1 on both.
+test("a form control's edge steps toward contrast, not always into shade", () => {
+  assert.match(css, /--slc-edge-control:\s*oklch\(from var\(--slc-surface\) calc\(l \+ var\(--slc-shade-step\) \* 5 \* clamp\(-1, \(0\.5 - l\) \* 1000, 1\)\) c h\);/);
+  const box = css.match(/\.sl-check__box,\s*\.sl-radio__box\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(box, /border:\s*1px solid var\(--slc-edge-control\)/);
+  const track = css.match(/\.sl-switch__track\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(track, /border:\s*1px solid var\(--slc-edge-control\)/, "the switch track is found by its edge");
+  const knob = css.match(/\.sl-switch__track::after\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(knob, /background:\s*var\(--slc-edge-control\)/, "the off knob reads on its track");
+  const field = css.match(/\.sl-field__input\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(field, /border:\s*1px solid var\(--slc-rim-edge, var\(--slc-edge-control\)\)/, "a field is found by its edge");
+});
