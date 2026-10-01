@@ -204,7 +204,7 @@ A CSS-only label above its host, in the inverted ink. The text lives in `data-sl
 <span class="sl-tooltip" data-sl-tooltip="Measured on the canvas ground" tabindex="0">4.89:1</span>
 <button class="sl-icon-btn sl-tooltip" data-sl-tooltip="Re-run the audit" aria-label="Re-run the audit">↻</button>
 ```
-Consumes: `--slc-text`, `--slc-raised`. Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
+Consumes: `--slc-text`, `--slc-raised`. It rises 4px into place as it fades in, on `--sl-motion-mid` (still under reduced motion). Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
 
 ### Kbd / inline code — `sl-kbd` · `sl-code`
 Keyboard key and inline monospace code. Substrate: **A**.
@@ -225,7 +225,7 @@ Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: *
   </div>
 </dialog>
 ```
-Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`.
+Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`. Opened with `showModal()`, it rises 6px and fades in with its backdrop, and falls back as it closes where `overlay` is supported (`@starting-style` and transitions on `--sl-motion-mid`; no keyframes). Reduced motion, or a browser without `@starting-style`, opens it at once. Don't: put a `display` of your own on a closed `sl-dialog` to show it — a closed dialog is transparent; set `open` instead.
 
 ## Navigation & state
 
@@ -314,7 +314,7 @@ Numbered navigation across pages of results. Mono tabular figures (L1). Substrat
   <a class="sl-pagination__item" href="?p=3">3</a>
 </nav>
 ```
-Consumes: `--slc-border`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
+Consumes: `--slc-edge-control-hover`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
 
 ### Empty state — `sl-empty` (`__title` · `__body`)
 What a surface shows where its content would be. Composes `sl-eyebrow` above the title. Substrate: **R** App, **A** IDE/Page.
@@ -515,7 +515,7 @@ Four facts that decide whether your pane looks like glass or like nothing:
 
 - **A pane over flat ground shows nothing.** The material is mostly what is behind it. With one flat colour back there, a bend has nothing to bend and a prism has no edge to open — the pane renders almost identically however its chain is configured. Put glass where there is *content* behind it: over a picture, a data grid, a table, a page that scrolls under it. A pane floating on the canvas is a tinted box, and you may as well have spent nothing.
 - **The box caps the bend at a sixth of its shorter side.** `reach` asks; `min(w, h) / 6` decides. A 32px field bends ~5.3px whatever you ask for. This is not tunable from markup, and it exists because a large bend on a small box samples outside the element's own region, which comes back transparent and renders a flat grey slab.
-- **The frost and the bend compete, and the frost wins.** A frost wider than the bend erases exactly the detail the bend moved. This is why `--slg-lens-blur` is **1.5px** and not the 5.9px the non-lensed layer runs: at 5.9 the refraction on a 37px field measured at most 10/255 of interior change, and raising the bend did not buy it back. If you widen the frost on a lensed surface, you are switching the lens off.
+- **The frost and the bend compete, and the frost wins.** A frost wider than the bend erases exactly the detail the bend moved. This is why `--slg-lens-blur` is **2.5px** and not the 5.9px the non-lensed layer runs: at 5.9 the refraction on a field measured at most 10/255 of interior change (taken when fields were 37px and bent 6.2px; a 32px field bends ~5.3px, so the frost wins by more), and raising the bend did not buy it back. 2.5px holds only because the convex bulge (`--slg-lens-bulge`) carries a distortion tens of pixels wide that the frost cannot erase. If you widen the frost on a lensed surface, you are switching the lens off.
 - **On a lensed host, `__backdrop`'s own blur is dead.** The host's `backdrop-filter` makes it a backdrop root, so that child layer has nothing behind it left to filter. A lensed pane's only frost is `--slg-lens-blur`; the 5.9px figure applies to non-lensed panes alone. Do not "fix" one by changing the other.
 
 The prism is bounded in `glass-lens.js`, not by you: the split can never exceed twice the bend, so a box with no room gets the widest prism it can hold rather than a red channel displaced backwards. In practice a host from ~65px up gets the full 21.6px and anything smaller degrades smoothly — a 40px button to 13.3px, a 32px icon button to 10.4px.
@@ -700,5 +700,6 @@ Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-
 ## Rules of use (all components)
 
 - **Bind role-vars, never literals.** A component's colour comes from a `--slc-*`/`--sl-*` var. A raw hex fails `sl-audit`.
+- **Selection and scrollbars come with the kit.** `components.css` paints `::selection` as a 24% wash of the accent with the text paired to its ground (`--slc-text`; ≥ 8:1 in all three themes and in `sl-invert`), and gives the page's own scrollbar a thin `--slc-edge-control` thumb and no track (not on high contrast); `<body>` resets `scrollbar-color: auto` for everything inside it. A product's own `.x::selection` wins on specificity, a later bare `::selection` on order, any `scrollbar-color` on a scroller wins outright. A product ink block that does not re-derive `--slc-text` selects ink on ink: re-derive it, as `sl-invert` does. Inner scrollers, hand-drawn `::-webkit-scrollbar` ones included, are left as they were.
 - **One accent hue.** The accent varies per product (see `accent-registry.json`); status colours (success/warning/danger/info) are shared and independent of it.
 - **Spend surprise on composition, not materials.** Family resemblance comes from these shared components; distinctiveness comes from how you compose them (≥1 unexpected layout decision per screen).

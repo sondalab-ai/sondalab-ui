@@ -283,10 +283,11 @@ export function lens(el, look = {}) {
   // blur 1.5 and disperse 90: A LENS YOU CAN SEE, which is the owner's ruling
   // and is not what either number was before. The two fight, and measurement
   // is what settled them. The bend is capped at a sixth of the shorter side —
-  // 6.2px on a 37px field — so a frost of 5.9 erases exactly the detail the
-  // bend moved: toggling the displacement off that field changed the interior
-  // by at most 10/255, and forcing the bend to 18 with the frost up changed
-  // nothing visible at all. The frost is the limiting knob, not the bend.
+  // ~5.3px on a 32px field — so a frost of 5.9 erases exactly the detail the
+  // bend moved. Measured when fields were still 37px (6.2px of bend, before
+  // 0.27.0): toggling the displacement off a field changed the interior by at
+  // most 10/255, and forcing the bend to 18 with the frost up changed nothing
+  // visible at all. The 32px field bends less, so the frost wins by more. The frost is the limiting knob, not the bend.
   // At 1.5 the copy behind a pane is a legible ghost rather than a smear, and
   // that is the cost the ruling accepts to get refraction on a small host.
   //

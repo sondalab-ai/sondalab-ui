@@ -55,6 +55,13 @@ Forced colours: under `forced-colors: active` (Windows High Contrast or any user
 
 Motion: buttons, icon buttons, chips, segmented and pagination items squash a little while held, the switch knob stretches, a check or radio box shrinks, a slider thumb grows; each springs back when let go (`--sl-motion-spring`). Transitions only, never a keyframe; tabs, nav items, list rows, fields and cards don't move — a glass-pane card only sinks a hair (a third of the swell). Glass control panes press with the same squash, and a wrapper's `--slfx-pane-swell: 1` still stands them down. Reduced motion stops it all.
 
+**0.27.1 — entrances, selection, scrollbars.** All additive; no class or token changed.
+
+- `.sl-dialog` opened with `showModal()` rises 6px and fades in with its backdrop, and falls back as it closes where `overlay` is supported (elsewhere it closes at once); `.sl-tooltip` rises 4px as it fades in. `@starting-style` and transitions on `--sl-motion-mid` / `--sl-motion-ease`, no keyframes, on the `translate` property so your own `transform` still composes. Reduced motion zeroes the tokens, and a browser without `@starting-style` simply shows them. A closed `sl-dialog` is transparent: show one with `open`, not with a `display` of your own.
+- `.sl-pagination__item:hover` takes the one control edge (`--slc-edge-control-hover`) instead of `--slc-border`.
+- `::selection` is a 24% wash of the accent with the text set to its ground's `--slc-text` (≥ 8:1 in light, dark, high contrast and inside `.sl-invert`). It weighs (0,0,1): your `.x::selection` wins, and so does a bare `::selection` loaded after the kit. An ink block of your own that does not re-derive `--slc-text` would select ink on ink — re-derive it, as `.sl-invert` does.
+- The page's own scrollbar is thin, with a `--slc-edge-control` thumb and no track (`:root`, zero specificity, not on high contrast). `<body>` hands `scrollbar-color: auto` back to everything inside it, so inner scrollers keep their own look and hand-drawn `::-webkit-scrollbar` rules keep working (Chromium 121+ ignores them under a non-auto `scrollbar-color`).
+
 Navigation & state: `.sl-breadcrumb` (`__item` / `__sep`), `.sl-btn-group`, `.sl-segmented` (`__item`; `aria-selected` for views, `aria-pressed` for a setting), `.sl-chips` / `.sl-chip` (`__count`; a multi-select filter row driven by `aria-pressed`), `.sl-progress` (`__bar`, `--success`/`--danger`; set `aria-valuenow` and `--sl-progress`), `.sl-icon-btn` (`--round`), `.sl-pagination` (`__item`), `.sl-empty` (`__title` / `__body`), `.sl-skeleton`, `.sl-stat` (`__value` / `__label`).
 
 Identity & media: `.sl-wordmark` (`__dot`), `.sl-lockup` (`__dot`), `.sl-monogram`, `.sl-figure` (`__media` / `__caption`), `.sl-avatar` (`--sm` / `--lg`).

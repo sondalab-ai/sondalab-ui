@@ -114,6 +114,51 @@
   --slc-shadow-lg: var(--sl-shadow-lg, 0 4px 8px rgba(28,29,34,0.08), 0 28px 72px rgba(28,29,34,0.22));
 }
 
+/* ══ PAGE-WIDE DEFAULTS ══════════════════════════════════════════════════════
+   Selection and scrollbars belong to the whole page, so these are the only
+   kit rules that reach elements without an .sl-* class. Both are written to
+   lose to any product rule that says otherwise. */
+
+/* Selection: a wash of the accent, with the text paired to it. Leaving the
+   text its own colour cannot hold 4.5:1 -- muted text on the dark theme is
+   ~5:1 to begin with, and any wash visible enough to read as a selection
+   takes it under (down to 3.05:1 at 24%). So selected text becomes the primary text
+   of its ground: >= 8:1 on canvas, surface and raised in all three themes,
+   and in the inversion band (scripts/selection.test.mjs measures it).
+   var() resolves against the element the text is in (checked in Chrome 154),
+   so the band's children select in their re-derived --slc-text. The weight
+   is (0,0,1), the least a pseudo-element can have: a product's own
+   `.x::selection` wins on specificity, a bare `::selection` loaded after the
+   kit wins on order. */
+::selection {
+  background: color-mix(in srgb, var(--slc-accent) 24%, transparent);
+  color: var(--slc-text);
+}
+/* Text set straight in the band, outside any child, still reads the page's
+   --slc-text, which is the band's ground; its ink is --slc-canvas, which the
+   band never re-derives. A filled primary's label stays its own partner,
+   set in the button or in a child of it (which does not re-derive). */
+:where(.sl-invert)::selection { color: var(--slc-canvas); }
+:where(.sl-btn--primary)::selection,
+:where(.sl-btn--primary) ::selection { color: var(--slc-on-accent); }
+
+/* Scrollbars: thin, a neutral thumb in the one control edge (>= 3.4:1 on
+   every ground of the light and dark themes), no track -- on the PAGE's own
+   scrollbar only. The viewport takes scrollbar-color from the root element;
+   <body> hands `auto` back to everything inside it by inheritance. Without
+   that reset the value would inherit into every scroller, and Chromium 121+
+   ignores ::-webkit-scrollbar styling on any element with a non-auto
+   scrollbar-color: a product that draws its own WebKit scrollbars (Theia,
+   Monaco) would lose them. Inheritance, not a rule on every element, so a
+   product's own scrollbar-color on a container still reaches its children.
+   Zero specificity, so any product value wins. High contrast keeps the
+   system's scrollbars, and forced colours resets this by itself. */
+:where(:root:not([data-sl-theme="high-contrast"])) {
+  scrollbar-color: var(--slc-edge-control) transparent;
+  scrollbar-width: thin;
+}
+:where(:root:not([data-sl-theme="high-contrast"]) > body) { scrollbar-color: auto; }
+
 /* Shared focus ring for keyboard nav — every interactive component uses it. */
 .sl-btn:focus-visible,
 .sl-link:focus-visible,
@@ -919,8 +964,38 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   padding: var(--sl-space-6, 2rem);
   max-width: 32rem;
   width: calc(100% - var(--sl-space-8, 3rem));
+  /* L4 entrance: a small rise and a fade as it opens (and back as it closes,
+     where `overlay` is supported -- below).
+     `translate`, not `transform`, so a product's own transform on the dialog
+     still composes. display and overlay are discrete: allow-discrete keeps a
+     closing dialog displayed and in the top layer until its fade is done.
+     Reduced motion zeroes the tokens, so it simply appears; a browser without
+     @starting-style has no "before" to come from and does the same. */
+  transition:
+    opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease),
+    translate var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease),
+    overlay var(--sl-motion-mid, 220ms) allow-discrete,
+    display var(--sl-motion-mid, 220ms) allow-discrete;
 }
-.sl-dialog::backdrop { background: var(--slc-overlay); }
+@starting-style { .sl-dialog[open] { opacity: 0; translate: 0 6px; } }
+/* Closing falls back to where it rose from -- only where `overlay` keeps the
+   closing dialog in the top layer. Without it (no `overlay` support) close()
+   drops the dialog out of the top layer at once, and the fade would play at
+   its place in the page, unpositioned and with no backdrop. There it just
+   disappears, as before. The UA hides a closed dialog (display: none), so
+   this state is only ever seen mid-fade. */
+@supports (overlay: auto) {
+  .sl-dialog:not([open]) { opacity: 0; translate: 0 6px; }
+  .sl-dialog:not([open])::backdrop { opacity: 0; }
+}
+.sl-dialog::backdrop {
+  background: var(--slc-overlay);
+  transition:
+    opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease),
+    overlay var(--sl-motion-mid, 220ms) allow-discrete,
+    display var(--sl-motion-mid, 220ms) allow-discrete;
+}
+@starting-style { .sl-dialog[open]::backdrop { opacity: 0; } }
 .sl-dialog__title {
   font-family: var(--sl-font-display, Georgia, serif);
   font-size: var(--sl-text-xl, 1.5rem);
@@ -976,12 +1051,19 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-radius: var(--sl-radius-sm, 6px);
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
   opacity: 0;
+  /* Hidden, it sits 4px low; shown, it rises into place as it fades in (L4).
+     The pseudo-element is always generated, only transparent, so this is a
+     plain transition between two states, no @starting-style needed. Its own
+     `translate` composes with the centring transform above. */
+  translate: 0 4px;
   pointer-events: none;
-  transition: opacity var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+  transition:
+    opacity var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease),
+    translate var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
   z-index: var(--sl-z-overlay, 50);
 }
 .sl-tooltip:hover::after,
-.sl-tooltip:focus-visible::after { opacity: 1; }
+.sl-tooltip:focus-visible::after { opacity: 1; translate: 0 0; }
 
 /* ══ PATTERNS (page-level composition) ═══════════════════════════════════════ */
 
@@ -1309,7 +1391,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
-.sl-pagination__item:hover { color: var(--slc-text); border-color: var(--slc-border); }
+.sl-pagination__item:hover { color: var(--slc-text); border-color: var(--slc-edge-control-hover); }
 .sl-pagination__item[aria-current] {
   color: var(--slc-text);
   background: color-mix(in srgb, var(--slc-text) 10%, transparent);

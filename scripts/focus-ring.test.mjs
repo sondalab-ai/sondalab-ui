@@ -268,3 +268,26 @@ test("sizing: icon button and pagination item are border-box, and the README say
     assert.ok(note.slice(0, 2000).includes(term), `the sizing note names ${term}`);
   }
 });
+
+// The pagination item was the last neutral control whose hover still drew the
+// old --slc-border line (0.27.1). Hover is the one control edge's hover step,
+// which high contrast and the inversion band both remap.
+test("a hovered pagination item takes the one control edge's hover step", () => {
+  const hover = css.match(/\n\.sl-pagination__item:hover \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(hover, /border-color:\s*var\(--slc-edge-control-hover\)/);
+  assert.match(css, /\.sl-invert > \* \{[^}]*--slc-edge-control-hover:/, "the band re-derives it");
+});
+
+// Fields have been 32px since 0.27.0. The glass lens comments and the catalog
+// still argued from a 37px field as if it were today's, which sent a reader
+// computing the bend cap to the wrong number. 37px may only appear as history.
+test("no lens note measures a field at 37px as a current fact", () => {
+  for (const f of ["packages/ui-kit/glass.css", "packages/ui-kit/glass-lens.js", "packages/ui-kit/agent/catalog.md"]) {
+    const text = readFileSync(resolve(REPO, f), "utf8");
+    for (const m of text.matchAll(/[^\n]*37px[^\n]*/g)) {
+      assert.match(m[0], /were (still )?37px/, `${f}: "${m[0].trim()}"`);
+    }
+    if (f !== "packages/ui-kit/agent/catalog.md") assert.match(text, /5\.3px on a 32px field|32px field bends at most ~5\.3px/, f);
+  }
+  assert.match(readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.md"), "utf8"), /`--slg-lens-blur` is \*\*2\.5px\*\*/, "the catalog's frost matches its table");
+});
