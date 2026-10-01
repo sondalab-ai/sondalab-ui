@@ -1178,11 +1178,12 @@ function pruneDetached() {
 }
 
 /* ── ink: a colour change travels ────────────────────────────────────────────
-   effects.css paints the wash and its iridescent front on one injected span per
-   control; this file gives it the span, the noise its front is torn by, and the
-   point the pointer crossed the edge, so the colour arrives from there and
-   leaves toward where the pointer went. Tier 1 only: without the span the plain
-   fade stands. */
+   effects.css paints a travelling front and its iridescence on one injected
+   span per control; this file gives it the span, the noise its front is torn
+   by, the point the pointer crossed the edge, and the colour arriving there.
+   Ink owns no colour: the control's own hover applies as declared, and the
+   front only sweeps over it. Tier 1 only: without the span the plain fade
+   stands. */
 const INK_HOSTS = ".sl-btn, .sl-icon-btn";
 const INK_FILTER = "sl-fx-ink-noise";
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -1228,6 +1229,38 @@ function ensureInkFilter() {
   document.body.append(svg);
 }
 
+/** Whether a computed colour paints anything: not `transparent`, not alpha 0.
+ *  Computed colours come back in several notations, so the alpha is read as
+ *  whatever follows a "/", or as the fourth comma-separated argument.
+ *  @param {string} v a computed colour */
+function paints(v) {
+  if (!v || v === "transparent") return false;
+  const alpha = v.match(/\/\s*([\d.]+%?)\s*\)$/)?.[1] ?? v.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/)?.[1];
+  return alpha === undefined || parseFloat(alpha) > 0;
+}
+
+/** The colour arriving on a control at the moment the pointer crosses it: the
+ *  end of its own running background (or glass fill) transition when there is
+ *  one, else its current fill, else its ink. Ink tints its front with this so
+ *  a red control shimmers red -- it never picks a colour of its own.
+ *  @param {Element} host the button or icon button
+ *  @returns {string|null} a CSS colour, or null to keep the CSS fallback */
+function inkTint(host) {
+  for (const a of host.getAnimations()) {
+    const prop = a.transitionProperty;
+    if (prop !== "background-color" && prop !== "--slfx-accent-t") continue;
+    const frames = a.effect?.getKeyframes?.() ?? [];
+    const to = frames[frames.length - 1];
+    const v = to?.backgroundColor ?? to?.["--slfx-accent-t"];
+    if (paints(v)) return v;
+  }
+  const cs = getComputedStyle(host);
+  for (const v of [cs.getPropertyValue("--slfx-accent-t").trim(), cs.backgroundColor, cs.color]) {
+    if (paints(v)) return v;
+  }
+  return null;
+}
+
 /** Where the pointer crossed a control's edge, written in the ink layer's own
  *  box (which bleeds INK_BLEED% past the host) so the wash grows from there on
  *  the way in and shrinks toward it on the way out. Moves inside the control
@@ -1244,6 +1277,9 @@ function onInkCross(ev) {
   const y = ((ev.clientY - r.top) / r.height) * 100 + INK_BLEED;
   ink.style.setProperty("--px", `${(x / span) * 100}%`);
   ink.style.setProperty("--py", `${(y / span) * 100}%`);
+  const tint = inkTint(host);
+  if (tint) ink.style.setProperty("--slfx-ink-tint", tint);
+  else ink.style.removeProperty("--slfx-ink-tint");
 }
 
 function injectGlassLayers(root) {

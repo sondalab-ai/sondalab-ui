@@ -76,3 +76,12 @@ test("the focus ring sits flush on the border, no gap", () => {
   const effects = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8");
   assert.match(effects, /:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass\.sl-fx-glass:focus-visible\s*\{\s*--slfx-control-edge:\s*var\(--slc-focus\);/, "a glass control's edge joins the ring");
 });
+
+// Regression, 2026-10-01: a solid danger button labelled with --slc-on-accent
+// went dark on dark red on the light theme (the accent's partner is dark when
+// the accent is light). Each status fill has its own contrast-picked label.
+test("each solid status fill has its own contrast-picked label", () => {
+  for (const s of ["success", "warning", "danger", "info"]) {
+    assert.match(css, new RegExp(`--slc-on-${s}:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*clamp\\(0\\.16, \\(0\\.61 - l\\) \\* 1000, 1\\) 0 h\\);`), s);
+  }
+});

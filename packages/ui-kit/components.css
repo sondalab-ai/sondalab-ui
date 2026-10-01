@@ -87,6 +87,14 @@
   --slc-warning: var(--sl-status-warning, #795305);
   --slc-danger:  var(--sl-status-danger,  #a72b05);
   --slc-info:    var(--sl-status-info,    #3853af);
+  /* A label ON a solid status fill: the pole that contrasts with that fill,
+     picked by its own lightness (the light theme's --sl-text-on-accent rule),
+     so a solid danger button reads on both themes. --slc-on-accent is the
+     accent's partner only -- on a red fill it can be dark on dark. */
+  --slc-on-success: oklch(from var(--slc-success) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
+  --slc-on-warning: oklch(from var(--slc-warning) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
+  --slc-on-danger:  oklch(from var(--slc-danger)  clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
+  --slc-on-info:    oklch(from var(--slc-info)    clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
   /* depth — cast in the ground's ink, so per theme */
   --slc-shadow-sm: var(--sl-shadow-sm, 0 1px 2px rgba(28,29,34,0.08), 0 0 0 1px rgba(28,29,34,0.03));
   --slc-shadow-md: var(--sl-shadow-md, 0 2px 4px rgba(28,29,34,0.06), 0 10px 28px rgba(28,29,34,0.12));
