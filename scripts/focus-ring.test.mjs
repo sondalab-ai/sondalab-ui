@@ -61,3 +61,18 @@ test("a nav item resets native button chrome", () => {
     assert.match(rule, d);
   }
 });
+
+// Regression, 2026-10-01 (owner: "no gaps between borders in any case"): the
+// ring sits flush on the border. A positive offset opens a band of page
+// between the control's edge and the ring.
+test("the focus ring sits flush on the border, no gap", () => {
+  const tokens = readFileSync(resolve(REPO, "packages/ui-kit/tokens.css"), "utf8");
+  assert.match(tokens, /--sl-focus-ring-offset:\s*0px;/);
+  assert.match(css, /outline-offset:\s*var\(--sl-focus-ring-offset, 0px\);/);
+  assert.doesNotMatch(css, /--sl-focus-ring-offset, [1-9]/, "no fallback may reopen the gap");
+  const ring = css.slice(css.indexOf("outline: var(--sl-focus-ring-width"), css.indexOf("}", css.indexOf("outline: var(--sl-focus-ring-width")));
+  assert.match(ring, /border-color:\s*var\(--slc-focus\)/, "the border joins the ring");
+  assert.match(css, /\.sl-icon-btn\[aria-pressed="true"\]:focus-visible,\s*\.sl-chip:hover:focus-visible\s*\{\s*border-color:\s*var\(--slc-focus\);/, "a pressed or hovered border joins the ring too");
+  const effects = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8");
+  assert.match(effects, /:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass\.sl-fx-glass:focus-visible\s*\{\s*--slfx-control-edge:\s*var\(--slc-focus\);/, "a glass control's edge joins the ring");
+});

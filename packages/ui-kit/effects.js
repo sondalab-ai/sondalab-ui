@@ -1177,6 +1177,75 @@ function pruneDetached() {
   }
 }
 
+/* ── ink: a colour change travels ────────────────────────────────────────────
+   effects.css paints the wash and its iridescent front on one injected span per
+   control; this file gives it the span, the noise its front is torn by, and the
+   point the pointer crossed the edge, so the colour arrives from there and
+   leaves toward where the pointer went. Tier 1 only: without the span the plain
+   fade stands. */
+const INK_HOSTS = ".sl-btn, .sl-icon-btn";
+const INK_FILTER = "sl-fx-ink-noise";
+const SVG_NS = "http://www.w3.org/2000/svg";
+/** The layer reaches 30% past the host on every side (effects.css, inset: -30%). */
+const INK_BLEED = 30;
+
+/** Give a control its ink layer, once. Prepended after the glass layers are in,
+ *  so among the z-index -1 layers it paints first: above the tint, below the
+ *  glass's shine and specular.
+ *  @param {Element} el a button or icon button */
+function injectInk(el) {
+  if (el.querySelector(":scope > .sl-fx-ink")) return;
+  const layer = document.createElement("span");
+  layer.className = "sl-fx-ink";
+  layer.setAttribute("aria-hidden", "true");
+  el.prepend(layer);
+}
+
+function injectInks(root) {
+  if (root instanceof Element && root.matches(INK_HOSTS)) injectInk(root);
+  for (const el of root.querySelectorAll(INK_HOSTS)) injectInk(el);
+}
+
+/** The one noise filter every ink front is torn by, added to the document once.
+ *  Low-frequency fractal noise displacing the wash by up to 70px, so its edge
+ *  arrives unevenly, the way ink spreads in water. */
+function ensureInkFilter() {
+  if (document.getElementById(INK_FILTER)) return;
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("width", "0");
+  svg.setAttribute("height", "0");
+  svg.setAttribute("aria-hidden", "true");
+  svg.style.position = "absolute";
+  const filter = document.createElementNS(SVG_NS, "filter");
+  filter.id = INK_FILTER;
+  for (const [k, v] of [["x", "-20%"], ["y", "-20%"], ["width", "140%"], ["height", "140%"]]) filter.setAttribute(k, v);
+  const noise = document.createElementNS(SVG_NS, "feTurbulence");
+  for (const [k, v] of [["type", "fractalNoise"], ["baseFrequency", "0.02"], ["numOctaves", "3"], ["seed", "7"], ["result", "n"]]) noise.setAttribute(k, v);
+  const shift = document.createElementNS(SVG_NS, "feDisplacementMap");
+  for (const [k, v] of [["in", "SourceGraphic"], ["in2", "n"], ["scale", "70"], ["xChannelSelector", "R"], ["yChannelSelector", "G"]]) shift.setAttribute(k, v);
+  filter.append(noise, shift);
+  svg.append(filter);
+  document.body.append(svg);
+}
+
+/** Where the pointer crossed a control's edge, written in the ink layer's own
+ *  box (which bleeds INK_BLEED% past the host) so the wash grows from there on
+ *  the way in and shrinks toward it on the way out. Moves inside the control
+ *  are ignored: only a crossing of its edge counts.
+ *  @param {PointerEvent} ev a delegated pointerover or pointerout */
+function onInkCross(ev) {
+  const host = ev.target instanceof Element ? ev.target.closest(INK_HOSTS) : null;
+  if (!host || (ev.relatedTarget instanceof Node && host.contains(ev.relatedTarget))) return;
+  const ink = host.querySelector(":scope > .sl-fx-ink");
+  const r = host.getBoundingClientRect();
+  if (!ink || !r.width || !r.height) return;
+  const span = 100 + 2 * INK_BLEED;
+  const x = ((ev.clientX - r.left) / r.width) * 100 + INK_BLEED;
+  const y = ((ev.clientY - r.top) / r.height) * 100 + INK_BLEED;
+  ink.style.setProperty("--px", `${(x / span) * 100}%`);
+  ink.style.setProperty("--py", `${(y / span) * 100}%`);
+}
+
 function injectGlassLayers(root) {
   if (root instanceof Element && root.matches(GLASS_HOSTS)) injectGlass(root);
   for (const el of root.querySelectorAll(GLASS_HOSTS)) injectGlass(el);
@@ -1348,6 +1417,8 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
   injectGlows(root);
+  ensureInkFilter();
+  injectInks(root);
   watchNear(root);
   collectSpecHosts(root);
   armLiveLight(root);
@@ -1357,6 +1428,7 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlows(n);
+      injectInks(n);
       watchNear(n);
       collectSpecHosts(n);
     }
@@ -1372,6 +1444,8 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   window.addEventListener("pointerout", onSpecOut, { passive: true });
   window.addEventListener("scroll", onSpecLayout, { capture: true, passive: true });
   window.addEventListener("resize", onSpecLayout, { passive: true });
+  root.addEventListener("pointerover", onInkCross, { passive: true });
+  root.addEventListener("pointerout", onInkCross, { passive: true });
   root.addEventListener("pointerdown", onPressDown, { passive: true });
   window.addEventListener("pointerup", pressEnd, { passive: true });
   window.addEventListener("pointercancel", pressEnd, { passive: true });

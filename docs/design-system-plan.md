@@ -74,7 +74,7 @@
     "z": { "base": "1", "overlay": "50", "modal": "100", "toast": "200" },
     "motion": { "fast": "120ms", "mid": "220ms", "slow": "360ms", "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)" },
     "shadow": { "sm": "0 1px 2px rgba(0,0,0,0.06)", "md": "0 4px 12px rgba(0,0,0,0.08)", "lg": "0 12px 32px rgba(0,0,0,0.16)" },
-    "focus": { "ring-width": "2px", "ring-offset": "2px" }
+    "focus": { "ring-width": "2px", "ring-offset": "0px" }
   },
   "themes": {
     "light": {
