@@ -3,8 +3,10 @@ slug: 2026-09-24-base-layer-aesthetics
 title: Base-layer aesthetics sweep
 status: draft
 createdAt: 2026-09-24
+workflowStep: ship
+forcedSteps: [specify, context, clarify, plan, implement, validate, ship]
+updatedAt: 2026-09-25
 ---
-
 > **What this file is:** the design contract for the aesthetic sweep of the *base* layer of `@sondalab/ui-kit` — tokens (`sondalab.tokens.json` → `tokens.css`, `themes/*.css`) and `components.css` — and for rolling it out to the two consumers, sondalab-site and spexr.
 > **Audience:** the owner (picks directions), engineers and agents working a slice, reviewers.
 > **Owner:** marcellobarile.
