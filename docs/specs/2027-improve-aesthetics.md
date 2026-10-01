@@ -3,8 +3,10 @@ slug: 2027-improve-aesthetics
 title: Improve aesthetics
 status: draft
 createdAt: 2026-09-10
+workflowStep: ship
+forcedSteps: [context, clarify, plan, implement, validate, ship]
+updatedAt: 2026-09-25
 ---
-
 > **What this file is:** the hub for the aesthetic effort of `@sondalab/ui-kit` after the 2026-09-11 pivot. It holds four things and nothing else: the bar (**Goal**, **Non-goals**), the working method that replaces iterate-until-it-convinces (**Method**), the curated visual ground truth everything is measured against (**Reference knowledge base** — owner-filled), and what has to be true before the ambition counts as met (**Acceptance Criteria**). It does **not** decide mechanism, and it is not an implementation plan.
 > **Audience:** the owner setting the bar and curating the references; engineers and agents working a slice; reviewers deciding whether a slice is done.
 > **Owner:** marcellobarile.

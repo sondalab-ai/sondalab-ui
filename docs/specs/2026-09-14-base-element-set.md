@@ -3,8 +3,10 @@ slug: 2026-09-14-base-element-set
 title: Base element set — @sondalab/ui-kit as a design system
 status: draft
 createdAt: 2026-09-14
+workflowStep: ship
+forcedSteps: [specify, context, clarify, plan, implement, validate, ship]
+updatedAt: 2026-09-25
 ---
-
 # Base element set — `@sondalab/ui-kit` as a design system
 
 > **What this file is:** the implementation contract for the base UI element set that turns `@sondalab/ui-kit` from a token package with a component layer into a design system a Sondalab product can build a whole surface out of. It fixes what is added, the markup shape and role-vars of each element, the one role-var deroga this requires, how the shipped classes relate to the opt-in effects layer, and what must be true per element before a slice counts as done. It does **not** re-derive the grammar: every rule it applies is cited to `docs/design-language.md`.
