@@ -117,14 +117,18 @@
         "sl-field",
         "sl-field__label",
         "sl-field__input",
-        "sl-field__control"
+        "sl-field__control",
+        "sl-field__hint",
+        "sl-field__error"
       ],
       "roleVars": [
         "--slc-surface",
         "--slc-border",
         "--slc-border-strong",
         "--slc-text",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-text-muted",
+        "--slc-danger"
       ]
     },
     {
@@ -487,7 +491,7 @@
         "sl-btn-group"
       ],
       "roleVars": [
-        "--slc-border",
+        "--slc-edge-control",
         "--slc-surface"
       ]
     },

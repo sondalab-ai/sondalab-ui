@@ -299,6 +299,42 @@
   display: none !important;
 }
 
+/* Forced colours (the user's own palette, components.css): every layer the
+   kill switches hide is hidden here too, plus the material's own layers and
+   ink. Each paints page colours -- a tint, a sheen, an arc, a shimmer -- and
+   on a pressed or checked control they sit over the Highlight that
+   components.css paints the state in, so the state read as the page's accent
+   or vanished. Same list as the paint layers above, without the theme prefix;
+   effects-guards.test.mjs keeps the two in step. */
+@media (forced-colors: active) {
+  .sl-fx-glass::before,
+  .sl-fx-glass::after,
+  .sl-fx-press::before,
+  .sl-fx-press::after,
+  .sl-fx-aurora::after,
+  .sl-fx-aurora__glow,
+  .sl-fx-live__canvas,
+  .sl-fx-glass__lens,
+  .sl-fx-glass__lit,
+  .sl-fx-liquid__skin,
+  .sl-fx-goo__field,
+  .sl-fx-glitch::before,
+  .sl-fx-glitch::after,
+  .sl-fx-ink,
+  .sl-glass__backdrop,
+  .sl-glass__tint,
+  .sl-glass__specular,
+  .sl-glass__shine {
+    display: none !important;
+  }
+  /* The shatter's bands are copies of the label in page colours; as in the
+     kill switches, the text comes back when they go. In :is() so no class
+     here is followed by its own brace ahead of its real rule below, which
+     some tests locate by first occurrence. */
+  :is(.sl-fx-glitch__text) { opacity: 1 !important; }
+  :is(.sl-fx-glitch__shard) { opacity: 0 !important; }
+}
+
 /* A halftone is a picture made of spacing and size: high contrast shows none. */
 :root[data-sl-theme="high-contrast"] [data-sl-halftone] { display: none; }
 
@@ -636,6 +672,15 @@
 .sl-field__control:is(.sl-fx-glass, .sl-fx-aurora):is(.sl-fx-glass--field, .sl-fx-aurora--field)::after {
   inset: 0;
 }
+/* An invalid field's edge is the danger ink, alone. The glass chrome and the
+   aurora's arc both ride that same 1px line, and an accent arc lit on a red
+   edge is two colours on one line (owner, 2026-10-01: no gap between lines)
+   that reads as "attention, all fine". They stand down while aria-invalid
+   holds; the material under the label stays. No `>`: a select sits one level
+   deeper, inside .sl-select. */
+.sl-field__control:is(.sl-fx-glass, .sl-fx-aurora):has(.sl-field__input[aria-invalid="true"])::after {
+  display: none;
+}
 
 
 /* ── Translucency ───────────────────────────────────────────────────────────
@@ -745,6 +790,17 @@
      line on ink is darker than the fill, a band inside the ring. */
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-accent-text) 50%, transparent), 0 0 0 3px var(--slc-accent-subtle);
 }
+/* Invalid (components.css): the glass edge yields to the danger ink at rest,
+   on hover and on focus, and the soft inner line follows it at half strength
+   so no other colour sits between edge and fill. The attribute plus the
+   :is() match the hover rule's specificity, and source order settles it. */
+.sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input[aria-invalid="true"]:is(:hover, :focus, :not(:focus)) {
+  border-color: var(--slc-danger-text, var(--slc-danger));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-danger-text, var(--slc-danger)) 50%, transparent);
+}
+.sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input[aria-invalid="true"]:focus {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-danger-text, var(--slc-danger)) 50%, transparent), 0 0 0 3px color-mix(in srgb, var(--slc-danger-text, var(--slc-danger)) 16%, transparent);
+}
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
 .sl-btn--ghost.sl-fx-glass,
@@ -752,7 +808,7 @@
 /* The edge in shade each glass control's fill casts (see the control edge above). */
 .sl-btn.sl-fx-glass,
 .sl-icon-btn.sl-fx-glass {
-  --slfx-control-edge: var(--slc-edge-wash);
+  --slfx-control-edge: var(--slc-edge-control);
   /* The soft inner line: the edge at half strength over whatever fill is
      painted, so it always lands between the edge and the fill. A solid
      half-step lighter line read as a pale gap once the hover fill darkened
@@ -2528,7 +2584,11 @@
   pointer-events: none;
   /* The control's own colour, as effects.js read it at the crossing; until it
      has, the control's ink. */
-  --slfx-ink-c: var(--slfx-ink-tint, currentColor);
+  /* A neutral control (grey fill, ink text) has no hue to shimmer with, and on
+     paper its ink is near-black: the front came out grey (owner, 2026-10-01:
+     "it should be vibrant"). effects.js passes only a chromatic colour; with
+     none, the front is the accent's. */
+  --slfx-ink-c: var(--slfx-ink-tint, var(--slc-accent));
 }
 .sl-fx-ink::before,
 .sl-fx-ink::after {
@@ -2543,7 +2603,7 @@
 .sl-fx-ink::before {
   background: radial-gradient(circle at var(--px, 50%) var(--py, 50%),
     transparent calc(var(--slfx-ink-r) - 40%),
-    oklch(from var(--slfx-ink-c) calc(l + .14) c h / .55) calc(var(--slfx-ink-r) - 14%),
+    oklch(from var(--slfx-ink-c) max(calc(l + .14), .78) c h / .55) calc(var(--slfx-ink-r) - 14%),
     transparent var(--slfx-ink-r));
   mix-blend-mode: screen;
   filter: url(#sl-fx-ink-noise) blur(5px);
@@ -2552,11 +2612,11 @@
    turning 90° while it travels -- one shimmer, gone once the front has passed. */
 .sl-fx-ink::after {
   background: conic-gradient(from var(--slfx-ink-a) at var(--px, 50%) var(--py, 50%),
-    oklch(from var(--slfx-ink-c) calc(l + .1) max(c, .12) calc(h - 110)),
-    oklch(from var(--slfx-ink-c) calc(l + .14) max(c * .8, .1) calc(h - 40)),
-    oklch(from var(--slfx-ink-c) calc(l + .12) max(c, .12) calc(h + 40)),
-    oklch(from var(--slfx-ink-c) calc(l + .1) max(c * .9, .11) calc(h + 110)),
-    oklch(from var(--slfx-ink-c) calc(l + .1) max(c, .12) calc(h - 110)));
+    oklch(from var(--slfx-ink-c) max(calc(l + .1), .7) max(c, .12) calc(h - 110)),
+    oklch(from var(--slfx-ink-c) max(calc(l + .14), .74) max(c * .8, .1) calc(h - 40)),
+    oklch(from var(--slfx-ink-c) max(calc(l + .12), .72) max(c, .12) calc(h + 40)),
+    oklch(from var(--slfx-ink-c) max(calc(l + .1), .7) max(c * .9, .11) calc(h + 110)),
+    oklch(from var(--slfx-ink-c) max(calc(l + .1), .7) max(c, .12) calc(h - 110)));
   mask: radial-gradient(circle at var(--px, 50%) var(--py, 50%),
     transparent calc(var(--slfx-ink-r) - 44%),
     black calc(var(--slfx-ink-r) - 26%),

@@ -77,15 +77,32 @@ Surface panel. Substrate: **R** App.
 ```
 Consumes: `--slc-surface`, `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
 
-### Field — `sl-field` (`__label` · `__input` · `__control`)
-Label + input/textarea/select. Substrate: **R** App.
+### Field — `sl-field` (`__label` · `__input` · `__control` · `__hint` · `__error`)
+Label + input/textarea/select, with an optional hint or error line under it. Substrate: **R** App.
 ```html
 <label class="sl-field">
   <span class="sl-field__label">Product</span>
   <input class="sl-field__input" type="text" placeholder="introspect">
 </label>
 ```
-Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
+With a hint or an error line, the host is a `<div>` and the label names the input by `for`; the line is a sibling the input points at with `aria-describedby`:
+```html
+<div class="sl-field">
+  <label class="sl-field__label" for="product">Product</label>
+  <input class="sl-field__input" id="product" type="text" placeholder="introspect" aria-describedby="product-hint">
+  <p class="sl-field__hint" id="product-hint">The registry name, lower case.</p>
+</div>
+<div class="sl-field">
+  <label class="sl-field__label" for="accent">Accent</label>
+  <input class="sl-field__input" id="accent" type="text" value="#12" aria-invalid="true" aria-describedby="accent-error">
+  <p class="sl-field__error" id="accent-error">Six hex digits, e.g. a registry value.</p>
+</div>
+```
+Don't: put `sl-field__hint` or `sl-field__error` inside a wrapping `<label class="sl-field">`. Everything inside a label becomes the input's accessible name, so the line is read as part of the name and then again as its description.
+
+Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-text-muted`, `--slc-danger`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
+
+`aria-invalid="true"` on the input is the invalid state — no extra class. The edge, the focus ring and the focus halo all take the danger ink together (never a red edge inside an accent ring), and the light theme's spectrum rim stands down. Do: point `aria-describedby` at a `sl-field__error` line, which leads with a drawn mark so the state never rests on colour alone; remove both the attribute and the line once the value is valid. Don't: mark a field invalid before the user has had a chance to fill it.
 
 ### Checkbox — `sl-check` (`__input` · `__box` · `__label`)
 A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that paints the box, and a `<span>` that carries the text. Substrate: **R** IDE/App, **A** Page.
@@ -96,6 +113,8 @@ A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that pai
   <span class="sl-check__label">Run the audit on save</span>
 </label>
 ```
+Mixed (a parent box over a partly-checked set): set `input.indeterminate = true` from script — there is no attribute for it; the box fills and shows a dash instead of the tick. Don't: put `aria-checked` on the native checkbox (ARIA in HTML forbids it, and a screen reader announces the native state anyway).
+
 Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
 
 ### Radio — `sl-radio` (`__input` · `__box` · `__label`)
@@ -232,7 +251,7 @@ Joins `sl-btn` children into one control with a shared 1px rule. Built on the ha
   <button class="sl-btn sl-btn--ghost">Adopt</button>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two. Do: put `sl-fx-glass sl-fx-glass--pane` on the members, never `sl-fx-glass` on `.sl-btn-group` itself — a group's `background` **is** the 1px rule between its members, and the material clears the host's own background so its tint layer can paint instead, so glass on the group dissolves the separator it was supposed to leave alone. The group also clips (`overflow: hidden`), so its ring would be cut at the group's own edges regardless of the background question.
+Consumes: `--slc-edge-control`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two. Do: put `sl-fx-glass sl-fx-glass--pane` on the members, never `sl-fx-glass` on `.sl-btn-group` itself — a group's `background` **is** the 1px rule between its members, and the material clears the host's own background so its tint layer can paint instead, so glass on the group dissolves the separator it was supposed to leave alone. The group also clips (`overflow: hidden`), so its ring would be cut at the group's own edges regardless of the background question.
 
 ### Segmented control — `sl-segmented` (`__item`)
 A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: **R** IDE/App, **A** Page.
@@ -268,7 +287,7 @@ A styled native range input: keyboard, screen readers and touch are the browser'
        oninput="this.style.setProperty('--sl-slider-value',
                (this.value - this.min) / (this.max - this.min) * 100 + '%')">
 ```
-Consumes: `--slc-canvas`, `--slc-text`, `--slc-accent-text`, `--slc-shade-step`, `--slc-shadow-sm`, `--slc-focus`, `--slc-border`. Do: give it an accessible name (`aria-label` or a `<label for>`). Don't: use it for a value the user must set exactly — pair it with a number field, or use one instead.
+Consumes: `--slc-canvas`, `--slc-text`, `--slc-accent-text`, `--slc-shade-step`, `--slc-shadow-sm`, `--slc-focus`, `--slc-border`. Under forced colours (a user palette) the value stays visible: the rest of the track in `GrayText`, the value in `Highlight`, the thumb in `ButtonText` with a `CanvasText` focus ring — forced colours would otherwise drop the fill, which is a gradient image. Do: give it an accessible name (`aria-label` or a `<label for>`). Don't: use it for a value the user must set exactly — pair it with a number field, or use one instead.
 
 ### Icon button — `sl-icon-btn` (`--round`)
 A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
@@ -495,7 +514,7 @@ The edge below is chrome on the border. This is the **surface inside it**, and i
 Four facts that decide whether your pane looks like glass or like nothing:
 
 - **A pane over flat ground shows nothing.** The material is mostly what is behind it. With one flat colour back there, a bend has nothing to bend and a prism has no edge to open — the pane renders almost identically however its chain is configured. Put glass where there is *content* behind it: over a picture, a data grid, a table, a page that scrolls under it. A pane floating on the canvas is a tinted box, and you may as well have spent nothing.
-- **The box caps the bend at a sixth of its shorter side.** `reach` asks; `min(w, h) / 6` decides. A 37px field bends ~6px whatever you ask for. This is not tunable from markup, and it exists because a large bend on a small box samples outside the element's own region, which comes back transparent and renders a flat grey slab.
+- **The box caps the bend at a sixth of its shorter side.** `reach` asks; `min(w, h) / 6` decides. A 32px field bends ~5.3px whatever you ask for. This is not tunable from markup, and it exists because a large bend on a small box samples outside the element's own region, which comes back transparent and renders a flat grey slab.
 - **The frost and the bend compete, and the frost wins.** A frost wider than the bend erases exactly the detail the bend moved. This is why `--slg-lens-blur` is **1.5px** and not the 5.9px the non-lensed layer runs: at 5.9 the refraction on a 37px field measured at most 10/255 of interior change, and raising the bend did not buy it back. If you widen the frost on a lensed surface, you are switching the lens off.
 - **On a lensed host, `__backdrop`'s own blur is dead.** The host's `backdrop-filter` makes it a backdrop root, so that child layer has nothing behind it left to filter. A lensed pane's only frost is `--slg-lens-blur`; the 5.9px figure applies to non-lensed panes alone. Do not "fix" one by changing the other.
 

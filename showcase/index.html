@@ -78,7 +78,7 @@
       font-size: 0.68rem; letter-spacing: 0.06em;
       color: var(--sl-text-muted);
     }
-    .cap b { color: var(--sl-accent-default); font-weight: 600; }
+    .cap b { color: var(--slc-accent-text); font-weight: 600; }
 
     /* -- header: signature sticky translucent ---------------------------- */
     header.top {
@@ -143,7 +143,7 @@
       margin: 1.1rem 0 0;
       color: var(--sl-text-secondary);
     }
-    .hero .accent-word { color: var(--sl-accent-default); font-style: italic; }
+    .hero .accent-word { color: var(--slc-accent-text); font-style: italic; }
     .lede {
       margin-top: 1.5rem;
       font-family: var(--sl-font-sans);
@@ -188,7 +188,7 @@
       display: inline-flex; align-items: center; gap: 0.5rem;
       font-family: var(--sl-font-mono); font-size: 0.64rem; font-weight: 600;
       letter-spacing: 0.16em; text-transform: uppercase;
-      color: var(--sl-accent-default); border: 1px solid var(--sl-accent-subtle);
+      color: var(--slc-accent-text); border: 1px solid var(--sl-accent-subtle);
       padding: 0.28rem 0.55rem; line-height: 1; background: var(--sl-accent-subtle);
     }
     .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sl-accent-default); flex: none; }
@@ -200,8 +200,10 @@
       font-family: var(--sl-font-mono); font-size: 0.8rem; line-height: 1.7;
       padding: 1.1rem 1.2rem; overflow-x: auto; white-space: pre; margin: 0;
     }
-    .realblock .c { color: color-mix(in srgb, var(--sl-bg-canvas) 45%, transparent); }
-    .realblock .k { color: var(--sl-accent-default); font-weight: 600; }
+    /* 66%: a comment is still text (45% read 3.0-4.1:1). */
+    .realblock .c { color: color-mix(in srgb, var(--sl-bg-canvas) 66%, transparent); }
+    /* The block is the page's ink: the band's floor-and-cap accent text (components.css .sl-invert). */
+    .realblock .k { color: oklch(from var(--sl-accent-default) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h); font-weight: 600; }
 
     /* -- L4 motion ------------------------------------------------------- */
     .rise { opacity: 0; transform: translateY(6px); animation: rise var(--sl-motion-slow) var(--sl-motion-ease) forwards; }
@@ -388,10 +390,16 @@
           <div class="g-cell">
             <span class="g-label">field</span>
             <div class="g-demo g-demo--col">
-              <label class="sl-field">
-                <span class="sl-field__label">Query</span>
-                <input class="sl-field__input" type="text" placeholder="resolve(&quot;q-8f2a&quot;)">
-              </label>
+              <div class="sl-field">
+                <label class="sl-field__label" for="demo-query">Query</label>
+                <input class="sl-field__input" id="demo-query" type="text" placeholder="resolve(&quot;q-8f2a&quot;)" aria-describedby="demo-query-hint">
+                <p class="sl-field__hint" id="demo-query-hint">A probe id, or a resolve() call.</p>
+              </div>
+              <div class="sl-field">
+                <label class="sl-field__label" for="demo-accent">Accent</label>
+                <input class="sl-field__input" id="demo-accent" type="text" value="5b6c" aria-invalid="true" aria-describedby="demo-accent-error">
+                <p class="sl-field__error" id="demo-accent-error">Six hex digits &mdash; this one has four.</p>
+              </div>
               <label class="sl-field">
                 <span class="sl-field__label">Notes</span>
                 <textarea class="sl-field__input" placeholder="Optional context…"></textarea>
@@ -411,6 +419,11 @@
                 <input class="sl-check__input" type="checkbox">
                 <span class="sl-check__box"></span>
                 <span class="sl-check__label">Fail the build on an R finding</span>
+              </label>
+              <label class="sl-check">
+                <input class="sl-check__input" type="checkbox" id="demo-mixed">
+                <span class="sl-check__box"></span>
+                <span class="sl-check__label">Audit some products (2 of 4)</span>
               </label>
               <label class="sl-radio">
                 <input class="sl-radio__input" type="radio" name="demo-tier" checked>
@@ -795,6 +808,8 @@
   </footer>
 
   <script>
+    // A mixed box is a DOM property, not markup: there is no indeterminate attribute.
+    document.getElementById("demo-mixed").indeterminate = true;
     // Registry accents: one hue per product. hover/active/subtle re-derive from
     // it via the theme layer (color-mix / relative-color) — the one-var contract.
     // Per theme, from agent/accent-registry.json (default / spexr / introspect):

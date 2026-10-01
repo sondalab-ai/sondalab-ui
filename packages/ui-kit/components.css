@@ -60,6 +60,13 @@
      themes: 4.4 / 4.1 on ink, 3.5 / 3.6 on paper. The sign is read from the
      surface's own lightness, so no theme branch. */
   --slc-edge-control:  oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * 5 * clamp(-1, (0.5 - l) * 1000, 1)) c h);
+  /* ONE CONTROL EDGE (owner, 2026-10-01: "most elements have bright borders
+     and buttons have darker ones -- they should all be consistent"). Every
+     neutral control -- field, select, checkbox, radio, switch, secondary,
+     ghost and icon buttons, chip, segmented -- is outlined in
+     --slc-edge-control; a filled one (primary, pressed) keeps its fill in
+     shade, because the fill is what finds it. Hover is two steps further. */
+  --slc-edge-control-hover: oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * 7 * clamp(-1, (0.5 - l) * 1000, 1)) c h);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
   --slc-canvas:        var(--sl-bg-canvas,         #F4F4F8);
@@ -205,7 +212,7 @@
   line-height: 1;
   color: var(--slc-text-muted);
   background-color: transparent;
-  border: 1px solid var(--slc-edge-ground);
+  border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-pill, 9999px);
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
   cursor: pointer;
@@ -222,7 +229,7 @@
   box-shadow: inset 0 0 0 1px currentColor;
   flex: none;
 }
-.sl-chip:hover:not(:disabled) { color: var(--slc-text); border-color: oklch(from var(--slc-canvas) calc(l - var(--slc-shade-step) * 2) c h); }
+.sl-chip:hover:not(:disabled) { color: var(--slc-text); border-color: var(--slc-edge-control-hover); }
 .sl-chip[aria-pressed="true"] {
   color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
@@ -253,8 +260,8 @@
   border-radius: inherit;
   transition: width var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease);
 }
-.sl-progress--success .sl-progress__bar { background-color: var(--slc-success); }
-.sl-progress--danger  .sl-progress__bar { background-color: var(--slc-danger); }
+.sl-progress--success .sl-progress__bar { background-color: var(--slc-success-text, var(--slc-success)); }
+.sl-progress--danger  .sl-progress__bar { background-color: var(--slc-danger-text, var(--slc-danger)); }
 
 /* Slider — a styled native range input, so keyboard, screen readers and
    touch are the browser's. The value is written twice, like sl-progress:
@@ -360,8 +367,11 @@
   font-size: var(--sl-text-sm, 0.875rem);
   font-weight: 500;
   line-height: 1;
-  /* Quiet precision: compact enough for an IDE toolbar, still a 32px target. */
-  padding: 0.55rem 0.9rem;
+  /* Quiet precision: compact enough for an IDE toolbar, still a 32px target --
+     exactly 32 (14px line + 2 x 8px + 2px border). It measured 33.6 at the
+     old 0.55rem, beside a 32px icon button and a 36.6px field: one row, three
+     heights. Fields, selects and the segmented control now land on 32 too. */
+  padding: 0.5rem 0.9rem;
   /* --md (10px) since 0.11: the glass family's pane needs a rounded slab, and
      at the soft-cast radii --md is already one on a 32px-tall control. */
   border-radius: var(--sl-radius-md, 10px);
@@ -399,9 +409,10 @@
 }
 .sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); --slc-rim-fill: var(--slc-accent-hover); }
 .sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); --slc-rim-fill: var(--slc-accent-active); }
-.sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); border-color: var(--slc-edge-wash); }
+.sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); border-color: var(--slc-edge-control); }
 .sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
-.sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.35rem 0.6rem; }
+/* 24px: 12px line + 2 x 5px + 2px border (was 25.2). */
+.sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.3125rem 0.6rem; }
 
 /* Toggle state — an on/off button is a plain or ghost button, or an icon
    button, carrying aria-pressed. The CSS reads the attribute, so the
@@ -487,12 +498,16 @@
 }
 /* The status text sits on a 12% wash of itself; palette-contrast.test.mjs
    holds every status ink to 4.5:1 on exactly that ground. */
-.sl-badge--success { color: var(--slc-success); background: color-mix(in srgb, currentColor 12%, transparent); }
-.sl-badge--warning { color: var(--slc-warning); background: color-mix(in srgb, currentColor 12%, transparent); }
-.sl-badge--danger  { color: var(--slc-danger);  background: color-mix(in srgb, currentColor 12%, transparent); }
-.sl-badge--info    { color: var(--slc-info);    background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--success { color: var(--slc-success-text, var(--slc-success)); background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--warning { color: var(--slc-warning-text, var(--slc-warning)); background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--danger  { color: var(--slc-danger-text, var(--slc-danger));  background: color-mix(in srgb, currentColor 12%, transparent); }
+.sl-badge--info    { color: var(--slc-info-text, var(--slc-info));    background: color-mix(in srgb, currentColor 12%, transparent); }
 
-/* Field — label + input/textarea/select. Compose __label with __input. */
+/* Field — label + input/textarea/select. Compose __label with __input. The
+   host is a wrapping <label>, or -- with a hint or an error line -- a <div>
+   whose __label is a <label for>: inside a wrapping label the line would be
+   part of the input's name, read once as the name and again as its
+   description. Neither rule here depends on which element is which. */
 .sl-field { display: flex; flex-direction: column; gap: var(--sl-space-2, 0.5rem); }
 .sl-field__label {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
@@ -511,7 +526,11 @@
      on the canvas, so its border is what finds it (>= 3:1, WCAG 1.4.11). */
   border: 1px solid var(--slc-rim-edge, var(--slc-edge-control));
   border-radius: var(--sl-radius-md, 10px);
-  padding: 0.55rem 0.75rem;
+  /* 32px, the button's height: a 20px line + 2 x 5px + 2px border. The line
+     is explicit because an <input> and a <select> resolve "normal" apart
+     (36.6 vs 36.1px), so a field and a select side by side disagreed. */
+  padding: 0.3125rem 0.75rem;
+  line-height: 1.25rem;
   --slc-rim-layers: linear-gradient(color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised)) 0 0), var(--slc-rim);
   /* Prism rim: the fill as an image over the padding box, the spectrum under
      it across the border box, seen through a transparent border. Where the
@@ -531,9 +550,59 @@
   box-shadow: 0 0 0 3px var(--slc-accent-subtle);
 }
 .sl-field__input::placeholder { color: var(--slc-text-muted); }
-.sl-field__input:hover:not(:disabled) { border-color: var(--slc-border-strong); }
+.sl-field__input:hover:not(:disabled) { border-color: var(--slc-edge-control-hover); }
 .sl-field__input:disabled { opacity: 0.5; cursor: not-allowed; }
-textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: var(--sl-line-normal, 1.5); }
+textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: var(--sl-line-normal, 1.5); padding-block: 0.55rem; }
+
+/* Invalid — aria-invalid="true" IS the state, as aria-pressed is a toggle's,
+   so what a screen reader hears and what the eye sees cannot drift apart. The
+   edge, the focus ring and the halo all turn to the danger ink together: a red
+   border flipping to the accent ring on focus would be two colours on one
+   edge (owner, 2026-10-01: no gap between lines), and would read as "fixed".
+   The Prism rim stands down with its documented pair: a spectrum edge that
+   opens on rose already reads like an error, and the real one must not be
+   mistaken for atmosphere. Colour is never the only signal: pair the field
+   with an .sl-field__error message (aria-describedby). The danger is the
+   band-safe one where a band re-derives it (canvas danger on the band's ink
+   is under 3:1), the status role everywhere else. */
+.sl-field__input[aria-invalid="true"] {
+  --slc-rim: initial;
+  --slc-rim-edge: initial;
+  --slc-focus: var(--slc-danger-text, var(--slc-danger));
+  border-color: var(--slc-danger-text, var(--slc-danger));
+}
+.sl-field__input[aria-invalid="true"]:hover:not(:disabled) { border-color: var(--slc-danger-text, var(--slc-danger)); }
+.sl-field__input[aria-invalid="true"]:focus {
+  border-color: var(--slc-danger-text, var(--slc-danger));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--slc-danger-text, var(--slc-danger)) 16%, transparent);
+}
+
+/* Hint and error — the line under a field, tied to it by aria-describedby.
+   Content, not a structural label (L1): sans, sentence case, the field's own
+   xs step. The error leads with a mark so it does not rely on colour alone
+   (WCAG 1.4.1); the mark is drawn, not an icon font, like the tick. */
+.sl-field__hint,
+.sl-field__error {
+  margin: 0;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-xs, 0.75rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text-muted);
+}
+.sl-field__error {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sl-space-2, 0.5rem);
+  color: var(--slc-danger-text, var(--slc-danger));
+}
+.sl-field__error::before {
+  content: "";
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+  transform: translateY(-0.05em) rotate(45deg);
+  background: currentColor;
+}
 
 /* Kbd — keyboard key. */
 .sl-kbd {
@@ -668,6 +737,25 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-check__input:checked + .sl-check__box::after,
 .sl-radio__input:checked + .sl-radio__box::after { opacity: 1; }
 
+/* Mixed — a parent box over a partly-checked set, from the DOM's
+   indeterminate flag (input.indeterminate = true; there is no attribute):
+   filled like checked, a dash instead of the tick, so "some" never reads as
+   "all". It wins over :checked, as the platform's own rendering does. Only
+   :indeterminate: ARIA in HTML forbids aria-checked on a native checkbox, and
+   a screen reader announces the native state, so an aria-checked="mixed"
+   styling hook would show a state nobody hears. */
+.sl-check__input:indeterminate + .sl-check__box {
+  background: var(--slc-accent);
+  border-color: var(--slc-edge-accent);
+}
+.sl-check__input:indeterminate + .sl-check__box::after {
+  width: 0.5rem;
+  height: 0;
+  border-width: 0 0 1.5px 0;
+  transform: none;
+  opacity: 1;
+}
+
 /* Content, not a structural label (L1): sans, sentence case. */
 .sl-check__label,
 .sl-radio__label,
@@ -787,10 +875,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-callout--warning { background: color-mix(in srgb, var(--slc-warning) 8%, var(--slc-surface)); }
 .sl-callout--danger  { background: color-mix(in srgb, var(--slc-danger)  8%, var(--slc-surface)); }
 .sl-callout--info    { background: color-mix(in srgb, var(--slc-info)    8%, var(--slc-surface)); }
-.sl-callout--success::before { background: var(--slc-success); }
-.sl-callout--warning::before { background: var(--slc-warning); }
-.sl-callout--danger::before  { background: var(--slc-danger); }
-.sl-callout--info::before    { background: var(--slc-info); }
+.sl-callout--success::before { background: var(--slc-success-text, var(--slc-success)); }
+.sl-callout--warning::before { background: var(--slc-warning-text, var(--slc-warning)); }
+.sl-callout--danger::before  { background: var(--slc-danger-text, var(--slc-danger)); }
+.sl-callout--info::before    { background: var(--slc-info-text, var(--slc-info)); }
 
 /* Table — shell. Wrap in a scroll container so wide tables never scroll the page:
    <div style="overflow-x:auto"><table class="sl-table">…</table></div> */
@@ -967,9 +1055,32 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      uncapped accent reads (the orange ~7.8:1, the capped text ~2.7), and LIGHT
      on the dark and high-contrast themes, where the bright accent is ~1.3:1.
      Those themes cap it for the band with a number of their own,
-     --sl-accent-band-text-lmax (0.45: every registered accent 5.5-7.4:1). */
-  --slc-accent-text:   oklch(from var(--slc-accent) min(l, var(--sl-accent-band-text-lmax, 1)) c h);
+     --sl-accent-band-text-lmax (0.45: every registered accent 5.5-7.4:1).
+     On light the orange reads uncapped, but a darker product hue does not:
+     spexr's indigo was 3.54:1 on the band's ink, introspect's teal 4.22. So
+     the text is also FLOORED at oklch L 0.68 (every registered accent and
+     status ink >= 5.3:1 on the ink, >= 4.6 on its own 12% wash). The floor
+     sits inside the cap: where a theme caps (dark, high contrast) the result
+     is at most the cap, so an accent darker than the cap is lifted to it --
+     still 5.5:1 or better on those light bands. */
+  --slc-accent-text:   oklch(from var(--slc-accent) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
   --slc-focus:         var(--slc-accent-text);
+  /* The wash under a tag, chip or selected row. High contrast's own subtle is
+     an OPAQUE near-black mix, and a product may register an opaque light one
+     (spexr's registered step): on the band either is a pill of the wrong ground under
+     the re-derived text (the HC tag read 2.48:1). A translucent mix of the
+     accent sits on whatever the band is. */
+  --slc-accent-subtle: color-mix(in srgb, var(--slc-accent) 12%, transparent);
+  /* Status AS TEXT or a thin mark (badge, callout tick, progress bar) takes
+     the same floor and cap: the canvas-tuned inks are dark on light and light
+     on dark, the band's ground is the opposite (a success badge read 2.25:1
+     on light, 1.61 on dark, 1.28 on high contrast). Declared only here --
+     outside a band the components fall back to the status role itself, read
+     live at the element, so a Tier-B mapping on a nested region still lands. */
+  --slc-success-text:  oklch(from var(--slc-success) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
+  --slc-warning-text:  oklch(from var(--slc-warning) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
+  --slc-danger-text:   oklch(from var(--slc-danger)  min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
+  --slc-info-text:     oklch(from var(--slc-info)    min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
   /* Edges in shade were resolved against the page's grounds on :root; here
      the grounds are currentColor washes, so the band keeps its re-derived
      neutral lines instead. */
@@ -978,6 +1089,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-edge-raised:   var(--slc-border-subtle);
   --slc-edge-wash:     var(--slc-border-subtle);
   --slc-edge-control:  var(--slc-border-strong);
+  --slc-edge-control-hover: color-mix(in srgb, currentColor 52%, transparent);
   --slc-edge-pressed:  color-mix(in srgb, var(--slc-accent) 35%, transparent);
 }
 
@@ -1081,8 +1193,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      past the last button, because that ground is the rule between them. */
   width: fit-content;
   gap: 1px;
-  background: var(--slc-border);
-  border: 1px solid var(--slc-border);
+  /* The group is one control, so it wears the one control edge (owner,
+     2026-10-01) -- outline and the rules between its buttons alike. On the
+     neutral line it was 1.4:1 on paper beside a lone ghost at 3.5. */
+  background: var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 10px);
   overflow: hidden;
 }
@@ -1098,7 +1213,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   gap: 1px;
   padding: 2px;
   background: color-mix(in srgb, var(--slc-text) 6%, transparent);
-  border: 1px solid var(--slc-edge-wash);
+  border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 10px);
 }
 .sl-segmented__item {
@@ -1111,7 +1226,10 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   font-size: var(--sl-text-xs, 0.75rem);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
+  /* 26px items in a 2px inset and a 1px edge: the control is 32px, the
+     button's height (it was 36.5). */
+  line-height: 1;
+  padding: 0.4375rem var(--sl-space-4, 1rem);
   border-radius: var(--sl-radius-sm, 6px);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1135,13 +1253,16 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* border-box: the 2rem is the whole control, edge included. In a
+     content-box page it was 34px beside a 32px button. */
+  box-sizing: border-box;
   width: 2rem;
   height: 2rem;
   padding: 0;
   cursor: pointer;
   color: var(--slc-text);
   background: color-mix(in srgb, var(--slc-text) 6%, transparent);
-  border: 1px solid var(--slc-edge-wash);
+  border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 10px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1171,6 +1292,10 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* border-box: the 1.75rem height and min-width are the whole item, edge
+     and padding included, as on a border-box page. In a content-box page it
+     was 30px tall and at least 46px wide, so a one-digit page was no square. */
+  box-sizing: border-box;
   min-width: 1.75rem;
   height: 1.75rem;
   padding: 0 var(--sl-space-2, 0.5rem);
@@ -1462,6 +1587,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* On a selected row the ground is the accent wash, and the muted ink falls
+   below text contrast there on dark: 3.77-4.16:1 across the registered
+   accents (12px meta and counts). The secondary ink clears it on every theme. */
+.sl-list__row:is([aria-selected="true"], [aria-current]) .sl-list__meta,
+.sl-nav__item[aria-current] .sl-nav__count { color: var(--slc-text-secondary); }
 .sl-list--dense .sl-list__row {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
   font-size: var(--sl-text-xs, 0.75rem);
@@ -1588,6 +1718,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-edge-raised:  var(--slc-border);
   --slc-edge-wash:    var(--slc-border);
   --slc-edge-control: var(--slc-border);
+  /* Hover too: left on :root's derivation it is a mid grey, WEAKER than the
+     drawn border at rest, so a hovered field lost its edge. */
+  --slc-edge-control-hover: var(--slc-border-strong);
   --slc-edge-accent:  var(--slc-accent);
   --slc-edge-pressed: var(--slc-accent);
 }
@@ -1610,3 +1743,76 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* A 12% wash vanishes on black: the slider track gets the theme's line. */
 :root[data-sl-theme="high-contrast"] .sl-slider::-webkit-slider-runnable-track { box-shadow: inset 0 0 0 1px var(--slc-border); }
 :root[data-sl-theme="high-contrast"] .sl-slider::-moz-range-track { box-shadow: inset 0 0 0 1px var(--slc-border); }
+
+/* ══ FORCED COLOURS (Windows High Contrast, and any user palette) ════════════
+   Distinct from the kit's own high-contrast theme: here the USER's palette
+   replaces every colour, background colours become the system Canvas, box
+   shadows are dropped and gradient images are removed. Anything whose state
+   is only a fill, a shadow or a gradient then vanishes — a radio's dot, a
+   switch's knob, a progress bar, a slider's value, the selected segment, an
+   "on" toggle. Those few opt out and paint the state in system colours, so it
+   reads in whatever palette the user chose. Nothing else is touched: borders,
+   text and the focus outline already follow the palette.
+   Every system colour is !important: an opted-out element is no longer
+   repainted by the browser, so a consumer rule of equal weight loaded later
+   (introspect's own pressed-chip colour) would otherwise put a page colour
+   back on it — the one place the user's palette must win. The injected effect
+   layers that would paint over Highlight are hidden in effects.css, beside the
+   kit's other kill switches. */
+@media (forced-colors: active) {
+  .sl-check__input:is(:checked, :indeterminate) + .sl-check__box,
+  .sl-radio__input:checked + .sl-radio__box,
+  .sl-switch__input:checked + .sl-switch__track {
+    forced-color-adjust: none;
+    background: Highlight !important;
+    border-color: Highlight !important;
+  }
+  .sl-check__box::after { forced-color-adjust: none; border-color: HighlightText !important; }
+  .sl-radio__box::after { forced-color-adjust: none; background: HighlightText !important; }
+  .sl-switch__track::after { forced-color-adjust: none; background: CanvasText !important; }
+  .sl-switch__input:checked + .sl-switch__track::after { background: HighlightText !important; }
+  .sl-progress { border: 1px solid CanvasText !important; }
+  .sl-progress__bar { forced-color-adjust: none; background: Highlight !important; }
+  :is(.sl-segmented__item[aria-selected="true"], .sl-segmented__item[aria-pressed="true"],
+      .sl-btn:not(.sl-btn--primary)[aria-pressed="true"], .sl-icon-btn[aria-pressed="true"],
+      .sl-chip[aria-pressed="true"], .sl-pagination__item[aria-current]) {
+    forced-color-adjust: none;
+    background: Highlight !important;
+    color: HighlightText !important;
+    border-color: Highlight !important;
+  }
+  .sl-nav__item[aria-current],
+  .sl-list__row:is([aria-selected="true"], [aria-current]) { border-color: Highlight !important; }
+  /* Slider: the value is a gradient image on the WebKit track, and forced
+     colours remove gradient images, so the fill was gone in Chromium and
+     Safari. The whole input opts out (the pseudo-elements inherit it): the
+     rest of the track in GrayText, the value in Highlight, the thumb a
+     ButtonText disc that turns Highlight under the pointer. One rule per
+     engine pseudo-element: an unknown one drops its whole selector list. */
+  .sl-slider { forced-color-adjust: none; }
+  .sl-slider::-webkit-slider-runnable-track {
+    background: linear-gradient(Highlight 0 0) 0 / var(--sl-slider-value, 0%) 100% no-repeat, GrayText !important;
+    box-shadow: none !important;
+  }
+  .sl-slider::-moz-range-track { background: GrayText !important; box-shadow: none !important; }
+  .sl-slider::-moz-range-progress { background: Highlight !important; }
+  .sl-slider::-webkit-slider-thumb { background: ButtonText !important; border-color: ButtonFace !important; box-shadow: none !important; }
+  .sl-slider::-moz-range-thumb { background: ButtonText !important; border-color: ButtonFace !important; box-shadow: none !important; }
+  @media (hover: hover) {
+    .sl-slider:hover:not(:disabled)::-webkit-slider-thumb { background: Highlight !important; }
+    .sl-slider:hover:not(:disabled)::-moz-range-thumb { background: Highlight !important; }
+  }
+  /* Its focus is a ring on the thumb (the input's own outline is off), and
+     opting out keeps that ring in the page's accent: draw it in the palette. */
+  .sl-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px Canvas, 0 0 0 4px CanvasText !important; }
+  .sl-slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2px Canvas, 0 0 0 4px CanvasText !important; }
+  /* Opting out also stops the browser forcing the OUTLINE colour, so the
+     ring on exactly these hosts would keep the page's accent: hand it back. */
+  :is(.sl-check__input:focus-visible + .sl-check__box,
+      .sl-radio__input:focus-visible + .sl-radio__box,
+      .sl-switch__input:focus-visible + .sl-switch__track,
+      .sl-segmented__item:focus-visible, .sl-btn:focus-visible, .sl-icon-btn:focus-visible,
+      .sl-chip:focus-visible, .sl-pagination__item:focus-visible) {
+    outline-color: CanvasText !important;
+  }
+}

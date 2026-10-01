@@ -14,6 +14,9 @@
    enforces the absence of literals. */
 
 import { cornerPx, roundedRectPath, GOO_CONTRAST, GOO_INTERCEPT } from "./geom.js";
+// A neutral (grey wash, ink label) has no hue to shimmer with: the ink front
+// then keeps the CSS fallback, the accent. The notation read lives in colour.js.
+import { isChromatic } from "./colour.js";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const CAP_MS = 1500;                      // hard ceiling on any single burst
@@ -1241,8 +1244,9 @@ function paints(v) {
 
 /** The colour arriving on a control at the moment the pointer crosses it: the
  *  end of its own running background (or glass fill) transition when there is
- *  one, else its current fill, else its ink. Ink tints its front with this so
- *  a red control shimmers red -- it never picks a colour of its own.
+ *  one, else its current fill, else its ink -- the first that has a hue. Ink
+ *  tints its front with this so a red control shimmers red; a neutral one
+ *  returns null and shimmers in the accent.
  *  @param {Element} host the button or icon button
  *  @returns {string|null} a CSS colour, or null to keep the CSS fallback */
 function inkTint(host) {
@@ -1252,11 +1256,11 @@ function inkTint(host) {
     const frames = a.effect?.getKeyframes?.() ?? [];
     const to = frames[frames.length - 1];
     const v = to?.backgroundColor ?? to?.["--slfx-accent-t"];
-    if (paints(v)) return v;
+    if (paints(v) && isChromatic(v)) return v;
   }
   const cs = getComputedStyle(host);
   for (const v of [cs.getPropertyValue("--slfx-accent-t").trim(), cs.backgroundColor, cs.color]) {
-    if (paints(v)) return v;
+    if (paints(v) && isChromatic(v)) return v;
   }
   return null;
 }
