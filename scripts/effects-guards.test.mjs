@@ -1073,10 +1073,19 @@ test("ink: the wash travels on a registered reach, only under no-preference, nev
   assert.match(effects, /\.sl-fx-ink::before\s*\{[^}]*filter:\s*url\(#sl-fx-ink-noise\)/);
 });
 
-test("ink: a press still takes the kit's press colour", () => {
-  for (const m of effects.matchAll(/([^{}]*:has\(> \.sl-fx-ink\):hover[^{]*)\{/g)) {
-    assert.match(m[1], /:active/, `${m[1].trim()} must stand down while pressed`);
+// Regression, 2026-10-01: 0.26.0's ink held each control at rest and painted
+// its own accent tint, so spexr's red danger hover came out indigo. Ink owns no
+// colour: no rule keyed on the ink layer may set a host's fill, border or
+// label, and the front is transparent on both sides of its band.
+test("ink owns no colour: it never sets a host's paint, and its front is a band", () => {
+  for (const m of effects.matchAll(/([^{}]*\.sl-fx-ink[^{}]*)\{([^}]*)\}/g)) {
+    if (!/:has\(> \.sl-fx-ink\)/.test(m[1])) continue;
+    assert.doesNotMatch(m[2], /(^|[;\s])(background|background-color|border-color|color|--slfx-fill|--slc-[\w-]+)\s*:/, `${m[1].trim()} paints the host`);
   }
+  assert.doesNotMatch(effects, /--slfx-ink-to\b/, "ink has no target colour of its own");
+  const front = effects.match(/\.sl-fx-ink::before\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(front, /transparent calc\(var\(--slfx-ink-r\) - 40%\)[\s\S]*transparent var\(--slfx-ink-r\)/, "the front is transparent on both sides");
+  assert.match(effectsJs, /function inkTint\(host\)/, "the tint is read off the control");
 });
 
 test("ink: effects.js injects the layer and the noise filter, Tier 1 only, and tracks the crossing", () => {
