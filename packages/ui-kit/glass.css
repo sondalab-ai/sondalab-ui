@@ -220,8 +220,9 @@
 
    1.5px, not the 5.9 the non-lensed layer runs, because here the frost has a
    bend to protect. The displacement is capped at a sixth of the shorter side,
-   so a 37px field bends about 6px; a 5.9px frost erases that entirely, and
-   raising the bend does not buy it back. The owner's ruling is that the lens
+   so a 32px field bends at most ~5.3px; a 5.9px frost erases that entirely
+   (it erased the 6.2px a field bent when fields were 37px, before 0.27.0),
+   and raising the bend does not buy it back. The owner's ruling is that the lens
    must be visible on every surface, so the frost yields to it: a legible
    ghost of the copy behind, rather than a smear with no refraction in it.
 

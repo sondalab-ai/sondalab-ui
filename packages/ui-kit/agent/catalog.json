@@ -570,7 +570,7 @@
         "sl-pagination__item"
       ],
       "roleVars": [
-        "--slc-border",
+        "--slc-edge-control-hover",
         "--slc-text-muted",
         "--slc-text",
         "--slc-accent",
