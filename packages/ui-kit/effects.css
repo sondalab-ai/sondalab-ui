@@ -730,10 +730,10 @@
   --slg-rim-lo: transparent;
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-raised, var(--slfx-edge-soft)) 50%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-control, var(--slfx-edge-soft)) 50%, transparent);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
-  border-color: var(--slc-edge-raised, var(--slfx-edge-mid));
+  border-color: var(--slc-edge-control, var(--slfx-edge-mid));
 }
 /* The rest line is already the strong border the shipped hover used, so hover
    brightens it toward the glint instead — the same light the arc is made of. */

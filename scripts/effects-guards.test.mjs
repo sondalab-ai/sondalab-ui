@@ -156,8 +156,8 @@ test("every glass control carries the two-line edge, with or without mount()", (
   assert.match(rule[2], /--slg-rim-lo:\s*transparent/, "buttons: flat like a field, no __shine rim");
   const input = [...effects.matchAll(/\.sl-field__control:is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)[^{]*\.sl-field__input(:[^{]*)?\s*\{([^}]*)\}/g)]
     .map((m) => (m[1] ?? "") + m[2]).join("\n");
-  assert.match(input, /inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-raised, var\(--slfx-edge-soft\)\) 50%, transparent\)/, "fields: soft line on the input");
-  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-raised, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
+  assert.match(input, /inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-control, var\(--slfx-edge-soft\)\) 50%, transparent\)/, "fields: soft line on the input");
+  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-control, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
   assert.match(input, /:focus\s*box-shadow:[^;]*0 0 0 3px var\(--slc-accent-subtle\)/, "fields: focus keeps its halo");
   assert.match(input, /:focus\s*(?:\/\*[\s\S]*?\*\/\s*)?box-shadow:\s*inset 0 0 0 1px color-mix\(in oklab, var\(--slc-accent-text\) 50%, transparent\)/, "fields: on focus the soft line follows the accent border, no band inside the ring");
 });
