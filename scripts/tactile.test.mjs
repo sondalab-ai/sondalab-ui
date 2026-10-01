@@ -62,7 +62,7 @@ test("glass control panes press with the kit squash formula, keeping the swell k
   const Reffects = rules(effects);
   const paneBase = Reffects.find((r) => r.selector === ".sl-fx-glass--pane" && /transition/.test(r.body));
   assert.ok(paneBase, ".sl-fx-glass--pane has no transition");
-  assert.match(paneBase.body, /transition.*transform.*var\(--sl-motion-spring/, "pane base does not use spring");
+  assert.match(paneBase.body, /transition[\s\S]*transform[\s\S]*var\(--sl-motion-spring/, "pane base does not use spring");
 
   const paneActive = Reffects.find((r) => r.selector === `${CONTROLS}.sl-fx-glass--pane:active${OFF}`);
   assert.ok(paneActive, "control-pane press rule not found");
@@ -215,7 +215,7 @@ test("the slider's focus ring is a box-shadow on its thumb, in each engine, not 
   for (const thumb of ["::-webkit-slider-thumb", "::-moz-range-thumb"]) {
     const ring = R.find((r) => r.selector === `.sl-slider:focus-visible${thumb}`);
     assert.ok(ring, thumb);
-    assert.match(ring.body, /box-shadow:\s*0 0 0 var\(--sl-focus-ring-offset, 2px\) var\(--slc-canvas\), 0 0 0 calc\(var\(--sl-focus-ring-offset, 2px\) \+ var\(--sl-focus-ring-width, 2px\)\) var\(--slc-focus\), var\(--slc-shadow-sm\)/, thumb);
+    assert.match(ring.body, /box-shadow:\s*0 0 0 var\(--sl-focus-ring-offset, 0px\) var\(--slc-canvas\), 0 0 0 calc\(var\(--sl-focus-ring-offset, 0px\) \+ var\(--sl-focus-ring-width, 2px\)\) var\(--slc-focus\), var\(--slc-shadow-sm\)/, thumb);
     assert.doesNotMatch(ring.body, /outline/, thumb);
   }
 });

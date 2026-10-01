@@ -321,7 +321,7 @@
     .goo-chip:active { cursor: grabbing; }
     .goo-chip:focus-visible {
       outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus, var(--sl-accent-default));
-      outline-offset: var(--sl-focus-ring-offset, 2px);
+      outline-offset: var(--sl-focus-ring-offset, 0px);
     }
     .goo-chip--a { background: var(--sl-accent-default); color: var(--sl-text-on-accent); }
     .goo-chip--b { background: var(--sl-accent-depth); color: var(--sl-text-on-accent); }
@@ -343,6 +343,20 @@
 
     footer { border-top: 1px solid var(--sl-border-subtle); padding-block: 2.5rem; }
     footer .cap { max-width: var(--sl-measure); line-height: 1.6; }
+  </style>
+  <style>
+    /* spexr's filled indigo (spexr-overrides.css, 2026-10-01): its primary is a
+       deeper indigo than its accent so the label can be white -- the accent
+       itself (#5b6cff / #8b96ff) still drives links, tags and the focus ring.
+       Product-local, so it lives in the product and is mirrored here only to
+       show the Indigo swatch as spexr ships it. */
+    [data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) .sl-btn--primary {
+      --slc-accent: #4c58e9;
+      --slc-edge-accent: oklch(from #4c58e9 calc(l - var(--slc-shade-step, 0.075)) c h);
+      --slc-on-accent: #ffffff;
+    }
+    [data-demo-accent="indigo"][data-sl-theme="light"] .sl-btn--primary { --slc-accent-hover: #424adb; --slc-accent-active: #393ccd; }
+    [data-demo-accent="indigo"][data-sl-theme="dark"] .sl-btn--primary { --slc-accent-hover: #505ef0; --slc-accent-active: #424adb; }
   </style>
 </head>
 <body>
@@ -925,6 +939,7 @@
     function applyAccent(a) {
       var pair = ACCENTS[a]; if (!pair) return;
       accent = a;
+      root.setAttribute("data-demo-accent", a);
       var theme = root.getAttribute("data-sl-theme");
       var hue = theme === "light" ? pair.light : pair.dark;
       // High contrast owns its accent outright; an inline hue would override it.

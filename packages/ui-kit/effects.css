@@ -316,8 +316,20 @@
    the PADDING box, so `inset: -1px` lands on a 1px border — and 1px outside
    the box when the element has none (a filled button, the only case where the
    ring is external). Width is `padding`, so it grows INWARD: growing outward
-   would walk into the focus outline at `outline-offset: 2px`, which no effect
-   may ever occupy. Do not "correct" the negative inset to a positive one. */
+   would walk into the focus outline, which sits flush outside the border
+   (`outline-offset: 0` since 2026-10-01 -- no gap between lines) and which no
+   effect may ever occupy. Do not "correct" the negative inset to a positive one. */
+
+/* The glass primary's fill as a registered <color>, so a hover or press change
+   fades instead of snapping: an unregistered custom property swaps at once, and
+   the tint layer paints it as a gradient, which never interpolates. Its own
+   name, not --slg-accent: a registered property always has a value, and that
+   would shadow every var(--slg-accent, ...) fallback in glass.css. */
+@property --slfx-accent-t {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
 
 @property --slfx-angle {
   syntax: "<angle>";
@@ -718,7 +730,7 @@
   --slg-rim-lo: transparent;
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
-  box-shadow: inset 0 0 0 1px oklch(from var(--slc-edge-raised, var(--slfx-edge-soft)) calc(l + var(--slc-shade-step, 0.075) / 2) c h);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-raised, var(--slfx-edge-soft)) 50%, transparent);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
   border-color: var(--slc-edge-raised, var(--slfx-edge-mid));
@@ -729,7 +741,9 @@
   border-color: var(--slfx-edge-hi);
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:focus {
-  box-shadow: inset 0 0 0 1px oklch(from var(--slc-edge-raised, var(--slfx-edge-soft)) calc(l + var(--slc-shade-step, 0.075) / 2) c h), 0 0 0 3px var(--slc-accent-subtle);
+  /* The soft line follows the focus border; the resting edge's half-strength
+     line on ink is darker than the fill, a band inside the ring. */
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-accent-text) 50%, transparent), 0 0 0 3px var(--slc-accent-subtle);
 }
 /* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
    what ships; the tint stays the page's ground from the group above. */
@@ -739,12 +753,21 @@
 .sl-btn.sl-fx-glass,
 .sl-icon-btn.sl-fx-glass {
   --slfx-control-edge: var(--slc-edge-wash);
-  /* The soft inner line: half a step, between the fill and its edge. */
-  --slfx-control-edge-soft: oklch(from var(--slfx-control-edge) calc(l + var(--slc-shade-step, 0.075) / 2) c h);
+  /* The soft inner line: the edge at half strength over whatever fill is
+     painted, so it always lands between the edge and the fill. A solid
+     half-step lighter line read as a pale gap once the hover fill darkened
+     past it (owner, 2026-10-01: "no gaps between borders in any case"). */
+  --slfx-control-edge-soft: color-mix(in oklab, var(--slfx-control-edge) 50%, transparent);
 }
 .sl-btn--primary.sl-fx-glass { --slfx-control-edge: var(--slc-edge-accent); }
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
 .sl-icon-btn.sl-fx-glass[aria-pressed="true"] { --slfx-control-edge: var(--slc-edge-pressed); }
+/* Under keyboard focus the edge IS the ring's colour: the outline sits flush on
+   the border, and an edge in shade left between the two read as a dark band
+   inside the ring on ink -- a gap (owner, 2026-10-01). */
+/* .sl-fx-glass twice: 0-4-0, so it also outranks the pressed toggle's edge
+   (.sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary)). */
+:is(.sl-btn, .sl-icon-btn).sl-fx-glass.sl-fx-glass:focus-visible { --slfx-control-edge: var(--slc-focus); }
 /* A pressed toggle keeps its "on" fill on glass: the pane clears the host's
    background, so the pressed wash is rebound as the pane's fill instead. */
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
@@ -956,9 +979,13 @@
    included — and names no theme. It also binds --slg-accent to the fill,
    which until now fell back to --sl-accent-default: a Tier B product's glass
    primary was tinted with the default accent. */
+/* ONE SHARE, owner 2026-10-01: a dark fill at 72% read pale on paper and
+   could not carry a white label; at 90% spexr's indigo carries it (~4.5:1).
+   The fill reaches the tint through --slfx-accent-t so hover and press fade. */
 .sl-btn--primary.sl-fx-glass {
   --slfx-fill-a: 72%;
-  --slg-accent: oklch(from var(--slfx-fill) l c h / clamp(0.72, 0.72 + (l - 0.61) * 1000, 0.9));
+  --slfx-accent-t: oklch(from var(--slfx-fill) l c h / 0.9);
+  --slg-accent: var(--slfx-accent-t);
   --slg-accent-a: 100%;
 }
 
@@ -976,7 +1003,15 @@
 /* Only on a translucent pane: without the layers, under high contrast and in an
    opt-out region the primary is its own opaque fill again, and its label goes
    back to --slc-on-accent. */
-.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) { color: var(--slfx-shade); }
+/* RULING 8, AMENDED (owner, 2026-10-01): the label is the pole that contrasts
+   with the pane AS IT COMPOSITES -- the resting accent at 90% over the canvas.
+   Every shipped accent but a deep one lands light, so the dark pole holds for
+   them; a deep fill (spexr's indigo, local-agents' light blue) takes white.
+   0.59 is where the two poles measure equal on that composite. The resting
+   accent, not the live fill, so the label does not flip on hover or press. */
+.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
+  color: oklch(from color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas)) clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h);
+}
 
 /* Ruling 9 — the lit rim is one continuous hairline, never a bevel. The pane's
    body shipped three inset shadows: a top band, a bottom shade and a full ring.
@@ -1130,7 +1165,13 @@
   /* The sink and the return, on the spring. The duration is a motion token,
      so reduced motion zeroes it with the rest; the spring's shape is
      time-normalised and plays at whatever duration it is given. */
-  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+  transition:
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    --slfx-accent-t var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-fx-press:active:not(:disabled, [aria-disabled="true"]) {
   /* The same squash as components.css's TACTILE block: a control moves the
@@ -1329,8 +1370,9 @@
    fill paints under, so the shared ring — pinned to that border band — sits
    on the fill, accent on accent, and vanishes. The declension says a filled
    element's ring sits OUTSIDE the box, and this is what makes it true: the
-   ring steps one border-width further out, hugging the fill, in the 2px the
-   focus outline (outline-offset: 2px) leaves free, and never past it. Its
+   ring steps one border-width further out, hugging the fill, 2px wide and
+   never past that -- the band the focus outline takes (flush, outline-offset:
+   0), so under keyboard focus the outline covers the rim and is the signal. Its
    hue is the depth companion, because the accent is what the fill is made
    of — contrast against the page, not against the button — and it has to
    read as ITS OWN colour beside the fill, so the core stays coloured rather
@@ -1343,7 +1385,7 @@
    override is scoped out of both kill switches, which restore the plain
    disabled look. */
 .sl-fx-aurora--rim {
-  /* 2px: the whole of the strip the outline leaves free. A 1px line of the
+  /* 2px: the outline's own width, so the rim never reaches past it. A 1px line of the
      depth companion against the page is below the threshold of notice; the
      ring has to carry its own weight out here, with nothing behind it. */
   --slfx-ring-w: 2px;
@@ -2175,7 +2217,13 @@
   /* Kit-wide press and spring return: the pane moves exactly like a plain
      control. The stand-down knob still works — a wrapper that sets
      --slfx-pane-swell: 1 yields k = 0 and no press. */
-  transition: transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
+  transition:
+    transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    --slfx-accent-t var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 /* THE AMOUNT IS A KNOB, AND IT IS READ WITH A FALLBACK, NOT DECLARED. A
    surface that wraps the pane and its seated glow in a box of its own and
@@ -2441,3 +2489,112 @@
    layout width and grow with every redraw at a device pixel ratio above 1; it
    takes its container's width, square. Zero specificity: any author width wins. */
 :where([data-sl-halftone]) { display: block; width: 100%; aspect-ratio: 1; }
+
+/* ══ INK — a colour change travels ══════════════════════════════════════════
+   Owner, 2026-10-01: a control's hover colour does not cross-fade in place, it
+   ARRIVES: it blooms from where the pointer came in, behind a soft blurred
+   front torn by noise, carrying a brief band of iridescence -- hues either side
+   of the accent's own -- and recedes toward where the pointer left. Not a
+   family with a meaning of its own (L6): it is how the kit's colour changes
+   move, like the gummy press is how its presses move (L4).
+
+   Tier 1 only. mount() injects one <span class="sl-fx-ink"> into each button
+   and icon button; ::before is the wash, ::after the iridescent front. Without
+   the span -- no JavaScript, reduced motion, high contrast -- nothing here
+   matches and the plain 120ms fade stands. While the span is there the host's
+   own hover fill is held at rest, so the wash is the only thing that changes
+   colour; a pressed toggle and a disabled control keep their own behaviour.
+
+   effects.js writes --px/--py (the pointer's crossing, in the layer's own box)
+   and owns the noise filter #sl-fx-ink-noise. */
+@property --slfx-ink-r { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --slfx-ink-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+:is(.sl-btn, .sl-icon-btn):has(> .sl-fx-ink) {
+  position: relative;
+  isolation: isolate;
+  /* The wash's colour and its front, per fill. A primary deepens; every other
+     control takes a tint of the accent. */
+  --slfx-ink-to: color-mix(in srgb, var(--slc-accent) 18%, transparent);
+  --slfx-ink-front: color-mix(in srgb, var(--slc-accent) 45%, transparent);
+  --slfx-ink-base: var(--slc-accent);
+}
+.sl-btn--primary:has(> .sl-fx-ink) {
+  --slfx-ink-to: oklch(from var(--slc-accent) calc(l - 0.12) calc(c * 1.1) h);
+  --slfx-ink-front: oklch(from var(--slc-accent) calc(l + 0.14) calc(c * 1.25) h);
+}
+
+.sl-fx-ink {
+  position: absolute;
+  inset: 0;
+  /* Above the glass tint (-2), below its shine and specular (-1, later in DOM
+     order) and below the label, which is inline content. */
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.sl-fx-ink::before,
+.sl-fx-ink::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+}
+/* The wash: the new colour behind a wide (40%) feathered edge, a lifted front
+   running ahead of it, torn by the noise and blurred. */
+.sl-fx-ink::before {
+  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%),
+    var(--slfx-ink-to) calc(var(--slfx-ink-r) - 40%),
+    var(--slfx-ink-front) calc(var(--slfx-ink-r) - 14%),
+    transparent var(--slfx-ink-r));
+  filter: url(#sl-fx-ink-noise) blur(5px);
+}
+/* The iridescence: a slow band of hues ±110° from the accent, only in the ring
+   the front occupies, turning 90° while it travels -- one shimmer, gone once
+   the colour has settled. Screened on ink, laid normally on paper. */
+.sl-fx-ink::after {
+  background: conic-gradient(from var(--slfx-ink-a) at var(--px, 50%) var(--py, 50%),
+    oklch(from var(--slfx-ink-base) calc(l + .1) max(c, .12) calc(h - 110)),
+    oklch(from var(--slfx-ink-base) calc(l + .14) max(c * .8, .1) calc(h - 40)),
+    oklch(from var(--slfx-ink-base) calc(l + .12) max(c, .12) calc(h + 40)),
+    oklch(from var(--slfx-ink-base) calc(l + .1) max(c * .9, .11) calc(h + 110)),
+    oklch(from var(--slfx-ink-base) calc(l + .1) max(c, .12) calc(h - 110)));
+  mask: radial-gradient(circle at var(--px, 50%) var(--py, 50%),
+    transparent calc(var(--slfx-ink-r) - 44%),
+    black calc(var(--slfx-ink-r) - 26%),
+    black calc(var(--slfx-ink-r) - 14%),
+    transparent var(--slfx-ink-r));
+  opacity: .55;
+  mix-blend-mode: screen;
+  filter: url(#sl-fx-ink-noise) blur(6px);
+}
+[data-sl-theme="light"] .sl-fx-ink::after { mix-blend-mode: normal; opacity: .4; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .sl-fx-ink::before,
+  .sl-fx-ink::after {
+    transition:
+      --slfx-ink-r var(--sl-motion-ink-out, 700ms) cubic-bezier(.4, 0, .2, 1),
+      --slfx-ink-a var(--sl-motion-ink-out, 700ms) var(--sl-motion-ease, ease);
+  }
+  :is(.sl-btn, .sl-icon-btn):hover:not(:disabled, [aria-disabled="true"], [aria-pressed="true"]) > .sl-fx-ink::before,
+  :is(.sl-btn, .sl-icon-btn):hover:not(:disabled, [aria-disabled="true"], [aria-pressed="true"]) > .sl-fx-ink::after {
+    --slfx-ink-r: 230%;
+    --slfx-ink-a: 90deg;
+    transition:
+      --slfx-ink-r var(--sl-motion-ink-in, 1100ms) cubic-bezier(.22, .7, .25, 1),
+      --slfx-ink-a var(--sl-motion-ink-in, 1100ms) var(--sl-motion-ease, ease);
+  }
+  /* The host's own hover fill holds at rest while the wash carries the change.
+     :not(:active), so a press still takes the kit's press colour. */
+  .sl-btn--primary:has(> .sl-fx-ink):hover:not(:disabled, :active) { background-color: var(--slc-accent); --slc-rim-fill: var(--slc-accent); }
+  .sl-btn--primary.sl-fx-glass:has(> .sl-fx-ink):hover:not(:disabled, :active) { --slfx-fill: var(--slc-accent); }
+  :is(.sl-btn--ghost, .sl-icon-btn):has(> .sl-fx-ink):hover:not(:disabled, :active, [aria-pressed="true"]) { background: color-mix(in srgb, var(--slc-text) 6%, transparent); }
+  /* On glass the host's rest is transparent -- the pane is the fill. */
+  :is(.sl-btn--ghost, .sl-icon-btn).sl-glass:has(> .sl-fx-ink):hover:not(:disabled, :active, [aria-pressed="true"]) { background: transparent; }
+}
+
+/* Never where the effects layer is refused. */
+:root[data-sl-theme="high-contrast"] .sl-fx-ink,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) > .sl-fx-ink { display: none; }

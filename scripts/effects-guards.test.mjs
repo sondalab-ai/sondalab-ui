@@ -156,9 +156,26 @@ test("every glass control carries the two-line edge, with or without mount()", (
   assert.match(rule[2], /--slg-rim-lo:\s*transparent/, "buttons: flat like a field, no __shine rim");
   const input = [...effects.matchAll(/\.sl-field__control:is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)[^{]*\.sl-field__input(:[^{]*)?\s*\{([^}]*)\}/g)]
     .map((m) => (m[1] ?? "") + m[2]).join("\n");
-  assert.match(input, /inset 0 0 0 1px oklch\(from var\(--slc-edge-raised, var\(--slfx-edge-soft\)\)/, "fields: soft line on the input");
+  assert.match(input, /inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-raised, var\(--slfx-edge-soft\)\) 50%, transparent\)/, "fields: soft line on the input");
   assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-raised, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
   assert.match(input, /:focus\s*box-shadow:[^;]*0 0 0 3px var\(--slc-accent-subtle\)/, "fields: focus keeps its halo");
+  assert.match(input, /:focus\s*(?:\/\*[\s\S]*?\*\/\s*)?box-shadow:\s*inset 0 0 0 1px color-mix\(in oklab, var\(--slc-accent-text\) 50%, transparent\)/, "fields: on focus the soft line follows the accent border, no band inside the ring");
+});
+
+// Regression, 2026-10-01: the soft inner line was a SOLID colour half a shade
+// step lighter than the edge. Once a hover fill darkened past it, it read as a
+// pale ring between the border and the fill -- a gap. Translucent, it composites
+// over whatever fill is painted and so always lands between edge and fill.
+test("the soft inner line is the edge at half strength, never a solid lighter colour", () => {
+  assert.match(effects, /--slfx-control-edge-soft:\s*color-mix\(in oklab, var\(--slfx-control-edge\) 50%, transparent\);/);
+  assert.doesNotMatch(effects, /--slfx-control-edge-soft:\s*oklch\(/, "the soft line may not be a solid shifted colour");
+});
+
+// Regression, 2026-10-01: a glass control filling a bordered frame stacked its
+// own edge inside the frame's line -- line, dark band, fill. The frame yields.
+test("a frame that a control fills gives up its own border", () => {
+  const comp = readFileSync(resolve(KIT, "compositions.css"), "utf8");
+  assert.match(comp, /\.sl-figure__media:has\(> :is\(\.sl-btn, \.sl-icon-btn\)\)\s*\{\s*border-width:\s*0;\s*\}/);
 });
 
 test("--slfx-angle is registered with @property", () => {
@@ -837,8 +854,8 @@ test("a glass host keeps its own fill until the layers exist", () => {
   const glass = clears.filter((sel) => sel.includes(".sl-fx-glass"));
   assert.ok(glass.length > 0, "the translucency rule is still there");
   for (const sel of glass) assert.match(sel, /:where\(\.sl-glass\)/, `${sel} must wait for the layers`);
-  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*var\(--slfx-shade\)/)?.[0] ?? "";
-  assert.match(label, /:where\(\.sl-glass\)/, "the dark label only on a built pane");
+  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*oklch\(from color-mix/)?.[0] ?? "";
+  assert.match(label, /:where\(\.sl-glass\)/, "the composite-picked label only on a built pane");
   assert.match(label, /:not\(\[data-sl-theme="high-contrast"\]\)/, "and never under high contrast");
   assert.match(label, /data-sl-fx="off"/, "nor in an opt-out region");
 });
@@ -1019,9 +1036,54 @@ test("the glass primary's label has no text-shadow", () => {
 // primary's resting share follows its fill's lightness (the label's pole):
 // 90% where the label is the dark pole, 72% (Ruling 8's measurement) where it
 // is not, and the tint takes the fill in effect rather than the default accent.
-test("the glass primary rests at 90% on a light fill, 72% on a dark one, in its own colour", () => {
+// Owner, 2026-10-01: one 90% share for every fill, through a registered colour
+// so hover and press fade; the label is the pole that contrasts with the
+// composite of the RESTING accent, so it never flips mid-hover.
+test("the glass primary rests at 90%, fades its fill, and picks its label from the composite", () => {
   const r = RULES.find((r) => r.selector.trim() === ".sl-btn--primary.sl-fx-glass" && /--slg-accent\s*:/.test(r.body));
   assert.ok(r, "the glass primary binds --slg-accent");
-  assert.match(r.body, /--slg-accent:\s*oklch\(from var\(--slfx-fill\) l c h \/ clamp\(0\.72, 0\.72 \+ \(l - 0\.61\) \* 1000, 0\.9\)\)/);
+  assert.match(r.body, /--slfx-accent-t:\s*oklch\(from var\(--slfx-fill\) l c h \/ 0\.9\)/);
+  assert.match(r.body, /--slg-accent:\s*var\(--slfx-accent-t\)/);
   assert.match(r.body, /--slg-accent-a:\s*100%/);
+  assert.match(effects, /@property\s+--slfx-accent-t\s*\{[^}]*syntax:\s*"<color>"/);
+  assert.match(effects, /color:\s*oklch\(from color-mix\(in oklab, var\(--slc-accent\) 90%, var\(--slc-canvas\)\) clamp\(0\.16, \(0\.59 - l\) \* 1000, 0\.985\) 0 h\)/);
+});
+
+// Regression, 2026-10-01: .sl-fx-glass--pane and .sl-fx-press reset `transition`
+// to transform alone, so every glass control's hover colour snapped.
+test("glass panes and press hosts keep the colour transitions", () => {
+  for (const sel of [".sl-fx-glass--pane", ".sl-fx-press"]) {
+    const r = RULES.find((r) => r.selector.trim() === sel && /transition:/.test(r.body));
+    assert.ok(r, sel);
+    for (const prop of ["color", "background-color", "border-color", "box-shadow", "--slfx-accent-t"]) {
+      assert.match(r.body, new RegExp(`\\s${prop.replace(/-/g, "\\-")} var\\(--sl-motion-fast`), `${sel}: ${prop}`);
+    }
+  }
+});
+
+// Owner, 2026-10-01: a control's colour change travels (INK). Tier 1 only, and
+// the plain fade is what stands wherever the layer is not injected.
+test("ink: the wash travels on a registered reach, only under no-preference, never in high contrast or opt-out", () => {
+  assert.match(effects, /@property\s+--slfx-ink-r\s*\{[^}]*syntax:\s*"<percentage>"/);
+  assert.match(effects, /@property\s+--slfx-ink-a\s*\{[^}]*syntax:\s*"<angle>"/);
+  const motion = effects.slice(effects.indexOf("@media (prefers-reduced-motion: no-preference) {\n  .sl-fx-ink::before"));
+  assert.ok(motion.length > 0, "the ink's motion sits inside the no-preference query");
+  assert.match(motion, /--slfx-ink-r:\s*230%/);
+  assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \.sl-fx-ink,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\) > \.sl-fx-ink\s*\{\s*display:\s*none;/);
+  assert.match(effects, /\.sl-fx-ink::before\s*\{[^}]*filter:\s*url\(#sl-fx-ink-noise\)/);
+});
+
+test("ink: a press still takes the kit's press colour", () => {
+  for (const m of effects.matchAll(/([^{}]*:has\(> \.sl-fx-ink\):hover[^{]*)\{/g)) {
+    assert.match(m[1], /:active/, `${m[1].trim()} must stand down while pressed`);
+  }
+});
+
+test("ink: effects.js injects the layer and the noise filter, Tier 1 only, and tracks the crossing", () => {
+  assert.match(effectsJs, /const INK_HOSTS = "\.sl-btn, \.sl-icon-btn";/);
+  assert.match(effectsJs, /const INK_FILTER = "sl-fx-ink-noise";/);
+  const guard = effectsJs.indexOf("if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;");
+  assert.ok(effectsJs.indexOf("injectInks(root);") > guard, "ink is injected after the reduced-motion guard");
+  assert.match(effectsJs, /addEventListener\("pointerover", onInkCross/);
+  assert.match(effectsJs, /addEventListener\("pointerout", onInkCross/);
 });

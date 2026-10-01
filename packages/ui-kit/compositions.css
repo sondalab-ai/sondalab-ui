@@ -48,6 +48,15 @@
 .sl-figure__media,
 .sl-btn-group { --slfx-pane-swell: 1; }
 
+/* A frame that a control FILLS gives up its own border: the control's edge is
+   the edge. Two strokes stacked flush read as a line, a band of something
+   else, then a line -- a gap (owner, 2026-10-01: "no gaps between borders in
+   any case"). The frame yields, not the control, because the control's border
+   band is where its specular arc, its aurora and its focus border live, and
+   the frame's clip would cut all three if the control lost it. .sl-btn-group
+   already strips its members' borders (components.css). */
+.sl-figure__media:has(> :is(.sl-btn, .sl-icon-btn)) { border-width: 0; }
+
 /* A PANE OVER A PICTURE CAN AFFORD A WIDER PRISM, and the lens already says so.
    glass-lens.js splits the backdrop into three feDisplacementMaps -- R bent
    least, B most, the glass-studio IOR triple -- and reads the separation from

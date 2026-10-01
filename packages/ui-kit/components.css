@@ -112,7 +112,10 @@
 .sl-resizer:focus-visible,
 [data-sl-tooltip]:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
-  outline-offset: var(--sl-focus-ring-offset, 2px);
+  outline-offset: var(--sl-focus-ring-offset, 0px);
+  /* Flush ring, and the border joins it: any other colour between the ring
+     and the fill reads as a band -- a gap (owner, 2026-10-01). */
+  border-color: var(--slc-focus);
 }
 /* The outline follows the element's own corners, so the ring sets no radius
    on anything that has one (a 10px field used to snap to 6px on focus). Only
@@ -323,10 +326,10 @@
   transition-timing-function: var(--sl-motion-ease, ease);
 }
 .sl-slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 2px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 2px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 0px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
 }
 .sl-slider:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 2px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 2px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 0px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
 }
 /* Inside an inversion band the ground is the page's text colour, which --slc-canvas
    is not re-derived for: the canvas-derived thumb would vanish into it. On the slider
@@ -401,6 +404,13 @@
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:hover:not(:disabled),
 .sl-icon-btn[aria-pressed="true"]:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--slc-accent) 20%, transparent);
+}
+/* The shared focus rule hands the border to the ring, but these state rules
+   outrank it: an "on" or hovered border left inside the ring is a band. */
+.sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:focus-visible,
+.sl-icon-btn[aria-pressed="true"]:focus-visible,
+.sl-chip:hover:focus-visible {
+  border-color: var(--slc-focus);
 }
 
 /* Card — surface panel. Compose with __title / __body. */
@@ -495,6 +505,7 @@
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   transition: border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+              background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 /* Focus is a halo around the box. The shared outline still draws on
@@ -1085,6 +1096,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-segmented__item:hover { color: var(--slc-text); }
@@ -1114,6 +1126,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-icon-btn:hover:not(:disabled) {
@@ -1146,6 +1160,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-sm, 6px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
@@ -1366,7 +1381,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   cursor: pointer;
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-nav__item:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 4%, transparent); }
 .sl-nav__item[aria-current] {
