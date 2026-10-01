@@ -170,3 +170,52 @@ for (const theme of ["light", "dark"]) {
     }
   }
 }
+
+// The band's text is also FLOORED (components.css .sl-invert > *): on light the
+// band's ground is the page's dark ink, where spexr's indigo read 3.54:1 and
+// introspect's teal 4.22 uncapped. The floor is read off the CSS, so the test
+// follows it. Status inks in the band take the same floor and cap
+// (--slc-<status>-text): a success badge read 2.25 / 1.61 / 1.28 before.
+{
+  const comp = readFileSync(resolve(KIT, "components.css"), "utf8");
+  const band = comp.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  const floor = Number(band.match(/--slc-accent-text:\s*oklch\(from var\(--slc-accent\) min\(max\(l, ([0-9.]+)\)/)?.[1]);
+  const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
+  const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
+    return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
+  const inBand = (hex, cap) => {
+    const [L, C, h] = toOklch(fromHex(hex));
+    const l = Math.min(Math.max(L, floor), cap);
+    return toHex(fromOklch([l, Math.min(C, maxChroma(l, h)), h]));
+  };
+
+  test("the band floors the accent text and the status inks with one number", () => {
+    assert.ok(floor > 0.5 && floor < 1, `no floor on --slc-accent-text in .sl-invert > *: ${floor}`);
+    for (const s of ["success", "warning", "danger", "info"]) {
+      assert.match(band, new RegExp(`--slc-${s}-text:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*min\\(max\\(l, ${floor}\\), var\\(--sl-accent-band-text-lmax, 1\\)\\) c h\\)`), s);
+      assert.match(comp, new RegExp(`\\.sl-badge--${s}\\s*\\{ color: var\\(--slc-${s}-text, var\\(--slc-${s}\\)\\)`), `badge ${s}`);
+    }
+    assert.match(band, /--slc-accent-subtle:\s*color-mix\(in srgb, var\(--slc-accent\) 12%, transparent\)/);
+  });
+
+  for (const theme of ["light", "dark", "high-contrast"]) {
+    const css = readFileSync(resolve(KIT, `themes/${theme}.css`), "utf8");
+    const t = { ...shared, ...vars(`themes/${theme}.css`) };
+    const cap = Number(css.match(/--sl-accent-band-text-lmax:\s*([0-9.]+)/)?.[1] ?? 1);
+    const ground = t["--sl-text-primary"];
+    const inks = [
+      ...STATUS.map((n) => [n, t[n]]),
+      ...(theme === "high-contrast"
+        ? [["accent", t["--sl-accent-default"]]]
+        : Object.entries(registry.products).map(([n, p]) => [n, p[theme] ?? registry.products[p.inherits]?.[theme]])),
+    ];
+    for (const [name, hex] of inks) {
+      test(`${theme} ${name}: reads inside the inversion band, on the band and on its own 12% wash (4.5:1)`, () => {
+        const text = inBand(hex, cap);
+        const bad = [ground, lerp(ground, text, 0.12)]
+          .map((bg) => [bg, ratio(text, bg)]).filter(([, r]) => r < 4.5).map(([bg, r]) => `${text} on ${bg} ${r.toFixed(2)}`);
+        assert.deepEqual(bad, []);
+      });
+    }
+  }
+}

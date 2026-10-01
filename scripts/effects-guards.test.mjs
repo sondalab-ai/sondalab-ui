@@ -1096,3 +1096,56 @@ test("ink: effects.js injects the layer and the noise filter, Tier 1 only, and t
   assert.match(effectsJs, /addEventListener\("pointerover", onInkCross/);
   assert.match(effectsJs, /addEventListener\("pointerout", onInkCross/);
 });
+
+// Regression, 2026-10-01: .sl-glass set the label at 0-1-0, tying and beating
+// .sl-btn--primary by load order, so a primary inside data-sl-fx="off" took
+// the page's ink: light text on a cyan fill.
+test("glass sets its label colour at zero specificity", () => {
+  const glass = readFileSync(resolve(KIT, "glass.css"), "utf8");
+  assert.match(glass, /:where\(\.sl-glass\)\s*\{\s*color:\s*var\(--slg-text, inherit\);\s*\}/);
+  assert.doesNotMatch(glass.replace(/\/\*[\s\S]*?\*\//g, ""), /(^|\n)\.sl-glass\s*\{[^}]*\bcolor:/, "no 0-1-0 colour on .sl-glass");
+});
+
+// Owner, 2026-10-01: on paper a neutral control's ink front was grey. A
+// neutral shimmers in the accent, and the front never drops below a vibrant
+// lightness.
+test("ink: a neutral control shimmers in the accent, never grey", () => {
+  assert.match(effects, /--slfx-ink-c:\s*var\(--slfx-ink-tint, var\(--slc-accent\)\);/);
+  assert.match(effectsJs, /import \{ isChromatic \} from "\.\/colour\.js";/);
+  assert.match(effectsJs, /paints\(v\) && isChromatic\(v\)/);
+  // Anchored on the STANDALONE rules -- the selector alone between the last
+  // rule's brace and its own: the shared `.sl-fx-ink::before,\n.sl-fx-ink::after {`
+  // rule carries no stop, and a match on it iterated nothing, so this passed
+  // with every floor removed.
+  const body = (sel) => effects.match(new RegExp(`\\}\\s*${sel.replace(/[.:]/g, "\\$&")} \\{([^}]*)\\}`))?.[1] ?? "";
+  const stops = (sel) => [...body(sel).matchAll(/oklch\(from var\(--slfx-ink-c\) (\S+)/g)].map((m) => m[1]);
+  const iri = stops(".sl-fx-ink::after");
+  assert.equal(iri.length, 5, `the iridescence has five stops, found ${iri.length}`);
+  for (const l of iri) assert.match(l, /^max\(/, `iridescence lightness has a floor: ${l}`);
+  const front = stops(".sl-fx-ink::before");
+  assert.equal(front.length, 1, `the front has one coloured stop, found ${front.length}`);
+  assert.match(front[0], /^max\(/, `the front's lightness has a floor: ${front[0]}`);
+});
+
+// Forced colours (the user's palette) repaint the state of a pressed or
+// checked control in Highlight (components.css), and every injected layer
+// painted page colours over it. The forced-colours list is the high-contrast
+// kill switch's paint layers without the theme prefix, plus the material's
+// own layers and ink -- derived here so the two cannot drift (review,
+// 2026-10-01).
+test("forced colours hide every layer the kill switch hides, plus glass and ink", () => {
+  const from = effects.indexOf(':root[data-sl-theme="high-contrast"] .sl-fx-glass::before,');
+  const paint = effects.slice(from, effects.indexOf("{", from));
+  const hc = [...paint.matchAll(/:root\[data-sl-theme="high-contrast"\] (\.sl-[a-z_-]+(?:::(?:before|after))?),/g)].map((m) => m[1]);
+  assert.ok(hc.length >= 12, `kill-switch paint layers not found (${hc.length})`);
+  const at = effects.indexOf("@media (forced-colors: active)");
+  assert.notEqual(at, -1, "effects.css has no forced-colours block");
+  const rule = effects.slice(at).match(/\{\s*([^{}]*)\{\s*display: none !important;\s*\}/);
+  assert.ok(rule, "the forced-colours block hides its layers with display: none !important");
+  const listed = new Set(rule[1].split(",").map((x) => x.trim()));
+  const want = [...hc, ".sl-glass__backdrop", ".sl-glass__tint", ".sl-glass__specular", ".sl-glass__shine", ".sl-fx-ink"];
+  assert.deepEqual(want.filter((s) => !listed.has(s)), [], "missing from the forced-colours list");
+  const block = effects.slice(at);
+  assert.match(block, /:is\(\.sl-fx-glitch__shard\) \{ opacity: 0 !important; \}/, "the shatter's bands go");
+  assert.match(block, /:is\(\.sl-fx-glitch__text\) \{ opacity: 1 !important; \}/, "and the label comes back");
+});

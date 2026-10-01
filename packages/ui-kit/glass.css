@@ -74,8 +74,12 @@
   position: relative;
   isolation: isolate;
   border-radius: var(--slg-radius, var(--sl-radius-md));
-  color: var(--slg-text, inherit);
 }
+/* The label colour at zero specificity: a component's own colour wins. At
+   0-1-0 this tied .sl-btn--primary's and won by load order, so a primary in a
+   data-sl-fx="off" region -- where effects.css stands its label rule down --
+   inherited the page's ink: light text on a cyan fill (owner, 2026-10-01). */
+:where(.sl-glass) { color: var(--slg-text, inherit); }
 
 /* EVERY default below is a var() fallback at the point of use, never a
    declaration on .sl-glass. A custom property declared on the element itself
