@@ -1101,7 +1101,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-surface:        color-mix(in srgb, currentColor 7%, transparent);
   --slc-raised:         color-mix(in srgb, currentColor 12%, transparent);
   --slc-text-secondary: color-mix(in srgb, currentColor 78%, transparent);
-  --slc-text-muted:     color-mix(in srgb, currentColor 58%, transparent);
+  /* 60%, the least that holds muted text to 4.5:1 on the bare band AND on a
+     card (7%) or a raised surface (12%) placed in it, for every product on
+     every theme: at 58% it read 4.31 on a raised surface in the dark default
+     band. Tightest now 4.58 (palette-contrast.test.mjs). */
+  --slc-text-muted:     color-mix(in srgb, currentColor 60%, transparent);
   --slc-border:         color-mix(in srgb, currentColor 22%, transparent);
   /* The strong line is not decoration here: the checkbox and radio box edge,
      the switch track and ITS KNOB are painted with it. Left on the canvas
