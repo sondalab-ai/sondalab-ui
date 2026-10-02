@@ -42,7 +42,13 @@ Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary 
 <button class="sl-btn sl-btn--ghost">Cancel</button>
 <button class="sl-btn sl-btn--primary sl-btn--sm">Add</button>
 ```
-Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-accent-subtle`, `--slc-on-accent`, `--slc-border`, `--slc-text`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
+Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-accent-subtle`, `--slc-on-accent`, `--slc-border`, `--slc-text`, `--slc-edge-accent`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
+
+**Shortcut in a button** (0.31). A shortcut rides in the label as a child keycap, never as `::after` (glass owns a button's pseudo-elements). Name the shortcut on the button with `aria-keyshortcuts` and hide the cap from its accessible name. The cap is 18px (16px in `--sm`) and gives its extra height back in negative margin, so the button stays on the 32px (24px) row; its text is the label's colour on a fill that steps away from the label, so it never reads weaker than the label on the button: on a neutral button (plain, ghost, a pressed toggle, in a band too) a half wash of the pole opposite the ink; on a primary the accent one step further from its label's pole; on a glass pane primary, whose label is re-picked from the composited pane, that composite one step further from the pane's label. High contrast rings it in its label's colour.
+```html
+<button class="sl-btn sl-btn--primary" aria-keyshortcuts="Meta+S">Save changes <kbd class="sl-kbd" aria-hidden="true">⌘S</kbd></button>
+<button class="sl-btn sl-btn--ghost sl-btn--sm" aria-keyshortcuts="R">Re-run <kbd class="sl-kbd" aria-hidden="true">R</kbd></button>
+```
 
 **Toggle button.** An on/off button is a plain or ghost `sl-btn` carrying `aria-pressed`; "on" takes the accent text, an accent wash and an accent edge. The CSS reads the attribute, so flip `aria-pressed` and nothing else — no `.on`/`.active` class.
 ```html
@@ -184,9 +190,17 @@ Data table shell. Wrap in an `overflow-x:auto` container so wide tables never sc
   </table>
 </div>
 ```
-Consumes: `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`. Do: `--numeric` for tabular figures.
+Consumes: `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`, `--slc-tile`, `--slc-depth-tile`. Do: `--numeric` for tabular figures. A selected row is `<tr aria-selected="true">` (0.31): a raised tile — the tile fill and `--slc-depth-tile` on the row, so the ring and the lit line run unbroken across its cells, and the rules above and below it give way. A row has no corners, so the tile is square. The ring and the cast are what find it: on the light theme the tile is the table's own white, so the fill alone measures 1.00:1, and an engine that does not paint a row's shadow shows nothing. Under forced colours the rules around it are drawn in `Highlight`. **`aria-selected` on a `<tr>` is announced only in a `role="grid"` (or `treegrid`)**: give an interactive table that role, or carry the state in the row itself — a checkbox cell, or a visually hidden "selected".
+```html
+<table class="sl-table" role="grid" aria-label="Probes" aria-multiselectable="true">
+  <tbody>
+    <tr aria-selected="true"><td>q-8f2a</td><td>Deterministic resolve</td></tr>
+    <tr aria-selected="false"><td>q-77c1</td><td>Evidence replay</td></tr>
+  </tbody>
+</table>
+```
 
-### Tabs — `sl-tabs` (`__list` · `__tab`)
+### Tabs — `sl-tabs` (`__list` · `__tab` · `--tile` · `__item` · `__dot` · `__close`)
 Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px accent underline — an emphasis accent, not a separator. Substrate: **R** App.
 ```html
 <div class="sl-tabs">
@@ -196,7 +210,24 @@ Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px 
   </div>
 </div>
 ```
-Consumes: `--slc-accent`, `--slc-text`, `--slc-text-muted`, `--slc-border`. Active state is the accent (never a neutral).
+Consumes: `--slc-accent`, `--slc-text`, `--slc-text-muted`, `--slc-border`, `--slc-tile`, `--slc-depth-flat`. On the underline tabs the active state is the accent (never a neutral). On the tile tabs below it is a neutral tile, and the accent is only its icon.
+
+**Tile tabs — `sl-tabs--tile`** (0.31, Lumen): the editor's tab strip. A modifier on the same tablist: no rule under the strip, no underline; the active tab is a flat tile (`--slc-tile` with `--slc-depth-flat`: lit and ringed, no cast) in the primary ink, its icon in the accent; hover is a flat wash. Inside a tab, in order: an icon, the name, `sl-tabs__dot` (unsaved work) and `sl-tabs__close`. The dot is a dot, so it is `aria-hidden` and the tab's name says the state in words. The close glyph is borderless chrome — the one documented exception to the one control edge (design-language L3). A `<button>` may not sit inside `role="tab"`, so there are two patterns, and the consumer wires the closing in both: an `aria-hidden` span inside the tab for the pointer, with Delete on the focused tab (announced with `aria-keyshortcuts`); or, so assistive tech reaches the close by name, the tab and a sibling `<button class="sl-tabs__close" tabindex="-1" aria-label="Close …">` in a `role="none"` wrapper, `sl-tabs__item`, which then carries the tile. Substrate: **R** IDE, **A** App.
+```html
+<div class="sl-tabs__list sl-tabs--tile" role="tablist" aria-label="Open files">
+  <button class="sl-tabs__tab" role="tab" aria-selected="true" aria-keyshortcuts="Delete">
+    <span>resolve.ts</span><span class="sl-tabs__dot" aria-hidden="true"></span><span class="sl-tabs__close" aria-hidden="true">×</span>
+  </button>
+  <button class="sl-tabs__tab" role="tab" aria-selected="false" aria-keyshortcuts="Delete"><span>cache.ts</span></button>
+</div>
+<div class="sl-tabs__list sl-tabs--tile" role="tablist" aria-label="Open files">
+  <div class="sl-tabs__item" role="none">
+    <button class="sl-tabs__tab" role="tab" aria-selected="true" aria-keyshortcuts="Delete"><span>evidence.ts</span></button>
+    <button class="sl-tabs__close" type="button" tabindex="-1" aria-label="Close evidence.ts">×</button>
+  </div>
+</div>
+```
+Don't: pair it with `sl-fx-aurora--linear` — that rides the underline, which a tile tab does not have. Don't: put a real `<button>` inside the tab.
 
 ### Tooltip — `sl-tooltip`
 A CSS-only label above its host, in the inverted ink. The text lives in `data-sl-tooltip`; a host that is not already focusable takes `tabindex="0"` so the keyboard reveals it too. Substrate: **R** App/IDE, **A** Page.
@@ -204,14 +235,14 @@ A CSS-only label above its host, in the inverted ink. The text lives in `data-sl
 <span class="sl-tooltip" data-sl-tooltip="Measured on the canvas ground" tabindex="0">4.89:1</span>
 <button class="sl-icon-btn sl-tooltip" data-sl-tooltip="Re-run the audit" aria-label="Re-run the audit">↻</button>
 ```
-Consumes: `--slc-text`, `--slc-raised`. It rises 4px into place as it fades in, on `--sl-motion-mid` (still under reduced motion). Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
+Consumes: `--slc-text`, `--slc-raised`. It rises 4px into place as it fades in, on `--sl-motion-mid` and the arrival curve `--sl-motion-enter` (still under reduced motion). Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
 
 ### Kbd / inline code — `sl-kbd` · `sl-code`
-Keyboard key and inline monospace code. Substrate: **A**.
+A keycap (0.31, Lumen) and inline monospace code. The keycap is a small physical key: Geist Mono 500, at least 20px square, radius 5, a fill that steps from raised to surface, a ring, a lit top line and a base that is its own fill in shade (`--slc-depth-key`). One cap per key. High contrast rings it in white; under forced colours, which drop the depth, it gets a drawn `CanvasText` edge. Inside a button it is the in-button key (see Button). Substrate: **A**.
 ```html
-Press <kbd class="sl-kbd">⌘K</kbd>, then run <code class="sl-code">sl-audit</code>.
+Press <kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd>, then run <code class="sl-code">sl-audit</code>.
 ```
-Consumes: `--slc-surface`, `--slc-text`, `--sl-font-mono`.
+Consumes: `--slc-raised`, `--slc-surface`, `--slc-text-secondary`, `--slc-depth-key`, `--slc-accent-text`, `--slc-accent-subtle`, `--sl-font-mono`.
 
 ### Dialog — `sl-dialog` (`__title` · `__body` · `__actions`)
 Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: **R** App.
@@ -225,7 +256,7 @@ Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: *
   </div>
 </dialog>
 ```
-Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`. Opened with `showModal()`, it rises 6px and fades in with its backdrop, and falls back as it closes where `overlay` is supported (`@starting-style` and transitions on `--sl-motion-mid`; no keyframes). Reduced motion, or a browser without `@starting-style`, opens it at once. Don't: put a `display` of your own on a closed `sl-dialog` to show it — a closed dialog is transparent; set `open` instead.
+Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`, `--slc-depth-float`. It floats on the overlay cast (`--slc-depth-float`, three layers under its own border in shade, which is the ring) at `--sl-radius-lg` (14px since 0.31). Opened with `showModal()`, it rises 6px and fades in with its backdrop, and falls back as it closes where `overlay` is supported (`@starting-style` and transitions on `--sl-motion-mid` with the arrival curve `--sl-motion-enter`; no keyframes). Reduced motion, or a browser without `@starting-style`, opens it at once. Don't: put a `display` of your own on a closed `sl-dialog` to show it — a closed dialog is transparent; set `open` instead.
 
 ## Navigation & state
 
@@ -262,7 +293,7 @@ A small set of mutually exclusive views. Sentence-case items in the sans, as eve
   <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-surface`, `--slc-raised`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. When it switches a setting rather than a view, it is a group of toggle buttons: `role="group"` on the control and `aria-pressed` on the items, which the CSS reads the same way. Don't: use it for more than about four options; that is a `select`.
+Consumes: `--slc-border`, `--slc-surface`, `--slc-tile`, `--slc-depth-tile`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. The chosen segment is a raised tile (0.31): the tile fill, a lit top line, a ring and a short cast. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. When it switches a setting rather than a view, it is a group of toggle buttons: `role="group"` on the control and `aria-pressed` on the items, which the CSS reads the same way. Don't: use it for more than about four options; that is a `select`.
 ```html
 <div class="sl-segmented" role="group" aria-label="Language">
   <button class="sl-segmented__item" aria-pressed="true">EN</button>
@@ -314,7 +345,7 @@ Numbered navigation across pages of results. Mono tabular figures (L1). Substrat
   <a class="sl-pagination__item" href="?p=3">3</a>
 </nav>
 ```
-Consumes: `--slc-edge-control-hover`, `--slc-text-muted`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
+Consumes: `--slc-text-muted`, `--slc-text`, `--slc-tile`, `--slc-depth-tile`, `--slc-focus`. The current page is a raised tile and hover is a flat wash (0.31; hover drew the control edge's hover step before, and the items are now borderless). Do: mark the current page `aria-current="page"`. There is no ellipsis class — a truncated range is a product decision, and the caller writes `<span class="sl-pagination__item" aria-hidden="true">…</span>`. Don't: render a page count you have not measured (L5, structure encodes truth).
 
 ### Empty state — `sl-empty` (`__title` · `__body`)
 What a surface shows where its content would be. Composes `sl-eyebrow` above the title. Substrate: **R** App, **A** IDE/Page.
@@ -347,7 +378,7 @@ Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, up
 ## App structure
 
 ### Sidebar nav — `sl-nav` (`__group` · `__item` · `__count`)
-A vertical list of destinations under micro-label group titles (mono, uppercase, `--sl-text-micro`). The current one is `aria-current="page"` and takes a 2px accent edge on the leading side over the accent wash. Substrate: **R** App/IDE, **N/A** Page.
+A vertical list of destinations under micro-label group titles (mono, uppercase, `--sl-text-micro`). The current one is `aria-current="page"` and is a raised tile (0.31, Lumen): the tile fill, a lit top line, a ring and a short cast, in the primary ink, with a **seam** — a 2px accent line (`--slc-seam`), half the item's height, 3px inside its leading edge (owner, 2026-10-02: the tile alone reads ~1.0–1.3:1 against its ground; the seam ≥ 3:1 against the tile on every ground). An icon in it takes the accent. Hover is a flat wash; only the current item lifts. (Until 0.31 it took a 2px accent edge on the leading side over the accent wash.) Substrate: **R** App/IDE, **N/A** Page.
 ```html
 <nav class="sl-nav" aria-label="Sections">
   <div class="sl-nav__group">Observe</div>
@@ -355,7 +386,7 @@ A vertical list of destinations under micro-label group titles (mono, uppercase,
   <a class="sl-nav__item" href="/sessions">Sessions <span class="sl-nav__count">340</span></a>
 </nav>
 ```
-Consumes: `--slc-text-muted`, `--slc-text-secondary`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: mark the current destination with `aria-current`, not a class. Don't: use it as the page's only navigation on a marketing page — that is the header's job.
+Consumes: `--slc-text-muted`, `--slc-text-secondary`, `--slc-text`, `--slc-accent-text`, `--slc-tile`, `--slc-depth-tile`, `--slc-seam`, `--slc-focus`. The seam is a layer of the item's own background, not a pseudo-element, so an effect family on the item keeps its `::before`. Do: mark the current destination with `aria-current`, not a class. Give the nav a little inset (its pane's padding) so the tile's ring and cast have room. Don't: use it as the page's only navigation on a marketing page — that is the header's job.
 
 ### List — `sl-list` (`__row` · `__meta` · `--dense`)
 Selectable rows for a master-detail pane or a feed. A row is a `<button>`/`<a>`, or `role="option"` inside `role="listbox"`; the selected one is `aria-selected="true"` (or `aria-current` on a link). `--dense` is the IDE register: mono, tighter. Substrate: **R** App/IDE, **A** Page.
@@ -365,7 +396,7 @@ Selectable rows for a master-detail pane or a feed. A row is a `<button>`/`<a>`,
   <button class="sl-list__row" role="option" aria-selected="false">Prism light theme<span class="sl-list__meta">1h ago · 212 tools</span></button>
 </div>
 ```
-Consumes: `--slc-text`, `--slc-text-muted`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: let the row's own markup carry its columns (a grid inside the row is fine). Don't: use it for tabular data with comparable columns — that is `sl-table`.
+Consumes: `--slc-text`, `--slc-text-muted`, `--slc-text-secondary`, `--slc-accent-text`, `--slc-tile`, `--slc-depth-tile`, `--slc-focus`. The selected row is a raised tile (0.31; the accent wash with a pressed edge before), its meta in the secondary ink and an icon in it in the accent; hover is a flat wash. Rows are borderless, the old 1px border is padding, so a row is the size it was. Do: let the row's own markup carry its columns (a grid inside the row is fine). Don't: use it for tabular data with comparable columns — that is `sl-table`.
 
 ### Disclosure — `sl-disclosure`
 The expand/collapse control: a `<button aria-expanded>` whose chevron points right when closed and down when open. The panel is the consumer's (`aria-controls` + `hidden`). Substrate: **R** App/IDE, **A** Page.
@@ -701,5 +732,6 @@ Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-
 
 - **Bind role-vars, never literals.** A component's colour comes from a `--slc-*`/`--sl-*` var. A raw hex fails `sl-audit`.
 - **Selection and scrollbars come with the kit.** `components.css` paints `::selection` as a 24% wash of the accent with the text paired to its ground (`--slc-text`; ≥ 8:1 in all three themes and in `sl-invert`), and gives the page's own scrollbar a thin `--slc-edge-control` thumb and no track (not on high contrast); `<body>` resets `scrollbar-color: auto` for everything inside it. A product's own `.x::selection` wins on specificity, a later bare `::selection` on order, any `scrollbar-color` on a scroller wins outright. A product ink block that does not re-derive `--slc-text` selects ink on ink: re-derive it, as `sl-invert` does. Inner scrollers, hand-drawn `::-webkit-scrollbar` ones included, are left as they were.
+- **Depth is lightness, and selection is a tile** (0.31, Lumen). A selected row, the current page or nav item, the chosen segment, an active tile tab and a selected table row are lifted as tiles from the depth recipes (`--slc-tile` + `--slc-depth-tile` / `--slc-depth-flat`); hover stays a flat wash; the accent marks only an icon (and the current nav item's seam). A host that wears a depth recipe carries no border of its own, so the lit line sits flush under the ring (no gap between lines). Reuse the recipes for your own chrome (a tree row, a palette row) instead of re-deriving them: `--slc-depth-tile`, `-flat`, `-island`, `-key`, `-sunk`, `-float`. High contrast rings them, forced colours turn them off.
 - **One accent hue.** The accent varies per product (see `accent-registry.json`); status colours (success/warning/danger/info) are shared and independent of it.
 - **Spend surprise on composition, not materials.** Family resemblance comes from these shared components; distinctiveness comes from how you compose them (≥1 unexpected layout decision per screen).

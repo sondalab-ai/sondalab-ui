@@ -328,7 +328,7 @@
          visible edge. Its fill is enough to read it as a chip, and the
          substance gives it a rim; consistency between the three matters more
          here than an outline none of the others has. */
-      border-radius: var(--sl-radius-md, 6px);
+      border-radius: var(--sl-radius-md, 8px);
       cursor: grab; touch-action: none; user-select: none;
     }
     .goo-chip:active { cursor: grabbing; }
@@ -341,7 +341,7 @@
     .goo-chip--b { background: var(--sl-accent-depth); color: oklch(from var(--sl-accent-depth) clamp(0.16, (0.61 - l) * 1000, 1) 0 h); }
 
     .goo-swatches { display: flex; gap: 0.75rem; padding: 0.4rem 0; }
-    .goo-swatch { flex: 1; height: 3.6rem; border-radius: var(--sl-radius-lg, 12px); background: var(--sl-bg-surface-raised); }
+    .goo-swatch { flex: 1; height: 3.6rem; border-radius: var(--sl-radius-lg, 14px); background: var(--sl-bg-surface-raised); }
     .goo-swatch--accent { background: var(--sl-accent-default); }
     .goo-swatch--depth { background: var(--sl-accent-depth); }
     /* The drift cell is laid out a hair INSIDE its own weld, so the members
@@ -349,7 +349,7 @@
        weld would never open; one well over it would never close. */
     .goo-float { display: flex; gap: 1.15rem; padding: 0.9rem 0; }
     .goo-plates { display: flex; gap: 0.75rem; padding: 0.4rem 0; }
-    .goo-plates img { width: 50%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; border-radius: var(--sl-radius-lg, 12px); display: block; }
+    .goo-plates img { width: 50%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; border-radius: var(--sl-radius-lg, 14px); display: block; }
 
     /* -- subtree opt-out demonstration --------------------------------------- */
     .fx-off { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--sl-border-subtle); }

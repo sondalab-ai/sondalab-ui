@@ -205,6 +205,21 @@
   --slfx-fill-a: 100% !important;
 }
 
+/* ...but not the kit's own selection. A selected tile (components.css, 0.31)
+   is drawn in box-shadow, and the kill above takes a host's box-shadow: a
+   current page or a chosen segment that also wears an effect lost its only
+   marker -- in high contrast its accent ring. The tile is the component's,
+   not the effect's, so it comes back here (in high contrast as that ring),
+   outranking the kill on specificity, both !important. */
+:root[data-sl-theme="high-contrast"] :is(.sl-pagination__item[aria-current], .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current])):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pagination__item[aria-current], .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current])):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-tile) !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-flat) !important;
+}
+
 /* The goo's drift is the one thing this family animates, and it animates the
    MEMBER — an ordinary card or wrapper that keeps its own chrome. So the
    switches reach it with `animation` alone rather than by adding the member to
@@ -832,7 +847,7 @@
 .sl-callout--warning.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-warning) 8%, var(--slc-surface)); }
 .sl-callout--danger.sl-fx-glass  { --slfx-fill: color-mix(in srgb, var(--slc-danger)  8%, var(--slc-surface)); }
 .sl-callout--info.sl-fx-glass    { --slfx-fill: color-mix(in srgb, var(--slc-info)    8%, var(--slc-surface)); }
-.sl-kbd.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 9%, transparent); }
+.sl-kbd.sl-fx-glass { --slfx-fill: var(--slc-raised); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
 /* A rule of their own, not a join to the .sl-btn/.sl-badge/.sl-field__control/
    .sl-icon-btn group above, though that group also binds transparent:
@@ -918,6 +933,9 @@
      fill back, and a primary went transparent on black. :where() keeps the
      rule at 0-1-0, where the primary's own states have always met it. */
   .sl-fx-glass:where(.sl-glass) { background-color: transparent; }
+  /* The keycap (0.31) shades its fill with a gradient, which would stay
+     opaque under the layers: it goes with the colour, on the same terms. */
+  .sl-kbd.sl-fx-glass:where(.sl-glass) { background-color: transparent; background-image: none; }
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -1061,6 +1079,19 @@
    accent, not the live fill, so the label does not flip on hover or press. */
 .sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   color: oklch(from color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas)) clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h);
+}
+/* The keycap a glass primary carries (0.31) follows the same pole. The
+   kit's cap steps away from the OPAQUE accent's label (components.css), and
+   on the pane the label is re-picked from the composite instead: on the
+   light theme's indigo the label turned to the dark pole while the cap
+   darkened under it, dark on dark at 3.2:1. So the cap is the same
+   composite stepped 0.085 away from THIS label -- lighter under the dark
+   pole, darker under the light one, around the same 0.59 -- and stands on
+   that fill in shade. Its text is the label (it inherits the colour above). */
+.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) > .sl-kbd {
+  --slfx-cap: oklch(from color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas)) calc(l + 0.085 * clamp(-1, (l - 0.59) * 1000, 1)) c h);
+  background: var(--slfx-cap);
+  box-shadow: inset 0 -1px 0 oklch(from var(--slfx-cap) calc(l - var(--slc-shade-step, 0.075)) c h);
 }
 
 /* Ruling 9 — the lit rim is one continuous hairline, never a bevel. The pane's

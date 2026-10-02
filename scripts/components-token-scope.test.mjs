@@ -80,13 +80,14 @@ test("the inversion band re-derives every neutral role its subtree paints with",
 
 // A wash with no edge vanishes on high contrast's black, a theme that exists to
 // draw every edge. Each component shipped as an edgeless wash must get its
-// line back there.
+// line back there. Since 0.31 the current page and the keycap are depth
+// recipes, not washes: they get theirs as a ring from the depth remap (below).
 test("high contrast gives every edgeless wash its border back", () => {
   const hc = [...css.matchAll(/:root\[data-sl-theme="high-contrast"\][^{]*\{[^}]*border[^}]*\}/g)]
     .map((m) => m[0]).join("\n");
   const WASHES = [
     "sl-btn--ghost", "sl-icon-btn", "sl-segmented", "sl-badge", "sl-callout",
-    "sl-switch__track", "sl-pagination__item", "sl-kbd", "sl-empty", "sl-table",
+    "sl-switch__track", "sl-empty", "sl-table",
   ];
   const missing = WASHES.filter((c) => !new RegExp(`\\.${c}\\b`).test(hc));
   assert.deepEqual(missing, []);
@@ -97,7 +98,9 @@ test("high contrast gives every edgeless wash its border back", () => {
 // whose chrome rode box-shadow drew a stray line there after 0.11.
 test("the primary button's chrome survives a background + border reset", () => {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, "");
-  const primary = [...bare.matchAll(/\.sl-btn--primary[^{,]*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
+  // The primary's own rules and its states, not a descendant's (the keycap
+  // a primary carries is content, with depth of its own).
+  const primary = [...bare.matchAll(/\.sl-btn--primary(?:[:.[][^{,\s]*)?\s*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
   assert.ok(primary.includes("background-color"), "parser found the primary rules");
   assert.doesNotMatch(primary, /box-shadow/);
   // No image at all since the spectrum rim went (owner, 2026-10-02): the fill

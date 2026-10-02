@@ -280,13 +280,19 @@ test("sizing: icon button and pagination item are border-box, and the README say
   }
 });
 
-// The pagination item was the last neutral control whose hover still drew the
-// old --slc-border line (0.27.1). Hover is the one control edge's hover step,
-// which high contrast and the inversion band both remap.
-test("a hovered pagination item takes the one control edge's hover step", () => {
+// The pagination item's hover drew the one control edge's hover step from
+// 0.27.1 (it had drawn the old --slc-border line). Since 0.31 (Lumen) hover
+// is a flat wash and only the current page lifts, as a tile: the item is
+// borderless, so no edge can sit between a ring and its fill.
+test("a hovered pagination item is a flat wash; the current one a tile", () => {
+  const item = css.match(/\n\.sl-pagination__item \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(item, /\n\s*border:\s*0;/, "borderless");
   const hover = css.match(/\n\.sl-pagination__item:hover \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(hover, /border-color:\s*var\(--slc-edge-control-hover\)/);
-  assert.match(css, /\.sl-invert > \* \{[^}]*--slc-edge-control-hover:/, "the band re-derives it");
+  assert.match(hover, /background:\s*color-mix\(in srgb, var\(--slc-text\) 5%, transparent\)/);
+  assert.doesNotMatch(hover, /border|box-shadow/, "hover never lifts");
+  const current = css.match(/\n\.sl-pagination__item\[aria-current\] \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(current, /background:\s*var\(--slc-tile\)/);
+  assert.match(current, /box-shadow:\s*var\(--slc-depth-tile\)/);
 });
 
 // Fields have been 32px since 0.27.0. The glass lens comments and the catalog

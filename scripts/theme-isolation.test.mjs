@@ -11,9 +11,10 @@ import { dirname, resolve } from "node:path";
 // reviewed baseline (scripts/fixtures/theme-*-baseline.css): changing the dark
 // or high-contrast theme is a deliberate act that updates the baseline in the
 // same commit. Baselines: 0.20.1, plus dark muted text #7C8D95 (0.21.1, AA),
-// plus the dark neutral ladder baked from the amber hue (0.29.0, Lumen); high
-// contrast took its values for the three new neutral roles and its resets in
-// 0.29.0, and is otherwise unchanged since 0.20.1.
+// plus the dark neutral ladder baked from the amber hue (0.29.0, Lumen), plus
+// the black casts and the new inset cast (0.31.0, Lumen depth; high contrast
+// reuses dark's); high contrast took its values for the three new neutral
+// roles and its resets in 0.29.0, and is otherwise unchanged since 0.20.1.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(HERE, p), "utf8");
 const SPECTRUM = [...Array(6).keys()].map((i) => `--sl-spectrum-${i}`)

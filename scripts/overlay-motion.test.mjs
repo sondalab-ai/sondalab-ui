@@ -18,11 +18,14 @@ const body = (sel) => {
   const m = css.match(new RegExp(`(?:^|[\\n}])\\s*${sel.replace(/[.[\]()*:]/g, "\\$&")}\\s*\\{([^{}]*)\\}`));
   return m?.[1] ?? "";
 };
-const ON_TOKENS = /var\(--sl-motion-(mid|slow), \d+ms\) var\(--sl-motion-(ease|spring)/;
+// Since 0.31 an arrival rides --sl-motion-enter (falling back to the ease).
+const ON_TOKENS = /var\(--sl-motion-(mid|slow), \d+ms\) var\(--sl-motion-(ease|spring|enter)/;
+const ENTER = /var\(--sl-motion-mid, 220ms\) var\(--sl-motion-enter, var\(--sl-motion-ease, ease\)\)/;
 
 test("the dialog fades and rises on the motion tokens, keeping display and overlay through the fade", () => {
   const d = body(".sl-dialog");
   for (const p of ["opacity", "translate"]) assert.match(d, new RegExp(`${p} ${ON_TOKENS.source}`), p);
+  for (const p of ["opacity", "translate"]) assert.match(d, new RegExp(`${p} ${ENTER.source}`), `${p} arrives on the enter curve`);
   for (const p of ["overlay", "display"]) assert.match(d, new RegExp(`${p} var\\(--sl-motion-mid, 220ms\\) allow-discrete`), p);
   assert.doesNotMatch(d, /(^|;)\s*transform\s*:/, "rises on translate, so a product transform composes");
 });
@@ -50,10 +53,24 @@ test("the tooltip rises into place as it fades in, on the motion tokens", () => 
   assert.match(t, /translate:\s*0 4px;/);
   assert.match(t, /transform:\s*translateX\(-50%\)/, "the centring transform is kept");
   for (const p of ["opacity", "translate"]) assert.match(t, new RegExp(`${p} ${ON_TOKENS.source}`), p);
+  for (const p of ["opacity", "translate"]) assert.match(t, new RegExp(`${p} ${ENTER.source}`), `${p} arrives on the enter curve`);
   assert.match(body(".sl-tooltip:hover::after,\n.sl-tooltip:focus-visible::after"), /opacity:\s*1;\s*translate:\s*0 0;/);
 });
 
 test("reduced motion stills both: the mid token is zeroed and no keyframe was added", () => {
   assert.match(tokens, /@media \(prefers-reduced-motion: reduce\) \{\s*:root \{[^}]*--sl-motion-mid:\s*0ms;/);
   assert.deepEqual([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]), ["sl-badge-live"]);
+});
+
+// Two curves (Lumen, 0.31): the ease for every state change, the enter curve
+// for what arrives. Both are tokens, so the values are pinned here; the
+// durations stay the three speed tokens, which reduced motion zeroes.
+test("the two curves are tokens, and reduced motion still zeroes every duration", () => {
+  assert.match(tokens, /--sl-motion-ease:\s*cubic-bezier\(0\.25, 1, 0\.5, 1\);/);
+  assert.match(tokens, /--sl-motion-enter:\s*cubic-bezier\(0\.22, 1, 0\.36, 1\);/);
+  const reduce = tokens.match(/@media \(prefers-reduced-motion: reduce\) \{\s*:root \{([^}]*)\}/)?.[1] ?? "";
+  for (const d of ["fast", "mid", "slow"]) assert.match(reduce, new RegExp(`--sl-motion-${d}:\\s*0ms;`), d);
+  assert.doesNotMatch(reduce, /--sl-motion-(ease|enter|spring)/, "a curve is not a duration");
+  // The backdrop fades on the same curve as its dialog.
+  assert.match(body(".sl-dialog::backdrop"), new RegExp(`opacity ${ENTER.source}`));
 });

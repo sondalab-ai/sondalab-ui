@@ -61,7 +61,8 @@
         "--slc-accent-subtle",
         "--slc-on-accent",
         "--slc-border",
-        "--slc-text"
+        "--slc-text",
+        "--slc-edge-accent"
       ]
     },
     {
@@ -174,7 +175,9 @@
         "--slc-border-subtle",
         "--slc-text",
         "--slc-text-secondary",
-        "--slc-surface"
+        "--slc-surface",
+        "--slc-tile",
+        "--slc-depth-tile"
       ]
     },
     {
@@ -184,13 +187,19 @@
       "classes": [
         "sl-tabs",
         "sl-tabs__list",
-        "sl-tabs__tab"
+        "sl-tabs__tab",
+        "sl-tabs--tile",
+        "sl-tabs__item",
+        "sl-tabs__dot",
+        "sl-tabs__close"
       ],
       "roleVars": [
         "--slc-accent",
         "--slc-text",
         "--slc-text-muted",
-        "--slc-border"
+        "--slc-border",
+        "--slc-tile",
+        "--slc-depth-flat"
       ]
     },
     {
@@ -212,8 +221,12 @@
         "sl-code"
       ],
       "roleVars": [
+        "--slc-raised",
         "--slc-surface",
-        "--slc-text"
+        "--slc-text-secondary",
+        "--slc-depth-key",
+        "--slc-accent-text",
+        "--slc-accent-subtle"
       ]
     },
     {
@@ -230,7 +243,8 @@
         "--slc-border",
         "--slc-overlay",
         "--slc-text",
-        "--slc-text-secondary"
+        "--slc-text-secondary",
+        "--slc-depth-float"
       ]
     },
     {
@@ -309,7 +323,12 @@
         "--slc-accent-hover"
       ]
     },
-    { "id": "fx-halftone", "kind": "effect", "classes": [], "roleVars": [] },
+    {
+      "id": "fx-halftone",
+      "kind": "effect",
+      "classes": [],
+      "roleVars": []
+    },
     {
       "id": "sticky-header",
       "kind": "signature",
@@ -506,7 +525,8 @@
       "roleVars": [
         "--slc-border",
         "--slc-surface",
-        "--slc-raised",
+        "--slc-tile",
+        "--slc-depth-tile",
         "--slc-text-muted",
         "--slc-text",
         "--slc-focus"
@@ -570,11 +590,10 @@
         "sl-pagination__item"
       ],
       "roleVars": [
-        "--slc-edge-control-hover",
         "--slc-text-muted",
         "--slc-text",
-        "--slc-accent",
-        "--slc-accent-subtle",
+        "--slc-tile",
+        "--slc-depth-tile",
         "--slc-focus"
       ]
     },
@@ -628,8 +647,10 @@
         "--slc-text-muted",
         "--slc-text-secondary",
         "--slc-text",
-        "--slc-accent",
-        "--slc-accent-subtle",
+        "--slc-accent-text",
+        "--slc-tile",
+        "--slc-depth-tile",
+        "--slc-seam",
         "--slc-focus"
       ]
     },
@@ -646,8 +667,10 @@
       "roleVars": [
         "--slc-text",
         "--slc-text-muted",
-        "--slc-accent",
-        "--slc-accent-subtle",
+        "--slc-text-secondary",
+        "--slc-accent-text",
+        "--slc-tile",
+        "--slc-depth-tile",
         "--slc-focus"
       ]
     },

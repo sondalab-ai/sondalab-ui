@@ -381,8 +381,12 @@ test("only shape re-declares the ring background; states rebind the stops", () =
   // of it taken away — but that mix moved into glass.css's tint layer on
   // 2026-09-11, and the host now only stands down so the anatomy can carry it.
   // The rule is stronger for it: light belongs on a layer, never on the host.
+  // A component the host carries as content (the keycap inside a glass
+  // primary, 0.31) is not the host: its own fill is the component's, so a
+  // selector whose subject is a child .sl-* outside the family is not checked.
   const onHost = RULES.filter(
-    (r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && !/::(?:before|after)/.test(r.selector) && PAINTS.test(r.body),
+    (r) => /\.sl-fx-(?:glass|aurora)/.test(r.selector) && !/::(?:before|after)/.test(r.selector) && PAINTS.test(r.body)
+      && !/>\s*\.sl-(?!fx-)[\w-]+$/.test(r.selector.trim()),
   );
   for (const r of onHost) {
     assert.match(
