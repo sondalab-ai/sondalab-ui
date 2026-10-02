@@ -10,22 +10,22 @@ The `--slc-*` role-vars (defined at the top of `components.css`) are the seam: c
 ## Primitives (ready classes in `components.css`)
 
 ### Eyebrow — `sl-eyebrow`
-Mono uppercase micro-label above a heading. The single strongest family signal. Substrate: **R** on App/Page/IDE.
+The micro label above a heading: mono, uppercase, `--sl-text-micro` (10.5px), weight 500, tracked `0.06em`, muted (L1). The single strongest family signal, spent on structure only. Substrate: **R** on App/Page/IDE.
 ```html
 <p class="sl-eyebrow">System status</p>
 ```
-Consumes: `--slc-text-muted`, `--sl-font-mono`. Don't: sentence-case it or use a sans face.
+Consumes: `--slc-text-muted`, `--sl-font-mono`, `--sl-text-micro`. Don't: sentence-case it, use a sans face, or put it on anything you operate — controls speak in sentence case (L1).
 
 ### Tag / tier marker — `sl-tag` (`--plain`)
-Accent-tinted pill with a leading dot; classification/status. Substrate: **R** App/Page.
+Accent-tinted mono pill with a leading dot, in sentence case, tracked `0.02em`; classification/status. Substrate: **R** App/Page.
 ```html
 <span class="sl-tag">Delivered</span>
 <span class="sl-tag sl-tag--plain">Draft</span>
 ```
-Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags.
+Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags, or write the label in capitals — the class no longer upper-cases it (0.30).
 
 ### Filter chip — `sl-chip` (`__count`) in `sl-chips`
-A toggleable filter; a row of them is a multi-select where any number may be on. Off: an outlined pill in the muted ink with a hollow dot. On: the tag's accent dress, dot filled — so the state reads by colour, fill and glyph. Substrate: **R** App/IDE, **A** Page.
+A toggleable filter; a row of them is a multi-select where any number may be on. A control, so sentence case in the sans; the count stays mono (L1). Off: an outlined pill in the muted ink with a hollow dot. On: the tag's accent dress, dot filled — so the state reads by colour, fill and glyph. Substrate: **R** App/IDE, **A** Page.
 ```html
 <div class="sl-chips" role="group" aria-label="Event kinds">
   <button class="sl-chip" aria-pressed="true">Tool <span class="sl-chip__count">42</span></button>
@@ -59,7 +59,7 @@ Underlined, accent on hover. Substrate: **R** App/Page.
 Consumes: `--slc-accent`. Don't: remove the underline (leave the affordance).
 
 ### Badge — `sl-badge` (`--success` · `--warning` · `--danger` · `--info` · `--live`)
-Semantic status pill. Semantic colour is **independent of the accent hue** and shared. Substrate: **R** App/IDE.
+Semantic status pill, in sentence case in the sans (L1). Semantic colour is **independent of the accent hue** and shared. Substrate: **R** App/IDE.
 ```html
 <span class="sl-badge sl-badge--success">Passing</span>
 <span class="sl-badge sl-badge--danger">Failed</span>
@@ -78,7 +78,7 @@ Surface panel. Substrate: **R** App.
 Consumes: `--slc-surface`, `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
 
 ### Field — `sl-field` (`__label` · `__input` · `__control` · `__hint` · `__error`)
-Label + input/textarea/select, with an optional hint or error line under it. Substrate: **R** App.
+Label + input/textarea/select, with an optional hint or error line under it. The label is read with the control, so it is sentence case in the sans, in the secondary ink (L1; it was a mono uppercase micro label before 0.30). Substrate: **R** App.
 ```html
 <label class="sl-field">
   <span class="sl-field__label">Product</span>
@@ -167,7 +167,7 @@ One modifier per status: `--success`, `--warning`, `--danger`, `--info` colours 
 Consumes: `--slc-surface`, `--slc-accent`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`. Don't: reinstate a full left border stripe.
 
 ### Rule — `sl-rule` (`--labeled`)
-Hairline divider; `--labeled` centres a mono caption over the line. Substrate: **R** App/Page.
+Hairline divider; `--labeled` centres a micro-label caption (mono, uppercase, `--sl-text-micro`) over the line. Substrate: **R** App/Page.
 ```html
 <hr class="sl-rule">
 <div class="sl-rule sl-rule--labeled">since 0.2.0</div>
@@ -230,7 +230,7 @@ Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-
 ## Navigation & state
 
 ### Breadcrumb — `sl-breadcrumb` (`__item` · `__sep`)
-The trail to here. Structural navigation labels, so mono uppercase tracked (L1). Substrate: **R** App, **A** IDE/Page.
+The trail to here. Navigation you operate, so sentence case in the sans (L1; it was mono uppercase tracked before 0.30). Substrate: **R** App, **A** IDE/Page.
 ```html
 <nav class="sl-breadcrumb" aria-label="Breadcrumb">
   <a class="sl-breadcrumb__item" href="/">Specs</a>
@@ -254,7 +254,7 @@ Joins `sl-btn` children into one control with a shared 1px rule. Built on the ha
 Consumes: `--slc-edge-control`, `--slc-surface`. Do: use one variant across the group. Don't: mix `sl-btn--primary` and `sl-btn--ghost` inside one group — a group is one control, and two fills read as two. Do: put `sl-fx-glass sl-fx-glass--pane` on the members, never `sl-fx-glass` on `.sl-btn-group` itself — a group's `background` **is** the 1px rule between its members, and the material clears the host's own background so its tint layer can paint instead, so glass on the group dissolves the separator it was supposed to leave alone. The group also clips (`overflow: hidden`), so its ring would be cut at the group's own edges regardless of the background question.
 
 ### Segmented control — `sl-segmented` (`__item`)
-A small set of mutually exclusive views. Mono uppercase items (L1). Substrate: **R** IDE/App, **A** Page.
+A small set of mutually exclusive views. Sentence-case items in the sans, as every control (L1; mono uppercase before 0.30). Substrate: **R** IDE/App, **A** Page.
 ```html
 <div class="sl-segmented" role="tablist">
   <button class="sl-segmented__item" role="tab" aria-selected="true">Light</button>
@@ -342,12 +342,12 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
   <span class="sl-stat__label">Tests green</span>
 </div>
 ```
-Consumes: `--slc-text`, `--slc-text-muted`. Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected). Don't: set a stat you have not measured.
+Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, uppercase, `--sl-text-micro`). Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected; kept in 0.30, where the Lumen reference sets it in Geist, until the owner rules again). Don't: set a stat you have not measured.
 
 ## App structure
 
 ### Sidebar nav — `sl-nav` (`__group` · `__item` · `__count`)
-A vertical list of destinations under mono group titles. The current one is `aria-current="page"` and takes a 2px accent edge on the leading side over the accent wash. Substrate: **R** App/IDE, **N/A** Page.
+A vertical list of destinations under micro-label group titles (mono, uppercase, `--sl-text-micro`). The current one is `aria-current="page"` and takes a 2px accent edge on the leading side over the accent wash. Substrate: **R** App/IDE, **N/A** Page.
 ```html
 <nav class="sl-nav" aria-label="Sections">
   <div class="sl-nav__group">Observe</div>
@@ -395,7 +395,7 @@ Consumes: `--slc-border-subtle`, `--slc-accent`, `--slc-focus`. Do: make it keyb
 ## Identity & media
 
 ### Wordmark — `sl-wordmark` (`__dot`)
-The official logo. The brand is typographic; there is no pictorial mark. `sondalab.` in the display face at weight 500, tracked `-0.05em`, the trailing period in the accent. Substrate: **R** App/Page, **A** IDE.
+The official logo. The brand is typographic; there is no pictorial mark. `sondalab.` in the brand face (`--sl-font-brand`, Fraunces) at weight 500, tracked `-0.05em`, the trailing period in the accent. Since 0.30 the display face is Geist; Fraunces is the wordmark's and the monogram's alone. Substrate: **R** App/Page, **A** IDE.
 ```html
 <span class="sl-wordmark">sondalab<span class="sl-wordmark__dot">.</span></span>
 ```
@@ -406,17 +406,17 @@ The wordmark where the wordmark is too wide: headers, tight chrome. `sonda·lab`
 ```html
 <span class="sl-lockup">sonda<span class="sl-lockup__dot">·</span>lab</span>
 ```
-Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg`. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
+Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg` — with one open exception: the asset is still cut in Martian Mono 300, the class renders in the mono role, Geist Mono since 0.30, until the owner signs off a re-cut. A mark, not a label: its `0.2em` tracking stands outside the micro register. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
 
 ### Monogram — `sl-monogram`
-Where even the lockup is too wide to read: a social avatar, a square tile. `s.` in the display cut, the letter in the text colour and the period in the accent, on a full-bleed square of the surface. Substrate: **R** IDE/App/Page.
+Where even the lockup is too wide to read: a social avatar, a square tile. `s.` in the wordmark's cut (`--sl-font-brand`, Fraunces), the letter in the text colour and the period in the accent, on a full-bleed square of the surface. Substrate: **R** IDE/App/Page.
 ```html
 <span class="sl-monogram" role="img" aria-label="Sondalab">s</span>
 ```
 Consumes: `--slc-text`, `--slc-accent`, `--slc-surface`. Rendered assets: `packages/ui-kit/assets/sondalab-avatar-{ink,paper}.{svg,png}`. Resize it by setting `--sl-monogram-size` (default `3rem`) — the letter is sized off that box, never off an inherited `font-size`, so the three corrections hold at every size. Those corrections are fixed in `design-language.md` L3 and transcribed here, not re-derived: the mark is sized to the inscribed crop circle (~60% of the canvas wide) rather than the square; the accent period is scaled +35% around its own centre so it survives a 32px render; and it is pushed +0.06em off the letter, because the wordmark's tight tracking is drawn for a period at its natural size. Do: give it `role="img"` and a label — `s.` read aloud is not the brand. The period is drawn by the class, so the markup carries the letter alone. Don't: re-tune the three corrections per surface; they are what makes the small end legible.
 
 ### Figure — `sl-figure` (`__media` · `__caption`)
-An image in a hairline frame with a mono caption. The house way to put a picture in a page without it reading as a blog post. Substrate: **R** Page, **A** App, **N/A** IDE.
+An image in a hairline frame with a micro-label caption. The house way to put a picture in a page without it reading as a blog post. Substrate: **R** Page, **A** App, **N/A** IDE.
 ```html
 <figure class="sl-figure">
   <div class="sl-figure__media" style="aspect-ratio: 16 / 9">
@@ -632,7 +632,7 @@ Caps running text at the ~63ch measure. `--sl-measure` is a convention, not a to
 Consumes: nothing — layout only. Do: put it on the text container, not on a grid cell that also holds a figure. Don't: let prose run full-bleed; L1 caps the measure for a reason.
 
 ### Sticky translucent header — `sl-header`
-The house header: sticky, translucent over the page ground, a 1px bottom rule. Mono wordmark left, mono meta right. Substrate: **R** App/Page, **N/A** IDE.
+The house header: sticky, translucent over the page ground, a 1px bottom rule. The lockup left, micro-label meta and sentence-case controls right. Substrate: **R** App/Page, **N/A** IDE.
 ```html
 <header class="sl-header">
   <div class="sl-wrap"> … </div>
@@ -665,7 +665,7 @@ Cards formed by a 1px gap over a line-colour background; cells paint their own s
 Consumes: `--slc-border-subtle`, `--slc-surface`. Do: let the cells be plain elements — the grid paints them. Don't: give a cell its own border; that is the doubling this technique exists to avoid.
 
 ### Section with mono index — `sl-section` (`__head` · `__idx`)
-A section opens with a mono index beside its heading, separated from the previous section by a 1px top rule. Substrate: **R** Page, **A** App, **N/A** IDE.
+A section opens with a micro-label index (mono, uppercase, `--sl-text-micro`) beside its heading, separated from the previous section by a 1px top rule. Substrate: **R** Page, **A** App, **N/A** IDE.
 ```html
 <section class="sl-section">
   <div class="sl-section__head">
@@ -677,11 +677,11 @@ A section opens with a mono index beside its heading, separated from the previou
 Consumes: `--slc-border-subtle`, `--slc-text-muted`. Do: number it only where the content is a real sequence — L5, structure encodes truth. Don't: number four unrelated sections 01–04 because it looks tidy.
 
 ### Oversized display anchor — `sl-anchor`
-One oversized display heading per screen, sized by a fluid clamp — a documented pattern, not a token, because the size is fluid — and set solid (`line-height: 1`). Substrate: **R** Page, **A** App where a hero exists, **N/A** IDE.
+One oversized display heading per screen, sized by a fluid clamp — a documented pattern, not a token, because the size is fluid — in Geist 600 tracked `-0.05em`, and set solid (`line-height: 1`). Substrate: **R** Page, **A** App where a hero exists, **N/A** IDE.
 ```html
 <h1 class="sl-anchor">Everything measured, nothing asserted.</h1>
 ```
-Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't reach for the display serif on a numeral — a display-scale numeral is a structural label and stays mono (L1).
+Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't set a numeral in the display face — a display-scale numeral is a structural label and stays mono (L1).
 
 ### Haze — `sl-haze`
 A soft field of the spectrum behind a section: the light theme's colour as atmosphere (Prism). **Opt-in only** — the kit never adds it, and since 0.28 the spectrum paints no edge, rim or arc anywhere by default. Substrate: **A** Page/App, **N/A** IDE.

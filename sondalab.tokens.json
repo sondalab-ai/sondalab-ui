@@ -1,14 +1,16 @@
 {
   "$schema-note": "Canonical Sondalab design tokens. Edit here only; run pnpm gen:tokens.",
   "shared": {
+    "$font-note": "Type (ui-kit 0.30, Lumen): the UI is Geist and Geist Mono; display is Geist too, set 600 with negative tracking. Fraunces is the brand face only (--sl-font-brand: the wordmark and the monogram). The first family of every stack is vendored in packages/ui-kit/assets/fonts and declared in fonts.css (scripts/font-coverage.test.mjs). --sl-text-micro (10.5px) is the micro-label register: mono, uppercase, +0.06em.",
     "font": {
-      "display": "\"Fraunces\", Georgia, serif",
-      "sans": "\"Instrument Sans\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
-      "mono": "\"Martian Mono\", ui-monospace, \"SF Mono\", Menlo, monospace"
+      "display": "\"Geist\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "sans": "\"Geist\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "mono": "\"Geist Mono\", ui-monospace, \"SF Mono\", Menlo, monospace",
+      "brand": "\"Fraunces\", Georgia, serif"
     },
     "space": { "0": "0", "1": "0.25rem", "2": "0.5rem", "3": "0.75rem", "4": "1rem", "5": "1.5rem", "6": "2rem", "8": "3rem" },
     "radius": { "sm": "6px", "md": "10px", "lg": "16px", "pill": "9999px" },
-    "text": { "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem", "3xl": "2.75rem", "display": "clamp(3.5rem, 2rem + 5vw, 6rem)" },
+    "text": { "micro": "0.65625rem", "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem", "3xl": "2.75rem", "display": "clamp(3.5rem, 2rem + 5vw, 6rem)" },
     "line": { "tight": "1.2", "normal": "1.5", "relaxed": "1.6", "loose": "1.7" },
     "z": { "base": "1", "overlay": "50", "modal": "100", "toast": "200" },
     "$motion-spring-note": "--sl-motion-spring: a damped spring (stiffness 170, damping 18) sampled into a CSS linear() easing — one ~5% overshoot, then settles. Time-normalised, so it plays at whatever duration token the transition uses. Only for transforms: on a colour the overshoot has no meaning. Re-scope R2 (card spring-tokens), 2026-09-25.",

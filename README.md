@@ -26,7 +26,7 @@ Generated files are committed; never hand-edit them.
 
 ## Design principles
 
-- **Shared grammar, per-product accent.** Tools share token architecture, type (Fraunces / Instrument Sans / Martian Mono), spacing, motion, the neutral ladder, and the 3-theme machinery; each product keeps its own signature accent by overriding `--sl-accent-*`, and its neutrals take that accent's hue (generated as hex per product, `themes/products.css` + `neutrals.json`). The bundled default is Sondalab amber + teal.
+- **Shared grammar, per-product accent.** Tools share token architecture, type (Geist / Geist Mono for the UI, Fraunces for the brand marks only, since ui-kit 0.30), spacing, motion, the neutral ladder, and the 3-theme machinery; each product keeps its own signature accent by overriding `--sl-accent-*`, and its neutrals take that accent's hue (generated as hex per product, `themes/products.css` + `neutrals.json`). The bundled default is Sondalab amber + teal.
 - **Terminal color = semantic roles + truecolor opt-in.** Color applies to roles (`prompt`/`ok`/`warn`/`err`/`dim`/`accent`), never decoration. Named-ANSI floor resolves through the user's theme; `COLORTERM=truecolor` upgrades to brand hex; `NO_COLOR` disables.
 - **No CSS→Python bridge exists**, so there is one canonical source and two generated distributions, not one shared package.
 

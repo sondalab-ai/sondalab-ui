@@ -9,6 +9,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 @import "@sondalab/ui-kit/themes/dark.css";
 @import "@sondalab/ui-kit/themes/high-contrast.css";
 @import "@sondalab/ui-kit/themes/products.css";  /* optional: per-product neutrals, see 0.29 below */
+@import "@sondalab/ui-kit/fonts.css";          /* optional: the faces, served from the package, see Fonts below */
 ```
 
 ```html
@@ -23,6 +24,16 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 ```
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
+
+**0.30.0 — Geist type, a brand face, a micro register (Lumen).** The UI faces change and the mono uppercase register shrinks to micro labels (owner, 2026-10-02). Two tokens are added and none removed, but what every surface renders changes:
+
+- `--sl-font-sans` and `--sl-font-display` are Geist, `--sl-font-mono` is Geist Mono (were Instrument Sans, Fraunces and Martian Mono). New `--sl-font-brand` is Fraunces: the wordmark and the monogram use it and nothing else does. If you set a heading, title or numeral in `--sl-font-display` expecting the serif, it is now Geist; point a brand mark of your own at `--sl-font-brand`.
+- New `--sl-text-micro` (`0.65625rem`, 10.5px): eyebrow, nav group title, stat label, section index, figure caption and labelled rule are mono, uppercase, 10.5px, weight 500, tracked `0.06em` (were `--sl-text-xs`, tracked 0.14–0.22em).
+- Sentence case, in the sans, untracked: buttons were already; chip, badge, segmented item, table head, breadcrumb and field label now are too (they were mono uppercase). The CSS no longer upper-cases them, so write their text in sentence case ("Passed", not "PASSED"). The callout title is the sans at `--sl-text-sm`, 600 (was mono uppercase xs). The tag stays mono, now in sentence case, tracked `0.02em`.
+- Headings: card title `-0.02em`, dialog title `-0.03em` (both `-0.01em` before), `.sl-anchor` `-0.05em` (was `-0.02em`), all Geist 600.
+- Unchanged: `--sl-text-xs`, `--sl-text-sm`, every control's padding and line height, so the 32px row stays 32px (Geist's ascent and descent centre its cap height on a `line-height: 1` box, as Instrument Sans's did).
+- `fonts.css` serves Geist and Geist Mono (new, variable, latin-subset woff2, SIL OFL 1.1) beside Fraunces. Instrument Sans and Martian Mono are deprecated: still declared and still shipped for this release window so a product that names them by hand keeps rendering; no token names them, and they go in 1.0.0.
+- The `sondalab-lockup.svg` asset is still cut in Martian Mono 300; `.sl-lockup` now renders in Geist Mono. The asset is re-cut once the owner signs off a Geist Mono lockup.
 
 **0.29.0 — neutrals tinted per product (Lumen).** Every neutral — canvas, surface, raised, the new `--sl-bg-tile` and `--sl-bg-sunken`, primary/secondary/muted text, the borders, the new `--sl-border-lit`, and the neutral code roles (`--sl-code-fg`, `--sl-code-comment`, `--sl-code-null`) — is now one rung of a shared lightness/chroma ladder tinted with the product's accent hue, baked to hex at build time:
 
@@ -47,7 +58,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 Dark and high contrast paint what they did in 0.27, apart from `.sl-anchor` being set solid (line-height 1) on every theme. No token changed.
 
-**Fonts** (load separately, e.g. Google Fonts): Fraunces (display), Instrument Sans (body), Martian Mono (mono).
+**Fonts.** Import `@sondalab/ui-kit/fonts.css` and the kit serves its own faces from the package: Geist (`--sl-font-sans`, `--sl-font-display`), Geist Mono (`--sl-font-mono`) and Fraunces (`--sl-font-brand`, the wordmark and the monogram only). They are variable, latin-subset woff2 files under the SIL Open Font License 1.1, with the licences beside them in `assets/fonts/` (sources and sizes in `assets/fonts/README.md`). A surface that loads the same families another way does not need the file; every token names a system fallback stack. A product's code editor and terminal keep their own coding mono (`--sl-font-code`); that is not the kit's mono role.
 
 ## Components (`components.css`)
 
