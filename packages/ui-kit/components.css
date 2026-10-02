@@ -50,7 +50,13 @@
   --slc-edge-surface:  oklch(from var(--slc-surface) calc(l - var(--slc-shade-step)) c h);
   --slc-edge-raised:   oklch(from var(--slc-raised) calc(l - var(--slc-shade-step)) c h);
   --slc-edge-wash:     oklch(from color-mix(in srgb, var(--slc-text) 6%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
-  --slc-edge-accent:   oklch(from var(--slc-accent) calc(l - var(--slc-shade-step)) c h);
+  /* The fill in shade. On paper it is also capped at L 0.62 (the light
+     block below sets --slc-edge-accent-lmax): with the rainbow rim gone
+     (owner, 2026-10-02) this edge is what finds a primary there, and a light
+     accent one step down (amber, L 0.71) read 2.46:1 on the canvas; capped,
+     every registered accent is >= 3.4:1. On ink the edge is the plain step,
+     exactly as in 0.27 -- a bright fill one step down already reads there. */
+  --slc-edge-accent:   oklch(from var(--slc-accent) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --slc-edge-pressed:  oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
   /* A form control's box must be found before it is read: five steps AWAY
      from the surface, toward contrast -- darker on paper, LIGHTER on ink. In
@@ -81,14 +87,12 @@
   --slc-border-subtle: var(--sl-border-subtle,  rgba(28,29,34,0.09));
   --slc-border-strong: var(--sl-border-strong,  rgba(28,29,34,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent-text));
-  /* Prism (light): the spectrum as a 1px hairline on cards, the primary button
-     and text fields. Both are built from theme tokens, so where a theme resets
-     the spectrum they are invalid and every consumer's fallback — today's
-     border and no image — wins. --slc-rim-edge is transparent where the rim
-     shows (a colour mixed at 0%), so the host's border lets it through. */
-  --slc-rim: linear-gradient(120deg, var(--sl-spectrum-ink-0), var(--sl-spectrum-ink-1), var(--sl-spectrum-ink-2), var(--sl-spectrum-ink-3), var(--sl-spectrum-ink-4));
-  --slc-rim-edge: color-mix(in srgb, var(--sl-spectrum-ink-0) 0%, transparent);
-  /* The two opt-in ornaments (sl-haze, sl-spectral), invalid in the same way. */
+  /* The spectrum paints no edge, rim or arc by default (owner, 2026-10-02:
+     "drop rainbow from fields and everything else"). It survives only in the
+     two ornaments a consumer must ask for by name (sl-haze, sl-spectral).
+     Both are built from theme tokens, so where a theme resets the spectrum
+     they are invalid and each ornament's fallback -- nothing, or plain
+     text -- wins. */
   --slc-haze:
     radial-gradient(closest-side at 28% 42%, color-mix(in srgb, var(--sl-spectrum-0) 30%, transparent), transparent),
     radial-gradient(closest-side at 70% 30%, color-mix(in srgb, var(--sl-spectrum-4) 26%, transparent), transparent),
@@ -439,21 +443,15 @@
      drop shadow, so it sits flat in a toolbar. Both are the border — which a
      consumer already resets when it strips a button to text — never
      box-shadow, which such an override does not think of. The glass family
-     clears it on its pane (effects.css). */
-  border-color: var(--slc-rim-edge, var(--slc-edge-accent));
-  border-top-color: var(--slc-rim-edge, color-mix(in srgb, var(--slc-accent) 80%, white));
-  --slc-rim-fill: var(--slc-accent);
-  --slc-rim-layers: linear-gradient(var(--slc-rim-fill) 0 0), var(--slc-rim);
-  /* Prism rim: the fill as an image over the padding box, the spectrum under
-     it across the border box, seen through a transparent border. Where the
-     spectrum is reset the layers are invalid and the fallback is two empty
-     images, so the colour keeps the border-box clip it always had. */
-  background-image: var(--slc-rim-layers, none, none);
-  background-clip: padding-box, border-box;
-  background-origin: padding-box, border-box;
+     clears it on its pane (effects.css).
+     The edge is the accent's own, on every theme: the light theme's
+     spectrum rim is gone (owner, 2026-10-02: a filled control's edge is "a
+     vibrant colour that goes along with the accent"). */
+  border-color: var(--slc-edge-accent);
+  border-top-color: var(--slc-edge-accent-top, color-mix(in srgb, var(--slc-accent) 80%, white));
 }
-.sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); --slc-rim-fill: var(--slc-accent-hover); }
-.sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); --slc-rim-fill: var(--slc-accent-active); }
+.sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); }
+.sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); }
 .sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); border-color: var(--slc-edge-control); }
 .sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
 /* 24px: 12px line + 2 x 5px + 2px border (was 25.2). */
@@ -486,15 +484,9 @@
 /* Card — surface panel. Compose with __title / __body. */
 .sl-card {
   background: var(--slc-surface);
-  border: 1px solid var(--slc-rim-edge, var(--slc-edge-surface));
-  --slc-rim-layers: linear-gradient(var(--slc-surface) 0 0), var(--slc-rim);
-  /* Prism rim: the fill as an image over the padding box, the spectrum under
-     it across the border box, seen through a transparent border. Where the
-     spectrum is reset the layers are invalid and the fallback is two empty
-     images, so the colour keeps the border-box clip it always had. */
-  background-image: var(--slc-rim-layers, none, none);
-  background-clip: padding-box, border-box;
-  background-origin: padding-box, border-box;
+  /* Its own surface in shade, on every theme: the light theme's spectrum
+     rim is gone (owner, 2026-10-02: "something that matches the context"). */
+  border: 1px solid var(--slc-edge-surface);
   border-radius: var(--sl-radius-lg, 16px);
   padding: var(--sl-space-5, 1.5rem);
 }
@@ -569,21 +561,13 @@
   background: color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised));
   /* The control edge, not the raised hairline: a field's fill is 1.01-1.26:1
      on the canvas, so its border is what finds it (>= 3:1, WCAG 1.4.11). */
-  border: 1px solid var(--slc-rim-edge, var(--slc-edge-control));
+  border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 10px);
   /* 32px, the button's height: a 20px line + 2 x 5px + 2px border. The line
      is explicit because an <input> and a <select> resolve "normal" apart
      (36.6 vs 36.1px), so a field and a select side by side disagreed. */
   padding: 0.3125rem 0.75rem;
   line-height: 1.25rem;
-  --slc-rim-layers: linear-gradient(color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised)) 0 0), var(--slc-rim);
-  /* Prism rim: the fill as an image over the padding box, the spectrum under
-     it across the border box, seen through a transparent border. Where the
-     spectrum is reset the layers are invalid and the fallback is two empty
-     images, so the colour keeps the border-box clip it always had. */
-  background-image: var(--slc-rim-layers, none, none);
-  background-clip: padding-box, border-box;
-  background-origin: padding-box, border-box;
   transition: border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
@@ -604,15 +588,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    edge, the focus ring and the halo all turn to the danger ink together: a red
    border flipping to the accent ring on focus would be two colours on one
    edge (owner, 2026-10-01: no gap between lines), and would read as "fixed".
-   The Prism rim stands down with its documented pair: a spectrum edge that
-   opens on rose already reads like an error, and the real one must not be
-   mistaken for atmosphere. Colour is never the only signal: pair the field
+   Colour is never the only signal: pair the field
    with an .sl-field__error message (aria-describedby). The danger is the
    band-safe one where a band re-derives it (canvas danger on the band's ink
    is under 3:1), the status role everywhere else. */
 .sl-field__input[aria-invalid="true"] {
-  --slc-rim: initial;
-  --slc-rim-edge: initial;
   --slc-focus: var(--slc-danger-text, var(--slc-danger));
   border-color: var(--slc-danger-text, var(--slc-danger));
 }
@@ -1105,11 +1085,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    one generation is enough to reach the whole subtree. */
 .sl-invert > * {
   --slc-text:           var(--slc-canvas);
-  /* Prism stands down in the band: its surfaces are translucent, so a rim
-     painted under the padding box would show through the whole body, and the
-     spectrum ink does not clear 3:1 on the band's ink. Effects keep theirs. */
-  --slc-rim:            initial;
-  --slc-rim-edge:       initial;
+  /* Opt-in spectral text stands down in the band: the spectrum ink does not
+     clear 3:1 on the band's ink. */
   --slc-spectral-ink:   initial;
   --slc-spectral-fill:  initial;
   /* Surfaces are re-derived too, not just text and lines: a component that
@@ -1213,13 +1190,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   font-family: var(--sl-font-display, Georgia, serif);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: var(--sl-line-tight, 1.2);
+  /* Set solid, not on --sl-line-tight (1.2): display type is the one role
+     that takes 1.0 (owner, 2026-10-02). In-flow headings keep the token. */
+  line-height: 1;
   text-wrap: balance;
   font-size: clamp(2.7rem, 1.6rem + 5vw, 5.4rem);
 }
 
 /* Haze — a soft field of the spectrum behind a section (Prism, light theme).
-   One per screen at most. Static: it is light, not motion. */
+   Opt-in only: nothing in the kit adds it (owner, 2026-10-02). One per
+   screen at most. Static: it is light, not motion. */
 .sl-haze { position: relative; isolation: isolate; }
 .sl-haze::before {
   content: "";
@@ -1232,6 +1212,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 
 /* Spectral — a word or phrase of a display heading in the spectrum ink.
+   Opt-in only: rainbow by name, never applied by the kit (owner, 2026-10-02).
    Display sizes only: the ink clears 3:1, the large-text floor, not 4.5.
    Where the spectrum is reset the fill falls back to currentColor: plain text. */
 .sl-spectral {
@@ -1794,6 +1775,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
 /* High contrast draws every edge in its own border colour: shade is a
    subtlety the theme exists to remove. */
+/* Paper only: the primary's edge is capped so it finds the button on the
+   light canvas (>= 3.4:1), and its top line takes that edge too -- the lit
+   line (80% fill + white) read 1.63:1 there once the rainbow rim was gone
+   (owner, 2026-10-02). Ink keeps the 0.27 edge and lit top line. */
+:root[data-sl-theme="light"] {
+  --slc-edge-accent-lmax: 0.62;
+  --slc-edge-accent-top: var(--slc-edge-accent);
+}
+
 :root[data-sl-theme="high-contrast"] {
   --slc-edge-ground:  var(--slc-border);
   --slc-edge-surface: var(--slc-border);

@@ -982,26 +982,22 @@ test("high contrast hides every halftone canvas", () => {
   assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \[data-sl-halftone\]\s*\{\s*display:\s*none;?\s*\}/);
 });
 
-// Prism (light theme): the spectrum is declared by the light theme only; the
-// other themes reset it, so every read must carry today's colour as fallback.
-test("every spectrum read in effects.css falls back to today's colour", () => {
-  const bare = [...effects.matchAll(/var\(\s*(--sl-spectrum-[a-z0-9-]+)\s*\)/g)].map((m) => m[1]);
-  assert.deepEqual(bare, [], "a spectrum var() without a fallback paints nothing in dark");
+// No rainbow by default (owner, 2026-10-02). The light theme still declares
+// the spectrum, but no effect reads it: the aurora, the press light, glitch
+// and the run light are the accent's and its depth companion's on every
+// theme, as they always were on dark.
+test("effects.css reads no spectrum token", () => {
+  const reads = [...effects.matchAll(/var\(\s*(--sl-spectrum-[a-z0-9-]+)/g)].map((m) => m[1]);
+  assert.deepEqual(reads, []);
 });
 
-test("Prism reaches the aurora, the press light, glitch and the live light", () => {
-  for (const [prop, stop] of [
-    ["--slfx-beam", "--sl-spectrum-4"], ["--slfx-beam-b", "--sl-spectrum-0"],
-    ["--slfx-beam-c", "--sl-spectrum-2"], ["--slfx-beam-tail", "--sl-spectrum-5"],
-    ["--slfx-bloom-hi", "--sl-spectrum-0"], ["--slfx-bloom-lo", "--sl-spectrum-4"],
-    ["--slfx-press-light", "--sl-spectrum-1"],
-    ["--slfx-light-a", "--sl-spectrum-0"], ["--slfx-light-b", "--sl-spectrum-4"],
-  ]) {
-    assert.match(effects, new RegExp(`${prop}:[^;]*var\\(${stop},`), `${prop} reads ${stop}`);
-  }
+test("the run light, the press light and glitch take the accent and its depth companion", () => {
+  assert.match(effects, /--slfx-light-a:\s*var\(--slc-accent, var\(--sl-accent-default\)\);/);
+  assert.match(effects, /--slfx-light-b:\s*var\(--slfx-depth\);/);
+  assert.match(effects, /--slfx-press-light:[^;]*82%, var\(--slc-accent, var\(--sl-accent-default\)\)\);/);
   const channel = (side) => RULES.find((r) => r.selector === `.sl-fx-glitch.is-glitching::${side}`)?.body ?? "";
-  assert.match(channel("before"), /var\(--sl-spectrum-ink-0,\s*var\(--slc-accent/);
-  assert.match(channel("after"), /var\(--sl-spectrum-ink-3,\s*var\(--slfx-depth\)\)/);
+  assert.match(channel("before"), /color:\s*var\(--slc-accent, var\(--sl-accent-default\)\)/);
+  assert.match(channel("after"), /color:\s*var\(--slfx-depth\)/);
 });
 
 test("busy stays the accent: state is the accent's job, not the spectrum's", () => {
@@ -1011,9 +1007,9 @@ test("busy stays the accent: state is the accent's job, not the spectrum's", () 
 });
 
 test("the run light's two bodies resolve on the live host, not on :root", () => {
-  // Declared on :root, var(--sl-spectrum-0, …) is substituted once at the root:
-  // a dark island in a light page would inherit the spectrum, a light one in a
-  // dark page would not get it. On the host it follows the host's theme.
+  // Declared on :root, var(--slc-accent, …) is substituted once at the root:
+  // a subtree that re-sets --slc-accent (a product region, a demo swatch)
+  // would still get the page's. On the host it gets its own.
   const decl = RULES.filter((r) => /--slfx-light-[ab]\s*:/.test(r.body));
   assert.ok(decl.length > 0);
   for (const r of decl) {

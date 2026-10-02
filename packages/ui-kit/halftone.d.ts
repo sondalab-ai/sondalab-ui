@@ -8,8 +8,8 @@ export interface HalftoneHandle {
 /**
  * Arm every `canvas[data-sl-halftone]` under `root` (`data-sl-src` required;
  * `data-sl-grid` 16–256, default 96; `data-sl-seed` optional;
- * `data-sl-ink="mono"` keeps one ink where the light theme's spectrum would
- * colour the dots) and follow
+ * `data-sl-ink="spectral"` opts into the light theme's spectrum for the dots;
+ * without it they are one ink on every theme) and follow
  * canvases added later. `mount()` calls this; call it yourself only without `mount()`.
  */
 export declare function halftone(root?: Document | Element): HalftoneHandle;

@@ -21,14 +21,17 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 [data-sl-theme="light"] { --sl-accent-default: #0e9c84; --sl-focus-ring: #0e9c84; }
 ```
 
-**Light theme: Prism (0.21).** The light theme is a cool near-white ground (`#F4F4F8`) on which colour arrives as light: a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen at 1px or as text) paints the effects, a 1px hairline on cards, primary buttons and text fields, and two opt-in ornaments (`sl-haze`, `sl-spectral`). The spectrum is not an accent: it is the same in every product and never marks state — the product's accent still does. Dark and high-contrast reset it to `initial`, so they paint exactly what they did.
+**Light theme: Prism (0.21).** The light theme is a cool near-white ground (`#F4F4F8`). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
-- Drop the rim on one element with the pair `--slc-rim: initial; --slc-rim-edge: initial` — it gets back the 0.20 border. Setting only `--slc-rim`, or restyling the element with the `background:` shorthand, clears the rim **and** leaves its border transparent on light; pair a `background:` override with the two resets. One that sets only `background-color` sees it covered by the rim's fill layer on light.
-- Inside an inversion band (`sl-invert`) the rim and spectral text stand down (the band's surfaces are translucent, and the spectrum ink does not clear 3:1 on its ink); effects inside the band stay spectral.
-- Keep a halftone single-ink with `data-sl-ink="mono"` on its canvas.
-- An effect host (glass, aurora, press, glitch, liquid, a goo member) keeps its effect's edge and takes no rim; neither does what it contains.
-- Nested theme regions: effects read the spectrum on their own host, so they follow the region's theme. The rims and the two ornaments resolve on `:root` like every `--slc-*` role, so they follow the page's theme — a light region in a dark page gets no rims, a dark region in a light page keeps them.
-- Tier B: declare the eleven `--sl-spectrum-*` values from `themes/light.css` in your light layer to opt in; without them nothing is spectral.
+**0.28.0 — no rainbow by default.** The kit no longer paints any edge, rim or arc with the spectrum (owner, 2026-10-02). On the light theme, as on dark:
+
+- Cards take their surface in shade (`--slc-edge-surface`), fields the one control edge (`--slc-edge-control`), and the primary button its fill in shade (`--slc-edge-accent`) with the lit top line. The 0.21–0.27 spectrum rim and its role vars (`--slc-rim`, `--slc-rim-edge`, `--slc-rim-layers`, `--slc-rim-fill`) are gone; an override that still sets them does nothing. The three hosts no longer carry a `background-image`, so a `background:` shorthand reset is safe again.
+- The aurora (arc, bloom, `--rim`, `--linear`), the press light, glitch's channels and the run light are the accent's and its depth companion's on every theme.
+- A halftone is single-ink by default. `data-sl-ink="spectral"` opts a canvas into the spectrum on light; `"mono"`, the old opt-out, still works and now changes nothing.
+- The spectrum stays opt-in only, through the classes that are rainbow by name: `sl-haze`, `sl-spectral` (both still stand down in dark, high contrast and, for spectral text, inside `sl-invert`), and the halftone attribute above. Tier B: declare the eleven `--sl-spectrum-*` values from `themes/light.css` in your light layer to use them.
+- `.sl-anchor` is set solid: `line-height: 1` (was `--sl-line-tight`, 1.2). In-flow headings are unchanged.
+
+Dark and high contrast paint what they did in 0.27, apart from `.sl-anchor` being set solid (line-height 1) on every theme. No token changed.
 
 **Fonts** (load separately, e.g. Google Fonts): Fraunces (display), Instrument Sans (body), Martian Mono (mono).
 

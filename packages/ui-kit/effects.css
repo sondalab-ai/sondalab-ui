@@ -59,20 +59,14 @@
 .sl-field__control { display: block; position: relative; }
 .sl-field__control > :is(input, textarea, select) { box-sizing: border-box; width: 100%; }
 
-/* The live light's two bodies (live-light.js, run mode). On light they are
-   two stops of the spectrum (Prism); where a theme resets the spectrum, the
-   accent and its depth companion, as before. Declared on the live host, not on
-   :root, so they follow the host's own theme. */
+/* The live light's two bodies (live-light.js, run mode): the accent and its
+   depth companion, on every theme. On light they were two spectrum stops
+   until the spectrum stopped painting effects (owner, 2026-10-02). Declared
+   on the live host, not on :root, so a subtree that re-sets --slc-accent
+   gets its own. */
 [data-sl-fx-live] {
-  --slfx-light-a: var(--sl-spectrum-0, var(--slc-accent, var(--sl-accent-default)));
-  --slfx-light-b: var(--sl-spectrum-4, var(--slfx-depth));
-}
-
-/* An effect host keeps its effect's edge: the Prism rim (components.css,
-   light theme) steps aside on it and on what it contains. */
-:is(.sl-fx-glass, .sl-fx-aurora, .sl-fx-press, .sl-fx-glitch, .sl-fx-liquid, .sl-fx-goo__member) {
-  --slc-rim: initial;
-  --slc-rim-edge: initial;
+  --slfx-light-a: var(--slc-accent, var(--sl-accent-default));
+  --slfx-light-b: var(--slfx-depth);
 }
 
 :root {
@@ -1215,7 +1209,7 @@
   /* The light: the page's light pole, warmed a little toward the accent, so
      a pressed control glows in its own register rather than in a neutral
      white. Near-white on both themes; the sheen decides, as for the glint. */
-  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h) 82%, var(--sl-spectrum-1, var(--slc-accent, var(--sl-accent-default))));
+  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h) 82%, var(--slc-accent, var(--sl-accent-default)));
   position: relative;
   isolation: isolate;
   /* The sink and the return, on the spring. The duration is a motion token,
@@ -1370,15 +1364,17 @@
   /* The beam's own hue, its tails, how white its core goes, and the two
      colours of its bloom. Rebound by --rim below, where the accent would
      vanish against an accent fill. */
-  --slfx-beam: var(--sl-spectrum-4, var(--slfx-accent-vivid));
+  --slfx-beam: var(--slfx-accent-vivid);
   /* The beam's companions, border-beam's "colorful" read in our own terms:
      the complement (180°) and a split (150°) of the vivid accent, turned in
      oklch so lightness and chroma are the accent's own — a product that
-     re-registers its accent gets its own trio (AC-18). On light, the
-     spectrum replaces the trio (Prism, 2026-09-30). */
-  --slfx-beam-b: var(--sl-spectrum-0, oklch(from var(--slfx-accent-vivid) l c calc(h + 180)));
-  --slfx-beam-c: var(--sl-spectrum-2, oklch(from var(--slfx-accent-vivid) l c calc(h + 150)));
-  --slfx-beam-tail: color-mix(in srgb, var(--sl-spectrum-5, var(--slfx-depth-vivid)) 75%, transparent);
+     re-registers its accent gets its own trio (AC-18). The same on every
+     theme: on light the spectrum replaced the trio from 2026-09-30 until the
+     owner dropped it (2026-10-02: the aurora on light follows the accent, as
+     on dark). */
+  --slfx-beam-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
+  --slfx-beam-c: oklch(from var(--slfx-accent-vivid) l c calc(h + 150));
+  --slfx-beam-tail: color-mix(in srgb, var(--slfx-depth-vivid) 75%, transparent);
   /* was 86%: the white core is the lighthouse's lamp, and it is gone */
   --slfx-core: 0%;
   /* The bloom's two colours are the vivid beam and the vivid depth companion
@@ -1405,8 +1401,8 @@
      +26.5, +19.9, +11.8, +4.0, +0.4, 0. The tail's alpha keeps the 0.75
      ratio (the reference's rose against its green at the edge); only the
      plateau's colour lies on the profiled edge. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--sl-spectrum-0, var(--slfx-accent-bloom)) 44%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--sl-spectrum-4, var(--slfx-depth-bloom)) 33%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-accent-bloom) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
   /* How far the bloom's band reaches INWARD from the host's border, before
      the blur. Declared here, on the host, so a component can rebind it and
      the seated glow follows (effects.js copies it across). */
@@ -1450,7 +1446,7 @@
      rather than as light, on paper especially, where the two tokens sit
      within 0.06 of each other. Fitted to the gamut at the lifted lightness
      like every pushed colour (the fit, above). */
-  --slfx-beam: var(--sl-spectrum-ink-3, var(--slfx-rim-beam));
+  --slfx-beam: var(--slfx-rim-beam);
   --slfx-beam-tail: color-mix(in srgb, var(--slfx-beam) 85%, transparent);
   --slfx-core: 40%;
   /* The HUE stays the depth companion, and the declension's reason for it
@@ -1461,8 +1457,8 @@
      glow — the owner reported it as a defect on a busy control. 44/33% is the
      register every other bloom in this file uses since the 2026-09-12 fit, and
      it is a halo at that strength. */
-  --slfx-bloom-hi: color-mix(in srgb, var(--sl-spectrum-3, var(--slfx-depth-bloom)) 44%, transparent);
-  --slfx-bloom-lo: color-mix(in srgb, var(--sl-spectrum-5, var(--slfx-depth-bloom)) 33%, transparent);
+  --slfx-bloom-hi: color-mix(in srgb, var(--slfx-depth-bloom) 44%, transparent);
+  --slfx-bloom-lo: color-mix(in srgb, var(--slfx-depth-bloom) 33%, transparent);
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
@@ -1826,9 +1822,11 @@
    renders as a smear. A linear aurora has no busy mode — report work on a
    ring aurora, not on an underline. */
 .sl-fx-aurora[data-sl-fx-live="busy"] { --slfx-arc: 65deg; }
-/* Busy is a state, and state is the accent's (design-language Decision 2): on
-   light the ring keeps its pre-Prism colours instead of the spectrum. The rim
-   variant's own colours come after, at the same weight, so they win on it. */
+/* Busy is a state, and state is the accent's (design-language Decision 2).
+   Since 0.28 every reading is the accent's, so these restate the defaults;
+   they stay so a variant that rebinds the beam cannot recolour a busy ring.
+   The rim variant's own colours come after, at the same weight, so they win
+   on it. */
 .sl-fx-aurora[data-sl-fx-live="busy"] {
   --slfx-beam: var(--slfx-accent-vivid);
   --slfx-beam-b: oklch(from var(--slfx-accent-vivid) l c calc(h + 180));
@@ -1863,9 +1861,9 @@
   mask: none;
   background: linear-gradient(90deg,
     transparent 0%,
-    color-mix(in srgb, var(--sl-spectrum-ink-0, var(--slfx-depth)) 80%, transparent) 30%,
-    color-mix(in srgb, var(--slfx-sheen) 70%, var(--sl-spectrum-ink-2, var(--slc-accent, var(--sl-accent-default)))) 50%,
-    color-mix(in srgb, var(--sl-spectrum-ink-4, var(--slfx-depth)) 80%, transparent) 70%,
+    color-mix(in srgb, var(--slfx-depth) 80%, transparent) 30%,
+    color-mix(in srgb, var(--slfx-sheen) 70%, var(--slc-accent, var(--sl-accent-default))) 50%,
+    color-mix(in srgb, var(--slfx-depth) 80%, transparent) 70%,
     transparent 100%);
 }
 
@@ -2221,8 +2219,8 @@
   white-space: inherit;
   mix-blend-mode: screen;
 }
-.sl-fx-glitch.is-glitching::before { color: var(--sl-spectrum-ink-0, var(--slc-accent, var(--sl-accent-default))); }
-.sl-fx-glitch.is-glitching::after  { color: var(--sl-spectrum-ink-3, var(--slfx-depth)); }
+.sl-fx-glitch.is-glitching::before { color: var(--slc-accent, var(--sl-accent-default)); }
+.sl-fx-glitch.is-glitching::after  { color: var(--slfx-depth); }
 
 /* Shatter variant — during a burst the text breaks into horizontal bands that
    jump sideways. Bands are stacked copies clipped to one strip each; JS sets a
@@ -2453,8 +2451,8 @@
     50%  {
       transform: translate(calc(-0.4 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0);
       text-shadow:
-        calc(0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--sl-spectrum-ink-0, var(--slc-accent-hover, var(--sl-accent-hover))) 55%, transparent),
-        calc(-0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--sl-spectrum-ink-3, var(--slfx-depth)) 40%, transparent);
+        calc(0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--slc-accent-hover, var(--sl-accent-hover)) 55%, transparent),
+        calc(-0.8 * var(--slfx-gx) * var(--slfx-gmul, 1)) 0 color-mix(in srgb, var(--slfx-depth) 40%, transparent);
     }
     100% { transform: translate(calc(0.4 * var(--slfx-gx) * var(--slfx-gmul, 1)), 0); text-shadow: none; }
   }

@@ -108,7 +108,7 @@
     .hero { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
     .anchor {
       font-family: var(--sl-font-display); font-weight: 600;
-      letter-spacing: -0.02em; line-height: var(--sl-line-tight);
+      letter-spacing: -0.02em; line-height: 1;
       font-size: clamp(2.4rem, 1.6rem + 4vw, 4.6rem);
       margin: 1.1rem 0 0;
     }
@@ -345,18 +345,22 @@
     footer .cap { max-width: var(--sl-measure); line-height: 1.6; }
   </style>
   <style>
-    /* spexr's filled indigo (spexr-overrides.css, 2026-10-01): its primary is a
-       deeper indigo than its accent so the label can be white -- the accent
-       itself (#5b6cff / #8b96ff) still drives links, tags and the focus ring.
-       Product-local, so it lives in the product and is mirrored here only to
-       show the Indigo swatch as spexr ships it. */
+    /* spexr's filled indigo (spexr-overrides.css): its primary is a deeper
+       indigo than its accent so the label can be white -- the accent itself
+       (#5b6cff / #8b96ff) still drives links, tags and the focus ring. ONE
+       registered colour on both themes (accent-registry.json, spexr "fill"),
+       and its steps derived the way the light theme derives the accent's:
+       less is more (owner, 2026-10-02). Darker on dark too: the dark theme's
+       lighten (80% white) leaves a white label at 3.70:1 on the hover; these
+       hold 5.41 / 6.47 / 8.03. Product-local, so it lives in the product and
+       is mirrored here only to show the Indigo swatch as spexr ships it. */
     [data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) .sl-btn--primary {
       --slc-accent: #4c58e9;
-      --slc-edge-accent: oklch(from #4c58e9 calc(l - var(--slc-shade-step, 0.075)) c h);
+      --slc-accent-hover: color-mix(in srgb, var(--slc-accent) 89%, black);
+      --slc-accent-active: color-mix(in srgb, var(--slc-accent) 76%, black);
+      --slc-edge-accent: oklch(from var(--slc-accent) calc(l - var(--slc-shade-step, 0.075)) c h);
       --slc-on-accent: #ffffff;
     }
-    [data-demo-accent="indigo"][data-sl-theme="light"] .sl-btn--primary { --slc-accent-hover: #424adb; --slc-accent-active: #393ccd; }
-    [data-demo-accent="indigo"][data-sl-theme="dark"] .sl-btn--primary { --slc-accent-hover: #505ef0; --slc-accent-active: #424adb; }
   </style>
 </head>
 <body>
