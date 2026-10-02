@@ -32,8 +32,10 @@ test("components.css reads the spectrum only inside the two opt-in ornaments", (
   }
   assert.deepEqual([...new Set(owners)].sort(), ["--slc-haze", "--slc-spectral-fill", "--slc-spectral-ink"]);
   // ...and those are consumed only by the classes that are rainbow by name.
+  // Every selector in each consuming rule's list, not just its last line.
   const consumers = [...css.matchAll(/([^{}]+)\{[^}]*var\(--slc-(?:haze|spectral-ink|spectral-fill)\b[^}]*\}/g)]
-    .map((m) => m[1].trim().split("\n").pop().trim());
+    .flatMap((m) => m[1].split(",").map((s) => s.trim()).filter(Boolean));
+  assert.ok(consumers.length > 0, "the opt-in ornaments still read the spectrum");
   for (const sel of consumers) assert.match(sel, /^\.sl-(haze|spectral)\b/, sel);
 });
 
@@ -49,8 +51,8 @@ for (const [host, edge] of [
   });
 }
 
-test("the primary keeps its lit top line and moves only its fill on hover and press", () => {
-  assert.match(rule(".sl-btn--primary"), /border-top-color:\s*color-mix\(in srgb, var\(--slc-accent\) 80%, white\)/);
+test("the primary keeps its lit top line (on ink) and moves only its fill on hover and press", () => {
+  assert.match(rule(".sl-btn--primary"), /border-top-color:\s*var\(--slc-edge-accent-top, color-mix\(in srgb, var\(--slc-accent\) 80%, white\)\)/);
   for (const state of [":hover:not(:disabled)", ":active:not(:disabled)"]) {
     const r = rule(`.sl-btn--primary${state}`);
     assert.match(r, /background-color:/, state);
@@ -74,6 +76,14 @@ const lightEnv = () => {
   for (const f of ["tokens.css", "themes/light.css"]) {
     for (const m of strip(f).matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   }
+  for (const [k, v] of declarations(raw("components.css"), [":root", ':root[data-sl-theme="light"]'])) env.set(k, v);
+  return env;
+};
+const darkEnv = () => {
+  const env = new Map();
+  for (const f of ["tokens.css", "themes/dark.css"]) {
+    for (const m of strip(f).matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  }
   for (const [k, v] of declarations(raw("components.css"), [":root"])) env.set(k, v);
   return env;
 };
@@ -95,6 +105,22 @@ for (const [name, fill] of FILLS) {
     // Owner, 2026-10-02: with the rim gone the edge is the primary's boundary,
     // so it holds the 3:1 a control boundary needs (amber was 2.46:1).
     assert.ok(ratio(edge, canvas) >= 3, `edge ${ratio(edge, canvas).toFixed(2)}:1 on the canvas, needs 3:1`);
+    // ...and its top line is that edge too: the lit line read 1.63:1 on paper.
+    const top = evaluate("var(--slc-edge-accent-top)", env);
+    assert.ok(ratio(top, canvas) >= 3, `top line ${ratio(top, canvas).toFixed(2)}:1 on the canvas, needs 3:1`);
+  });
+}
+
+// Regression (review of 0.28.0): the paper cap must not reach ink. On the dark
+// theme the primary's edge is the plain step, exactly as in 0.27.
+const DARK_FILLS = Object.entries(registry).filter(([, e]) => e.dark).map(([n, e]) => [n, e.dark]);
+for (const [name, fill] of DARK_FILLS) {
+  test(`dark, ${name} ${fill}: the primary's edge is the 0.27 step, uncapped`, () => {
+    const env = darkEnv();
+    env.set("--sl-accent-default", fill);
+    const edge = evaluate("var(--slc-edge-accent)", env);
+    const plain = evaluate(`oklch(from ${fill} calc(l - 0.075) c h)`, env);
+    assert.deepEqual(edge.lin.map((v) => v.toFixed(5)), plain.lin.map((v) => v.toFixed(5)));
   });
 }
 

@@ -240,7 +240,7 @@ export function halftone(root = document) {
       for (const n of r.addedNodes) if (n instanceof Element) scan(n);
     }
   });
-  added.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-sl-theme", "class"] });
+  added.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-sl-theme", "class", "data-sl-ink"] });
 
   const faded = (e) => { if (e.propertyName === "color") retint(e.target); };
   root.addEventListener("transitionend", faded);

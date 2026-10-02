@@ -50,12 +50,13 @@
   --slc-edge-surface:  oklch(from var(--slc-surface) calc(l - var(--slc-shade-step)) c h);
   --slc-edge-raised:   oklch(from var(--slc-raised) calc(l - var(--slc-shade-step)) c h);
   --slc-edge-wash:     oklch(from color-mix(in srgb, var(--slc-text) 6%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
-  /* The fill in shade, never lighter than L 0.62: with the rainbow rim gone
-     (owner, 2026-10-02) this edge is what finds a primary on paper, and a
-     light accent one step down (amber, L 0.71) read 2.46:1 on the canvas.
-     The cap holds every registered accent >= 3.4:1; darker ones are below it
-     already and keep their step. */
-  --slc-edge-accent:   oklch(from var(--slc-accent) min(calc(l - var(--slc-shade-step)), 0.62) c h);
+  /* The fill in shade. On paper it is also capped at L 0.62 (the light
+     block below sets --slc-edge-accent-lmax): with the rainbow rim gone
+     (owner, 2026-10-02) this edge is what finds a primary there, and a light
+     accent one step down (amber, L 0.71) read 2.46:1 on the canvas; capped,
+     every registered accent is >= 3.4:1. On ink the edge is the plain step,
+     exactly as in 0.27 -- a bright fill one step down already reads there. */
+  --slc-edge-accent:   oklch(from var(--slc-accent) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --slc-edge-pressed:  oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
   /* A form control's box must be found before it is read: five steps AWAY
      from the surface, toward contrast -- darker on paper, LIGHTER on ink. In
@@ -447,7 +448,7 @@
      spectrum rim is gone (owner, 2026-10-02: a filled control's edge is "a
      vibrant colour that goes along with the accent"). */
   border-color: var(--slc-edge-accent);
-  border-top-color: color-mix(in srgb, var(--slc-accent) 80%, white);
+  border-top-color: var(--slc-edge-accent-top, color-mix(in srgb, var(--slc-accent) 80%, white));
 }
 .sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); }
 .sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); }
@@ -1774,6 +1775,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════ */
 /* High contrast draws every edge in its own border colour: shade is a
    subtlety the theme exists to remove. */
+/* Paper only: the primary's edge is capped so it finds the button on the
+   light canvas (>= 3.4:1), and its top line takes that edge too -- the lit
+   line (80% fill + white) read 1.63:1 there once the rainbow rim was gone
+   (owner, 2026-10-02). Ink keeps the 0.27 edge and lit top line. */
+:root[data-sl-theme="light"] {
+  --slc-edge-accent-lmax: 0.62;
+  --slc-edge-accent-top: var(--slc-edge-accent);
+}
+
 :root[data-sl-theme="high-contrast"] {
   --slc-edge-ground:  var(--slc-border);
   --slc-edge-surface: var(--slc-border);

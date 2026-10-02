@@ -31,7 +31,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 - The spectrum stays opt-in only, through the classes that are rainbow by name: `sl-haze`, `sl-spectral` (both still stand down in dark, high contrast and, for spectral text, inside `sl-invert`), and the halftone attribute above. Tier B: declare the eleven `--sl-spectrum-*` values from `themes/light.css` in your light layer to use them.
 - `.sl-anchor` is set solid: `line-height: 1` (was `--sl-line-tight`, 1.2). In-flow headings are unchanged.
 
-Dark and high contrast paint exactly what they did in 0.27. No token changed.
+Dark and high contrast paint what they did in 0.27, apart from `.sl-anchor` being set solid (line-height 1) on every theme. No token changed.
 
 **Fonts** (load separately, e.g. Google Fonts): Fraunces (display), Instrument Sans (body), Martian Mono (mono).
 
