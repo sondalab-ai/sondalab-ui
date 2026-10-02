@@ -135,8 +135,12 @@ test("an invalid field is red at rest, on hover and inside its own focus ring", 
     assert.match(rest, d);
   }
   assert.match(css, /\.sl-field__input\[aria-invalid="true"\]:hover:not\(:disabled\) \{ border-color: var\(--slc-danger-text, var\(--slc-danger\)\); \}/);
+  // Focused, the border is the danger and the halo is drawn in --slc-focus,
+  // which the field re-binds to the danger (0.32): one colour on the edge.
   const focus = css.match(/\.sl-field__input\[aria-invalid="true"\]:focus \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(focus, /box-shadow:\s*0 0 0 3px color-mix\(in srgb, var\(--slc-danger-text, var\(--slc-danger\)\) 16%, transparent\)/);
+  assert.match(focus, /border-color:\s*var\(--slc-danger-text, var\(--slc-danger\)\)/);
+  assert.doesNotMatch(focus, /box-shadow/, "the halo comes from the field's own focus rule, in --slc-focus");
+  assert.match(css, /\n\.sl-field__input:focus \{\s*border-color:\s*var\(--slc-focus\);\s*box-shadow:\s*var\(--_sl-depth, 0 0 transparent\), var\(--_sl-halo, 0 0 transparent\);/);
   const effects = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8");
   assert.match(effects, /\.sl-field__input\[aria-invalid="true"\]:is\(:hover, :focus, :not\(:focus\)\) \{\s*border-color: var\(--slc-danger-text, var\(--slc-danger\)\);/, "the glass field edge yields too");
   assert.match(css, /\.sl-field__error::before \{/, "the error line carries a mark, not colour alone");
@@ -292,7 +296,7 @@ test("a hovered pagination item is a flat wash; the current one a tile", () => {
   assert.doesNotMatch(hover, /border|box-shadow/, "hover never lifts");
   const current = css.match(/\n\.sl-pagination__item\[aria-current\] \{([^}]*)\}/)?.[1] ?? "";
   assert.match(current, /background:\s*var\(--slc-tile\)/);
-  assert.match(current, /box-shadow:\s*var\(--slc-depth-tile\)/);
+  assert.match(current, /--_sl-depth:\s*var\(--slc-depth-tile\)/);
 });
 
 // Fields have been 32px since 0.27.0. The glass lens comments and the catalog

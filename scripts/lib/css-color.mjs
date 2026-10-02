@@ -87,11 +87,20 @@ export function substitute(text, env, seen = new Set()) {
     // takes its fallback exactly as if the property were never declared.
     const declared = env.get(name);
     const value = declared?.trim() === "initial" ? undefined : declared;
-    if (value === undefined) {
+    // A custom property whose own value reaches an unresolved var() with no
+    // fallback is invalid at computed-value time, which makes it the
+    // guaranteed-invalid value too: a var() naming it with a fallback takes
+    // the fallback (the kit's --slc-accent-fill derivations rely on this).
+    let expanded;
+    if (value !== undefined) {
+      try { expanded = substitute(value, env, new Set([...seen, name])); }
+      catch (e) { if (fallback === null || !/^unresolved /.test(e.message)) throw e; }
+    }
+    if (expanded === undefined) {
       if (fallback === null) throw new Error(`unresolved ${name}`);
       out += substitute(fallback, env, seen);
     } else {
-      out += substitute(value, env, new Set([...seen, name]));
+      out += expanded;
     }
     i = j;
   }
@@ -213,13 +222,19 @@ class Parser {
     this.expect("ident", "in");
     const space = this.expect("ident").v;
     this.expect("punct", ",");
+    // A percentage is a literal or a math function over percentages
+    // (calc(22% * min(1, 0.5 * 1000))), read as a fraction either way.
+    const pct = () => {
+      const p = this.peek();
+      if (p?.t === "num") return this.expect("num").v / 100;
+      if (p?.t === "fn" && ["calc", "min", "max", "clamp"].includes(p.v)) return this.primary({});
+      return null;
+    };
     const a = this.color(env);
-    let pa = null;
-    if (this.peek()?.t === "num") pa = this.expect("num").v / 100;
+    let pa = pct();
     this.expect("punct", ",");
     const b = this.color(env);
-    let pb = null;
-    if (this.peek()?.t === "num") pb = this.expect("num").v / 100;
+    let pb = pct();
     this.expect("punct", ")");
     if (pa === null && pb === null) { pa = pb = 0.5; }
     else if (pa === null) pa = 1 - pb;

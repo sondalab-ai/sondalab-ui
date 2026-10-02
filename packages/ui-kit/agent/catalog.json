@@ -52,17 +52,27 @@
         "sl-btn",
         "sl-btn--primary",
         "sl-btn--ghost",
-        "sl-btn--sm"
+        "sl-btn--sm",
+        "sl-btn--danger"
       ],
       "roleVars": [
         "--slc-accent",
-        "--slc-accent-hover",
-        "--slc-accent-active",
+        "--slc-accent-fill",
+        "--slc-accent-fill-hover",
+        "--slc-accent-fill-active",
+        "--slc-on-accent-fill",
         "--slc-accent-subtle",
-        "--slc-on-accent",
-        "--slc-border",
+        "--slc-edge-accent",
+        "--slc-edge-control",
+        "--slc-edge-control-hover",
+        "--slc-raised",
+        "--slc-tile",
+        "--slc-lit",
+        "--slc-shadow-sm",
         "--slc-text",
-        "--slc-edge-accent"
+        "--slc-danger",
+        "--slc-on-danger",
+        "--slc-focus"
       ]
     },
     {
@@ -123,13 +133,14 @@
         "sl-field__error"
       ],
       "roleVars": [
-        "--slc-surface",
-        "--slc-border",
-        "--slc-border-strong",
+        "--slc-sunken",
+        "--slc-depth-sunk",
+        "--slc-edge-control",
+        "--slc-edge-control-hover",
         "--slc-text",
-        "--slc-focus",
         "--slc-text-muted",
-        "--slc-danger"
+        "--slc-danger",
+        "--slc-focus"
       ]
     },
     {
@@ -415,10 +426,13 @@
         "sl-check__label"
       ],
       "roleVars": [
-        "--slc-surface",
-        "--slc-border-strong",
+        "--slc-sunken",
+        "--slc-edge-control",
         "--slc-accent",
-        "--slc-on-accent",
+        "--slc-accent-fill",
+        "--slc-on-accent-fill",
+        "--slc-edge-accent",
+        "--slc-glow",
         "--slc-text",
         "--slc-focus"
       ]
@@ -434,10 +448,13 @@
         "sl-radio__label"
       ],
       "roleVars": [
-        "--slc-surface",
-        "--slc-border-strong",
+        "--slc-sunken",
+        "--slc-edge-control",
         "--slc-accent",
-        "--slc-on-accent",
+        "--slc-accent-fill",
+        "--slc-on-accent-fill",
+        "--slc-edge-accent",
+        "--slc-glow",
         "--slc-text",
         "--slc-focus"
       ]
@@ -453,10 +470,14 @@
         "sl-switch__label"
       ],
       "roleVars": [
-        "--slc-surface",
-        "--slc-border-strong",
+        "--slc-sunken",
+        "--slc-depth-sunk",
+        "--slc-edge-control",
         "--slc-accent",
-        "--slc-on-accent",
+        "--slc-accent-fill",
+        "--slc-on-accent-fill",
+        "--slc-edge-accent",
+        "--slc-glow",
         "--slc-text",
         "--slc-focus"
       ]
@@ -523,8 +544,9 @@
         "sl-segmented__item"
       ],
       "roleVars": [
-        "--slc-border",
-        "--slc-surface",
+        "--slc-sunken",
+        "--slc-depth-sunk",
+        "--slc-edge-control",
         "--slc-tile",
         "--slc-depth-tile",
         "--slc-text-muted",
@@ -571,14 +593,20 @@
       "interactive": true,
       "classes": [
         "sl-icon-btn",
-        "sl-icon-btn--round"
+        "sl-icon-btn--round",
+        "sl-icon-btn--danger"
       ],
       "roleVars": [
-        "--slc-border",
+        "--slc-edge-control",
+        "--slc-edge-control-hover",
+        "--slc-surface",
+        "--slc-text-secondary",
         "--slc-text",
         "--slc-accent",
-        "--slc-focus",
-        "--slc-accent-subtle"
+        "--slc-accent-subtle",
+        "--slc-danger",
+        "--slc-on-danger",
+        "--slc-focus"
       ]
     },
     {

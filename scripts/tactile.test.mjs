@@ -131,11 +131,23 @@ test("the switch knob is a pill that stretches toward where it will travel, neve
   const knob = R.find((r) => r.selector === ".sl-switch__track::after");
   assert.match(knob.body, /border-radius:\s*999px/);
   assert.match(knob.body, /width var\(--sl-motion-slow, 360ms\) var\(--sl-motion-spring/);
-  const held = R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*0\.825rem/.test(r.body));
+  // 0.32 (Lumen): a 0.85rem knob in a 2.1rem border-box track, seated 2px in
+  // on both sides (0.875rem of travel), grows by a tenth while held -- to
+  // 0.935rem -- and a checked one grows leftward, its right edge still 2px in.
+  assert.match(knob.body, /width:\s*0\.85rem/);
+  const track = R.find((r) => r.selector === ".sl-switch__track");
+  assert.match(track.body, /box-sizing:\s*border-box/);
+  assert.match(track.body, /width:\s*2\.1rem/);
+  const on = R.find((r) => r.selector === ".sl-switch__input:checked + .sl-switch__track::after");
+  assert.match(on.body, /translateX\(0\.875rem\)/);
+  const px = (rem) => rem * 16;
+  assert.equal(px(2.1) - 2 - 2 - px(0.85) - px(0.875), 2, "on, the knob sits 2px in from the right as it sits 2px in from the left");
+  assert.equal(px(2.1) - 2 - 2 - px(0.935) - px(0.79), 2, "held on, it grows leftward and keeps that 2px");
+  const held = R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*0\.935rem/.test(r.body));
   assert.ok(held, "no held-knob rule");
   assert.match(held.selector, /:not\(:has\(:disabled\)\)/);
-  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(0\.775rem\)/.test(r.body));
-  assert.ok(heldOn, "a checked knob must grow leftward (translateX 0.775rem)");
+  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(0\.79rem\)/.test(r.body));
+  assert.ok(heldOn, "a checked knob must grow leftward (translateX 0.79rem)");
   assert.match(heldOn.selector, /:not\(:has\(:disabled\)\)/);
   for (const r of [held, heldOn]) {
     assert.match(r.body, FAST, "a held knob goes down on fast");
@@ -215,7 +227,8 @@ test("the slider's focus ring is a box-shadow on its thumb, in each engine, not 
   for (const thumb of ["::-webkit-slider-thumb", "::-moz-range-thumb"]) {
     const ring = R.find((r) => r.selector === `.sl-slider:focus-visible${thumb}`);
     assert.ok(ring, thumb);
-    assert.match(ring.body, /box-shadow:\s*0 0 0 var\(--sl-focus-ring-offset, 0px\) var\(--slc-canvas\), 0 0 0 calc\(var\(--sl-focus-ring-offset, 0px\) \+ var\(--sl-focus-ring-width, 2px\)\) var\(--slc-focus\), var\(--slc-shadow-sm\)/, thumb);
+    // the ring, then the kit's halo (0.32), then the thumb's cast
+    assert.match(ring.body, /box-shadow:\s*0 0 0 var\(--sl-focus-ring-offset, 0px\) var\(--slc-canvas\), 0 0 0 calc\(var\(--sl-focus-ring-offset, 0px\) \+ var\(--sl-focus-ring-width, 2px\)\) var\(--slc-focus\), var\(--_sl-halo, 0 0 transparent\), var\(--slc-shadow-sm\)/, thumb);
     assert.doesNotMatch(ring.body, /outline/, thumb);
   }
 });

@@ -753,9 +753,11 @@
 }
 .sl-tag.sl-fx-glass { --slfx-fill: var(--slc-accent-subtle); --slg-tint-color: var(--slc-accent-subtle); }
 .sl-dialog.sl-fx-glass { --slfx-fill: var(--slc-raised); --slg-tint-color: var(--slc-raised); }
-.sl-btn--primary.sl-fx-glass { --slfx-fill: var(--slc-accent); }
-.sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--slc-accent-hover); }
-.sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--slc-accent-active); }
+/* The primary's fill is its private fill set (components.css, 0.32): the
+   accent, a product's --slc-accent-fill, or the danger on a danger primary. */
+.sl-btn--primary.sl-fx-glass { --slfx-fill: var(--_sl-fill); }
+.sl-btn--primary.sl-fx-glass:hover:not(:disabled)  { --slfx-fill: var(--_sl-fill-hover); }
+.sl-btn--primary.sl-fx-glass:active:not(:disabled) { --slfx-fill: var(--_sl-fill-active); }
 /* THE CONTROL EDGE — two lines, one recipe for every glass control: a sharp
    1px line on the border and a softer 1px line just inside it (the owner,
    2026-09-29: "1px sharp and 1px softer, not a single bold border"). The
@@ -772,7 +774,16 @@
    less bright — the sharp one a full shade step (--slfx-control-edge, bound
    per fill below), the soft one the same colour at half strength — instead
    of the neutral strong/default pair, which read as a grey line on colour. */
+/* GLASS OWNS A CONTROL'S DEPTH (0.32). The box-shadow below replaces the
+   control's own (components.css writes it into --_sl-depth: the secondary
+   key's lit line and cast), and the primary's foot stands down
+   (--_sl-foot: 0, so its bottom border and padding are the plain ones
+   again): the material is the depth here, one edge and one soft line, the
+   same on every glass control. Under keyboard focus the halo is appended
+   (below). High contrast and an opt-out region keep the shipped control,
+   foot and depth included. */
 :is(.sl-btn, .sl-icon-btn).sl-fx-glass:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
+  --_sl-foot: 0px;
   border-color: var(--slfx-control-edge, var(--slfx-edge-mid));
   box-shadow: inset 0 0 0 1px var(--slfx-control-edge-soft, var(--slfx-edge-soft));
   /* Flat, like the field beside it (the owner, 2026-09-29: "make the buttons
@@ -783,8 +794,14 @@
   --slg-rim-hi: transparent;
   --slg-rim-lo: transparent;
 }
+/* The soft line composes with the field's well (--_sl-depth): an aurora
+   field keeps it, a glass field gives it up (the next rule), since glass
+   owns the depth of what it is on (0.32). */
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-control, var(--slfx-edge-soft)) 50%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-control, var(--slfx-edge-soft)) 50%, transparent), var(--_sl-depth, 0 0 transparent);
+}
+.sl-field__control.sl-fx-glass--field:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
+  --_sl-depth: 0 0 transparent;
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
   border-color: var(--slc-edge-control, var(--slfx-edge-mid));
@@ -796,8 +813,9 @@
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:focus {
   /* The soft line follows the focus border; the resting edge's half-strength
-     line on ink is darker than the fill, a band inside the ring. */
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-accent-text) 50%, transparent), 0 0 0 3px var(--slc-accent-subtle);
+     line on ink is darker than the fill, a band inside the ring. Outside it,
+     the kit's halo (components.css, 0.32), which this rule outranks. */
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-focus) 50%, transparent), var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent);
 }
 /* Invalid (components.css): the glass edge yields to the danger ink at rest,
    on hover and on focus, and the soft inner line follows it at half strength
@@ -805,15 +823,17 @@
    :is() match the hover rule's specificity, and source order settles it. */
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input[aria-invalid="true"]:is(:hover, :focus, :not(:focus)) {
   border-color: var(--slc-danger-text, var(--slc-danger));
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-danger-text, var(--slc-danger)) 50%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-danger-text, var(--slc-danger)) 50%, transparent), var(--_sl-depth, 0 0 transparent);
 }
+/* The halo is the danger's: the invalid field re-binds --slc-focus. */
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input[aria-invalid="true"]:focus {
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-danger-text, var(--slc-danger)) 50%, transparent), 0 0 0 3px color-mix(in srgb, var(--slc-danger-text, var(--slc-danger)) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-danger-text, var(--slc-danger)) 50%, transparent), var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent);
 }
-/* Since 0.11 these fill with a wash of the ink (badges: of their own status). The fill is named for
-   what ships; the tint stays the page's ground from the group above. */
-.sl-btn--ghost.sl-fx-glass,
-.sl-icon-btn.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 6%, transparent); }
+/* The fill is named for what ships; the tint stays the page's ground from
+   the group above. Since 0.32 the secondary key is the raised rung (it was a
+   6% wash of the ink, as the icon button was; the icon button is clear at
+   rest now, the group's transparent). */
+.sl-btn--ghost.sl-fx-glass { --slfx-fill: var(--slc-raised); }
 /* The edge in shade each glass control's fill casts (see the control edge above). */
 .sl-btn.sl-fx-glass,
 .sl-icon-btn.sl-fx-glass {
@@ -824,7 +844,18 @@
      past it (owner, 2026-10-01: "no gaps between borders in any case"). */
   --slfx-control-edge-soft: color-mix(in oklab, var(--slfx-control-edge) 50%, transparent);
 }
-.sl-btn--primary.sl-fx-glass { --slfx-control-edge: var(--slc-edge-accent); }
+.sl-btn--primary.sl-fx-glass { --slfx-control-edge: var(--_sl-fill-edge, var(--slc-edge-accent)); }
+/* A danger tone keeps its danger edge on glass (components.css, 0.32);
+   hovered, the host fills with the danger, so the edge is that fill in
+   shade and the tint is the danger too, or the page's ground at 25% would
+   veil the fill and its label. Not under focus: there the edge is the
+   ring's (below). */
+.sl-btn--danger:not(.sl-btn--primary).sl-fx-glass,
+.sl-icon-btn--danger.sl-fx-glass { --slfx-control-edge: var(--slc-danger-text, var(--slc-danger)); }
+.sl-btn--danger:not(.sl-btn--primary).sl-fx-glass:hover:not(:disabled, :focus-visible),
+.sl-icon-btn--danger.sl-fx-glass:hover:not(:disabled, :focus-visible) { --slfx-control-edge: oklch(from var(--slc-danger) calc(l - var(--slc-shade-step, 0.075)) c h); }
+.sl-btn--danger:not(.sl-btn--primary).sl-fx-glass:hover:not(:disabled),
+.sl-icon-btn--danger.sl-fx-glass:hover:not(:disabled) { --slg-tint-color: var(--slc-danger); }
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
 .sl-icon-btn.sl-fx-glass[aria-pressed="true"] { --slfx-control-edge: var(--slc-edge-pressed); }
 /* Under keyboard focus the edge IS the ring's colour: the outline sits flush on
@@ -832,7 +863,14 @@
    inside the ring on ink -- a gap (owner, 2026-10-01). */
 /* .sl-fx-glass twice: 0-4-0, so it also outranks the pressed toggle's edge
    (.sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary)). */
-:is(.sl-btn, .sl-icon-btn).sl-fx-glass.sl-fx-glass:focus-visible { --slfx-control-edge: var(--slc-focus); }
+/* The halo (components.css, 0.32) is appended to the glass edge's soft
+   line here, since the edge rule above outranks the kit's focus rule. High
+   contrast and an opt-out region take every glass host's box-shadow away
+   (the kill switches) and draw no halo there anyway. */
+:is(.sl-btn, .sl-icon-btn).sl-fx-glass.sl-fx-glass:focus-visible {
+  --slfx-control-edge: var(--slc-focus);
+  box-shadow: inset 0 0 0 1px var(--slfx-control-edge-soft, var(--slfx-edge-soft)), var(--_sl-halo, 0 0 transparent);
+}
 /* A pressed toggle keeps its "on" fill on glass: the pane clears the host's
    background, so the pressed wash is rebound as the pane's fill instead. */
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
@@ -933,6 +971,12 @@
      fill back, and a primary went transparent on black. :where() keeps the
      rule at 0-1-0, where the primary's own states have always met it. */
   .sl-fx-glass:where(.sl-glass) { background-color: transparent; }
+  /* The secondary key and the icon button lift to an opaque rung on hover
+     (components.css, 0.32), which outranks the rule above: on a built pane
+     the rung goes too, and the pane's own light is the hover. (A danger
+     tone's hover fill stays: it is the state, and it carries the label; so
+     does a pressed toggle's wash, which it keeps at rest too.) */
+  :is(.sl-btn--ghost, .sl-icon-btn):not(.sl-btn--danger, .sl-icon-btn--danger, [aria-pressed="true"]).sl-fx-glass:where(.sl-glass):hover:not(:disabled) { background-color: transparent; }
   /* The keycap (0.31) shades its fill with a gradient, which would stay
      opaque under the layers: it goes with the colour, on the same terms. */
   .sl-kbd.sl-fx-glass:where(.sl-glass) { background-color: transparent; background-image: none; }
@@ -1076,9 +1120,12 @@
    Every shipped accent but a deep one lands light, so the dark pole holds for
    them; a deep fill (spexr's indigo, local-agents' light blue) takes white.
    0.59 is where the two poles measure equal on that composite. The resting
-   accent, not the live fill, so the label does not flip on hover or press. */
+   fill, not the live one, so the label does not flip on hover or press.
+   Since 0.32 the resting fill is the primary's own (--_sl-fill): the accent,
+   a product's accent fill, or the danger, so a danger pane re-picks its
+   label from the danger. */
 .sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
-  color: oklch(from color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas)) clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h);
+  color: oklch(from color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas)) clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h);
 }
 /* The keycap a glass primary carries (0.31) follows the same pole. The
    kit's cap steps away from the OPAQUE accent's label (components.css), and
@@ -1089,7 +1136,7 @@
    pole, darker under the light one, around the same 0.59 -- and stands on
    that fill in shade. Its text is the label (it inherits the colour above). */
 .sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) > .sl-kbd {
-  --slfx-cap: oklch(from color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas)) calc(l + 0.085 * clamp(-1, (l - 0.59) * 1000, 1)) c h);
+  --slfx-cap: oklch(from color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas)) calc(l + 0.085 * clamp(-1, (l - 0.59) * 1000, 1)) c h);
   background: var(--slfx-cap);
   box-shadow: inset 0 -1px 0 oklch(from var(--slfx-cap) calc(l - var(--slc-shade-step, 0.075)) c h);
 }
@@ -1493,8 +1540,17 @@
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
+/* Measured from the padding box, past the 1px border. A primary's foot
+   (components.css, 0.32) makes the bottom border 1px + --_sl-foot, and on
+   press the foot is the top one: the rim steps past the deeper side, so it
+   still hugs the fill instead of lying over the foot. */
 .sl-fx-aurora--rim::after {
   inset: calc(-1px - var(--slfx-ring-w));
+  bottom: calc(-1px - var(--_sl-foot, 0px) - var(--slfx-ring-w));
+}
+.sl-fx-aurora--rim:active:not(:disabled)::after {
+  top: calc(-1px - var(--_sl-foot, 0px) - var(--slfx-ring-w));
+  bottom: calc(-1px - var(--slfx-ring-w));
 }
 :root:not([data-sl-theme="high-contrast"]) .sl-fx-aurora--rim[data-sl-fx-live="busy"]:disabled:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   opacity: 1;

@@ -197,3 +197,20 @@ test("contrast maths: compositing and rings", () => {
   assert.deepEqual(rings("rgb(0, 0, 0) 0px 0px 4px 1px"), [], "a blurred shadow is not a ring");
   assert.deepEqual(rings("none"), []);
 });
+
+// 0.32: the stage measures the kit, not stand-ins. A count is a labelled
+// accent fill, so it reads the kit's accent-fill role (the indigo count read
+// 4.17:1 on the bare accent); the danger buttons are the kit's tone, and the
+// .lab-danger hooks the target draws from paint nothing in the kit view.
+test("the stage's count badge reads the accent-fill role, and its danger buttons are the kit's", () => {
+  const css = read("showcase/screens.css");
+  const badge = css.match(/\.ide-activity__btn\[data-count\]::after \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(badge, /background:\s*var\(--slc-accent-fill, var\(--slc-accent\)\)/);
+  assert.match(badge, /color:\s*var\(--slc-on-accent-fill\)/);
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.doesNotMatch(bare, /\.lab-danger(-ghost)?\s*\{/, "the stage paints no danger of its own");
+  const js = read("showcase/screens.js");
+  assert.match(js, /class="sl-btn sl-btn--primary sl-btn--danger lab-danger"/);
+  assert.match(js, /class="sl-btn sl-btn--sm sl-btn--danger lab-danger-ghost"/);
+  assert.match(js, /\["Danger label", "\.set-row \.sl-btn--danger"\]/);
+});

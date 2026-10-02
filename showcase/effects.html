@@ -359,21 +359,20 @@
     footer .cap { max-width: var(--sl-measure); line-height: 1.6; }
   </style>
   <style>
-    /* spexr's filled indigo (spexr-overrides.css): its primary is a deeper
-       indigo than its accent so the label can be white -- the accent itself
-       (#5b6cff / #8b96ff) still drives links, tags and the focus ring. ONE
-       registered colour on both themes (accent-registry.json, spexr "fill"),
-       and its steps derived the way the light theme derives the accent's:
-       less is more (owner, 2026-10-02). Darker on dark too: the dark theme's
-       lighten (80% white) leaves a white label at 3.70:1 on the hover; these
-       hold 5.41 / 6.47 / 8.03. Product-local, so it lives in the product and
-       is mirrored here only to show the Indigo swatch as spexr ships it. */
-    [data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) .sl-btn--primary {
-      --slc-accent: #4c58e9;
-      --slc-accent-hover: color-mix(in srgb, var(--slc-accent) 89%, black);
-      --slc-accent-active: color-mix(in srgb, var(--slc-accent) 76%, black);
-      --slc-edge-accent: oklch(from var(--slc-accent) calc(l - var(--slc-shade-step, 0.075)) c h);
-      --slc-on-accent: #ffffff;
+    /* spexr's accent fill (spexr-overrides.css): every accent fill that
+       carries a label -- the primary, a checked switch, check or radio -- is
+       a deeper indigo than the accent, so the label can be white (white on
+       #5b6cff is 4.17:1); the accent itself (#5b6cff / #8b96ff) still drives
+       links, tags and the focus ring. ONE registered colour on both themes
+       (accent-registry.json, spexr "fill"), set as the kit's one role since
+       ui-kit 0.32, --slc-accent-fill, on the root: the label, the hover and
+       press (the light theme's mixes, 89% / 76% with black, on both themes:
+       less is more, owner 2026-10-02) and the edge follow from it in the
+       kit. White reads 5.41 / 6.47 / 8.03 on them. Product-local, so it lives
+       in the product and is mirrored here only to show the Indigo swatch as
+       spexr ships it. (Until 0.32 it re-bound --slc-accent on the primary.) */
+    [data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) {
+      --slc-accent-fill: #4c58e9;
     }
   </style>
 </head>
@@ -427,7 +426,7 @@
         <div class="gallery">
           <div class="g-cell">
             <span class="g-label">child span, never the host</span>
-            <button class="sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press" id="delete-branch">
+            <button class="sl-btn sl-btn--primary sl-btn--danger sl-fx-glass sl-fx-glass--pane sl-fx-aurora sl-fx-aurora--rim sl-fx-press" id="delete-branch">
               <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
             </button>
             <p class="cap">Click to re-resolve. The button itself is a glass pane with the aurora's rim; the glitch sits on its child, never on <b>.sl-btn</b> directly.</p>
@@ -703,8 +702,16 @@
                   <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 2h4l-1 4 3 3H4l3-3zM8 9v5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
                 </button>
               </div>
+              <div style="display:flex; gap:0.5rem">
+                <button class="sl-btn sl-btn--ghost sl-btn--danger sl-fx-glass sl-fx-glass--pane sl-fx-press">Drop cache</button>
+                <button class="sl-btn sl-btn--danger sl-btn--sm sl-fx-glass sl-fx-glass--pane sl-fx-press">Archive</button>
+                <button class="sl-icon-btn sl-icon-btn--danger sl-fx-glass sl-fx-glass--pane" aria-label="Remove the probe">
+                  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+                </button>
+              </div>
             </div>
             <p class="cap">The toggles below the group are pressed glass: the pane clears the host's own background, so the pressed wash rides the pane's fill (<b>--slfx-fill</b>) and "on" survives the material.</p>
+            <p class="cap">The last row is the danger tone (<b>.sl-btn--danger</b>, <b>.sl-icon-btn--danger</b>, 0.32) on glass: the edge stays the danger's, and on hover the host fills with the danger and the tint follows it, so the page's ground does not veil the fill or its label. "Delete branch" above is the filled danger: a pane re-picks its label from the danger, as from the accent.</p>
             <p class="cap">They are text buttons, so panes are not wrong — but the glass never goes on <b>.sl-btn-group</b> itself. A group's <b>background</b> is not a surface; it <b>is</b> the 1px rule between its members, and the material clears whatever background the host had so its own tint layer can paint instead. Measured on the group: glass on it took the computed background to <b>rgba(0, 0, 0, 0)</b> — the rule between members gone, silently. Left on the members, as above, that background survives untouched (<b>--slc-edge-control</b>). A second, independent reason stacks on top of the first: the group also clips (<b>overflow: hidden</b>), so the shared ring — drawn at <b>inset: -1px</b> — would be cut at the group's own edges regardless of the background question.</p>
           </div>
         </div>

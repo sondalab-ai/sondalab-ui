@@ -53,9 +53,11 @@ test("no selector outside the :root role-var block reads a theme colour token", 
 //   --slc-overlay — a scrim over the whole page, not over the band.
 // Chromatic roles (accent, focus, status, on-accent) stay themselves on ink:
 // design-language.md Decision 2 — a product has one accent, whatever the ground.
-// --slc-shade-step is a number (how much less bright an edge is), not a colour.
-const BAND_INDEPENDENT = new Set(["--slc-canvas", "--slc-overlay", "--slc-shade-step"]);
-const CHROMATIC = /^--slc-(accent|edge-accent|focus|on-accent|success|warning|danger|info|haze|spectral)/;
+// --slc-shade-step and --slc-glow are numbers (how much less bright an edge
+// is, how strongly an accent glow shows), not colours. A label on a solid
+// fill (--slc-on-*) is picked from that fill, so it stays with it on ink.
+const BAND_INDEPENDENT = new Set(["--slc-canvas", "--slc-overlay", "--slc-shade-step", "--slc-glow"]);
+const CHROMATIC = /^--slc-(accent|edge-accent|focus|on-(accent|success|warning|danger|info)|success|warning|danger|info|haze|spectral)/;
 
 test("the inversion band re-derives every neutral role its subtree paints with", () => {
   const readOutside = new Set(

@@ -42,7 +42,9 @@ test("components.css reads the spectrum only inside the two opt-in ornaments", (
 for (const [host, edge] of [
   [".sl-card", /border:\s*1px solid var\(--slc-edge-surface\)/],
   [".sl-field__input", /border:\s*1px solid var\(--slc-edge-control\)/],
-  [".sl-btn--primary", /border-color:\s*var\(--slc-edge-accent\)/],
+  // the primary's edge is its fill set's (0.32): --slc-edge-accent unless a
+  // tone swaps the set
+  [".sl-btn--primary", /--_sl-fill-edge:\s*var\(--slc-edge-accent\);[\s\S]*border-color:\s*var\(--_sl-fill-edge\)/],
 ]) {
   test(`${host}: the edge of its context, and no image under it`, () => {
     const r = rule(host);
@@ -51,12 +53,18 @@ for (const [host, edge] of [
   });
 }
 
-test("the primary keeps its lit top line (on ink) and moves only its fill on hover and press", () => {
-  assert.match(rule(".sl-btn--primary"), /border-top-color:\s*var\(--slc-edge-accent-top, color-mix\(in srgb, var\(--slc-accent\) 80%, white\)\)/);
+// Lumen (0.32, the owner's default): the lit top line goes; the primary
+// stands on a foot, its bottom border a pixel deeper in the same edge.
+test("the primary stands on a foot, has no lit top line, and moves only its fill and foot on hover and press", () => {
+  const r = rule(".sl-btn--primary");
+  assert.doesNotMatch(r, /border-top-color/, "no lit top line");
+  assert.doesNotMatch(css, /--slc-edge-accent-top/, "the lit line's role is retired");
+  assert.match(r, /border-bottom-width:\s*calc\(1px \+ var\(--_sl-foot\)\)/);
+  assert.match(r, /--_sl-foot:\s*1px/);
   for (const state of [":hover:not(:disabled)", ":active:not(:disabled)"]) {
-    const r = rule(`.sl-btn--primary${state}`);
-    assert.match(r, /background-color:/, state);
-    assert.doesNotMatch(r, /--slc-[\w-]+\s*:/, `${state} declares no role`);
+    const s = rule(`.sl-btn--primary${state}`);
+    assert.match(s, /background-color:/, state);
+    assert.doesNotMatch(s, /--slc-[\w-]+\s*:/, `${state} declares no role`);
   }
 });
 
@@ -105,11 +113,20 @@ for (const [name, fill] of FILLS) {
     // Owner, 2026-10-02: with the rim gone the edge is the primary's boundary,
     // so it holds the 3:1 a control boundary needs (amber was 2.46:1).
     assert.ok(ratio(edge, canvas) >= 3, `edge ${ratio(edge, canvas).toFixed(2)}:1 on the canvas, needs 3:1`);
-    // ...and its top line is that edge too: the lit line read 1.63:1 on paper.
-    const top = evaluate("var(--slc-edge-accent-top)", env);
-    assert.ok(ratio(top, canvas) >= 3, `top line ${ratio(top, canvas).toFixed(2)}:1 on the canvas, needs 3:1`);
   });
 }
+
+// spexr's registered fill reaches the primary through the one role since 0.32
+// (--slc-accent-fill), and the edge follows it: the fill in shade, capped on
+// paper, never the accent's edge under a fill of another colour.
+test("light: a product's accent fill takes the primary's edge with it", () => {
+  const env = lightEnv();
+  env.set("--sl-accent-default", registry.spexr.light);
+  env.set("--slc-accent-fill", registry.spexr.fill.light);
+  const edge = evaluate("var(--slc-edge-accent)", env);
+  const want = evaluate(`oklch(from ${registry.spexr.fill.light} min(calc(l - 0.075), 0.59) c h)`, env);
+  assert.deepEqual(edge.lin.map((v) => v.toFixed(5)), want.lin.map((v) => v.toFixed(5)));
+});
 
 // Regression (review of 0.28.0): the paper cap must not reach ink. On the dark
 // theme the primary's edge is the plain step, exactly as in 0.27.

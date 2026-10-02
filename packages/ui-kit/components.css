@@ -58,7 +58,9 @@
      was 0.62 until the darker Lumen canvas (0.29) took amber to 3.03:1. On
      ink the edge is the plain step, exactly as in 0.27 -- a bright fill one
      step down already reads there. */
-  --slc-edge-accent:   oklch(from var(--slc-accent) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
+  /* It is the edge of whatever accent FILL is painted: the accent, or the
+     product's own --slc-accent-fill (below) where it sets one. */
+  --slc-edge-accent:   oklch(from var(--slc-accent-fill, var(--slc-accent)) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --slc-edge-pressed:  oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
   /* A form control's box must be found before it is read: steps AWAY from
      the surface, toward contrast -- darker on paper, LIGHTER on ink. In
@@ -81,6 +83,26 @@
      shade, because the fill is what finds it. Hover is two steps further. */
   --slc-edge-control-hover: oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * (var(--slc-edge-control-steps) + 0.5 * clamp(0, (l - 0.5) * 1000, 1) + 2) * clamp(-1, (0.5 - l) * 1000, 1)) c h);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
+  /* THE ACCENT AS A FILL THAT CARRIES A LABEL (0.32): the primary, a checked
+     check, radio or switch, a count badge. --slc-accent-fill is UNSET by
+     default, so each of those is the accent and each role below is the
+     accent's own (the theme's hover, active and label, exactly as before):
+     read it as var(--slc-accent-fill, var(--slc-accent)). A product whose
+     accent cannot carry a label at 4.5:1 sets this one role where the theme
+     is set, on the root (spexr: its registered fill, #4c58e9, where white on
+     the #5b6cff accent read 4.17:1), and the label, the two states and the
+     edge (--slc-edge-accent, above) follow from it. The private values
+     reference it with no fallback, so they are invalid until it is set and
+     each public role falls back to the accent's step. Set, the label is the
+     pole that contrasts with the fill and the states are the light theme's
+     mixes on every theme (the registry's spexr fill note). High contrast
+     owns its accent and resets it (below). */
+  --slc-on-accent-fill:     var(--_sl-on-accent-fill, var(--slc-on-accent));
+  --slc-accent-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
+  --slc-accent-fill-active: var(--_sl-accent-fill-active, var(--slc-accent-active));
+  --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
+  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, black);
+  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, black);
   /* surfaces + text */
   --slc-canvas:        var(--sl-bg-canvas,         #eae6e2);
   --slc-surface:       var(--sl-bg-surface,        #fcfaf9);
@@ -147,8 +169,10 @@
   --slc-seam:   var(--slc-accent-text);
   /* How strongly an accent glow shows: a number, not a colour, because it
      cannot be read off the ground. 0.5 here and on dark, 0.35 on the light
-     theme, 0 on high contrast (blocks at the end). The focus halo (0.32) and
-     the lit pane (0.33) spend it. */
+     theme, 0 on high contrast and under forced colours (blocks at the end).
+     A checked control's glow spends it (0.32), and so will the lit pane
+     (0.33); the focus halo only asks whether it is 0, and keeps its ~22%
+     on paper and ink alike (owner's ruling). */
   --slc-glow:   0.5;
   --slc-depth-tile:   inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border), var(--slc-shadow-sm);
   /* A tile that does not leave its row: an active tab, a current activity
@@ -163,6 +187,10 @@
   /* The overlay cast: three layers. The fourth, the ring, is the overlay's
      own border in shade, which a dialog, a palette or a toast already has. */
   --slc-depth-float:  var(--slc-shadow-lg);
+  /* A recipe is a member of a box-shadow LIST (a control's depth composes
+     with the focus halo, 0.32), so where a theme turns one off it is an
+     empty shadow, `0 0 transparent`, never `none`, which would void the
+     whole list it joins. */
 }
 
 /* ══ PAGE-WIDE DEFAULTS ══════════════════════════════════════════════════════
@@ -191,7 +219,7 @@
    set in the button or in a child of it (which does not re-derive). */
 :where(.sl-invert)::selection { color: var(--slc-canvas); }
 :where(.sl-btn--primary)::selection,
-:where(.sl-btn--primary) ::selection { color: var(--slc-on-accent); }
+:where(.sl-btn--primary) ::selection { color: var(--_sl-on-fill, var(--slc-on-accent)); }
 
 /* Scrollbars: thin, a neutral thumb in the one control edge (>= 3.4:1 on
    every ground of the light and dark themes), no track -- on the PAGE's own
@@ -209,6 +237,40 @@
   scrollbar-width: thin;
 }
 :where(:root:not([data-sl-theme="high-contrast"]) > body) { scrollbar-color: auto; }
+
+/* A CONTROL'S DEPTH AND ITS FOCUS HALO (Lumen, 0.32). Two private
+   values every focusable control carries:
+   --_sl-depth  the control's resting box-shadow. A control writes its depth
+                here, never into box-shadow itself, and the rule below paints
+                it. Declared on each control at zero weight (custom
+                properties inherit, and a segment must not wear its sunk
+                track's well), so any rule of the control's own replaces it.
+   --_sl-halo   the soft glow that hugs the focus ring (owner-approved): a
+                ring of the focus colour --sl-focus-glow-width (5px) wider
+                than the ring itself, at ~22%, so the visible 5px starts
+                flush where the ring ends. Declared on the control, so a
+                control that re-binds --slc-focus (an invalid field, a danger
+                button) glows in its own colour. Off wherever --slc-glow is 0
+                -- high contrast and forced colours, where it would sit on
+                Highlight in page colours -- through the min(): the strength
+                is not scaled by the glow, the ruling is ~22% on every theme.
+   The shared focus rule composes both, depth first, with no !important.
+   Glass owns a control's depth and appends the halo itself (effects.css). */
+:where(.sl-btn, .sl-link, .sl-field__input, .sl-tabs__tab, .sl-check__box, .sl-radio__box,
+  .sl-switch__track, .sl-segmented__item, .sl-breadcrumb__item, .sl-icon-btn,
+  .sl-pagination__item, .sl-chip, .sl-nav__item, .sl-list__row, .sl-disclosure,
+  .sl-resizer, .sl-slider, [data-sl-tooltip]) {
+  --_sl-depth: 0 0 transparent;
+  --_sl-halo: 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px) + var(--sl-focus-glow-width, 5px)) color-mix(in srgb, var(--slc-focus) calc(22% * min(1, var(--slc-glow) * 1000)), transparent);
+}
+/* The controls that have a depth of their own paint it. One step of weight
+   (0,1,0), before the focus rule (0,2,0), so focus replaces it with depth
+   plus halo; a state rule writes only --_sl-depth, never box-shadow, or it
+   would outrank the focus rule and drop the halo. */
+:is(.sl-btn, .sl-icon-btn, .sl-field__input, .sl-check__box, .sl-radio__box, .sl-switch__track,
+  .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab) {
+  box-shadow: var(--_sl-depth);
+}
 
 /* Shared focus ring for keyboard nav — every interactive component uses it. */
 .sl-btn:focus-visible,
@@ -233,6 +295,8 @@
   /* Flush ring, and the border joins it: any other colour between the ring
      and the fill reads as a band -- a gap (owner, 2026-10-01). */
   border-color: var(--slc-focus);
+  /* The control's own depth, then the halo outside the ring. */
+  box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent);
 }
 /* The outline follows the element's own corners, so the ring sets no radius
    on anything that has one (a 10px field used to snap to 6px on focus). Only
@@ -443,18 +507,21 @@
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
+/* The ring on the thumb, the halo around it (the input carries --_sl-halo,
+   0.32, and the thumb inherits it), then the thumb's own cast. */
 .sl-slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 0px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 0px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--_sl-halo, 0 0 transparent), var(--slc-shadow-sm);
 }
 .sl-slider:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 0px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--slc-shadow-sm);
+  box-shadow: 0 0 0 var(--sl-focus-ring-offset, 0px) var(--slc-canvas), 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px)) var(--slc-focus), var(--_sl-halo, 0 0 transparent), var(--slc-shadow-sm);
 }
 /* Inside an inversion band the ground is the page's text colour, which --slc-canvas
    is not re-derived for: the canvas-derived thumb would vanish into it. On the slider
    itself, not .sl-invert > *: the slider declares the property on itself. */
 .sl-invert .sl-slider { --sl-slider-thumb: var(--slc-canvas); }
 
-/* Button — primary (filled accent), ghost (6% ink wash, no border), and a small size. */
+/* Button — primary (a filled key on a foot), ghost (a raised key with the
+   control edge), plain (text), a small size, and a danger tone (below). */
 .sl-btn {
   display: inline-flex;
   align-items: center;
@@ -484,26 +551,60 @@
               transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* THE PRIMARY (Lumen, 0.32): a flat key standing on its own base. Its paint
+   is one private set, so the danger tone (below) and a product's accent fill
+   (--slc-accent-fill, :root) swap the set and nothing else; glass reads the
+   same set (effects.css).
+     --_sl-fill / -hover / -active  the fill at rest, hovered, pressed
+     --_sl-on-fill                   the label on it
+     --_sl-fill-edge                 the fill in shade: the edge, all round
+   THE FOOT. The bottom border is 1px deeper (--_sl-foot) in the same edge:
+   a key's base, which is where its depth comes from -- not a lit top line
+   (it went with the owner's Lumen default, 2026-10-02) and never a
+   box-shadow, which a consumer stripping a button to text with `background:
+   transparent; border: 0` would not think to reset (the border it does).
+   The foot takes its pixel from the padding under the label, so the button
+   stays 32px (24px small): 1 + 8 + 14 + 7 + 2. Pressed, the foot moves to
+   the top: the label sinks a pixel and the height holds (the squash owns
+   `transform`). Glass stands the foot down (--_sl-foot: 0, effects.css). */
 .sl-btn--primary {
-  background-color: var(--slc-accent);
-  color: var(--slc-on-accent);
-  /* A pressed-ink edge and a lit top line: reads as a solid object without a
-     drop shadow, so it sits flat in a toolbar. Both are the border — which a
-     consumer already resets when it strips a button to text — never
-     box-shadow, which such an override does not think of. The glass family
-     clears it on its pane (effects.css).
-     The edge is the accent's own, on every theme: the light theme's
-     spectrum rim is gone (owner, 2026-10-02: a filled control's edge is "a
-     vibrant colour that goes along with the accent"). */
-  border-color: var(--slc-edge-accent);
-  border-top-color: var(--slc-edge-accent-top, color-mix(in srgb, var(--slc-accent) 80%, white));
+  --_sl-fill:        var(--slc-accent-fill, var(--slc-accent));
+  --_sl-fill-hover:  var(--slc-accent-fill-hover);
+  --_sl-fill-active: var(--slc-accent-fill-active);
+  --_sl-on-fill:     var(--slc-on-accent-fill);
+  --_sl-fill-edge:   var(--slc-edge-accent);
+  --_sl-foot: 1px;
+  background-color: var(--_sl-fill);
+  color: var(--_sl-on-fill);
+  /* The edge is the fill's own, on every theme: the light theme's spectrum
+     rim is gone (owner, 2026-10-02: a filled control's edge is "a vibrant
+     colour that goes along with the accent"). */
+  border-color: var(--_sl-fill-edge);
+  border-bottom-width: calc(1px + var(--_sl-foot));
+  padding-bottom: calc(0.5rem - var(--_sl-foot));
 }
-.sl-btn--primary:hover:not(:disabled)  { background-color: var(--slc-accent-hover); }
-.sl-btn--primary:active:not(:disabled) { background-color: var(--slc-accent-active); }
-.sl-btn--ghost { background: color-mix(in srgb, var(--slc-text) 6%, transparent); color: var(--slc-text); border-color: var(--slc-edge-control); }
-.sl-btn--ghost:hover:not(:disabled)  { background: color-mix(in srgb, var(--slc-text) 11%, transparent); }
+.sl-btn--primary:hover:not(:disabled)  { background-color: var(--_sl-fill-hover); }
+.sl-btn--primary:active:not(:disabled) {
+  background-color: var(--_sl-fill-active);
+  border-top-width: calc(1px + var(--_sl-foot));
+  border-bottom-width: 1px;
+}
+/* THE SECONDARY KEY (Lumen, 0.32): the raised rung in the one control edge,
+   lit along its top inside the edge and standing on a short cast -- the
+   tile's recipe without its ring, since the edge is the ring. Hover lifts
+   it to the tile rung with the edge's hover step. */
+.sl-btn--ghost {
+  --_sl-depth: inset 0 1px 0 var(--slc-lit), var(--slc-shadow-sm);
+  background: var(--slc-raised);
+  color: var(--slc-text);
+  border-color: var(--slc-edge-control);
+}
+.sl-btn--ghost:hover:not(:disabled)  { background: var(--slc-tile); border-color: var(--slc-edge-control-hover); }
 /* 24px: 12px line + 2 x 5px + 2px border (was 25.2). */
 .sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.3125rem 0.6rem; }
+/* The small shorthand above lands after the primary's foot and weighs the
+   same: the small primary takes its pixel again (1 + 5 + 12 + 4 + 2 = 24). */
+.sl-btn--primary.sl-btn--sm { padding-bottom: calc(0.3125rem - var(--_sl-foot)); }
 
 /* Toggle state — an on/off button is a plain or ghost button, or an icon
    button, carrying aria-pressed. The CSS reads the attribute, so the
@@ -513,6 +614,8 @@
    its fill already reads as "on", so there would be nothing left to switch to. */
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"],
 .sl-icon-btn[aria-pressed="true"] {
+  /* A key held down casts nothing: a pressed secondary sits flat. */
+  --_sl-depth: 0 0 transparent;
   color: var(--slc-accent-text);
   background-color: var(--slc-accent-subtle);
   border-color: var(--slc-edge-pressed);
@@ -523,6 +626,9 @@
 }
 /* The shared focus rule hands the border to the ring, but these state rules
    outrank it: an "on" or hovered border left inside the ring is a band. */
+.sl-btn--ghost:hover:not(:disabled):focus-visible,
+.sl-icon-btn:hover:not(:disabled):focus-visible,
+.sl-chip[aria-pressed="true"]:focus-visible,
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:focus-visible,
 .sl-icon-btn[aria-pressed="true"]:focus-visible,
 .sl-chip:hover:focus-visible {
@@ -601,11 +707,15 @@
   font-weight: 500;
   color: var(--slc-text-secondary);
 }
+/* A field is SUNKEN (Lumen, 0.32): a well on the sunken rung, its inset cast
+   the sunk recipe, inside the one control edge (it was a 4% wash of the ink
+   over the raised rung). Glass owns the well on a glass field (effects.css). */
 .sl-field__input {
+  --_sl-depth: var(--slc-depth-sunk);
   font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-sm, 0.875rem);
   color: var(--slc-text);
-  background: color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised));
+  background: var(--slc-sunken);
   /* The control edge, not the raised hairline: a field's fill is 1.01-1.26:1
      on the canvas, so its border is what finds it (>= 3:1, WCAG 1.4.11). */
   border: 1px solid var(--slc-edge-control);
@@ -619,14 +729,19 @@
               background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-/* Focus is a halo around the box. The shared outline still draws on
-   keyboard focus, so the halo adds to the contract, never replaces it. */
+/* A field shows focus on any focus, a pointer's included: it is where you
+   type. The border joins the ring's colour and the well keeps its depth
+   under the shared halo (0.32; it was a 3px wash of the accent). A <select>
+   clicked with the pointer does not match :focus-visible, so this rule, not
+   the shared one, is what gives it the halo; the shared outline still draws
+   on keyboard focus. */
 .sl-field__input:focus {
-  border-color: var(--slc-accent-text);
-  box-shadow: 0 0 0 3px var(--slc-accent-subtle);
+  border-color: var(--slc-focus);
+  box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent);
 }
 .sl-field__input::placeholder { color: var(--slc-text-muted); }
-.sl-field__input:hover:not(:disabled) { border-color: var(--slc-edge-control-hover); }
+/* Not while focused: the hover edge would sit inside the ring, a band. */
+.sl-field__input:hover:not(:disabled, :focus) { border-color: var(--slc-edge-control-hover); }
 .sl-field__input:disabled { opacity: 0.5; cursor: not-allowed; }
 textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: var(--sl-line-normal, 1.5); padding-block: 0.55rem; }
 
@@ -644,9 +759,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-color: var(--slc-danger-text, var(--slc-danger));
 }
 .sl-field__input[aria-invalid="true"]:hover:not(:disabled) { border-color: var(--slc-danger-text, var(--slc-danger)); }
+/* Focused, the halo is the danger's too: it is drawn in --slc-focus, which
+   this field re-binds (0.32; it was a 3px wash of the danger). */
 .sl-field__input[aria-invalid="true"]:focus {
   border-color: var(--slc-danger-text, var(--slc-danger));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--slc-danger-text, var(--slc-danger)) 16%, transparent);
 }
 
 /* Hint and error — the line under a field, tied to it by aria-describedby.
@@ -716,9 +832,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    off the ink's own lightness -- which the inversion band gets right too,
    since it re-derives the ink. (A wash of the ink moved the cap toward the
    label: 3.70:1 on a pressed toggle in the band.) On a primary it is the
-   accent one step further from its label's
-   pole (lighter under a dark label, darker under a white one, read off the
-   fill's own lightness like --slc-on-accent). */
+   fill it is painted with (the accent, the product's accent fill or the
+   danger, 0.32) one step further from its label's pole (lighter under a
+   dark label, darker under a white one, read off the fill's own lightness
+   like the label), standing on that fill's edge. */
 .sl-btn > .sl-kbd {
   min-width: 18px;
   height: 18px;
@@ -732,8 +849,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--slc-text) 16%, transparent);
 }
 .sl-btn--primary > .sl-kbd {
-  background: oklch(from var(--slc-accent) calc(l + 0.085 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
-  box-shadow: inset 0 -1px 0 var(--slc-edge-accent);
+  background: oklch(from var(--_sl-fill, var(--slc-accent)) calc(l + 0.085 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
+  box-shadow: inset 0 -1px 0 var(--_sl-fill-edge, var(--slc-edge-accent));
 }
 .sl-btn--sm > .sl-kbd {
   min-width: 16px;
@@ -811,17 +928,24 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   white-space: nowrap;
 }
 
+/* A box is a small well on the sunken rung (Lumen, 0.32; it was the
+   surface), found by the one control edge. Checked, it fills with the
+   accent fill on a foot -- an inset base in the fill's own shade under the
+   edge, so the bottom reads deeper with nothing of another colour between
+   -- and a soft glow of the fill, as strong as --slc-glow says (none on
+   high contrast or under forced colours). */
 .sl-check__box,
 .sl-radio__box {
   position: relative;
   flex: none;
   width: 1rem;
   height: 1rem;
-  background: var(--slc-surface);
+  background: var(--slc-sunken);
   border: 1px solid var(--slc-edge-control);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-check__box { border-radius: var(--sl-radius-sm, 6px); }
@@ -829,7 +953,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 
 .sl-check__input:checked + .sl-check__box,
 .sl-radio__input:checked + .sl-radio__box {
-  background: var(--slc-accent);
+  --_sl-depth: inset 0 -1.5px 0 var(--slc-edge-accent), 0 0 10px -2px color-mix(in srgb, var(--slc-accent-fill, var(--slc-accent)) calc(var(--slc-glow) * 110%), transparent);
+  background: var(--slc-accent-fill, var(--slc-accent));
   border-color: var(--slc-edge-accent);
 }
 
@@ -842,7 +967,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   margin: auto;
   width: 0.3rem;
   height: 0.55rem;
-  border: solid var(--slc-on-accent);
+  border: solid var(--slc-on-accent-fill);
   border-width: 0 1.5px 1.5px 0;
   transform: translateY(-1px) rotate(45deg);
   opacity: 0;
@@ -855,7 +980,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 50%;
-  background: var(--slc-on-accent);
+  background: var(--slc-on-accent-fill);
   opacity: 0;
 }
 .sl-check__input:checked + .sl-check__box::after,
@@ -869,7 +994,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    a screen reader announces the native state, so an aria-checked="mixed"
    styling hook would show a state nobody hears. */
 .sl-check__input:indeterminate + .sl-check__box {
-  background: var(--slc-accent);
+  --_sl-depth: inset 0 -1.5px 0 var(--slc-edge-accent), 0 0 10px -2px color-mix(in srgb, var(--slc-accent-fill, var(--slc-accent)) calc(var(--slc-glow) * 110%), transparent);
+  background: var(--slc-accent-fill, var(--slc-accent));
   border-color: var(--slc-edge-accent);
 }
 .sl-check__input:indeterminate + .sl-check__box::after {
@@ -890,30 +1016,40 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   color: var(--slc-text);
 }
 
+/* The switch is a sunk track (Lumen, 0.32): the sunken rung and the sunk
+   recipe inside the control edge, 2.1 x 1.25rem with a 0.85rem knob (it was
+   1.9 x 1.05 with 0.75, and a 14% wash of the ink). border-box, so the size
+   is the whole control on a content-box page too, and the knob's travel is
+   exact: 2px in from the left off, 2px in from the right on (33.6 - 2 - 2 -
+   13.6 - 2 = 14px, 0.875rem). On, it is the accent fill on a foot with a
+   soft glow of the fill, like a checked box. */
 .sl-switch__track {
+  --_sl-depth: var(--slc-depth-sunk);
   position: relative;
   flex: none;
-  width: 1.9rem;
-  height: 1.05rem;
-  background: color-mix(in srgb, var(--slc-text) 14%, transparent);
-  /* The control edge: the off track's 14% wash is 1.3:1 on the canvas, so the
-     border is what finds it (owner, 2026-10-01). */
+  box-sizing: border-box;
+  width: 2.1rem;
+  height: 1.25rem;
+  background: var(--slc-sunken);
+  /* The control edge: the off track's fill is about 1:1 on the canvas, so
+     the border is what finds it (owner, 2026-10-01). */
   border: 1px solid var(--slc-edge-control);
   border-radius: 999px;
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
-    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-switch__track::after {
   content: "";
   position: absolute;
   top: 50%;
   left: 2px;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.85rem;
+  height: 0.85rem;
   border-radius: 999px;
   /* Off, the knob is the control edge's colour: the raised ground it was read
-     1.17:1 on the track on ink. On, it takes --slc-on-accent (below). */
+     1.17:1 on the track on ink. On, it takes the fill's label (below). */
   background: var(--slc-edge-control);
   transform: translateY(-50%);
   /* The knob travels on the spring (--sl-motion-spring): one small overshoot
@@ -924,13 +1060,20 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-switch__input:checked + .sl-switch__track {
-  background: var(--slc-accent);
+  --_sl-depth: inset 0 -1.5px 0 var(--slc-edge-accent), 0 0 12px -2px color-mix(in srgb, var(--slc-accent-fill, var(--slc-accent)) calc(var(--slc-glow) * 120%), transparent);
+  background: var(--slc-accent-fill, var(--slc-accent));
   border-color: var(--slc-edge-accent);
 }
 .sl-switch__input:checked + .sl-switch__track::after {
-  background: var(--slc-on-accent);
-  transform: translateY(-50%) translateX(0.85rem);
+  background: var(--slc-on-accent-fill);
+  transform: translateY(-50%) translateX(0.875rem);
 }
+/* Focused while checked, the border is the ring's: the checked rules above
+   outrank the shared focus rule, and the fill's edge left inside the ring
+   is a band (owner, 2026-10-01: no gap between lines). */
+.sl-check__input:is(:checked, :indeterminate):focus-visible + .sl-check__box,
+.sl-radio__input:checked:focus-visible + .sl-radio__box,
+.sl-switch__input:checked:focus-visible + .sl-switch__track { border-color: var(--slc-focus); }
 
 /* The chevron rides the WRAPPER, never the <select>: a mask or a pseudo-element
    on the control itself would take the option text with it. */
@@ -1175,9 +1318,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-tabs--tile .sl-tabs__tab:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
 .sl-tabs--tile .sl-tabs__tab[aria-selected="true"] {
+  --_sl-depth: var(--slc-depth-flat);
   color: var(--slc-text);
   background-color: var(--slc-tile);
-  box-shadow: var(--slc-depth-flat);
 }
 .sl-tabs--tile .sl-tabs__tab[aria-selected="true"] > svg { color: var(--slc-accent-text); }
 .sl-tabs__dot {
@@ -1226,7 +1369,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   box-shadow: var(--slc-depth-flat);
 }
 .sl-tabs--tile .sl-tabs__item > .sl-tabs__tab,
-.sl-tabs--tile .sl-tabs__item > .sl-tabs__tab:hover { background-color: transparent; box-shadow: none; }
+.sl-tabs--tile .sl-tabs__item > .sl-tabs__tab:hover { background-color: transparent; --_sl-depth: 0 0 transparent; }
 
 /* Tooltip — CSS-only. Put text in data-sl-tooltip; give the host tabindex="0"
    for keyboard reveal. <span class="sl-tooltip" data-sl-tooltip="…" tabindex="0">…</span> */
@@ -1503,20 +1646,28 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-radius: var(--sl-radius-md, 8px);
   overflow: hidden;
 }
-.sl-btn-group > .sl-btn { border-radius: 0; border: none; }
+/* Its members sit flat in it: one control casts no shadow between its keys
+   (and the group's overflow would clip it), and the foot would make a
+   primary member a pixel taller than its neighbours. */
+.sl-btn-group > .sl-btn { border-radius: 0; border: none; --_sl-depth: 0 0 transparent; --_sl-foot: 0px; }
 /* Cells paint their own ground — the group's background IS the rule between
    them, so a transparent ghost would show the line colour across its whole
    face instead of only in the 1px gap. A filled variant brings its own. */
 .sl-btn-group > .sl-btn:not(.sl-btn--primary) { background: var(--slc-surface); }
 
+/* The track is sunk (Lumen, 0.32): the sunken rung and the sunk recipe
+   inside the one control edge (it was a 6% wash of the ink), so the chosen
+   segment, a raised tile, stands out of a well. The track is not
+   focusable, so it paints its well directly. */
 .sl-segmented {
   display: inline-flex;
   width: fit-content;
   gap: 1px;
   padding: 2px;
-  background: color-mix(in srgb, var(--slc-text) 6%, transparent);
+  background: var(--slc-sunken);
   border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 8px);
+  box-shadow: var(--slc-depth-sunk);
 }
 .sl-segmented__item {
   appearance: none;
@@ -1549,9 +1700,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    ground with its own edge in shade. */
 .sl-segmented__item[aria-selected="true"],
 .sl-segmented__item[aria-pressed="true"] {
+  --_sl-depth: var(--slc-depth-tile);
   background: var(--slc-tile);
   color: var(--slc-text);
-  box-shadow: var(--slc-depth-tile);
 }
 
 .sl-icon-btn {
@@ -1565,8 +1716,13 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   height: 2rem;
   padding: 0;
   cursor: pointer;
-  color: var(--slc-text);
-  background: color-mix(in srgb, var(--slc-text) 6%, transparent);
+  /* Transparent at rest, in the one control edge (owner's ruling: every
+     neutral control, icon buttons included), the glyph in the secondary
+     ink; hover brings the surface rung up under it (Lumen, 0.32; it was a
+     6% wash of the ink). Only a chrome glyph inside a workbench primitive
+     may drop the edge (0.33). */
+  color: var(--slc-text-secondary);
+  background: transparent;
   border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 8px);
   transition:
@@ -1577,13 +1733,65 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-icon-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--slc-text) 11%, transparent);
+  color: var(--slc-text);
+  background: var(--slc-surface);
+  border-color: var(--slc-edge-control-hover);
 }
 .sl-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 /* The round silhouette the liquid's --drop is allowed on. It does NOT apply
    the effect: L6 makes the modifier written in the markup the contract, and
    forbids anything from measuring a radius to decide. */
 .sl-icon-btn--round { border-radius: 50%; }
+
+/* DANGER (0.32) — a tone, not a variant: it composes with the variant it
+   rides on, so a product drops its own danger CSS for the kit's names
+   (spexr's .sl-btn--danger and .sl-icon-btn--danger keep working).
+     filled  .sl-btn--primary.sl-btn--danger swaps the primary's fill set for
+             the danger: the danger fill on its foot, its own contrast-picked
+             label (--slc-on-danger), its edge the fill in shade. Hover and
+             press step AWAY from the label (darker under white, lighter
+             under the dark pole), so the label never reads weaker than at
+             rest; mixing toward black, as the accent does, took a dark
+             label under 4.5:1 on dark.
+     neutral .sl-btn--danger (plain or ghost) and .sl-icon-btn--danger take
+             the danger ink on a 12% wash of itself -- the danger badge's
+             recipe, which holds the ink at 4.5:1 on every ground and inside
+             the band (the secondary's raised rung did not: 3.98:1 in the
+             light theme's band) -- and a danger edge, so a lone destructive
+             button never reads as disabled; hovered, they fill with the
+             danger and its label. The secondary keeps its depth.
+   The focus ring, the border that joins it and the halo are the danger's
+   too (--slc-focus), as on an invalid field: a danger edge inside an accent
+   ring is two colours on one edge. The ink is the band-safe one where a
+   band re-derives it, the status role everywhere else. */
+.sl-btn--danger,
+.sl-icon-btn--danger {
+  --slc-focus: var(--slc-danger-text, var(--slc-danger));
+}
+.sl-btn--primary.sl-btn--danger {
+  --_sl-fill:        var(--slc-danger);
+  --_sl-fill-hover:  oklch(from var(--slc-danger) calc(l + 0.05 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
+  --_sl-fill-active: oklch(from var(--slc-danger) calc(l + 0.1 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
+  --_sl-on-fill:     var(--slc-on-danger);
+  --_sl-fill-edge:   oklch(from var(--slc-danger) calc(l - var(--slc-shade-step)) c h);
+}
+.sl-btn--danger:not(.sl-btn--primary),
+.sl-icon-btn--danger {
+  color: var(--slc-danger-text, var(--slc-danger));
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
+  border-color: var(--slc-danger-text, var(--slc-danger));
+}
+.sl-btn--danger:not(.sl-btn--primary):hover:not(:disabled),
+.sl-icon-btn--danger:hover:not(:disabled) {
+  color: var(--slc-on-danger);
+  background-color: var(--slc-danger);
+  border-color: oklch(from var(--slc-danger) calc(l - var(--slc-shade-step)) c h);
+}
+/* Focused while hovered, the border is the ring's, not the fill's shade. */
+.sl-btn--danger:not(.sl-btn--primary):hover:not(:disabled):focus-visible,
+.sl-icon-btn--danger:hover:not(:disabled):focus-visible {
+  border-color: var(--slc-focus);
+}
 
 .sl-pagination {
   display: flex;
@@ -1618,9 +1826,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 .sl-pagination__item:hover { color: var(--slc-text); background: color-mix(in srgb, var(--slc-text) 5%, transparent); }
 .sl-pagination__item[aria-current] {
+  --_sl-depth: var(--slc-depth-tile);
   color: var(--slc-text);
   background: var(--slc-tile);
-  box-shadow: var(--slc-depth-tile);
 }
 
 .sl-empty {
@@ -1865,7 +2073,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   background-repeat: no-repeat;
   background-size: 2px 50%;
   background-position: 3px 50%;
-  box-shadow: var(--slc-depth-tile);
+  --_sl-depth: var(--slc-depth-tile);
 }
 .sl-nav__count {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
@@ -1912,8 +2120,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* Selected is a raised tile (Lumen, 0.31), the nav's current item's twin;
    until 0.31 it was the accent wash with a pressed edge. */
 .sl-list__row:is([aria-selected="true"], [aria-current]) {
+  --_sl-depth: var(--slc-depth-tile);
   background-color: var(--slc-tile);
-  box-shadow: var(--slc-depth-tile);
 }
 /* Accent only on the icon of the selected row or item, where it has one. */
 :is(.sl-list__row:is([aria-selected="true"], [aria-current]), .sl-nav__item[aria-current]) > svg { color: var(--slc-accent-text); }
@@ -2028,15 +2236,16 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 
 /* The switch knob stretches toward the side it will travel to while held —
-   rightward from off, leftward from on (it sits at 0.85rem, and grows by
-   0.075rem) — then springs across on release, as it always has. */
+   rightward from off, leftward from on (it sits at 0.875rem and grows by a
+   tenth, 0.085rem, since the 0.32 knob) — then springs across on release,
+   as it always has. */
 .sl-switch:active:not(:has(:disabled)) .sl-switch__track::after {
-  width: 0.825rem;
+  width: 0.935rem;
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
 .sl-switch:active:not(:has(:disabled)) .sl-switch__input:checked + .sl-switch__track::after {
-  transform: translateY(-50%) translateX(0.775rem);
+  transform: translateY(-50%) translateX(0.79rem);
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
@@ -2052,15 +2261,14 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* High contrast draws every edge in its own border colour: shade is a
    subtlety the theme exists to remove. */
 /* Paper only: the primary's edge is capped so it finds the button on the
-   light canvas (>= 3.4:1), and its top line takes that edge too -- the lit
-   line (80% fill + white) read 1.63:1 there once the rainbow rim was gone
-   (owner, 2026-10-02). Ink keeps the 0.27 edge and lit top line. The cap
-   cannot be read off the fill (an accent says nothing about its ground), so
-   it stays a light-theme number: a Tier B product sets these two in its own
-   light layer (README, "Tier B"). */
+   light canvas (>= 3.4:1) (owner, 2026-10-02). Ink keeps the 0.27 edge. The
+   cap cannot be read off the fill (an accent says nothing about its ground),
+   so it stays a light-theme number: a Tier B product sets it in its own
+   light layer (README, "Tier B"). The lit top line it also set until 0.31
+   (--slc-edge-accent-top) is gone with the line: the primary stands on a
+   foot since 0.32, so nothing reads it. */
 :root[data-sl-theme="light"] {
   --slc-edge-accent-lmax: 0.59;
-  --slc-edge-accent-top: var(--slc-edge-accent);
   /* An accent glow on paper reads at less: 0.35 (Lumen's light value). */
   --slc-glow: 0.35;
 }
@@ -2081,15 +2289,21 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      (a tile, flat or raised) is ringed in the accent, as a pressed control's
      edge is here; a key and an island in the theme's own white line. A well
      and an overlay's cast go: the field and the overlay have their own
-     drawn edge. No glow. */
+     drawn edge. No glow, and so no focus halo either. */
   --slc-glow: 0;
   --slc-depth-tile:   0 0 0 1px var(--slc-accent);
   --slc-depth-flat:   0 0 0 1px var(--slc-accent);
   --slc-depth-island: 0 0 0 1px var(--slc-border);
   --slc-depth-key:    0 0 0 1px var(--slc-border);
-  --slc-depth-sunk:   none;
-  --slc-depth-float:  none;
+  --slc-depth-sunk:   0 0 transparent;
+  --slc-depth-float:  0 0 transparent;
+  /* High contrast owns its accent outright: a product's accent fill (0.32)
+     does not reach it, and every labelled fill is the theme's yellow. */
+  --slc-accent-fill:  initial;
 }
+/* The secondary key's own depth (a white lit line inside the white edge, a
+   cast on black) gives way to its drawn edge, like every recipe here. */
+:root[data-sl-theme="high-contrast"] .sl-btn--ghost { --_sl-depth: 0 0 transparent; }
 /* The band re-declares the recipes for its own washes, on its children,
    which outranks the remap on :root: here the remap is repeated there, the
    selection ring in the band's own accent text (the yellow capped for the
@@ -2099,8 +2313,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-depth-flat:   0 0 0 1px var(--slc-accent-text);
   --slc-depth-island: 0 0 0 1px var(--slc-border);
   --slc-depth-key:    0 0 0 1px var(--slc-border);
-  --slc-depth-sunk:   none;
-  --slc-depth-float:  none;
+  --slc-depth-sunk:   0 0 transparent;
+  --slc-depth-float:  0 0 transparent;
 }
 /* The in-button key draws its own base line instead of the key depth, so it
    is ringed here, in its label's colour: white on a neutral button, black on
@@ -2122,6 +2336,10 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   .sl-callout,
   .sl-switch__track
 ) { border-color: var(--slc-border); }
+/* ...and that drawn edge outranks the shared focus rule: under focus the
+   border is the ring's again, or a white line sits inside the yellow ring. */
+:root[data-sl-theme="high-contrast"] :is(.sl-btn--ghost, .sl-icon-btn):focus-visible,
+:root[data-sl-theme="high-contrast"] .sl-switch__input:focus-visible + .sl-switch__track { border-color: var(--slc-focus); }
 :root[data-sl-theme="high-contrast"] :is(.sl-empty, .sl-progress) { border: 1px solid var(--slc-border); }
 :root[data-sl-theme="high-contrast"] .sl-table thead th { border-bottom-color: var(--slc-border); }
 /* A 12% wash vanishes on black: the slider track gets the theme's line. */
@@ -2182,15 +2400,30 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      fixed height, so the cap stays 20px (18 in a button). */
   .sl-kbd { border: 1px solid CanvasText !important; }
   /* Depth is off: the browser drops shadows, but not on the hosts above that
-     opt out, where a tile's ring and cast would paint in page colours. */
+     opt out, where a tile's ring and cast would paint in page colours. So is
+     every accent glow -- a checked control's and the focus halo, which would
+     sit on Highlight in page colours (0.32): --slc-glow 0 turns both off. */
   :root, :root[data-sl-theme], .sl-invert > *, :root[data-sl-theme] .sl-invert > * {
-    --slc-depth-tile: none;
-    --slc-depth-flat: none;
-    --slc-depth-island: none;
-    --slc-depth-key: none;
-    --slc-depth-sunk: none;
-    --slc-depth-float: none;
+    --slc-depth-tile: 0 0 transparent;
+    --slc-depth-flat: 0 0 transparent;
+    --slc-depth-island: 0 0 transparent;
+    --slc-depth-key: 0 0 transparent;
+    --slc-depth-sunk: 0 0 transparent;
+    --slc-depth-float: 0 0 transparent;
+    --slc-glow: 0;
   }
+  /* The halo too, on every control, whatever --slc-glow a product's own
+     light layer sets (a Tier B [data-theme="light"] root outweighs the
+     :root above): the opted-out hosts would paint it in page colours. */
+  :where(.sl-btn, .sl-link, .sl-field__input, .sl-tabs__tab, .sl-check__box, .sl-radio__box,
+    .sl-switch__track, .sl-segmented__item, .sl-breadcrumb__item, .sl-icon-btn,
+    .sl-pagination__item, .sl-chip, .sl-nav__item, .sl-list__row, .sl-disclosure,
+    .sl-resizer, .sl-slider, [data-sl-tooltip]) { --_sl-halo: 0 0 transparent; }
+  /* The checked boxes and the switch opt out of forced colours: their foot
+     in the fill's shade would paint a page colour under Highlight. */
+  :is(.sl-check__input:is(:checked, :indeterminate) + .sl-check__box,
+      .sl-radio__input:checked + .sl-radio__box,
+      .sl-switch__input:checked + .sl-switch__track) { --_sl-depth: 0 0 transparent; }
   /* Slider: the value is a gradient image on the WebKit track, and forced
      colours remove gradient images, so the fill was gone in Chromium and
      Safari. The whole input opts out (the pseudo-elements inherit it): the

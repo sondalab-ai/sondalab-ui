@@ -35,16 +35,25 @@ A toggleable filter; a row of them is a multi-select where any number may be on.
 ```
 Consumes: `--slc-text-muted`, `--slc-text`, `--slc-border`, `--slc-border-strong`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: drive it with `aria-pressed` and label the group. Don't: use chips for one-of-N (that is `sl-segmented`), or for a label that does nothing (that is `sl-tag`).
 
-### Button — `sl-btn` (`--primary` · `--ghost` · `--sm`)
-Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary hover/active track the accent hue; ghost hover deepens the wash. Substrate: **R** App/IDE, **A** Page.
+### Button — `sl-btn` (`--primary` · `--ghost` · `--sm` · `--danger`)
+Three Lumen keys (0.32, L2). The primary is a flat key on a **foot**: its accent fill (`--slc-accent-fill` where the product sets one), edged in the fill in shade with a 2px bottom edge, which it takes from its own padding so the row stays 32px (24px small); pressed, the foot moves to the top and the label sinks a pixel. The secondary (`--ghost`) is a raised key: the raised rung in the one control edge, lit inside its top, on a short cast; hover lifts it to the tile rung. A plain `sl-btn` is text. Substrate: **R** App/IDE, **A** Page.
 ```html
 <button class="sl-btn sl-btn--primary">Save changes</button>
 <button class="sl-btn sl-btn--ghost">Cancel</button>
+<button class="sl-btn">Skip</button>
 <button class="sl-btn sl-btn--primary sl-btn--sm">Add</button>
 ```
-Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-accent-subtle`, `--slc-on-accent`, `--slc-border`, `--slc-text`, `--slc-edge-accent`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
+Consumes: `--slc-accent`, `--slc-accent-fill`, `--slc-accent-fill-hover`, `--slc-accent-fill-active`, `--slc-on-accent-fill`, `--slc-accent-subtle`, `--slc-edge-accent`, `--slc-edge-control`, `--slc-edge-control-hover`, `--slc-raised`, `--slc-tile`, `--slc-lit`, `--slc-shadow-sm`, `--slc-text`, `--slc-danger`, `--slc-on-danger`, `--slc-focus`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state. Don't: re-bind `--slc-accent` on the primary to deepen its fill — set `--slc-accent-fill` once on the root (README, Tier B), and every labelled fill follows. If you override `padding` on `sl-btn`, give the primary its bottom padding minus the foot's pixel, or it stands a pixel taller than its row.
 
-**Shortcut in a button** (0.31). A shortcut rides in the label as a child keycap, never as `::after` (glass owns a button's pseudo-elements). Name the shortcut on the button with `aria-keyshortcuts` and hide the cap from its accessible name. The cap is 18px (16px in `--sm`) and gives its extra height back in negative margin, so the button stays on the 32px (24px) row; its text is the label's colour on a fill that steps away from the label, so it never reads weaker than the label on the button: on a neutral button (plain, ghost, a pressed toggle, in a band too) a half wash of the pole opposite the ink; on a primary the accent one step further from its label's pole; on a glass pane primary, whose label is re-picked from the composited pane, that composite one step further from the pane's label. High contrast rings it in its label's colour.
+**Danger tone** (`--danger`, 0.32). A tone on any button, not a variant. On a primary it swaps the fill for the danger, labelled in `--slc-on-danger`, edged and footed in the danger in shade; on a secondary or a plain button it is the danger ink on a 12% wash of itself with a danger edge, filling with the danger on hover. Its focus ring and halo are the danger's. `sl-icon-btn--danger` is the same tone on an icon button.
+```html
+<button class="sl-btn sl-btn--primary sl-btn--danger">Delete workspace</button>
+<button class="sl-btn sl-btn--ghost sl-btn--danger">Drop cache</button>
+<button class="sl-btn sl-btn--danger sl-btn--sm">Archive</button>
+```
+Do: keep one destructive action per view and say in the label what goes. Don't: use the tone for an error state or a warning — that is a badge or a callout; the tone marks an action that destroys something.
+
+**Shortcut in a button** (0.31). A shortcut rides in the label as a child keycap, never as `::after` (glass owns a button's pseudo-elements). Name the shortcut on the button with `aria-keyshortcuts` and hide the cap from its accessible name. The cap is 18px (16px in `--sm`) and gives its extra height back in negative margin, so the button stays on the 32px (24px) row; its text is the label's colour on a fill that steps away from the label, so it never reads weaker than the label on the button: on a neutral button (plain, ghost, a pressed toggle, in a band too) a half wash of the pole opposite the ink; on a primary its fill (the accent, the product's accent fill or the danger) one step further from its label's pole; on a glass pane primary, whose label is re-picked from the composited pane, that composite one step further from the pane's label. High contrast rings it in its label's colour.
 ```html
 <button class="sl-btn sl-btn--primary" aria-keyshortcuts="Meta+S">Save changes <kbd class="sl-kbd" aria-hidden="true">⌘S</kbd></button>
 <button class="sl-btn sl-btn--ghost sl-btn--sm" aria-keyshortcuts="R">Re-run <kbd class="sl-kbd" aria-hidden="true">R</kbd></button>
@@ -106,7 +115,7 @@ With a hint or an error line, the host is a `<div>` and the label names the inpu
 ```
 Don't: put `sl-field__hint` or `sl-field__error` inside a wrapping `<label class="sl-field">`. Everything inside a label becomes the input's accessible name, so the line is read as part of the name and then again as its description.
 
-Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-text-muted`, `--slc-danger`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
+Consumes: `--slc-sunken`, `--slc-depth-sunk`, `--slc-edge-control`, `--slc-edge-control-hover`, `--slc-text`, `--slc-text-muted`, `--slc-danger`, `--slc-focus`. The input is a well (0.32): the sunken rung and the sunk inset cast inside the one control edge; focused (on any focus, a pointer's included), the border takes the ring's colour and the halo rings it. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
 
 `aria-invalid="true"` on the input is the invalid state — no extra class. The edge, the focus ring and the focus halo all take the danger ink together (never a red edge inside an accent ring). Do: point `aria-describedby` at a `sl-field__error` line, which leads with a drawn mark so the state never rests on colour alone; remove both the attribute and the line once the value is valid. Don't: mark a field invalid before the user has had a chance to fill it.
 
@@ -121,7 +130,7 @@ A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that pai
 ```
 Mixed (a parent box over a partly-checked set): set `input.indeterminate = true` from script — there is no attribute for it; the box fills and shows a dash instead of the tick. Don't: put `aria-checked` on the native checkbox (ARIA in HTML forbids it, and a screen reader announces the native state anyway).
 
-Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
+Consumes: `--slc-sunken`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. The box is a small well on the sunken rung (0.32); checked or mixed, it is the accent fill on an inset foot of its own shade, with a soft glow of the fill as strong as `--slc-glow`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
 
 ### Radio — `sl-radio` (`__input` · `__box` · `__label`)
 The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A** Page.
@@ -132,7 +141,7 @@ The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A**
   <span class="sl-radio__label">Tier A — full theme selector</span>
 </label>
 ```
-Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
+Consumes: `--slc-sunken`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. Checked, like a checkbox: the accent fill on its foot, with its glow. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
 
 ### Switch — `sl-switch` (`__input` · `__track` · `__label`)
 A checkbox that reads as a state rather than a choice: use it where the change takes effect immediately, and a checkbox where it takes effect on submit. Substrate: **R** IDE/App, **A** Page.
@@ -143,7 +152,7 @@ A checkbox that reads as a state rather than a choice: use it where the change t
   <span class="sl-switch__label">Tier 2 GPU effects</span>
 </label>
 ```
-Consumes: `--slc-surface`, `--slc-border-strong`, `--slc-accent`, `--slc-on-accent`, `--slc-text`, `--slc-focus`. Do: carry `role="switch"` on the input, so the state reaches a screen reader as on/off rather than as checked. Don't: put ON/OFF text inside the track — the knob's position is the state, and a label that repeats it goes stale in translation.
+Consumes: `--slc-sunken`, `--slc-depth-sunk`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. The track is sunk (0.32): 2.1 × 1.25rem, border-box, a 0.85rem knob 2px in from either end; on, it is the accent fill on its foot with its glow, the knob in the fill's label. Do: carry `role="switch"` on the input, so the state reaches a screen reader as on/off rather than as checked. Don't: put ON/OFF text inside the track — the knob's position is the state, and a label that repeats it goes stale in translation.
 
 ### Select — `sl-select`
 The chevron a `<select>` cannot draw for itself. Composes onto `sl-field__control`, the wrapper the effects layer already binds to, so a field and a select take an effect the same way. Substrate: **R** IDE/App, **A** Page.
@@ -293,7 +302,7 @@ A small set of mutually exclusive views. Sentence-case items in the sans, as eve
   <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
 </div>
 ```
-Consumes: `--slc-border`, `--slc-surface`, `--slc-tile`, `--slc-depth-tile`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. The chosen segment is a raised tile (0.31): the tile fill, a lit top line, a ring and a short cast. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. When it switches a setting rather than a view, it is a group of toggle buttons: `role="group"` on the control and `aria-pressed` on the items, which the CSS reads the same way. Don't: use it for more than about four options; that is a `select`.
+Consumes: `--slc-sunken`, `--slc-depth-sunk`, `--slc-edge-control`, `--slc-tile`, `--slc-depth-tile`, `--slc-text-muted`, `--slc-text`, `--slc-focus`. The track is a well (0.32: the sunken rung and the sunk cast in the one control edge), and the chosen segment is a raised tile standing out of it (0.31): the tile fill, a lit top line, a ring and a short cast. Do: drive the selected state with `aria-selected` — the CSS reads it, so the accessible state and the visible state cannot drift apart. When it switches a setting rather than a view, it is a group of toggle buttons: `role="group"` on the control and `aria-pressed` on the items, which the CSS reads the same way. Don't: use it for more than about four options; that is a `select`.
 ```html
 <div class="sl-segmented" role="group" aria-label="Language">
   <button class="sl-segmented__item" aria-pressed="true">EN</button>
@@ -320,8 +329,8 @@ A styled native range input: keyboard, screen readers and touch are the browser'
 ```
 Consumes: `--slc-canvas`, `--slc-text`, `--slc-accent-text`, `--slc-shade-step`, `--slc-shadow-sm`, `--slc-focus`, `--slc-border`. Under forced colours (a user palette) the value stays visible: the rest of the track in `GrayText`, the value in `Highlight`, the thumb in `ButtonText` with a `CanvasText` focus ring — forced colours would otherwise drop the fill, which is a gradient image. Do: give it an accessible name (`aria-label` or a `<label for>`). Don't: use it for a value the user must set exactly — pair it with a number field, or use one instead.
 
-### Icon button — `sl-icon-btn` (`--round`)
-A square icon-only control. The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
+### Icon button — `sl-icon-btn` (`--round` · `--danger`)
+A square icon-only control: clear at rest in the one control edge, its glyph in the secondary ink, the surface rung under it on hover (0.32). The kit ships no icon set: supply your own `<svg>` and let it inherit `currentColor`. Substrate: **R** IDE/App, **A** Page.
 ```html
 <button class="sl-icon-btn" aria-label="Re-run the audit">
   <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
@@ -334,7 +343,7 @@ A square icon-only control. The kit ships no icon set: supply your own `<svg>` a
   </svg>
 </button>
 ```
-Consumes: `--slc-border`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. As a toggle it takes `aria-pressed`, painted like the toggle button's. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
+Consumes: `--slc-edge-control`, `--slc-edge-control-hover`, `--slc-surface`, `--slc-text-secondary`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-danger`, `--slc-on-danger`, `--slc-focus`. As a toggle it takes `aria-pressed`, painted like the toggle button's. `--danger` is the button's danger tone (a remove or delete glyph). The edge stays: only a chrome glyph inside a workbench primitive (a tab's close, 0.31; the activity bar, 0.33) may drop it. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
 
 ### Pagination — `sl-pagination` (`__item`)
 Numbered navigation across pages of results. Mono tabular figures (L1). Substrate: **R** App, **A** Page, **N/A** IDE.
@@ -564,7 +573,7 @@ The pointer is a light above the surface: a narrow arc of warm white wakes on th
   </span>
 </label>
 ```
-`--wide` widens the CSS fallback ring to 2px for containers (card, dialog, panel); it does not change the chrome, which is always the element's own border width. `--field` marks a field's wrapper: its ring sits on the input's own border, 1px. Glass controls (buttons, icon buttons, `--field` inputs) share one edge: a sharp 1px line on the border and a softer 1px line just inside it. **On a replaced control the `sl-field__control` wrapper is mandatory:** `<input>`, `<textarea>` and `<select>` render no `::before`/`::after`, so the class on the control itself renders nothing at all — no error, no ring.
+`--wide` widens the CSS fallback ring to 2px for containers (card, dialog, panel); it does not change the chrome, which is always the element's own border width. `--field` marks a field's wrapper: its ring sits on the input's own border, 1px. Glass controls (buttons, icon buttons, `--field` inputs) share one edge: a sharp 1px line on the border and a softer 1px line just inside it. **Glass owns the control's depth** (0.32): the primary's foot, the secondary's lit line and cast and a `--field` input's well stand down for that edge, and under keyboard focus the edge carries the kit's focus halo; high contrast and an opt-out region keep the shipped control. **On a replaced control the `sl-field__control` wrapper is mandatory:** `<input>`, `<textarea>` and `<select>` render no `::before`/`::after`, so the class on the control itself renders nothing at all — no error, no ring.
 Consumes: `--slc-border-strong`, `--slc-border-subtle`, `--slc-accent`, `--slc-text` (the chrome's poles and flecks, read at runtime). Don't: thicken it to replace a separator — a separator is always 1px. Don't: put glass or aurora on a component whose own `::after` is load-bearing — both families paint their ring there (`:is(.sl-fx-glass, .sl-fx-aurora)::after`, `effects.css:499`), and the ring rule silently wins over whatever the component needed the pseudo-element for. `.sl-switch__track` is the instance that proved it: the track's `::after` **is** the knob, and glass on the track computed `opacity: 0` there, deleting the knob with no error and no warning. The same collision waits on `::before`: that is where `--pane` seats its pointer-following light, so a component that needs its own `::before` for something load-bearing is in the same position. Check what a component's `::before`/`::after` already does before reaching for either family. Don't: put glass on a container whose own background is structural — a separator, a rule, a divider — rather than a surface. The material clears the host's background so its own tint layer can paint (`glass.css:209`), and a container that has no fill of its own to spare loses whatever that background was doing. `.sl-btn-group` is the instance that proved it: the group's `background` **is** the 1px rule between its members, and glass on the group measured `rgba(0, 0, 0, 0)` there — the rule gone, silently. Same shape as the `::after` collision above, one property over: the effect layer takes over something the component was already using, with no error and no warning. The switch's knob (`::after`), the select's chevron (no pseudo-element at all on a replaced control), and the group's rule (`background`) are three instances of one pattern, in three different properties.
 
 ### Aurora — `sl-fx-aurora` (`--wide` · `--field` · `--linear` · `--rim`)
