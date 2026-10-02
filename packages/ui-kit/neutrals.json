@@ -1,0 +1,276 @@
+{
+  "$note": "GENERATED from sondalab.tokens.json (neutrals) + agent/accent-registry.json — do not edit. Run `npm run gen:tokens`. products.<id>.<theme>.<role> is the literal value of --sl-<role> for that product; ladder is [oklch L, C] per role, tinted with the product's accent hue.",
+  "ladder": {
+    "light": {
+      "bg-canvas": [0.928, 0.007],
+      "bg-surface": [0.987, 0.003],
+      "bg-surface-raised": [1, 0],
+      "bg-tile": [1, 0],
+      "bg-sunken": [0.975, 0.004],
+      "text-primary": [0.23, 0.01],
+      "text-secondary": [0.38, 0.012],
+      "text-muted": [0.47, 0.014],
+      "code-fg": [0.27, 0.01],
+      "code-comment": [0.5, 0.012]
+    },
+    "dark": {
+      "bg-canvas": [0.135, 0.006],
+      "bg-surface": [0.178, 0.007],
+      "bg-surface-raised": [0.215, 0.008],
+      "bg-tile": [0.255, 0.01],
+      "bg-sunken": [0.155, 0.006],
+      "text-primary": [0.94, 0.006],
+      "text-secondary": [0.79, 0.008],
+      "text-muted": [0.69, 0.01],
+      "code-fg": [0.9, 0.008],
+      "code-comment": [0.68, 0.012]
+    }
+  },
+  "border": {
+    "light": {
+      "subtle": 0.09,
+      "default": 0.16,
+      "strong": 0.28
+    },
+    "dark": {
+      "subtle": 0.07,
+      "default": 0.13,
+      "strong": 0.28
+    }
+  },
+  "border-lit": {
+    "light": 0.9,
+    "dark": 0.07
+  },
+  "alias": {
+    "code-null": "code-comment"
+  },
+  "products": {
+    "default": {
+      "accent": {
+        "light": "#FF9F1C",
+        "dark": "#F5A83C"
+      },
+      "hue": {
+        "light": 66.2,
+        "dark": 71.04
+      },
+      "light": {
+        "bg-canvas": "#eae6e2",
+        "bg-surface": "#fcfaf9",
+        "bg-surface-raised": "#ffffff",
+        "bg-tile": "#ffffff",
+        "bg-sunken": "#f9f6f4",
+        "text-primary": "#201c18",
+        "text-secondary": "#47413c",
+        "text-muted": "#605953",
+        "code-fg": "#2a2621",
+        "code-comment": "#68625c",
+        "border-subtle": "rgba(32,28,24,0.09)",
+        "border-default": "rgba(32,28,24,0.16)",
+        "border-strong": "rgba(32,28,24,0.28)",
+        "bg-overlay": "rgba(32,28,24,0.4)",
+        "border-lit": "rgba(255,255,255,0.9)",
+        "code-null": "#68625c"
+      },
+      "dark": {
+        "bg-canvas": "#0a0806",
+        "bg-surface": "#13110e",
+        "bg-surface-raised": "#1c1915",
+        "bg-tile": "#26221e",
+        "bg-sunken": "#0e0c09",
+        "text-primary": "#eeeae7",
+        "text-secondary": "#bebab5",
+        "text-muted": "#9f9a95",
+        "code-fg": "#e1ddd8",
+        "code-comment": "#9d9790",
+        "border-subtle": "rgba(238,234,231,0.07)",
+        "border-default": "rgba(238,234,231,0.13)",
+        "border-strong": "rgba(238,234,231,0.28)",
+        "border-lit": "rgba(255,255,255,0.07)",
+        "code-null": "#9d9790"
+      }
+    },
+    "daos": {
+      "inherits": "default",
+      "accent": {
+        "light": "#FF9F1C",
+        "dark": "#F5A83C"
+      },
+      "hue": {
+        "light": 66.2,
+        "dark": 71.04
+      },
+      "light": {
+        "bg-canvas": "#eae6e2",
+        "bg-surface": "#fcfaf9",
+        "bg-surface-raised": "#ffffff",
+        "bg-tile": "#ffffff",
+        "bg-sunken": "#f9f6f4",
+        "text-primary": "#201c18",
+        "text-secondary": "#47413c",
+        "text-muted": "#605953",
+        "code-fg": "#2a2621",
+        "code-comment": "#68625c",
+        "border-subtle": "rgba(32,28,24,0.09)",
+        "border-default": "rgba(32,28,24,0.16)",
+        "border-strong": "rgba(32,28,24,0.28)",
+        "bg-overlay": "rgba(32,28,24,0.4)",
+        "border-lit": "rgba(255,255,255,0.9)",
+        "code-null": "#68625c"
+      },
+      "dark": {
+        "bg-canvas": "#0a0806",
+        "bg-surface": "#13110e",
+        "bg-surface-raised": "#1c1915",
+        "bg-tile": "#26221e",
+        "bg-sunken": "#0e0c09",
+        "text-primary": "#eeeae7",
+        "text-secondary": "#bebab5",
+        "text-muted": "#9f9a95",
+        "code-fg": "#e1ddd8",
+        "code-comment": "#9d9790",
+        "border-subtle": "rgba(238,234,231,0.07)",
+        "border-default": "rgba(238,234,231,0.13)",
+        "border-strong": "rgba(238,234,231,0.28)",
+        "border-lit": "rgba(255,255,255,0.07)",
+        "code-null": "#9d9790"
+      }
+    },
+    "spexr": {
+      "accent": {
+        "light": "#5b6cff",
+        "dark": "#8b96ff"
+      },
+      "hue": {
+        "light": 273.01,
+        "dark": 277.24
+      },
+      "light": {
+        "bg-canvas": "#e5e7ec",
+        "bg-surface": "#fafbfd",
+        "bg-surface-raised": "#ffffff",
+        "bg-tile": "#ffffff",
+        "bg-sunken": "#f6f7f9",
+        "text-primary": "#1b1d22",
+        "text-secondary": "#404249",
+        "text-muted": "#585a63",
+        "code-fg": "#25262b",
+        "code-comment": "#61636a",
+        "border-subtle": "rgba(27,29,34,0.09)",
+        "border-default": "rgba(27,29,34,0.16)",
+        "border-strong": "rgba(27,29,34,0.28)",
+        "bg-overlay": "rgba(27,29,34,0.4)",
+        "border-lit": "rgba(255,255,255,0.9)",
+        "code-null": "#61636a"
+      },
+      "dark": {
+        "bg-canvas": "#08080b",
+        "bg-surface": "#101114",
+        "bg-surface-raised": "#18191d",
+        "bg-tile": "#212228",
+        "bg-sunken": "#0b0c0f",
+        "text-primary": "#eaebef",
+        "text-secondary": "#b9bac0",
+        "text-muted": "#9a9ba2",
+        "code-fg": "#dcdee3",
+        "code-comment": "#9698a0",
+        "border-subtle": "rgba(234,235,239,0.07)",
+        "border-default": "rgba(234,235,239,0.13)",
+        "border-strong": "rgba(234,235,239,0.28)",
+        "border-lit": "rgba(255,255,255,0.07)",
+        "code-null": "#9698a0"
+      }
+    },
+    "introspect": {
+      "accent": {
+        "light": "#0e9c84",
+        "dark": "#2ee6c0"
+      },
+      "hue": {
+        "light": 176.34,
+        "dark": 174.2
+      },
+      "light": {
+        "bg-canvas": "#e3e9e7",
+        "bg-surface": "#f9fbfb",
+        "bg-surface-raised": "#ffffff",
+        "bg-tile": "#ffffff",
+        "bg-sunken": "#f4f8f7",
+        "text-primary": "#181f1d",
+        "text-secondary": "#3c4542",
+        "text-muted": "#535e5a",
+        "code-fg": "#212826",
+        "code-comment": "#5c6663",
+        "border-subtle": "rgba(24,31,29,0.09)",
+        "border-default": "rgba(24,31,29,0.16)",
+        "border-strong": "rgba(24,31,29,0.28)",
+        "bg-overlay": "rgba(24,31,29,0.4)",
+        "border-lit": "rgba(255,255,255,0.9)",
+        "code-null": "#5c6663"
+      },
+      "dark": {
+        "bg-canvas": "#060908",
+        "bg-surface": "#0e1211",
+        "bg-surface-raised": "#161b19",
+        "bg-tile": "#1e2422",
+        "bg-sunken": "#0a0d0c",
+        "text-primary": "#e7eceb",
+        "text-secondary": "#b6bcba",
+        "text-muted": "#959d9b",
+        "code-fg": "#d9e0dd",
+        "code-comment": "#919b98",
+        "border-subtle": "rgba(231,236,235,0.07)",
+        "border-default": "rgba(231,236,235,0.13)",
+        "border-strong": "rgba(231,236,235,0.28)",
+        "border-lit": "rgba(255,255,255,0.07)",
+        "code-null": "#919b98"
+      }
+    },
+    "local-agents": {
+      "accent": {
+        "light": "#1d63d8",
+        "dark": "#58a6ff"
+      },
+      "hue": {
+        "light": 260.44,
+        "dark": 253.31
+      },
+      "light": {
+        "bg-canvas": "#e4e7ec",
+        "bg-surface": "#fafbfd",
+        "bg-surface-raised": "#ffffff",
+        "bg-tile": "#ffffff",
+        "bg-sunken": "#f5f7f9",
+        "text-primary": "#1a1d22",
+        "text-secondary": "#3f4349",
+        "text-muted": "#565b63",
+        "code-fg": "#24272b",
+        "code-comment": "#5f636a",
+        "border-subtle": "rgba(26,29,34,0.09)",
+        "border-default": "rgba(26,29,34,0.16)",
+        "border-strong": "rgba(26,29,34,0.28)",
+        "bg-overlay": "rgba(26,29,34,0.4)",
+        "border-lit": "rgba(255,255,255,0.9)",
+        "code-null": "#5f636a"
+      },
+      "dark": {
+        "bg-canvas": "#07080a",
+        "bg-surface": "#0f1114",
+        "bg-surface-raised": "#171a1d",
+        "bg-tile": "#1f2328",
+        "bg-sunken": "#0a0c0f",
+        "text-primary": "#e8ebef",
+        "text-secondary": "#b7bbc0",
+        "text-muted": "#979ca2",
+        "code-fg": "#dadee3",
+        "code-comment": "#9399a0",
+        "border-subtle": "rgba(232,235,239,0.07)",
+        "border-default": "rgba(232,235,239,0.13)",
+        "border-strong": "rgba(232,235,239,0.28)",
+        "border-lit": "rgba(255,255,255,0.07)",
+        "code-null": "#9399a0"
+      }
+    }
+  }
+}

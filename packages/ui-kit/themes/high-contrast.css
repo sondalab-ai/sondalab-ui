@@ -3,10 +3,13 @@
   --sl-bg-canvas: #000000;
   --sl-bg-surface: #000000;
   --sl-bg-surface-raised: #0a0a0a;
+  --sl-bg-tile: #0a0a0a;
+  --sl-bg-sunken: #000000;
   --sl-bg-overlay: rgba(0,0,0,0.85);
   --sl-border-subtle: #ffffff;
   --sl-border-default: #ffffff;
   --sl-border-strong: #ffff00;
+  --sl-border-lit: #ffffff;
   --sl-text-primary: #ffffff;
   --sl-text-secondary: #ffffff;
   --sl-text-muted: #cccccc;
@@ -44,4 +47,15 @@
   --sl-spectrum-ink-2: initial;
   --sl-spectrum-ink-3: initial;
   --sl-spectrum-ink-4: initial;
+  --sl-accent-text-lmax: initial;
+  --sl-code-fg: initial;
+  --sl-code-comment: initial;
+  --sl-code-keyword: initial;
+  --sl-code-string: initial;
+  --sl-code-number: initial;
+  --sl-code-boolean: initial;
+  --sl-code-function: initial;
+  --sl-code-tag: initial;
+  --sl-code-builtin: initial;
+  --sl-code-null: initial;
 }

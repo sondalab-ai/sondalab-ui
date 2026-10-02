@@ -1,6 +1,6 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
   "keywords": [
     "design-system",
@@ -45,6 +45,8 @@
     "./themes/light.css": "./themes/light.css",
     "./themes/dark.css": "./themes/dark.css",
     "./themes/high-contrast.css": "./themes/high-contrast.css",
+    "./themes/products.css": "./themes/products.css",
+    "./neutrals.json": "./neutrals.json",
     "./assets/wordmark.svg": "./assets/sondalab-wordmark.svg",
     "./assets/lockup.svg": "./assets/sondalab-lockup.svg",
     "./assets/favicon.svg": "./assets/favicon.svg",
@@ -85,6 +87,8 @@
     "themes/light.css",
     "themes/dark.css",
     "themes/high-contrast.css",
+    "themes/products.css",
+    "neutrals.json",
     "assets/sondalab-wordmark.svg",
     "assets/sondalab-lockup.svg",
     "assets/favicon.svg",

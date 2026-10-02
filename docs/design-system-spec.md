@@ -109,6 +109,8 @@ Spacing `0/1/2/3/4/5/6/8` (4px base), radii `sm 4 / md 6 / lg 10 / pill`, motion
 
 ### Themes — surfaces/text/borders (canonical shared neutrals = brand-board warm paper / abyss)
 
+> **Superseded in ui-kit 0.29.** Neutrals are now a shared oklch ladder tinted with each product's accent hue and generated as hex (`sondalab.tokens.json` → `neutrals`; values per product in `packages/ui-kit/neutrals.json`; reasoning in `design-language.md` §Decision 2). The table below is the 0.21.1–0.28 history.
+
 | Role token | light | dark |
 |---|---|---|
 | `--sl-bg-canvas` | `#F4F4F8` | `#070A0D` |

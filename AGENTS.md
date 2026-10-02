@@ -19,15 +19,19 @@ This repo ships an agentic layer that lets an AI agent author, migrate, and adop
 
 Shipping the agent core is a **ui-kit-only** change (bump ui-kit, not palette-py). When you change the accent table or the compliance matrix in `design-language.md`, update the matching JSON in `agent/` — `scripts/accent-registry.test.mjs` enforces product-set parity.
 
+**The accent registry feeds generated output (since ui-kit 0.29).** `scripts/gen-css.mjs` reads `agent/accent-registry.json` to tint each product's neutrals with its accent hue, so adding or removing a product, changing a product's `light`/`dark` accent, or changing its `inherits` is a **token change**: run `npm run gen:tokens`, commit the regenerated `themes/products.css` and `neutrals.json`, and dual-bump per the release rules below. The generator fails the build if a product's neutrals clip out of sRGB, read as a hue (chroma ≥ 0.04 or an rgb spread > 24, the ink effect's `isChromatic` test), or bake identical to another product's with a different hue. Editing only `steps`, `fill`, `depth` or a `$note` changes no generated file and stays ui-kit-only (`npm run gen:tokens` followed by `git status -- packages/` tells you which case you are in).
+
 ## Never hand-edit generated files
 
-`packages/ui-kit/tokens.css`, `packages/ui-kit/themes/*.css`, and `packages/palette-py/sondalab_palette/__init__.py` are **generated**. Edit `sondalab.tokens.json`, then regenerate:
+`packages/ui-kit/tokens.css`, `packages/ui-kit/themes/*.css` (including `themes/products.css`), `packages/ui-kit/neutrals.json`, and `packages/palette-py/sondalab_palette/__init__.py` are **generated**. Edit `sondalab.tokens.json` (or, for a product's neutrals, its accent in `agent/accent-registry.json`), then regenerate:
 
 ```sh
 npm run gen:tokens
 ```
 
-Commit the regenerated outputs together with the token change. CI fails if committed outputs drift from a fresh regeneration (see `.github/workflows/check-drift.yml`).
+Commit the regenerated outputs together with the token change. CI fails if committed outputs drift from a fresh regeneration (see `.github/workflows/check-drift.yml`); `scripts/neutrals-ladder.test.mjs` also fails if `products.css` or `neutrals.json` differ from a fresh build.
+
+**Neutrals are baked hex, per product.** `sondalab.tokens.json` → `neutrals.ladder` holds one oklch `[L, C]` per role per theme; the hue comes from each product's accent. `themes/{light,dark}.css` carry the default product's values; `themes/products.css` carries every product's under `[data-sl-product="<id>"]`, which must sit on the element that carries `data-sl-theme` or on an ancestor of it, one product per theme subtree (every block weighs the same, so between nested products source order decides, not nesting); `neutrals.json` carries the same values for consumers that need hex outside CSS (Monaco, xterm, Electron `backgroundColor`, preload pages, Tier B colour layers). High contrast keeps its literals, and the generator resets to `initial` there every other `--sl-*` that light or dark declares (`scripts/theme-isolation.test.mjs`).
 
 ## Release / version bump (MANDATORY — two packages, two registries)
 

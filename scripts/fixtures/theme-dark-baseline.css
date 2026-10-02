@@ -1,15 +1,18 @@
 /* GENERATED from sondalab.tokens.json — do not edit. Run `npm run gen:tokens`. */
 [data-sl-theme="dark"] {
-  --sl-bg-canvas: #070A0D;
-  --sl-bg-surface: #0F151A;
-  --sl-bg-surface-raised: #131C23;
+  --sl-bg-canvas: #0a0806;
+  --sl-bg-surface: #13110e;
+  --sl-bg-surface-raised: #1c1915;
+  --sl-bg-tile: #26221e;
+  --sl-bg-sunken: #0e0c09;
   --sl-bg-overlay: rgba(0,0,0,0.6);
-  --sl-border-subtle: rgba(218,227,228,0.07);
-  --sl-border-default: rgba(218,227,228,0.13);
-  --sl-border-strong: rgba(218,227,228,0.28);
-  --sl-text-primary: #DAE3E4;
-  --sl-text-secondary: #9AA9AD;
-  --sl-text-muted: #7C8D95;
+  --sl-border-subtle: rgba(238,234,231,0.07);
+  --sl-border-default: rgba(238,234,231,0.13);
+  --sl-border-strong: rgba(238,234,231,0.28);
+  --sl-border-lit: rgba(255,255,255,0.07);
+  --sl-text-primary: #eeeae7;
+  --sl-text-secondary: #bebab5;
+  --sl-text-muted: #9f9a95;
   --sl-text-on-accent: #0A0A0B;
   --sl-status-success: #98b958;
   --sl-status-warning: #db9e2e;
@@ -23,8 +26,8 @@
   --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 16%, transparent);
   --sl-accent-depth: #35A0B4;
   --sl-focus-ring: #F5A83C;
-  --sl-code-fg: #DAE3E4;
-  --sl-code-comment: #687475;
+  --sl-code-fg: #e1ddd8;
+  --sl-code-comment: #9d9790;
   --sl-code-keyword: #87a7fd;
   --sl-code-string: #99b860;
   --sl-code-number: #f5886c;
@@ -32,7 +35,7 @@
   --sl-code-function: #6db3e4;
   --sl-code-tag: #fe8263;
   --sl-code-builtin: #d4a14a;
-  --sl-code-null: #687475;
+  --sl-code-null: #9d9790;
   --sl-viz-0: #ef806f;
   --sl-viz-1: #65a7fa;
   --sl-viz-2: #9ab140;

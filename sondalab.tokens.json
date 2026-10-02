@@ -21,37 +21,48 @@
   },
   "themes": {
     "light": {
-      "bg-canvas": "#F4F4F8", "bg-surface": "#FAFAFC", "bg-surface-raised": "#FFFFFF", "bg-overlay": "rgba(28,29,34,0.4)",
-      "border-subtle": "rgba(28,29,34,0.09)", "border-default": "rgba(28,29,34,0.16)", "border-strong": "rgba(28,29,34,0.28)",
-      "text-primary": "#1C1D22", "text-secondary": "#454857", "text-muted": "#5F6374", "text-on-accent": "oklch(from var(--sl-accent-default) clamp(0.22, (0.61 - l) * 1000, 1) 0 h)",
+      "text-on-accent": "oklch(from var(--sl-accent-default) clamp(0.22, (0.61 - l) * 1000, 1) 0 h)",
       "status-success": "#4a6205", "status-warning": "#795305", "status-danger": "#a72b05", "status-info": "#3853af"
     },
     "dark": {
-      "bg-canvas": "#070A0D", "bg-surface": "#0F151A", "bg-surface-raised": "#131C23", "bg-overlay": "rgba(0,0,0,0.6)",
-      "border-subtle": "rgba(218,227,228,0.07)", "border-default": "rgba(218,227,228,0.13)", "border-strong": "rgba(218,227,228,0.28)",
-      "text-primary": "#DAE3E4", "text-secondary": "#9AA9AD", "text-muted": "#7C8D95", "text-on-accent": "#0A0A0B",
+      "bg-overlay": "rgba(0,0,0,0.6)",
+      "text-on-accent": "#0A0A0B",
       "status-success": "#98b958", "status-warning": "#db9e2e", "status-danger": "#fe8263", "status-info": "#87a7fd"
     },
     "high-contrast": {
-      "bg-canvas": "#000000", "bg-surface": "#000000", "bg-surface-raised": "#0a0a0a", "bg-overlay": "rgba(0,0,0,0.85)",
-      "border-subtle": "#ffffff", "border-default": "#ffffff", "border-strong": "#ffff00",
+      "bg-canvas": "#000000", "bg-surface": "#000000", "bg-surface-raised": "#0a0a0a", "bg-tile": "#0a0a0a", "bg-sunken": "#000000", "bg-overlay": "rgba(0,0,0,0.85)",
+      "border-subtle": "#ffffff", "border-default": "#ffffff", "border-strong": "#ffff00", "border-lit": "#ffffff",
       "text-primary": "#ffffff", "text-secondary": "#ffffff", "text-muted": "#cccccc", "text-on-accent": "#000000",
       "status-success": "#00ff00", "status-warning": "#ffaa00", "status-danger": "#ff5555", "status-info": "#00ffff"
     }
   },
+  "$neutrals-note": "The neutral ladder (ui-kit 0.29, Lumen): one [oklch L, C] per role per theme. The generator tints it with each product's accent hue — the token accent for default, agent/accent-registry.json light/dark for every other product, following `inherits` — and bakes LITERAL HEX: themes/{light,dark}.css carry the default product's, themes/products.css every product's under [data-sl-product], neutrals.json all of them for hex-only consumers (Monaco, xterm, Electron, preload, sl-audit). Borders are the generated primary text at the alphas below, and so is the light overlay (`overlay`; dark's stays a black literal in themes.dark); border-lit is white. Chroma stays under 0.04 (colour.js isChromatic): the build fails above it, on gamut clipping, and on two products with different hues baking to identical neutrals. A registry edit is therefore a token change. Paper text-primary sits at L 0.23, not the Lumen mock's 0.2: the glass glint mirrors its lightness (1.2 - l) at the same chroma and must stay inside sRGB for any hue (the generator checks it). code-null is code-comment. High contrast keeps its literals in themes.high-contrast (tile = raised, sunken = canvas, lit = its white edge); any other --sl-* light or dark declares and high contrast does not own is reset to `initial` there, so a high-contrast island inherits nothing.",
+  "neutrals": {
+    "ladder": {
+      "light": { "bg-canvas": [0.928, 0.007], "bg-surface": [0.987, 0.003], "bg-surface-raised": [1, 0], "bg-tile": [1, 0], "bg-sunken": [0.975, 0.004], "text-primary": [0.23, 0.01], "text-secondary": [0.38, 0.012], "text-muted": [0.47, 0.014], "code-fg": [0.27, 0.01], "code-comment": [0.5, 0.012] },
+      "dark": { "bg-canvas": [0.135, 0.006], "bg-surface": [0.178, 0.007], "bg-surface-raised": [0.215, 0.008], "bg-tile": [0.255, 0.01], "bg-sunken": [0.155, 0.006], "text-primary": [0.94, 0.006], "text-secondary": [0.79, 0.008], "text-muted": [0.69, 0.01], "code-fg": [0.9, 0.008], "code-comment": [0.68, 0.012] }
+    },
+    "border": {
+      "light": { "subtle": 0.09, "default": 0.16, "strong": 0.28 },
+      "dark": { "subtle": 0.07, "default": 0.13, "strong": 0.28 }
+    },
+    "border-lit": { "light": 0.9, "dark": 0.07 },
+    "overlay": { "light": 0.4 },
+    "alias": { "code-null": "code-comment" }
+  },
   "accent": {
-    "light": { "default": "#FF9F1C", "text-lmax": 0.5, "hover": { "mix": [89, "black"] }, "active": { "mix": [76, "black"] }, "subtle": { "mix": [12, "transparent"] }, "depth": "#14606C" },
+    "light": { "default": "#FF9F1C", "text-lmax": 0.46, "hover": { "mix": [89, "black"] }, "active": { "mix": [76, "black"] }, "subtle": { "mix": [12, "transparent"] }, "depth": "#14606C" },
     "dark": { "default": "#F5A83C", "band-text-lmax": 0.45, "hover": { "mix": [80, "white"] }, "active": { "oklch": ["calc(l * 0.92)", "calc(c * 0.96)", "h"], "fallback": "#E0942A" }, "subtle": { "mix": [16, "transparent"] }, "depth": "#35A0B4" },
     "high-contrast": { "default": "#ffff00", "band-text-lmax": 0.45, "hover": { "mix": [37, "white"] }, "active": { "mix": [80, "black"] }, "subtle": { "mix": [10, "black"] }, "depth": "#00ffff" }
   },
-  "$code-note": "Syntax-highlight palette (--sl-code-<role>): code is viz, out of the single-brand-accent scope — a code token stays semantically stable and readable, it does not track the product hue. Print inks, the same family as status and viz; every role clears 4.5:1 (comment/null 3:1) on canvas, surface and raised. Emitted per theme; high-contrast intentionally omitted (undefined there, consumers fall back).",
+  "$code-note": "Syntax-highlight palette (--sl-code-<role>): code is viz, out of the single-brand-accent scope — a chromatic code token stays semantically stable and readable, it does not track the product hue. Print inks, the same family as status and viz; every role clears 4.5:1 (comment/null 3:1) on canvas, surface, raised, tile and sunken of every product. The two neutral roles, fg and comment (null is comment), are rungs of the neutral ladder (`neutrals`), so they take the product's tint like every other neutral. Emitted per theme; high-contrast intentionally omitted (undefined there, consumers fall back).",
   "code": {
-    "light": { "fg": "#383a42", "comment": "#727e7f", "keyword": "#4460b6", "string": "#536d0b", "number": "#aa442b", "boolean": "#aa442b", "function": "#1f6a96", "tag": "#b33c1e", "builtin": "#865d06", "null": "#727e7f" },
-    "dark": { "fg": "#DAE3E4", "comment": "#687475", "keyword": "#87a7fd", "string": "#99b860", "number": "#f5886c", "boolean": "#f5886c", "function": "#6db3e4", "tag": "#fe8263", "builtin": "#d4a14a", "null": "#687475" }
+    "light": { "keyword": "#4460b6", "string": "#536d0b", "number": "#aa442b", "boolean": "#aa442b", "function": "#1f6a96", "tag": "#b33c1e", "builtin": "#865d06" },
+    "dark": { "keyword": "#87a7fd", "string": "#99b860", "number": "#f5886c", "boolean": "#f5886c", "function": "#6db3e4", "tag": "#fe8263", "builtin": "#d4a14a" }
   },
   "$viz-theme-note": "Per-theme --sl-viz-0..7, emitted into each theme file after shared.viz on :root. High-contrast reuses the dark ramp (its ground is black).",
   "viz": {
-    "light": ["#E0405E", "#2F6FE0", "#0E958A", "#D26A00", "#7A35E0", "#2E8540", "#A57C00", "#C93FC4"],
+    "light": ["#E0405E", "#2F6FE0", "#0E9186", "#CD6400", "#7A35E0", "#2E8540", "#A57C00", "#C93FC4"],
     "dark": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"],
     "high-contrast": ["#ef806f", "#65a7fa", "#9ab140", "#d79628", "#e17eb9", "#14bcbc", "#68eeba", "#b28fef"]
   },

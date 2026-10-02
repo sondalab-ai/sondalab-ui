@@ -87,3 +87,28 @@ for (const page of ["index", "effects"]) {
     }
   });
 }
+
+// 0.29: neutrals are tinted per product, so a swatch is a registered product,
+// not just a hue. The switcher names the product (data-sl-product) and the
+// page loads products.css; each swatch's hues are that product's registry
+// accents, so the neutrals and the accent always agree.
+{
+  const registry = JSON.parse(read("../packages/ui-kit/agent/accent-registry.json")).products;
+  const accentOf = (id, theme) => registry[id][theme] ?? registry[registry[id].inherits]?.[theme];
+  for (const page of ["index", "effects"]) {
+    const src = read(`../showcase/${page}.html`);
+    test(`${page}.html: the accent switcher sets data-sl-product to the swatch's registered product`, () => {
+      assert.match(src, /<link rel="stylesheet" href="\.\.\/packages\/ui-kit\/themes\/products\.css">/);
+      const fn = src.slice(src.indexOf("function applyAccent"), src.indexOf("store(\"sl-demo-accent\"", src.indexOf("function applyAccent")));
+      assert.match(fn, /setAttribute\("data-sl-product", pair\.product\)/);
+      const table = src.match(/var ACCENTS = \{([\s\S]*?)\};/)[1];
+      const rows = [...table.matchAll(/(\w+):\s*\{ light: "(#[0-9a-fA-F]{6})", dark: "(#[0-9a-fA-F]{6})", product: "([\w-]+)" \}/g)];
+      assert.equal(rows.length, 3, "three swatches, each naming its product");
+      for (const [, swatch, light, dark, product] of rows) {
+        assert.ok(registry[product], `${swatch}: ${product} is registered`);
+        assert.equal(light.toLowerCase(), accentOf(product, "light").toLowerCase(), `${swatch} light`);
+        assert.equal(dark.toLowerCase(), accentOf(product, "dark").toLowerCase(), `${swatch} dark`);
+      }
+    });
+  }
+}

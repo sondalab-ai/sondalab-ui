@@ -22,7 +22,7 @@ The design system has always had the *rules* (`design-language.md`) and the *val
 
 Everything else — the actual rules, why they exist, the compliance philosophy — stays in `design-language.md`. This core **references** it; it never forks it.
 
-The verdict engine is `sl-audit` (`agent/sl-audit.mjs`, exposed as the `sl-audit` bin). It reads this core plus the shipped token CSS (`../tokens.css` + `../themes/*.css`) and reports what is decidable from CSS text. What requires human/agent judgement (missing structural labels, editorial voice, layout composition) is out of the script's scope by design.
+The verdict engine is `sl-audit` (`agent/sl-audit.mjs`, exposed as the `sl-audit` bin). It reads this core plus the shipped token CSS (`../tokens.css`, `../themes/light.css`, `../themes/dark.css`, `../themes/high-contrast.css` — not `themes/products.css`, which would allow every product's neutrals for every product) and the audited product's own entry in `../neutrals.json` (since 0.29), and reports what is decidable from CSS text. What requires human/agent judgement (missing structural labels, editorial voice, layout composition) is out of the script's scope by design.
 
 **What the script checks today:** colour value-equality, theme-selector tier consistency, accent-step derivation (check 7, mechanical since v0.7.0) and the effects runtime (check 8 — `sl-fx-*` classes used with no `mount()` call anywhere in the surface). Spacing-off-scale, border width, font-family, and eyebrow/tag recipe conformance are *specified* (see the agentic spec) but **not implemented in the script**; they are judgement-level and belong to the `sl-ds-auditor` subagent, not the audit script. `HANDOFF.md` is the authority on that split. A colour finding can be silenced two ways in `blessed/<product>.json`: `selectors` (a distinctive selector/property the colour sits under) or `values` (an exact colour value — for demo data with no distinctive selector).
 
@@ -49,7 +49,7 @@ All three share the same core and the same read-only auditor. Migrate is the dee
 
 1. `node_modules/@sondalab/ui-kit/agent/` (this core — registry, matrix, blessed, catalog, workflows),
 2. `node_modules/@sondalab/ui-kit/agent/design-language.md` (the grammar),
-3. `node_modules/@sondalab/ui-kit/tokens.css` + `themes/*.css` (the values the audit checks against).
+3. `node_modules/@sondalab/ui-kit/tokens.css` + `themes/light.css`, `themes/dark.css`, `themes/high-contrast.css` + `neutrals.json` (the values the audit checks against; `neutrals.json` → `products.<id>` holds each product's tinted neutrals as hex).
 
 Then run the audit via the shipped bin:
 

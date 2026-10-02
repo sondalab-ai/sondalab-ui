@@ -8,6 +8,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 @import "@sondalab/ui-kit/themes/light.css";  /* [data-sl-theme="light"]  surfaces, text, borders, status, accent */
 @import "@sondalab/ui-kit/themes/dark.css";
 @import "@sondalab/ui-kit/themes/high-contrast.css";
+@import "@sondalab/ui-kit/themes/products.css";  /* optional: per-product neutrals, see 0.29 below */
 ```
 
 ```html
@@ -21,7 +22,20 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 [data-sl-theme="light"] { --sl-accent-default: #0e9c84; --sl-focus-ring: #0e9c84; }
 ```
 
-**Light theme: Prism (0.21).** The light theme is a cool near-white ground (`#F4F4F8`). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
+**Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
+
+**0.29.0 — neutrals tinted per product (Lumen).** Every neutral — canvas, surface, raised, the new `--sl-bg-tile` and `--sl-bg-sunken`, primary/secondary/muted text, the borders, the new `--sl-border-lit`, and the neutral code roles (`--sl-code-fg`, `--sl-code-comment`, `--sl-code-null`) — is now one rung of a shared lightness/chroma ladder tinted with the product's accent hue, baked to hex at build time:
+
+- The theme files carry the default (amber) product's values, so a page with no product attribute gets warm neutrals: light canvas `#eae6e2` (was `#F4F4F8`), surface `#fcfaf9`, text `#201c18`; dark canvas `#0a0806` (was `#070A0D`), surface `#13110e`, text `#eeeae7`.
+- `themes/products.css` (new) carries every registered product's neutrals. Load it and put `data-sl-product="<id>"` on the element that carries `data-sl-theme`, or on an ancestor of it: `<html data-sl-theme="dark" data-sl-product="spexr">`. The attribute on a descendant of the theme element matches nothing. One product per theme subtree: every block weighs the same, so with two products nested the later block in `products.css` wins, not the nearer ancestor.
+- `neutrals.json` (new, exported) has the same values for code that needs hex outside CSS — editor and terminal themes, Electron `backgroundColor`, a preload page, a Tier B colour layer: `products.<id>.<light|dark>.<role>` is the literal value of `--sl-<role>`.
+- High contrast keeps its own literal neutrals (see the last bullet).
+- Light accent text is capped at oklch L 0.46 (was 0.5), so every registered accent's text reads on the darker canvas and its own 12% wash; the focus ring follows it.
+- Light `--sl-viz-2` `#0E958A` → `#0E9186` and `--sl-viz-3` `#D26A00` → `#CD6400`, to keep 3:1 on the new grounds.
+- The one control edge (`--slc-edge-control`) steps 5 from the surface toward contrast, plus half a step on a light surface (read from the surface's lightness, so a Tier B layer gets it too; the base is the new `--slc-edge-control-steps`); it reads >= 3.5:1 on the light canvas. The primary's paper edge cap (`--slc-edge-accent-lmax`) goes 0.62 → 0.59, so amber's edge reads >= 3.4:1 there (it fell to 3.03).
+- The light overlay (`--sl-bg-overlay`) is cast in the product's own ink too. The shadow ramp still casts in the pre-0.29 ink (`rgba(28,29,34,…)`) until the K4 casts; that ink is otherwise gone.
+- `sl-audit --product <id>` allows that product's own generated neutrals. The pre-0.29 grey grounds and text (`#F4F4F8`, `#7C8D95`, …) are no longer tokens: a product that copied them gets R findings until it reads `neutrals.json`.
+- High contrast gains values for the three new roles (tile = raised, sunken = canvas, lit = white) and resets to `initial` every other token light or dark declares that it has no value for (the code palette, the light text cap), so a high-contrast island inherits nothing from the page around it.
 
 **0.28.0 — no rainbow by default.** The kit no longer paints any edge, rim or arc with the spectrum (owner, 2026-10-02). On the light theme, as on dark:
 
@@ -104,8 +118,20 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
 
 **Derived roles — never map these.** Two families are computed from the ones above, so a Tier B product gets them in its own colours for free:
 
-- `--slc-accent-text` is the accent as text or a thin line: `oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h)`. On the light theme the accent is a *fill* and the cap (`0.5`) darkens it until it reads at 4.5:1; elsewhere it is the accent. Links, tags, tabs, pressed labels and the focus ring use it. On a solid status fill use `--slc-on-success|warning|danger|info` instead of `--slc-on-accent`: each picks the pole that contrasts with its own fill (white on the light theme, near-black on the dark), where the accent's partner can be dark on dark. Inside `.sl-invert` the ground is the theme's ink — light on the dark and high-contrast themes — so the band re-derives it with its own cap, `--sl-accent-band-text-lmax` (0.45 there, none on light), and a fixed floor (oklch L 0.68) that lifts a dark product hue on the light theme's band. The band also derives `--slc-success-text` / `-warning-` / `-danger-` / `-info-text` (status as text or a thin mark, same floor and cap) and its own translucent `--slc-accent-subtle`; outside a band those four are unset and components fall back to the status role.
+- `--slc-accent-text` is the accent as text or a thin line: `oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h)`. On the light theme the accent is a *fill* and the cap (`0.46` since 0.29, `0.5` before) darkens it until it reads at 4.5:1; elsewhere it is the accent. Links, tags, tabs, pressed labels and the focus ring use it. On a solid status fill use `--slc-on-success|warning|danger|info` instead of `--slc-on-accent`: each picks the pole that contrasts with its own fill (white on the light theme, near-black on the dark), where the accent's partner can be dark on dark. Inside `.sl-invert` the ground is the theme's ink — light on the dark and high-contrast themes — so the band re-derives it with its own cap, `--sl-accent-band-text-lmax` (0.45 there, none on light), and a fixed floor (oklch L 0.68) that lifts a dark product hue on the light theme's band. The band also derives `--slc-success-text` / `-warning-` / `-danger-` / `-info-text` (status as text or a thin mark, same floor and cap) and its own translucent `--slc-accent-subtle`; outside a band those four are unset and components fall back to the status role.
 - `--slc-edge-*` (`ground`, `surface`, `raised`, `wash`, `accent`, `pressed`, `control`) is each edge as its own fill one step less bright (`--slc-shade-step`, 0.075 of oklch lightness). Every bordered component uses them instead of the neutral `--slc-border*` lines; high contrast maps them back to its drawn border, the inversion band to its re-derived neutrals.
+
+**Light-layer numbers (Tier B).** The kit sets three numbers only on `:root[data-sl-theme="light"]` and the light theme file, which a `[data-theme]` layer never matches, because they cannot be read off the colours themselves. Set them in your light layer, on the root element (the role-vars resolve there):
+
+```css
+:root[data-theme="light"] {
+  --sl-accent-text-lmax: 0.46;                    /* the accent as text, capped */
+  --slc-edge-accent-lmax: 0.59;                   /* the primary's edge, capped on paper */
+  --slc-edge-accent-top: var(--slc-edge-accent);  /* its top line is that edge too */
+}
+```
+
+The control edge needs nothing: its extra half step on a light surface is read from the surface. Your neutrals (`--your-canvas`, `--your-text`, the borders, the overlay) come from `neutrals.json` → `products.<id>.<light|dark>`.
 
 **Inversion bands.** `.sl-invert` ships the fix. Inside a band whose background is the strongest neutral, `--slc-border`'s alpha-over-canvas value sits on the wrong ground and the hairline disappears — and a component that paints its own surface keeps the light one under re-derived light text. The class re-derives the border, text **and surface** role-vars from the band's own foreground, on its children, so any component placed inside keeps a visible edge and a ground it can be read against. A product rolling its own band does the same by hand:
 

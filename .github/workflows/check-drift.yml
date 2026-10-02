@@ -31,4 +31,20 @@ jobs:
         run: npm run gen:tokens
 
       - name: Fail if committed outputs drift from regeneration
-        run: git diff --exit-code -- packages/
+        # `git diff` alone misses a generated file that was never committed
+        # (themes/products.css and neutrals.json arrived in 0.29), so any
+        # untracked or modified path under packages/ fails the check too.
+        run: |
+          git diff --exit-code -- packages/
+          drift="$(git status --porcelain --untracked-files=all -- packages/)"
+          if [ -n "$drift" ]; then
+            echo "Generated output not committed:"
+            echo "$drift"
+            exit 1
+          fi
+
+      - name: Tests
+        # The suite also holds products.css and neutrals.json to a fresh
+        # build of the ladder (scripts/neutrals-ladder.test.mjs). It needs no
+        # install: node:test and the repo's own files only.
+        run: npm test

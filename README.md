@@ -5,9 +5,11 @@ Shared design system for the Sondalab suite. One canonical token source generate
 ```
 sondalab.tokens.json          canonical source — edit here only
 scripts/
-  gen-css.mjs                 -> packages/ui-kit/{tokens.css, themes/*.css}
+  gen-css.mjs                 -> packages/ui-kit/{tokens.css, themes/*.css, themes/products.css, neutrals.json}
+                                 (reads agent/accent-registry.json for each product's neutral tint)
   gen-py.mjs                  -> packages/palette-py/sondalab_palette/__init__.py
-  lib/tokens.mjs              shared loader
+  lib/tokens.mjs              shared loader (tokens + accent registry)
+  lib/neutrals.mjs            the neutral ladder: per-product tint, hex, build guards
 packages/
   ui-kit/                     @sondalab/ui-kit   — CSS custom properties (--sl-*), 3 themes
   palette-py/                 sondalab-palette   — terminal color roles (named ANSI + truecolor)
@@ -24,7 +26,7 @@ Generated files are committed; never hand-edit them.
 
 ## Design principles
 
-- **Shared grammar, per-product accent.** Tools share token architecture, type (Fraunces / Instrument Sans / Martian Mono), spacing, motion, neutrals, and the 3-theme machinery; each product keeps its own signature accent by overriding `--sl-accent-*`. The bundled default is Sondalab amber + teal.
+- **Shared grammar, per-product accent.** Tools share token architecture, type (Fraunces / Instrument Sans / Martian Mono), spacing, motion, the neutral ladder, and the 3-theme machinery; each product keeps its own signature accent by overriding `--sl-accent-*`, and its neutrals take that accent's hue (generated as hex per product, `themes/products.css` + `neutrals.json`). The bundled default is Sondalab amber + teal.
 - **Terminal color = semantic roles + truecolor opt-in.** Color applies to roles (`prompt`/`ok`/`warn`/`err`/`dim`/`accent`), never decoration. Named-ANSI floor resolves through the user's theme; `COLORTERM=truecolor` upgrades to brand hex; `NO_COLOR` disables.
 - **No CSS→Python bridge exists**, so there is one canonical source and two generated distributions, not one shared package.
 

@@ -89,8 +89,18 @@ test("each solid status fill has its own contrast-picked label", () => {
 // Regression, 2026-10-01: the checkbox/radio edge was the surface three steps
 // darker, which on the dark theme is near-black on near-black (1.06:1). It
 // steps away from the surface toward contrast, five steps: >= 3:1 on both.
+// 0.29: a light surface takes half a step more -- the Lumen canvas sits
+// further from the surface, and five read 3.02:1 on it. Read from the
+// surface's own lightness, like the sign, so a Tier B layer on its own
+// [data-theme] gets it too: no theme block may set the step count. Hover stays
+// two steps further.
 test("a form control's edge steps toward contrast, not always into shade", () => {
-  assert.match(css, /--slc-edge-control:\s*oklch\(from var\(--slc-surface\) calc\(l \+ var\(--slc-shade-step\) \* 5 \* clamp\(-1, \(0\.5 - l\) \* 1000, 1\)\) c h\);/);
+  const STEPS = "\\(var\\(--slc-edge-control-steps\\) \\+ 0\\.5 \\* clamp\\(0, \\(l - 0\\.5\\) \\* 1000, 1\\)";
+  const SIGN = "\\* clamp\\(-1, \\(0\\.5 - l\\) \\* 1000, 1\\)\\) c h\\);";
+  assert.match(css, /--slc-edge-control-steps:\s*5;/);
+  assert.match(css, new RegExp(`--slc-edge-control:\\s*oklch\\(from var\\(--slc-surface\\) calc\\(l \\+ var\\(--slc-shade-step\\) \\* ${STEPS}\\) ${SIGN}`));
+  assert.match(css, new RegExp(`--slc-edge-control-hover:\\s*oklch\\(from var\\(--slc-surface\\) calc\\(l \\+ var\\(--slc-shade-step\\) \\* ${STEPS} \\+ 2\\) ${SIGN}`));
+  assert.equal(css.match(/--slc-edge-control-steps\s*:/g).length, 1, "declared once, on :root, never per theme");
   const box = css.match(/\.sl-check__box,\s*\.sl-radio__box\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.match(box, /border:\s*1px solid var\(--slc-edge-control\)/);
   const track = css.match(/\.sl-switch__track\s*\{([^}]*)\}/)?.[1] ?? "";

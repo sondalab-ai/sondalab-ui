@@ -1,7 +1,7 @@
 # Workflow — Migrate a surface onto the Sondalab DS
 
 > **What this file is:** the ordered, harness-agnostic procedure an agent follows to migrate an existing app's UI onto the Sondalab design system. It is the portable core; the Claude Code `sl-migrate` skill loads and executes it. Any other harness can follow it directly.
-> **Reads:** `catalog.md` (components and the effects layer), `../design-language.md` (grammar), the token CSS (`../../tokens.css` + `../../themes/*.css`, the values), the agent core (`accent-registry.json`, `substrate-matrix.json`, `blessed/<product>.json`), `sl-audit` (verdict engine).
+> **Reads:** `catalog.md` (components and the effects layer), `../design-language.md` (grammar), the token CSS (`../../tokens.css` + `../../themes/*.css`, the values), the product's neutrals (`../../neutrals.json` → `products.<id>`, hex tinted with its accent — what a Tier B layer copies), the agent core (`accent-registry.json`, `substrate-matrix.json`, `blessed/<product>.json`), `sl-audit` (verdict engine).
 > **Invariant:** migrating a live surface is semi-irreversible. Work on a branch; do not edit before the human approves the mapping plan (Step 3 gate) or the effects plan (Step 6 gate).
 
 ## Division of labour (do not blur)
@@ -34,6 +34,8 @@ For each remaining R-violation, map the free-floating value to an `--sl-*` role 
 
 ### 4 — Apply
 After approval, edit per the product's tier (A: consume the theme layer; B: keep the local colour layer but pin every value to a Sondalab value). Small, rollback-friendly chunks.
+- **Tier A, any product but the default:** load `themes/products.css` and set `data-sl-product="<id>"` on the element that carries `data-sl-theme` (or an ancestor), one product per theme subtree.
+- **Tier B:** take the neutrals (grounds, text, borders, the light overlay, the neutral code roles) from `neutrals.json` → `products.<id>.<light|dark>`, never another product's entry and never a pre-0.29 grey. In the light layer also set the numbers the kit keeps on `:root[data-sl-theme="light"]`, which a `[data-theme]` layer never matches: `--sl-accent-text-lmax: 0.46`, `--slc-edge-accent-lmax: 0.59`, `--slc-edge-accent-top: var(--slc-edge-accent)`. The control edge needs nothing: its step count reads the surface's lightness.
 
 ### 5 — Re-audit and diff
 Re-run the audit. R-violations must reach 0 or be blessed. Produce a before/after report (baseline counts vs current).

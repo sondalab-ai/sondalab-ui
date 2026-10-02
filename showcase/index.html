@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/products.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500;600&display=swap">
@@ -817,10 +818,13 @@
     // it via the theme layer (color-mix / relative-color) — the one-var contract.
     // Per theme, from agent/accent-registry.json (default / spexr / introspect):
     // a dark-ground hue on paper fails contrast, so light takes its own.
+    // Each swatch is a registered product, and data-sl-product lets the
+    // neutrals follow it (themes/products.css): warm amber, cool indigo, a
+    // green-grey under the cyan.
     var ACCENTS = {
-      amber:  { light: "#FF9F1C", dark: "#F5A83C" },
-      indigo: { light: "#5b6cff", dark: "#8b96ff" },
-      cyan:   { light: "#0e9c84", dark: "#2ee6c0" },
+      amber:  { light: "#FF9F1C", dark: "#F5A83C", product: "default" },
+      indigo: { light: "#5b6cff", dark: "#8b96ff", product: "spexr" },
+      cyan:   { light: "#0e9c84", dark: "#2ee6c0", product: "introspect" },
     };
     var accent = "amber";
     var root = document.documentElement;
@@ -839,6 +843,7 @@
       var pair = ACCENTS[a]; if (!pair) return;
       accent = a;
       root.setAttribute("data-demo-accent", a);
+      root.setAttribute("data-sl-product", pair.product);
       var theme = root.getAttribute("data-sl-theme");
       var hue = theme === "light" ? pair.light : pair.dark;
       // High contrast owns its accent outright; an inline hue would override it.
