@@ -96,10 +96,12 @@ Both run in a `pnpm gen:tokens` script; generated files are committed (so consum
 
 | Token | Value | Replaces |
 |---|---|---|
-| `--sl-font-display` | `"Fraunces", Georgia, serif` | (new — display/headline) |
-| `--sl-font-sans` | `"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif` | Inter (spexr), Space Grotesk (introspect) |
-| `--sl-font-mono` | `"Martian Mono", ui-monospace, "SF Mono", Menlo, monospace` | JetBrains Mono (spexr), IBM Plex Mono (introspect) — UI/data/TUI labels, thin/extra-light hierarchy |
-| `--sl-font-code` | **per-product override**, defaults to `--sl-font-mono` | source-code surfaces (spexr editor / code blocks) — a carve-out so the code editor may keep a coding-optimized mono; Martian Mono thin is a display face, not an editor face |
+| `--sl-font-display` | `"Geist", system-ui, -apple-system, "Segoe UI", sans-serif` (ui-kit 0.30; was `"Fraunces", Georgia, serif`) | (new — display/headline) |
+| `--sl-font-sans` | `"Geist", system-ui, -apple-system, "Segoe UI", sans-serif` (0.30; was Instrument Sans) | Inter (spexr), Space Grotesk (introspect) |
+| `--sl-font-mono` | `"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace` (0.30; was Martian Mono) | JetBrains Mono (spexr), IBM Plex Mono (introspect) — UI/data/TUI labels and micro labels |
+| `--sl-font-brand` | `"Fraunces", Georgia, serif` (new in 0.30) | the wordmark and the monogram only |
+| `--sl-text-micro` | `0.65625rem` (10.5px, new in 0.30) | the micro-label register (eyebrow, section index, nav group, stat label, figure caption, labelled rule) |
+| `--sl-font-code` | **per-product override**, defaults to `--sl-font-mono` | source-code surfaces (spexr editor / code blocks) — a carve-out so the code editor may keep a coding-optimized mono (spexr keeps JetBrains Mono); the kit's mono is a UI face, not an editor face |
 
 Mono weight hierarchy (from board): 100 large numerals · 200 data/TUI · 300 tracked labels · 400 accent.
 

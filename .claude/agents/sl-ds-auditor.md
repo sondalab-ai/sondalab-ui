@@ -34,8 +34,11 @@ edit.** You return findings for the caller to act on.
    treat them as judgement. Read
    `docs/design-language.md` and, scoped to the substrate's Required rules in
    `substrate-matrix.json`, check:
-   - **L1** — are structural labels (eyebrow / section index / tag) present and
-     mono-uppercase-tracked where the substrate requires them? Is there an
+   - **L1** — are structural labels (eyebrow / section index / tag) present
+     where the substrate requires them, the micro labels mono-uppercase at
+     `--sl-text-micro` tracked `0.06em`, and every control in sentence case
+     (uppercase on a button, chip, badge or segmented item is a defect since
+     0.30)? Is Fraunces confined to the wordmark and monogram? Is there an
      oversized display anchor where a Page expects one?
    - **L2** — hairline `1px` structure, spacing off `--sl-space-*`, the
      hairline-grid technique, gutter/ruler, section indices.

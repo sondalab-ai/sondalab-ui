@@ -208,17 +208,21 @@
 
 /* ══ PRIMITIVES ══════════════════════════════════════════════════════════════ */
 
-/* Eyebrow — mono uppercase micro-label above a heading. Strongest family signal. */
+/* Eyebrow — the micro register (L1): mono, uppercase, 10.5px, +0.06em, above
+   a heading. Since 0.30 (Lumen) it is the one place uppercase is spoken, with
+   the other structural micro labels -- nav group, stat label, section index,
+   figure caption, labelled rule. Controls speak in sentence case. */
 .sl-eyebrow {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
+  font-size: var(--sl-text-micro, 0.65625rem);
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slc-text-muted);
 }
 
-/* Tag — accent-tinted pill with a dot glyph. Category / tier marker. */
+/* Tag — accent-tinted pill with a dot glyph. Category / tier marker. Mono, as
+   an identifier is, but in sentence case and barely tracked (0.30). */
 .sl-tag {
   display: inline-flex;
   align-items: center;
@@ -226,8 +230,7 @@
   font-family: var(--sl-font-mono, ui-monospace, monospace);
   font-size: var(--sl-text-xs, 0.75rem);
   font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   line-height: 1;
   color: var(--slc-accent-text);
   background: var(--slc-accent-subtle);
@@ -260,11 +263,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  /* A control, so sentence case in the sans (0.30); the count stays mono. */
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-xs, 0.75rem);
   font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   line-height: 1;
   color: var(--slc-text-muted);
   background-color: transparent;
@@ -292,7 +294,7 @@
   border-color: var(--slc-edge-pressed);
 }
 .sl-chip[aria-pressed="true"]::before { background-color: currentColor; }
-.sl-chip__count { font-variant-numeric: tabular-nums; }
+.sl-chip__count { font-family: var(--sl-font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; }
 .sl-chip:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Progress — a determinate bar. The value is written twice, on purpose:
@@ -498,10 +500,10 @@
   padding: var(--sl-space-5, 1.5rem);
 }
 .sl-card__title {
-  font-family: var(--sl-font-display, Georgia, serif);
+  font-family: var(--sl-font-display, system-ui, sans-serif);
   font-size: var(--sl-text-lg, 1.125rem);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--slc-text);
   margin: 0 0 var(--sl-space-2, 0.5rem);
 }
@@ -518,11 +520,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  /* Status words in sentence case ("Running"), in the sans (0.30). */
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-xs, 0.75rem);
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   line-height: 1;
   color: var(--slc-text-secondary);
   background: color-mix(in srgb, var(--slc-text) 7%, transparent);
@@ -553,13 +554,13 @@
    part of the input's name, read once as the name and again as its
    description. Neither rule here depends on which element is which. */
 .sl-field { display: flex; flex-direction: column; gap: var(--sl-space-2, 0.5rem); }
+/* A field's name, read with the control: sentence case in the sans, in the
+   secondary ink (0.30; it was a mono uppercase micro label). */
 .sl-field__label {
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-xs, 0.75rem);
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--slc-text-muted);
+  color: var(--slc-text-secondary);
 }
 .sl-field__input {
   font-family: var(--sl-font-sans, system-ui, sans-serif);
@@ -680,8 +681,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border: none;
   margin: var(--sl-space-6, 2rem) 0;
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
-  letter-spacing: 0.16em;
+  font-size: var(--sl-text-micro, 0.65625rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slc-text-muted);
 }
@@ -888,11 +890,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-radius: 0 0 var(--sl-radius-sm, 6px) var(--sl-radius-sm, 6px);
 }
 .sl-callout__title {
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   color: var(--slc-text);
   margin: 0 0 var(--sl-space-1, 0.25rem);
 }
@@ -922,11 +923,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   color: var(--slc-text);
 }
 .sl-table thead th {
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-xs, 0.75rem);
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   text-align: left;
   color: var(--slc-text-muted);
   background: color-mix(in srgb, var(--slc-text) 4%, transparent);
@@ -984,10 +983,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 @starting-style { .sl-dialog[open]::backdrop { opacity: 0; } }
 .sl-dialog__title {
-  font-family: var(--sl-font-display, Georgia, serif);
+  font-family: var(--sl-font-display, system-ui, sans-serif);
   font-size: var(--sl-text-xl, 1.5rem);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
   margin: 0 0 var(--sl-space-3, 0.75rem);
 }
 .sl-dialog__body { font-family: var(--sl-font-sans, system-ui, sans-serif); font-size: var(--sl-text-sm, 0.875rem); line-height: var(--sl-line-normal, 1.5); color: var(--slc-text-secondary); margin: 0 0 var(--sl-space-5, 1.5rem); }
@@ -1102,7 +1101,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-surface:        color-mix(in srgb, currentColor 7%, transparent);
   --slc-raised:         color-mix(in srgb, currentColor 12%, transparent);
   --slc-text-secondary: color-mix(in srgb, currentColor 78%, transparent);
-  --slc-text-muted:     color-mix(in srgb, currentColor 58%, transparent);
+  /* 60%, the least that holds muted text to 4.5:1 on the bare band AND on a
+     card (7%) or a raised surface (12%) placed in it, for every product on
+     every theme: at 58% it read 4.31 on a raised surface in the dark default
+     band. Tightest now 4.58 (palette-contrast.test.mjs). */
+  --slc-text-muted:     color-mix(in srgb, currentColor 60%, transparent);
   --slc-border:         color-mix(in srgb, currentColor 22%, transparent);
   /* The strong line is not decoration here: the checkbox and radio box edge,
      the switch track and ITS KNOB are painted with it. Left on the canvas
@@ -1184,8 +1187,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-section__idx {
   flex: none;
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
-  letter-spacing: 0.2em;
+  font-size: var(--sl-text-micro, 0.65625rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slc-text-muted);
 }
@@ -1194,9 +1198,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    a --sl-text-* token. At most one per screen (L1). */
 .sl-anchor {
   margin: 0;
-  font-family: var(--sl-font-display, Georgia, serif);
+  font-family: var(--sl-font-display, system-ui, sans-serif);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  /* Geist at display size closes up hard (Lumen: -0.045 to -0.06em, tighter
+     as it grows); in-flow headings take -0.02 to -0.03em. */
+  letter-spacing: -0.05em;
   /* Set solid, not on --sl-line-tight (1.2): display type is the one role
      that takes 1.0 (owner, 2026-10-02). In-flow headings keep the token. */
   line-height: 1;
@@ -1239,10 +1245,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sl-space-2, 0.5rem);
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  /* Navigation, so sentence case in the sans (0.30): a trail of names. */
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-xs, 0.75rem);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
 }
 .sl-breadcrumb__item {
   color: var(--slc-text-muted);
@@ -1292,10 +1297,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   cursor: pointer;
   background: transparent;
   color: var(--slc-text-muted);
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  /* A control: sentence case in the sans (0.30), still the 12px step the
+     32px arithmetic below is made of. */
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-xs, 0.75rem);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
   /* 26px items in a 2px inset and a 1px edge: the control is 32px, the
      button's height (it was 36.5). */
   line-height: 1;
@@ -1434,8 +1440,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 .sl-stat__label {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
-  letter-spacing: 0.2em;
+  font-size: var(--sl-text-micro, 0.65625rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slc-text-muted);
 }
@@ -1444,9 +1451,13 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 
 /* The brand is typographic — there is no pictorial mark. These three classes
    must render as packages/ui-kit/assets/sondalab-*.svg does; where they
-   disagree, the asset is right and the CSS is the defect. */
+   disagree, the asset is right and the CSS is the defect. Since 0.30 the
+   lockup is Geist Mono 300 tracked 0.2em, in the asset (scripts/gen-logo.py)
+   and here alike. */
 .sl-wordmark {
-  font-family: var(--sl-font-display, Georgia, serif);
+  /* The brand face, not the display role: since 0.30 display is Geist and
+     Fraunces is the wordmark's and the monogram's alone. */
+  font-family: var(--sl-font-brand, Georgia, serif);
   font-weight: 500;
   letter-spacing: -0.05em;
   color: var(--slc-text);
@@ -1456,6 +1467,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-lockup {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
   font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 300;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--slc-text);
@@ -1482,7 +1494,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   line-height: var(--sl-monogram-size);
   text-align: center;
   background: var(--slc-surface);
-  font-family: var(--sl-font-display, Georgia, serif);
+  font-family: var(--sl-font-brand, Georgia, serif);
   font-weight: 500;
   /* The 60% in L3 is the MARK's ink width against the tile, not a font-size.
      sondalab-avatar-ink.svg puts s + period at 59.7% of its 1024 canvas
@@ -1527,8 +1539,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-figure__caption {
   margin-top: var(--sl-space-2, 0.5rem);
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
-  letter-spacing: 0.16em;
+  font-size: var(--sl-text-micro, 0.65625rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slc-text-muted);
 }
@@ -1568,9 +1581,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 .sl-nav__group {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
+  font-size: var(--sl-text-micro, 0.65625rem);
   font-weight: 500;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slc-text-muted);
   padding: var(--sl-space-4, 1rem) var(--sl-space-4, 1rem) var(--sl-space-2, 0.5rem);

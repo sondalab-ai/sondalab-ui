@@ -1,6 +1,6 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.29.0",
+  "version": "0.30.0",
   "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
   "keywords": [
     "design-system",
@@ -100,9 +100,13 @@
     "assets/README.md",
     "README.md",
     "agent/",
+    "assets/fonts/geist-latin.woff2",
+    "assets/fonts/geist-mono-latin.woff2",
     "assets/fonts/fraunces-latin.woff2",
     "assets/fonts/instrument-sans-latin.woff2",
     "assets/fonts/martian-mono-latin.woff2",
+    "assets/fonts/OFL-Geist.txt",
+    "assets/fonts/OFL-GeistMono.txt",
     "assets/fonts/OFL-Fraunces.txt",
     "assets/fonts/OFL-InstrumentSans.txt",
     "assets/fonts/OFL-MartianMono.txt",

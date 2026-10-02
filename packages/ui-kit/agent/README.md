@@ -100,7 +100,7 @@ The agent pulls the canonical eyebrow/tag recipe from `design-language.md` L3, b
 
 > *"Scaffold a new empty-state panel for introspect."*
 
-The agent starts from the substrate (App), applies the required rules for that column of the matrix (mono structural labels, hairline structure, spacing off `--sl-space-*`, one accent hue), and the audit passes on first run because compliance was built in, not retrofitted.
+The agent starts from the substrate (App), applies the required rules for that column of the matrix (mono micro labels and sentence-case controls, hairline structure, spacing off `--sl-space-*`, one accent hue), and the audit passes on first run because compliance was built in, not retrofitted.
 
 ### 4 — CI guard (any slice)
 

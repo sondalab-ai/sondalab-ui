@@ -34,6 +34,21 @@ const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).
 const NEUTRALS = JSON.parse(readFileSync(resolve(KIT, "neutrals.json"), "utf8"));
 const PRODUCTS = Object.entries(NEUTRALS.products).filter(([, p]) => !p.inherits);
 const GROUNDS = ["bg-canvas", "bg-surface", "bg-surface-raised", "bg-tile", "bg-sunken"].map((r) => `--sl-${r}`);
+/** The inversion band, read off components.css (.sl-invert > *): its text
+ *  inks and its card and raised grounds are each its foreground (the page's
+ *  canvas) at a fraction over its own ground (the page's primary text). */
+const BAND = (() => {
+  const band = readFileSync(resolve(KIT, "components.css"), "utf8").match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  const pct = (role) => Number(band.match(new RegExp(`--slc-${role}:\\s*color-mix\\(in srgb, currentColor (\\d+)%, transparent\\)`))?.[1]) / 100;
+  return { inks: { muted: pct("text-muted"), secondary: pct("text-secondary") }, grounds: { band: 0, card: pct("surface"), raised: pct("raised") } };
+})();
+/** Every band ink on every band ground (the bare band, a card on it, a raised
+ *  surface on it) as ["ink on ground", ratio]; the ink composites over the
+ *  ground it sits on, so a card's muted text is the canvas over the card. */
+const bandReadings = (ground, ink) => Object.entries(BAND.grounds).flatMap(([g, gp]) => {
+  const under = lerp(ground, ink, gp);
+  return Object.entries(BAND.inks).map(([n, a]) => [`${n} on ${g}`, ratio(lerp(under, ink, a), under)]);
+});
 /** The theme's generated tokens with one product's neutrals in place. */
 const productTokens = (theme, p) => ({
   ...shared,
@@ -75,6 +90,51 @@ for (const theme of ["light", "dark"]) for (const [product, p] of PRODUCTS) {
   // Muted text is text: it reads at 4.5:1 on every ground of every product.
   test(`${theme} ${product}: muted text reads on every ground (4.5:1)`, () =>
     assert.deepEqual(below(["--sl-text-muted", "--sl-text-secondary", "--sl-text-primary"], 4.5), []));
+  // ...and on the two ink washes the kit lays over a ground: 4% (a table
+  // head, a field, an empty state) and 6% (a segmented track, a ghost or an
+  // icon button). Since 0.30 the micro labels are 10.5px muted text, so the
+  // muted ink carries more of the page than it did.
+  for (const wash of [0.04, 0.06]) {
+    test(`${theme} ${product}: muted text reads on a ${wash * 100}% ink wash over every ground (4.5:1)`, () =>
+      assert.deepEqual(below(["--sl-text-muted", "--sl-text-secondary"], 4.5, (bg) => lerp(hex(bg), hex("--sl-text-primary"), wash)), []));
+  }
+  // Inside an inversion band (components.css .sl-invert > *) the ground is the
+  // page's primary text, and muted and secondary text are its canvas at the
+  // fractions the CSS declares -- on the bare band, on a card and on a raised
+  // surface placed in it (the band's own 7% and 12% washes of its canvas).
+  test(`${theme} ${product}: muted text reads inside the inversion band, bare and on a card or raised surface in it (4.5:1)`, () => {
+    const bad = bandReadings(hex("--sl-text-primary"), hex("--sl-bg-canvas"))
+      .filter(([, r]) => r < 4.5).map(([n, r]) => `${n} ${r.toFixed(2)}`);
+    assert.deepEqual(bad, []);
+  });
+}
+
+test("the band's inks and grounds are read off components.css, and secondary stays above muted", () => {
+  for (const [n, a] of Object.entries({ ...BAND.inks, card: BAND.grounds.card, raised: BAND.grounds.raised })) {
+    assert.ok(a > 0 && a < 1, `band ${n} not found: ${a}`);
+  }
+  assert.ok(BAND.inks.secondary > BAND.inks.muted, "secondary must read stronger than muted");
+});
+
+// High contrast keeps literal neutrals: its muted ink is held to the same 4.5
+// on its grounds, on the 4% and 6% washes and inside the band.
+{
+  const t = { ...shared, ...vars("themes/high-contrast.css") };
+  const lines = [];
+  for (const bg of GROUNDS) for (const wash of [0, 0.04, 0.06]) {
+    const ground = lerp(t[bg], t["--sl-text-primary"], wash);
+    for (const n of ["--sl-text-muted", "--sl-text-secondary"]) {
+      const r = ratio(t[n], ground);
+      if (r < 4.5) lines.push(`${n} on ${bg} +${wash * 100}% ${r.toFixed(2)}`);
+    }
+  }
+  for (const [n, r] of bandReadings(t["--sl-text-primary"], t["--sl-bg-canvas"])) {
+    if (r < 4.5) lines.push(`band ${n} ${r.toFixed(2)}`);
+  }
+  test("high contrast: muted text reads on every ground, on the 4% and 6% washes and inside the band, bare and on a card or raised surface (4.5:1)", () => {
+    for (const bg of GROUNDS) assert.ok(t[bg], `${bg} is not a hex literal in high-contrast.css`);
+    assert.deepEqual(lines, []);
+  });
 }
 
 for (const theme of ["light", "dark"]) {

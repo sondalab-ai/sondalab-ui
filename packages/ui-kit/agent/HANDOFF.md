@@ -32,7 +32,7 @@ The hairline rule (L2) is about *structural separators* being 1px. But 2px borde
 **Active/pressed control states resolve to the product accent** (amber for the `default` product; the product's registered hue otherwise) — an active tab, a pressed button, a selected control shows the accent, never a neutral. So a 2px active-state edge is coloured with the accent (or its `active` step), and a colour-value-equality finding there should map to the accent, not be flattened away.
 
 ### Eyebrow / tag recipe conformance  *(check 6 — deferred)*
-For elements already named eyebrow/tag, the recipe (mono + uppercase + tracking `0.14–0.22em`) is fixed in `design-language.md` L3. The script does not verify it.
+For elements already named eyebrow/tag, the recipe is fixed in `design-language.md` L3 (0.30): the eyebrow is a micro label — mono, uppercase, `--sl-text-micro` (10.5px), 500, tracking `0.06em`; the tag is mono in sentence case, tracking `0.02em`. Controls, badges, chips, segmented items, table heads, field labels and breadcrumbs are sentence case in the sans; uppercase on any of them is a pre-0.30 leftover. The script does not verify it.
 
 **How to judge:** when you author or touch an eyebrow/tag/section-index, cite the canonical recipe in `design-language.md` and match it — don't re-derive tracking/size. When migrating, check existing eyebrow/tag elements against the recipe by eye.
 

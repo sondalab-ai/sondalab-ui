@@ -9,7 +9,7 @@ bitmap.
 | File | Form | Font (baked) |
 |---|---|---|
 | `sondalab-wordmark.svg` | primary — `sondalab.` | Fraunces, wght 500, opsz 144 |
-| `sondalab-lockup.svg` | compact — `SONDA·LAB` | Martian Mono, wght 300 |
+| `sondalab-lockup.svg` | compact — `SONDA·LAB` | Geist Mono, wght 300, tracked 0.2em (ui-kit 0.30; Martian Mono before) |
 | `favicon.svg` | the mark — the amber dot alone | — |
 | `app-icon.svg` | the mark on an ink tile (rounded) | — |
 | `sondalab-avatar-ink.svg` / `.png` | monogram — `s.` on the ink tile | Fraunces, wght 500, opsz 144 |
@@ -81,7 +81,8 @@ the SVG is exported alongside it from the same source, so both stay in step.
 The PNG step needs `rsvg-convert` (librsvg) and `magick` (ImageMagick) on PATH;
 without them the script still writes the SVGs and skips the raster.
 
-The paths were generated from the variable fonts (Fraunces, Martian Mono)
+The paths were generated from the variable fonts (Fraunces, Geist Mono)
 instanced at the weights above and shaped with HarfBuzz, then outlined with
-fontTools. To regenerate after a brand-type change, re-run that outline step
+fontTools (`scripts/gen-logo.py`; Geist Mono is pinned to the google/fonts
+commit the kit's own `geist-mono-latin.woff2` was cut from). To regenerate after a brand-type change, re-run that outline step
 against the updated axis values — do not hand-edit the path data.

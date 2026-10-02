@@ -570,10 +570,10 @@
   /* ── target overlay ─────────────────────────────────────────────────────── */
   // dir-lumen.css is scoped by html[data-dir="lumen"], so the overlay is the
   // attribute: the sheet is added once, then flipping data-dir swaps kit and
-  // target in place, without a reload. Geist comes from Google Fonts until the
-  // kit vendors it in fonts.css (docs/plans/2026-10-02-lumen-adoption.md).
+  // target in place, without a reload. Since ui-kit 0.30 the kit vendors
+  // Geist and Geist Mono in fonts.css, which the stage already loads, so the
+  // target and the kit render from the same files and no font CDN is fetched.
   const TARGET_CSS = "../lab/directions-2/dir-lumen.css";
-  const TARGET_FONTS = "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap";
   // appended last in <head>, so it lands after components.css and screens.css
   const sheet = (href) => new Promise((res) => {
     let l = document.querySelector(`link[href="${href}"]`);
@@ -592,7 +592,7 @@
   async function setTarget(on) {
     wanted = on;
     if (on) {
-      await Promise.all([sheet(TARGET_FONTS), sheet(TARGET_CSS)]);
+      await sheet(TARGET_CSS);
       if (wanted !== on) return H.getAttribute("data-dir");
       H.setAttribute("data-dir", "lumen");
       // fonts.ready can resolve before a face is even requested: ask for both

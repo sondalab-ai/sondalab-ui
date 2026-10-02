@@ -57,15 +57,15 @@ test("each hero card's product colour is that product's registered dark accent",
   for (const [, product] of cards) assert.match(markup, new RegExp(`<article class="web-card" data-product="${product}">`));
 });
 
-test("the kit view loads the kit's own faces, never a font CDN", () => {
+test("the kit view and the Lumen target both render in the kit's own faces, never a font CDN", () => {
   const stage = read("showcase/screens-stage.html");
   assert.match(stage, /<link rel="stylesheet" href="\.\.\/packages\/ui-kit\/fonts\.css">/);
   assert.doesNotMatch(stage, /fonts\.googleapis|fonts\.gstatic|jsdelivr/);
-  // the CDN face belongs to the target alone, added by setTarget()
+  // Since 0.30 the target's Geist is the kit's own (fonts.css): the overlay
+  // fetches no font CDN either, so kit and target render from the same files.
   const js = read("showcase/screens.js");
-  const target = js.slice(js.indexOf("async function setTarget"));
-  assert.match(js, /TARGET_FONTS = "https:\/\/fonts\.googleapis\.com/);
-  assert.match(target, /sheet\(TARGET_FONTS\)/);
+  assert.doesNotMatch(js, /fonts\.googleapis|fonts\.gstatic|jsdelivr/);
+  assert.doesNotMatch(js, /TARGET_FONTS/);
 });
 
 test("setTarget re-checks that it is still wanted after waiting for its sheets", () => {
@@ -73,7 +73,7 @@ test("setTarget re-checks that it is still wanted after waiting for its sheets",
   // the stale call resumes after the await and must not flip back to Lumen.
   const js = read("showcase/screens.js");
   const fn = js.slice(js.indexOf("async function setTarget"), js.indexOf("const health"));
-  const wait = fn.indexOf("await Promise.all([sheet(TARGET_FONTS), sheet(TARGET_CSS)]);");
+  const wait = fn.indexOf("await sheet(TARGET_CSS);");
   const flip = fn.indexOf('H.setAttribute("data-dir", "lumen")');
   assert.ok(wait > -1 && flip > wait, "the sheets are awaited before the flip");
   assert.match(fn.slice(0, wait), /wanted = on;/, "the call records what is wanted first");

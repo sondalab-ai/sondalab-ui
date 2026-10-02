@@ -33,7 +33,7 @@ npx sl-audit --surface "<the one file you edited>" --product <host> --substrate 
 The **added** component must contribute zero R-violations. Pre-existing findings elsewhere in the file are **not** yours to fix in an adopt — note them (they are migrate's job) but leave them. Populate `blessed/<host>.json` only for a deviation your added component legitimately needs.
 
 ### 4 — Judgement check (the one component)
-Against `design-language.md`, scoped to just what you added: does the eyebrow/tag read as mono-uppercase-tracked? Does an adopted inversion band avoid an alpha-on-canvas hairline inside it? Is the copy in the component precise/active (L5)? See `HANDOFF.md` for judgement vs mechanical.
+Against `design-language.md`, scoped to just what you added: does the eyebrow read as a micro label (mono, uppercase, 10.5px, `0.06em`) and the tag as mono in sentence case, with every control you added in sentence case (L1)? Does an adopted inversion band avoid an alpha-on-canvas hairline inside it? Is the copy in the component precise/active (L5)? See `HANDOFF.md` for judgement vs mechanical.
 
 ### 5 — Show the diff
 Present the diff (it is small). No full migration plan — the change is localised and reversible. Render the touched screen across the host's themes to confirm the component sits right; in high contrast every effect family is off, so the component must still read complete. If you adopted a glass component, do not sign it off by eye — `HANDOFF.md` § *How to verify an effect*.
