@@ -232,7 +232,7 @@ A CSS-only label above its host, in the inverted ink. The text lives in `data-sl
 Consumes: `--slc-text`, `--slc-raised`. It rises 4px into place as it fades in, on `--sl-motion-mid` and the arrival curve `--sl-motion-enter` (still under reduced motion). Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
 
 ### Kbd / inline code — `sl-kbd` · `sl-code`
-A keycap (0.31, Lumen) and inline monospace code. The keycap is a small physical key: Geist Mono 500, at least 20px square, radius 5, a fill that steps from raised to surface, a ring, a lit top line and a base that is its own fill in shade (`--slc-depth-key`). One cap per key. High contrast rings it in white; forced colours drop the depth. Inside a button it is the in-button key (see Button). Substrate: **A**.
+A keycap (0.31, Lumen) and inline monospace code. The keycap is a small physical key: Geist Mono 500, at least 20px square, radius 5, a fill that steps from raised to surface, a ring, a lit top line and a base that is its own fill in shade (`--slc-depth-key`). One cap per key. High contrast rings it in white; under forced colours, which drop the depth, it gets a drawn `CanvasText` edge. Inside a button it is the in-button key (see Button). Substrate: **A**.
 ```html
 Press <kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd>, then run <code class="sl-code">sl-audit</code>.
 ```

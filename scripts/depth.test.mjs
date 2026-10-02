@@ -272,6 +272,10 @@ test("the keycap: Geist Mono 500, at least 20px square, radius 5, the key depth,
   assert.match(decl(k, "font-family"), /^var\(--sl-font-mono/);
   // the glass family names the fill the component ships
   assert.match(read("effects.css"), /\.sl-kbd\.sl-fx-glass \{ --slfx-fill: var\(--slc-raised\); \}/);
+  // forced colours drop its ring and flatten its fill: a drawn edge comes back,
+  // inside its border-box height
+  const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
+  assert.match(fc, /\n\s*\.sl-kbd \{ border: 1px solid CanvasText !important; \}/);
   // high contrast rings it through the depth remap; a border there would make it 22px
   const hcBorders = RULES.filter((r) => r.selector.startsWith(':root[data-sl-theme="high-contrast"]') && /border/.test(r.body)).map((r) => r.selector).join(" ");
   assert.doesNotMatch(hcBorders, /\.sl-kbd/);

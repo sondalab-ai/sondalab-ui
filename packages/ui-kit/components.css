@@ -2098,6 +2098,10 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      badges included); the rules above and below it are drawn in Highlight. */
   .sl-table tbody tr[aria-selected="true"] > td,
   .sl-table tbody tr:has(+ tr[aria-selected="true"]) > td { border-bottom-color: Highlight !important; }
+  /* A keycap is found by its ring and its fill, and forced colours drop the
+     one and flatten the other: it gets a drawn edge back. Border-box at a
+     fixed height, so the cap stays 20px (18 in a button). */
+  .sl-kbd { border: 1px solid CanvasText !important; }
   /* Depth is off: the browser drops shadows, but not on the hosts above that
      opt out, where a tile's ring and cast would paint in page colours. */
   :root, :root[data-sl-theme], .sl-invert > * {
