@@ -83,7 +83,7 @@ test("fonts.css and its files are reachable through the package exports", () => 
 // The showcase is the kit's reference page: it renders in the kit's own files,
 // so what it shows is what a consumer of fonts.css gets — never a CDN copy of
 // a face the tokens no longer name.
-for (const page of ["showcase/index.html", "showcase/effects.html"]) {
+for (const page of ["showcase/index.html", "showcase/effects.html", "showcase/screens.html", "showcase/screens-stage.html"]) {
   test(`${page} loads the kit's fonts.css, no font CDN, no retired UI face`, () => {
     const html = readFileSync(resolve(REPO, page), "utf8");
     assert.match(html, /<link rel="stylesheet" href="\.\.\/packages\/ui-kit\/fonts\.css">/);

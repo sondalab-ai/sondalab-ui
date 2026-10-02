@@ -31,7 +31,7 @@
     a { color: inherit; }
     .gutter { padding-inline: var(--sl-gutter); }
     .mono {
-      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.16em;
+      font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em;
       text-transform: uppercase; color: var(--sl-text-muted);
     }
 
@@ -44,11 +44,12 @@
     }
     .top-in { display: flex; align-items: center; gap: 0.75rem 1.75rem; padding-block: 0.7rem; flex-wrap: wrap; }
     .brand { display: flex; align-items: baseline; gap: 0.6rem; }
-    .brand .word { font-family: var(--sl-font-display); font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+    /* The brand word is the wordmark's: the brand face, never the display role. */
+    .brand .word { font-family: var(--sl-font-brand); font-weight: 500; font-size: 1rem; letter-spacing: -0.05em; }
     .brand .word i { font-style: italic; color: var(--sl-accent-default); }
     .pages { display: flex; gap: 0.15rem; flex: 1; }
     .pages a {
-      font-family: var(--sl-font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+      font-family: var(--sl-font-sans); font-size: var(--sl-text-xs); font-weight: 500;
       color: var(--sl-text-muted); text-decoration: none; padding: 0.4rem 0.55rem;
       box-shadow: inset 0 -2px 0 transparent;
       transition: color var(--sl-motion-fast) var(--sl-motion-ease), box-shadow var(--sl-motion-fast) var(--sl-motion-ease);
@@ -59,7 +60,7 @@
     .switch { display: inline-flex; align-items: center; gap: 0.35rem; }
     .seg { display: inline-flex; border: 1px solid var(--sl-border-default); }
     .seg button {
-      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      font-family: var(--sl-font-sans); font-size: var(--sl-text-xs); font-weight: 500;
       color: var(--sl-text-muted); background: none; border: none; border-right: 1px solid var(--sl-border-default);
       padding: 0.38rem 0.5rem; cursor: pointer; line-height: 1;
       transition: color var(--sl-motion-fast) var(--sl-motion-ease), background var(--sl-motion-fast) var(--sl-motion-ease);
@@ -81,9 +82,10 @@
     }
     .head h1 {
       margin: 0.9rem 0 0; font-family: var(--sl-font-display); font-weight: 600;
-      font-size: clamp(2.4rem, 1.4rem + 4vw, 4.75rem); line-height: 0.98; letter-spacing: -0.03em; text-wrap: balance;
+      font-size: clamp(2.4rem, 1.4rem + 4vw, 4.75rem); line-height: 1; letter-spacing: -0.05em; text-wrap: balance;
     }
-    .head h1 em { color: var(--slc-accent-text); }
+    /* Upright: the kit vendors no italic Geist, and a synthesised slant is not a face. */
+    .head h1 em { color: var(--slc-accent-text); font-style: normal; }
     .head .lede { margin: 1.1rem 0 0; max-width: 62ch; color: var(--sl-text-secondary); font-size: clamp(1rem, 0.96rem + 0.2vw, 1.08rem); }
     .tally { display: grid; justify-items: end; text-align: right; gap: 0.35rem; }
     .tally b {
@@ -112,7 +114,7 @@
     .report__head h2 { margin: 0; font-family: var(--sl-font-display); font-weight: 600; font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); letter-spacing: -0.02em; }
     .report__head p { margin: 0; color: var(--sl-text-secondary); font-size: 0.92rem; max-width: 72ch; flex: 1 1 28rem; }
     .copy {
-      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      font-family: var(--sl-font-sans); font-size: var(--sl-text-xs); font-weight: 500;
       color: var(--sl-text-secondary); background: none; border: 1px solid var(--sl-border-default); padding: 0.4rem 0.6rem; cursor: pointer;
     }
     .copy:hover { color: var(--sl-text-primary); border-color: var(--sl-border-strong); }
@@ -208,7 +210,7 @@
 
   <footer>
     <div class="gutter">
-      <p>The stage is <code>screens-stage.html</code> + <code>screens.css</code> + <code>screens.js</code>, ported from <code>lab/directions-2/</code>. The kit view loads only the kit's stylesheets and its own <code>fonts.css</code>. The target is <code>lab/directions-2/dir-lumen.css</code>, scoped by <code>html[data-dir="lumen"]</code>, with Geist and Geist Mono from Google Fonts until the kit vendors them (see <code>docs/plans/2026-10-02-lumen-adoption.md</code>); it is a reference, never copied into <code>packages/</code>. Serve the repository with <code>python3 lab/_serve.py</code>: the plain <code>http.server</code> lets Chrome keep a stale stylesheet across reloads. The lab's own side-by-side is <a href="../lab/directions-2/compare.html">Kit vs Lumen</a>.</p>
+      <p>The stage is <code>screens-stage.html</code> + <code>screens.css</code> + <code>screens.js</code>, ported from <code>lab/directions-2/</code>. The kit view loads only the kit's stylesheets and its own <code>fonts.css</code>. The target is <code>lab/directions-2/dir-lumen.css</code>, scoped by <code>html[data-dir="lumen"]</code>, in the same Geist and Geist Mono the kit vendors since 0.30 (its <code>fonts.css</code>, which the stage already loads); it is a reference, never copied into <code>packages/</code>. Serve the repository with <code>python3 lab/_serve.py</code>: the plain <code>http.server</code> lets Chrome keep a stale stylesheet across reloads. The lab's own side-by-side is <a href="../lab/directions-2/compare.html">Kit vs Lumen</a>.</p>
     </div>
   </footer>
 
