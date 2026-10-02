@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumen direction</title>
+<link rel="icon" href="../../packages/ui-kit/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="_frame2.css?v=3">
+</head>
+<body data-dir="lumen">
+<header class="g-top">
+  <a class="g-brand" href="index.html">sondalab<b>/</b>02</a>
+  <nav class="g-links" aria-label="Pages"><a href="lumen.html" aria-current="page">Lumen</a><a href="compare.html">Kit vs Lumen</a><a href="../../showcase/screens.html">Screens harness</a></nav>
+  <span class="g-mono">lab · reference target · not for packages/</span>
+</header>
+
+<section class="g-hero">
+  <div>
+    <p class="g-kicker">The chosen direction · soft depth</p>
+    <h1 class="g-title">Lumen</h1>
+  </div>
+  <div>
+    <p class="g-lede">Panes are islands of light on a darker frame, and depth comes from lightness, never from a line.<br>The pane that holds your attention is lit: an accent seam and the light it casts. Nothing else is.<br>Geist carries the voice in sentence case, and the accent is spent only where attention is.</p>
+  </div>
+</section>
+
+<div class="g-bar">
+  <div class="g-ctl">
+    <span class="g-mono">Screen</span>
+    <div class="g-seg" role="group" aria-label="Screen"><button data-set="screen:ide">IDE</button><button data-set="screen:settings">Settings</button><button data-set="screen:data">Data</button><button data-set="screen:hero">sondalab.eu</button></div>
+    <span class="g-mono">Theme</span>
+    <div class="g-seg" role="group" aria-label="Theme"><button data-set="view:dark">Dark</button><button data-set="view:light">Light</button><button data-set="view:split">Both</button><button data-set="view:high-contrast">Contrast</button></div>
+    <span class="g-mono">Accent</span>
+    <div class="g-seg" role="group" aria-label="Accent"><button data-set="accent:amber">Amber</button><button data-set="accent:indigo">Indigo · spexr</button><button data-set="accent:cyan">Cyan · introspect</button></div>
+  </div>
+  <div class="g-ctl"><span class="g-sum" data-fails="0">measuring…</span><button class="g-btn" data-replay>Replay entrance</button></div>
+</div>
+<details class="g-measure">
+  <summary class="g-mono">Measured in the page: WCAG contrast of every text and control the screen shows, recomputed on each switch</summary>
+  <div class="g-mgrid"></div>
+</details>
+<main class="g-stage"></main>
+
+<section class="g-specs">
+  <div>
+    <h3>Signature details</h3>
+    <ol class="g-sig">
+      <li><b>The lit pane</b><span>The pane that has focus is the one lit. A 2px seam of the accent runs along its top edge, its light falls about 140px into the pane, its rim takes the accent at 46%, and its fill is one step lighter than the other panes. At a third of full size (the compare column) the focused pane is still the one you point at; the other panes stay unlit.</span></li>
+      <li><b>The raised tile</b><span>Selection lifts the row out of the island as an object: a lighter fill, a lit top hairline, a short cast, and the icon in the accent. Hover stays a flat wash; only selection lifts. Tabs, segmented items and the settings nav use the same tile.</span></li>
+      <li><b>Keycaps</b><span>Every shortcut is a small physical key: 20px, r5, with an inset base. Inside a button the key rides along as a cap one lightness step off the fill. The step's direction comes from the fill's own lightness, so the cap reads on amber, on indigo <code>#4c58e9</code> and on cyan.</span></li>
+      <li><b>The glow ring</b><span>Focus is the owner's flush ring (the border is the ring, with no gap), and an accent glow continues outward from it, 5px at 22%. It is contiguous with the ring, so no line of a second colour sits between.</span></li>
+      <li><b>Status seams</b><span>Toasts and terminal blocks carry their status in the same seam language: green when done, red when failed. The toast stack shows the next toast waiting behind it (scale .94, −11px).</span></li>
+      <li><b>The status dock</b><span>The status bar is a row of quiet segments on the frame, not a strip. The live agent segment is a lit pill that breathes (2.4s) while a process runs.</span></li>
+    </ol>
+  </div>
+  <div>
+    <h3>Token-level changes</h3>
+    <dl class="g-tok">
+      <dt>Type</dt><dd><b>Geist</b> (sans and display) and <b>Geist Mono</b> (code, kbd, figures in meta), both OFL. Fraunces leaves the UI. Weights 400 / 500 / 600 (+650 for match highlights). Display 600 at −0.045 to −0.06em. UI 13–13.5px. Pane titles are 13px/600 in sentence case. Micro-labels are Geist Mono 10.5px at +0.06em (today: Martian 12px at +0.12–0.22em).</dd>
+      <dt>Spacing</dt><dd>Island gap 6px; pane head 40px; status bar 30px; tree row 26px; palette row 38px. <b>Control height stays 32px</b> (button, field, select, segmented, icon button: measured below); the small button stays 24px.</dd>
+      <dt>Radii</dt><dd>sm 6 / md 8 / lg 14 (today 6 / 10 / 16); island 10; keycap 5; palette 14. No pills on controls.</dd>
+      <dt>Surfaces</dt><dd>The neutrals are <b>generated from the accent's hue</b> at near-zero chroma, Linear's three inputs. Dark: canvas oklch L .135 C .006, surface .178, raised .215, tile .255. Light: canvas .928, surface .987, raised 1.0. Text .94 / .79 / .69 on dark, .20 / .38 / .47 on light. On light, the accent used as text is capped at L .46 (the kit uses .50); without it, cyan tags measured 3.97:1.</dd>
+      <dt>Borders</dt><dd>Islands are drawn as a 1px white 6.5% ring plus a 1px inset highlight at 7% (dark). The control edge is unchanged: the kit's five-step rule still sets every field, checkbox and secondary button at ≥ 3:1.</dd>
+      <dt>Elevation</dt><dd>The page is flat. Overlays (palette, toast) get a four-layer cast: an inset hairline, a black ring at .35, and casts of 8px and 32px. The primary button stands on a 2px darker foot instead of being lit from above (round 1 B used a lit top).</dd>
+      <dt>Focus</dt><dd>A flush 2px ring with a 5px glow at 22%. The palette input shows no ring: the palette itself is the focus context.</dd>
+      <dt>Motion</dt><dd>Hover 120–140ms <code>(.25,1,.5,1)</code>. Press: scale .97 over 220ms <code>(.22,1,.36,1)</code>. Islands rise over 560ms, staggered 40–180ms; rows fade in at a 28ms stagger; the toast rises and scales in over 520ms. The palette appears instantly. All motion is off under reduced motion.</dd>
+      <dt>Syntax</dt><dd><code>--sl-code-*</code> is re-bound per theme for the new grounds. The kit's comment colour measured 3.57:1 on its own dark theme; here it is ≥ 4.5.</dd>
+    </dl>
+  </div>
+  <div>
+    <h3>Adoption cost in the kit</h3>
+    <ul class="g-list">
+      <li><b><code>sondalab.tokens.json</code> and the generator.</b> Three families and three radii change. The neutrals become <code>oklch(from var(--sl-accent-default) …)</code> formulas instead of hex literals, so <code>gen:tokens</code> must emit relative colours, and <code>sl-audit</code>'s value-equality check must accept them. Tier B products that pin literals (daos, introspect) keep theirs.</li>
+      <li><b><code>fonts.css</code> + <code>assets/fonts</code>.</b> Vendor Geist and Geist Mono as variable latin woff2 (OFL, two files). The glass lens needs them same-origin anyway. Fraunces stays only for the wordmark and monogram.</li>
+      <li><b><code>components.css</code>.</b> About 30 rule overrides: buttons, kbd, fields, check, radio, switch, segmented, chips, badges, tags, list rows, nav items, table, empty, pagination and labels. No class renames and no markup changes, so <b>markup is not affected, but the look changes</b>.</li>
+      <li><b>New primitives</b> the IDE chrome needs: <code>.sl-pane[data-focus]</code> (island plus lit seam), a keycap <code>.sl-kbd</code>, <code>.sl-toast</code> with a stack, and <code>.sl-statusbar</code>. spexr maps Theia's panels onto <code>.sl-pane</code> in <code>spexr.css</code>; the seam follows Theia's focus tracker.</li>
+      <li><b>spexr's 32px: not breaking.</b> In spexr, 32px is the kit's control height: icon buttons, and <code>--df-control-height: 2rem</code> on the scheduler and launcher pickers. Lumen keeps every control at 32 (measured). spexr has no tree-row override, so its Theia trees run at Theia's own <code>--theia-content-line-height: 22px</code>. Lumen's 26px tree row would make rows taller if spexr adopted it, never shorter, and it is optional.</li>
+      <li><b>spexr's indigo fill must widen.</b> <code>spexr-overrides.css</code> (and the registry's fill note) re-bind only <code>.sl-btn--primary</code> to <code>#4c58e9</code>. Every other accent fill that carries a label (count badges, a checked switch's glyph, a highlighted headline) needs the same fill: on <code>#5b6cff</code> white measures 4.17:1. The stage does this in <code>_stage2.css</code>; the kit would add a <code>--slc-accent-fill</code> role.</li>
+      <li><b><code>design-language.md</code>.</b> L1 changes: pane titles leave mono uppercase, while micro-labels keep mono at a lower tracking. The serif is reduced to the wordmark.</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Risks</h3>
+    <ul class="g-list">
+      <li><b>Generic premium dark.</b> Soft islands are where Linear, Raycast and JetBrains Islands already are. Lumen's owned claim is the lit pane. A first version with only a 1px seam failed the thumbnail test, so the rim and the lighter fill were added. Tone them down in implementation and Lumen becomes a tint of those products.</li>
+      <li><b>Light theme.</b> The seam has to use the darkened accent-text on near-white, and the light reads weaker. Paper islands depend on the 1px hairline more than the dark ones do.</li>
+      <li><b>One temperature per product.</b> spexr's ground turns cool indigo and introspect's teal. The family resemblance then rests on shape and type, not on colour.</li>
+      <li><b>Paint, not border.</b> Rings and casts are box-shadow, so Theia's own widget borders must be zeroed per widget or they double up.</li>
+      <li><span class="g-flag">Flag</span>No owner ruling is broken, but the glow ring adds a soft wash outside the flush ring. It is contiguous (no gap), and it is the owner's call whether that still reads as one line.</li>
+    </ul>
+  </div>
+</section>
+<p class="g-foot">The markup and the kit classes are the same for the kit and every direction (<code>_screens.js</code>). The difference is one scoped stylesheet, <code>dir-lumen.css</code>, which re-binds <code>--sl-*</code> / <code>--slc-*</code> and overrides component rules. A focus ring is shown statically with <code>.lab-focus</code>, which mirrors <code>:focus-visible</code>. This is lab material and not for <code>packages/</code>.</p>
+<script src="_frame2.js?v=3"></script>
+</body>
+</html>

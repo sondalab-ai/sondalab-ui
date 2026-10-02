@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Directions, round two</title>
+<link rel="icon" href="../../packages/ui-kit/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="_frame2.css?v=3">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="index.html">sondalab<b>/</b>02</a>
+  <nav class="g-links" aria-label="Pages"><a href="lumen.html">Lumen</a><a href="compare.html">Kit vs Lumen</a><a href="../../showcase/screens.html">Screens harness</a></nav>
+  <span class="g-mono">lab · reference target · not for packages/</span>
+</header>
+<section class="g-hero">
+  <div>
+    <p class="g-kicker">Round 2 · dev-tool first · 2026-10-02</p>
+    <h1 class="g-title">The target is <span class="px">Lumen</span></h1>
+  </div>
+  <div>
+    <p class="g-lede">Round 1 was rejected for four reasons: not bold enough, too print and serif, wrong for a dev tool, and generic components. Round 2 built two directions as real screens (an IDE, a settings screen, a data view and the sondalab.eu hero) in dark, light and high contrast, with three accents and live contrast measurement. The owner picked Lumen.</p>
+    <div class="g-stats"><div><b>1</b><span>direction kept</span></div><div><b>4</b><span>screens</span></div><div><b>0</b><span>contrast misses</span></div></div>
+  </div>
+</section>
+
+<section class="g-sec">
+  <div class="g-sec__head"><span class="g-sec__idx">→</span><h2>Open</h2><p>Each page has switches for screen, theme and accent. The measurement panel recomputes WCAG contrast for every text and control on the screen.</p></div>
+  <div class="g-shots">
+    <a href="lumen.html"><span><b>Lumen</b><i>the target, with its signatures</i></span></a>
+    <a href="compare.html"><span><b>Kit vs Lumen</b><i>same markup, two sheets</i></span></a>
+    <a href="../../showcase/screens.html"><span><b>Screens harness</b><i>showcase · kit + target toggle</i></span></a>
+  </div>
+</section>
+
+<section class="g-sec">
+  <div class="g-sec__head"><span class="g-sec__idx">01</span><h2>Decision</h2><p>Owner, 2026-10-02.</p></div>
+  <div class="g-rec">
+    <div>
+      <h3>Build <span class="px">Lumen</span>.</h3>
+      <p>Panes as islands of light with one lit pane, raised-tile selection, keycap shortcuts, sunken fields, a primary standing on its foot, a soft focus glow, a status dock and a toast stack. Geist and Geist Mono carry the voice; the neutrals are tinted by each product's accent.</p>
+    </div>
+    <div>
+      <p><b>How it is adopted.</b> The kit is rewritten slice by slice, never by copying this sheet. Each slice is judged on <code>showcase/screens.html</code>, which renders these screens with the kit as it ships and overlays <code>dir-lumen.css</code> as the target.</p>
+      <p><b>What stays here.</b> <code>dir-lumen.css</code> and the stage it runs on (<code>_stage2.*</code>, <code>_screens.js</code>, <code>_frame2.*</code>) are the reference until the last slice removes them. The second direction, the research board and the third-party captures behind both were kept out of the repository.</p>
+    </div>
+  </div>
+</section>
+<p class="g-foot">Everything here lives in <code>lab/directions-2/</code> and is lab material: nothing in it enters <code>packages/</code>.</p>
+</body>
+</html>

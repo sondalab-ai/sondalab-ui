@@ -15,3 +15,13 @@ lab/*.html
 lab/_scene.*
 # and third-party copy-paste sources a probe vendors verbatim
 lab/_lg-*.js
+
+# lab/directions-2/ is committed as the Lumen reference target (removed in K7).
+# The research behind it stays local: third-party screenshots and captures, the
+# research board that shows them, and the direction that was not chosen.
+lab/directions-2/refs/
+lab/directions-2/shots/
+lab/directions-2/data/
+lab/directions-2/research.html
+lab/directions-2/signal.html
+lab/directions-2/dir-signal.css

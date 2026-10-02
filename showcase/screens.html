@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en" data-sl-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sondalab Screens</title>
+  <link rel="icon" href="../packages/ui-kit/assets/favicon.svg">
+
+  <!-- Tier A: the generated token + theme layers, and the kit's own faces. -->
+  <link rel="stylesheet" href="../packages/ui-kit/fonts.css">
+  <link rel="stylesheet" href="../packages/ui-kit/tokens.css">
+  <link rel="stylesheet" href="../packages/ui-kit/components.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
+  <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
+
+  <style>
+    /* -- page-local conventions (per spec: not tokens) -------------------- */
+    :root { --sl-gutter: clamp(1rem, 3.2vw, 3rem); }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--sl-bg-canvas);
+      color: var(--sl-text-primary);
+      font-family: var(--sl-font-sans);
+      line-height: var(--sl-line-relaxed);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: inherit; }
+    .gutter { padding-inline: var(--sl-gutter); }
+    .mono {
+      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--sl-text-muted);
+    }
+
+    /* -- header: the showcase's sticky translucent bar --------------------- */
+    header.top {
+      position: sticky; top: 0; z-index: var(--sl-z-overlay);
+      background: color-mix(in srgb, var(--sl-bg-canvas) 84%, transparent);
+      backdrop-filter: saturate(140%) blur(10px);
+      border-bottom: 1px solid var(--sl-border-subtle);
+    }
+    .top-in { display: flex; align-items: center; gap: 0.75rem 1.75rem; padding-block: 0.7rem; flex-wrap: wrap; }
+    .brand { display: flex; align-items: baseline; gap: 0.6rem; }
+    .brand .word { font-family: var(--sl-font-display); font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+    .brand .word i { font-style: italic; color: var(--sl-accent-default); }
+    .pages { display: flex; gap: 0.15rem; flex: 1; }
+    .pages a {
+      font-family: var(--sl-font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--sl-text-muted); text-decoration: none; padding: 0.4rem 0.55rem;
+      box-shadow: inset 0 -2px 0 transparent;
+      transition: color var(--sl-motion-fast) var(--sl-motion-ease), box-shadow var(--sl-motion-fast) var(--sl-motion-ease);
+    }
+    .pages a:hover { color: var(--sl-text-primary); }
+    .pages a[aria-current="page"] { color: var(--sl-text-primary); box-shadow: inset 0 -2px 0 var(--sl-accent-default); }
+    .switches { display: flex; align-items: center; gap: 0.6rem 1.1rem; flex-wrap: wrap; }
+    .switch { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .seg { display: inline-flex; border: 1px solid var(--sl-border-default); }
+    .seg button {
+      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--sl-text-muted); background: none; border: none; border-right: 1px solid var(--sl-border-default);
+      padding: 0.38rem 0.5rem; cursor: pointer; line-height: 1;
+      transition: color var(--sl-motion-fast) var(--sl-motion-ease), background var(--sl-motion-fast) var(--sl-motion-ease);
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button:hover { color: var(--sl-text-primary); }
+    .seg button[aria-pressed="true"] { color: var(--sl-text-on-accent); background: var(--sl-accent-default); }
+    .seg button:focus-visible, .pages a:focus-visible, .copy:focus-visible { outline: 2px solid var(--slc-focus); outline-offset: 0; }
+    /* the target is the one switch that changes direction, not a view: it gets an edge in the accent */
+    .seg--target { border-color: var(--sl-accent-default); }
+    .seg--target button::before { content: "◇ "; }
+    .seg--target button[aria-pressed="true"]::before { content: "◆ "; }
+
+    /* -- head: an oversized tally beside the explanation ------------------ */
+    .head {
+      display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 1.5rem 4rem; align-items: end;
+      padding-block: clamp(2.25rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.25rem);
+      border-bottom: 1px solid var(--sl-border-subtle);
+    }
+    .head h1 {
+      margin: 0.9rem 0 0; font-family: var(--sl-font-display); font-weight: 600;
+      font-size: clamp(2.4rem, 1.4rem + 4vw, 4.75rem); line-height: 0.98; letter-spacing: -0.03em; text-wrap: balance;
+    }
+    .head h1 em { color: var(--slc-accent-text); }
+    .head .lede { margin: 1.1rem 0 0; max-width: 62ch; color: var(--sl-text-secondary); font-size: clamp(1rem, 0.96rem + 0.2vw, 1.08rem); }
+    .tally { display: grid; justify-items: end; text-align: right; gap: 0.35rem; }
+    .tally b {
+      font-family: var(--sl-font-mono); font-weight: 500; font-variant-numeric: tabular-nums;
+      font-size: clamp(3.5rem, 2rem + 6vw, 7.5rem); line-height: 0.85; letter-spacing: -0.06em;
+      color: var(--sl-text-primary);
+      transition: color var(--sl-motion-mid) var(--sl-motion-ease);
+    }
+    .tally[data-state="fail"] b { color: var(--slc-danger-text, var(--slc-danger)); }
+    .tally[data-state="pass"] b { color: var(--slc-success-text, var(--slc-success)); }
+    .tally[data-state="busy"] b { color: var(--sl-text-muted); }
+
+    /* -- stage: one iframe per theme, full bleed --------------------------- */
+    .stage { display: grid; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
+    .stage figure { margin: 0; min-width: 0; border-right: 1px solid var(--sl-border-subtle); }
+    .stage figure:last-child { border-right: 0; }
+    .stage figcaption { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem var(--sl-gutter); border-bottom: 1px solid var(--sl-border-subtle); }
+    .stage figcaption b { color: var(--sl-text-primary); font-weight: 500; }
+    .stage figcaption [data-dir="lumen"] { color: var(--slc-accent-text); }
+    /* the design ratio until the stage sizes its own frame to its content */
+    .stage iframe { display: block; width: 100%; aspect-ratio: 1440 / 900; border: 0; background: var(--sl-bg-canvas); }
+
+    /* -- report ---------------------------------------------------------- */
+    .report { padding-block: 2rem 3rem; border-top: 1px solid var(--sl-border-subtle); }
+    .report__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1.25rem; margin-bottom: 1.5rem; }
+    .report__head h2 { margin: 0; font-family: var(--sl-font-display); font-weight: 600; font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); letter-spacing: -0.02em; }
+    .report__head p { margin: 0; color: var(--sl-text-secondary); font-size: 0.92rem; max-width: 72ch; flex: 1 1 28rem; }
+    .copy {
+      font-family: var(--sl-font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--sl-text-secondary); background: none; border: 1px solid var(--sl-border-default); padding: 0.4rem 0.6rem; cursor: pointer;
+    }
+    .copy:hover { color: var(--sl-text-primary); border-color: var(--sl-border-strong); }
+    .reps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1px; background: var(--sl-border-subtle); border: 1px solid var(--sl-border-subtle); }
+    .rep { background: var(--sl-bg-canvas); padding: 1.1rem 1.25rem 1.4rem; display: grid; gap: 1.1rem; align-content: start; }
+    .rep__cap { display: flex; justify-content: space-between; gap: 1rem; margin: 0; }
+    .rep__cap b { font-family: var(--sl-font-sans); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; text-transform: none; color: var(--sl-text-primary); }
+    .rep table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .rep caption { text-align: left; padding-bottom: 0.35rem; }
+    .rep td { padding: 0.2rem 0; border-bottom: 1px solid var(--sl-border-subtle); color: var(--sl-text-secondary); vertical-align: baseline; }
+    .rep td small { font-family: var(--sl-font-mono); font-size: 0.6rem; color: var(--sl-text-muted); margin-left: 0.3rem; }
+    .rep td:last-child { text-align: right; font-family: var(--sl-font-mono); font-size: 0.72rem; color: var(--sl-text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .rep .bad { color: var(--slc-danger-text, var(--slc-danger)); font-weight: 600; }
+    .rep .bad::after { content: " ✕"; }
+    .rep .ok::after { content: " ✓"; color: var(--slc-success-text, var(--slc-success)); }
+    .rep .info::after { content: " ·"; color: var(--sl-text-muted); }
+    .rep__health { margin: 0; font-family: var(--sl-font-mono); font-size: 0.66rem; color: var(--sl-text-muted); }
+    .rep__health .bad { display: block; margin-top: 0.3rem; }
+
+    footer { border-top: 1px solid var(--sl-border-subtle); padding-block: 2rem 3rem; }
+    footer p { margin: 0; max-width: 84ch; color: var(--sl-text-muted); font-size: 0.85rem; }
+    footer code, .report code { font-family: var(--sl-font-mono); font-size: 0.85em; color: var(--sl-text-secondary); }
+
+    @media (max-width: 900px) {
+      .head { grid-template-columns: minmax(0, 1fr); }
+      .tally { justify-items: start; text-align: left; }
+      .stage { grid-template-columns: minmax(0, 1fr); }
+      .stage figure { border-right: 0; border-bottom: 1px solid var(--sl-border-subtle); }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .rep[data-state="done"] { animation: rep-in var(--sl-motion-slow) var(--sl-motion-ease) both; }
+    }
+    @keyframes rep-in { from { opacity: 0.35; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="gutter top-in">
+      <div class="brand"><span class="word">sondalab<i>.</i></span></div>
+      <nav class="pages" aria-label="Showcase pages">
+        <a href="index.html">Components</a>
+        <a href="effects.html">Effects</a>
+        <a href="screens.html" aria-current="page">Screens</a>
+      </nav>
+      <div class="switches">
+        <div class="switch">
+          <span class="mono">screen</span>
+          <div class="seg" role="group" aria-label="Screen">
+            <button data-set="screen:ide">IDE</button><button data-set="screen:settings">Settings</button><button data-set="screen:data">Data</button><button data-set="screen:hero">Site</button>
+          </div>
+        </div>
+        <div class="switch">
+          <span class="mono">theme</span>
+          <div class="seg" role="group" aria-label="Theme">
+            <button data-set="view:dark">Dark</button><button data-set="view:light">Light</button><button data-set="view:high-contrast">HC</button><button data-set="view:all">All</button>
+          </div>
+        </div>
+        <div class="switch">
+          <span class="mono">accent</span>
+          <div class="seg" role="group" aria-label="Accent">
+            <button data-set="accent:amber">Amber</button><button data-set="accent:indigo">Indigo</button><button data-set="accent:cyan">Cyan</button>
+          </div>
+        </div>
+        <div class="seg seg--target"><button id="target" aria-pressed="false" aria-keyshortcuts="T" title="Overlay the Lumen target in place (T)">Target: Lumen</button></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="gutter head">
+      <div>
+        <p class="sl-eyebrow">Showcase · the kit in real product screens</p>
+        <h1>Real screens, <em>today's</em> kit.</h1>
+        <p class="lede">Four product screens (the spexr IDE, a settings page, a data view and the sondalab.eu hero) built from the kit's own classes, one theme per frame. Every view measures itself: text contrast, the contrast of each control's boundary, and control heights. <b>Target: Lumen</b> overlays the direction the kit is moving to, in place, so each slice can be judged against it. Press <kbd class="sl-kbd">T</kbd> to flip.</p>
+      </div>
+      <div class="tally" id="tally" data-state="busy" aria-live="polite">
+        <b id="tally-n">–</b>
+        <span class="mono" id="tally-l">measuring</span>
+      </div>
+    </section>
+
+    <div class="stage" id="stage"></div>
+
+    <section class="gutter report" aria-labelledby="report-title">
+      <div class="report__head">
+        <h2 id="report-title">Measured in each frame</h2>
+        <p>WCAG 2 contrast of every text role the screen shows against its composited ground (≥ 4.5 at any size), the contrast of each control's boundary against what surrounds it (≥ 3), and control heights against the kit's 32px. Rows marked · are information, not checks.</p>
+        <button class="copy" id="copy" type="button">Copy as JSON</button>
+      </div>
+      <div class="reps" id="report"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="gutter">
+      <p>The stage is <code>screens-stage.html</code> + <code>screens.css</code> + <code>screens.js</code>, ported from <code>lab/directions-2/</code>. The kit view loads only the kit's stylesheets and its own <code>fonts.css</code>. The target is <code>lab/directions-2/dir-lumen.css</code>, scoped by <code>html[data-dir="lumen"]</code>, with Geist and Geist Mono from Google Fonts until K3 vendors them; it is a reference, never copied into <code>packages/</code>. Serve the repository with <code>python3 lab/_serve.py</code>: the plain <code>http.server</code> lets Chrome keep a stale stylesheet across reloads. The lab's own side-by-side is <a href="../lab/directions-2/compare.html">Kit vs Lumen</a>.</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var SCREENS = { ide: "IDE", settings: "Settings", data: "Data", hero: "sondalab.eu" };
+      var THEMES = { dark: "Dark", light: "Light", "high-contrast": "High contrast" };
+      var VIEWS = { dark: ["dark"], light: ["light"], "high-contrast": ["high-contrast"], all: ["dark", "light", "high-contrast"] };
+      var ACCENTS = ["amber", "indigo", "cyan"];
+      // the kit's one control height (components.css): button, field, select, segmented, icon button
+      var CONTROLS = ["button", "field", "select", "segmented", "icon button"];
+      var CONTROL_H = 32;
+
+      var stage = document.getElementById("stage");
+      var report = document.getElementById("report");
+      var targetBtn = document.getElementById("target");
+      var st = { screen: "ide", view: "dark", accent: "amber", target: "off" };
+      var hash = new URLSearchParams(location.hash.slice(1));
+      [["screen", Object.keys(SCREENS)], ["view", Object.keys(VIEWS)], ["accent", ACCENTS], ["target", ["off", "on"]]].forEach(function (kv) {
+        var v = hash.get(kv[0]); if (kv[1].indexOf(v) > -1) st[kv[0]] = v;
+      });
+      // label -> measurement, for the copy button and for scripted checks
+      var reports = window.screensReports = {};
+      var gen = 0;
+
+      function dir() { return st.target === "on" ? "lumen" : "kit"; }
+      function dirName() { return st.target === "on" ? "Lumen target" : "kit"; }
+      function accentName(theme) { return theme === "high-contrast" ? "theme accent" : st.accent; }
+      function themes() { return VIEWS[st.view]; }
+
+      function sync() {
+        document.querySelectorAll("[data-set]").forEach(function (b) {
+          var kv = b.getAttribute("data-set").split(":");
+          b.setAttribute("aria-pressed", String(st[kv[0]] === kv[1]));
+        });
+        targetBtn.setAttribute("aria-pressed", String(st.target === "on"));
+        history.replaceState(null, "", "#" + new URLSearchParams(st));
+      }
+
+      function caption(theme) {
+        return "<span class=\"mono\"><b>" + THEMES[theme] + "</b></span><span class=\"mono\">" + accentName(theme) + " · " +
+          SCREENS[st.screen] + " · <span data-dir=\"" + dir() + "\">" + dirName() + "</span></span>";
+      }
+      function setTally() {
+        var boxes = report.querySelectorAll(".rep");
+        var busy = 0, fails = 0, checks = 0;
+        boxes.forEach(function (b) { if (b.dataset.state !== "done") busy++; fails += +(b.dataset.fails || 0); checks += +(b.dataset.checks || 0); });
+        var t = document.getElementById("tally");
+        t.dataset.state = busy ? "busy" : fails ? "fail" : "pass";
+        document.getElementById("tally-n").textContent = busy ? "–" : String(fails);
+        document.getElementById("tally-l").textContent = busy ? "measuring" : (fails ? "below threshold" : "all pass") + " · " + checks + " checks · " + boxes.length + (boxes.length > 1 ? " frames" : " frame");
+      }
+
+      function render() {
+        sync();
+        var g = ++gen, ts = themes();
+        Object.keys(reports).forEach(function (k) { delete reports[k]; });
+        stage.style.setProperty("--cols", ts.length);
+        report.innerHTML = ts.map(function (t) { return "<article class=\"rep\" data-frame=\"" + t + "\"><p class=\"rep__cap mono\">" + caption(t) + "</p><p class=\"rep__health\">measuring…</p></article>"; }).join("");
+        stage.innerHTML = ts.map(function (t) {
+          var q = new URLSearchParams({ screen: st.screen, theme: t, accent: st.accent, dir: dir() });
+          return "<figure data-frame=\"" + t + "\"><figcaption>" + caption(t) + "</figcaption>" +
+            "<iframe title=\"" + SCREENS[st.screen] + ", " + THEMES[t] + "\" loading=\"eager\" src=\"screens-stage.html?" + q + "\"></iframe></figure>";
+        }).join("");
+        setTally();
+        stage.querySelectorAll("iframe").forEach(function (fr, i) {
+          fr.addEventListener("load", function () { measureInto(fr, ts[i], g); });
+        });
+      }
+
+      function settle(w) {
+        return Promise.resolve(w.slScreens && w.slScreens.ready)
+          .then(function () { return w.document.fonts.ready; })
+          .catch(function () {})
+          .then(function () { return new Promise(function (r) { setTimeout(r, 250); }); });
+      }
+
+      function measureInto(frame, theme, g) {
+        var w = frame.contentWindow;
+        var box = report.querySelector(".rep[data-frame=\"" + theme + "\"]");
+        if (!w.slScreens) { fill(box, theme, null, { sheets: [], errors: ["the stage script did not run"] }); return; }
+        settle(w).then(function () {
+          if (g !== gen) return;
+          fill(box, theme, w.slScreens.measure(), w.slScreens.health());
+        });
+      }
+
+      function grade(v, min, info) { return info || v == null ? "info" : v < min ? "bad" : "ok"; }
+      function fill(box, theme, m, h) {
+        var rows = function (list, min) {
+          return list.map(function (r) {
+            var info = /\(info/.test(r[0]);
+            return "<tr><td>" + r[0] + (r[2] ? "<small>" + r[2] + "px</small>" : "") + "</td><td class=\"" + grade(r[1], min, info) + "\">" + (r[1] == null ? "—" : r[1].toFixed(2)) + "</td></tr>";
+          }).join("");
+        };
+        var fails = 0, checks = 0;
+        var html = "<p class=\"rep__cap mono\">" + caption(theme) + "</p>";
+        if (m) {
+          m.text.forEach(function (r) { if (r[1] != null) { checks++; if (r[1] < 4.5) fails++; } });
+          m.edge.forEach(function (r) { if (r[1] != null && !/\(info/.test(r[0])) { checks++; if (r[1] < 3) fails++; } });
+          var hs = Object.keys(m.heights).map(function (k) {
+            var control = CONTROLS.indexOf(k) > -1, v = m.heights[k];
+            if (control && v != null) { checks++; if (v !== CONTROL_H) fails++; }
+            var cls = !control || v == null ? "info" : v === CONTROL_H ? "ok" : "bad";
+            return "<tr><td>" + k + "</td><td class=\"" + cls + "\">" + (v == null ? "—" : v + "px") + "</td></tr>";
+          }).join("");
+          html += "<table><caption class=\"mono\">Text · ≥ 4.5</caption>" + rows(m.text, 4.5) + "</table>" +
+            "<table><caption class=\"mono\">Control boundary · ≥ 3</caption>" + rows(m.edge, 3) + "</table>" +
+            (hs ? "<table><caption class=\"mono\">Heights · controls " + CONTROL_H + "px</caption>" + hs + "</table>" : "");
+        }
+        var bad = h.sheets.filter(function (s) { return !s.ok; });
+        fails += bad.length + h.errors.length;
+        html += "<p class=\"rep__health\">" + (h.sheets.length - bad.length) + "/" + h.sheets.length + " stylesheets · " + h.errors.length + " script errors" +
+          bad.map(function (s) { return "<span class=\"bad\">not loaded: " + s.href + "</span>"; }).join("") +
+          h.errors.map(function (e) { return "<span class=\"bad\">" + e + "</span>"; }).join("") + "</p>";
+        box.innerHTML = html;
+        box.dataset.state = "done";
+        box.dataset.fails = fails;
+        box.dataset.checks = checks;
+        reports[THEMES[theme] + " · " + accentName(theme) + " · " + SCREENS[st.screen] + " · " + dirName()] = Object.assign({ fails: fails, health: h }, m);
+        setTally();
+      }
+
+      // the target flips in place: the stage adds dir-lumen.css once and toggles html[data-dir]
+      function setTarget(on) {
+        st.target = on ? "on" : "off";
+        var frames = [].slice.call(stage.querySelectorAll("iframe"));
+        if (!frames.every(function (f) { return f.contentWindow && f.contentWindow.slScreens; })) { render(); return; }
+        sync();
+        var g = ++gen, ts = themes();
+        Object.keys(reports).forEach(function (k) { delete reports[k]; });
+        stage.querySelectorAll("figcaption").forEach(function (c, i) { c.innerHTML = caption(ts[i]); });
+        report.querySelectorAll(".rep").forEach(function (b) { b.dataset.state = "busy"; b.querySelector(".rep__health").textContent = "measuring…"; });
+        setTally();
+        frames.forEach(function (fr, i) {
+          var w = fr.contentWindow;
+          w.slScreens.setTarget(on).then(function () { return settle(w); }).then(function () {
+            if (g !== gen) return;
+            fill(report.querySelector(".rep[data-frame=\"" + ts[i] + "\"]"), ts[i], w.slScreens.measure(), w.slScreens.health());
+          });
+        });
+      }
+
+      document.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-set]");
+        if (b) { var kv = b.getAttribute("data-set").split(":"); if (st[kv[0]] !== kv[1]) { st[kv[0]] = kv[1]; render(); } return; }
+        if (e.target.closest("#target")) setTarget(st.target !== "on");
+        if (e.target.closest("#copy") && navigator.clipboard) {
+          var c = document.getElementById("copy");
+          navigator.clipboard.writeText(JSON.stringify(reports, null, 2)).then(function () { c.textContent = "Copied"; setTimeout(function () { c.textContent = "Copy as JSON"; }, 1400); });
+        }
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "t" && e.key !== "T") return;
+        if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest("input, textarea, select, [contenteditable]")) return;
+        setTarget(st.target !== "on");
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

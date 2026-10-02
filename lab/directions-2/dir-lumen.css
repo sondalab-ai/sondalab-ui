@@ -1,0 +1,400 @@
+/* ═══ Direction A — LUMEN ═══════════════════════════════════════════════════
+   Panes are islands of light on a darker frame. Depth is lightness, not lines.
+   The pane that holds your attention is lit: an accent seam marks focus at
+   every scale (pane, tab, field, toast). Geist carries the voice; the accent is
+   spent only where attention is.
+   One sheet: re-binds --sl-* / --slc-* and overrides component rules. */
+
+/* ── type: Geist family; serif nowhere ──────────────────────────────────── */
+html[data-dir="lumen"] {
+  --sl-font-display: "Geist", system-ui, sans-serif;
+  --sl-font-sans: "Geist", system-ui, sans-serif;
+  --sl-font-mono: "Geist Mono", ui-monospace, monospace;
+  --lab-code: "Geist Mono", ui-monospace, monospace;
+  --sl-radius-sm: 6px; --sl-radius-md: 8px; --sl-radius-lg: 14px;
+  --lu-island-r: 10px; --lu-gap: 6px;
+  --sl-motion-ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --lu-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --sl-focus-ring-width: 2px;
+}
+
+/* ── neutrals: three inputs (accent hue, lightness ladder, contrast) ───────
+   The ground is tinted by the product's own accent hue at near-zero chroma,
+   so amber reads warm, indigo cool, cyan teal — one temperature per product. */
+html[data-dir="lumen"][data-sl-theme="dark"] {
+  --sl-bg-canvas: oklch(from var(--sl-accent-default) 0.135 0.006 h);
+  --sl-bg-surface: oklch(from var(--sl-accent-default) 0.178 0.007 h);
+  --sl-bg-surface-raised: oklch(from var(--sl-accent-default) 0.215 0.008 h);
+  --sl-text-primary: oklch(from var(--sl-accent-default) 0.94 0.006 h);
+  --sl-text-secondary: oklch(from var(--sl-accent-default) 0.79 0.008 h);
+  --sl-text-muted: oklch(from var(--sl-accent-default) 0.69 0.01 h);
+  --sl-bg-overlay: oklch(0.08 0 0 / 0.55);
+  --lu-hair: oklch(1 0 0 / 0.065);
+  --lu-hair-2: oklch(1 0 0 / 0.11);
+  --lu-hi: oklch(1 0 0 / 0.07);
+  --lu-tile: oklch(from var(--sl-accent-default) 0.255 0.01 h);
+  --lu-cast: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 0 0 1px oklch(0 0 0 / 0.35), 0 8px 18px -6px oklch(0 0 0 / 0.55), 0 32px 64px -24px oklch(0 0 0 / 0.7);
+  --lu-glow: 0.5;
+}
+html[data-dir="lumen"][data-sl-theme="light"] {
+  --sl-accent-text-lmax: 0.46;
+  --sl-bg-canvas: oklch(from var(--sl-accent-default) 0.928 0.007 h);
+  --sl-bg-surface: oklch(from var(--sl-accent-default) 0.987 0.003 h);
+  --sl-bg-surface-raised: oklch(1 0 0);
+  --sl-text-primary: oklch(from var(--sl-accent-default) 0.2 0.01 h);
+  --sl-text-secondary: oklch(from var(--sl-accent-default) 0.38 0.012 h);
+  --sl-text-muted: oklch(from var(--sl-accent-default) 0.47 0.014 h);
+  --sl-bg-overlay: oklch(0.2 0.01 60 / 0.28);
+  --lu-hair: oklch(0.2 0.01 60 / 0.08);
+  --lu-hair-2: oklch(0.2 0.01 60 / 0.14);
+  --lu-hi: oklch(1 0 0 / 0.9);
+  --lu-tile: oklch(1 0 0);
+  --lu-cast: 0 0 0 1px oklch(0.2 0.01 60 / 0.08), 0 1px 2px oklch(0.2 0.01 60 / 0.06), 0 12px 28px -10px oklch(0.2 0.01 60 / 0.22), 0 32px 64px -28px oklch(0.2 0.01 60 / 0.28);
+  --lu-glow: 0.35;
+}
+html[data-dir="lumen"][data-sl-theme="high-contrast"] {
+  --lu-hair: #ffffff; --lu-hair-2: #ffffff; --lu-hi: transparent; --lu-tile: #000; --lu-cast: 0 0 0 1px #fff; --lu-glow: 0;
+}
+html[data-dir="lumen"] { --lu-seam: var(--slc-accent); }
+html[data-dir="lumen"][data-sl-theme="dark"] {
+  --sl-code-fg: oklch(from var(--sl-accent-default) 0.9 0.008 h); --sl-code-comment: oklch(from var(--sl-accent-default) 0.68 0.012 h);
+  --sl-code-keyword: oklch(0.78 0.11 280); --sl-code-string: oklch(0.8 0.12 135); --sl-code-function: oklch(0.8 0.1 230); --sl-code-number: oklch(0.78 0.13 40); --sl-code-builtin: oklch(0.82 0.11 85);
+}
+html[data-dir="lumen"][data-sl-theme="light"] {
+  --sl-code-fg: oklch(from var(--sl-accent-default) 0.27 0.01 h); --sl-code-comment: oklch(from var(--sl-accent-default) 0.5 0.012 h);
+  --sl-code-keyword: oklch(0.48 0.17 285); --sl-code-string: oklch(0.47 0.12 140); --sl-code-function: oklch(0.47 0.12 240); --sl-code-number: oklch(0.52 0.16 40); --sl-code-builtin: oklch(0.5 0.11 75);
+}
+html[data-dir="lumen"][data-sl-theme="light"] { --lu-seam: var(--slc-accent-text); }
+
+/* ── the island ─────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .app { background: var(--slc-canvas); grid-template-rows: 44px minmax(0, 1fr) 30px; }
+[data-dir="lumen"] .app__body { gap: var(--lu-gap); padding-right: var(--lu-gap); }
+[data-dir="lumen"] .pane { position: relative; border: 0 !important; border-radius: var(--lu-island-r); background: var(--slc-surface); box-shadow: 0 0 0 1px var(--lu-hair), 0 1px 0 var(--lu-hi) inset; }
+[data-dir="lumen"] .ide-main { background: transparent; box-shadow: none; grid-template-rows: 38px 30px minmax(0, 1fr) 210px; }
+[data-dir="lumen"] .ide-main > .ide-tabs { border-radius: var(--lu-island-r) var(--lu-island-r) 0 0; background: var(--slc-surface); box-shadow: 0 0 0 1px var(--lu-hair); border-bottom: 0; position: relative; }
+[data-dir="lumen"] .ide-main > .ide-crumbs { background: var(--slc-raised); box-shadow: 1px 0 0 var(--lu-hair), -1px 0 0 var(--lu-hair); border-bottom: 1px solid var(--lu-hair); }
+[data-dir="lumen"] .ide-main > .ide-code { background: var(--slc-raised); border-radius: 0 0 var(--lu-island-r) var(--lu-island-r); box-shadow: 0 0 0 1px var(--lu-hair); }
+[data-dir="lumen"] .ide-main > .ide-panel { margin-top: var(--lu-gap); border: 0; border-radius: var(--lu-island-r); box-shadow: 0 0 0 1px var(--lu-hair), 0 1px 0 var(--lu-hi) inset; }
+[data-dir="lumen"] .ide-agent { border: 0; border-radius: var(--lu-island-r); box-shadow: 0 0 0 1px var(--lu-hair), 0 1px 0 var(--lu-hi) inset; }
+[data-dir="lumen"] .set-main, [data-dir="lumen"] .dat-main { background: var(--slc-surface); }
+
+/* SIGNATURE 1 — the lit pane: the pane with focus is lit from its top edge.
+   A 2px seam of the accent runs along it and the light falls into the pane
+   as a wash, so at thumbnail size the focused pane is the bright one. The
+   other panes stay unlit. */
+[data-dir="lumen"] :is(.pane--focus:not(.ide-main), .ide-main > .ide-tabs)::before {
+  content: ""; position: absolute; left: 10px; right: 10px; top: 0; height: 2px; z-index: 3; pointer-events: none; border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lu-seam) 0%, transparent), var(--lu-seam) 18%, var(--lu-seam) 45%, color-mix(in srgb, var(--lu-seam) 0%, transparent) 92%);
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--lu-seam) calc(var(--lu-glow) * 110%), transparent);
+}
+[data-dir="lumen"] :is(.pane--focus:not(.ide-main), .ide-main > .ide-tabs)::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 140px; pointer-events: none; border-radius: inherit; z-index: 0;
+  background: radial-gradient(80% 100% at 30% 0%, color-mix(in srgb, var(--lu-seam) calc(var(--lu-glow) * 52%), transparent), transparent 78%);
+}
+/* the lit pane is also the lighter pane, and its rim takes the accent: an
+   area, not only a line, so it survives a thumbnail */
+html[data-dir="lumen"] { --lu-rim: color-mix(in srgb, var(--lu-seam) 46%, transparent); }
+[data-dir="lumen"] .pane--focus:not(.ide-main),
+[data-dir="lumen"] .ide-main > :is(.ide-tabs, .ide-crumbs, .ide-code) { background-color: var(--slc-raised); }
+[data-dir="lumen"] .pane--focus:not(.ide-main) { box-shadow: 0 0 0 1px var(--lu-rim), 0 0 24px -6px color-mix(in srgb, var(--lu-seam) calc(var(--lu-glow) * 40%), transparent); }
+[data-dir="lumen"] .ide-main > .ide-tabs { box-shadow: 0 0 0 1px var(--lu-rim) !important; }
+[data-dir="lumen"] .ide-main > .ide-crumbs { box-shadow: 1px 0 0 var(--lu-rim), -1px 0 0 var(--lu-rim) !important; }
+[data-dir="lumen"] .ide-main > .ide-code { box-shadow: 0 0 0 1px var(--lu-rim), 0 18px 30px -18px color-mix(in srgb, var(--lu-seam) calc(var(--lu-glow) * 40%), transparent) !important; }
+[data-dir="lumen"] .ide-main > .ide-tabs { overflow: visible; }
+[data-dir="lumen"] .ide-main > .ide-tabs > * { position: relative; z-index: 1; }
+[data-dir="lumen"] .ide-main > .ide-crumbs { position: relative; background: linear-gradient(color-mix(in srgb, var(--lu-seam) calc(var(--lu-glow) * 7%), var(--slc-raised)), var(--slc-raised)); }
+[data-dir="lumen"] .ide-main > .ide-tabs::after { height: 38px; border-radius: var(--lu-island-r) var(--lu-island-r) 0 0; }
+
+/* ── title bar, activity bar, status bar sit on the frame ──────────────── */
+[data-dir="lumen"] .ide-title { border-bottom: 0; background: transparent; padding: 0 0.6rem 0 0.9rem; }
+[data-dir="lumen"] .ide-mark { font-family: "Geist", sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -0.04em; }
+[data-dir="lumen"] .ide-mark::after { content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 2px; border-radius: 50%; background: var(--slc-accent); vertical-align: 1px; }
+[data-dir="lumen"] .ide-title__crumb { font-size: 13px; }
+[data-dir="lumen"] .ide-cmd { height: 30px; border-radius: 8px; border: 1px solid var(--slc-edge-control); background: var(--slc-surface); box-shadow: 0 1px 0 var(--lu-hi) inset; color: var(--slc-text-muted); transition: box-shadow 160ms var(--sl-motion-ease), background-color 160ms var(--sl-motion-ease); }
+[data-dir="lumen"] .ide-cmd:hover { background: var(--slc-raised); border-color: var(--slc-edge-control-hover); }
+[data-dir="lumen"] .ide-live { font-family: "Geist", sans-serif; letter-spacing: 0; text-transform: none; font-size: 12px; font-weight: 500; }
+[data-dir="lumen"] .ide-activity { width: 52px; background: transparent; border: 0; gap: 6px; padding-top: 4px; }
+[data-dir="lumen"] .ide-activity__btn { width: 38px; height: 38px; border-radius: 9px; transition: color 140ms var(--sl-motion-ease), background-color 140ms var(--sl-motion-ease); }
+[data-dir="lumen"] .ide-activity__btn[aria-current] { background: var(--slc-surface); color: var(--slc-text); box-shadow: 0 0 0 1px var(--lu-hair-2), 0 1px 0 var(--lu-hi) inset; }
+[data-dir="lumen"] .ide-activity__btn[aria-current] svg { color: var(--slc-accent-text); }
+[data-dir="lumen"] .ide-activity__btn[data-count]::after { top: 4px; right: 3px; min-width: 14px; height: 14px; font: 600 9px/14px "Geist Mono", monospace; box-shadow: 0 0 0 2px var(--slc-canvas); }
+
+/* SIGNATURE 6 — the status dock: facts as quiet segments on the frame; the
+   agent segment is a lit pill that breathes while a process is live. */
+[data-dir="lumen"] .ide-status { background: transparent; border: 0; padding: 0 0.5rem 0 0.25rem; font-size: 12px; color: var(--slc-text-muted); }
+[data-dir="lumen"] .ide-status__item { height: 22px; padding: 0 0.5rem; border-radius: 6px; transition: background-color 140ms var(--sl-motion-ease), color 140ms var(--sl-motion-ease); }
+[data-dir="lumen"] .ide-status__item:hover { background: var(--slc-surface); color: var(--slc-text); }
+[data-dir="lumen"] .ide-status__agents { color: var(--slc-text); background: var(--slc-surface); box-shadow: 0 0 0 1px var(--lu-hair-2); margin-left: 0.25rem; }
+[data-dir="lumen"] .ide-pulse { background: var(--slc-accent); box-shadow: 0 0 0 0 color-mix(in srgb, var(--slc-accent) 50%, transparent); }
+[data-dir="lumen"] .ide-status__model b, [data-dir="lumen"] .ide-status__branch b { font-family: "Geist Mono", monospace; font-weight: 500; color: var(--slc-text); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-dir="lumen"] .ide-pulse { animation: lu-breathe 2.4s var(--lu-out) infinite; }
+}
+@keyframes lu-breathe { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--slc-accent) 45%, transparent); } 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--slc-accent) 0%, transparent); } }
+
+/* ── pane heads ─────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .pane__head { height: 40px; padding: 0 0.5rem 0 0.95rem; }
+[data-dir="lumen"] .pane__label { font-family: "Geist", sans-serif; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; text-transform: none; color: var(--slc-text); }
+[data-dir="lumen"] .pane__sub, [data-dir="lumen"] .sl-eyebrow, [data-dir="lumen"] .sl-nav__group, [data-dir="lumen"] .ide-pal__grp, [data-dir="lumen"] .sl-stat__label, [data-dir="lumen"] .sl-field__label {
+  font-family: "Geist Mono", monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slc-text-muted);
+}
+[data-dir="lumen"] .sl-field__label { font-family: "Geist", sans-serif; font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--slc-text-secondary); font-weight: 500; }
+
+/* SIGNATURE 2 — the raised tile: a selected row is an object, lifted out of
+   the island (lighter fill, a lit top hairline, a short cast), its icon in the
+   accent. Hover is a flat wash; only selection lifts. */
+[data-dir="lumen"] .ide-tree { padding: 0 0.45rem; }
+[data-dir="lumen"] .ide-tree__row { height: 26px; border-radius: 6px; border: 0; font-size: 13px; color: var(--slc-text-secondary); transition: background-color 120ms var(--sl-motion-ease), color 120ms var(--sl-motion-ease); }
+[data-dir="lumen"] .ide-tree__row:hover { background: color-mix(in srgb, var(--slc-text) 5%, transparent); color: var(--slc-text); }
+[data-dir="lumen"] :is(.ide-tree__row.is-sel, .sl-list__row[aria-selected="true"], .ide-pal__row[aria-selected="true"], .sl-nav__item[aria-current]) {
+  background: var(--lu-tile); color: var(--slc-text);
+  box-shadow: 0 1px 0 var(--lu-hi) inset, 0 0 0 1px var(--lu-hair-2), 0 1px 2px oklch(0 0 0 / 0.25), 0 4px 10px -4px oklch(0 0 0 / 0.35);
+}
+[data-dir="lumen"][data-sl-theme="light"] :is(.ide-tree__row.is-sel, .sl-list__row[aria-selected="true"], .ide-pal__row[aria-selected="true"], .sl-nav__item[aria-current]) {
+  box-shadow: 0 0 0 1px var(--lu-hair-2), 0 1px 2px oklch(0.2 0.01 60 / 0.10), 0 4px 10px -4px oklch(0.2 0.01 60 / 0.16);
+}
+[data-dir="lumen"] .ide-tree__row.is-sel .ide-tree__ic { color: var(--slc-accent-text); }
+[data-dir="lumen"] .ide-tree__tw, [data-dir="lumen"] .ide-tree__ic { color: var(--slc-text-muted); }
+[data-dir="lumen"] .ide-tree__git { font-family: "Geist Mono", monospace; font-size: 10.5px; font-weight: 600; }
+[data-dir="lumen"] .ide-sessions { padding: 0 0.45rem; gap: 2px; }
+[data-dir="lumen"] .sl-list--dense .sl-list__row { font-family: "Geist", sans-serif; font-size: 13px; padding: 0.3rem 0.6rem; border-radius: 6px; border: 0; min-height: 40px; color: var(--slc-text-secondary); }
+[data-dir="lumen"] .sl-list__row[aria-selected="true"] { color: var(--slc-text); border-color: transparent; }
+[data-dir="lumen"] .sl-list__meta { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--slc-text-muted); }
+[data-dir="lumen"] .sl-list__row[aria-selected="true"] .sl-list__meta { color: var(--slc-text-secondary); }
+[data-dir="lumen"] .lab-hover { background: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+
+/* ── editor tabs: the active tab is a tile with its own short seam ─────── */
+[data-dir="lumen"] .ide-tabs { padding: 0 0.4rem; gap: 2px; align-items: center; }
+[data-dir="lumen"] .ide-tab { height: 28px; border: 0; border-radius: 7px; padding: 0 0.7rem; font-size: 13px; color: var(--slc-text-muted); transition: background-color 120ms var(--sl-motion-ease), color 120ms var(--sl-motion-ease); }
+[data-dir="lumen"] .ide-tab:hover { background: color-mix(in srgb, var(--slc-text) 5%, transparent); color: var(--slc-text-secondary); }
+[data-dir="lumen"] .ide-tab[aria-selected="true"] { background: var(--lu-tile); color: var(--slc-text); box-shadow: 0 1px 0 var(--lu-hi) inset, 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .ide-tab[aria-selected="true"] svg { color: var(--slc-accent-text); }
+[data-dir="lumen"] .ide-tab__dot { width: 6px; height: 6px; background: var(--slc-accent); }
+[data-dir="lumen"] .ide-tab[aria-selected="false"] .ide-tab__dot { background: var(--slc-text-muted); }
+[data-dir="lumen"] .ide-crumbs { font-size: 12px; padding: 0 1rem; }
+[data-dir="lumen"] .ide-crumbs__meta { font-family: "Geist Mono", monospace; color: var(--slc-text-muted); }
+
+/* ── code ──────────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .ide-code { font-size: 13px; line-height: 22px; padding-top: 0.75rem; }
+[data-dir="lumen"] .ide-code__no { color: var(--slc-text-muted); }
+[data-dir="lumen"] .ide-code__ln.is-cur { background: color-mix(in srgb, var(--slc-text) 4.5%, transparent); }
+[data-dir="lumen"] .ide-diag { border-radius: 5px; font-family: "Geist", sans-serif; }
+
+/* ── panel + SIGNATURE 5 (shared with the toast): blocks are small islands ─ */
+[data-dir="lumen"] .ide-panel { background: var(--slc-surface); grid-template-rows: 38px minmax(0, 1fr); }
+[data-dir="lumen"] .ide-panel__tabs { padding: 0 0.5rem; gap: 2px; }
+[data-dir="lumen"] .ide-ptab { height: 26px; border-radius: 6px; font-family: "Geist", sans-serif; font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; padding: 0 0.6rem; }
+[data-dir="lumen"] .ide-ptab[aria-selected="true"] { background: var(--lu-tile); box-shadow: 0 1px 0 var(--lu-hi) inset, 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .ide-ptab__n { font-family: "Geist Mono", monospace; background: color-mix(in srgb, var(--slc-warning) 18%, transparent); color: var(--slc-warning-text, var(--slc-warning)); }
+[data-dir="lumen"] .ide-term { font-family: "Geist Mono", monospace; font-size: 12.5px; gap: 6px; padding: 0.15rem 0.6rem 0.5rem; }
+[data-dir="lumen"] .ide-block { position: relative; border: 0; border-radius: 8px; background: var(--slc-raised); box-shadow: 0 0 0 1px var(--lu-hair); }
+[data-dir="lumen"] .ide-block::before { content: ""; position: absolute; left: 10px; right: 55%; top: 0; height: 1px; background: linear-gradient(90deg, var(--lu-block, var(--slc-success)), transparent); }
+[data-dir="lumen"] .ide-block[data-exit="1"] { --lu-block: var(--slc-danger-text, var(--slc-danger)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--slc-danger) 35%, transparent); }
+[data-dir="lumen"] .ide-block[data-exit="0"] { --lu-block: var(--slc-success-text, var(--slc-success)); }
+[data-dir="lumen"] .ide-block__head { background: transparent; padding: 0.4rem 0.7rem 0.15rem; }
+[data-dir="lumen"] .ide-block__cmd { color: var(--slc-text); font-weight: 500; }
+[data-dir="lumen"] .ide-block__meta { font-size: 11.5px; }
+[data-dir="lumen"] .ide-block__exit { font-weight: 600; }
+[data-dir="lumen"] .ide-block__out { padding: 0.2rem 0.7rem 0.55rem; color: var(--slc-text-secondary); }
+[data-dir="lumen"] .ide-caret { width: 7px; height: 15px; border-radius: 1px; background: var(--slc-accent); box-shadow: 0 0 8px color-mix(in srgb, var(--slc-accent) 60%, transparent); }
+
+/* ── agent ─────────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .ide-agent { width: 352px; }
+[data-dir="lumen"] .ide-agent__head { border-bottom: 1px solid var(--lu-hair); padding: 0.85rem 1rem; }
+[data-dir="lumen"] .ide-agent__title { font-family: "Geist", sans-serif; font-weight: 600; font-size: 16px; letter-spacing: -0.025em; }
+[data-dir="lumen"] .ide-agent__model { font-family: "Geist Mono", monospace; letter-spacing: 0.02em; text-transform: none; font-size: 11.5px; border-radius: 6px; padding: 0.2rem 0.5rem; }
+[data-dir="lumen"] .ide-msg { font-size: 13.5px; line-height: 1.55; }
+[data-dir="lumen"] .ide-msg--user p { background: var(--lu-tile); border-radius: 10px 10px 10px 3px; box-shadow: 0 1px 0 var(--lu-hi) inset, 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .sl-code { font-family: "Geist Mono", monospace; border-radius: 4px; }
+[data-dir="lumen"] .ide-tools { gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .ide-tool { border-radius: 0; background: var(--slc-raised); padding: 0.4rem 0.6rem; border-top: 1px solid var(--lu-hair); }
+[data-dir="lumen"] .ide-tool:first-child { border-top: 0; }
+[data-dir="lumen"] .ide-tool b { font-family: "Geist Mono", monospace; font-size: 12px; }
+[data-dir="lumen"] .ide-tool[data-state="done"] svg { color: var(--slc-success-text, var(--slc-success)); }
+[data-dir="lumen"] .ide-tool[data-state="run"] { background: color-mix(in srgb, var(--slc-accent) 7%, var(--slc-raised)); }
+[data-dir="lumen"] .ide-tool[data-state="run"] svg { color: var(--slc-accent-text); }
+[data-dir="lumen"] .ide-composer { border: 0; border-radius: 12px; background: var(--slc-raised); box-shadow: 0 0 0 1px var(--slc-edge-control), 0 1px 0 var(--lu-hi) inset, 0 8px 24px -12px oklch(0 0 0 / 0.5); }
+[data-dir="lumen"] .ide-composer .sl-chip { font-family: "Geist Mono", monospace; text-transform: none; letter-spacing: 0; border-radius: 6px; }
+
+/* ── controls ──────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .sl-btn { height: 32px; border-radius: 8px; font-family: "Geist", sans-serif; font-weight: 500; font-size: 13.5px; padding: 0 0.85rem; gap: 0.5rem;
+  transition: background-color 140ms var(--sl-motion-ease), box-shadow 140ms var(--sl-motion-ease), color 140ms var(--sl-motion-ease), transform 220ms var(--lu-out); }
+[data-dir="lumen"] .sl-btn--sm { height: 24px; font-size: 12.5px; padding: 0 0.6rem; border-radius: 7px; }
+[data-dir="lumen"] .sl-btn:active:not(:disabled) { transform: scale(0.97); }
+[data-dir="lumen"] .sl-btn:hover:not(:disabled):not(.sl-btn--primary):not(.sl-btn--ghost) { background: color-mix(in srgb, var(--slc-text) 7%, transparent); }
+/* secondary: a raised key with the control edge */
+[data-dir="lumen"] .sl-btn--ghost { background: var(--slc-raised); border-color: var(--slc-edge-control); box-shadow: 0 1px 0 var(--lu-hi) inset, 0 1px 2px oklch(0 0 0 / 0.2); }
+[data-dir="lumen"] .sl-btn--ghost:hover:not(:disabled) { background: var(--lu-tile); border-color: var(--slc-edge-control-hover); }
+/* primary: a flat key standing on its own base (a darker 2px foot), not lit
+   from above — the shortcut sits in it as a translucent keycap */
+[data-dir="lumen"] .sl-btn--primary { border-color: transparent; border-top-color: transparent;
+  box-shadow: inset 0 -2px 0 oklch(from var(--slc-accent) calc(l - 0.14) c h), 0 1px 2px oklch(0 0 0 / 0.25), 0 0 0 1px oklch(from var(--slc-accent) calc(l - 0.1) c h); }
+[data-dir="lumen"] .sl-btn--primary:hover:not(:disabled) { box-shadow: inset 0 -2px 0 oklch(from var(--slc-accent) calc(l - 0.14) c h), 0 2px 10px -2px color-mix(in srgb, var(--slc-accent) 55%, transparent), 0 0 0 1px oklch(from var(--slc-accent) calc(l - 0.1) c h); }
+[data-dir="lumen"] .sl-btn--primary:active:not(:disabled) { box-shadow: inset 0 1px 0 oklch(from var(--slc-accent) calc(l - 0.14) c h), 0 0 0 1px oklch(from var(--slc-accent) calc(l - 0.1) c h); }
+[data-dir="lumen"] .sl-btn--primary:disabled { opacity: 1; background: color-mix(in srgb, var(--slc-text) 8%, var(--slc-surface)); color: var(--slc-text-muted); box-shadow: 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .lab-danger { box-shadow: inset 0 -2px 0 oklch(from var(--slc-danger) calc(l - 0.14) c h), 0 0 0 1px oklch(from var(--slc-danger) calc(l - 0.1) c h) !important; }
+
+/* SIGNATURE 3 — keycaps: every shortcut is a small physical key; inside a
+   button it rides along as a translucent cap. */
+[data-dir="lumen"] .sl-kbd { font-family: "Geist Mono", monospace; font-size: 11px; font-weight: 500; min-width: 20px; height: 20px; justify-content: center; padding: 0 0.32rem; border-radius: 5px; color: var(--slc-text-secondary);
+  background: linear-gradient(var(--slc-raised), var(--slc-surface)); box-shadow: 0 0 0 1px var(--lu-hair-2), inset 0 1px 0 var(--lu-hi), inset 0 -1.5px 0 oklch(0 0 0 / 0.28); }
+[data-dir="lumen"][data-sl-theme="light"] .sl-kbd { box-shadow: 0 0 0 1px var(--lu-hair-2), inset 0 -1.5px 0 oklch(0.2 0.01 60 / 0.12), 0 1px 0 oklch(0.2 0.01 60 / 0.06); }
+[data-dir="lumen"][data-sl-theme="high-contrast"] .sl-kbd { background: #000; box-shadow: 0 0 0 1px #fff; color: #fff; }
+[data-dir="lumen"] .ide-keys { gap: 3px; }
+[data-dir="lumen"] [data-key]::after { content: attr(data-key); display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-right: -0.3rem; padding: 0 0.25rem; border-radius: 4px;
+  font: 500 10.5px/1 "Geist Mono", monospace; background: oklch(from var(--slc-accent) calc(l + 0.085 * clamp(-1, (l - 0.61) * 1000, 1)) c h); box-shadow: inset 0 -1px 0 oklch(0 0 0 / 0.22), inset 0 1px 0 oklch(1 0 0 / 0.14); color: inherit; }
+[data-dir="lumen"] .sl-btn--ghost[data-key]::after, [data-dir="lumen"] .sl-btn:not(.sl-btn--primary)[data-key]::after { background: color-mix(in srgb, var(--slc-text) 8%, transparent); box-shadow: inset 0 -1px 0 oklch(0 0 0 / 0.2); color: var(--slc-text-secondary); }
+[data-dir="lumen"] .sl-btn--sm[data-key]::after { height: 16px; min-width: 16px; font-size: 10px; }
+
+/* fields */
+[data-dir="lumen"] .sl-field__input { font-family: "Geist", sans-serif; font-size: 13.5px; border-radius: 8px; background: var(--slc-canvas); box-shadow: inset 0 1px 2px oklch(0 0 0 / 0.18); }
+[data-dir="lumen"][data-sl-theme="light"] .sl-field__input { background: oklch(from var(--sl-accent-default) 0.975 0.004 h); box-shadow: inset 0 1px 2px oklch(0.2 0.01 60 / 0.06); }
+[data-dir="lumen"] .sl-field__hint, [data-dir="lumen"] .sl-field__error { font-size: 12px; }
+/* SIGNATURE 4 — the glow ring: focus is the owner's flush ring (the border IS
+   the ring, no gap) with an accent glow that continues outward from it. */
+[data-dir="lumen"] :is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-field__input, .sl-segmented__item, .sl-nav__item, .sl-list__row, .sl-pagination__item, .sl-link, .ide-cmd, .ide-tab, .ide-ptab, .ide-activity__btn, .web-links a, .web-mark):is(:focus-visible, .lab-focus),
+[data-dir="lumen"] .ide-composer:focus-within,
+[data-dir="lumen"] .sl-field__input:focus:not(.ide-composer textarea) {
+  outline: 2px solid var(--slc-focus) !important; outline-offset: -1px !important; border-color: var(--slc-focus) !important;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--slc-focus) 22%, transparent) !important;
+}
+[data-dir="lumen"] .ide-composer textarea:is(:focus-visible, :focus) { outline: none !important; border-color: transparent !important; box-shadow: none !important; }
+[data-dir="lumen"] .sl-field__input[aria-invalid="true"] { box-shadow: 0 0 0 3px color-mix(in srgb, var(--slc-danger) 14%, transparent); }
+[data-dir="lumen"] .sl-select::after { right: 0.85rem; }
+[data-dir="lumen"] .sl-check__box { border-radius: 5px; background: var(--slc-canvas); }
+[data-dir="lumen"] :is(.sl-check__input:checked + .sl-check__box, .sl-radio__input:checked + .sl-radio__box) { box-shadow: inset 0 -1.5px 0 oklch(from var(--slc-accent) calc(l - 0.14) c h), 0 0 10px -2px color-mix(in srgb, var(--slc-accent) 55%, transparent); }
+[data-dir="lumen"] .sl-radio__box { background: var(--slc-canvas); }
+[data-dir="lumen"] .sl-switch__track { width: 2.1rem; height: 1.25rem; background: var(--slc-canvas); box-shadow: inset 0 1px 2px oklch(0 0 0 / 0.25); }
+[data-dir="lumen"] .sl-switch__track::after { width: 0.85rem; height: 0.85rem; left: 2px; background: var(--slc-text-muted); box-shadow: 0 1px 2px oklch(0 0 0 / 0.35); }
+[data-dir="lumen"] .sl-switch__input:checked + .sl-switch__track { box-shadow: inset 0 -1.5px 0 oklch(from var(--slc-accent) calc(l - 0.14) c h), 0 0 12px -2px color-mix(in srgb, var(--slc-accent) 60%, transparent); }
+[data-dir="lumen"] .sl-switch__input:checked + .sl-switch__track::after { transform: translateY(-50%) translateX(0.85rem); background: var(--slc-on-accent); }
+[data-dir="lumen"] .sl-check__label, [data-dir="lumen"] .sl-radio__label, [data-dir="lumen"] .sl-switch__label { font-size: 13.5px; }
+[data-dir="lumen"] .sl-segmented { border-radius: 9px; padding: 2px; background: var(--slc-canvas); box-shadow: inset 0 1px 2px oklch(0 0 0 / 0.2); }
+[data-dir="lumen"] .sl-segmented__item { height: 26px; display: inline-flex; align-items: center; font-family: "Geist", sans-serif; font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; border-radius: 7px; padding: 0 0.85rem; transition: background-color 160ms var(--sl-motion-ease), color 160ms var(--sl-motion-ease), box-shadow 160ms var(--sl-motion-ease); }
+[data-dir="lumen"] .sl-segmented__item[aria-selected="true"] { background: var(--lu-tile); box-shadow: 0 1px 0 var(--lu-hi) inset, 0 0 0 1px var(--lu-hair-2), 0 1px 3px oklch(0 0 0 / 0.3); }
+[data-dir="lumen"] .sl-icon-btn { border-radius: 8px; background: transparent; border-color: transparent; color: var(--slc-text-secondary); transition: background-color 140ms var(--sl-motion-ease), color 140ms var(--sl-motion-ease); }
+[data-dir="lumen"] .sl-icon-btn:hover:not(:disabled) { background: var(--slc-surface); color: var(--slc-text); box-shadow: 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .ide-title__r .sl-icon-btn { border-color: var(--slc-edge-control); background: var(--slc-surface); }
+[data-dir="lumen"] .ide-title__r .sl-icon-btn[data-count]::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--slc-accent); box-shadow: 0 0 0 2px var(--slc-surface); }
+[data-dir="lumen"] .sl-chip { font-family: "Geist", sans-serif; text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; border-radius: 7px; padding: 0.3rem 0.6rem; }
+[data-dir="lumen"] .sl-chip::before { border-radius: 2px; }
+[data-dir="lumen"] .sl-chip__count { font-family: "Geist Mono", monospace; font-size: 11px; color: inherit; opacity: 1; }
+[data-dir="lumen"] .sl-badge { font-family: "Geist", sans-serif; text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; border-radius: 6px; padding: 0.2rem 0.5rem 0.2rem 0.45rem; }
+[data-dir="lumen"] .sl-tag { font-family: "Geist Mono", monospace; letter-spacing: 0.02em; text-transform: none; border-radius: 6px; font-size: 11.5px; }
+[data-dir="lumen"] .sl-avatar { border-radius: 8px; }
+[data-dir="lumen"] .sl-progress__bar { background: var(--slc-accent); }
+
+/* ── palette: an overlay earns depth; it appears without animation ───────── */
+[data-dir="lumen"] .ide-scrim { top: 118px; left: 316px; right: 358px; }
+[data-dir="lumen"] .ide-pal { position: relative; width: 580px; border: 0; border-radius: 14px; background: color-mix(in srgb, var(--slc-raised) 94%, transparent); backdrop-filter: blur(24px) saturate(1.3); box-shadow: var(--lu-cast); }
+[data-dir="lumen"] .ide-pal::before { content: ""; position: absolute; left: 16px; right: 40%; top: 0; height: 1px; background: linear-gradient(90deg, var(--lu-seam), transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--lu-seam) 55%, transparent); }
+[data-dir="lumen"] .ide-pal__in { height: 54px; border-bottom: 1px solid var(--lu-hair); padding: 0 1rem; }
+[data-dir="lumen"] .ide-pal__input { font-size: 16px; letter-spacing: -0.01em; height: 34px; border-radius: 8px; padding: 0 0.5rem; }
+[data-dir="lumen"] .ide-pal__input { outline: none; }
+[data-dir="lumen"] .ide-pal__scope { font-family: "Geist", sans-serif; letter-spacing: 0; text-transform: none; font-size: 12px; font-weight: 500; border-radius: 6px; }
+[data-dir="lumen"] .ide-pal__list { padding: 0.35rem 0.5rem 0.5rem; }
+[data-dir="lumen"] .ide-pal__row { height: 38px; border-radius: 8px; gap: 0.7rem; }
+[data-dir="lumen"] .ide-pal__row[aria-selected="true"] svg { color: var(--slc-accent-text); }
+[data-dir="lumen"] .ide-pal__t b { color: var(--slc-text); font-weight: 650; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--slc-accent) 70%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+[data-dir="lumen"] .ide-pal__row:not([aria-selected="true"]) .ide-keys { opacity: 0.85; }
+[data-dir="lumen"] .ide-pal__foot { border-top: 1px solid var(--lu-hair); background: color-mix(in srgb, var(--slc-surface) 70%, transparent); font-size: 12px; }
+
+/* ── toast: the stack shows what waits; its seam is its status ─────────── */
+[data-dir="lumen"] .ide-toasts { right: 372px; bottom: 48px; }
+[data-dir="lumen"] .ide-toast { border: 0; border-radius: 12px; background: var(--slc-raised); box-shadow: var(--lu-cast); padding: 0.8rem 0.8rem 0.9rem 1rem; }
+[data-dir="lumen"] .ide-toast::before { content: ""; position: absolute; left: 14px; right: 50%; top: 0; height: 1px; background: linear-gradient(90deg, var(--slc-success-text, var(--slc-success)), transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--slc-success) 50%, transparent); }
+[data-dir="lumen"] .ide-toast--back { background: var(--slc-surface); transform: translateY(-11px) scale(0.94); opacity: 1; box-shadow: 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .ide-toast__mark { width: 26px; height: 26px; border-radius: 50%; place-items: center; background: color-mix(in srgb, var(--slc-success) 16%, transparent); }
+[data-dir="lumen"] .ide-toast__title { font-weight: 600; letter-spacing: -0.01em; }
+[data-dir="lumen"] .ide-toast__timer { height: 2px; background: transparent; }
+[data-dir="lumen"] .ide-toast__timer .sl-progress__bar { background: color-mix(in srgb, var(--slc-success-text, var(--slc-success)) 70%, transparent); }
+
+/* ── settings ──────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .set-nav { width: 236px; padding: 0.6rem 0.45rem; }
+[data-dir="lumen"] .sl-nav__item { font-family: "Geist", sans-serif; font-size: 13.5px; border-left: 0; border-radius: 7px; padding: 0.45rem 0.7rem; margin-bottom: 1px; color: var(--slc-text-secondary); }
+[data-dir="lumen"] .sl-nav__item[aria-current] { color: var(--slc-text); font-weight: 500; }
+[data-dir="lumen"] .sl-nav__group { padding: 1rem 0.7rem 0.4rem; }
+[data-dir="lumen"] .sl-nav__count { font-family: "Geist Mono", monospace; font-size: 11px; }
+[data-dir="lumen"] .set-title { font-family: "Geist", sans-serif; font-weight: 600; font-size: 34px; letter-spacing: -0.045em; }
+[data-dir="lumen"] .set-head { border-bottom: 1px solid var(--lu-hair); padding: 2rem 3rem 1.5rem; }
+[data-dir="lumen"] .set-sec { border-bottom: 1px solid var(--lu-hair); padding: 1.35rem 3rem; }
+[data-dir="lumen"] .set-sec__head h2 { font-size: 14.5px; letter-spacing: -0.015em; }
+[data-dir="lumen"] .set-bar { border-top: 1px solid var(--lu-hair); background: var(--slc-raised); border-radius: 0 0 var(--lu-island-r) var(--lu-island-r); }
+[data-dir="lumen"] .set-bar__dot { background: var(--slc-accent); box-shadow: 0 0 8px var(--slc-accent); }
+
+/* ── data ──────────────────────────────────────────────────────────────── */
+[data-dir="lumen"] .dat-head { padding: 1.75rem 2.25rem 1.25rem; }
+[data-dir="lumen"] .dat-count { font-family: "Geist Mono", monospace; }
+[data-dir="lumen"] .sl-stat__value { font-family: "Geist", sans-serif; font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+[data-dir="lumen"] .dat-tools { border-block: 1px solid var(--lu-hair); padding: 0.7rem 2.25rem; }
+[data-dir="lumen"] .dat-table { padding: 0.25rem 1.25rem 0 2.25rem; }
+[data-dir="lumen"] .sl-table { font-size: 13px; }
+[data-dir="lumen"] .sl-table thead th { font-family: "Geist", sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--slc-text-muted); background: transparent; border-bottom: 1px solid var(--lu-hair-2); }
+[data-dir="lumen"] .sl-table tbody td { border-bottom: 1px solid var(--lu-hair); }
+[data-dir="lumen"] .dat-table .sl-table tbody tr { transition: background-color 120ms var(--sl-motion-ease); }
+[data-dir="lumen"] .dat-table .sl-table tbody tr:hover td { background: color-mix(in srgb, var(--slc-text) 3%, transparent); }
+[data-dir="lumen"] .dat-table .sl-table tbody tr[aria-selected="true"] td { background: var(--lu-tile); border-bottom-color: transparent; }
+[data-dir="lumen"] .dat-table .sl-table tbody tr[aria-selected="true"] td:first-child { border-radius: 6px 0 0 6px; }
+[data-dir="lumen"] .dat-table .sl-table tbody tr[aria-selected="true"] td:last-child { border-radius: 0 6px 6px 0; }
+[data-dir="lumen"] .dat-table .sl-table tbody tr[aria-selected="true"] .dat-dim { color: var(--slc-text-secondary); }
+[data-dir="lumen"] .dat-id { font-family: "Geist Mono", monospace; }
+[data-dir="lumen"] .dat-bar { height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--slc-text) 9%, transparent); }
+[data-dir="lumen"] .dat-bar i { background: var(--slc-accent); border-radius: inherit; box-shadow: 0 0 6px color-mix(in srgb, var(--slc-accent) 50%, transparent); }
+[data-dir="lumen"] .dat-side { border-left: 1px solid var(--lu-hair); }
+[data-dir="lumen"] .dat-bulk { border-bottom: 1px solid var(--lu-hair); }
+[data-dir="lumen"] .dat-bulk__n b { font-weight: 600; letter-spacing: -0.03em; }
+[data-dir="lumen"] .sl-empty { background: var(--slc-raised); border-radius: 12px; box-shadow: 0 0 0 1px var(--lu-hair), 0 1px 0 var(--lu-hi) inset; }
+[data-dir="lumen"] .sl-empty__title { font-weight: 600; letter-spacing: -0.02em; }
+[data-dir="lumen"] .sl-pagination { font-family: "Geist Mono", monospace; }
+[data-dir="lumen"] .sl-pagination__item { border-radius: 6px; }
+[data-dir="lumen"] .sl-pagination__item[aria-current] { background: var(--lu-tile); box-shadow: 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .sl-badge--live::before { box-shadow: 0 0 6px currentColor; }
+
+/* ── marketing: the brand may be louder ──────────────────────────────────── */
+[data-dir="lumen"] .web { background: var(--slc-canvas); }
+[data-dir="lumen"] .web-nav { border-bottom: 0; padding: 1.1rem 4rem; position: relative; z-index: 2; }
+[data-dir="lumen"] .web-mark { font-family: "Geist", sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.045em; text-transform: none; }
+[data-dir="lumen"] .web-links a { font-size: 14px; transition: color 140ms var(--sl-motion-ease); }
+[data-dir="lumen"] .web-links a:hover { color: var(--slc-text); }
+[data-dir="lumen"] .web-hero { position: relative; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); padding: 5.5rem 0 6rem 4rem; isolation: isolate; }
+[data-dir="lumen"] .web-hero::before { content: ""; position: absolute; z-index: -1; right: -10%; top: -20%; width: 80%; height: 140%;
+  background: radial-gradient(50% 45% at 55% 45%, color-mix(in srgb, var(--slc-accent) calc(var(--lu-glow) * 26%), transparent), transparent 70%); filter: blur(10px); }
+[data-dir="lumen"] .web-h1 { font-family: "Geist", sans-serif; font-weight: 600; font-size: 84px; line-height: 0.95; letter-spacing: -0.06em; }
+[data-dir="lumen"] .web-h1 em { font-style: normal; color: var(--slc-text); background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--slc-accent) 38%, transparent) 62%, color-mix(in srgb, var(--slc-accent) 38%, transparent) 92%, transparent 92%); }
+[data-dir="lumen"] .web-lede { font-size: 17.5px; letter-spacing: -0.005em; }
+[data-dir="lumen"] .web-cta .sl-btn { height: 42px; font-size: 14.5px; padding: 0 1.05rem; border-radius: 10px; }
+[data-dir="lumen"] .web-install { border: 0; border-radius: 10px; background: var(--slc-surface); box-shadow: 0 0 0 1px var(--lu-hair-2), 0 1px 0 var(--lu-hi) inset; font-family: "Geist Mono", monospace; }
+[data-dir="lumen"] .web-shot { height: 600px; perspective: 1800px; }
+[data-dir="lumen"] .web-shot__in { transform: scale(0.66) rotateY(-14deg) rotateX(6deg); transform-origin: 0 10%; border: 0; border-radius: 18px; box-shadow: var(--lu-cast), 0 0 0 1px var(--lu-hair-2); }
+[data-dir="lumen"] .web-sec { border-top: 0; padding: 3rem 4rem 5rem; }
+[data-dir="lumen"] .web-h2 { font-family: "Geist", sans-serif; font-weight: 600; font-size: 44px; letter-spacing: -0.05em; }
+[data-dir="lumen"] .web-grid { gap: var(--lu-gap); padding: var(--lu-gap); background: color-mix(in srgb, var(--slc-text) 3%, transparent); border-radius: 18px; }
+[data-dir="lumen"] .web-card { position: relative; border: 0; border-radius: 13px; background: var(--slc-surface); box-shadow: 0 0 0 1px var(--lu-hair), 0 1px 0 var(--lu-hi) inset; padding: 1.75rem; overflow: hidden; transition: transform 320ms var(--lu-out), box-shadow 320ms var(--lu-out); }
+[data-dir="lumen"] .web-card::before { content: ""; position: absolute; left: 18px; right: 45%; top: 0; height: 1px; background: linear-gradient(90deg, var(--p), transparent); box-shadow: 0 0 12px var(--p); }
+[data-dir="lumen"] .web-card:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px var(--lu-hair-2), 0 1px 0 var(--lu-hi) inset, 0 18px 40px -20px oklch(0 0 0 / 0.6); }
+[data-dir="lumen"] .web-card__n { font-family: "Geist", sans-serif; font-weight: 600; font-size: 56px; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+[data-dir="lumen"] .sl-link { text-decoration-color: color-mix(in srgb, var(--slc-text) 30%, transparent); }
+
+/* ── high contrast keeps shape and type; depth gives way to drawn edges ─── */
+[data-dir="lumen"][data-sl-theme="high-contrast"] .pane,
+[data-dir="lumen"][data-sl-theme="high-contrast"] .ide-main > * { box-shadow: 0 0 0 1px #fff !important; }
+[data-dir="lumen"][data-sl-theme="high-contrast"] :is(.ide-tree__row.is-sel, .sl-list__row[aria-selected="true"], .ide-pal__row[aria-selected="true"], .sl-nav__item[aria-current], .ide-tab[aria-selected="true"]) { box-shadow: 0 0 0 1px var(--slc-accent) !important; background: #000; }
+
+/* ── motion: islands rise in order; rows follow; the palette never animates ─ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-dir="lumen"].lab-ready .app { animation: none; }
+  [data-dir="lumen"].lab-ready :is(.ide-activity, .pane, .ide-main > *, .ide-agent, .ide-status) { animation: lu-rise 560ms var(--lu-out) both; }
+  [data-dir="lumen"].lab-ready .ide-side, [data-dir="lumen"].lab-ready .set-nav { animation-delay: 40ms; }
+  [data-dir="lumen"].lab-ready .ide-main > .ide-tabs, [data-dir="lumen"].lab-ready .ide-main > .ide-crumbs, [data-dir="lumen"].lab-ready .ide-main > .ide-code { animation-delay: 90ms; }
+  [data-dir="lumen"].lab-ready .ide-main > .ide-panel { animation-delay: 140ms; }
+  [data-dir="lumen"].lab-ready .ide-agent { animation-delay: 180ms; }
+  [data-dir="lumen"].lab-ready :is(.ide-tree__row, .ide-tool, .sl-table tbody tr, .web-card) { animation: lu-fade 420ms var(--lu-out) both; animation-delay: calc(160ms + var(--i, 0) * 28ms); }
+  [data-dir="lumen"].lab-ready .ide-toast:not(.ide-toast--back) { animation: lu-toast 520ms var(--lu-out) 420ms both; }
+  [data-dir="lumen"].lab-ready .web-line { display: inline-block; animation: lu-rise 760ms var(--lu-out) both; animation-delay: calc(var(--i, 0) * 90ms); }
+  [data-dir="lumen"].lab-ready .web-shot__in { animation: lu-shot 1100ms var(--lu-out) 120ms both; }
+  [data-dir="lumen"].lab-ready .ide-scrim, [data-dir="lumen"].lab-ready .ide-pal { animation: none !important; }
+}
+@keyframes lu-rise { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+@keyframes lu-fade { from { opacity: 0; translate: -4px 0; } to { opacity: 1; translate: 0 0; } }
+@keyframes lu-toast { from { opacity: 0; translate: 0 16px; scale: 0.96; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes lu-shot { from { opacity: 0; translate: 40px 24px; } to { opacity: 1; translate: 0 0; } }
