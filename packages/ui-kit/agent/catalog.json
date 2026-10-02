@@ -650,6 +650,7 @@
         "--slc-accent-text",
         "--slc-tile",
         "--slc-depth-tile",
+        "--slc-seam",
         "--slc-focus"
       ]
     },

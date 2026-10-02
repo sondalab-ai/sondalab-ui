@@ -569,3 +569,56 @@ test("a selected tile that wears an effect keeps its tile through the effects ki
     assert.ok(cmp(specificity(offPart), killSpec[1]) > 0, `opt-out: ${specificity(offPart)} must outrank ${killSpec[1]}`);
   }
 });
+
+// ── the current nav item's seam (owner, 2026-10-02) ─────────────────────────
+
+// The tile alone finds the current destination at about 1.0-1.3:1 against its
+// ground; the 2px accent edge it replaced read >= 5.24:1. The owner kept a
+// stronger cue: a seam of the accent, Lumen's mark for the focus of
+// attention, inside the tile's leading edge. It must read at 3:1 (a graphical
+// object) against the tile it sits on, everywhere the tile does.
+const NAV = ".sl-nav__item[aria-current]";
+
+test("the current nav item carries a seam: 2px, half its height, centred, 3px in, a layer of its own background", () => {
+  const nav = rule(NAV);
+  for (const [p, v] of [["background-color", "var(--slc-tile)"], ["background-image", "linear-gradient(var(--slc-seam), var(--slc-seam))"], ["background-repeat", "no-repeat"], ["background-size", "2px 50%"], ["background-position", "3px 50%"], ["box-shadow", "var(--slc-depth-tile)"]]) {
+    assert.equal(decl(nav, p), v, p);
+  }
+  // it arrives with the state and never animates: the image is not transitioned
+  assert.doesNotMatch(decl(rule(".sl-nav__item"), "transition"), /background-image|background-position|background-size|(^|,\s*)background\s/);
+  assert.doesNotMatch(nav, /transition|animation/);
+  // only the current item: hover is a flat wash and draws no seam
+  assert.doesNotMatch(rule(".sl-nav__item:hover"), /background-image/);
+  // forced colours: the Highlight fill is a shorthand, which resets the seam with the rest
+  const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
+  const fill = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[1].includes(".sl-nav__item[aria-current]") && /Highlight/.test(m[2]));
+  assert.match(fill[2], /(^|;)\s*background:\s*Highlight !important/);
+});
+
+test("the seam takes no pseudo-element: an effect family owns its host's ::before", () => {
+  // every effect family that paints a host's ::before ...
+  for (const fx of [".sl-fx-glass", ".sl-fx-press", ".sl-fx-aurora", ".sl-fx-glitch"]) {
+    assert.ok(FX_RULES.some((r) => new RegExp(`${fx.replace(".", "\\.")}[^,{]*::before`).test(r.selector)), `${fx} paints ::before`);
+  }
+  // ... so components.css draws nothing on a nav item's pseudo-elements
+  assert.deepEqual(RULES.filter((r) => /\.sl-nav__item[^,{]*::(before|after)/.test(r.selector)).map((r) => r.selector), []);
+});
+
+{
+  const envs = [
+    ...CASES.flatMap(([theme, product]) => [[`${theme} ${product}`, () => rootEnv(theme, product), () => evaluate("var(--slc-surface)", rootEnv(theme, product))],
+      [`${theme} ${product} band`, () => (theme === "high-contrast" ? hcBandEnv() : bandEnv(theme, product)), () => evaluate("var(--slc-text)", rootEnv(theme, product))]]),
+    ...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [`${t} ${p} Tier B`, () => tierBEnv(t, p), () => evaluate("var(--slc-surface)", tierBEnv(t, p))])),
+  ];
+  test("the seam reads at 3:1 against the tile, every product and theme, the band, high contrast and Tier B", () => {
+    const low = [];
+    for (const [label, envOf, groundOf] of envs) {
+      const env = envOf();
+      const tile = over(evaluate("var(--slc-tile)", env), groundOf());
+      const seam = decl(rule(NAV), "background-image").match(/^linear-gradient\((.+), \1\)$/)[1];
+      const r = ratio(over(evaluate(seam, env), tile), tile);
+      if (r < 3) low.push(`${label} ${r.toFixed(2)}`);
+    }
+    assert.deepEqual(low, []);
+  });
+}

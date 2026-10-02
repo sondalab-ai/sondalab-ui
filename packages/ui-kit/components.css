@@ -1846,9 +1846,25 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-nav__item:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+/* THE SEAM (owner, 2026-10-02). The tile alone finds the current destination
+   at about 1.0-1.3:1 against its ground, where the 2px accent edge it
+   replaced read >= 5.24:1; the owner kept a stronger cue. A seam of the
+   accent as a line of light (--slc-seam, Lumen's mark for the focus of
+   attention), 2px by half the item's height, 3px inside the tile's leading
+   edge, centred: >= 3:1 against the tile on every ground (depth.test.mjs).
+   Inside the fill, never against the ring, so no gap between lines. It
+   arrives with the state and never animates; hover draws none.
+   A background layer, not ::before: an effect family (glass, press,
+   aurora, glitch) owns its host's ::before, and a seam there would paint
+   over the effect's own layer; an image composes with all of them. Forced
+   colours' Highlight fill resets it with the rest of the background. */
 .sl-nav__item[aria-current] {
   color: var(--slc-text);
   background-color: var(--slc-tile);
+  background-image: linear-gradient(var(--slc-seam), var(--slc-seam));
+  background-repeat: no-repeat;
+  background-size: 2px 50%;
+  background-position: 3px 50%;
   box-shadow: var(--slc-depth-tile);
 }
 .sl-nav__count {
