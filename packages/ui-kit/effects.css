@@ -832,7 +832,7 @@
 .sl-callout--warning.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-warning) 8%, var(--slc-surface)); }
 .sl-callout--danger.sl-fx-glass  { --slfx-fill: color-mix(in srgb, var(--slc-danger)  8%, var(--slc-surface)); }
 .sl-callout--info.sl-fx-glass    { --slfx-fill: color-mix(in srgb, var(--slc-info)    8%, var(--slc-surface)); }
-.sl-kbd.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 9%, transparent); }
+.sl-kbd.sl-fx-glass { --slfx-fill: var(--slc-raised); }
 .sl-tag--plain.sl-fx-glass { --slfx-fill: transparent; }
 /* A rule of their own, not a join to the .sl-btn/.sl-badge/.sl-field__control/
    .sl-icon-btn group above, though that group also binds transparent:
@@ -918,6 +918,9 @@
      fill back, and a primary went transparent on black. :where() keeps the
      rule at 0-1-0, where the primary's own states have always met it. */
   .sl-fx-glass:where(.sl-glass) { background-color: transparent; }
+  /* The keycap (0.31) shades its fill with a gradient, which would stay
+     opaque under the layers: it goes with the colour, on the same terms. */
+  .sl-kbd.sl-fx-glass:where(.sl-glass) { background-color: transparent; background-image: none; }
 }
 
 @supports not (backdrop-filter: blur(1px)) {

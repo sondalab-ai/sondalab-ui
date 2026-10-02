@@ -236,11 +236,11 @@
           </div>
         </aside>
         <main class="ide-main pane pane--focus" aria-label="Editor">
-          <div class="ide-tabs" role="tablist">
-            <button class="ide-tab" role="tab" aria-selected="true" data-dirty="true">${I.file}<span>resolve.ts</span><i class="ide-tab__dot" aria-label="unsaved"></i></button>
-            <button class="ide-tab" role="tab" aria-selected="false">${I.file}<span>cache.ts</span></button>
-            <button class="ide-tab" role="tab" aria-selected="false" data-dirty="true">${I.file}<span>evidence.ts</span><i class="ide-tab__dot" aria-label="unsaved"></i></button>
-            <button class="ide-tab" role="tab" aria-selected="false">${I.agent}<span>Agent · audit</span></button>
+          <div class="ide-tabs sl-tabs__list sl-tabs--tile" role="tablist">
+            <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="true" data-dirty="true">${I.file}<span>resolve.ts</span><i class="ide-tab__dot sl-tabs__dot" aria-hidden="true"></i><span class="sr">, unsaved</span></button>
+            <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="false">${I.file}<span>cache.ts</span></button>
+            <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="false" data-dirty="true">${I.file}<span>evidence.ts</span><i class="ide-tab__dot sl-tabs__dot" aria-hidden="true"></i><span class="sr">, unsaved</span></button>
+            <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="false">${I.agent}<span>Agent · audit</span></button>
             <span class="ide-tabs__sp"></span>
             <button class="sl-icon-btn ide-ghost" aria-label="Split">${I.split}</button>
           </div>
@@ -429,6 +429,17 @@
   const stage = document.getElementById("stage");
   stage.innerHTML = { ide, settings, data, hero }[screen]();
 
+  // A shortcut on a button is the kit's in-button keycap since ui-kit 0.31: a
+  // child <kbd class="sl-kbd">, hidden from the name, with the shortcut named
+  // on the button by aria-keyshortcuts. data-key stays, because the Lumen
+  // target draws its own cap from it (screens.css hides the child there).
+  const SHORTCUT = { "⌘": "Meta+", "⏎": "Enter" };
+  stage.querySelectorAll(".sl-btn[data-key]").forEach((el) => {
+    const key = el.getAttribute("data-key");
+    el.setAttribute("aria-keyshortcuts", [...key].map((c) => SHORTCUT[c] ?? c).join("").replace(/\+$/, ""));
+    el.insertAdjacentHTML("beforeend", `<kbd class="sl-kbd" aria-hidden="true">${key}</kbd>`);
+  });
+
   // stagger index for entrance motion
   stage.querySelectorAll(".ide-tree__row, .ide-pal__row, .ide-tool, .sl-table tbody tr, .set-sec, .web-line, .web-card, .ide-block, .ide-tab").forEach((el) => {
     el.style.setProperty("--i", [...el.parentElement.children].indexOf(el));
@@ -521,11 +532,21 @@
       const g = groundOf(el), cs = getComputedStyle(el), c = rgba(cs.color); c[3] *= opac(el);
       out.text.push([name, ratio(over(c, g), g), parseFloat(cs.fontSize)]);
     }
-    // keycaps drawn as ::after on a [data-key] control: the cap's text on the cap's own fill over the control
+    // keycaps on a [data-key] control: the cap's text on the cap's own fill over the control.
+    // The target draws it as ::after; the kit (0.31) as a child <kbd class="sl-kbd">.
     [...stage.querySelectorAll("[data-key]")].filter((el) => !el.closest(".web-shot")).slice(0, MAX_KEYCAPS).forEach((el) => {
-      const a = getComputedStyle(el, "::after"); if (!a.content || a.content === "none" || a.display === "none") return;
-      const g = over(rgba(a.backgroundColor), groundOf(el)), c = over(rgba(a.color), g);
-      out.text.push(["Keycap in " + (el.textContent.trim().split(/\s/)[0] || "button"), ratio(c, g), parseFloat(a.fontSize)]);
+      const label = [...el.childNodes].filter((n) => !(n.nodeType === 1 && n.matches(".sl-kbd"))).map((n) => n.textContent).join("");
+      const name = "Keycap in " + (label.trim().split(/\s/)[0] || "button");
+      const a = getComputedStyle(el, "::after");
+      if (a.content && a.content !== "none" && a.display !== "none") {
+        const g = over(rgba(a.backgroundColor), groundOf(el)), c = over(rgba(a.color), g);
+        out.text.push([name, ratio(c, g), parseFloat(a.fontSize)]);
+        return;
+      }
+      const k = el.querySelector(":scope > .sl-kbd"), ks = k && getComputedStyle(k);
+      if (!ks || ks.display === "none") return;
+      const g = over(rgba(ks.backgroundColor), groundOf(el)), c = over(rgba(ks.color), g);
+      out.text.push([name, ratio(c, g), parseFloat(ks.fontSize)]);
     });
     // labels a direction draws as generated content on a filled ground
     for (const [name, sel, pe] of [["Switch state glyph", ".sl-switch__input:checked + .sl-switch__track", "::before"], ["Count badge", ".ide-activity__btn[data-count]", "::after"]]) {
