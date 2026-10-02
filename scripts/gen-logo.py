@@ -46,7 +46,9 @@ AVATAR_CIRCLE = 0.80
 
 FONTS = {
     "fraunces.ttf": "https://github.com/google/fonts/raw/main/ofl/fraunces/Fraunces%5BSOFT%2CWONK%2Copsz%2Cwght%5D.ttf",
-    "martian.ttf": "https://github.com/google/fonts/raw/main/ofl/martianmono/MartianMono%5Bwdth%2Cwght%5D.ttf",
+    # Pinned to the google/fonts commit the kit's geist-mono-latin.woff2 was cut
+    # from (Geist Mono 1.701), so the lockup and the UI's mono are one cut.
+    "geistmono.ttf": "https://github.com/google/fonts/raw/9e25e2ba265e5298f70f6182dd4e8a3ebf1b9123/ofl/geistmono/GeistMono%5Bwght%5D.ttf",
 }
 
 
@@ -203,8 +205,10 @@ if __name__ == "__main__":
     # Primary wordmark: sondalab. — Fraunces 500, display optical size; dot amber.
     # tracking -0.05em matches the identity board's tight letter-spacing.
     build_svg(font_path("fraunces.ttf"), {"wght": 500, "opsz": 144}, "sondalab.", 8, "sondalab-wordmark.svg", tracking_em=-0.05)
-    # Compact lockup: SONDA·LAB — Martian Mono 300; middle dot amber.
-    build_svg(font_path("martian.ttf"), {"wght": 300}, "SONDA·LAB", 5, "sondalab-lockup.svg")
+    # Compact lockup: SONDA·LAB — Geist Mono 300 (ui-kit 0.30; Martian Mono 300
+    # before), tracked 0.2em as the identity board's brandline and L3 set it;
+    # middle dot amber.
+    build_svg(font_path("geistmono.ttf"), {"wght": 300}, "SONDA·LAB", 5, "sondalab-lockup.svg", tracking_em=0.2)
     # Social avatar: the `s.` monogram, same Fraunces cut as the wordmark. The
     # dot is optically enlarged — at 32px the natural period is the first thing
     # to disappear, and the dot is the mark — then given back the space that

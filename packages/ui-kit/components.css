@@ -1447,10 +1447,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 
 /* The brand is typographic — there is no pictorial mark. These three classes
    must render as packages/ui-kit/assets/sondalab-*.svg does; where they
-   disagree, the asset is right and the CSS is the defect. One open exception
-   since 0.30: the lockup follows the mono role, now Geist Mono, while
-   sondalab-lockup.svg is still cut in Martian Mono 300 -- the asset is
-   re-cut (scripts/gen-logo.py) once the owner signs off a Geist Mono lockup. */
+   disagree, the asset is right and the CSS is the defect. Since 0.30 the
+   lockup is Geist Mono 300 tracked 0.2em, in the asset (scripts/gen-logo.py)
+   and here alike. */
 .sl-wordmark {
   /* The brand face, not the display role: since 0.30 display is Geist and
      Fraunces is the wordmark's and the monogram's alone. */
@@ -1464,6 +1463,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-lockup {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
   font-size: var(--sl-text-xs, 0.75rem);
+  font-weight: 300;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--slc-text);
