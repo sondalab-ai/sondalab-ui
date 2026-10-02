@@ -105,10 +105,11 @@ test("the primary button's chrome survives a background + border reset", () => {
   const primary = [...bare.matchAll(/\.sl-btn--primary(?:[:.[][^{,\s]*)?\s*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
   assert.ok(primary.includes("background-color"), "parser found the primary rules");
   assert.doesNotMatch(primary, /box-shadow/);
-  // No image at all since the spectrum rim went (owner, 2026-10-02): the fill
-  // and the two border colours are the whole primary, all reset by that pair.
+  // No spectrum image since the rim went (owner, 2026-10-02). The one image
+  // is the foot (0.32), a layer of the primary's own edge, which the
+  // `background` shorthand of that reset strips with the fill.
   const images = [...primary.matchAll(/background-image:\s*([^;]+)/g)].map((m) => m[1].trim());
-  assert.deepEqual(images, []);
+  assert.deepEqual(images, ["linear-gradient(var(--_sl-foot-color, var(--_sl-fill-edge)), var(--_sl-foot-color, var(--_sl-fill-edge)))"]);
   // …and on glass the family replaces the primary's two border colours with
   // the one control edge every glass button shares.
   const fx = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");

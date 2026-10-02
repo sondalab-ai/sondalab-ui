@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, toHex, toSrgb } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, toHex, toSrgb, within } from "./lib/css-color.mjs";
 
 // Page-wide defaults (0.27.1): selected text and the scrollbar thumb, measured
 // from the rules components.css actually declares, evaluated over each theme's
@@ -28,12 +28,12 @@ function rootEnv(theme) {
   for (const [k, v] of declarations(raw, sels)) env.set(k, v);
   return env;
 }
-/** A child of the band: its declarations, with currentColor bound to the band's ink. */
+/** A child of the band: its declarations, with currentColor bound to the
+ *  band's ink, computed over what it inherits from :root. */
 function bandEnv(theme) {
   const env = rootEnv(theme);
   const ink = toHex(evaluate("var(--slc-canvas)", env));
-  for (const [k, v] of declarations(raw, [".sl-invert > *"])) env.set(k, v.replace(/currentColor/g, ink));
-  return env;
+  return within(env, declarations(raw, [".sl-invert > *"]).map(([k, v]) => [k, v.replace(/currentColor/g, ink)]));
 }
 const Y = (c) => { const [r, g, b] = c.lin.map((v) => Math.min(1, Math.max(0, v))); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [hi, lo] = [Y(a), Y(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };

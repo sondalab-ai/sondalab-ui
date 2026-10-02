@@ -88,15 +88,20 @@
      default, so each of those is the accent and each role below is the
      accent's own (the theme's hover, active and label, exactly as before):
      read it as var(--slc-accent-fill, var(--slc-accent)). A product whose
-     accent cannot carry a label at 4.5:1 sets this one role where the theme
-     is set, on the root (spexr: its registered fill, #4c58e9, where white on
-     the #5b6cff accent read 4.17:1), and the label, the two states and the
-     edge (--slc-edge-accent, above) follow from it. The private values
-     reference it with no fallback, so they are invalid until it is set and
-     each public role falls back to the accent's step. Set, the label is the
-     pole that contrasts with the fill and the states are the light theme's
-     mixes on every theme (the registry's spexr fill note). High contrast
-     owns its accent and resets it (below). */
+     accent cannot carry a label at 4.5:1 sets this one role (spexr: its
+     registered fill, #4c58e9, where white on the #5b6cff accent read
+     4.17:1), and the label, the two states and the edge (--slc-edge-accent,
+     above) follow from it. The private values reference it with no
+     fallback, so they are invalid until it is set and each public role
+     falls back to the accent's step. Set, the label is the pole that
+     contrasts with the fill and the states are the light theme's mixes on
+     every theme (the registry's spexr fill note). High contrast owns its
+     accent and resets it (below).
+     These public roles compute HERE, on :root, so they follow a fill set on
+     the root only: they are for a fill a product draws itself (a count
+     badge). The kit's own filled controls compute the same derivations on
+     themselves (the fill set, at the primary), so on them the role works at
+     any scope -- a subtree, a section in another product's hue. */
   --slc-on-accent-fill:     var(--_sl-on-accent-fill, var(--slc-on-accent));
   --slc-accent-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
   --slc-accent-fill-active: var(--_sl-accent-fill-active, var(--slc-accent-active));
@@ -544,51 +549,74 @@
   color: var(--slc-text);
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+  /* background-color, not the shorthand: the primary's foot is a background
+     layer that moves to the top when pressed, and must not slide there. */
+  transition: background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
               transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
 .sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-/* THE PRIMARY (Lumen, 0.32): a flat key standing on its own base. Its paint
-   is one private set, so the danger tone (below) and a product's accent fill
-   (--slc-accent-fill, :root) swap the set and nothing else; glass reads the
-   same set (effects.css).
+/* THE FILL SET (0.32) -- what an accent fill that carries a label is
+   painted with: the primary, a checked check, radio or switch.
      --_sl-fill / -hover / -active  the fill at rest, hovered, pressed
-     --_sl-on-fill                   the label on it
-     --_sl-fill-edge                 the fill in shade: the edge, all round
-   THE FOOT. The bottom border is 1px deeper (--_sl-foot) in the same edge:
-   a key's base, which is where its depth comes from -- not a lit top line
-   (it went with the owner's Lumen default, 2026-10-02) and never a
-   box-shadow, which a consumer stripping a button to text with `background:
-   transparent; border: 0` would not think to reset (the border it does).
-   The foot takes its pixel from the padding under the label, so the button
-   stays 32px (24px small): 1 + 8 + 14 + 7 + 2. Pressed, the foot moves to
-   the top: the label sinks a pixel and the height holds (the squash owns
-   `transform`). Glass stands the foot down (--_sl-foot: 0, effects.css). */
-.sl-btn--primary {
+     --_sl-on-fill                   the label (the tick, the dot, the knob)
+     --_sl-fill-edge                 the fill in shade: its edge and its foot
+   Declared ON THE CONTROL, at zero weight, never only on :root: a custom
+   property computes where it is declared, so a role derived on :root does
+   not follow an accent re-bound on a subtree (a product page that paints
+   one section in another product's hue) or a product's --slc-accent-fill
+   set below the root. Here each one reads the control's own accent, steps
+   and label where no fill is set, and derives from the fill where one is.
+   --slc-edge-accent is re-declared here for the same reason. The private
+   derivations reference --slc-accent-fill with no fallback, so they are
+   invalid until it is set, and each fallback is the element's own role.
+   The danger tone swaps the set (below); glass reads it (effects.css). */
+:where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
+  --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
+  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, black);
+  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, black);
+  --slc-edge-accent: oklch(from var(--slc-accent-fill, var(--slc-accent)) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --_sl-fill:        var(--slc-accent-fill, var(--slc-accent));
-  --_sl-fill-hover:  var(--slc-accent-fill-hover);
-  --_sl-fill-active: var(--slc-accent-fill-active);
-  --_sl-on-fill:     var(--slc-on-accent-fill);
+  --_sl-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
+  --_sl-fill-active: var(--_sl-accent-fill-active, var(--slc-accent-active));
+  --_sl-on-fill:     var(--_sl-on-accent-fill, var(--slc-on-accent));
   --_sl-fill-edge:   var(--slc-edge-accent);
+}
+/* THE PRIMARY (Lumen, 0.32): a flat key standing on its own base, a FOOT --
+   one more pixel of its edge (--_sl-foot) along the bottom, inside the 1px
+   border, so the bottom reads 2px deep in the fill's shade. It is a
+   background layer, not a border width and not padding: the box is exactly
+   as a plain button's, so a consumer's own padding or font size gives the
+   same height on a primary as beside it, foot or no foot, and nothing in
+   the row has to know the foot is there. It is not a box-shadow either: a
+   consumer stripping a button to text with `background: transparent;
+   border: 0` strips the foot with the fill. The lit top line went with the
+   owner's Lumen default (2026-10-02). Pressed, the foot moves to the top
+   and the key sinks by it (`translate`, so the squash keeps `transform`).
+   Under keyboard focus the foot takes the ring's colour, as the border does.
+   A built glass pane stands it down (--_sl-foot: 0, effects.css). */
+.sl-btn--primary {
   --_sl-foot: 1px;
   background-color: var(--_sl-fill);
+  background-image: linear-gradient(var(--_sl-foot-color, var(--_sl-fill-edge)), var(--_sl-foot-color, var(--_sl-fill-edge)));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% var(--_sl-foot);
   color: var(--_sl-on-fill);
   /* The edge is the fill's own, on every theme: the light theme's spectrum
      rim is gone (owner, 2026-10-02: a filled control's edge is "a vibrant
      colour that goes along with the accent"). */
   border-color: var(--_sl-fill-edge);
-  border-bottom-width: calc(1px + var(--_sl-foot));
-  padding-bottom: calc(0.5rem - var(--_sl-foot));
 }
 .sl-btn--primary:hover:not(:disabled)  { background-color: var(--_sl-fill-hover); }
 .sl-btn--primary:active:not(:disabled) {
   background-color: var(--_sl-fill-active);
-  border-top-width: calc(1px + var(--_sl-foot));
-  border-bottom-width: 1px;
+  background-position: 0 0;
+  translate: 0 var(--_sl-foot);
 }
+.sl-btn--primary:focus-visible { --_sl-foot-color: var(--slc-focus); }
 /* THE SECONDARY KEY (Lumen, 0.32): the raised rung in the one control edge,
    lit along its top inside the edge and standing on a short cast -- the
    tile's recipe without its ring, since the edge is the ring. Hover lifts
@@ -602,9 +630,6 @@
 .sl-btn--ghost:hover:not(:disabled)  { background: var(--slc-tile); border-color: var(--slc-edge-control-hover); }
 /* 24px: 12px line + 2 x 5px + 2px border (was 25.2). */
 .sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.3125rem 0.6rem; }
-/* The small shorthand above lands after the primary's foot and weighs the
-   same: the small primary takes its pixel again (1 + 5 + 12 + 4 + 2 = 24). */
-.sl-btn--primary.sl-btn--sm { padding-bottom: calc(0.3125rem - var(--_sl-foot)); }
 
 /* Toggle state — an on/off button is a plain or ghost button, or an icon
    button, carrying aria-pressed. The CSS reads the attribute, so the
@@ -953,9 +978,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 
 .sl-check__input:checked + .sl-check__box,
 .sl-radio__input:checked + .sl-radio__box {
-  --_sl-depth: inset 0 -1.5px 0 var(--slc-edge-accent), 0 0 10px -2px color-mix(in srgb, var(--slc-accent-fill, var(--slc-accent)) calc(var(--slc-glow) * 110%), transparent);
-  background: var(--slc-accent-fill, var(--slc-accent));
-  border-color: var(--slc-edge-accent);
+  --_sl-depth: inset 0 -1.5px 0 var(--_sl-fill-edge), 0 0 10px -2px color-mix(in srgb, var(--_sl-fill) calc(var(--slc-glow) * 110%), transparent);
+  background: var(--_sl-fill);
+  border-color: var(--_sl-fill-edge);
 }
 
 /* The tick is a rotated border corner — no asset, no data URI, nothing to
@@ -967,7 +992,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   margin: auto;
   width: 0.3rem;
   height: 0.55rem;
-  border: solid var(--slc-on-accent-fill);
+  border: solid var(--_sl-on-fill);
   border-width: 0 1.5px 1.5px 0;
   transform: translateY(-1px) rotate(45deg);
   opacity: 0;
@@ -980,7 +1005,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 50%;
-  background: var(--slc-on-accent-fill);
+  background: var(--_sl-on-fill);
   opacity: 0;
 }
 .sl-check__input:checked + .sl-check__box::after,
@@ -994,9 +1019,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    a screen reader announces the native state, so an aria-checked="mixed"
    styling hook would show a state nobody hears. */
 .sl-check__input:indeterminate + .sl-check__box {
-  --_sl-depth: inset 0 -1.5px 0 var(--slc-edge-accent), 0 0 10px -2px color-mix(in srgb, var(--slc-accent-fill, var(--slc-accent)) calc(var(--slc-glow) * 110%), transparent);
-  background: var(--slc-accent-fill, var(--slc-accent));
-  border-color: var(--slc-edge-accent);
+  --_sl-depth: inset 0 -1.5px 0 var(--_sl-fill-edge), 0 0 10px -2px color-mix(in srgb, var(--_sl-fill) calc(var(--slc-glow) * 110%), transparent);
+  background: var(--_sl-fill);
+  border-color: var(--_sl-fill-edge);
 }
 .sl-check__input:indeterminate + .sl-check__box::after {
   width: 0.5rem;
@@ -1060,12 +1085,12 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-switch__input:checked + .sl-switch__track {
-  --_sl-depth: inset 0 -1.5px 0 var(--slc-edge-accent), 0 0 12px -2px color-mix(in srgb, var(--slc-accent-fill, var(--slc-accent)) calc(var(--slc-glow) * 120%), transparent);
-  background: var(--slc-accent-fill, var(--slc-accent));
-  border-color: var(--slc-edge-accent);
+  --_sl-depth: inset 0 -1.5px 0 var(--_sl-fill-edge), 0 0 12px -2px color-mix(in srgb, var(--_sl-fill) calc(var(--slc-glow) * 120%), transparent);
+  background: var(--_sl-fill);
+  border-color: var(--_sl-fill-edge);
 }
 .sl-switch__input:checked + .sl-switch__track::after {
-  background: var(--slc-on-accent-fill);
+  background: var(--_sl-on-fill);
   transform: translateY(-50%) translateX(0.875rem);
 }
 /* Focused while checked, the border is the ring's: the checked rules above
@@ -1518,7 +1543,12 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      live at the element, so a Tier-B mapping on a nested region still lands. */
   --slc-success-text:  oklch(from var(--slc-success) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
   --slc-warning-text:  oklch(from var(--slc-warning) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
-  --slc-danger-text:   oklch(from var(--slc-danger)  min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
+  /* The danger is floored higher (0.32): it is the one status a control
+     carries as text on a card in the band (the danger tone), and at 0.68 it
+     read 3.52:1 on a tile there, 3.98 on a raised surface (light theme). At
+     0.76 it reads at least 4.57 on the band, a card, a raised surface and a
+     tile, on every theme; the cap still governs dark and high contrast. */
+  --slc-danger-text:   oklch(from var(--slc-danger)  min(max(l, 0.76), var(--sl-accent-band-text-lmax, 1)) c h);
   --slc-info-text:     oklch(from var(--slc-info)    min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
   /* Edges in shade were resolved against the page's grounds on :root; here
      the grounds are currentColor washes, so the band keeps its re-derived
@@ -1754,12 +1784,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
              rest; mixing toward black, as the accent does, took a dark
              label under 4.5:1 on dark.
      neutral .sl-btn--danger (plain or ghost) and .sl-icon-btn--danger take
-             the danger ink on a 12% wash of itself -- the danger badge's
-             recipe, which holds the ink at 4.5:1 on every ground and inside
-             the band (the secondary's raised rung did not: 3.98:1 in the
-             light theme's band) -- and a danger edge, so a lone destructive
-             button never reads as disabled; hovered, they fill with the
-             danger and its label. The secondary keeps its depth.
+             the danger ink on a 12% wash of itself, the danger badge's
+             recipe, and a danger edge, so a lone destructive button never
+             reads as disabled; hovered, they fill with the danger and its
+             label. The secondary keeps its depth. On the page the ink holds
+             4.5:1 on that wash over the canvas, a surface, a raised surface
+             and a tile. Inside an inversion band the wash goes (below): on a
+             card or a tile in the band it took the ink under 4.5:1 (3.05 on
+             a tile, light theme), where the bare band ink, floored at 0.76
+             there, reads at least 4.57 on all four grounds.
    The focus ring, the border that joins it and the halo are the danger's
    too (--slc-focus), as on an invalid field: a danger edge inside an accent
    ring is two colours on one edge. The ink is the band-safe one where a
@@ -1781,6 +1814,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   background-color: color-mix(in srgb, currentColor 12%, transparent);
   border-color: var(--slc-danger-text, var(--slc-danger));
 }
+.sl-invert .sl-btn--danger:not(.sl-btn--primary),
+.sl-invert .sl-icon-btn--danger { background-color: transparent; }
 .sl-btn--danger:not(.sl-btn--primary):hover:not(:disabled),
 .sl-icon-btn--danger:hover:not(:disabled) {
   color: var(--slc-on-danger);
@@ -2300,6 +2335,13 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   /* High contrast owns its accent outright: a product's accent fill (0.32)
      does not reach it, and every labelled fill is the theme's yellow. */
   --slc-accent-fill:  initial;
+}
+/* The fill set is declared on the controls themselves (0.32), so the remap
+   above is repeated there: a filled control's edge is the accent, and a
+   product's accent fill does not reach high contrast at any scope. */
+:root[data-sl-theme="high-contrast"] :where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
+  --slc-accent-fill: initial;
+  --slc-edge-accent: var(--slc-accent);
 }
 /* The secondary key's own depth (a white lit line inside the white edge, a
    cast on black) gives way to its drawn edge, like every recipe here. */

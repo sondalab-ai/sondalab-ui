@@ -168,11 +168,19 @@ test("every glass control carries the two-line edge, with or without mount()", (
 // its well up, an aurora field keeps it.
 test("glass owns a control's depth: the foot and the well stand down, the halo is appended", () => {
   const edge = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass:where\(:root:not\(\[data-sl-theme="high-contrast"\]\) \*\):where\(:not\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\) \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(edge, /--_sl-foot:\s*0px/, "the foot stands down on glass, gated like the edge");
+  assert.doesNotMatch(edge, /--_sl-foot/, "the foot stands down only where the pane is built (below), not on every glass edge");
+  assert.match(effects, /@supports \(backdrop-filter: blur\(1px\)\) \{[\s\S]*\.sl-btn--primary\.sl-fx-glass:where\(\.sl-glass\)[^{]*\{ --_sl-foot: 0px; \}/, "a built pane stands the foot down");
   assert.match(edge, /box-shadow:\s*inset 0 0 0 1px var\(--slfx-control-edge-soft, var\(--slfx-edge-soft\)\);/, "the glass edge replaces the control's depth");
   const focus = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass\.sl-fx-glass:focus-visible \{([^}]*)\}/)?.[1] ?? "";
   assert.match(focus, /box-shadow:\s*inset 0 0 0 1px var\(--slfx-control-edge-soft, var\(--slfx-edge-soft\)\), var\(--_sl-halo, 0 0 transparent\)/);
-  assert.doesNotMatch(effects, /!important[^;]*--_sl|--_sl-halo[^;]*!important/, "the halo needs no !important");
+  // The halo needs no !important to compose. The one place it carries one is
+  // the kill switches' restore, which must outrank their own !important.
+  const forced = [...effects.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => /--_sl-(?:halo|depth)[^;]*!important/.test(m[2]));
+  for (const m of forced) {
+    for (const part of m[1].split(/,(?![^(]*\))/).map((s) => s.trim())) {
+      assert.match(part, /^(?::root\[data-sl-theme="high-contrast"\]|:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\))/, `an !important halo or depth outside the kill switches' restore: ${part}`);
+    }
+  }
   assert.match(effects, /\.sl-field__control\.sl-fx-glass--field:where\([^{]*\.sl-field__input \{\s*--_sl-depth:\s*0 0 transparent;\s*\}/, "a glass field gives up its well");
   assert.match(effects, /\.sl-field__input \{\s*box-shadow: inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-control, var\(--slfx-edge-soft\)\) 50%, transparent\), var\(--_sl-depth, 0 0 transparent\);/, "an aurora field keeps its well under the soft line");
 });

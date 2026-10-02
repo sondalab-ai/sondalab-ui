@@ -219,6 +219,23 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
   box-shadow: var(--slc-depth-flat) !important;
 }
+/* ...nor a control's own depth and focus halo (components.css, 0.32): a
+   control writes its resting shadow into --_sl-depth and its focus rule adds
+   --_sl-halo, and the kill above took both off every control that wears an
+   effect -- the secondary key's lit line and cast, and the halo of every
+   glass button in an opt-out region (a product's power-save switch, say).
+   They are the control's, not the effect's, so they come back as the kit
+   paints them, outranking the kill, both !important. The halo is still off
+   in high contrast and under forced colours: it is drawn at --slc-glow's
+   strength, which is 0 there. */
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--_sl-depth, 0 0 transparent) !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
+  box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent) !important;
+}
 
 /* The goo's drift is the one thing this family animates, and it animates the
    MEMBER — an ordinary card or wrapper that keeps its own chrome. So the
@@ -776,14 +793,13 @@
    of the neutral strong/default pair, which read as a grey line on colour. */
 /* GLASS OWNS A CONTROL'S DEPTH (0.32). The box-shadow below replaces the
    control's own (components.css writes it into --_sl-depth: the secondary
-   key's lit line and cast), and the primary's foot stands down
-   (--_sl-foot: 0, so its bottom border and padding are the plain ones
-   again): the material is the depth here, one edge and one soft line, the
-   same on every glass control. Under keyboard focus the halo is appended
-   (below). High contrast and an opt-out region keep the shipped control,
-   foot and depth included. */
+   key's lit line and cast): the material is the depth here, one edge and
+   one soft line, the same on every glass control. Under keyboard focus the
+   halo is appended (below). The primary's foot stands down only where the
+   pane is actually built (the @supports block further down). High contrast
+   and an opt-out region keep the shipped control: its foot, its depth and
+   its halo (the kill switches' restore, at the top of this file). */
 :is(.sl-btn, .sl-icon-btn).sl-fx-glass:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
-  --_sl-foot: 0px;
   border-color: var(--slfx-control-edge, var(--slfx-edge-mid));
   box-shadow: inset 0 0 0 1px var(--slfx-control-edge-soft, var(--slfx-edge-soft));
   /* Flat, like the field beside it (the owner, 2026-09-29: "make the buttons
@@ -864,9 +880,11 @@
 /* .sl-fx-glass twice: 0-4-0, so it also outranks the pressed toggle's edge
    (.sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary)). */
 /* The halo (components.css, 0.32) is appended to the glass edge's soft
-   line here, since the edge rule above outranks the kit's focus rule. High
-   contrast and an opt-out region take every glass host's box-shadow away
-   (the kill switches) and draw no halo there anyway. */
+   line here, since the edge rule above outranks the kit's focus rule. In
+   high contrast and an opt-out region the kill switches take this
+   box-shadow away and their restore (top of this file) paints the shipped
+   control's own depth and halo instead (no halo in high contrast, where
+   --slc-glow is 0). */
 :is(.sl-btn, .sl-icon-btn).sl-fx-glass.sl-fx-glass:focus-visible {
   --slfx-control-edge: var(--slc-focus);
   box-shadow: inset 0 0 0 1px var(--slfx-control-edge-soft, var(--slfx-edge-soft)), var(--_sl-halo, 0 0 transparent);
@@ -977,6 +995,11 @@
      tone's hover fill stays: it is the state, and it carries the label; so
      does a pressed toggle's wash, which it keeps at rest too.) */
   :is(.sl-btn--ghost, .sl-icon-btn):not(.sl-btn--danger, .sl-icon-btn--danger, [aria-pressed="true"]).sl-fx-glass:where(.sl-glass):hover:not(:disabled) { background-color: transparent; }
+  /* The primary's foot (components.css, 0.32) stands down where the pane is
+     built: the material is its depth. Without the layers -- no script, no
+     backdrop-filter, high contrast, an opt-out region -- the primary is its
+     own opaque key again, so it keeps its foot. */
+  .sl-btn--primary.sl-fx-glass:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) { --_sl-foot: 0px; }
   /* The keycap (0.31) shades its fill with a gradient, which would stay
      opaque under the layers: it goes with the colour, on the same terms. */
   .sl-kbd.sl-fx-glass:where(.sl-glass) { background-color: transparent; background-image: none; }
@@ -1540,17 +1563,8 @@
   --slfx-rim-out: var(--slfx-ring-w);
   --slfx-bloom-out: var(--slfx-bloom-w);
 }
-/* Measured from the padding box, past the 1px border. A primary's foot
-   (components.css, 0.32) makes the bottom border 1px + --_sl-foot, and on
-   press the foot is the top one: the rim steps past the deeper side, so it
-   still hugs the fill instead of lying over the foot. */
 .sl-fx-aurora--rim::after {
   inset: calc(-1px - var(--slfx-ring-w));
-  bottom: calc(-1px - var(--_sl-foot, 0px) - var(--slfx-ring-w));
-}
-.sl-fx-aurora--rim:active:not(:disabled)::after {
-  top: calc(-1px - var(--_sl-foot, 0px) - var(--slfx-ring-w));
-  bottom: calc(-1px - var(--slfx-ring-w));
 }
 :root:not([data-sl-theme="high-contrast"]) .sl-fx-aurora--rim[data-sl-fx-live="busy"]:disabled:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   opacity: 1;

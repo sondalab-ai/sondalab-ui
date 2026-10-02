@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, toHex, toSrgb } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, toHex, toSrgb, within } from "./lib/css-color.mjs";
 
 // Lumen controls (ui-kit 0.32): the primary's foot, the focus halo composed
 // with each control's depth, the danger tone and the accent-fill role,
@@ -47,60 +47,55 @@ function rootEnv(theme, product = "default") {
   for (const [k, v] of declarations(raw, sels)) env.set(k, v);
   return env;
 }
-/** A child of the inversion band, currentColor bound to the band's ink. */
+/** A child of the inversion band, currentColor bound to the band's ink,
+ *  computed over what it inherits from :root. */
 function bandEnv(theme, product) {
   const env = rootEnv(theme, product);
   const ink = toHex(evaluate("var(--slc-canvas)", env));
-  for (const [k, v] of declarations(raw, [".sl-invert > *"])) env.set(k, v.replace(/currentColor/g, ink));
-  return env;
+  return within(env, declarations(raw, [".sl-invert > *"]).map(([k, v]) => [k, v.replace(/currentColor/g, ink)]));
 }
-/** An element's own declarations over an env, in the order given. */
-const own = (env, ...sels) => { for (const s of sels) for (const [k, v] of declarations(raw, [s])) env.set(k, v); return env; };
+/** An element under `env` (a :root map or an element's computed scope) that
+ *  matches every selector given: their declarations in that order, computed
+ *  on the element, over the values it inherits. */
+const own = (env, ...sels) => within(env, sels.flatMap((s) => declarations(raw, [s])));
 const Y = (c) => { const [r, g, b] = c.lin.map((v) => Math.min(1, Math.max(0, v))); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [hi, lo] = [Y(a), Y(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
 const over = (top, under) => {
   const t = toSrgb(top), u = toSrgb(under);
   return fromSrgb(t.map((v, i) => v * top.alpha + u[i] * (1 - top.alpha)));
 };
-const px = (v) => (v.endsWith("rem") ? parseFloat(v) * 16 : parseFloat(v));
+
 const CASES = [...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [t, p])), ["high-contrast", "default"]];
 
 // ── the foot ────────────────────────────────────────────────────────────────
 
-test("the primary stands on a foot and stays 32px (24px small), at rest, pressed and on glass", () => {
-  const btn = rule(".sl-btn"), sm = rule(".sl-btn--sm"), primary = rule(".sl-btn--primary");
-  const press = rule(".sl-btn--primary:active:not(:disabled)"), smPrimary = rule(".sl-btn--primary.sl-btn--sm");
-  assert.equal(decl(btn, "line-height"), "1");
-  assert.equal(decl(btn, "border"), "1px solid transparent");
-  const [padTop] = decl(btn, "padding").split(" ").map(px);
-  const [smTop] = decl(sm, "padding").split(" ").map(px);
-  assert.equal(decl(primary, "--_sl-foot"), "1px");
-  assert.equal(decl(primary, "border-bottom-width"), "calc(1px + var(--_sl-foot))");
-  assert.equal(decl(primary, "padding-bottom"), `calc(${decl(btn, "padding").split(" ")[0]} - var(--_sl-foot))`);
-  assert.equal(decl(smPrimary, "padding-bottom"), `calc(${decl(sm, "padding").split(" ")[0]} - var(--_sl-foot))`);
-  // pressed: the foot moves to the top, the label sinks a pixel, no transform
-  assert.equal(decl(press, "border-top-width"), "calc(1px + var(--_sl-foot))");
-  assert.equal(decl(press, "border-bottom-width"), "1px");
-  assert.equal(decl(press, "transform"), undefined, "the squash owns transform");
-  // glass stands the foot down; so does a button group
-  const glassEdge = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass:where\(:root:not\(\[data-sl-theme="high-contrast"\]\) \*\):where\(:not\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\) \{([^}]*)\}/)?.[1] ?? "";
-  assert.equal(decl(glassEdge, "--_sl-foot"), "0px");
-  assert.equal(decl(rule(".sl-btn-group > .sl-btn"), "--_sl-foot"), "0px");
-  for (const foot of [1, 0]) {
-    for (const [name, line, top, row] of [["button", 14, padTop, 32], ["small", 12, smTop, 24]]) {
-      const rest = 1 + top + line + (top - foot) + (1 + foot);
-      const pressed = (1 + foot) + top + line + (top - foot) + 1;
-      assert.equal(rest, row, `${name} at rest, foot ${foot}px`);
-      assert.equal(pressed, row, `${name} pressed, foot ${foot}px`);
-    }
-  }
-  // the foot is a border, so a consumer's border reset takes it with the rest
-  assert.doesNotMatch(primary, /box-shadow/);
-});
+// The fill set lives on the controls that paint it (0.32, review finding B1).
+const FILL_SET = ":where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track)";
+const PRIMARY = [FILL_SET, ".sl-btn--primary"];
 
-test("an aurora rim on a footed primary steps past the deeper side, at rest and pressed", () => {
-  assert.match(effects, /\.sl-fx-aurora--rim::after \{\s*inset: calc\(-1px - var\(--slfx-ring-w\)\);\s*bottom: calc\(-1px - var\(--_sl-foot, 0px\) - var\(--slfx-ring-w\)\);/);
-  assert.match(effects, /\.sl-fx-aurora--rim:active:not\(:disabled\)::after \{\s*top: calc\(-1px - var\(--_sl-foot, 0px\) - var\(--slfx-ring-w\)\);\s*bottom: calc\(-1px - var\(--slfx-ring-w\)\);/);
+// The rendered heights, with the kit's padding and with a consumer's, in every
+// context and state, are measured through the cascade in
+// controls-cascade.test.mjs; this checks the foot's own shape.
+test("the primary's foot is a background layer of its edge, standing down on a built glass pane and in a group", () => {
+  const primary = rule(".sl-btn--primary");
+  assert.equal(decl(primary, "--_sl-foot"), "1px");
+  assert.equal(decl(primary, "background-image"), "linear-gradient(var(--_sl-foot-color, var(--_sl-fill-edge)), var(--_sl-foot-color, var(--_sl-fill-edge)))");
+  assert.equal(decl(primary, "background-size"), "100% var(--_sl-foot)");
+  assert.equal(decl(primary, "background-position"), "0 100%");
+  assert.equal(decl(primary, "background-repeat"), "no-repeat");
+  for (const p of ["border-bottom-width", "border-top-width", "padding-bottom", "padding", "box-shadow"]) assert.equal(decl(primary, p), undefined, `no ${p}: the box is a plain button's`);
+  assert.doesNotMatch(css, /\.sl-btn--primary\.sl-btn--sm \{/, "no small-primary padding rule to outrank a consumer's");
+  const press = rule(".sl-btn--primary:active:not(:disabled)");
+  assert.equal(decl(press, "background-position"), "0 0");
+  assert.equal(decl(press, "translate"), "0 var(--_sl-foot)");
+  assert.equal(decl(press, "transform"), undefined, "the squash owns transform");
+  assert.equal(decl(rule(".sl-btn--primary:focus-visible"), "--_sl-foot-color"), "var(--slc-focus)", "under focus the foot is the ring's, as the border is");
+  // the foot must not slide to the top when pressed: only the colour transitions
+  assert.match(decl(rule(".sl-btn"), "transition"), /^background-color /);
+  assert.equal(decl(rule(".sl-btn-group > .sl-btn"), "--_sl-foot"), "0px");
+  const glass = effects.slice(effects.indexOf("@supports (backdrop-filter: blur(1px))"));
+  assert.match(glass, /\.sl-btn--primary\.sl-fx-glass:where\(\.sl-glass\):where\(:root:not\(\[data-sl-theme="high-contrast"\]\) \*\):where\(:not\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\) \{ --_sl-foot: 0px; \}/, "only a built pane, where backdrop-filter works, stands the foot down");
+  assert.doesNotMatch(effects.slice(0, effects.indexOf("@supports (backdrop-filter: blur(1px))")), /--_sl-foot:\s*0px/, "nowhere else");
 });
 
 // ── the focus halo ──────────────────────────────────────────────────────────
@@ -220,7 +215,7 @@ for (const [theme, product] of CASES) {
   test(`${theme} ${product}: the danger tone reads, filled and neutral, on the page and in the band`, () => {
     const low = [];
     // filled: the label on the fill, its hover and its press
-    const f = own(rootEnv(theme, product), ".sl-btn--primary", DANGER_FILLED);
+    const f = own(rootEnv(theme, product), ...PRIMARY, DANGER_FILLED);
     const label = evaluate("var(--_sl-on-fill)", f);
     for (const p of ["--_sl-fill", "--_sl-fill-hover", "--_sl-fill-active"]) {
       const r = ratio(label, evaluate(`var(${p})`, f));
@@ -231,21 +226,26 @@ for (const [theme, product] of CASES) {
       const r = ratio(evaluate("var(--_sl-fill-edge)", f), evaluate(`var(--slc-${g})`, f));
       if (r < 3) low.push(`filled edge on ${g} ${r.toFixed(2)}`);
     }
-    // neutral: the ink on a ghost (raised) and on a plain button (its ground),
-    // the edge on the ground, and the hover label on the danger fill
-    for (const [where, env, grounds] of [
-      ["page", rootEnv(theme, product), ["canvas", "surface", "raised"].map((g) => evaluate(`var(--slc-${g})`, rootEnv(theme, product)))],
-      ...(theme === "high-contrast" ? [] : [["band", bandEnv(theme, product), [evaluate("var(--slc-text)", rootEnv(theme, product))]]]),
+    // neutral: the ink on its own fill over every ground it can stand on --
+    // the page's canvas, a card (surface), a raised surface and a tile; in
+    // the band, the bare band and its own card, raised and tile washes --
+    // the edge on that ground, and the hover label on the danger fill
+    const page = rootEnv(theme, product), band = bandEnv(theme, product);
+    const bandGround = evaluate("var(--slc-text)", page);
+    for (const [where, env, grounds, fillValue] of [
+      ["page", page, Object.fromEntries(["canvas", "surface", "raised", "tile"].map((g) => [g, evaluate(`var(--slc-${g})`, page)])), decl(rule(DANGER_NEUTRAL), "background-color")],
+      ["band", band, Object.fromEntries([["band", bandGround], ...["surface", "raised", "tile"].map((g) => [g, over(evaluate(`var(--slc-${g})`, band), bandGround)])]),
+        decl(rule(".sl-invert .sl-btn--danger:not(.sl-btn--primary), .sl-invert .sl-icon-btn--danger"), "background-color")],
     ]) {
       const ink = evaluate(decl(rule(DANGER_NEUTRAL), "color"), env);
-      // its own fill: a wash of the ink (currentColor), on whatever ground it is on
-      const wash = decl(rule(DANGER_NEUTRAL), "background-color").replace(/currentColor/g, toHex(ink));
-      for (const ground of grounds) {
-        const fill = over(evaluate(wash, env), ground);
+      // its own fill (currentColor is the ink), composited on the ground
+      const fillOf = (ground) => over(evaluate(fillValue.replace(/currentColor/g, toHex(ink)), env), ground);
+      for (const [g, ground] of Object.entries(grounds)) {
+        const fill = fillOf(ground);
         const r = ratio(over(ink, fill), fill);
-        if (r < 4.5) low.push(`${where} ink ${r.toFixed(2)}`);
+        if (r < 4.5) low.push(`${where} ink on ${g} ${r.toFixed(2)}`);
         const re = ratio(over(evaluate(decl(rule(DANGER_NEUTRAL), "border-color"), env), ground), ground);
-        if (re < 3) low.push(`${where} edge ${re.toFixed(2)}`);
+        if (re < 3) low.push(`${where} edge on ${g} ${re.toFixed(2)}`);
       }
       const hover = evaluate(decl(rule(DANGER_HOVER), "background-color"), env);
       const rh = ratio(evaluate(decl(rule(DANGER_HOVER), "color"), env), hover);
@@ -265,7 +265,7 @@ test("unset, the accent fill is the accent and every derived role is the accent'
     for (const [role, accentRole] of [["--slc-on-accent-fill", "--slc-on-accent"], ["--slc-accent-fill-hover", "--slc-accent-hover"], ["--slc-accent-fill-active", "--slc-accent-active"]]) {
       assert.equal(toHex(evaluate(`var(${role})`, env)), toHex(evaluate(`var(${accentRole})`, env)), `${theme} ${product} ${role}`);
     }
-    const p = own(rootEnv(theme, product), ".sl-btn--primary");
+    const p = own(rootEnv(theme, product), ...PRIMARY);
     assert.equal(toHex(evaluate("var(--_sl-fill)", p)), toHex(evaluate("var(--slc-accent)", p)), `${theme} ${product} primary fill`);
   }
 });
@@ -295,7 +295,7 @@ for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
       if (r < 4.5) low.push(`${p} ${r.toFixed(2)}`);
     }
     // the primary paints exactly these, and so do the switch and the boxes
-    const p = own(new Map(env), ".sl-btn--primary");
+    const p = own(new Map(env), ...PRIMARY);
     assert.equal(toHex(evaluate("var(--_sl-fill)", p)), toHex(evaluate("var(--slc-accent-fill, var(--slc-accent))", env)));
     assert.equal(toHex(evaluate("var(--_sl-on-fill)", p)), toHex(label));
     assert.deepEqual(low, []);
@@ -310,18 +310,25 @@ test("spexr's registered fill is what lifts its light label over 4.5:1 (4.17 on 
   assert.ok(ratio(evaluate("var(--slc-on-accent-fill)", env), evaluate("var(--slc-accent-fill)", env)) >= 4.5);
 });
 
-test("every labelled accent fill reads the role: primary, checked check, radio and switch", () => {
-  const FILL = "var(--slc-accent-fill, var(--slc-accent))";
-  assert.equal(decl(rule(".sl-btn--primary"), "--_sl-fill"), FILL);
+test("every labelled accent fill reads the fill set on the control: primary, checked check, radio and switch", () => {
+  const set = rule(FILL_SET);
+  assert.equal(decl(set, "--_sl-fill"), "var(--slc-accent-fill, var(--slc-accent))");
+  assert.equal(decl(set, "--_sl-fill-hover"), "var(--_sl-accent-fill-hover, var(--slc-accent-hover))");
+  assert.equal(decl(set, "--_sl-fill-active"), "var(--_sl-accent-fill-active, var(--slc-accent-active))");
+  assert.equal(decl(set, "--_sl-on-fill"), "var(--_sl-on-accent-fill, var(--slc-on-accent))");
+  assert.equal(decl(set, "--_sl-fill-edge"), "var(--slc-edge-accent)");
+  assert.match(decl(set, "--slc-edge-accent"), /^oklch\(from var\(--slc-accent-fill, var\(--slc-accent\)\) /);
   for (const sel of [".sl-check__input:checked + .sl-check__box, .sl-radio__input:checked + .sl-radio__box", ".sl-check__input:indeterminate + .sl-check__box", ".sl-switch__input:checked + .sl-switch__track"]) {
-    assert.equal(decl(rule(sel), "background"), FILL, sel);
-    assert.match(decl(rule(sel), "--_sl-depth"), /^inset 0 -1\.5px 0 var\(--slc-edge-accent\), 0 0 1\dpx -2px color-mix\(in srgb, var\(--slc-accent-fill, var\(--slc-accent\)\) calc\(var\(--slc-glow\) \* 1[12]0%\), transparent\)$/, sel);
+    assert.equal(decl(rule(sel), "background"), "var(--_sl-fill)", sel);
+    assert.equal(decl(rule(sel), "border-color"), "var(--_sl-fill-edge)", sel);
+    assert.match(decl(rule(sel), "--_sl-depth"), /^inset 0 -1\.5px 0 var\(--_sl-fill-edge\), 0 0 1\dpx -2px color-mix\(in srgb, var\(--_sl-fill\) calc\(var\(--slc-glow\) \* 1[12]0%\), transparent\)$/, sel);
   }
-  assert.equal(decl(rule(".sl-switch__input:checked + .sl-switch__track::after"), "background"), "var(--slc-on-accent-fill)");
-  assert.match(rule(".sl-check__box::after"), /border:\s*solid var\(--slc-on-accent-fill\)/);
-  assert.equal(decl(rule(".sl-radio__box::after"), "background"), "var(--slc-on-accent-fill)");
-  // and the edge of a filled control is the painted fill in shade
-  assert.match(decl(css.match(/:root \{([^}]*)\}/)[1], "--slc-edge-accent"), /^oklch\(from var\(--slc-accent-fill, var\(--slc-accent\)\) /);
+  assert.equal(decl(rule(".sl-switch__input:checked + .sl-switch__track::after"), "background"), "var(--_sl-on-fill)");
+  assert.match(rule(".sl-check__box::after"), /border:\s*solid var\(--_sl-on-fill\)/);
+  assert.equal(decl(rule(".sl-radio__box::after"), "background"), "var(--_sl-on-fill)");
+  // the public roles stay on :root for a fill a product draws itself (a count badge)
+  const root = css.match(/:root \{([^}]*)\}/)[1];
+  for (const r of ["--slc-on-accent-fill", "--slc-accent-fill-hover", "--slc-accent-fill-active", "--slc-edge-accent"]) assert.ok(decl(root, r), r);
 });
 
 // ── the depth of the neutral controls ───────────────────────────────────────

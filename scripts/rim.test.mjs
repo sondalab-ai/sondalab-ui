@@ -42,24 +42,31 @@ test("components.css reads the spectrum only inside the two opt-in ornaments", (
 for (const [host, edge] of [
   [".sl-card", /border:\s*1px solid var\(--slc-edge-surface\)/],
   [".sl-field__input", /border:\s*1px solid var\(--slc-edge-control\)/],
-  // the primary's edge is its fill set's (0.32): --slc-edge-accent unless a
-  // tone swaps the set
-  [".sl-btn--primary", /--_sl-fill-edge:\s*var\(--slc-edge-accent\);[\s\S]*border-color:\s*var\(--_sl-fill-edge\)/],
+  // the primary's edge is its fill set's (0.32, declared on the control):
+  // --slc-edge-accent unless a tone swaps the set
+  [".sl-btn--primary", /border-color:\s*var\(--_sl-fill-edge\)/],
 ]) {
-  test(`${host}: the edge of its context, and no image under it`, () => {
+  test(`${host}: the edge of its context, and no image under it but the primary's foot`, () => {
     const r = rule(host);
     assert.match(r, edge);
-    assert.doesNotMatch(r, /background-(image|clip|origin)/);
+    const images = [...r.matchAll(/background-image:\s*([^;]+)/g)].map((m) => m[1].trim());
+    // the one image is the primary's foot, a layer of its own edge (0.32)
+    if (host === ".sl-btn--primary") assert.deepEqual(images, ["linear-gradient(var(--_sl-foot-color, var(--_sl-fill-edge)), var(--_sl-foot-color, var(--_sl-fill-edge)))"]);
+    else assert.deepEqual(images, []);
+    assert.doesNotMatch(r, /background-(clip|origin)/);
   });
 }
+test("the primary's edge is the fill set's, declared on the control", () => {
+  assert.match(rule(":where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track)"), /--_sl-fill-edge:\s*var\(--slc-edge-accent\);/);
+});
 
 // Lumen (0.32, the owner's default): the lit top line goes; the primary
-// stands on a foot, its bottom border a pixel deeper in the same edge.
+// stands on a foot, one more pixel of its edge along the bottom.
 test("the primary stands on a foot, has no lit top line, and moves only its fill and foot on hover and press", () => {
   const r = rule(".sl-btn--primary");
   assert.doesNotMatch(r, /border-top-color/, "no lit top line");
   assert.doesNotMatch(css, /--slc-edge-accent-top/, "the lit line's role is retired");
-  assert.match(r, /border-bottom-width:\s*calc\(1px \+ var\(--_sl-foot\)\)/);
+  assert.match(r, /background-size:\s*100% var\(--_sl-foot\)/);
   assert.match(r, /--_sl-foot:\s*1px/);
   for (const state of [":hover:not(:disabled)", ":active:not(:disabled)"]) {
     const s = rule(`.sl-btn--primary${state}`);

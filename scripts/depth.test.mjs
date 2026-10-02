@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, substitute, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, substitute, toHex, toOklch, toSrgb, within } from "./lib/css-color.mjs";
 import { allowlistForProduct } from "../packages/ui-kit/agent/sl-audit.mjs";
 
 // Lumen depth (ui-kit 0.31): radii, casts, the depth recipes (--slc-depth-*),
@@ -52,12 +52,13 @@ function rootEnv(theme, product = "default") {
   for (const [k, v] of declarations(raw, sels)) env.set(k, v);
   return env;
 }
-/** A child of the inversion band: its declarations, currentColor bound to the band's ink. */
+/** A child of the inversion band: its own declarations, currentColor bound
+ *  to the band's ink, computed over what it inherits from :root (a role the
+ *  band does not re-declare keeps the value :root computed). */
+const bandDecls = (sels, ink) => sels.flatMap((s) => declarations(raw, [s])).map(([k, v]) => [k, v.replace(/currentColor/g, ink)]);
 function bandEnv(theme, product) {
   const env = rootEnv(theme, product);
-  const ink = toHex(evaluate("var(--slc-canvas)", env));
-  for (const [k, v] of declarations(raw, [".sl-invert > *"])) env.set(k, v.replace(/currentColor/g, ink));
-  return env;
+  return within(env, bandDecls([".sl-invert > *"], toHex(evaluate("var(--slc-canvas)", env))));
 }
 /** A Tier B page: no theme file and no --sl-* colour token, only the shared
  *  :root layer, components.css, and the product's own colour layer mapping
@@ -80,10 +81,8 @@ function tierBEnv(theme, product) {
 /** A child of the inversion band on the high-contrast theme: the band's
  *  declarations, then the high-contrast band remap. */
 function hcBandEnv() {
-  const env = bandEnv("high-contrast", "default");
-  const ink = toHex(evaluate("var(--slc-canvas)", rootEnv("high-contrast")));
-  for (const [k, v] of declarations(raw, [':root[data-sl-theme="high-contrast"] .sl-invert > *'])) env.set(k, v.replace(/currentColor/g, ink));
-  return env;
+  const env = rootEnv("high-contrast");
+  return within(env, bandDecls([".sl-invert > *", ':root[data-sl-theme="high-contrast"] .sl-invert > *'], toHex(evaluate("var(--slc-canvas)", env))));
 }
 /** The colours of every layer of a box-shadow list, evaluated: "none" is no layer. */
 function shadowColours(value, env) {
@@ -411,9 +410,8 @@ test("a key inside a button keeps the 32px and 24px rows", () => {
 function primary(env, product, theme, { danger = false, fill = true } = {}) {
   const registered = fill && theme !== "high-contrast" && REGISTRY[product].fill?.[theme];
   if (registered) env.set("--slc-accent-fill", registered);
-  for (const [k, v] of declarations(raw, [".sl-btn--primary"])) env.set(k, v);
-  if (danger) for (const [k, v] of declarations(raw, [".sl-btn--primary.sl-btn--danger"])) env.set(k, v);
-  return env;
+  const sels = [":where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track)", ".sl-btn--primary", ...(danger ? [".sl-btn--primary.sl-btn--danger"] : [])];
+  return within(env, sels.flatMap((s) => declarations(raw, [s])));
 }
 
 for (const [theme, product] of CASES) {
@@ -511,10 +509,10 @@ for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
       // the cascade: the glass rule where effects.css has one, else the kit's cap
       const glassCap = fxRule(`${PANE_HOST} > .sl-kbd`);
       const capDecls = glassCap ? new Map([...glassCap.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim()])) : new Map();
-      for (const [k, v] of capDecls) env.set(k, v);
+      const capEnv = within(env, capDecls);
       const capValue = glassCap ? decl(glassCap, "background") : decl(rule(".sl-btn--primary > .sl-kbd"), "background");
       const label = evaluate(decl(fxRule(PANE_HOST), "color"), env);
-      const pane = evaluate(PANE, env), cap = evaluate(capValue, env);
+      const pane = evaluate(PANE, env), cap = evaluate(capValue, capEnv);
       const r = ratio(label, cap);
       if (r < 4.5) low.push(`${accent}: the cap's glyph ${r.toFixed(2)}`);
       if (r < ratio(label, pane)) low.push(`${accent}: the cap ${r.toFixed(2)} reads weaker than the label on the pane ${ratio(label, pane).toFixed(2)}`);
