@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative } from "node:path";
+import { readWoff2, codepoints, axes, parseUnicodeRange, WOFF2_MAGIC } from "./lib/woff2.mjs";
 
 // Every face a --sl-font-* token names first must ship with the kit: declared
 // in fonts.css, its file on disk, the file in package.json `files` (npm only
@@ -91,3 +92,68 @@ for (const page of ["showcase/index.html", "showcase/effects.html", "showcase/sc
     assert.doesNotMatch(html, /Instrument|Martian/, "the UI faces are Geist and Geist Mono since 0.30");
   });
 }
+
+// ── the files themselves ──────────────────────────────────────────────────
+// The checks above trust fonts.css; these read each file's own tables, so a
+// renamed TTF, a face that claims a weight its axis cannot draw, or a range
+// that claims glyphs the file lacks all fail here.
+
+/** The latin range every face shares (the Google Fonts latin subset's). */
+const LATIN = parseUnicodeRange(
+  "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, " +
+  "U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD");
+/** The IDE blocks a face may add (owner, 2026-10-02): arrows, math operators,
+ *  miscellaneous technical, box drawing, block elements, geometric shapes. */
+const IDE = parseUnicodeRange("U+2190-21FF, U+2200-22FF, U+2300-23FF, U+2500-257F, U+2580-259F, U+25A0-25FF");
+const prop = (body, name) => body.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1].trim();
+const fontOf = (file) => readWoff2(readFileSync(resolve(KIT, file)));
+
+for (const face of faces()) {
+  const file = face.files[0];
+  test(`${file} is a WOFF2 file`, () => {
+    assert.equal(readFileSync(resolve(KIT, file)).toString("latin1", 0, 4), WOFF2_MAGIC);
+  });
+
+  test(`"${face.family}" claims no weight its wght axis cannot draw`, () => {
+    const wght = axes(fontOf(file)).find((a) => a.tag === "wght");
+    assert.ok(wght, `${file} has no wght axis`);
+    const [lo, hi = lo] = prop(face.body, "font-weight").split(/\s+/).map(Number);
+    assert.ok(lo >= wght.min && hi <= wght.max, `font-weight ${lo} ${hi} outside the axis ${wght.min}–${wght.max}`);
+  });
+
+  test(`"${face.family}" follows the range policy: the shared latin range, plus exactly the IDE glyphs its file has`, () => {
+    const declared = parseUnicodeRange(prop(face.body, "unicode-range"));
+    const cmap = codepoints(fontOf(file));
+    for (const cp of LATIN) assert.ok(declared.has(cp), `U+${cp.toString(16).toUpperCase()} of the latin range is missing`);
+    const extra = [...declared].filter((cp) => !LATIN.has(cp));
+    const hex = (cps) => cps.map((cp) => "U+" + cp.toString(16).toUpperCase()).join(" ");
+    const outside = extra.filter((cp) => !IDE.has(cp));
+    assert.deepEqual(outside, [], `claims outside the latin range and the IDE blocks: ${hex(outside)}`);
+    const lacking = extra.filter((cp) => !cmap.has(cp));
+    assert.deepEqual(lacking, [], `claims code points the file has no glyph for: ${hex(lacking)}`);
+    const unclaimed = [...cmap].filter((cp) => IDE.has(cp) && !declared.has(cp));
+    assert.deepEqual(unclaimed, [], `has IDE glyphs its range does not claim: ${hex(unclaimed)}`);
+  });
+}
+
+test("Geist Mono draws the IDE glyphs a terminal and an editor reach for", () => {
+  const cmap = codepoints(fontOf("assets/fonts/geist-mono-latin.woff2"));
+  for (const ch of "→⇧↵⏎⌫─│┌┐└┘├┤═║█░≠≤≥●▶") assert.ok(cmap.has(ch.codePointAt(0)), `${ch} is not in the file`);
+});
+
+// Instrument Sans and Martian Mono are deprecated in 0.30 and kept for one
+// release window: a product that names them by hand keeps rendering until
+// 1.0.0, and 1.0.0 removes them.
+test("the deprecated faces stay declared and shipped until 1.0.0, and go at 1.0.0", () => {
+  const major = Number(pkg.version.split(".")[0]);
+  const declared = new Set(faces().map((f) => f.family));
+  for (const [family, file] of [["Instrument Sans", "assets/fonts/instrument-sans-latin.woff2"], ["Martian Mono", "assets/fonts/martian-mono-latin.woff2"]]) {
+    if (major < 1) {
+      assert.ok(declared.has(family), `${family} must stay declared until 1.0.0`);
+      assert.ok(listed(file), `${file} must stay packed until 1.0.0`);
+    } else {
+      assert.ok(!declared.has(family), `${family} is removed in 1.0.0`);
+      assert.ok(!listed(file), `${file} is removed in 1.0.0`);
+    }
+  }
+});
