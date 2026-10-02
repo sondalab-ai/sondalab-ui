@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, toHex, toSrgb } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
 import { allowlistForProduct } from "../packages/ui-kit/agent/sl-audit.mjs";
 
 // Lumen depth (ui-kit 0.31): radii, casts, the depth recipes (--slc-depth-*),
@@ -350,3 +350,46 @@ test("tile tabs: no rule under the strip, no underline, a flat tile, the dot and
   assert.ok(ring.selector.includes(".sl-tabs__tab:focus-visible"));
   assert.equal(decl(tab, "border-radius"), "var(--sl-radius-sm, 6px)");
 });
+
+// ── the keycap in a glass primary ──────────────────────────────────────────
+
+// On a mounted glass pane (effects.css) the primary's label is re-picked from
+// the composited pane -- the resting accent at 90% over the canvas -- not from
+// the opaque accent. A cap that stepped away from the OPAQUE accent's label
+// put a dark cap under the pane's dark label on the light theme's indigo
+// (3.22:1). The cap the cascade gives there must read against THAT label and
+// stand apart from the pane. Every product's accent, and its registered fill
+// where it has one, on both themes.
+const EFFECTS = bare(read("effects.css"));
+const PANE_HOST = '.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *))';
+const FX_RULES = [...EFFECTS.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ selector: m[1].trim().replace(/\s+/g, " "), body: m[2] }));
+const fxRule = (sel) => FX_RULES.find((r) => r.selector === sel)?.body;
+const PANE = "color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas))";
+
+test("the glass primary's label is the composite-picked pole the cap test reads", () => {
+  assert.equal(decl(fxRule(PANE_HOST) ?? "", "color"), `oklch(from ${PANE} clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h)`);
+});
+
+for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+  const accents = [REGISTRY[product][theme], REGISTRY[product].fill?.[theme]].filter(Boolean);
+  test(`${theme} ${product}: a keycap in a glass primary reads against the pane's own label and stands apart from the pane`, () => {
+    const low = [];
+    for (const accent of accents) {
+      const env = rootEnv(theme, product);
+      env.set("--slc-accent", accent);
+      // the cascade: the glass rule where effects.css has one, else the kit's cap
+      const glassCap = fxRule(`${PANE_HOST} > .sl-kbd`);
+      const capDecls = glassCap ? new Map([...glassCap.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim()])) : new Map();
+      for (const [k, v] of capDecls) env.set(k, v);
+      const capValue = glassCap ? decl(glassCap, "background") : decl(rule(".sl-btn--primary > .sl-kbd"), "background");
+      const label = evaluate(decl(fxRule(PANE_HOST), "color"), env);
+      const pane = evaluate(PANE, env), cap = evaluate(capValue, env);
+      const r = ratio(label, cap);
+      if (r < 4.5) low.push(`${accent}: the cap's glyph ${r.toFixed(2)}`);
+      if (r < ratio(label, pane)) low.push(`${accent}: the cap ${r.toFixed(2)} reads weaker than the label on the pane ${ratio(label, pane).toFixed(2)}`);
+      const dL = Math.abs(toOklch(cap)[0] - toOklch(pane)[0]);
+      if (dL < 0.06) low.push(`${accent}: the cap is ${dL.toFixed(3)} from the pane in lightness`);
+    }
+    assert.deepEqual(low, []);
+  });
+}
