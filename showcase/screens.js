@@ -451,13 +451,13 @@
   stage.addEventListener("focusin", () => stage.querySelectorAll(".lab-focus").forEach((n) => n.classList.remove("lab-focus")), { once: true });
 
   /* ── measurement ────────────────────────────────────────────────────────── */
+  // the maths is screens-contrast.js (unit-tested); this part reads the DOM
+  const { ratio, over, rings } = window.slContrast;
   const cv = document.createElement("canvas"); cv.width = cv.height = 1;
   const cx = cv.getContext("2d", { willReadFrequently: true });
   const rgba = (str) => { cx.clearRect(0, 0, 1, 1); cx.fillStyle = "#000"; cx.fillStyle = str; cx.fillRect(0, 0, 1, 1); const [r, g, b, a] = cx.getImageData(0, 0, 1, 1).data; return [r, g, b, a / 255]; };
-  const over = (t, u) => { const a = t[3]; return [t[0] * a + u[0] * (1 - a), t[1] * a + u[1] * (1 - a), t[2] * a + u[2] * (1 - a), 1]; };
+  // background colours only, composited up the tree: a gradient or image ground is not sampled
   const groundOf = (el) => { const chain = []; for (let n = el; n && n.nodeType === 1; n = n.parentElement) chain.push(getComputedStyle(n).backgroundColor); let c = [255, 255, 255, 1]; for (let i = chain.length - 1; i >= 0; i--) c = over(rgba(chain[i]), c); return c; };
-  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
-  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   const opac = (el) => { let o = 1; for (let n = el; n && n.nodeType === 1; n = n.parentElement) o *= +getComputedStyle(n).opacity; return o; };
   const TEXT = {
     ide: [["Body text", ".ide-msg p"], ["Code", ".ide-code__ln.is-cur .tk-v"], ["Code comment", ".tk-c"], ["Line number", ".ide-code__ln:not(.is-cur) .ide-code__no"], ["Tab inactive", '.ide-tab[aria-selected="false"] span'],
@@ -469,7 +469,7 @@
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
       ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],
-      ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .lab-danger"], ["Secondary label", ".set-bar .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
+      ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .lab-danger"], ["Secondary label", ".set-row .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
       ["Segmented off", '.set-sec .sl-segmented__item[aria-selected="false"]'], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Status bar", ".ide-status__item"]],
     data: [["Table cell", ".sl-table tbody td:nth-child(3)"], ["Table head", ".sl-table thead th:nth-child(2)"], ["Dim cell", ".sl-table tbody tr:not([aria-selected]) .dat-dim"], ["Selected row", '.sl-table tbody tr[aria-selected="true"] td:nth-child(3)'],
       ["Selected row dim", '.sl-table tbody tr[aria-selected="true"] .dat-dim'], ["Probe id", ".dat-id"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Chip on", '.sl-chip[aria-pressed="true"]'], ["Badge ok", ".sl-badge--success"], ["Badge warn", ".sl-badge--warning"],
@@ -479,56 +479,77 @@
   const EDGE = {
     ide: [["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
     settings: [["Field", "#s-name"], ["Select", "#s-br"], ["Checkbox", ".set-sec .sl-check__input:not(:checked) + .sl-check__box"], ["Radio", ".sl-radio__input:not(:checked) + .sl-radio__box"], ["Switch off", ".sl-switch__input:not(:checked):not(:disabled) + .sl-switch__track"],
-      ["Segmented", ".set-sec .sl-segmented"], ["Secondary", ".set-bar .sl-btn--ghost"], ["Ghost (info: text button, no edge by design)", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"]],
+      ["Segmented", ".set-sec .sl-segmented"], ["Secondary", ".set-row .sl-btn--ghost"], ["Ghost (info: text button, no edge by design)", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"]],
     data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"]],
     hero: [["Secondary", ".web-cta .sl-btn--ghost"], ["Install box (info: display, not a control)", ".web-install"]],
   };
+  // A row never samples an element whose lab state class forces its colour:
+  // .lab-focus paints a focus border, .lab-hover a hover wash. .lab-danger is
+  // sampled on purpose: it paints only the kit's own danger roles, standing in
+  // for the danger button the kit does not ship yet.
+  const FORCED = ".lab-focus, .lab-hover";
+  const pick = (sel) => [...stage.querySelectorAll(sel)].find((e) => !e.closest(FORCED)) || null;
+  // keycaps measured per screen: the first few carry every variant (primary, ghost, small)
+  const MAX_KEYCAPS = 4;
+  const SIDES = ["Top", "Right", "Bottom", "Left"];
+
+  /** Contrast of a control's boundary against what surrounds it: the best of
+   *  its fill, each visible border side and each box-shadow ring, all
+   *  composited over the parent's ground. Full precision. */
+  function edgeContrast(el) {
+    const ground = groundOf(el.parentElement), cs = getComputedStyle(el);
+    const fill = over(rgba(cs.backgroundColor), ground);
+    let best = ratio(fill, ground);
+    // a zero-width or hidden side has no colour on screen (it would read as currentColor)
+    for (const side of SIDES) {
+      if (parseFloat(cs[`border${side}Width`]) > 0 && !/^(none|hidden)$/.test(cs[`border${side}Style`])) best = Math.max(best, ratio(over(rgba(cs[`border${side}Color`]), fill), ground));
+    }
+    for (const ring of rings(cs.boxShadow)) best = Math.max(best, ratio(over(rgba(ring.color), ground), ground));
+    return best;
+  }
+
+  /** Every check for this screen: text contrast, control-boundary contrast
+   *  and heights. Ratios are full precision: the frame compares them against
+   *  the thresholds and rounds only to display. Missing elements report null. */
   function measure() {
     // entrance animations hold text at opacity 0 in a background tab (timers and
     // frames are frozen there): settle every finite one before reading colours
     document.getAnimations().forEach((a) => { try { if (a.effect && a.effect.getComputedTiming().endTime !== Infinity) a.finish(); } catch (e) {} });
     const out = { text: [], edge: [], heights: {} };
     for (const [name, sel] of TEXT[screen] || []) {
-      const el = stage.querySelector(sel); if (!el) { out.text.push([name, null]); continue; }
+      const el = pick(sel); if (!el) { out.text.push([name, null]); continue; }
       const g = groundOf(el), cs = getComputedStyle(el), c = rgba(cs.color); c[3] *= opac(el);
-      out.text.push([name, +ratio(over(c, g), g).toFixed(2), parseFloat(cs.fontSize)]);
+      out.text.push([name, ratio(over(c, g), g), parseFloat(cs.fontSize)]);
     }
     // keycaps drawn as ::after on a [data-key] control: the cap's text on the cap's own fill over the control
-    stage.querySelectorAll("[data-key]").forEach((el, i) => {
-      if (i > 3 || el.closest(".web-shot")) return;
+    [...stage.querySelectorAll("[data-key]")].filter((el) => !el.closest(".web-shot")).slice(0, MAX_KEYCAPS).forEach((el) => {
       const a = getComputedStyle(el, "::after"); if (!a.content || a.content === "none" || a.display === "none") return;
       const g = over(rgba(a.backgroundColor), groundOf(el)), c = over(rgba(a.color), g);
-      out.text.push(["Keycap in " + (el.textContent.trim().split(/\s/)[0] || "button"), +ratio(c, g).toFixed(2), parseFloat(a.fontSize)]);
+      out.text.push(["Keycap in " + (el.textContent.trim().split(/\s/)[0] || "button"), ratio(c, g), parseFloat(a.fontSize)]);
     });
     // labels a direction draws as generated content on a filled ground
     for (const [name, sel, pe] of [["Switch state glyph", ".sl-switch__input:checked + .sl-switch__track", "::before"], ["Count badge", ".ide-activity__btn[data-count]", "::after"]]) {
-      const el = stage.querySelector(sel); if (!el) continue;
+      const el = pick(sel); if (!el) continue;
       const a = getComputedStyle(el, pe); if (!a.content || a.content === "none" || a.content === '""' || a.display === "none") continue;
       const fillEl = pe === "::before" && name.startsWith("Switch") ? getComputedStyle(el).backgroundColor : a.backgroundColor;
       const g = over(rgba(fillEl), groundOf(el)), c = over(rgba(a.color), g);
-      out.text.push([name, +ratio(c, g).toFixed(2), parseFloat(a.fontSize)]);
+      out.text.push([name, ratio(c, g), parseFloat(a.fontSize)]);
     }
     for (const [name, sel] of EDGE[screen] || []) {
-      const el = stage.querySelector(sel); if (!el) { out.edge.push([name, null]); continue; }
-      const ground = groundOf(el.parentElement), cs = getComputedStyle(el);
-      const fill = over(rgba(cs.backgroundColor), ground);
-      // a zero-width or hidden border has no colour on screen (it would default to currentColor)
-      const hasBorder = parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none";
-      let best = ratio(fill, ground);
-      if (hasBorder) best = Math.max(best, ratio(over(rgba(cs.borderTopColor), fill), ground));
-      // a ring drawn as the first box-shadow counts as the edge
-      const m = cs.boxShadow.match(/(rgba?\([^)]*\)|oklch\([^)]*\)|#[0-9a-f]+)\s+0px\s+0px\s+0px\s+(\d+(?:\.\d+)?)px(?!\s*inset)/i);
-      if (m) best = Math.max(best, ratio(over(rgba(m[1]), ground), ground));
-      out.edge.push([name, +best.toFixed(2)]);
+      const el = pick(sel);
+      out.edge.push([name, el ? edgeContrast(el) : null]);
     }
     // heights at zoom 1: a scaled box snaps to device pixels, and dividing the
     // snapped height back out read a 32px control as 33.2px in a third-width frame
     const zoom = H.style.zoom;
     H.style.zoom = "";
-    const Hh = (sel) => { const e = stage.querySelector(sel); return e ? Math.round(e.getBoundingClientRect().height * 10) / 10 : null; };
-    out.heights =screen === "settings" ? { button: Hh(".set-bar .sl-btn--primary"), field: Hh("#s-name"), select: Hh("#s-br"), segmented: Hh(".set-sec .sl-segmented"), "icon button": Hh(".ide-title__r .sl-icon-btn") }
-      : screen === "ide" ? { "tree row": Hh(".ide-tree__row"), "editor tab": Hh(".ide-tab"), "session row": Hh(".ide-sessions .sl-list__row"), "status bar": Hh(".ide-status"), "palette row": Hh(".ide-pal__row"), "icon button": Hh(".ide-title__r .sl-icon-btn") }
-      : screen === "data" ? { "table row": Hh(".sl-table tbody tr"), button: Hh(".dat-tools .sl-btn--primary"), field: Hh(".dat-search .sl-field__input"), chip: Hh(".sl-chip") } : {};
+    const Hh = (sel) => { const e = pick(sel); return e ? Math.round(e.getBoundingClientRect().height * 10) / 10 : null; };
+    const HEIGHTS = {
+      settings: { button: ".set-bar .sl-btn--primary", field: "#s-name", select: "#s-br", segmented: ".set-sec .sl-segmented", "icon button": ".ide-title__r .sl-icon-btn" },
+      ide: { "tree row": ".ide-tree__row", "editor tab": ".ide-tab", "session row": ".ide-sessions .sl-list__row", "status bar": ".ide-status", "palette row": ".ide-pal__row", "icon button": ".ide-title__r .sl-icon-btn" },
+      data: { "table row": ".sl-table tbody tr", button: ".dat-tools .sl-btn--primary", field: ".dat-search .sl-field__input", chip: ".sl-chip" },
+    };
+    for (const [k, sel] of Object.entries(HEIGHTS[screen] || {})) out.heights[k] = Hh(sel);
     H.style.zoom = zoom;
     return out;
   }
@@ -549,8 +570,8 @@
   /* ── target overlay ─────────────────────────────────────────────────────── */
   // dir-lumen.css is scoped by html[data-dir="lumen"], so the overlay is the
   // attribute: the sheet is added once, then flipping data-dir swaps kit and
-  // target in place, without a reload. Geist comes from Google Fonts until K3
-  // vendors it into the kit's fonts.css.
+  // target in place, without a reload. Geist comes from Google Fonts until the
+  // kit vendors it in fonts.css (docs/plans/2026-10-02-lumen-adoption.md).
   const TARGET_CSS = "../lab/directions-2/dir-lumen.css";
   const TARGET_FONTS = "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap";
   // appended last in <head>, so it lands after components.css and screens.css
@@ -562,9 +583,17 @@
     l.addEventListener("load", done, { once: true });
     l.addEventListener("error", done, { once: true });
   });
+  // The last call wins. setTarget(true) waits for its sheets; a setTarget(false)
+  // that lands meanwhile flips back at once, and the stale call must not flip
+  // to Lumen when its await resolves, so each call checks it is still wanted.
+  let wanted = H.getAttribute("data-dir") === "lumen";
+  /** Show the Lumen target (on) or the kit (off), in place. Resolves with the
+   *  data-dir now on <html>, after the target's sheets and faces are ready. */
   async function setTarget(on) {
+    wanted = on;
     if (on) {
       await Promise.all([sheet(TARGET_FONTS), sheet(TARGET_CSS)]);
+      if (wanted !== on) return H.getAttribute("data-dir");
       H.setAttribute("data-dir", "lumen");
       // fonts.ready can resolve before a face is even requested: ask for both
       try { await Promise.all(["400 13px Geist", "600 16px Geist", "400 12px 'Geist Mono'", "500 11px 'Geist Mono'"].map((f) => document.fonts.load(f))); } catch (e) {}

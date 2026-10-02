@@ -199,7 +199,7 @@
     <section class="gutter report" aria-labelledby="report-title">
       <div class="report__head">
         <h2 id="report-title">Measured in each frame</h2>
-        <p>WCAG 2 contrast of every text role the screen shows against its composited ground (≥ 4.5 at any size), the contrast of each control's boundary against what surrounds it (≥ 3), and control heights against the kit's 32px. Rows marked · are information, not checks.</p>
+        <p>WCAG 2 contrast of every text role the screen shows against its composited ground (≥ 4.5 at any size), the contrast of each control's boundary against what surrounds it (≥ 3), and control heights against the kit's 32px. A ground is composited from background colours only: a gradient or image under the text is not sampled. Ratios are compared at full precision and shown floored to two decimals. Rows marked · are information, not checks.</p>
         <button class="copy" id="copy" type="button">Copy as JSON</button>
       </div>
       <div class="reps" id="report"></div>
@@ -208,12 +208,16 @@
 
   <footer>
     <div class="gutter">
-      <p>The stage is <code>screens-stage.html</code> + <code>screens.css</code> + <code>screens.js</code>, ported from <code>lab/directions-2/</code>. The kit view loads only the kit's stylesheets and its own <code>fonts.css</code>. The target is <code>lab/directions-2/dir-lumen.css</code>, scoped by <code>html[data-dir="lumen"]</code>, with Geist and Geist Mono from Google Fonts until K3 vendors them; it is a reference, never copied into <code>packages/</code>. Serve the repository with <code>python3 lab/_serve.py</code>: the plain <code>http.server</code> lets Chrome keep a stale stylesheet across reloads. The lab's own side-by-side is <a href="../lab/directions-2/compare.html">Kit vs Lumen</a>.</p>
+      <p>The stage is <code>screens-stage.html</code> + <code>screens.css</code> + <code>screens.js</code>, ported from <code>lab/directions-2/</code>. The kit view loads only the kit's stylesheets and its own <code>fonts.css</code>. The target is <code>lab/directions-2/dir-lumen.css</code>, scoped by <code>html[data-dir="lumen"]</code>, with Geist and Geist Mono from Google Fonts until the kit vendors them (see <code>docs/plans/2026-10-02-lumen-adoption.md</code>); it is a reference, never copied into <code>packages/</code>. Serve the repository with <code>python3 lab/_serve.py</code>: the plain <code>http.server</code> lets Chrome keep a stale stylesheet across reloads. The lab's own side-by-side is <a href="../lab/directions-2/compare.html">Kit vs Lumen</a>.</p>
     </div>
   </footer>
 
+  <script src="screens-contrast.js"></script>
   <script>
     (function () {
+      var show = window.slContrast.display;
+      // stage strings (stylesheet hrefs, script errors) are data, never markup
+      var esc = function (v) { return String(v).replace(/[&<>"']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); };
       var SCREENS = { ide: "IDE", settings: "Settings", data: "Data", hero: "sondalab.eu" };
       var THEMES = { dark: "Dark", light: "Light", "high-contrast": "High contrast" };
       var VIEWS = { dark: ["dark"], light: ["light"], "high-contrast": ["high-contrast"], all: ["dark", "light", "high-contrast"] };
@@ -301,7 +305,7 @@
         var rows = function (list, min) {
           return list.map(function (r) {
             var info = /\(info/.test(r[0]);
-            return "<tr><td>" + r[0] + (r[2] ? "<small>" + r[2] + "px</small>" : "") + "</td><td class=\"" + grade(r[1], min, info) + "\">" + (r[1] == null ? "—" : r[1].toFixed(2)) + "</td></tr>";
+            return "<tr><td>" + esc(r[0]) + (r[2] ? "<small>" + r[2] + "px</small>" : "") + "</td><td class=\"" + grade(r[1], min, info) + "\">" + (r[1] == null ? "—" : show(r[1])) + "</td></tr>";
           }).join("");
         };
         var fails = 0, checks = 0;
@@ -313,7 +317,7 @@
             var control = CONTROLS.indexOf(k) > -1, v = m.heights[k];
             if (control && v != null) { checks++; if (v !== CONTROL_H) fails++; }
             var cls = !control || v == null ? "info" : v === CONTROL_H ? "ok" : "bad";
-            return "<tr><td>" + k + "</td><td class=\"" + cls + "\">" + (v == null ? "—" : v + "px") + "</td></tr>";
+            return "<tr><td>" + esc(k) + "</td><td class=\"" + cls + "\">" + (v == null ? "—" : v + "px") + "</td></tr>";
           }).join("");
           html += "<table><caption class=\"mono\">Text · ≥ 4.5</caption>" + rows(m.text, 4.5) + "</table>" +
             "<table><caption class=\"mono\">Control boundary · ≥ 3</caption>" + rows(m.edge, 3) + "</table>" +
@@ -322,8 +326,8 @@
         var bad = h.sheets.filter(function (s) { return !s.ok; });
         fails += bad.length + h.errors.length;
         html += "<p class=\"rep__health\">" + (h.sheets.length - bad.length) + "/" + h.sheets.length + " stylesheets · " + h.errors.length + " script errors" +
-          bad.map(function (s) { return "<span class=\"bad\">not loaded: " + s.href + "</span>"; }).join("") +
-          h.errors.map(function (e) { return "<span class=\"bad\">" + e + "</span>"; }).join("") + "</p>";
+          bad.map(function (s) { return "<span class=\"bad\">not loaded: " + esc(s.href) + "</span>"; }).join("") +
+          h.errors.map(function (e) { return "<span class=\"bad\">" + esc(e) + "</span>"; }).join("") + "</p>";
         box.innerHTML = html;
         box.dataset.state = "done";
         box.dataset.fails = fails;

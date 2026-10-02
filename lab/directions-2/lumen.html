@@ -78,7 +78,7 @@
       <li><b><code>components.css</code>.</b> About 30 rule overrides: buttons, kbd, fields, check, radio, switch, segmented, chips, badges, tags, list rows, nav items, table, empty, pagination and labels. No class renames and no markup changes, so <b>markup is not affected, but the look changes</b>.</li>
       <li><b>New primitives</b> the IDE chrome needs: <code>.sl-pane[data-focus]</code> (island plus lit seam), a keycap <code>.sl-kbd</code>, <code>.sl-toast</code> with a stack, and <code>.sl-statusbar</code>. spexr maps Theia's panels onto <code>.sl-pane</code> in <code>spexr.css</code>; the seam follows Theia's focus tracker.</li>
       <li><b>spexr's 32px: not breaking.</b> In spexr, 32px is the kit's control height: icon buttons, and <code>--df-control-height: 2rem</code> on the scheduler and launcher pickers. Lumen keeps every control at 32 (measured). spexr has no tree-row override, so its Theia trees run at Theia's own <code>--theia-content-line-height: 22px</code>. Lumen's 26px tree row would make rows taller if spexr adopted it, never shorter, and it is optional.</li>
-      <li><b>spexr's indigo fill must widen.</b> <code>spexr-overrides.css</code> (and the registry's fill note) re-bind only <code>.sl-btn--primary</code> to <code>#4c58e9</code>. Every other accent fill that carries a label (count badges, a checked switch's glyph, a highlighted headline) needs the same fill: on <code>#5b6cff</code> white measures 4.17:1. The stage does this in <code>_stage2.css</code>; the kit would add a <code>--slc-accent-fill</code> role.</li>
+      <li><b>spexr's indigo fill must widen.</b> <code>spexr-overrides.css</code> (and the registry's fill note) re-bind only <code>.sl-btn--primary</code> to <code>#4c58e9</code>. Every other accent fill that carries a label (count badges, a checked switch's glyph, a highlighted headline) needs the same fill: on <code>#5b6cff</code> white measures 4.17:1. The harness does this for the target only, in <code>showcase/screens.css</code>; the kit would add a <code>--slc-accent-fill</code> role.</li>
       <li><b><code>design-language.md</code>.</b> L1 changes: pane titles leave mono uppercase, while micro-labels keep mono at a lower tracking. The serif is reduced to the wordmark.</li>
     </ul>
   </div>
@@ -93,7 +93,7 @@
     </ul>
   </div>
 </section>
-<p class="g-foot">The markup and the kit classes are the same for the kit and every direction (<code>_screens.js</code>). The difference is one scoped stylesheet, <code>dir-lumen.css</code>, which re-binds <code>--sl-*</code> / <code>--slc-*</code> and overrides component rules. A focus ring is shown statically with <code>.lab-focus</code>, which mirrors <code>:focus-visible</code>. This is lab material and not for <code>packages/</code>.</p>
-<script src="_frame2.js?v=3"></script>
+<p class="g-foot">The screens are the showcase's own stage (<code>showcase/screens-stage.html</code>), with the same markup and kit classes for the kit and the target. The difference is one scoped stylesheet, <code>dir-lumen.css</code>, which re-binds <code>--sl-*</code> / <code>--slc-*</code> and overrides component rules. A focus ring is shown statically with <code>.lab-focus</code>, which mirrors <code>:focus-visible</code>. This is lab material and not for <code>packages/</code>.</p>
+<script src="_frame.js"></script>
 </body>
 </html>
