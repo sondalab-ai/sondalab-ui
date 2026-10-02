@@ -46,6 +46,7 @@
   --sl-shadow-inset: inset 0 1px 2px rgba(0,0,0,0.06);
   --sl-focus-ring-width: 2px;
   --sl-focus-ring-offset: 0px;
+  --sl-focus-glow-width: 5px;
   --sl-viz-0: #ef806f;
   --sl-viz-1: #65a7fa;
   --sl-viz-2: #9ab140;

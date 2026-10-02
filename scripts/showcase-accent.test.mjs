@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { evaluate, fromHex } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromHex } from "./lib/css-color.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(HERE, p), "utf8");
@@ -57,34 +57,51 @@ for (const theme of ["light", "dark", "high-contrast"]) {
   }
 }
 
-// spexr's filled primary on the Indigo swatch (owner, 2026-10-02: "less is
-// more"): ONE registered fill on both themes, hover and active derived from it
-// by the light theme's own mixes -- no hand-tuned step literal -- and a white
-// label that clears 4.5:1 on all three.
+// spexr's accent fill on the Indigo swatch (owner, 2026-10-02: "less is
+// more"): ONE registered fill on both themes, set since ui-kit 0.32 as the
+// kit's one role, --slc-accent-fill, on the root -- never a re-binding of
+// --slc-accent on the primary. The kit derives the label, the hover and the
+// press from it (the light theme's mixes, on both themes), and they hold
+// 4.5:1 on all three.
 const Yl = (c) => 0.2126 * c.lin[0] + 0.7152 * c.lin[1] + 0.0722 * c.lin[2];
 const contrast = (a, b) => { const [hi, lo] = [Yl(a), Yl(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
 const registeredFill = JSON.parse(read("../packages/ui-kit/agent/accent-registry.json")).products.spexr.fill;
+const components = read("../packages/ui-kit/components.css");
+/** The kit's :root roles on a theme, with spexr's accent and `fill` set as the role. */
+const kitEnv = (theme, fill) => {
+  const env = new Map();
+  for (const f of ["../packages/ui-kit/tokens.css", `../packages/ui-kit/themes/${theme}.css`]) {
+    for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  }
+  for (const [k, v] of declarations(components, [":root", ...(theme === "light" ? [':root[data-sl-theme="light"]'] : [])])) env.set(k, v);
+  env.set("--sl-accent-default", theme === "light" ? "#5b6cff" : "#8b96ff");
+  env.set("--slc-accent-fill", fill);
+  return env;
+};
 
 // screens.css is the stage of showcase/screens.html: it mirrors the same block.
 for (const page of ["index.html", "effects.html", "screens.css"]) {
   const src = read(`../showcase/${page}`);
-  const block = src.match(/\[data-demo-accent="indigo"\]:not\(\[data-sl-theme="high-contrast"\]\) \.sl-btn--primary \{([^}]*)\}/)?.[1] ?? "";
+  const block = src.match(/\[data-demo-accent="indigo"\]:not\(\[data-sl-theme="high-contrast"\]\) \{([^}]*)\}/)?.[1] ?? "";
   const decl = (p) => block.match(new RegExp(`${p}:\\s*([^;]+);`))?.[1].trim();
 
-  test(`${page}: the indigo primary is the registered fill with derived steps, on both themes`, () => {
-    assert.equal(decl("--slc-accent"), registeredFill.light);
+  test(`${page}: the indigo accent fill is the registered fill, set once on the root, on both themes`, () => {
+    assert.equal(decl("--slc-accent-fill"), registeredFill.light);
     assert.equal(registeredFill.dark, registeredFill.light, "one fill on both themes");
-    assert.equal(decl("--slc-accent-hover"), "color-mix(in srgb, var(--slc-accent) 89%, black)");
-    assert.equal(decl("--slc-accent-active"), "color-mix(in srgb, var(--slc-accent) 76%, black)");
+    assert.deepEqual([...block.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]), ["--slc-accent-fill"], "the one role, nothing derived by hand");
+    assert.doesNotMatch(src, /data-demo-accent="indigo"\]:not\(\[data-sl-theme="high-contrast"\]\) \.sl-btn--primary \{/, "no re-binding of the accent on the primary (pre-0.32)");
     assert.doesNotMatch(src, /data-demo-accent="indigo"\]\[data-sl-theme=/, "no per-theme step override");
   });
 
-  test(`${page}: a white label reads on the indigo fill, its hover and its press (4.5:1)`, () => {
-    const env = new Map([["--slc-accent", decl("--slc-accent")]]);
-    const white = fromHex("#ffffff");
-    for (const p of ["--slc-accent", "--slc-accent-hover", "--slc-accent-active"]) {
-      const r = contrast(white, evaluate(decl(p), env));
-      assert.ok(r >= 4.5, `${p} ${r.toFixed(2)}:1`);
+  test(`${page}: the kit's label reads on the indigo fill, its hover and its press (4.5:1), on both themes`, () => {
+    for (const theme of ["light", "dark"]) {
+      const env = kitEnv(theme, decl("--slc-accent-fill"));
+      const label = evaluate("var(--slc-on-accent-fill)", env);
+      assert.equal(contrast(label, fromHex("#ffffff")), 1, `${theme}: the label is white`);
+      for (const p of ["--slc-accent-fill", "--slc-accent-fill-hover", "--slc-accent-fill-active"]) {
+        const r = contrast(label, evaluate(`var(${p})`, env));
+        assert.ok(r >= 4.5, `${theme} ${p} ${r.toFixed(2)}:1`);
+      }
     }
   });
 }

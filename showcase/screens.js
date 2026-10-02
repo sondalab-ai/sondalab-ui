@@ -311,7 +311,7 @@
           </section>
           <section class="set-sec set-danger">
             <div class="set-sec__head"><h2>Danger zone</h2><p>Deleting the workspace drops 212 cached answers and their evidence.</p></div>
-            <div class="set-row"><button class="sl-btn sl-btn--ghost">Export evidence</button><button class="sl-btn sl-btn--primary lab-danger">Delete workspace</button></div>
+            <div class="set-row"><button class="sl-btn sl-btn--ghost">Export evidence</button><button class="sl-btn sl-btn--primary sl-btn--danger lab-danger">Delete workspace</button></div>
           </section>
           <footer class="set-bar">
             <span class="set-bar__note"><i class="set-bar__dot" aria-hidden="true"></i>2 unsaved changes</span>
@@ -383,7 +383,7 @@
               <div class="dat-bulk">
                 <p class="sl-eyebrow">Selection</p>
                 <p class="dat-bulk__n"><b data-count="2">2</b> probes selected</p>
-                <div class="dat-bulk__act"><button class="sl-btn sl-btn--ghost sl-btn--sm" data-key="R">Re-run</button><button class="sl-btn sl-btn--sm">Compare</button><button class="sl-btn sl-btn--sm lab-danger-ghost">Archive</button></div>
+                <div class="dat-bulk__act"><button class="sl-btn sl-btn--ghost sl-btn--sm" data-key="R">Re-run</button><button class="sl-btn sl-btn--sm">Compare</button><button class="sl-btn sl-btn--sm sl-btn--danger lab-danger-ghost">Archive</button></div>
               </div>
               <div class="sl-empty dat-empty">
                 <span class="dat-empty__mark" aria-hidden="true">${I.check}</span>
@@ -480,24 +480,26 @@
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
       ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],
-      ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .lab-danger"], ["Secondary label", ".set-row .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
+      ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .sl-btn--danger"], ["Secondary label", ".set-row .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
       ["Segmented off", '.set-sec .sl-segmented__item[aria-selected="false"]'], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Status bar", ".ide-status__item"]],
     data: [["Table cell", ".sl-table tbody td:nth-child(3)"], ["Table head", ".sl-table thead th:nth-child(2)"], ["Dim cell", ".sl-table tbody tr:not([aria-selected]) .dat-dim"], ["Selected row", '.sl-table tbody tr[aria-selected="true"] td:nth-child(3)'],
       ["Selected row dim", '.sl-table tbody tr[aria-selected="true"] .dat-dim'], ["Probe id", ".dat-id"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Chip on", '.sl-chip[aria-pressed="true"]'], ["Badge ok", ".sl-badge--success"], ["Badge warn", ".sl-badge--warning"],
-      ["Badge err", ".sl-badge--danger"], ["Badge info", ".dat-table .sl-badge--info"], ["Stat label", ".sl-stat__label"], ["Empty body", ".sl-empty__body"], ["Pagination", ".sl-pagination__item:not([aria-current])"]],
+      ["Badge err", ".sl-badge--danger"], ["Badge info", ".dat-table .sl-badge--info"], ["Stat label", ".sl-stat__label"], ["Empty body", ".sl-empty__body"], ["Pagination", ".sl-pagination__item:not([aria-current])"],
+      ["Danger ghost label", ".dat-bulk__act .sl-btn--danger"]],
     hero: [["Headline", ".web-h1 .web-line"], ["Headline highlight", ".web-h1 em"], ["Lede", ".web-lede"], ["Nav link", ".web-links a:not([aria-current])"], ["Tag", ".web-hero .sl-tag"], ["Primary label", ".web-cta__p"], ["Card label", ".web-card__l"], ["Install", ".web-install code"], ["Eyebrow", ".web-sec .sl-eyebrow"]],
   };
   const EDGE = {
     ide: [["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
     settings: [["Field", "#s-name"], ["Select", "#s-br"], ["Checkbox", ".set-sec .sl-check__input:not(:checked) + .sl-check__box"], ["Radio", ".sl-radio__input:not(:checked) + .sl-radio__box"], ["Switch off", ".sl-switch__input:not(:checked):not(:disabled) + .sl-switch__track"],
       ["Segmented", ".set-sec .sl-segmented"], ["Secondary", ".set-row .sl-btn--ghost"], ["Ghost (info: text button, no edge by design)", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"]],
-    data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"]],
+    data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"],
+      ["Danger ghost (Archive)", ".dat-bulk__act .sl-btn--danger"]],
     hero: [["Secondary", ".web-cta .sl-btn--ghost"], ["Install box (info: display, not a control)", ".web-install"]],
   };
   // A row never samples an element whose lab state class forces its colour:
-  // .lab-focus paints a focus border, .lab-hover a hover wash. .lab-danger is
-  // sampled on purpose: it paints only the kit's own danger roles, standing in
-  // for the danger button the kit does not ship yet.
+  // .lab-focus paints a focus border, .lab-hover a hover wash. .lab-danger
+  // and .lab-danger-ghost paint nothing in the kit view since 0.32 (the kit
+  // ships .sl-btn--danger); they are the target's hooks, so they are sampled.
   const FORCED = ".lab-focus, .lab-hover";
   const pick = (sel) => [...stage.querySelectorAll(sel)].find((e) => !e.closest(FORCED)) || null;
   // keycaps measured per screen: the first few carry every variant (primary, ghost, small)

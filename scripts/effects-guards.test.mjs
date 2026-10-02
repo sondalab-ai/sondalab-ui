@@ -158,8 +158,31 @@ test("every glass control carries the two-line edge, with or without mount()", (
     .map((m) => (m[1] ?? "") + m[2]).join("\n");
   assert.match(input, /inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-control, var\(--slfx-edge-soft\)\) 50%, transparent\)/, "fields: soft line on the input");
   assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-control, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
-  assert.match(input, /:focus\s*box-shadow:[^;]*0 0 0 3px var\(--slc-accent-subtle\)/, "fields: focus keeps its halo");
-  assert.match(input, /:focus\s*(?:\/\*[\s\S]*?\*\/\s*)?box-shadow:\s*inset 0 0 0 1px color-mix\(in oklab, var\(--slc-accent-text\) 50%, transparent\)/, "fields: on focus the soft line follows the accent border, no band inside the ring");
+  assert.match(input, /:focus\s*box-shadow:[^;]*var\(--_sl-halo, 0 0 transparent\)/, "fields: focus keeps the kit's halo (0.32), which this rule outranks");
+  assert.match(input, /:focus\s*(?:\/\*[\s\S]*?\*\/\s*)?box-shadow:\s*inset 0 0 0 1px color-mix\(in oklab, var\(--slc-focus\) 50%, transparent\)/, "fields: on focus the soft line follows the ring's border, no band inside the ring");
+});
+
+// Glass owns a control's depth (0.32): the buttons' edge rule replaces the
+// box-shadow the kit paints from --_sl-depth and stands the primary's foot
+// down, and appends the kit's halo under keyboard focus; a glass field gives
+// its well up, an aurora field keeps it.
+test("glass owns a control's depth: the foot and the well stand down, the halo is appended", () => {
+  const edge = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass:where\(:root:not\(\[data-sl-theme="high-contrast"\]\) \*\):where\(:not\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\) \{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(edge, /--_sl-foot/, "the foot stands down only where the pane is built (below), not on every glass edge");
+  assert.match(effects, /@supports \(backdrop-filter: blur\(1px\)\) \{[\s\S]*\.sl-btn--primary\.sl-fx-glass:where\(\.sl-glass\)[^{]*\{ --_sl-foot: 0px; \}/, "a built pane stands the foot down");
+  assert.match(edge, /box-shadow:\s*inset 0 0 0 1px var\(--slfx-control-edge-soft, var\(--slfx-edge-soft\)\);/, "the glass edge replaces the control's depth");
+  const focus = effects.match(/:is\(\.sl-btn, \.sl-icon-btn\)\.sl-fx-glass\.sl-fx-glass:focus-visible \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(focus, /box-shadow:\s*inset 0 0 0 1px var\(--slfx-control-edge-soft, var\(--slfx-edge-soft\)\), var\(--_sl-halo, 0 0 transparent\)/);
+  // The halo needs no !important to compose. The one place it carries one is
+  // the kill switches' restore, which must outrank their own !important.
+  const forced = [...effects.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => /--_sl-(?:halo|depth)[^;]*!important/.test(m[2]));
+  for (const m of forced) {
+    for (const part of m[1].split(/,(?![^(]*\))/).map((s) => s.trim())) {
+      assert.match(part, /^(?::root\[data-sl-theme="high-contrast"\]|:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\))/, `an !important halo or depth outside the kill switches' restore: ${part}`);
+    }
+  }
+  assert.match(effects, /\.sl-field__control\.sl-fx-glass--field:where\([^{]*\.sl-field__input \{\s*--_sl-depth:\s*0 0 transparent;\s*\}/, "a glass field gives up its well");
+  assert.match(effects, /\.sl-field__input \{\s*box-shadow: inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-control, var\(--slfx-edge-soft\)\) 50%, transparent\), var\(--_sl-depth, 0 0 transparent\);/, "an aurora field keeps its well under the soft line");
 });
 
 // Regression, 2026-10-01: the soft inner line was a SOLID colour half a shade
@@ -1046,7 +1069,8 @@ test("the glass primary rests at 90%, fades its fill, and picks its label from t
   assert.match(r.body, /--slg-accent:\s*var\(--slfx-accent-t\)/);
   assert.match(r.body, /--slg-accent-a:\s*100%/);
   assert.match(effects, /@property\s+--slfx-accent-t\s*\{[^}]*syntax:\s*"<color>"/);
-  assert.match(effects, /color:\s*oklch\(from color-mix\(in oklab, var\(--slc-accent\) 90%, var\(--slc-canvas\)\) clamp\(0\.16, \(0\.59 - l\) \* 1000, 0\.985\) 0 h\)/);
+  // the resting fill is the primary's own fill set (components.css, 0.32)
+  assert.match(effects, /color:\s*oklch\(from color-mix\(in oklab, var\(--_sl-fill, var\(--slc-accent\)\) 90%, var\(--slc-canvas\)\) clamp\(0\.16, \(0\.59 - l\) \* 1000, 0\.985\) 0 h\)/);
 });
 
 // Regression, 2026-10-01: .sl-fx-glass--pane and .sl-fx-press reset `transition`

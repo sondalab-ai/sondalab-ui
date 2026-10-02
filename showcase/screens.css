@@ -15,22 +15,21 @@
 :root { --lab-code: var(--sl-font-mono); }
 
 /* spexr's filled indigo — mirrored byte for byte from showcase/index.html
-   (scripts/showcase-accent.test.mjs holds both to accent-registry.json): its
-   primary is a deeper indigo than its accent so the label can be white; the
-   accent itself (#5b6cff / #8b96ff) still drives links, tags and the ring. */
-[data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) .sl-btn--primary {
-  --slc-accent: #4c58e9;
-  --slc-accent-hover: color-mix(in srgb, var(--slc-accent) 89%, black);
-  --slc-accent-active: color-mix(in srgb, var(--slc-accent) 76%, black);
-  --slc-edge-accent: oklch(from var(--slc-accent) calc(l - var(--slc-shade-step, 0.075)) c h);
-  --slc-on-accent: #ffffff;
+   (scripts/showcase-accent.test.mjs holds both to accent-registry.json): every
+   accent fill that carries a label is a deeper indigo than the accent, so the
+   label can be white (white on #5b6cff is 4.17:1). Since ui-kit 0.32 that is
+   one role on the root, --slc-accent-fill: the primary, a checked switch,
+   check or radio and the count badges follow it, with their label, hover,
+   press and edge; the accent itself (#5b6cff / #8b96ff) still drives links,
+   tags and the ring. (Until 0.32 the primary re-bound --slc-accent alone.) */
+[data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) {
+  --slc-accent-fill: #4c58e9;
 }
-/* Target only: Lumen widens that fill to every other accent fill that carries
-   a label (count badges, a checked switch, the highlighted headline), because
-   white on #5b6cff is 4.17:1. Today's spexr re-binds the primary alone, so the
-   kit view keeps the registry accent there and the report shows what that
-   costs. In the kit this becomes a --slc-accent-fill role. */
-[data-dir="lumen"][data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) :is(.ide-activity__btn[data-count], .sl-switch__input:checked + .sl-switch__track, .ide-title__r .sl-icon-btn[data-count], .web-h1 em) {
+/* Target only: Lumen paints with --slc-accent, so it widens the fill by
+   re-binding the accent on each fill that carries a label (the primary, its
+   foot included, the count badges, a checked switch, the highlighted
+   headline). The kit view reads the role above. */
+[data-dir="lumen"][data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) :is(.sl-btn--primary, .ide-activity__btn[data-count], .sl-switch__input:checked + .sl-switch__track, .ide-title__r .sl-icon-btn[data-count], .web-h1 em) {
   --slc-accent: #4c58e9;
   --slc-on-accent: #ffffff;
 }
@@ -47,9 +46,12 @@ p { margin: 0; }
 svg { flex: none; }
 
 /* static focus mirror: the kit's own ring, as :focus-visible draws it */
-.lab-focus { outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus); outline-offset: var(--sl-focus-ring-offset, 0px); border-color: var(--slc-focus) !important; }
-.lab-danger { background-color: var(--slc-danger) !important; border-color: var(--slc-danger) !important; color: var(--slc-on-danger) !important; }
-.lab-danger-ghost { color: var(--slc-danger-text, var(--slc-danger)); }
+/* ...and its halo (0.32): the kit's own private pair, composed as the kit's
+   focus rule composes them (components.css) */
+.lab-focus { outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus); outline-offset: var(--sl-focus-ring-offset, 0px); border-color: var(--slc-focus) !important; box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent); }
+/* .lab-danger and .lab-danger-ghost paint nothing here since 0.32: the kit
+   ships the danger tone (.sl-btn--danger), and the two classes stay on the
+   markup only as the hooks the Lumen target draws its danger foot from. */
 .lab-hover { background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
 .lab-num { text-align: right !important; }
 /* the target draws its own in-button keycap from data-key (::after); the kit's child cap stands down there */
@@ -80,7 +82,8 @@ svg { flex: none; }
 /* the current view is a flat tile on the frame (0.31): one rung up from the canvas, ringed and lit, its icon in the accent */
 .ide-activity__btn[aria-current] { color: var(--slc-text); background: var(--slc-surface); box-shadow: var(--slc-depth-flat); }
 .ide-activity__btn[aria-current] svg { color: var(--slc-accent-text); }
-.ide-activity__btn[data-count]::after { content: attr(data-count); position: absolute; top: 3px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--slc-accent); color: var(--slc-on-accent); font: 600 9px/15px var(--sl-font-mono); text-align: center; }
+/* a count is a labelled accent fill: the kit's accent-fill role (0.32) */
+.ide-activity__btn[data-count]::after { content: attr(data-count); position: absolute; top: 3px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--slc-accent-fill, var(--slc-accent)); color: var(--slc-on-accent-fill); font: 600 9px/15px var(--sl-font-mono); text-align: center; }
 .ide-activity__spacer { flex: 1; }
 
 .ide-side { width: 264px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--slc-edge-surface); overflow: hidden; }

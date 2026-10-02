@@ -87,11 +87,20 @@ export function substitute(text, env, seen = new Set()) {
     // takes its fallback exactly as if the property were never declared.
     const declared = env.get(name);
     const value = declared?.trim() === "initial" ? undefined : declared;
-    if (value === undefined) {
+    // A custom property whose own value reaches an unresolved var() with no
+    // fallback is invalid at computed-value time, which makes it the
+    // guaranteed-invalid value too: a var() naming it with a fallback takes
+    // the fallback (the kit's --slc-accent-fill derivations rely on this).
+    let expanded;
+    if (value !== undefined) {
+      try { expanded = substitute(value, env, new Set([...seen, name])); }
+      catch (e) { if (fallback === null || !/^unresolved /.test(e.message)) throw e; }
+    }
+    if (expanded === undefined) {
       if (fallback === null) throw new Error(`unresolved ${name}`);
       out += substitute(fallback, env, seen);
     } else {
-      out += substitute(value, env, new Set([...seen, name]));
+      out += expanded;
     }
     i = j;
   }
@@ -213,13 +222,31 @@ class Parser {
     this.expect("ident", "in");
     const space = this.expect("ident").v;
     this.expect("punct", ",");
+    // A percentage is a literal, 0% to 100% (anything else voids the mix),
+    // or a math function whose result is a percentage, clamped to that
+    // range as CSS clamps a calculated one (calc(22% * min(1, 0.5 * 1000))).
+    // A bare number is not a percentage here, in either form: browsers
+    // reject color-mix(in srgb, red 0.22, …) and calc(0.22) alike.
+    const pct = () => {
+      const p = this.peek();
+      if (p?.t === "num") {
+        const tok = this.expect("num");
+        if (tok.unit !== "%") throw new Error(`a color-mix weight must be a percentage, got ${tok.v}${tok.unit}`);
+        if (tok.v < 0 || tok.v > 100) throw new Error(`a color-mix weight must be 0% to 100%, got ${tok.v}%`);
+        return tok.v / 100;
+      }
+      if (p?.t === "fn" && ["calc", "min", "max", "clamp"].includes(p.v)) {
+        const r = this.typed();
+        if (!r.pct) throw new Error(`a color-mix weight must be a percentage, got the number ${r.v}`);
+        return Math.min(1, Math.max(0, r.v));
+      }
+      return null;
+    };
     const a = this.color(env);
-    let pa = null;
-    if (this.peek()?.t === "num") pa = this.expect("num").v / 100;
+    let pa = pct();
     this.expect("punct", ",");
     const b = this.color(env);
-    let pb = null;
-    if (this.peek()?.t === "num") pb = this.expect("num").v / 100;
+    let pb = pct();
     this.expect("punct", ")");
     if (pa === null && pb === null) { pa = pb = 0.5; }
     else if (pa === null) pa = 1 - pb;
@@ -227,6 +254,55 @@ class Parser {
     const sum = pa + pb;
     if (sum !== 1) { pa /= sum; pb /= sum; }
     return mix(space, a, pa, b, pb);
+  }
+
+  /** A math expression with its type: { v, pct } -- pct when the result is a
+   *  percentage (v then a fraction). CSS typing: a sum's terms share a type,
+   *  a product takes at most one percentage, a divisor is a number, and
+   *  min/max/clamp take one type throughout. */
+  typed() {
+    const tok = this.next();
+    if (!tok) throw new Error("expected a number");
+    if (tok.t === "num") return tok.unit === "%" ? { v: tok.v / 100, pct: true } : { v: tok.v, pct: false };
+    if (tok.t === "punct" && tok.v === "(") { const r = this.typedSum(); this.expect("punct", ")"); return r; }
+    if (tok.t === "fn" && ["calc", "min", "max", "clamp"].includes(tok.v)) {
+      const args = [];
+      do { args.push(this.typedSum()); } while (this.isPunct(",") && this.next());
+      this.expect("punct", ")");
+      if (args.some((a) => a.pct !== args[0].pct)) throw new Error(`${tok.v}() mixes a percentage with a number`);
+      const vs = args.map((a) => a.v);
+      const v = tok.v === "calc" ? vs[0] : tok.v === "min" ? Math.min(...vs) : tok.v === "max" ? Math.max(...vs) : Math.min(Math.max(vs[1], vs[0]), vs[2]);
+      return { v, pct: args[0].pct };
+    }
+    throw new Error(`unexpected ${JSON.stringify(tok)} in a typed expression`);
+  }
+  typedSum() {
+    let a = this.typedProduct();
+    while (this.isPunct("+") || this.isPunct("-")) {
+      const op = this.next().v, b = this.typedProduct();
+      if (a.pct !== b.pct) throw new Error("a sum mixes a percentage with a number");
+      a = { v: op === "+" ? a.v + b.v : a.v - b.v, pct: a.pct };
+    }
+    return a;
+  }
+  typedProduct() {
+    let a = this.typedUnary();
+    while (this.isPunct("*") || this.isPunct("/")) {
+      const op = this.next().v, b = this.typedUnary();
+      if (op === "*") {
+        if (a.pct && b.pct) throw new Error("a product of two percentages");
+        a = { v: a.v * b.v, pct: a.pct || b.pct };
+      } else {
+        if (b.pct) throw new Error("a division by a percentage");
+        a = { v: a.v / b.v, pct: a.pct };
+      }
+    }
+    return a;
+  }
+  typedUnary() {
+    if (this.isPunct("-")) { this.next(); const r = this.typedUnary(); return { v: -r.v, pct: r.pct }; }
+    if (this.isPunct("+")) { this.next(); return this.typedUnary(); }
+    return this.typed();
   }
 
   /** One channel value: a number, a channel keyword, or a math function.
@@ -315,6 +391,41 @@ function mix(space, a, pa, b, pb) {
     : oklabToLin(lchToLab([out[0], out[1], out[2] % 360]));
   return { lin, alpha };
 }
+
+// ── scopes: custom properties compute where they are declared ───────────────
+
+/** The computed custom properties of an element, the way the cascade gives
+ *  them: `decls` (the element's own declarations, a Map or [name, value]
+ *  pairs, in cascade order) are var()-substituted against themselves and
+ *  the parent's COMPUTED values, which they then inherit alongside. A value
+ *  that is `initial` or reaches an unresolved var() without a fallback is
+ *  the guaranteed-invalid value: the property is absent. Pass `parent` as
+ *  `null` for the root.
+ *  This is the difference a flat Map gets wrong: a role declared on :root
+ *  as var(--x) is computed THERE, so re-binding --x on a descendant does not
+ *  change what the descendant inherits, while a role declared on the
+ *  descendant itself does follow it. */
+export function scope(parent, decls) {
+  const base = parent ? new Map(parent) : new Map();
+  const own = new Map(decls instanceof Map ? decls : decls);
+  const merged = new Map([...base, ...own]);
+  const out = new Map(base);
+  for (const name of own.keys()) {
+    const value = merged.get(name);
+    if (value.trim() === "initial") { out.delete(name); continue; }
+    try { out.set(name, substitute(value, merged)); }
+    catch (e) {
+      if (!/^unresolved |^var\(\) cycle/.test(e.message)) throw e;
+      out.delete(name);
+    }
+  }
+  out.computed = true;
+  return out;
+}
+
+/** An element under `env`: `env` is either a computed scope (a descendant)
+ *  or a flat Map of the root's own declarations, which is computed first. */
+export const within = (env, decls) => scope(env.computed ? env : scope(null, env), decls);
 
 /** Evaluates one colour expression after var() substitution against `env`. */
 export function evaluate(text, env) {

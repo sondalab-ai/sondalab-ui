@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, substitute, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, substitute, toHex, toOklch, toSrgb, within } from "./lib/css-color.mjs";
 import { allowlistForProduct } from "../packages/ui-kit/agent/sl-audit.mjs";
 
 // Lumen depth (ui-kit 0.31): radii, casts, the depth recipes (--slc-depth-*),
@@ -52,12 +52,13 @@ function rootEnv(theme, product = "default") {
   for (const [k, v] of declarations(raw, sels)) env.set(k, v);
   return env;
 }
-/** A child of the inversion band: its declarations, currentColor bound to the band's ink. */
+/** A child of the inversion band: its own declarations, currentColor bound
+ *  to the band's ink, computed over what it inherits from :root (a role the
+ *  band does not re-declare keeps the value :root computed). */
+const bandDecls = (sels, ink) => sels.flatMap((s) => declarations(raw, [s])).map(([k, v]) => [k, v.replace(/currentColor/g, ink)]);
 function bandEnv(theme, product) {
   const env = rootEnv(theme, product);
-  const ink = toHex(evaluate("var(--slc-canvas)", env));
-  for (const [k, v] of declarations(raw, [".sl-invert > *"])) env.set(k, v.replace(/currentColor/g, ink));
-  return env;
+  return within(env, bandDecls([".sl-invert > *"], toHex(evaluate("var(--slc-canvas)", env))));
 }
 /** A Tier B page: no theme file and no --sl-* colour token, only the shared
  *  :root layer, components.css, and the product's own colour layer mapping
@@ -73,17 +74,15 @@ function tierBEnv(theme, product) {
     "--slc-border": n["border-default"], "--slc-border-subtle": n["border-subtle"], "--slc-border-strong": n["border-strong"], "--slc-focus": REGISTRY[product][theme],
   };
   for (const [k, v] of Object.entries(map)) env.set(k, v);
-  if (theme === "light") for (const [k, v] of Object.entries({ "--sl-accent-text-lmax": "0.46", "--slc-edge-accent-lmax": "0.59", "--slc-edge-accent-top": "var(--slc-edge-accent)", "--slc-glow": "0.35" })) env.set(k, v);
+  if (theme === "light") for (const [k, v] of Object.entries({ "--sl-accent-text-lmax": "0.46", "--slc-edge-accent-lmax": "0.59", "--slc-glow": "0.35" })) env.set(k, v);
   for (const t of ["--sl-bg-tile", "--sl-bg-sunken", "--sl-border-lit"]) assert.equal(env.has(t), false, `a Tier B page has no ${t}`);
   return env;
 }
 /** A child of the inversion band on the high-contrast theme: the band's
  *  declarations, then the high-contrast band remap. */
 function hcBandEnv() {
-  const env = bandEnv("high-contrast", "default");
-  const ink = toHex(evaluate("var(--slc-canvas)", rootEnv("high-contrast")));
-  for (const [k, v] of declarations(raw, [':root[data-sl-theme="high-contrast"] .sl-invert > *'])) env.set(k, v.replace(/currentColor/g, ink));
-  return env;
+  const env = rootEnv("high-contrast");
+  return within(env, bandDecls([".sl-invert > *", ':root[data-sl-theme="high-contrast"] .sl-invert > *'], toHex(evaluate("var(--slc-canvas)", env))));
 }
 /** The colours of every layer of a box-shadow list, evaluated: "none" is no layer. */
 function shadowColours(value, env) {
@@ -207,8 +206,10 @@ test("high contrast trades depth for drawn rings: selection in the accent, a key
   assert.equal(hc.get("--slc-depth-flat"), "0 0 0 1px var(--slc-accent)");
   assert.equal(hc.get("--slc-depth-island"), "0 0 0 1px var(--slc-border)");
   assert.equal(hc.get("--slc-depth-key"), "0 0 0 1px var(--slc-border)");
-  assert.equal(hc.get("--slc-depth-sunk"), "none");
-  assert.equal(hc.get("--slc-depth-float"), "none");
+  // off is an empty shadow, never `none`: a recipe joins a box-shadow list
+  // (a control's depth plus its focus halo, 0.32), and `none` voids a list
+  assert.equal(hc.get("--slc-depth-sunk"), "0 0 transparent");
+  assert.equal(hc.get("--slc-depth-float"), "0 0 transparent");
   assert.equal(hc.get("--slc-glow"), "0");
   assert.equal(vars([':root[data-sl-theme="light"]']).get("--slc-glow"), "0.35");
 });
@@ -219,8 +220,8 @@ test("high contrast keeps its rings inside the inversion band, where the band re
   assert.equal(band.get("--slc-depth-flat"), "0 0 0 1px var(--slc-accent-text)");
   assert.equal(band.get("--slc-depth-island"), "0 0 0 1px var(--slc-border)");
   assert.equal(band.get("--slc-depth-key"), "0 0 0 1px var(--slc-border)");
-  assert.equal(band.get("--slc-depth-sunk"), "none");
-  assert.equal(band.get("--slc-depth-float"), "none");
+  assert.equal(band.get("--slc-depth-sunk"), "0 0 transparent");
+  assert.equal(band.get("--slc-depth-float"), "0 0 transparent");
   // the ring finds the tile on the band's ground (3:1, a boundary)
   const env = hcBandEnv();
   const ground = evaluate("var(--slc-text)", rootEnv("high-contrast"));
@@ -233,7 +234,15 @@ test("forced colours turn every depth recipe off, on :root, on a themed root and
   const r = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => /^\s*:root,/.test(m[1]));
   assert.ok(r, "a forced-colours rule on :root");
   assert.equal(r[1].trim().replace(/\s+/g, " "), ":root, :root[data-sl-theme], .sl-invert > *, :root[data-sl-theme] .sl-invert > *");
-  for (const n of DEPTH) assert.match(r[2], new RegExp(`${n}:\\s*none;`), n);
+  for (const n of DEPTH) assert.match(r[2], new RegExp(`${n}:\\s*0 0 transparent;`), n);
+  // and every accent glow with them: the checked glow and the focus halo
+  assert.match(r[2], /--slc-glow:\s*0;/);
+});
+
+test("no theme turns a depth recipe off with `none`: a recipe joins box-shadow lists", () => {
+  for (const [, , body] of [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => [null, m[1], m[2]])) {
+    for (const m of body.matchAll(/(--slc-depth-[\w-]+)\s*:\s*([^;]+);/g)) assert.notEqual(m[2].trim(), "none", m[1]);
+  }
 });
 
 test("every depth recipe resolves on every product and theme, the band and Tier B included", () => {
@@ -261,13 +270,26 @@ const TILES = [
   ["tile tab", '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]', "flat", '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]'],
 ];
 
+// The depth is written into the control's private --_sl-depth (0.32), which
+// the kit paints and its focus rule composes with the halo; a table row is
+// not focusable, so it paints its tile directly.
+const depthOf = (body) => decl(body, "--_sl-depth") ?? decl(body, "box-shadow");
 test("selection is a tile: the tile fill and a depth recipe, never the accent wash", () => {
   for (const [host, sel, depth] of TILES) {
     const body = rule(sel);
     assert.equal(decl(body, "background(?:-color)?"), "var(--slc-tile)", host);
-    assert.equal(decl(body, "box-shadow"), `var(--slc-depth-${depth})`, host);
+    assert.equal(depthOf(body), `var(--slc-depth-${depth})`, host);
     assert.doesNotMatch(body, /accent-subtle|edge-pressed|border-left/, `${host} still wears the old accent selection`);
   }
+});
+
+test("a focusable tile writes its depth into --_sl-depth, never box-shadow, so focus keeps its halo", () => {
+  for (const [host, sel, depth] of TILES.filter(([h]) => h !== "table row")) {
+    const body = rule(sel);
+    assert.equal(decl(body, "--_sl-depth"), `var(--slc-depth-${depth})`, host);
+    assert.equal(decl(body, "box-shadow"), undefined, `${host} sets box-shadow, which outranks the focus rule`);
+  }
+  assert.equal(decl(rule('.sl-table tbody tr[aria-selected="true"]'), "box-shadow"), "var(--slc-depth-tile)");
 });
 
 test("a tile's host carries no border, so its lit line sits flush under the ring", () => {
@@ -381,12 +403,15 @@ test("a key inside a button keeps the 32px and 24px rows", () => {
   assert.equal(decl(smKey, "height"), "16px");
 });
 
-/** The colour a primary is filled with and labelled in, for a product: its
- *  registered fill (and a white label) where it has one, as spexr binds. */
-function primary(env, product, theme) {
-  const fill = theme !== "high-contrast" && REGISTRY[product].fill?.[theme];
-  if (fill) { env.set("--slc-accent", fill); env.set("--slc-on-accent", "#ffffff"); }
-  return env;
+/** A primary's own declarations over a product's root: its registered fill
+ *  set as the one role (--slc-accent-fill, 0.32) where it has one, as spexr
+ *  sets it, and the danger tone's fill set when `danger` is asked for. The
+ *  fill it paints is then var(--_sl-fill), its label var(--_sl-on-fill). */
+function primary(env, product, theme, { danger = false, fill = true } = {}) {
+  const registered = fill && theme !== "high-contrast" && REGISTRY[product].fill?.[theme];
+  if (registered) env.set("--slc-accent-fill", registered);
+  const sels = [":where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track)", ".sl-btn--primary", ...(danger ? [".sl-btn--primary.sl-btn--danger"] : [])];
+  return within(env, sels.flatMap((s) => declarations(raw, [s])));
 }
 
 for (const [theme, product] of CASES) {
@@ -417,12 +442,15 @@ for (const [theme, product] of CASES) {
       }
     }
     // in a primary: the label's own colour on a cap that steps away from it
-    const p = primary(rootEnv(theme, product), product, theme);
-    const fill = evaluate("var(--slc-accent)", p), label = evaluate("var(--slc-on-accent)", p);
-    const cap = evaluate(decl(rule(".sl-btn--primary > .sl-kbd"), "background"), p);
-    const rk = ratio(label, cap), rl = ratio(label, fill);
-    if (rk < rl) low.push(`primary key ${rk.toFixed(2)} reads weaker than its label ${rl.toFixed(2)}`);
-    if (rk < 4.5) low.push(`primary key ${rk.toFixed(2)}`);
+    for (const danger of [false, true]) {
+      const p = primary(rootEnv(theme, product), product, theme, { danger });
+      const fill = evaluate("var(--_sl-fill)", p), label = evaluate("var(--_sl-on-fill)", p);
+      const cap = evaluate(decl(rule(".sl-btn--primary > .sl-kbd"), "background"), p);
+      const rk = ratio(label, cap), rl = ratio(label, fill);
+      const name = danger ? "danger primary" : "primary";
+      if (rk < rl) low.push(`${name} key ${rk.toFixed(2)} reads weaker than its label ${rl.toFixed(2)}`);
+      if (rk < 4.5) low.push(`${name} key ${rk.toFixed(2)}`);
+    }
     assert.deepEqual(low, []);
   });
 }
@@ -444,7 +472,7 @@ test("tile tabs: no rule under the strip, no underline, a flat tile, the dot and
   assert.equal(decl(close, "appearance"), "none");
   // the wrapper pattern: the item carries the tile, the tab inside it none
   assert.equal(decl(rule('.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])'), "box-shadow"), "var(--slc-depth-flat)");
-  assert.equal(decl(rule(".sl-tabs--tile .sl-tabs__item > .sl-tabs__tab, .sl-tabs--tile .sl-tabs__item > .sl-tabs__tab:hover"), "box-shadow"), "none");
+  assert.equal(decl(rule(".sl-tabs--tile .sl-tabs__item > .sl-tabs__tab, .sl-tabs--tile .sl-tabs__item > .sl-tabs__tab:hover"), "--_sl-depth"), "0 0 transparent");
   assert.match(rule(".sl-tabs__close:hover"), /background-color:\s*color-mix\(in srgb, var\(--slc-text\) 10%, transparent\)/);
   // the shared focus ring covers the tab, and the outline follows its 6px
   const ring = RULES.find((r) => /outline: var\(--sl-focus-ring-width/.test(r.body));
@@ -465,26 +493,26 @@ const EFFECTS = bare(read("effects.css"));
 const PANE_HOST = '.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *))';
 const FX_RULES = [...EFFECTS.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ selector: m[1].trim().replace(/\s+/g, " "), body: m[2] }));
 const fxRule = (sel) => FX_RULES.find((r) => r.selector === sel)?.body;
-const PANE = "color-mix(in oklab, var(--slc-accent) 90%, var(--slc-canvas))";
+const PANE = "color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas))";
 
 test("the glass primary's label is the composite-picked pole the cap test reads", () => {
   assert.equal(decl(fxRule(PANE_HOST) ?? "", "color"), `oklch(from ${PANE} clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h)`);
 });
 
 for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
-  const accents = [REGISTRY[product][theme], REGISTRY[product].fill?.[theme]].filter(Boolean);
+  // the accent, the product's registered accent fill (set as the role), the danger
+  const fills = [["accent", { fill: false }], ...(REGISTRY[product].fill?.[theme] ? [["accent fill", {}]] : []), ["danger", { danger: true }]];
   test(`${theme} ${product}: a keycap in a glass primary reads against the pane's own label and stands apart from the pane`, () => {
     const low = [];
-    for (const accent of accents) {
-      const env = rootEnv(theme, product);
-      env.set("--slc-accent", accent);
+    for (const [accent, opts] of fills) {
+      const env = primary(rootEnv(theme, product), product, theme, opts);
       // the cascade: the glass rule where effects.css has one, else the kit's cap
       const glassCap = fxRule(`${PANE_HOST} > .sl-kbd`);
       const capDecls = glassCap ? new Map([...glassCap.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim()])) : new Map();
-      for (const [k, v] of capDecls) env.set(k, v);
+      const capEnv = within(env, capDecls);
       const capValue = glassCap ? decl(glassCap, "background") : decl(rule(".sl-btn--primary > .sl-kbd"), "background");
       const label = evaluate(decl(fxRule(PANE_HOST), "color"), env);
-      const pane = evaluate(PANE, env), cap = evaluate(capValue, env);
+      const pane = evaluate(PANE, env), cap = evaluate(capValue, capEnv);
       const r = ratio(label, cap);
       if (r < 4.5) low.push(`${accent}: the cap's glyph ${r.toFixed(2)}`);
       if (r < ratio(label, pane)) low.push(`${accent}: the cap ${r.toFixed(2)} reads weaker than the label on the pane ${ratio(label, pane).toFixed(2)}`);
@@ -581,7 +609,7 @@ const NAV = ".sl-nav__item[aria-current]";
 
 test("the current nav item carries a seam: 2px, half its height, centred, 3px in, a layer of its own background", () => {
   const nav = rule(NAV);
-  for (const [p, v] of [["background-color", "var(--slc-tile)"], ["background-image", "linear-gradient(var(--slc-seam), var(--slc-seam))"], ["background-repeat", "no-repeat"], ["background-size", "2px 50%"], ["background-position", "3px 50%"], ["box-shadow", "var(--slc-depth-tile)"]]) {
+  for (const [p, v] of [["background-color", "var(--slc-tile)"], ["background-image", "linear-gradient(var(--slc-seam), var(--slc-seam))"], ["background-repeat", "no-repeat"], ["background-size", "2px 50%"], ["background-position", "3px 50%"], ["--_sl-depth", "var(--slc-depth-tile)"]]) {
     assert.equal(decl(nav, p), v, p);
   }
   // it arrives with the state and never animates: the image is not transitioned

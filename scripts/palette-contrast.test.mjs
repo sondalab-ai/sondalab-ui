@@ -258,16 +258,21 @@ for (const [product, p] of PRODUCTS) {
   const band = comp.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
   const floor = Number(band.match(/--slc-accent-text:\s*oklch\(from var\(--slc-accent\) min\(max\(l, ([0-9.]+)\)/)?.[1]);
   const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
-  const inBand = (hex, cap) => {
+  // The danger is floored higher than the rest (0.32): the danger tone sets
+  // it as text on cards inside the band (controls.test.mjs measures those).
+  const floorOf = (s) => Number(band.match(new RegExp(`--slc-${s}-text:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*min\\(max\\(l, ([0-9.]+)\\)`))?.[1]);
+  const inBand = (hex, cap, f = floor) => {
     const [L, C, h] = toOklch(fromHex(hex));
-    const l = Math.min(Math.max(L, floor), cap);
+    const l = Math.min(Math.max(L, f), cap);
     return toHex(fromOklch([l, Math.min(C, maxChroma(l, h)), h]));
   };
 
-  test("the band floors the accent text and the status inks with one number", () => {
+  test("the band floors the accent text and the status inks with one number, and the danger higher", () => {
     assert.ok(floor > 0.5 && floor < 1, `no floor on --slc-accent-text in .sl-invert > *: ${floor}`);
+    assert.ok(floorOf("danger") > floor, "the danger's floor is the higher one");
     for (const s of ["success", "warning", "danger", "info"]) {
-      assert.match(band, new RegExp(`--slc-${s}-text:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*min\\(max\\(l, ${floor}\\), var\\(--sl-accent-band-text-lmax, 1\\)\\) c h\\)`), s);
+      const f = s === "danger" ? floorOf("danger") : floor;
+      assert.match(band, new RegExp(`--slc-${s}-text:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*min\\(max\\(l, ${f}\\), var\\(--sl-accent-band-text-lmax, 1\\)\\) c h\\)`), s);
       assert.match(comp, new RegExp(`\\.sl-badge--${s}\\s*\\{ color: var\\(--slc-${s}-text, var\\(--slc-${s}\\)\\)`), `badge ${s}`);
     }
     assert.match(band, /--slc-accent-subtle:\s*color-mix\(in srgb, var\(--slc-accent\) 12%, transparent\)/);
@@ -288,7 +293,7 @@ for (const [product, p] of PRODUCTS) {
       });
     for (const [name, hex, ground] of cases) {
       test(`${theme} ${name}: reads inside the inversion band, on the band and on its own 12% wash (4.5:1)`, () => {
-        const text = inBand(hex, cap);
+        const text = inBand(hex, cap, /danger/.test(name) ? floorOf("danger") : floor);
         const bad = [ground, lerp(ground, text, 0.12)]
           .map((bg) => [bg, ratio(text, bg)]).filter(([, r]) => r < 4.5).map(([bg, r]) => `${text} on ${bg} ${r.toFixed(2)}`);
         assert.deepEqual(bad, []);
