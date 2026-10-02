@@ -24,6 +24,58 @@ const STATUS = ["success", "warning", "danger", "info"].map((s) => `--sl-status-
 const CODE_TEXT = ["fg", "keyword", "string", "number", "boolean", "function", "tag", "builtin"].map((s) => `--sl-code-${s}`);
 const CODE_QUIET = ["--sl-code-comment", "--sl-code-null"];
 const VIZ = [...Array(8).keys()].map((i) => `--sl-viz-${i}`);
+const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
+  return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
+
+// Since 0.29 every product has its own neutrals (its accent hue, baked to hex
+// in neutrals.json), so every floor below is held on EVERY product's grounds,
+// the new tile and sunken grounds included. A product that inherits another's
+// accent bakes the same values (neutrals-ladder.test.mjs), so it is skipped.
+const NEUTRALS = JSON.parse(readFileSync(resolve(KIT, "neutrals.json"), "utf8"));
+const PRODUCTS = Object.entries(NEUTRALS.products).filter(([, p]) => !p.inherits);
+const GROUNDS = ["bg-canvas", "bg-surface", "bg-surface-raised", "bg-tile", "bg-sunken"].map((r) => `--sl-${r}`);
+/** The theme's generated tokens with one product's neutrals in place. */
+const productTokens = (theme, p) => ({
+  ...shared,
+  ...vars(`themes/${theme}.css`),
+  ...Object.fromEntries(Object.entries(p[theme]).filter(([, v]) => v.startsWith("#")).map(([k, v]) => [`--sl-${k}`, v])),
+});
+
+test("the default product's neutrals are the ones the theme files ship", () => {
+  for (const theme of ["light", "dark"]) {
+    const t = vars(`themes/${theme}.css`);
+    for (const [role, v] of Object.entries(NEUTRALS.products.default[theme])) {
+      if (v.startsWith("#")) assert.equal(t[`--sl-${role}`], v, `${theme} ${role}`);
+    }
+  }
+});
+
+for (const theme of ["light", "dark"]) for (const [product, p] of PRODUCTS) {
+  const t = productTokens(theme, p);
+  const hex = (n) => {
+    assert.ok(t[n], `${n} is not a 6-digit hex in the generated ${theme} css`);
+    return t[n];
+  };
+  const below = (names, min, over = (bg) => hex(bg)) => GROUNDS.flatMap((bg) => names
+    .map((n) => [n, ratio(hex(n), over(bg, n))])
+    .filter(([, r]) => r < min)
+    .map(([n, r]) => `${n} on ${bg} ${r.toFixed(2)}`));
+
+  test(`${theme} ${product}: status reads as text on every ground (4.5:1)`, () =>
+    assert.deepEqual(below(STATUS, 4.5), []));
+  // The badge fills itself with a wash of its own status colour
+  // (components.css: color-mix(in srgb, currentColor 12%, transparent)),
+  // so the text's real ground is that wash over the page.
+  test(`${theme} ${product}: status reads on its own 12% badge wash on every ground (4.5:1)`, () =>
+    assert.deepEqual(below(STATUS, 4.5, (bg, n) => lerp(hex(bg), hex(n), 0.12)), []));
+  test(`${theme} ${product}: code reads on every ground (4.5:1, comment 3:1)`, () =>
+    assert.deepEqual([...below(CODE_TEXT, 4.5), ...below(CODE_QUIET, 3)], []));
+  test(`${theme} ${product}: viz marks are visible on every ground (3:1)`, () =>
+    assert.deepEqual(below(VIZ, 3), []));
+  // Muted text is text: it reads at 4.5:1 on every ground of every product.
+  test(`${theme} ${product}: muted text reads on every ground (4.5:1)`, () =>
+    assert.deepEqual(below(["--sl-text-muted", "--sl-text-secondary", "--sl-text-primary"], 4.5), []));
+}
 
 for (const theme of ["light", "dark"]) {
   const t = { ...shared, ...vars(`themes/${theme}.css`) };
@@ -31,28 +83,6 @@ for (const theme of ["light", "dark"]) {
     assert.ok(t[n], `${n} is not a 6-digit hex in the generated ${theme} css`);
     return t[n];
   };
-  const below = (names, bg, min) => names
-    .filter((n) => ratio(hex(n), hex(bg)) < min)
-    .map((n) => `${n} ${ratio(t[n], t[bg]).toFixed(2)}`);
-
-  for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
-    test(`${theme} ${bg}: status reads as text (4.5:1)`, () =>
-      assert.deepEqual(below(STATUS, bg, 4.5), []));
-    // The badge fills itself with a wash of its own status colour
-    // (components.css: color-mix(in srgb, currentColor 12%, transparent)),
-    // so the text's real ground is that wash over the page.
-    test(`${theme} ${bg}: status reads on its own 12% badge wash (4.5:1)`, () => {
-      const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
-        return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
-      const bad = STATUS.map((n) => [n, ratio(hex(n), lerp(hex(bg), hex(n), 0.12))])
-        .filter(([, r]) => r < 4.5).map(([n, r]) => `${n} ${r.toFixed(2)}`);
-      assert.deepEqual(bad, []);
-    });
-    test(`${theme} ${bg}: code reads (4.5:1, comment 3:1)`, () =>
-      assert.deepEqual([...below(CODE_TEXT, bg, 4.5), ...below(CODE_QUIET, bg, 3)], []));
-    test(`${theme} ${bg}: viz marks are visible (3:1)`, () =>
-      assert.deepEqual(below(VIZ, bg, 3), []));
-  }
 
   test(`${theme}: viz series are pairwise distinct (OKLab >= 0.08)`, () => {
     const labs = VIZ.map((n) => linToOklab(fromHex(hex(n)).lin));
@@ -65,29 +95,23 @@ for (const theme of ["light", "dark"]) {
   });
 }
 
-// Prism (light only): the neutrals, and the spectrum ink that must be seen at
-// 1px and as display text. The accent is a FILL on light since 0.24; what
-// reads as text is its derivation, checked below. The dark accent is out of
-// scope here.
-{
-  const t = { ...shared, ...vars("themes/light.css") };
+// Prism (light only): the spectrum ink must be seen at 1px and as display
+// text on every product's light grounds. The accent is a FILL on light since
+// 0.24; what reads as text is its derivation, checked below.
+for (const [product, p] of PRODUCTS) {
+  const t = productTokens("light", p);
   const INK = [...Array(5).keys()].map((i) => `--sl-spectrum-ink-${i}`);
-  for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
-    test(`light ${bg}: muted text reads as text (4.5:1)`, () => {
-      const r = ratio(t["--sl-text-muted"], t[bg]);
-      assert.ok(r >= 4.5, `--sl-text-muted ${r.toFixed(2)}`);
-    });
-    test(`light ${bg}: spectrum ink is visible at 1px and as display text (3:1)`, () => {
-      const bad = INK.filter((n) => !t[n] || ratio(t[n], t[bg]) < 3).map((n) => `${n} ${t[n] && ratio(t[n], t[bg]).toFixed(2)}`);
-      assert.deepEqual(bad, []);
-    });
-  }
+  test(`light ${product}: spectrum ink is visible at 1px and as display text on every ground (3:1)`, () => {
+    const bad = GROUNDS.flatMap((bg) => INK.filter((n) => !t[n] || ratio(t[n], t[bg]) < 3)
+      .map((n) => `${n} on ${bg} ${t[n] && ratio(t[n], t[bg]).toFixed(2)}`));
+    assert.deepEqual(bad, []);
+  });
 }
 
 // The light accent split (0.24): every registered product's light accent is a
 // fill, its text is re-derived from it with the theme's lightness cap, and its
 // label is the pole its lightness picks. These mirror the CSS formulas:
-//   --slc-accent-text   oklch(from accent min(l, lmax) c h)   (gamut-mapped by chroma)
+//   --slc-accent-text   oklch(from accent min(l, lmax) c h)   (gamut-mapped, or clipped as Chrome does)
 //   --sl-text-on-accent oklch(from accent clamp(0.22, (0.61 - l) * 1000, 1) 0 h)
 {
   const light = readFileSync(resolve(KIT, "themes/light.css"), "utf8");
@@ -95,10 +119,14 @@ for (const theme of ["light", "dark"]) {
   const onAccent = light.match(/--sl-text-on-accent:\s*([^;]+);/)[1];
   const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
   const t = { ...shared, ...vars("themes/light.css") };
-  const textOf = (hex) => {
+  // Two readings of an out-of-gamut text colour: CSS Color 4 gamut mapping
+  // (chroma reduced at fixed L and h) and what Chrome 154 paints, measured
+  // from pixels in K2 -- each channel clipped, which also moves the hue
+  // (amber at the cap: #933a00, h 45, not #7e4a00, h 66). Both must read.
+  const textsOf = (hex) => {
     const [L, C, h] = toOklch(fromHex(hex));
     const l = Math.min(L, lmax);
-    return toHex(fromOklch([l, Math.min(C, maxChroma(l, h)), h]));
+    return [toHex(fromOklch([l, Math.min(C, maxChroma(l, h)), h])), toHex(fromOklch([l, C, h]))];
   };
   const labelOf = (hex) => {
     const [L, , h] = toOklch(fromHex(hex));
@@ -113,13 +141,12 @@ for (const theme of ["light", "dark"]) {
     assert.match(light, /--sl-focus-ring: oklch\(from var\(--sl-accent-default\) min\(l, var\(--sl-accent-text-lmax\)\) c h\)/);
   });
   for (const [name, hex] of accents) {
-    test(`light ${name}: accent text reads on every ground and on its own 12% wash (4.5:1)`, () => {
-      const text = textOf(hex);
-      const grounds = ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"].map((n) => t[n]);
-      const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
-        return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
-      const bad = [...grounds, lerp(t["--sl-bg-canvas"], hex, 0.12)]
-        .map((bg) => [bg, ratio(text, bg)]).filter(([, r]) => r < 4.5).map(([bg, r]) => `${text} on ${bg} ${r.toFixed(2)}`);
+    // Its own product's grounds (an inheriting product shares its parent's).
+    const own = NEUTRALS.products[name] ?? NEUTRALS.products.default;
+    test(`light ${name}: accent text reads on its own grounds and on its own 12% wash (4.5:1)`, () => {
+      const grounds = GROUNDS.map((n) => own.light[n.slice(5)]);
+      const bad = textsOf(hex).flatMap((text) => [...grounds, lerp(own.light["bg-canvas"], hex, 0.12)]
+        .map((bg) => [bg, ratio(text, bg)]).filter(([, r]) => r < 4.5).map(([bg, r]) => `${text} on ${bg} ${r.toFixed(2)}`));
       assert.deepEqual(bad, []);
     });
     test(`light ${name}: the derived label is the better pole on the fill`, () => {
@@ -134,17 +161,6 @@ for (const theme of ["light", "dark"]) {
   });
 }
 
-// Muted text is text: it reads at 4.5:1 on every dark ground too.
-{
-  const t = { ...shared, ...vars("themes/dark.css") };
-  for (const bg of ["--sl-bg-canvas", "--sl-bg-surface", "--sl-bg-surface-raised"]) {
-    test(`dark ${bg}: muted text reads as text (4.5:1)`, () => {
-      const r = ratio(t["--sl-text-muted"], t[bg]);
-      assert.ok(r >= 4.5, `--sl-text-muted ${r.toFixed(2)}`);
-    });
-  }
-}
-
 // Inside an inversion band the ground is the theme's text colour — LIGHT on the
 // dark and high-contrast themes — so the band caps the accent text with its own
 // number (--sl-accent-band-text-lmax). Every registered accent must read there.
@@ -154,11 +170,12 @@ for (const theme of ["light", "dark"]) {
     const css = readFileSync(resolve(KIT, `themes/${theme}.css`), "utf8");
     const t = { ...shared, ...vars(`themes/${theme}.css`) };
     const cap = Number(css.match(/--sl-accent-band-text-lmax:\s*([0-9.]+)/)?.[1]);
-    const band = t["--sl-text-primary"];
     const accents = theme === "dark"
       ? Object.entries(registry.products).map(([n, p]) => [n, p.dark ?? registry.products[p.inherits]?.dark])
       : [["default", t["--sl-accent-default"]]];
     for (const [name, hex] of accents) {
+      // The band's ground is the product's own primary text.
+      const band = theme === "dark" ? NEUTRALS.products[name].dark["text-primary"] : t["--sl-text-primary"];
       test(`${theme} ${name}: accent text inside the inversion band reads (4.5:1)`, () => {
         assert.ok(cap > 0 && cap < 1, `${theme} declares no band cap`);
         const [L, C, h] = toOklch(fromHex(hex));
@@ -181,8 +198,6 @@ for (const theme of ["light", "dark"]) {
   const band = comp.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
   const floor = Number(band.match(/--slc-accent-text:\s*oklch\(from var\(--slc-accent\) min\(max\(l, ([0-9.]+)\)/)?.[1]);
   const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
-  const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).lin.map(lin2g);
-    return "#" + x.map((v, i) => Math.round((v + (y[i] - v) * p) * 255).toString(16).padStart(2, "0")).join(""); };
   const inBand = (hex, cap) => {
     const [L, C, h] = toOklch(fromHex(hex));
     const l = Math.min(Math.max(L, floor), cap);
@@ -202,14 +217,16 @@ for (const theme of ["light", "dark"]) {
     const css = readFileSync(resolve(KIT, `themes/${theme}.css`), "utf8");
     const t = { ...shared, ...vars(`themes/${theme}.css`) };
     const cap = Number(css.match(/--sl-accent-band-text-lmax:\s*([0-9.]+)/)?.[1] ?? 1);
-    const ground = t["--sl-text-primary"];
-    const inks = [
-      ...STATUS.map((n) => [n, t[n]]),
-      ...(theme === "high-contrast"
-        ? [["accent", t["--sl-accent-default"]]]
-        : Object.entries(registry.products).map(([n, p]) => [n, p[theme] ?? registry.products[p.inherits]?.[theme]])),
-    ];
-    for (const [name, hex] of inks) {
+    // Each product's band is its own primary text; its accent and the status
+    // inks are read there. High contrast has one ground.
+    const cases = theme === "high-contrast"
+      ? [...STATUS.map((n) => [n, t[n], t["--sl-text-primary"]]), ["accent", t["--sl-accent-default"], t["--sl-text-primary"]]]
+      : Object.entries(registry.products).flatMap(([n, p]) => {
+        const ground = NEUTRALS.products[n][theme]["text-primary"];
+        const accent = p[theme] ?? registry.products[p.inherits]?.[theme];
+        return [[n, accent, ground], ...STATUS.map((s) => [`${n} ${s}`, t[s], ground])];
+      });
+    for (const [name, hex, ground] of cases) {
       test(`${theme} ${name}: reads inside the inversion band, on the band and on its own 12% wash (4.5:1)`, () => {
         const text = inBand(hex, cap);
         const bad = [ground, lerp(ground, text, 0.12)]

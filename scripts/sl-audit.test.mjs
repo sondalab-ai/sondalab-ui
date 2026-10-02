@@ -359,3 +359,69 @@ test("spexr's filled primary audits clean under spexr's registry entry", async (
   });
   assert.deepEqual(r.findings, []);
 });
+
+// --- each product's generated neutrals (0.29) ---
+// Neutrals are tinted with each product's accent hue and baked to hex
+// (neutrals.json). A product's own grounds are tokens on that product and
+// free-floating colours on any other; the default product's stay allowed for
+// everyone, because they ship in the theme files.
+{
+  const { readFileSync } = await import("node:fs");
+  const { productNeutralBases, allowlistForProduct, buildAllowlistBasesFromCss } = await import("../packages/ui-kit/agent/sl-audit.mjs");
+  const kit = new URL("../packages/ui-kit/", import.meta.url);
+  const cssTexts = ["tokens.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"]
+    .map((f) => readFileSync(new URL(f, kit), "utf8"));
+  const neutrals = JSON.parse(readFileSync(new URL("neutrals.json", kit), "utf8"));
+  const registry = JSON.parse(readFileSync(new URL("agent/accent-registry.json", kit), "utf8"));
+  const audit = (css, product) => auditCss({
+    css,
+    allowlistBases: allowlistForProduct({ cssTexts, neutrals, product }),
+    accentEntry: resolveAccentEntry(registry, product),
+    declaredTier: "A",
+  }).findings.filter((f) => f.rule === "accent-one-hue");
+
+  const spexrCanvas = neutrals.products.spexr.light["bg-canvas"];
+  const spexrText = neutrals.products.spexr.dark["text-primary"];
+
+  test("neutrals: the fixture values are product-only (not in the default theme CSS)", () => {
+    const shipped = buildAllowlistBasesFromCss(cssTexts);
+    assert.ok(!shipped.has(spexrCanvas), `${spexrCanvas} must not already be a default token`);
+    assert.ok(!shipped.has(spexrText), `${spexrText} must not already be a default token`);
+  });
+
+  test("neutrals: a product's own generated ground audits clean on that product", () => {
+    assert.deepEqual(audit(`[data-sl-theme="light"] .x { background: ${spexrCanvas}; color: ${spexrText}; }`, "spexr"), []);
+  });
+
+  test("neutrals: another product's ground is free-floating (R)", () => {
+    const f = audit(`[data-sl-theme="light"] .x { background: ${spexrCanvas}; }`, "introspect");
+    assert.equal(f.length, 1);
+    assert.equal(f[0].level, "R");
+  });
+
+  test("neutrals: a generated border (rgba of the product's ink) is allowed by its base", () => {
+    assert.deepEqual(audit(`.x { border-color: ${neutrals.products.spexr.dark["border-default"]}; }`, "spexr"), []);
+  });
+
+  test("neutrals: the default product's grounds stay allowed for every product", () => {
+    const d = neutrals.products.default;
+    for (const product of Object.keys(registry.products)) {
+      assert.deepEqual(audit(`.x { background: ${d.light["bg-canvas"]}; color: ${d.dark["text-muted"]}; }`, product), [], product);
+    }
+  });
+
+  test("neutrals: an inheriting product gets its parent's neutrals", () => {
+    const own = productNeutralBases({ products: { a: { light: { "bg-canvas": "#123456" } }, b: { inherits: "a" } } }, "b");
+    assert.ok(own.has("#123456"));
+    assert.deepEqual([...productNeutralBases(neutrals, "daos")].sort(), [...productNeutralBases(neutrals, "default")].sort());
+  });
+
+  test("neutrals: an unknown product or a missing neutrals.json adds nothing", () => {
+    assert.equal(productNeutralBases(neutrals, "nope").size, 0);
+    assert.equal(productNeutralBases(null, "spexr").size, 0);
+  });
+
+  test("neutrals: a circular inherit throws instead of degrading", () => {
+    assert.throws(() => productNeutralBases({ products: { a: { inherits: "b" }, b: { inherits: "a" } } }, "a"), /circular/);
+  });
+}

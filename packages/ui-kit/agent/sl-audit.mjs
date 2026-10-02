@@ -6,8 +6,9 @@
 // sl-ds-auditor subagent. See design-system-agentic-spec.md.
 //
 // Ships inside @sondalab/ui-kit as the `sl-audit` bin. It resolves the colour
-// allowlist from the package's own token CSS (tokens.css + themes/*.css), so it
-// works identically in-repo and when installed in a consumer's node_modules.
+// allowlist from the package's own token CSS (tokens.css + themes/*.css) plus
+// the audited product's generated neutrals (neutrals.json), so it works
+// identically in-repo and when installed in a consumer's node_modules.
 // Surface globs resolve against the caller's cwd.
 
 import { readFileSync, globSync } from "node:fs";
@@ -131,6 +132,41 @@ export function buildAllowlistBasesFromCss(cssTexts) {
       if (norm) bases.add(colorBase(norm));
     }
   }
+  return bases;
+}
+
+/** Opaque colour bases of ONE product's generated neutrals (neutrals.json,
+ * `products.<id>.{light,dark}`), following `inherits` when an entry carries
+ * no values of its own. Each product's neutrals are tinted with its own accent
+ * hue, so a spexr ground is a value-equal token on spexr and a free-floating
+ * colour anywhere else. The default product's neutrals need no entry here:
+ * they ship in themes/*.css and are allowed for every product. */
+export function productNeutralBases(neutrals, product) {
+  const bases = new Set();
+  const seen = new Set();
+  let name = product;
+  while (name && neutrals?.products?.[name]) {
+    if (seen.has(name)) throw new Error(`neutrals.json: circular inherits at "${name}"`);
+    seen.add(name);
+    const entry = neutrals.products[name];
+    if (entry.light || entry.dark) {
+      for (const s of collectStrings([entry.light, entry.dark], [])) {
+        const norm = normalizeColor(s);
+        if (norm) bases.add(colorBase(norm));
+      }
+      break;
+    }
+    name = entry.inherits;
+  }
+  return bases;
+}
+
+/** The allowlist one audit runs against: every colour in the shipped token
+ * CSS (the default product's neutrals among them), plus the audited product's
+ * own generated neutrals. */
+export function allowlistForProduct({ cssTexts, neutrals, product }) {
+  const bases = buildAllowlistBasesFromCss(cssTexts);
+  for (const b of productNeutralBases(neutrals, product)) bases.add(b);
   return bases;
 }
 
@@ -475,7 +511,15 @@ function main() {
     process.exit(2);
   }
 
-  const allowlistBases = buildAllowlistBasesFromCss(loadTokenCss());
+  let neutrals = null;
+  try {
+    neutrals = loadJson(resolve(PKG_DIR, "neutrals.json"));
+  } catch (err) {
+    // The theme CSS still applies, so the audit runs; but every product's own
+    // tinted neutrals would read as free-floating, so say why.
+    console.warn(`warning: could not read neutrals.json (${err.code ?? err.message}) — "${args.product}"'s generated neutrals are not allowlisted; only the default product's are`);
+  }
+  const allowlistBases = allowlistForProduct({ cssTexts: loadTokenCss(), neutrals, product: args.product });
   const registry = loadJson(resolve(HERE, "accent-registry.json"));
   const matrix = loadJson(resolve(HERE, "substrate-matrix.json"));
   let blessed = { deviations: [] };

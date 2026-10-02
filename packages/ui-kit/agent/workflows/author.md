@@ -16,8 +16,8 @@ For each part of the screen, pick the matching entry from `catalog.md`. Prefer t
 Assemble the components into a layout. Family resemblance comes from the shared materials (the catalog); distinctiveness comes from composition — every screen needs **≥1 unexpected, intentional layout decision** (an asymmetric split, an oversized anchor, a full-bleed inversion). A generic centred card grid fails the house rule; a second accent or a new type scale fails the grammar. Spend boldness on layout, keep materials shared.
 
 ### 3 — Bind role-vars per tier
-- **Tier A** (greenfield is the common case): consume `@sondalab/ui-kit` `components.css` + a theme (`themes/*.css`) under `data-sl-theme`. Components resolve their `--slc-*` role-vars automatically.
-- **Tier B** (you have an existing colour layer): map each `--slc-*` role-var to a value that resolves to a Sondalab token or your registered accent. Never bind a component to a literal.
+- **Tier A** (greenfield is the common case): consume `@sondalab/ui-kit` `components.css` + a theme (`themes/*.css`) under `data-sl-theme`. Components resolve their `--slc-*` role-vars automatically. For any product but the default, also load `themes/products.css` and set `data-sl-product="<id>"` on the element that carries `data-sl-theme` (or an ancestor of it), so the neutrals take the product's hue; one product per theme subtree.
+- **Tier B** (you have an existing colour layer): map each `--slc-*` role-var to a value that resolves to a Sondalab token or your registered accent; the neutrals come from `neutrals.json` → `products.<id>`. Never bind a component to a literal. Set the light-layer numbers listed in the README's Tier B recipe (`--sl-accent-text-lmax`, `--slc-edge-accent-lmax`, `--slc-edge-accent-top`).
 
 ### 4 — Audit + judgement pass
 Run the audit (must be clean on greenfield):

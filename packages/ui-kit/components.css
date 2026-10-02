@@ -50,42 +50,49 @@
   --slc-edge-surface:  oklch(from var(--slc-surface) calc(l - var(--slc-shade-step)) c h);
   --slc-edge-raised:   oklch(from var(--slc-raised) calc(l - var(--slc-shade-step)) c h);
   --slc-edge-wash:     oklch(from color-mix(in srgb, var(--slc-text) 6%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
-  /* The fill in shade. On paper it is also capped at L 0.62 (the light
+  /* The fill in shade. On paper it is also capped at L 0.59 (the light
      block below sets --slc-edge-accent-lmax): with the rainbow rim gone
      (owner, 2026-10-02) this edge is what finds a primary there, and a light
      accent one step down (amber, L 0.71) read 2.46:1 on the canvas; capped,
-     every registered accent is >= 3.4:1. On ink the edge is the plain step,
-     exactly as in 0.27 -- a bright fill one step down already reads there. */
+     every registered accent is >= 3.4:1 on its own product's canvas. The cap
+     was 0.62 until the darker Lumen canvas (0.29) took amber to 3.03:1. On
+     ink the edge is the plain step, exactly as in 0.27 -- a bright fill one
+     step down already reads there. */
   --slc-edge-accent:   oklch(from var(--slc-accent) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --slc-edge-pressed:  oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
-  /* A form control's box must be found before it is read: five steps AWAY
-     from the surface, toward contrast -- darker on paper, LIGHTER on ink. In
+  /* A form control's box must be found before it is read: steps AWAY from
+     the surface, toward contrast -- darker on paper, LIGHTER on ink. In
      shade on ink it was near-black on near-black (1.06:1, owner 2026-10-01:
-     "checkbox on dark theme is almost invisible"); five steps clear the 3:1 a
-     control boundary needs (WCAG 1.4.11) against canvas and surface on both
-     themes: 4.4 / 4.1 on ink, 3.5 / 3.6 on paper. The sign is read from the
-     surface's own lightness, so no theme branch. */
-  --slc-edge-control:  oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * 5 * clamp(-1, (0.5 - l) * 1000, 1)) c h);
+     "checkbox on dark theme is almost invisible"). Five steps clear the 3:1 a
+     control boundary needs (WCAG 1.4.11) on ink; a light surface takes half a
+     step more, since the Lumen canvas (0.29, oklch L 0.928) sits further
+     from the surface and five read 3.02:1 there. Measured on every product's
+     neutrals: >= 4.16 / 3.93 on ink, >= 3.52 / 4.22 on paper (canvas /
+     surface). The sign and the extra half step are both read from the
+     surface's own lightness, so no theme branch: a Tier B colour layer on its
+     own [data-theme] gets them too. */
+  --slc-edge-control-steps: 5;
+  --slc-edge-control:  oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * (var(--slc-edge-control-steps) + 0.5 * clamp(0, (l - 0.5) * 1000, 1)) * clamp(-1, (0.5 - l) * 1000, 1)) c h);
   /* ONE CONTROL EDGE (owner, 2026-10-01: "most elements have bright borders
      and buttons have darker ones -- they should all be consistent"). Every
      neutral control -- field, select, checkbox, radio, switch, secondary,
      ghost and icon buttons, chip, segmented -- is outlined in
      --slc-edge-control; a filled one (primary, pressed) keeps its fill in
      shade, because the fill is what finds it. Hover is two steps further. */
-  --slc-edge-control-hover: oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * 7 * clamp(-1, (0.5 - l) * 1000, 1)) c h);
+  --slc-edge-control-hover: oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * (var(--slc-edge-control-steps) + 0.5 * clamp(0, (l - 0.5) * 1000, 1) + 2) * clamp(-1, (0.5 - l) * 1000, 1)) c h);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* surfaces + text */
-  --slc-canvas:        var(--sl-bg-canvas,         #F4F4F8);
-  --slc-surface:       var(--sl-bg-surface,        #FAFAFC);
-  --slc-raised:        var(--sl-bg-surface-raised, #FFFFFF);
-  --slc-overlay:       var(--sl-bg-overlay,        rgba(28,29,34,0.4));
-  --slc-text:          var(--sl-text-primary,   #1C1D22);
-  --slc-text-secondary:var(--sl-text-secondary, #454857);
-  --slc-text-muted:    var(--sl-text-muted,     #5F6374);
+  --slc-canvas:        var(--sl-bg-canvas,         #eae6e2);
+  --slc-surface:       var(--sl-bg-surface,        #fcfaf9);
+  --slc-raised:        var(--sl-bg-surface-raised, #ffffff);
+  --slc-overlay:       var(--sl-bg-overlay,        rgba(32,28,24,0.4));
+  --slc-text:          var(--sl-text-primary,   #201c18);
+  --slc-text-secondary:var(--sl-text-secondary, #47413c);
+  --slc-text-muted:    var(--sl-text-muted,     #605953);
   /* lines */
-  --slc-border:        var(--sl-border-default, rgba(28,29,34,0.16));
-  --slc-border-subtle: var(--sl-border-subtle,  rgba(28,29,34,0.09));
-  --slc-border-strong: var(--sl-border-strong,  rgba(28,29,34,0.28));
+  --slc-border:        var(--sl-border-default, rgba(32,28,24,0.16));
+  --slc-border-subtle: var(--sl-border-subtle,  rgba(32,28,24,0.09));
+  --slc-border-strong: var(--sl-border-strong,  rgba(32,28,24,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent-text));
   /* The spectrum paints no edge, rim or arc by default (owner, 2026-10-02:
      "drop rainbow from fields and everything else"). It survives only in the
@@ -1778,9 +1785,12 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* Paper only: the primary's edge is capped so it finds the button on the
    light canvas (>= 3.4:1), and its top line takes that edge too -- the lit
    line (80% fill + white) read 1.63:1 there once the rainbow rim was gone
-   (owner, 2026-10-02). Ink keeps the 0.27 edge and lit top line. */
+   (owner, 2026-10-02). Ink keeps the 0.27 edge and lit top line. The cap
+   cannot be read off the fill (an accent says nothing about its ground), so
+   it stays a light-theme number: a Tier B product sets these two in its own
+   light layer (README, "Tier B"). */
 :root[data-sl-theme="light"] {
-  --slc-edge-accent-lmax: 0.62;
+  --slc-edge-accent-lmax: 0.59;
   --slc-edge-accent-top: var(--slc-edge-accent);
 }
 
