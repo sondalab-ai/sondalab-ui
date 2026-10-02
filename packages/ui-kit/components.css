@@ -134,9 +134,14 @@
      rings. The recipes are box-shadows, so a host that wears one carries no
      border of its own: the lit line then sits flush under the ring, never a
      pixel below it with a band of fill between (no gap between lines). */
-  --slc-tile:   var(--sl-bg-tile,    #ffffff);
-  --slc-sunken: var(--sl-bg-sunken,  #f9f6f4);
-  --slc-lit:    var(--sl-border-lit, rgba(255,255,255,0.9));
+  /* The fallbacks are roles a Tier B layer already maps, never a literal:
+     a page with no theme file has no --sl-bg-tile, and a white literal here
+     put white tiles under light text on a dark Tier B page (1.2:1). Without
+     the token a tile is the raised rung, a well the surface, and the lit
+     line a white hairline faint enough to read on either ground. */
+  --slc-tile:   var(--sl-bg-tile,    var(--slc-raised));
+  --slc-sunken: var(--sl-bg-sunken,  var(--slc-surface));
+  --slc-lit:    var(--sl-border-lit, color-mix(in srgb, white 8%, transparent));
   /* The accent where it marks the focus of attention as a line of light
      (the lit pane's seam, from 0.33). It is the accent as a thin line. */
   --slc-seam:   var(--slc-accent-text);
@@ -704,10 +709,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      <button class="sl-btn sl-btn--primary" aria-keyshortcuts="Meta+S">
        Save changes <kbd class="sl-kbd" aria-hidden="true">⌘S</kbd></button>
    Its text is the label's own colour on a fill that steps AWAY from the
-   label, so the cap never reads weaker than the label beside it: on a
-   neutral button a wash of the ink, on a primary the accent one step
-   further from its label's pole (lighter under a dark label, darker under
-   a white one, read off the fill's own lightness like --slc-on-accent). */
+   label, so the cap never reads weaker than the label beside it. On a
+   neutral button (plain, ghost, a pressed toggle) the label is the ink or
+   the accent as text, both on the ink's side, so the cap is a half wash of
+   the OTHER pole -- white under a dark ink, black under a light one, read
+   off the ink's own lightness -- which the inversion band gets right too,
+   since it re-derives the ink. (A wash of the ink moved the cap toward the
+   label: 3.70:1 on a pressed toggle in the band.) On a primary it is the
+   accent one step further from its label's
+   pole (lighter under a dark label, darker under a white one, read off the
+   fill's own lightness like --slc-on-accent). */
 .sl-btn > .sl-kbd {
   min-width: 18px;
   height: 18px;
@@ -717,7 +728,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-radius: 4px;
   font-size: var(--sl-text-micro, 0.65625rem);
   color: inherit;
-  background: color-mix(in srgb, var(--slc-text) 8%, transparent);
+  background: oklch(from var(--slc-text) clamp(0, (0.5 - l) * 1000, 1) 0 h / 0.5);
   box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--slc-text) 16%, transparent);
 }
 .sl-btn--primary > .sl-kbd {
@@ -1021,8 +1032,13 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    the fill and the depth are the ROW's, so the ring and the lit line run
    across it unbroken (a cell-by-cell shadow would seam at every cell). The
    rules above and below it give way, so no hairline crosses the tile. A row
-   has no corners of its own, so the tile is square. Where an engine does not
-   paint a row's shadow, the fill still marks it. */
+   has no corners of its own, so the tile is square. The ring and the cast
+   are what find it: on the light theme the tile is white, the table's own
+   raised ground, so the fill alone measures 1.00:1 there. Where an engine
+   does not paint a row's shadow, only the row's own content says it is
+   selected -- which it must anyway: aria-selected on a <tr> is announced
+   only in a role="grid" (or treegrid), so a plain table carries the state
+   in a checkbox or a visually hidden "selected" in the row. */
 .sl-table tbody tr {
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1127,10 +1143,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    says the state in words (a visually hidden ", unsaved" in its name).
    __close is a borderless chrome glyph: the one documented exception to
    "one control edge" (design-language L3). A button may not sit inside a
-   role="tab", so it is a <span aria-hidden="true"> for the pointer, and
-   the keyboard closes the focused tab (Delete, announced with
-   aria-keyshortcuts on the tab); the consumer wires both. The tile tab has
-   no edge to carry an aurora --linear underline. */
+   role="tab", so either:
+   - the glyph is a <span aria-hidden="true"> inside the tab, for the
+     pointer, and the keyboard closes the focused tab (Delete, announced
+     with aria-keyshortcuts on the tab); or
+   - the tab and a sibling <button class="sl-tabs__close" tabindex="-1"
+     aria-label="Close resolve.ts"> sit in a role="none" wrapper,
+     .sl-tabs__item, which then carries the tile, so assistive tech reaches
+     the close by name. The keyboard path is still Delete on the tab.
+   The consumer wires the closing. The tile tab has no edge to carry an
+   aurora --linear underline. */
 .sl-tabs--tile {
   align-items: center;
   gap: 2px;
@@ -1167,11 +1189,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-tabs__tab[aria-selected="true"] .sl-tabs__dot { background: var(--slc-accent-text); }
 .sl-tabs__close {
+  appearance: none;
   flex: none;
   display: inline-grid;
   place-items: center;
   width: 1rem;
   height: 1rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   margin-inline-end: calc(var(--sl-space-1, 0.25rem) * -1);
   border-radius: var(--sl-radius-sm, 6px);
   color: var(--slc-text-muted);
@@ -1181,6 +1208,25 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
 .sl-tabs__close:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 10%, transparent); }
+/* The wrapper pattern: the item is the tile, the tab inside it paints none. */
+.sl-tabs--tile .sl-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-1, 0.25rem);
+  height: 1.75rem;
+  padding-inline-end: var(--sl-space-2, 0.5rem);
+  border-radius: var(--sl-radius-sm, 6px);
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-tabs--tile .sl-tabs__item:hover { background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"]) {
+  background-color: var(--slc-tile);
+  box-shadow: var(--slc-depth-flat);
+}
+.sl-tabs--tile .sl-tabs__item > .sl-tabs__tab,
+.sl-tabs--tile .sl-tabs__item > .sl-tabs__tab:hover { background-color: transparent; box-shadow: none; }
 
 /* Tooltip — CSS-only. Put text in data-sl-tooltip; give the host tabindex="0"
    for keyboard reveal. <span class="sl-tooltip" data-sl-tooltip="…" tabindex="0">…</span> */
@@ -2028,6 +2074,22 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-depth-sunk:   none;
   --slc-depth-float:  none;
 }
+/* The band re-declares the recipes for its own washes, on its children,
+   which outranks the remap on :root: here the remap is repeated there, the
+   selection ring in the band's own accent text (the yellow capped for the
+   band's white ground). */
+:root[data-sl-theme="high-contrast"] .sl-invert > * {
+  --slc-depth-tile:   0 0 0 1px var(--slc-accent-text);
+  --slc-depth-flat:   0 0 0 1px var(--slc-accent-text);
+  --slc-depth-island: 0 0 0 1px var(--slc-border);
+  --slc-depth-key:    0 0 0 1px var(--slc-border);
+  --slc-depth-sunk:   none;
+  --slc-depth-float:  none;
+}
+/* The in-button key draws its own base line instead of the key depth, so it
+   is ringed here, in its label's colour: white on a neutral button, black on
+   the yellow primary. Inset, so the 18px cap stays 18px. */
+:root[data-sl-theme="high-contrast"] .sl-btn > .sl-kbd { box-shadow: inset 0 0 0 1px currentColor; }
 
 /* Since 0.11 several components are washes with no edge. On high contrast's
    black a 6–12% wash is invisible, and the theme exists to draw every edge —
@@ -2094,6 +2156,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   :is(.sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current]), .sl-tabs--tile .sl-tabs__tab[aria-selected="true"])
     :is(.sl-list__meta, .sl-nav__count, svg) { color: HighlightText !important; }
   .sl-tabs--tile .sl-tabs__tab[aria-selected="true"] .sl-tabs__dot { background: HighlightText !important; }
+  .sl-tabs--tile :is(.sl-tabs__tab[aria-selected="true"], .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])) .sl-tabs__close { color: HighlightText !important; }
   /* A selected table row keeps the user's palette (its cells hold anything,
      badges included); the rules above and below it are drawn in Highlight. */
   .sl-table tbody tr[aria-selected="true"] > td,
@@ -2104,7 +2167,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   .sl-kbd { border: 1px solid CanvasText !important; }
   /* Depth is off: the browser drops shadows, but not on the hosts above that
      opt out, where a tile's ring and cast would paint in page colours. */
-  :root, :root[data-sl-theme], .sl-invert > * {
+  :root, :root[data-sl-theme], .sl-invert > *, :root[data-sl-theme] .sl-invert > * {
     --slc-depth-tile: none;
     --slc-depth-flat: none;
     --slc-depth-island: none;
@@ -2141,7 +2204,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
       .sl-radio__input:focus-visible + .sl-radio__box,
       .sl-switch__input:focus-visible + .sl-switch__track,
       .sl-segmented__item:focus-visible, .sl-btn:focus-visible, .sl-icon-btn:focus-visible,
-      .sl-chip:focus-visible, .sl-pagination__item:focus-visible) {
+      .sl-chip:focus-visible, .sl-pagination__item:focus-visible,
+      .sl-nav__item:focus-visible, .sl-list__row:focus-visible, .sl-tabs__tab:focus-visible) {
     outline-color: CanvasText !important;
   }
 }

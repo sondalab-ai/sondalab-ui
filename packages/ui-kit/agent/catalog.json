@@ -189,6 +189,7 @@
         "sl-tabs__list",
         "sl-tabs__tab",
         "sl-tabs--tile",
+        "sl-tabs__item",
         "sl-tabs__dot",
         "sl-tabs__close"
       ],

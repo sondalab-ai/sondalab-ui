@@ -205,6 +205,21 @@
   --slfx-fill-a: 100% !important;
 }
 
+/* ...but not the kit's own selection. A selected tile (components.css, 0.31)
+   is drawn in box-shadow, and the kill above takes a host's box-shadow: a
+   current page or a chosen segment that also wears an effect lost its only
+   marker -- in high contrast its accent ring. The tile is the component's,
+   not the effect's, so it comes back here (in high contrast as that ring),
+   outranking the kill on specificity, both !important. */
+:root[data-sl-theme="high-contrast"] :is(.sl-pagination__item[aria-current], .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current])):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pagination__item[aria-current], .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current])):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-tile) !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-flat) !important;
+}
+
 /* The goo's drift is the one thing this family animates, and it animates the
    MEMBER — an ordinary card or wrapper that keeps its own chrome. So the
    switches reach it with `animation` alone rather than by adding the member to

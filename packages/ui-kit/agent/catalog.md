@@ -44,7 +44,7 @@ Filled-accent primary or a ghost washed with 6% of the ink (no border). Primary 
 ```
 Consumes: `--slc-accent`, `--slc-accent-hover`, `--slc-accent-active`, `--slc-accent-subtle`, `--slc-on-accent`, `--slc-border`, `--slc-text`, `--slc-edge-accent`. Do: state the effect in the label (L5 voice). Don't: use a default-blue CTA or `hover:opacity` as the only state.
 
-**Shortcut in a button** (0.31). A shortcut rides in the label as a child keycap, never as `::after` (glass owns a button's pseudo-elements). Name the shortcut on the button with `aria-keyshortcuts` and hide the cap from its accessible name. The cap is 18px (16px in `--sm`) and gives its extra height back in negative margin, so the button stays on the 32px (24px) row; its text is the label's colour on a fill that steps away from the label (a wash of the ink on a neutral button; the accent one step further from its label's pole on a primary; on a glass pane primary, whose label is re-picked from the composited pane, that composite one step further from the pane's label), so it never reads weaker than the label.
+**Shortcut in a button** (0.31). A shortcut rides in the label as a child keycap, never as `::after` (glass owns a button's pseudo-elements). Name the shortcut on the button with `aria-keyshortcuts` and hide the cap from its accessible name. The cap is 18px (16px in `--sm`) and gives its extra height back in negative margin, so the button stays on the 32px (24px) row; its text is the label's colour on a fill that steps away from the label, so it never reads weaker than the label on the button: on a neutral button (plain, ghost, a pressed toggle, in a band too) a half wash of the pole opposite the ink; on a primary the accent one step further from its label's pole; on a glass pane primary, whose label is re-picked from the composited pane, that composite one step further from the pane's label. High contrast rings it in its label's colour.
 ```html
 <button class="sl-btn sl-btn--primary" aria-keyshortcuts="Meta+S">Save changes <kbd class="sl-kbd" aria-hidden="true">⌘S</kbd></button>
 <button class="sl-btn sl-btn--ghost sl-btn--sm" aria-keyshortcuts="R">Re-run <kbd class="sl-kbd" aria-hidden="true">R</kbd></button>
@@ -190,17 +190,17 @@ Data table shell. Wrap in an `overflow-x:auto` container so wide tables never sc
   </table>
 </div>
 ```
-Consumes: `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`, `--slc-tile`, `--slc-depth-tile`. Do: `--numeric` for tabular figures. A selected row is `<tr aria-selected="true">` (0.31): a raised tile — the tile fill and `--slc-depth-tile` on the row, so the ring and the lit line run unbroken across its cells, and the rules above and below it give way. A row has no corners, so the tile is square; an engine that does not paint a row's shadow still shows the fill. Under forced colours the rules around it are drawn in `Highlight`.
+Consumes: `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`, `--slc-surface`, `--slc-tile`, `--slc-depth-tile`. Do: `--numeric` for tabular figures. A selected row is `<tr aria-selected="true">` (0.31): a raised tile — the tile fill and `--slc-depth-tile` on the row, so the ring and the lit line run unbroken across its cells, and the rules above and below it give way. A row has no corners, so the tile is square. The ring and the cast are what find it: on the light theme the tile is the table's own white, so the fill alone measures 1.00:1, and an engine that does not paint a row's shadow shows nothing. Under forced colours the rules around it are drawn in `Highlight`. **`aria-selected` on a `<tr>` is announced only in a `role="grid"` (or `treegrid`)**: give an interactive table that role, or carry the state in the row itself — a checkbox cell, or a visually hidden "selected".
 ```html
-<table class="sl-table">
+<table class="sl-table" role="grid" aria-label="Probes" aria-multiselectable="true">
   <tbody>
     <tr aria-selected="true"><td>q-8f2a</td><td>Deterministic resolve</td></tr>
-    <tr><td>q-77c1</td><td>Evidence replay</td></tr>
+    <tr aria-selected="false"><td>q-77c1</td><td>Evidence replay</td></tr>
   </tbody>
 </table>
 ```
 
-### Tabs — `sl-tabs` (`__list` · `__tab` · `--tile` · `__dot` · `__close`)
+### Tabs — `sl-tabs` (`__list` · `__tab` · `--tile` · `__item` · `__dot` · `__close`)
 Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px accent underline — an emphasis accent, not a separator. Substrate: **R** App.
 ```html
 <div class="sl-tabs">
@@ -210,15 +210,21 @@ Visual-only tabs (consumer wires ARIA + panel switching). Active tab uses a 2px 
   </div>
 </div>
 ```
-Consumes: `--slc-accent`, `--slc-text`, `--slc-text-muted`, `--slc-border`, `--slc-tile`, `--slc-depth-flat`. Active state is the accent (never a neutral).
+Consumes: `--slc-accent`, `--slc-text`, `--slc-text-muted`, `--slc-border`, `--slc-tile`, `--slc-depth-flat`. On the underline tabs the active state is the accent (never a neutral). On the tile tabs below it is a neutral tile, and the accent is only its icon.
 
-**Tile tabs — `sl-tabs--tile`** (0.31, Lumen): the editor's tab strip. A modifier on the same tablist: no rule under the strip, no underline; the active tab is a flat tile (`--slc-tile` with `--slc-depth-flat`: lit and ringed, no cast) in the primary ink, its icon in the accent; hover is a flat wash. Inside a tab, in order: an icon, the name, `sl-tabs__dot` (unsaved work) and `sl-tabs__close`. The dot is a dot, so it is `aria-hidden` and the tab's name says the state in words. The close glyph is borderless chrome — the one documented exception to the one control edge (design-language L3). A `<button>` may not sit inside `role="tab"`, so it is an `aria-hidden` span for the pointer, and the keyboard closes the focused tab (Delete, announced with `aria-keyshortcuts`); the consumer wires both. Substrate: **R** IDE, **A** App.
+**Tile tabs — `sl-tabs--tile`** (0.31, Lumen): the editor's tab strip. A modifier on the same tablist: no rule under the strip, no underline; the active tab is a flat tile (`--slc-tile` with `--slc-depth-flat`: lit and ringed, no cast) in the primary ink, its icon in the accent; hover is a flat wash. Inside a tab, in order: an icon, the name, `sl-tabs__dot` (unsaved work) and `sl-tabs__close`. The dot is a dot, so it is `aria-hidden` and the tab's name says the state in words. The close glyph is borderless chrome — the one documented exception to the one control edge (design-language L3). A `<button>` may not sit inside `role="tab"`, so there are two patterns, and the consumer wires the closing in both: an `aria-hidden` span inside the tab for the pointer, with Delete on the focused tab (announced with `aria-keyshortcuts`); or, so assistive tech reaches the close by name, the tab and a sibling `<button class="sl-tabs__close" tabindex="-1" aria-label="Close …">` in a `role="none"` wrapper, `sl-tabs__item`, which then carries the tile. Substrate: **R** IDE, **A** App.
 ```html
 <div class="sl-tabs__list sl-tabs--tile" role="tablist" aria-label="Open files">
   <button class="sl-tabs__tab" role="tab" aria-selected="true" aria-keyshortcuts="Delete">
     <span>resolve.ts</span><span class="sl-tabs__dot" aria-hidden="true"></span><span class="sl-tabs__close" aria-hidden="true">×</span>
   </button>
   <button class="sl-tabs__tab" role="tab" aria-selected="false" aria-keyshortcuts="Delete"><span>cache.ts</span></button>
+</div>
+<div class="sl-tabs__list sl-tabs--tile" role="tablist" aria-label="Open files">
+  <div class="sl-tabs__item" role="none">
+    <button class="sl-tabs__tab" role="tab" aria-selected="true" aria-keyshortcuts="Delete"><span>evidence.ts</span></button>
+    <button class="sl-tabs__close" type="button" tabindex="-1" aria-label="Close evidence.ts">×</button>
+  </div>
 </div>
 ```
 Don't: pair it with `sl-fx-aurora--linear` — that rides the underline, which a tile tab does not have. Don't: put a real `<button>` inside the tab.

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, substitute, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
 import { allowlistForProduct } from "../packages/ui-kit/agent/sl-audit.mjs";
 
 // Lumen depth (ui-kit 0.31): radii, casts, the depth recipes (--slc-depth-*),
@@ -58,6 +58,46 @@ function bandEnv(theme, product) {
   const ink = toHex(evaluate("var(--slc-canvas)", env));
   for (const [k, v] of declarations(raw, [".sl-invert > *"])) env.set(k, v.replace(/currentColor/g, ink));
   return env;
+}
+/** A Tier B page: no theme file and no --sl-* colour token, only the shared
+ *  :root layer, components.css, and the product's own colour layer mapping
+ *  the README's role-vars (here from its neutrals.json entry) plus the
+ *  light-layer numbers. */
+function tierBEnv(theme, product) {
+  const env = new Map(SHARED);
+  for (const [k, v] of declarations(raw, [":root"])) env.set(k, v);
+  const n = NEUTRALS[product][theme];
+  const map = {
+    "--slc-accent": REGISTRY[product][theme], "--slc-canvas": n["bg-canvas"], "--slc-surface": n["bg-surface"], "--slc-raised": n["bg-surface-raised"],
+    "--slc-overlay": n["bg-overlay"] ?? "rgba(0,0,0,0.6)", "--slc-text": n["text-primary"], "--slc-text-secondary": n["text-secondary"], "--slc-text-muted": n["text-muted"],
+    "--slc-border": n["border-default"], "--slc-border-subtle": n["border-subtle"], "--slc-border-strong": n["border-strong"], "--slc-focus": REGISTRY[product][theme],
+  };
+  for (const [k, v] of Object.entries(map)) env.set(k, v);
+  if (theme === "light") for (const [k, v] of Object.entries({ "--sl-accent-text-lmax": "0.46", "--slc-edge-accent-lmax": "0.59", "--slc-edge-accent-top": "var(--slc-edge-accent)", "--slc-glow": "0.35" })) env.set(k, v);
+  for (const t of ["--sl-bg-tile", "--sl-bg-sunken", "--sl-border-lit"]) assert.equal(env.has(t), false, `a Tier B page has no ${t}`);
+  return env;
+}
+/** A child of the inversion band on the high-contrast theme: the band's
+ *  declarations, then the high-contrast band remap. */
+function hcBandEnv() {
+  const env = bandEnv("high-contrast", "default");
+  const ink = toHex(evaluate("var(--slc-canvas)", rootEnv("high-contrast")));
+  for (const [k, v] of declarations(raw, [':root[data-sl-theme="high-contrast"] .sl-invert > *'])) env.set(k, v.replace(/currentColor/g, ink));
+  return env;
+}
+/** The colours of every layer of a box-shadow list, evaluated: "none" is no layer. */
+function shadowColours(value, env) {
+  const text = substitute(value, env).trim();
+  if (text === "none") return [];
+  const layers = [];
+  let depth = 0, from = 0;
+  for (let i = 0; i <= text.length; i++) {
+    const ch = text[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth--;
+    else if ((ch === "," && depth === 0) || i === text.length) { layers.push(text.slice(from, i).trim()); from = i + 1; }
+  }
+  return layers.map((l) => evaluate(l.replace(/^inset\s+/, "").replace(/^(?:-?[\d.]+(?:px)?\s+)+/, ""), env));
 }
 const Y = (c) => { const [r, g, b] = c.lin.map((v) => Math.min(1, Math.max(0, v))); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [hi, lo] = [Y(a), Y(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
@@ -131,9 +171,12 @@ test("the role-var casts fall back to the light ramp, and the band casts the dar
 
 test("the depth recipes are role-vars built from roles, never a literal colour", () => {
   const root = vars([":root"]);
-  assert.equal(root.get("--slc-tile"), "var(--sl-bg-tile, #ffffff)");
-  assert.equal(root.get("--slc-sunken"), "var(--sl-bg-sunken, #f9f6f4)");
-  assert.equal(root.get("--slc-lit"), "var(--sl-border-lit, rgba(255,255,255,0.9))");
+  // Tier B has no --sl-bg-tile / -sunken / --sl-border-lit: the rungs fall
+  // back through roles it maps, and the lit line to a hairline that reads on
+  // either ground (a white literal made dark Tier B tiles white).
+  assert.equal(root.get("--slc-tile"), "var(--sl-bg-tile, var(--slc-raised))");
+  assert.equal(root.get("--slc-sunken"), "var(--sl-bg-sunken, var(--slc-surface))");
+  assert.equal(root.get("--slc-lit"), "var(--sl-border-lit, color-mix(in srgb, white 8%, transparent))");
   assert.equal(root.get("--slc-seam"), "var(--slc-accent-text)");
   assert.equal(root.get("--slc-glow"), "0.5");
   for (const n of DEPTH) {
@@ -170,19 +213,39 @@ test("high contrast trades depth for drawn rings: selection in the accent, a key
   assert.equal(vars([':root[data-sl-theme="light"]']).get("--slc-glow"), "0.35");
 });
 
+test("high contrast keeps its rings inside the inversion band, where the band re-declares the recipes", () => {
+  const band = vars([':root[data-sl-theme="high-contrast"] .sl-invert > *']);
+  assert.equal(band.get("--slc-depth-tile"), "0 0 0 1px var(--slc-accent-text)");
+  assert.equal(band.get("--slc-depth-flat"), "0 0 0 1px var(--slc-accent-text)");
+  assert.equal(band.get("--slc-depth-island"), "0 0 0 1px var(--slc-border)");
+  assert.equal(band.get("--slc-depth-key"), "0 0 0 1px var(--slc-border)");
+  assert.equal(band.get("--slc-depth-sunk"), "none");
+  assert.equal(band.get("--slc-depth-float"), "none");
+  // the ring finds the tile on the band's ground (3:1, a boundary)
+  const env = hcBandEnv();
+  const ground = evaluate("var(--slc-text)", rootEnv("high-contrast"));
+  const [ring] = shadowColours("var(--slc-depth-tile)", env);
+  assert.ok(ratio(over(ring, ground), ground) >= 3, `ring ${ratio(over(ring, ground), ground).toFixed(2)}`);
+});
+
 test("forced colours turn every depth recipe off, on :root, on a themed root and in the band", () => {
   const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
   const r = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => /^\s*:root,/.test(m[1]));
   assert.ok(r, "a forced-colours rule on :root");
-  assert.equal(r[1].trim().replace(/\s+/g, " "), ":root, :root[data-sl-theme], .sl-invert > *");
+  assert.equal(r[1].trim().replace(/\s+/g, " "), ":root, :root[data-sl-theme], .sl-invert > *, :root[data-sl-theme] .sl-invert > *");
   for (const n of DEPTH) assert.match(r[2], new RegExp(`${n}:\\s*none;`), n);
 });
 
-test("every depth recipe resolves on every product and theme, the band included", () => {
-  for (const [theme, product] of CASES) {
-    for (const env of [rootEnv(theme, product), bandEnv(theme, product)]) {
-      for (const n of ["--slc-tile", "--slc-sunken", "--slc-lit", "--slc-seam"]) assert.doesNotThrow(() => evaluate(`var(${n})`, env), `${theme} ${product} ${n}`);
-    }
+test("every depth recipe resolves on every product and theme, the band and Tier B included", () => {
+  const envs = [
+    ...CASES.flatMap(([theme, product]) => [[`${theme} ${product}`, rootEnv(theme, product)], [`${theme} ${product} band`, bandEnv(theme, product)]]),
+    ...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [`${t} ${p} Tier B`, tierBEnv(t, p)])),
+    ["high-contrast band", hcBandEnv()],
+  ];
+  for (const [label, env] of envs) {
+    for (const n of ["--slc-tile", "--slc-sunken", "--slc-lit", "--slc-seam"]) assert.doesNotThrow(() => evaluate(`var(${n})`, env), `${label} ${n}`);
+    // every layer of every recipe is a colour that evaluates
+    for (const n of DEPTH) assert.doesNotThrow(() => shadowColours(`var(${n})`, env), `${label} ${n}`);
   }
 });
 
@@ -251,6 +314,17 @@ for (const [theme, product] of CASES) {
   });
 }
 
+for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+  test(`Tier B ${theme} ${product}: a tile is a rung of the product's own layer, and its text reads at 4.5:1`, () => {
+    const env = tierBEnv(theme, product);
+    const tile = over(evaluate("var(--slc-tile)", env), evaluate("var(--slc-surface)", env));
+    const low = TILES.map(([host, , , textSel]) => [host, ratio(over(evaluate(decl(rule(textSel), "color"), env), tile), tile)])
+      .filter(([, r]) => r < 4.5).map(([h, r]) => `${h} ${r.toFixed(2)}`);
+    assert.deepEqual(low, []);
+    assert.equal(toHex(evaluate("var(--slc-tile)", env)), toHex(evaluate("var(--slc-raised)", env)), "the tile falls back to the raised rung");
+  });
+}
+
 test("forced colours: a selected tile becomes Highlight, a selected table row is bracketed in it", () => {
   const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
   const fill = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[2].includes("background: Highlight") && m[1].includes(".sl-segmented__item"));
@@ -258,6 +332,12 @@ test("forced colours: a selected tile becomes Highlight, a selected table row is
   for (const s of [".sl-nav__item[aria-current]", '.sl-list__row:is([aria-selected="true"], [aria-current])', '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]', ".sl-pagination__item[aria-current]"]) {
     assert.ok(fill[1].includes(s), s);
   }
+  const close = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[1].includes(".sl-tabs__close") && /HighlightText/.test(m[2]));
+  assert.ok(close, "the close glyph takes the selection's text colour");
+  assert.match(close[2], /HighlightText !important/);
+  // opted out, these hosts no longer get the forced outline colour: it is handed back
+  const ring = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => /outline-color:\s*CanvasText !important/.test(m[2]));
+  for (const s of [".sl-nav__item:focus-visible", ".sl-list__row:focus-visible", ".sl-tabs__tab:focus-visible", ".sl-pagination__item:focus-visible", ".sl-segmented__item:focus-visible"]) assert.ok(ring[1].includes(s), s);
   assert.match(fc, /\.sl-table tbody tr\[aria-selected="true"\] > td,\s*\.sl-table tbody tr:has\(\+ tr\[aria-selected="true"\]\) > td \{ border-bottom-color: Highlight !important; \}/);
 });
 
@@ -287,9 +367,11 @@ test("a key inside a button keeps the 32px and 24px rows", () => {
   const key = rule(".sl-btn > .sl-kbd"), smKey = rule(".sl-btn--sm > .sl-kbd");
   const margin = px(decl(key, "margin-block"));
   assert.ok(margin < 0, "the cap gives back its height");
+  // the label's font size, read from the rule and resolved through its token
+  const size = (body) => px(substitute(decl(body, "font-size"), SHARED));
   for (const [name, fontSize, padBlock, keyH, rowH] of [
-    ["button", 14, px(decl(btn, "padding").split(" ")[0]), px(decl(key, "height")), 32],
-    ["small button", 12, px(decl(sm, "padding").split(" ")[0]), px(decl(smKey, "height")), 24],
+    ["button", size(btn), px(decl(btn, "padding").split(" ")[0]), px(decl(key, "height")), 32],
+    ["small button", size(sm), px(decl(sm, "padding").split(" ")[0]), px(decl(smKey, "height")), 24],
   ]) {
     assert.equal(decl(btn, "line-height"), "1", "the label's line is its font size");
     const content = Math.max(fontSize, keyH + 2 * margin);
@@ -316,11 +398,24 @@ for (const [theme, product] of CASES) {
       const r = ratio(evaluate(decl(rule(".sl-kbd"), "color"), env), cap);
       if (r < 4.5) low.push(`kbd on ${g} ${r.toFixed(2)}`);
     }
-    // in a ghost button: the cap's wash over the ghost's wash over the surface
-    const ghost = over(evaluate(decl(rule(".sl-btn--ghost"), "background"), env), evaluate("var(--slc-surface)", env));
-    const ghostCap = over(evaluate(decl(rule(".sl-btn > .sl-kbd"), "background"), env), ghost);
-    const rg = ratio(evaluate(decl(rule(".sl-btn--ghost"), "color"), env), ghostCap);
-    if (rg < 4.5) low.push(`ghost key ${rg.toFixed(2)}`);
+    // in a neutral button -- plain, ghost, a pressed toggle -- on the page and
+    // in the band: the label's own colour on the cap, over the button's fill,
+    // over its ground; never weaker than the label on the fill
+    const PRESSED = '.sl-btn:not(.sl-btn--primary)[aria-pressed="true"], .sl-icon-btn[aria-pressed="true"]';
+    for (const [where, e, ground] of [["page", env, evaluate("var(--slc-surface)", env)], ["band", bandEnv(theme, product), evaluate("var(--slc-text)", env)]]) {
+      for (const [name, fillOf, inkOf] of [
+        ["plain", () => "transparent", () => decl(rule(".sl-btn"), "color")],
+        ["ghost", () => decl(rule(".sl-btn--ghost"), "background"), () => decl(rule(".sl-btn--ghost"), "color")],
+        ["pressed toggle", () => decl(rule(PRESSED), "background-color"), () => decl(rule(PRESSED), "color")],
+      ]) {
+        const fill = over(evaluate(fillOf(), e), ground);
+        const label = over(evaluate(inkOf(), e), fill);
+        const cap = over(evaluate(decl(rule(".sl-btn > .sl-kbd"), "background"), e), fill);
+        const rc = ratio(label, cap), rf = ratio(label, fill);
+        if (rc < 4.5) low.push(`${where} ${name} key ${rc.toFixed(2)}`);
+        if (rc + 1e-9 < rf) low.push(`${where} ${name} key ${rc.toFixed(2)} reads weaker than its label on the button ${rf.toFixed(2)}`);
+      }
+    }
     // in a primary: the label's own colour on a cap that steps away from it
     const p = primary(rootEnv(theme, product), product, theme);
     const fill = evaluate("var(--slc-accent)", p), label = evaluate("var(--slc-on-accent)", p);
@@ -343,7 +438,13 @@ test("tile tabs: no rule under the strip, no underline, a flat tile, the dot and
   assert.equal(decl(rule(".sl-tabs__dot"), "border-radius"), "50%");
   assert.equal(decl(rule('.sl-tabs__tab[aria-selected="true"] .sl-tabs__dot'), "background"), "var(--slc-accent-text)");
   const close = rule(".sl-tabs__close");
-  assert.doesNotMatch(close, /(^|;)\s*border(-(top|right|bottom|left))?(-(color|width|style))?\s*:/, "a borderless chrome glyph");
+  // a borderless chrome glyph, as a span or as a button (whose chrome it resets)
+  assert.equal(decl(close, "border"), "0");
+  assert.doesNotMatch(close.replace(/(^|;)\s*border:\s*0\s*;/, ";"), /(^|;)\s*border(-(top|right|bottom|left))?(-(color|width|style))?\s*:/, "no edge of any kind");
+  assert.equal(decl(close, "appearance"), "none");
+  // the wrapper pattern: the item carries the tile, the tab inside it none
+  assert.equal(decl(rule('.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])'), "box-shadow"), "var(--slc-depth-flat)");
+  assert.equal(decl(rule(".sl-tabs--tile .sl-tabs__item > .sl-tabs__tab, .sl-tabs--tile .sl-tabs__item > .sl-tabs__tab:hover"), "box-shadow"), "none");
   assert.match(rule(".sl-tabs__close:hover"), /background-color:\s*color-mix\(in srgb, var\(--slc-text\) 10%, transparent\)/);
   // the shared focus ring covers the tab, and the outline follows its 6px
   const ring = RULES.find((r) => /outline: var\(--sl-focus-ring-width/.test(r.body));
@@ -393,3 +494,78 @@ for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
     assert.deepEqual(low, []);
   });
 }
+
+// High contrast rings every keycap in a drawn line; the in-button cap
+// replaces the key depth with its own base line, so it is ringed there in the
+// label's own colour (white on a neutral button, black on the yellow primary).
+test("high contrast rings the in-button key in its label's colour", () => {
+  const hc = rule(':root[data-sl-theme="high-contrast"] .sl-btn > .sl-kbd');
+  assert.equal(decl(hc, "box-shadow"), "inset 0 0 0 1px currentColor");
+});
+
+// The effects kill (effects.css: high contrast and data-sl-fx="off") takes a
+// host's box-shadow with !important. A tile is drawn in box-shadow, and in
+// high contrast its ring is a current page's or a chosen segment's only
+// marker: a tile host that also wears an effect class keeps its depth.
+/** Specificity [a, b, c] of one complex selector (:where is 0, :is/:not/:has take their most specific argument). */
+function specificity(sel) {
+  const split = (t) => { const out = []; let d = 0, f = 0; for (let i = 0; i <= t.length; i++) { const ch = t[i]; if (ch === "(" || ch === "[") d++; else if (ch === ")" || ch === "]") d--; else if ((ch === "," && d === 0) || i === t.length) { out.push(t.slice(f, i).trim()); f = i + 1; } } return out; };
+  const cmp = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+  let a = 0, b = 0, c = 0, i = 0;
+  const word = () => { while (i < sel.length && /[\w-]/.test(sel[i])) i++; };
+  while (i < sel.length) {
+    const ch = sel[i];
+    if (ch === "#") { a++; i++; word(); }
+    else if (ch === ".") { b++; i++; word(); }
+    else if (ch === "[") { b++; i = sel.indexOf("]", i) + 1; }
+    else if (ch === ":" && sel[i + 1] === ":") { c++; i += 2; word(); }
+    else if (ch === ":") {
+      i++; const start = i; word(); const name = sel.slice(start, i);
+      if (sel[i] === "(") {
+        let d = 1, j = i + 1; while (d) { if (sel[j] === "(") d++; else if (sel[j] === ")") d--; j++; }
+        const inner = sel.slice(i + 1, j - 1); i = j;
+        if (name === "where") continue;
+        if (["is", "not", "has"].includes(name)) { const best = split(inner).map(specificity).sort(cmp).pop(); a += best[0]; b += best[1]; c += best[2]; continue; }
+      }
+      b++;
+    }
+    else if (/[a-zA-Z]/.test(ch)) { c++; word(); }
+    else i++;
+  }
+  return [a, b, c];
+}
+/** Top-level comma split of a selector list. */
+const selectorParts = (list) => { const out = []; let d = 0, f = 0; for (let i = 0; i <= list.length; i++) { const ch = list[i]; if (ch === "(" || ch === "[") d++; else if (ch === ")" || ch === "]") d--; else if ((ch === "," && d === 0) || i === list.length) { out.push(list.slice(f, i).trim()); f = i + 1; } } return out; };
+
+test("specificity(): :where counts nothing, :is takes its strongest argument", () => {
+  assert.deepEqual(specificity(':root[data-sl-theme="high-contrast"] :is(.a, .b)'), [0, 3, 0]);
+  assert.deepEqual(specificity(':is([x="off"], [x="off"] *):is(.a, .b)'), [0, 2, 0]);
+  assert.deepEqual(specificity(".a:where(.b, .c) > .d"), [0, 2, 0]);
+  assert.deepEqual(specificity(".sl-table tbody tr"), [0, 1, 2]);
+});
+
+const FX_HOSTS = [".sl-fx-glass", ".sl-fx-press", ".sl-fx-aurora", ".sl-fx-liquid", ".sl-fx-glitch"];
+test("a selected tile that wears an effect keeps its tile through the effects kill, in high contrast and where effects are off", () => {
+  const kill = FX_RULES.find((r) => /box-shadow:\s*none !important/.test(r.body) && r.selector.startsWith(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
+  assert.ok(kill, "the kill rule");
+  const killSpec = selectorParts(kill.selector).map(specificity);
+  const cmp = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+  const at = FX_RULES.indexOf(kill);
+  for (const [depth, hosts] of [
+    ["tile", [".sl-pagination__item[aria-current]", '.sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"])', ".sl-nav__item[aria-current]", '.sl-list__row:is([aria-selected="true"], [aria-current])']],
+    ["flat", ['.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]']],
+  ]) {
+    const keep = FX_RULES.find((r, i) => i > at && new RegExp(`box-shadow:\\s*var\\(--slc-depth-${depth}\\) !important`).test(r.body));
+    assert.ok(keep, `a rule after the kill re-applies --slc-depth-${depth}`);
+    const parts = selectorParts(keep.selector);
+    const hcPart = parts.find((s) => s.startsWith(':root[data-sl-theme="high-contrast"]'));
+    const offPart = parts.find((s) => s.startsWith(':is([data-sl-fx="off"], [data-sl-fx="off"] *)'));
+    assert.ok(hcPart && offPart, `${depth}: both the high-contrast and the opt-out kill are answered`);
+    for (const part of [hcPart, offPart]) {
+      for (const h of hosts) assert.ok(part.includes(h), `${depth}: ${h} in ${part}`);
+      for (const fx of FX_HOSTS) assert.ok(part.includes(fx), `${depth}: ${fx} in ${part}`);
+    }
+    assert.ok(cmp(specificity(hcPart), killSpec[0]) > 0, `high contrast: ${specificity(hcPart)} must outrank ${killSpec[0]}`);
+    assert.ok(cmp(specificity(offPart), killSpec[1]) > 0, `opt-out: ${specificity(offPart)} must outrank ${killSpec[1]}`);
+  }
+});
