@@ -55,7 +55,7 @@ test("no selector outside the :root role-var block reads a theme colour token", 
 // design-language.md Decision 2 — a product has one accent, whatever the ground.
 // --slc-shade-step is a number (how much less bright an edge is), not a colour.
 const BAND_INDEPENDENT = new Set(["--slc-canvas", "--slc-overlay", "--slc-shade-step"]);
-const CHROMATIC = /^--slc-(accent|edge-accent|focus|on-accent|success|warning|danger|info|rim|haze|spectral)/;
+const CHROMATIC = /^--slc-(accent|edge-accent|focus|on-accent|success|warning|danger|info|haze|spectral)/;
 
 test("the inversion band re-derives every neutral role its subtree paints with", () => {
   const readOutside = new Set(
@@ -100,10 +100,10 @@ test("the primary button's chrome survives a background + border reset", () => {
   const primary = [...bare.matchAll(/\.sl-btn--primary[^{,]*\{([^}]*)\}/g)].map((m) => m[1]).join("\n");
   assert.ok(primary.includes("background-color"), "parser found the primary rules");
   assert.doesNotMatch(primary, /box-shadow/);
-  // The only image is the Prism rim (light theme), which the same `background:`
-  // shorthand reset clears along with the fill; any other image would not be.
+  // No image at all since the spectrum rim went (owner, 2026-10-02): the fill
+  // and the two border colours are the whole primary, all reset by that pair.
   const images = [...primary.matchAll(/background-image:\s*([^;]+)/g)].map((m) => m[1].trim());
-  assert.deepEqual(images, ["var(--slc-rim-layers, none, none)"]);
+  assert.deepEqual(images, []);
   // …and on glass the family replaces the primary's two border colours with
   // the one control edge every glass button shares.
   const fx = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");

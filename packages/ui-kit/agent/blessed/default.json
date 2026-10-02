@@ -16,9 +16,10 @@
         "#8b96ff",
         "#2ee6c0",
         "#5b6cff",
-        "#0e9c84"
+        "#0e9c84",
+        "#4c58e9"
       ],
-      "why": "The two non-amber demo hues in the showcase accent switcher, dark and light: spexr's indigo and introspect's cyan, both registered product accents (accent-registry.json). The switcher picks the pair member for the active theme (0.11: a dark-ground hue on paper failed contrast). They appear as demo swatch content so the page can show the per-product registry (design-language.md §Decision 2), not as a second accent adopted by the showcase. Blessed by exact value — they live in a JS object with no distinctive selector. Only the hue is listed now: hover/active/subtle are no longer hardcoded (the switcher sets only the hue and they re-derive), so the previous demo step-literals are gone."
+      "why": "The two non-amber demo hues in the showcase accent switcher, dark and light: spexr's indigo and introspect's cyan, both registered product accents (accent-registry.json). The switcher picks the pair member for the active theme (0.11: a dark-ground hue on paper failed contrast). They appear as demo swatch content so the page can show the per-product registry (design-language.md §Decision 2), not as a second accent adopted by the showcase. Blessed by exact value — they live in a JS object with no distinctive selector. Only the hue is listed now: hover/active/subtle are no longer hardcoded (the switcher sets only the hue and they re-derive), so the previous demo step-literals are gone. #4c58e9 is spexr's registered filled primary (accent-registry.json spexr.fill), shown on the Indigo swatch's primary button; its hover and active derive from it with color-mix, so no step literal appears."
     }
   ]
 }

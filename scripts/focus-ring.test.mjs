@@ -98,7 +98,7 @@ test("a form control's edge steps toward contrast, not always into shade", () =>
   const knob = css.match(/\.sl-switch__track::after\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.match(knob, /background:\s*var\(--slc-edge-control\)/, "the off knob reads on its track");
   const field = css.match(/\.sl-field__input\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(field, /border:\s*1px solid var\(--slc-rim-edge, var\(--slc-edge-control\)\)/, "a field is found by its edge");
+  assert.match(field, /border:\s*1px solid var\(--slc-edge-control\)/, "a field is found by its edge");
 });
 
 // Owner, 2026-10-01: fields were outlined in the bright control edge and
@@ -116,11 +116,12 @@ test("every neutral control is outlined in the one control edge", () => {
 
 // An invalid field (aria-invalid="true") turns its edge, its focus ring and its
 // halo to the danger ink together: a red edge inside an accent ring is two
-// colours on one edge (owner, 2026-10-01). The Prism rim stands down with the
-// documented pair, or its rose-to-violet edge would hide the state on light.
+// colours on one edge (owner, 2026-10-01). There is no spectrum rim left to
+// stand down (owner, 2026-10-02), so the rule carries no rim reset.
 test("an invalid field is red at rest, on hover and inside its own focus ring", () => {
   const rest = css.match(/\.sl-field__input\[aria-invalid="true"\] \{([^}]*)\}/)?.[1] ?? "";
-  for (const d of [/--slc-rim:\s*initial/, /--slc-rim-edge:\s*initial/, /--slc-focus:\s*var\(--slc-danger-text, var\(--slc-danger\)\)/, /border-color:\s*var\(--slc-danger-text, var\(--slc-danger\)\)/]) {
+  assert.doesNotMatch(rest, /--slc-rim/);
+  for (const d of [/--slc-focus:\s*var\(--slc-danger-text, var\(--slc-danger\)\)/, /border-color:\s*var\(--slc-danger-text, var\(--slc-danger\)\)/]) {
     assert.match(rest, d);
   }
   assert.match(css, /\.sl-field__input\[aria-invalid="true"\]:hover:not\(:disabled\) \{ border-color: var\(--slc-danger-text, var\(--slc-danger\)\); \}/);

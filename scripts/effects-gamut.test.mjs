@@ -121,12 +121,8 @@ test("the vivid tier keeps its lightness and hue and pays chroma only to the gam
 test("a lifted colour is never paler than its source unless the gamut forbids it", () => {
   const failures = [];
   for (const c of cases()) {
-    // Where a theme declares the spectrum (light, Prism) the bloom and the beam
-    // are two spectrum tokens, not a colour and its lift, so there is no lift to
-    // hold; the in-gamut test above still covers them. Themes that reset the
-    // spectrum keep the derivation, and this check.
-    const spectrum = THEMES[c.theme].get("--sl-spectrum-0");
-    if (spectrum && spectrum !== "initial") continue;
+    // Light is held too since 0.28: its bloom and beam are the accent's
+    // derivation again, not two spectrum tokens (owner, 2026-10-02).
     const out = resolveAll(env(c.theme, c.overrides, c.cascade));
     for (const [prop, from] of Object.entries(LIFTS)) {
       const got = toOklch(out[prop]);
@@ -163,16 +159,26 @@ test("the evaluator treats a property set to initial as guaranteed-invalid", () 
   assert.throws(() => substitute("var(--sl-spectrum-0)", e), /unresolved --sl-spectrum-0/);
 });
 
-test("busy stays the accent on light: the ring resolves as if the spectrum were reset", () => {
-  // Busy is a state, and state is the accent's job (design-language Decision 2).
+// No rainbow by default (owner, 2026-10-02): the light theme still declares
+// the spectrum (products may use it), but no effect reads it. Every colour the
+// aurora, the press light and the run light resolve to on light is the colour
+// it would be with the spectrum reset -- at rest and busy, ghost and filled.
+test("light paints no spectrum: every effect colour resolves as if the spectrum were reset", () => {
   const COLOURS = ["--slfx-beam", "--slfx-beam-b", "--slfx-beam-c", "--slfx-beam-tail", "--slfx-bloom-hi", "--slfx-bloom-lo"];
   const noSpectrum = new Map([...THEMES.light].map(([k, v]) => [k, /^--sl-spectrum-/.test(k) ? "initial" : v]));
-  for (const [name, sel] of [["ghost", GHOST], ["rim", RIM]]) {
-    const busy = [...sel, '.sl-fx-aurora[data-sl-fx-live="busy"]', ...(name === "rim" ? ['.sl-fx-aurora--rim[data-sl-fx-live="busy"]'] : [])];
-    const cascade = declarations(effects, busy);
+  const BUSY = '.sl-fx-aurora[data-sl-fx-live="busy"]';
+  const sets = {
+    ghost: [GHOST, COLOURS], rim: [RIM, COLOURS],
+    "ghost busy": [[...GHOST, BUSY], COLOURS],
+    "rim busy": [[...RIM, BUSY, '.sl-fx-aurora--rim[data-sl-fx-live="busy"]'], COLOURS],
+    press: [[":root", ".sl-fx-press"], ["--slfx-press-light"]],
+    "run light": [[":root", "[data-sl-fx-live]"], ["--slfx-light-a", "--slfx-light-b"]],
+  };
+  for (const [name, [sel, props]] of Object.entries(sets)) {
+    const cascade = declarations(effects, sel);
     const at = (themeMap) => { const e = new Map(themeMap); for (const [k, v] of cascade) e.set(k, v); return e; };
-    for (const p of COLOURS) {
-      assert.equal(toHex(evaluate(`var(${p})`, at(THEMES.light))), toHex(evaluate(`var(${p})`, at(noSpectrum))), `${name} busy ${p}`);
+    for (const p of props) {
+      assert.equal(toHex(evaluate(`var(${p})`, at(THEMES.light))), toHex(evaluate(`var(${p})`, at(noSpectrum))), `${name} ${p}`);
     }
   }
 });

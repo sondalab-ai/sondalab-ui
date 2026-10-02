@@ -327,3 +327,35 @@ test("the tier finding points at the real selector, not at a comment", () => {
   assert.equal(tier.length, 1);
   assert.equal(tier[0].line, 3);
 });
+
+// --- a product's registered filled primary (owner, 2026-10-02) ---
+// spexr fills its primary with ONE deeper indigo, registered as `fill` in its
+// accent-registry entry, and derives hover and active from it. This is the
+// exact block handed to spexr-overrides.css: under spexr's real entry and the
+// kit's real token CSS it must audit clean, so the registered fill is what
+// lets it through, and no step is a literal.
+const SPEXR_FILL_CSS = `:is([data-sl-theme="light"], [data-sl-theme="dark"]) .sl-btn--primary {
+  --slc-accent: #4c58e9;
+  --slc-accent-hover: color-mix(in srgb, var(--slc-accent) 89%, black);
+  --slc-accent-active: color-mix(in srgb, var(--slc-accent) 76%, black);
+  --slc-edge-accent: oklch(from var(--slc-accent) calc(l - var(--slc-shade-step, 0.075)) c h);
+  --slc-on-accent: #ffffff;
+}`;
+
+test("spexr's filled primary audits clean under spexr's registry entry", async () => {
+  const { readFileSync } = await import("node:fs");
+  const kit = new URL("../packages/ui-kit/", import.meta.url);
+  const { buildAllowlistBasesFromCss } = await import("../packages/ui-kit/agent/sl-audit.mjs");
+  const allowlistBases = buildAllowlistBasesFromCss(
+    ["tokens.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"].map((f) => readFileSync(new URL(f, kit), "utf8")),
+  );
+  const registry = JSON.parse(readFileSync(new URL("agent/accent-registry.json", kit), "utf8"));
+  assert.equal(registry.products.spexr.fill?.light, "#4c58e9", "the fill is registered");
+  const r = auditCss({
+    css: SPEXR_FILL_CSS,
+    allowlistBases,
+    accentEntry: resolveAccentEntry(registry, "spexr"),
+    declaredTier: "A",
+  });
+  assert.deepEqual(r.findings, []);
+});

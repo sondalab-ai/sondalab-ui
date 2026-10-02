@@ -16,9 +16,11 @@
    Followed on <html> and on every section under the root: a data-sl-theme or
    a class (an .sl-invert band) that changes after arming re-reads the ink of
    the scenes inside it, and again when a colour transition there ends.
-   On a theme that declares the spectrum (light, Prism) the dots are filled
-   with one gradient through --sl-spectrum-ink-0..4 instead; the polarity
-   still follows `color`. data-sl-ink="mono" keeps the single ink.
+   data-sl-ink="spectral" opts a canvas into the light theme's spectrum: on a
+   theme that declares it the dots are filled with one gradient through
+   --sl-spectrum-ink-0..4 instead; the polarity still follows `color`. Without
+   the attribute the dots are single-ink on every theme (owner, 2026-10-02:
+   no rainbow by default). "mono", the old opt-out, is now the default.
 
    MOTION: one frame loop for every scene, running only while one is within
    200px of the viewport and the page is visible. Under reduced motion each
@@ -54,10 +56,10 @@ function seedOf(canvas) {
 
 const INK_STOPS = 5;
 
-/** The light theme's spectrum ink as read on the canvas, or null where the
- * theme resets it (dark, high-contrast) or the author asked for one ink. */
+/** The light theme's spectrum ink as read on the canvas, or null unless the
+ * author opted in (data-sl-ink="spectral") and the theme declares it. */
 function spectrumOf(canvas) {
-  if (canvas.getAttribute("data-sl-ink") === "mono") return null;
+  if (canvas.getAttribute("data-sl-ink") !== "spectral") return null;
   const cs = getComputedStyle(canvas);
   const stops = [];
   for (let i = 0; i < INK_STOPS; i++) {

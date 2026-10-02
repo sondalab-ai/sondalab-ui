@@ -455,17 +455,29 @@ test("a colour that transitions is re-read when the transition ends", async (t) 
   assert.ok(centre() < 100, "read at the end, not mid-way");
 });
 
-// Prism: on the light theme the dots take the spectrum ink as one gradient
-// across the scene; where a theme resets it, or the author asks for one ink,
-// they keep the canvas's own colour.
+// No rainbow by default (owner, 2026-10-02): the dots are one ink on every
+// theme; data-sl-ink="spectral" opts a canvas into the light theme's spectrum,
+// taken as one gradient across the scene, and only where the theme declares it.
 const INK = ["#D6264A", "#B85A00", "#0B857A", "#2A62D8", "#7A2FE0"];
 const withSpectrum = (page) => INK.forEach((c, i) => (page.vars[`--sl-spectrum-ink-${i}`] = c));
 
-test("on a theme with the spectrum the dots are one gradient through its five inks", async (t) => {
+test("the dots keep the single ink by default, even where the spectrum exists", async (t) => {
   const page = fakePage();
   t.after(page.restore);
   withSpectrum(page);
   const c = page.canvas({ "data-sl-grid": "32" });
+  const { ready } = halftone(page.doc);
+  await ready;
+  page.show(c);
+  page.tick();
+  assert.equal(page.frames.at(-1).fill, "ink");
+});
+
+test("data-sl-ink=spectral fills the dots with one gradient through the five inks", async (t) => {
+  const page = fakePage();
+  t.after(page.restore);
+  withSpectrum(page);
+  const c = page.canvas({ "data-sl-grid": "32", "data-sl-ink": "spectral" });
   const { ready } = halftone(page.doc);
   await ready;
   page.show(c);
@@ -475,7 +487,7 @@ test("on a theme with the spectrum the dots are one gradient through its five in
   assert.deepEqual(fill.stops, INK.map((col, i) => [i / 4, col]));
 });
 
-test("data-sl-ink=mono keeps the single ink even where the spectrum exists", async (t) => {
+test("data-sl-ink=mono, the old opt-out, still means one ink", async (t) => {
   const page = fakePage();
   t.after(page.restore);
   withSpectrum(page);
@@ -487,11 +499,11 @@ test("data-sl-ink=mono keeps the single ink even where the spectrum exists", asy
   assert.equal(page.frames.at(-1).fill, "ink");
 });
 
-test("a switch to a theme that resets the spectrum repaints in the single ink", async (t) => {
+test("an opted-in canvas repaints in the single ink on a theme that resets the spectrum", async (t) => {
   const page = fakePage();
   t.after(page.restore);
   withSpectrum(page);
-  const c = page.canvas({ "data-sl-grid": "32" });
+  const c = page.canvas({ "data-sl-grid": "32", "data-sl-ink": "spectral" });
   const { ready } = halftone(page.doc);
   await ready;
   page.show(c);

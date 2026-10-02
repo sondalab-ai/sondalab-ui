@@ -102,7 +102,7 @@ Don't: put `sl-field__hint` or `sl-field__error` inside a wrapping `<label class
 
 Consumes: `--slc-surface`, `--slc-border`, `--slc-border-strong`, `--slc-text`, `--slc-text-muted`, `--slc-danger`, `--slc-focus`. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
 
-`aria-invalid="true"` on the input is the invalid state — no extra class. The edge, the focus ring and the focus halo all take the danger ink together (never a red edge inside an accent ring), and the light theme's spectrum rim stands down. Do: point `aria-describedby` at a `sl-field__error` line, which leads with a drawn mark so the state never rests on colour alone; remove both the attribute and the line once the value is valid. Don't: mark a field invalid before the user has had a chance to fill it.
+`aria-invalid="true"` on the input is the invalid state — no extra class. The edge, the focus ring and the focus halo all take the danger ink together (never a red edge inside an accent ring). Do: point `aria-describedby` at a `sl-field__error` line, which leads with a drawn mark so the state never rests on colour alone; remove both the attribute and the line once the value is valid. Don't: mark a field invalid before the user has had a chance to fill it.
 
 ### Checkbox — `sl-check` (`__input` · `__box` · `__label`)
 A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that paints the box, and a `<span>` that carries the text. Substrate: **R** IDE/App, **A** Page.
@@ -577,7 +577,7 @@ A picture in round dots whose size follows its light, in a circle that dissolves
 <canvas data-sl-halftone data-sl-src="/art/subject.png" data-sl-grid="130" aria-hidden="true"
         style="width: 22rem; aspect-ratio: 1; color: var(--slc-text)"></canvas>
 ```
-Attributes: `data-sl-grid` is cells per side (16–256, default 96); `data-sl-seed` (optional) makes the scatter reproducible; a non-square picture is centre-cropped.
+Attributes: `data-sl-grid` is cells per side (16–256, default 96); `data-sl-seed` (optional) makes the scatter reproducible; a non-square picture is centre-cropped; `data-sl-ink="spectral"` (opt-in, light theme only) fills the dots with the spectrum ink instead of the single ink, which is the default on every theme since 0.28.
 Consumes: the canvas's inherited `color` (set it with a role-var, e.g. `var(--slc-text)` or `var(--slc-accent)`). Don't: feed it a busy photo or a dark render — only one iconic subject with near-binary contrast reads, at ≥ 320px with a grid near 130. Don't: give it meaning — it is a picture, so a label or caption says what it shows; keep `aria-hidden` when the text beside it already does.
 
 ### Press — `sl-fx-press`
@@ -677,21 +677,21 @@ A section opens with a mono index beside its heading, separated from the previou
 Consumes: `--slc-border-subtle`, `--slc-text-muted`. Do: number it only where the content is a real sequence — L5, structure encodes truth. Don't: number four unrelated sections 01–04 because it looks tidy.
 
 ### Oversized display anchor — `sl-anchor`
-One oversized display heading per screen, sized by a fluid clamp — a documented pattern, not a token, because the size is fluid. Substrate: **R** Page, **A** App where a hero exists, **N/A** IDE.
+One oversized display heading per screen, sized by a fluid clamp — a documented pattern, not a token, because the size is fluid — and set solid (`line-height: 1`). Substrate: **R** Page, **A** App where a hero exists, **N/A** IDE.
 ```html
 <h1 class="sl-anchor">Everything measured, nothing asserted.</h1>
 ```
 Consumes: nothing — type only. Do: spend the screen's one oversized element here. Don't: use more than one per screen, and don't reach for the display serif on a numeral — a display-scale numeral is a structural label and stays mono (L1).
 
 ### Haze — `sl-haze`
-A soft field of the spectrum behind a section: the light theme's colour as atmosphere (Prism). Substrate: **A** Page/App, **N/A** IDE.
+A soft field of the spectrum behind a section: the light theme's colour as atmosphere (Prism). **Opt-in only** — the kit never adds it, and since 0.28 the spectrum paints no edge, rim or arc anywhere by default. Substrate: **A** Page/App, **N/A** IDE.
 ```html
 <section class="sl-haze"> … </section>
 ```
 Consumes: `--slc-haze`. Paints nothing in dark and high-contrast. Do: one per screen, behind a hero. Don't: put it behind body text that must be read at a glance, or stack two.
 
 ### Spectral text — `sl-spectral`
-A word or phrase of a display heading painted in the spectrum ink (Prism). Substrate: **A** Page/App, **N/A** IDE.
+A word or phrase of a display heading painted in the spectrum ink (Prism). **Opt-in only**, like `sl-haze`. Substrate: **A** Page/App, **N/A** IDE.
 ```html
 <h1 class="sl-anchor">Everything measured, <span class="sl-spectral">nothing asserted.</span></h1>
 ```
