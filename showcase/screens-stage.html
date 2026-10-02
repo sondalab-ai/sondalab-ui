@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" data-sl-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screens stage</title>
+<link rel="icon" href="../packages/ui-kit/assets/favicon.svg">
+<script>
+  /* The iframe document of showcase/screens.html: one screen, one theme, one
+     accent. The kit's --slc-* role vars resolve at :root, so a theme cannot be
+     scoped to a section; each theme gets its own document.
+     Params: screen=ide|settings|data|hero  theme=dark|light|high-contrast
+             accent=amber|indigo|cyan  dir=kit|lumen  fit=0 (no scale to width) */
+  (function () {
+    window.stageErrors = [];
+    addEventListener("error", function (e) {
+      // a failed <link> or <script> fires here too, on the element, without a message
+      var t = e.target && e.target !== window ? e.target.getAttribute("href") || e.target.getAttribute("src") : null;
+      window.stageErrors.push(t ? "failed to load " + t : (e.message || "error") + (e.lineno ? " (" + e.filename.split("/").pop() + ":" + e.lineno + ")" : ""));
+    }, true);
+    addEventListener("unhandledrejection", function (e) { window.stageErrors.push("unhandled rejection: " + (e.reason && e.reason.message || e.reason)); });
+
+    var p = new URLSearchParams(location.search);
+    var pick = function (k, ok, d) { var v = p.get(k); return ok.indexOf(v) > -1 ? v : d; };
+    var theme = pick("theme", ["dark", "light", "high-contrast"], "dark");
+    var accent = pick("accent", ["amber", "indigo", "cyan"], "amber");
+    var h = document.documentElement;
+    h.setAttribute("data-sl-theme", theme);
+    h.setAttribute("data-demo-accent", accent);
+    h.setAttribute("data-screen", pick("screen", ["ide", "settings", "data", "hero"], "ide"));
+    h.setAttribute("data-dir", pick("dir", ["kit", "lumen"], "kit"));
+    if (p.get("fit") !== "0") h.setAttribute("data-fit", "");
+    // Per theme, from agent/accent-registry.json (default / spexr / introspect).
+    // Each swatch is a registered product, and data-sl-product lets the
+    // neutrals follow it (themes/products.css), as the index switcher does.
+    // Only the hue: hover/active/subtle re-derive in the theme layer, and so
+    // does the light ring (capped at --sl-accent-text-lmax). The dark theme
+    // pins its ring to amber as a literal, so a product re-binds it there, as
+    // this does. High contrast owns its accent outright.
+    var ACCENTS = {
+      amber:  { light: "#FF9F1C", dark: "#F5A83C", product: "default" },
+      indigo: { light: "#5b6cff", dark: "#8b96ff", product: "spexr" },
+      cyan:   { light: "#0e9c84", dark: "#2ee6c0", product: "introspect" },
+    };
+    h.setAttribute("data-sl-product", ACCENTS[accent].product);
+    if (theme !== "high-contrast") h.style.setProperty("--sl-accent-default", ACCENTS[accent][theme]);
+    if (theme === "dark") h.style.setProperty("--sl-focus-ring", ACCENTS[accent].dark);
+  })();
+</script>
+<!-- the kit's own faces, served from the package (no CDN for the kit view) -->
+<link rel="stylesheet" href="../packages/ui-kit/fonts.css">
+<link rel="stylesheet" href="../packages/ui-kit/tokens.css">
+<link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
+<link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
+<link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
+<link rel="stylesheet" href="../packages/ui-kit/themes/products.css">
+<link rel="stylesheet" href="../packages/ui-kit/components.css">
+<!-- after components.css; screens.js appends the target overlay after this -->
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<div id="stage"></div>
+<script src="screens-contrast.js"></script>
+<script src="screens.js"></script>
+</body>
+</html>

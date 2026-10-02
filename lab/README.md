@@ -58,3 +58,16 @@ Two passes, and both are needed:
 Choose → the winner is rewritten in the kit → **every probe file for that slice
 is deleted** → one row goes into the slice log in the spec. If probes from three
 slices ago are still sitting here, the method is not being followed.
+
+## The one exception: `directions-2/`
+
+The round-2 direction the owner chose (Lumen, 2026-10-02) stays committed while
+the kit is rewritten towards it, slice by slice
+(`docs/plans/2026-10-02-lumen-adoption.md`): `dir-lumen.css` is the target that
+`showcase/screens.html` overlays in place. `lumen.html` and `compare.html` are
+thin pages (`_frame.js`, `_frame2.css`) over the showcase's own stage, so the
+reference and the harness render the same markup. The last slice of the
+adoption deletes the directory. The design round's own stage (`_stage2.*`,
+`_screens.js`, `_frame2.js`), the research behind it (`refs/`, `shots/`,
+`data/`, `research.html`) and the direction that was not chosen
+(`signal.html`, `dir-signal.css`) are git-ignored and stay local.

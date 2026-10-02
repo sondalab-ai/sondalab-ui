@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit vs Lumen</title>
+<link rel="icon" href="../../packages/ui-kit/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="_frame2.css?v=3">
+</head>
+<body data-dirs="kit,lumen">
+<header class="g-top">
+  <a class="g-brand" href="index.html">sondalab<b>/</b>02</a>
+  <nav class="g-links" aria-label="Pages"><a href="lumen.html">Lumen</a><a href="compare.html" aria-current="page">Kit vs Lumen</a><a href="../../showcase/screens.html">Screens harness</a></nav>
+  <span class="g-mono">lab · reference target · not for packages/</span>
+</header>
+<section class="g-hero" style="padding-block: 3rem 2rem">
+  <div><p class="g-kicker">Same markup · two stylesheets</p><h1 class="g-title" style="font-size:clamp(2.5rem,1.5rem+4vw,5rem)">Kit vs Lumen</h1></div>
+  <div><p class="g-lede">The same screen side by side at thumbnail size, which is the size at which a product is recognised, or stacked at full width to read the details. Both columns are the showcase's own stage (<code>showcase/screens-stage.html</code>); only <code>dir-lumen.css</code> is added to the second.</p></div>
+</section>
+<div class="g-bar">
+  <div class="g-ctl">
+    <span class="g-mono">Screen</span>
+    <div class="g-seg" role="group" aria-label="Screen"><button data-set="screen:ide">IDE</button><button data-set="screen:settings">Settings</button><button data-set="screen:data">Data</button><button data-set="screen:hero">sondalab.eu</button></div>
+    <span class="g-mono">Theme</span>
+    <div class="g-seg" role="group" aria-label="Theme"><button data-set="view:dark">Dark</button><button data-set="view:light">Light</button><button data-set="view:high-contrast">Contrast</button></div>
+    <span class="g-mono">Accent</span>
+    <div class="g-seg" role="group" aria-label="Accent"><button data-set="accent:amber">Amber</button><button data-set="accent:indigo">Indigo · spexr</button><button data-set="accent:cyan">Cyan · introspect</button></div>
+    <span class="g-mono">Layout</span>
+    <div class="g-seg" role="group" aria-label="Layout"><button data-set="layout:side">Side by side</button><button data-set="layout:stack">Stacked</button></div>
+  </div>
+  <div class="g-ctl"><span class="g-sum" data-fails="0">measuring…</span><button class="g-btn" data-replay>Replay entrance</button></div>
+</div>
+<details class="g-measure">
+  <summary class="g-mono">Measured in each column: WCAG contrast and control heights</summary>
+  <div class="g-mgrid"></div>
+</details>
+<main class="g-stage"></main>
+<p class="g-foot">The kit column is the kit as this checkout ships it, with the IDE chrome written in its own idiom (its tokens, its radii and its faces), so the comparison is fair. Its misses are kept on purpose, because they are what the kit produces when composed into these screens; the measurement panel lists them. In the design round (2026-10-02) Lumen passed every check on every screen, theme and accent. The kit's own harness for the same screens, which every slice of the adoption is judged on, is <a href="../../showcase/screens.html">showcase/screens.html</a>.</p>
+<script src="_frame.js"></script>
+</body>
+</html>

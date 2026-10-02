@@ -92,6 +92,16 @@
     .brand .word i { font-style: italic; color: var(--sl-accent-default); }
     .brand .sub { font-family: var(--sl-font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sl-text-muted); }
     .switches { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+    /* page nav: the three showcase pages */
+    .pages { display: flex; gap: 0.15rem; }
+    .pages a {
+      font-family: var(--sl-font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--sl-text-muted); text-decoration: none; padding: 0.4rem 0.55rem;
+      box-shadow: inset 0 -2px 0 transparent;
+      transition: color var(--sl-motion-fast) var(--sl-motion-ease), box-shadow var(--sl-motion-fast) var(--sl-motion-ease);
+    }
+    .pages a:hover { color: var(--sl-text-primary); }
+    .pages a[aria-current="page"] { color: var(--sl-text-primary); box-shadow: inset 0 -2px 0 var(--sl-accent-default); }
     .switch { display: inline-flex; align-items: center; gap: 0.35rem; }
     .switch .lbl { font-family: var(--sl-font-mono); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sl-text-muted); }
     .seg { display: inline-flex; border: 1px solid var(--sl-border-default); }
@@ -371,6 +381,11 @@
         <span class="word">sondalab<i>.</i></span>
         <span class="sub">effects layer</span>
       </div>
+      <nav class="pages" aria-label="Showcase pages">
+        <a href="index.html">Components</a>
+        <a href="effects.html" aria-current="page">Effects</a>
+        <a href="screens.html">Screens</a>
+      </nav>
       <div class="switches">
         <div class="switch">
           <span class="lbl">theme</span>

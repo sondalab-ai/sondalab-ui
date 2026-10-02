@@ -65,12 +65,13 @@ const Yl = (c) => 0.2126 * c.lin[0] + 0.7152 * c.lin[1] + 0.0722 * c.lin[2];
 const contrast = (a, b) => { const [hi, lo] = [Yl(a), Yl(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
 const registeredFill = JSON.parse(read("../packages/ui-kit/agent/accent-registry.json")).products.spexr.fill;
 
-for (const page of ["index", "effects"]) {
-  const src = read(`../showcase/${page}.html`);
+// screens.css is the stage of showcase/screens.html: it mirrors the same block.
+for (const page of ["index.html", "effects.html", "screens.css"]) {
+  const src = read(`../showcase/${page}`);
   const block = src.match(/\[data-demo-accent="indigo"\]:not\(\[data-sl-theme="high-contrast"\]\) \.sl-btn--primary \{([^}]*)\}/)?.[1] ?? "";
   const decl = (p) => block.match(new RegExp(`${p}:\\s*([^;]+);`))?.[1].trim();
 
-  test(`${page}.html: the indigo primary is the registered fill with derived steps, on both themes`, () => {
+  test(`${page}: the indigo primary is the registered fill with derived steps, on both themes`, () => {
     assert.equal(decl("--slc-accent"), registeredFill.light);
     assert.equal(registeredFill.dark, registeredFill.light, "one fill on both themes");
     assert.equal(decl("--slc-accent-hover"), "color-mix(in srgb, var(--slc-accent) 89%, black)");
@@ -78,7 +79,7 @@ for (const page of ["index", "effects"]) {
     assert.doesNotMatch(src, /data-demo-accent="indigo"\]\[data-sl-theme=/, "no per-theme step override");
   });
 
-  test(`${page}.html: a white label reads on the indigo fill, its hover and its press (4.5:1)`, () => {
+  test(`${page}: a white label reads on the indigo fill, its hover and its press (4.5:1)`, () => {
     const env = new Map([["--slc-accent", decl("--slc-accent")]]);
     const white = fromHex("#ffffff");
     for (const p of ["--slc-accent", "--slc-accent-hover", "--slc-accent-active"]) {
