@@ -47,9 +47,9 @@ it and publish the next patch.
 | Slice | What | Release | Status |
 |---|---|---|---|
 | K0 | Ship the pending 0.28.0 | ui-kit 0.28.0 | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/65) |
-| K1 | Screens harness (`showcase/screens.html`) and the committed Lumen reference | none | In review (https://github.com/sondalab-ai/sondalab-ui/pull/66) |
+| K1 | Screens harness (`showcase/screens.html`) and the committed Lumen reference | none | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/66) |
 | K2 | Neutral ladder baked to hex, tinted per product (`themes/products.css`, `neutrals.json`) | ui-kit 0.29.0, palette-py 0.3.3 | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/67) |
-| K3 | Geist and Geist Mono vendored in `fonts.css`; brand face for the wordmark; micro labels; sentence-case controls. Checkpoint A | minor | Planned |
+| K3 | Geist and Geist Mono vendored in `fonts.css`; brand face for the wordmark; micro labels; sentence-case controls. Checkpoint A | ui-kit 0.30.0, palette-py 0.3.4 | In review (https://github.com/sondalab-ai/sondalab-ui/pull/68) |
 | K4 | Depth recipes, new radii, two motion curves, tile selection, keycap `.sl-kbd`, tile tabs | minor | Planned |
 | K5 | Controls: primary foot, raised ghost, sunken fields, check and switch, segmented, focus halo, `.sl-btn--danger`. Checkpoint B | minor | Planned |
 | K6 | `workbench.css` (lit pane, status bar, activity bar, tree, palette, terminal block) and the toast stack. Checkpoint C | minor | Planned |

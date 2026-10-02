@@ -342,7 +342,7 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
   <span class="sl-stat__label">Tests green</span>
 </div>
 ```
-Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, uppercase, `--sl-text-micro`). Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected; kept in 0.30, where the Lumen reference sets it in Geist, until the owner rules again). Don't: set a stat you have not measured.
+Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, uppercase, `--sl-text-micro`). Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected; confirmed 2026-10-02, when Lumen's Geist 600 figures were considered and declined). Don't: set a stat you have not measured.
 
 ## App structure
 
@@ -406,7 +406,7 @@ The wordmark where the wordmark is too wide: headers, tight chrome. `sonda·lab`
 ```html
 <span class="sl-lockup">sonda<span class="sl-lockup__dot">·</span>lab</span>
 ```
-Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg` — with one open exception: the asset is still cut in Martian Mono 300, the class renders in the mono role, Geist Mono since 0.30, until the owner signs off a re-cut. A mark, not a label: its `0.2em` tracking stands outside the micro register. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
+Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg` — Geist Mono weight 300, tracked `0.2em`, in the asset and the class alike since 0.30. A mark, not a label: its `0.2em` tracking stands outside the micro register. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
 
 ### Monogram — `sl-monogram`
 Where even the lockup is too wide to read: a social avatar, a square tile. `s.` in the wordmark's cut (`--sl-font-brand`, Fraunces), the letter in the text colour and the period in the accent, on a full-bleed square of the surface. Substrate: **R** IDE/App/Page.

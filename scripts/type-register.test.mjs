@@ -19,19 +19,49 @@ const bare = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 const css = bare(readFileSync(resolve(KIT, "components.css"), "utf8"));
 const tokens = bare(readFileSync(resolve(KIT, "tokens.css"), "utf8"));
 
-/** Flat rules [{ selectors, body }]; a rule nested in @media is read as flat. */
-const RULES = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
-  selectors: m[1].split(",").map((s) => s.trim()),
-  body: m[2],
-}));
-/** The declarations of every rule whose selector list names `sel` exactly. */
-const decls = (sel) => RULES.filter((r) => r.selectors.includes(sel)).map((r) => r.body).join("\n");
-const prop = (body, name) => body.match(new RegExp(`(?:^|[;{\\s])${name}:\\s*([^;]+);`))?.[1].trim();
+/** Every style rule as [{ selectors, body, nested }] in source order; `nested`
+ *  marks one inside an at-rule (@media, @supports), which applies only some of
+ *  the time and so never decides the register. */
+function rules(text) {
+  const out = [];
+  let depth = 0, start = 0;
+  const stack = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "{") {
+      stack.push(text.slice(start, i).trim());
+      depth++; start = i + 1;
+    } else if (text[i] === "}") {
+      const prelude = stack.pop();
+      depth--;
+      if (!prelude.startsWith("@")) {
+        out.push({ selectors: prelude.split(",").map((x) => x.trim()), body: text.slice(start, i), nested: stack.some((p) => p.startsWith("@")) });
+      }
+      start = i + 1;
+    }
+  }
+  return out;
+}
+const RULES = rules(css);
+/** The declarations that apply to `sel`: every top-level rule whose selector
+ *  list names it exactly, in source order, so the LAST value of a property is
+ *  the one the cascade keeps (same selector, same specificity, later wins). */
+const decls = (sel) => RULES.filter((r) => !r.nested && r.selectors.includes(sel)).map((r) => r.body).join(";\n");
+const prop = (body, name) => {
+  const all = [...body.matchAll(new RegExp(`(?:^|[;{\\s])${name}:\\s*([^;]+);`, "g"))];
+  return all.length ? all[all.length - 1][1].trim() : undefined;
+};
 const em = (v) => (v === undefined ? 0 : v === "0" ? 0 : parseFloat(v));
 
 const MICRO = [".sl-eyebrow", ".sl-nav__group", ".sl-stat__label", ".sl-section__idx", ".sl-figure__caption", ".sl-rule--labeled"];
 const SENTENCE = [".sl-btn", ".sl-chip", ".sl-badge", ".sl-segmented__item", ".sl-table thead th", ".sl-callout__title", ".sl-field__label", ".sl-breadcrumb"];
 const HEADINGS = [".sl-card__title", ".sl-dialog__title", ".sl-empty__title"];
+
+test("the reader keeps the cascade: a later rule for the same selector wins, an @media rule does not", () => {
+  const r = rules(".a { color: red; }\n.a, .b { color: blue; }\n@media (x) { .a { color: green; } }");
+  const body = r.filter((x) => !x.nested && x.selectors.includes(".a")).map((x) => x.body).join(";\n");
+  assert.equal(prop(body, "color"), "blue");
+  assert.equal(r.find((x) => x.nested)?.selectors[0], ".a");
+});
 
 test("--sl-text-micro is 10.5px, and the 32px row's two steps did not move", () => {
   assert.match(tokens, /--sl-text-micro:\s*0\.65625rem;/);

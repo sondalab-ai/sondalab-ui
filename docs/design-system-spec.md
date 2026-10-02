@@ -100,8 +100,8 @@ Both run in a `pnpm gen:tokens` script; generated files are committed (so consum
 | `--sl-font-sans` | `"Geist", system-ui, -apple-system, "Segoe UI", sans-serif` (0.30; was Instrument Sans) | Inter (spexr), Space Grotesk (introspect) |
 | `--sl-font-mono` | `"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace` (0.30; was Martian Mono) | JetBrains Mono (spexr), IBM Plex Mono (introspect) — UI/data/TUI labels and micro labels |
 | `--sl-font-brand` | `"Fraunces", Georgia, serif` (new in 0.30) | the wordmark and the monogram only |
-| `--sl-text-micro` | `0.65625rem` (10.5px, new in 0.30) | the micro-label register (eyebrow, section index, nav group, stat label) |
-| `--sl-font-code` | **per-product override**, defaults to `--sl-font-mono` | source-code surfaces (spexr editor / code blocks) — a carve-out so the code editor may keep a coding-optimized mono; Martian Mono thin is a display face, not an editor face |
+| `--sl-text-micro` | `0.65625rem` (10.5px, new in 0.30) | the micro-label register (eyebrow, section index, nav group, stat label, figure caption, labelled rule) |
+| `--sl-font-code` | **per-product override**, defaults to `--sl-font-mono` | source-code surfaces (spexr editor / code blocks) — a carve-out so the code editor may keep a coding-optimized mono (spexr keeps JetBrains Mono); the kit's mono is a UI face, not an editor face |
 
 Mono weight hierarchy (from board): 100 large numerals · 200 data/TUI · 300 tracked labels · 400 accent.
 

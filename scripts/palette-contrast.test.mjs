@@ -34,6 +34,13 @@ const lerp = (a, b, p) => { const x = fromHex(a).lin.map(lin2g), y = fromHex(b).
 const NEUTRALS = JSON.parse(readFileSync(resolve(KIT, "neutrals.json"), "utf8"));
 const PRODUCTS = Object.entries(NEUTRALS.products).filter(([, p]) => !p.inherits);
 const GROUNDS = ["bg-canvas", "bg-surface", "bg-surface-raised", "bg-tile", "bg-sunken"].map((r) => `--sl-${r}`);
+/** The inversion band's text inks, as fractions of its foreground (its page's
+ *  canvas) over its ground (its page's primary text), read off components.css. */
+const BAND_INKS = (() => {
+  const band = readFileSync(resolve(KIT, "components.css"), "utf8").match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  const pct = (role) => Number(band.match(new RegExp(`--slc-${role}:\\s*color-mix\\(in srgb, currentColor (\\d+)%, transparent\\)`))?.[1]) / 100;
+  return { muted: pct("text-muted"), secondary: pct("text-secondary") };
+})();
 /** The theme's generated tokens with one product's neutrals in place. */
 const productTokens = (theme, p) => ({
   ...shared,
@@ -75,6 +82,49 @@ for (const theme of ["light", "dark"]) for (const [product, p] of PRODUCTS) {
   // Muted text is text: it reads at 4.5:1 on every ground of every product.
   test(`${theme} ${product}: muted text reads on every ground (4.5:1)`, () =>
     assert.deepEqual(below(["--sl-text-muted", "--sl-text-secondary", "--sl-text-primary"], 4.5), []));
+  // ...and on the two ink washes the kit lays over a ground: 4% (a table
+  // head, a field, an empty state) and 6% (a segmented track, a ghost or an
+  // icon button). Since 0.30 the micro labels are 10.5px muted text, so the
+  // muted ink carries more of the page than it did.
+  for (const wash of [0.04, 0.06]) {
+    test(`${theme} ${product}: muted text reads on a ${wash * 100}% ink wash over every ground (4.5:1)`, () =>
+      assert.deepEqual(below(["--sl-text-muted", "--sl-text-secondary"], 4.5, (bg) => lerp(hex(bg), hex("--sl-text-primary"), wash)), []));
+  }
+  // Inside an inversion band (components.css .sl-invert > *) the ground is the
+  // page's primary text and the band's inks are its canvas at 58% (muted) and
+  // 78% (secondary), read off the CSS.
+  test(`${theme} ${product}: muted text reads inside the inversion band (4.5:1)`, () => {
+    const ground = hex("--sl-text-primary"), ink = hex("--sl-bg-canvas");
+    const bad = Object.entries(BAND_INKS).map(([n, a]) => [n, ratio(lerp(ground, ink, a), ground)])
+      .filter(([, r]) => r < 4.5).map(([n, r]) => `${n} ${r.toFixed(2)}`);
+    assert.deepEqual(bad, []);
+  });
+}
+
+test("the band's muted and secondary inks are read off components.css", () => {
+  for (const [n, a] of Object.entries(BAND_INKS)) assert.ok(a > 0 && a < 1, `band ${n} ink not found: ${a}`);
+});
+
+// High contrast keeps literal neutrals: its muted ink is held to the same 4.5
+// on its grounds, on the 4% and 6% washes and inside the band.
+{
+  const t = { ...shared, ...vars("themes/high-contrast.css") };
+  const lines = [];
+  for (const bg of GROUNDS) for (const wash of [0, 0.04, 0.06]) {
+    const ground = lerp(t[bg], t["--sl-text-primary"], wash);
+    for (const n of ["--sl-text-muted", "--sl-text-secondary"]) {
+      const r = ratio(t[n], ground);
+      if (r < 4.5) lines.push(`${n} on ${bg} +${wash * 100}% ${r.toFixed(2)}`);
+    }
+  }
+  for (const [n, a] of Object.entries(BAND_INKS)) {
+    const r = ratio(lerp(t["--sl-text-primary"], t["--sl-bg-canvas"], a), t["--sl-text-primary"]);
+    if (r < 4.5) lines.push(`band ${n} ${r.toFixed(2)}`);
+  }
+  test("high contrast: muted text reads on every ground, on the 4% and 6% washes and inside the band (4.5:1)", () => {
+    for (const bg of GROUNDS) assert.ok(t[bg], `${bg} is not a hex literal in high-contrast.css`);
+    assert.deepEqual(lines, []);
+  });
 }
 
 for (const theme of ["light", "dark"]) {
