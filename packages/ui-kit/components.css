@@ -23,7 +23,7 @@
    field, callout, checkbox, switch) inherits the fix automatically. */
 
 :root {
-  /* THE LABEL ON A FILL AND THE STEP AWAY FROM IT (0.32.1), written once.
+  /* THE LABEL ON A FILL AND ITS HOVER AND PRESS (0.32.1), written once.
      Every labelled fill reads these: the theme's label and accent steps
      (themes/*.css), the accent-fill set, the status labels, the danger
      tone, the in-button key and the glass primary (effects.css). They are
@@ -31,39 +31,55 @@
      and `h` are the channels of the colour they are used in --
      oklch(from <fill> var(--_sl-on)). A theme file that reads them needs
      this file loaded, as every surface that paints a fill already does.
-       --_sl-pole-l  where a label turns from white to the dark pole, on its
-                     fill's oklch lightness: 0.59, where white and the dark
-                     pole read about equal for the registered hues (0.61
-                     until 0.32.1, which was tuned for a 0.22 pole and left
-                     spexr's #5b6cff, L 0.6015, white at 4.17:1 where the
-                     dark pole reads 4.65).
-       --_sl-on      the label: white below the threshold, near-black
-                     (oklch L 0.16) above it.
+       --_sl-pole-l    where a label turns from white to the dark pole, on
+                       its fill's oklch lightness: 0.59, where white and the
+                       dark pole read about equal for the registered hues
+                       (0.61 until 0.32.1, which was tuned for a 0.22 pole
+                       and left spexr's #5b6cff, L 0.6015, white at 4.17:1
+                       where the dark pole reads 4.65).
+       --_sl-pole-dark the dark pole, oklch L 0.16 (0.22 on the light
+                       theme until 0.32.1).
+       --_sl-on        the label: white below the threshold, the dark pole
+                       above it.
        --_sl-step-hover / --_sl-step-press  the danger tone's step, size
-                     included: 0.05 and 0.10 of lightness AWAY from that
-                     label (lighter under the dark pole, darker under
-                     white), so the label never reads weaker hovered or
-                     pressed than at rest. Mixing toward black under a dark
-                     label took introspect's press to 3.15:1; mixing toward
-                     white at 89% / 76% moved a dark hover to its press by
-                     ΔE 0.7-1.3. The step runs along the line to the pole it
-                     moves toward, so it never leaves sRGB and the colour a
-                     test reads is the colour a browser paints: darkening
-                     keeps chroma in proportion to lightness (a dim in
-                     linear light), lightening eases it by
-                     (1 - step / (1 - l))^1.5, the least that keeps every
-                     sRGB colour in gamut. */
+                       included: 0.05 and 0.10 of oklch lightness. A fill
+                       steps TOWARD BLACK, the way a key reads pressed,
+                       unless its label is the dark pole and would read
+                       under --_sl-hold on the fill pressed toward black;
+                       then it steps toward white instead. The direction is
+                       decided once per fill, on the press, so hover and
+                       press always move the same way.
+       --_sl-hold      5.4:1. A pressed fill must leave its label 4.5:1 on
+                       a glass pane too, and a pane over a dark page shows a
+                       tenth of that page through the fill, which costs up
+                       to about 0.9:1 under a dark label: 4.5 + 0.9.
+                       Introspect's teal on paper (3.15:1 pressed toward
+                       black on 0.32.0) and local-agents' blue on ink step
+                       toward white; amber, daos, introspect's mint, the
+                       dark danger and every white label step toward black.
+       --_sl-lum       the fill's WCAG luminance, from its own oklch
+                       channels (OKLab to linear sRGB, weighted). Pressed
+                       toward black the fill is dimmed in linear light by
+                       ((l - 0.1) / l)^3, so that is its luminance there.
+     The step runs along the line to the pole it moves toward, so it never
+     leaves sRGB and the colour a test reads is the colour a browser
+     paints: darkening keeps chroma in proportion to lightness (a dim in
+     linear light), lightening eases it by (1 - step / (1 - l))^1.5, the
+     least that keeps every sRGB colour in gamut. */
   --_sl-pole-l: 0.59;
-  --_sl-on: clamp(0.16, (var(--_sl-pole-l) - l) * 1000, 1) 0 h;
-  --_sl-away: clamp(0, (l - var(--_sl-pole-l)) * 1000, 1);
-  --_sl-step-hover: clamp(0, l + 0.05 * (2 * var(--_sl-away) - 1), 1) calc(c * (var(--_sl-away) * pow(max(0, 1 - 0.05 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-away)) * max(0, 1 - 0.05 / max(l, 0.001)))) h;
-  --_sl-step-press: clamp(0, l + 0.1 * (2 * var(--_sl-away) - 1), 1) calc(c * (var(--_sl-away) * pow(max(0, 1 - 0.1 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-away)) * max(0, 1 - 0.1 / max(l, 0.001)))) h;
+  --_sl-pole-dark: 0.16;
+  --_sl-hold: 5.4;
+  --_sl-on: clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 1) 0 h;
+  --_sl-lum: calc(-0.04077454096 * pow(l + 0.3963377774 * c * cos(h * 0.017453292519943295) + 0.2158037573 * c * sin(h * 0.017453292519943295), 3) + 1.112492185 * pow(l - 0.1055613458 * c * cos(h * 0.017453292519943295) - 0.0638541728 * c * sin(h * 0.017453292519943295), 3) - 0.07171764402 * pow(l - 0.0894841775 * c * cos(h * 0.017453292519943295) - 1.2914855480 * c * sin(h * 0.017453292519943295), 3));
+  --_sl-lighter: calc(clamp(0, (l - var(--_sl-pole-l)) * 1000, 1) * clamp(0, (var(--_sl-hold) - (var(--_sl-lum) * pow((l - 0.1) / l, 3) + 0.05) / (pow(var(--_sl-pole-dark), 3) + 0.05)) * 1000, 1));
+  --_sl-step-hover: clamp(0, l + 0.05 * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - 0.05 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - 0.05 / max(l, 0.001)))) h;
+  --_sl-step-press: clamp(0, l + 0.1 * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - 0.1 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - 0.1 / max(l, 0.001)))) h;
   /* accent */
   --slc-accent:        var(--sl-accent-default, #9A5300);
   /* Steps derive from --slc-accent so a bare --sl-accent-default override
      (or a Tier-B product that maps only --slc-accent) re-derives the whole
      family — no amber leak. The theme layer still wins when it sets the step.
-     Unset, the step is the kit's own, away from the label (above). */
+     Unset, the step is the kit's own (above). */
   --slc-accent-hover:  var(--sl-accent-hover,   oklch(from var(--slc-accent) var(--_sl-step-hover)));
   --slc-accent-active: var(--sl-accent-active,  oklch(from var(--slc-accent) var(--_sl-step-press)));
   --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
@@ -130,8 +146,8 @@
      above) follow from it. The private values reference it with no
      fallback, so they are invalid until it is set and each public role
      falls back to the accent's step. Set, the label is the pole that
-     contrasts with the fill and the states are the kit's steps away from
-     it (above), on every theme. High contrast owns its accent and resets
+     contrasts with the fill and the states are the kit's steps (above),
+     on every theme. High contrast owns its accent and resets
      it (below).
      These public roles compute HERE, on :root, so they follow a fill set on
      the root only: they are for a fill a product draws itself (a count
@@ -608,8 +624,7 @@
    --slc-edge-accent is re-declared here for the same reason. The private
    derivations reference --slc-accent-fill with no fallback, so they are
    invalid until it is set, and each fallback is the element's own role.
-   Hover and press are the kit's steps away from the label (the :root
-   block above). The danger tone swaps the set (below); glass reads it
+   Hover and press are the kit's steps (the :root block above). The danger tone swaps the set (below); glass reads it
    (effects.css). */
 :where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
   --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) var(--_sl-on));
@@ -1830,12 +1845,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      filled  .sl-btn--primary.sl-btn--danger swaps the primary's fill set for
              the danger: the danger fill on its foot, its own contrast-picked
              label (--slc-on-danger), its edge the fill in shade. Hover and
-             press step AWAY from the label (darker under white, lighter
-             under the dark pole), so the label never reads weaker than at
-             rest; mixing toward black, as the accent did until 0.32.1,
-             took a dark label under 4.5:1 on dark. Since 0.32.1 its step
-             is the kit's one (--_sl-step-hover / -press, :root), which the
-             accent shares, so it stays inside sRGB on ink as well.
+             press are the kit's one step (--_sl-step-hover / -press, :root,
+             0.32.1), which the accent shares: toward black, unless its dark
+             label would read under 5.4:1 pressed. Both themes' dangers hold
+             that, so both darken (on ink it stepped lighter until 0.32.1,
+             and out of sRGB); its label reads 5.46:1 pressed on ink.
      neutral .sl-btn--danger (plain or ghost) and .sl-icon-btn--danger take
              the danger ink on a 12% wash of itself, the danger badge's
              recipe, and a danger edge, so a lone destructive button never

@@ -279,7 +279,7 @@ test("high contrast resets a product's accent fill: the theme owns its accent", 
 
 // At rest, hovered and pressed for every product: with a registered fill the
 // role derives the steps, unset they are the theme's own accent steps. Both
-// step away from the label since 0.32.1 (introspect's light hover and press
+// step the way the kit's 5.4 rule picks since 0.32.1 (introspect's light hover and press
 // read 4.09 / 3.15 under its dark label until then, the theme stepping toward
 // black). primary-label.test.mjs measures the same through the cascade, in
 // every wiring and context.

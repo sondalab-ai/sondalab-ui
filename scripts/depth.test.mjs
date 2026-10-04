@@ -501,7 +501,7 @@ const PANE = "var(--_slfx-pane)";
 
 test("the glass primary's label is the composite-picked pole the cap test reads", () => {
   assert.equal(decl(GLASS_PRIMARY, "--_slfx-pane"), "color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas))");
-  assert.equal(decl(fxRule(PANE_HOST) ?? "", "color"), "oklch(from var(--_slfx-pane) clamp(0.16, (var(--_sl-pole-l) - l) * 1000, 0.985) 0 h)");
+  assert.equal(decl(fxRule(PANE_HOST) ?? "", "color"), "oklch(from var(--_slfx-pane) clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 0.985) 0 h)");
 });
 
 for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {

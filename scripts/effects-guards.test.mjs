@@ -1080,7 +1080,7 @@ test("the glass primary rests at 90%, fades its fill, and picks its label from t
   assert.match(r.body, /--slg-accent-a:\s*100%/);
   assert.match(effects, /@property\s+--slfx-accent-t\s*\{[^}]*syntax:\s*"<color>"/);
   // the label and the keycap read the same pane and the kit's threshold
-  assert.match(effects, /color:\s*oklch\(from var\(--_slfx-pane\) clamp\(0\.16, \(var\(--_sl-pole-l\) - l\) \* 1000, 0\.985\) 0 h\)/);
+  assert.match(effects, /color:\s*oklch\(from var\(--_slfx-pane\) clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 0\.985\) 0 h\)/);
   assert.match(effects, /--slfx-cap:\s*oklch\(from var\(--_slfx-pane\) calc\(l \+ 0\.085 \* clamp\(-1, \(l - var\(--_sl-pole-l\)\) \* 1000, 1\)\) c h\)/);
   assert.doesNotMatch(effects, /\b0\.59\b|0\.61\b/, "no threshold of its own: it reads components.css's");
   const comp = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");

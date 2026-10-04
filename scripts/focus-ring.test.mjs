@@ -82,7 +82,8 @@ test("the focus ring sits flush on the border, no gap", () => {
 // the accent is light). Each status fill has its own contrast-picked label.
 test("each solid status fill has its own contrast-picked label", () => {
   // the kit's one label rule (0.32.1): a macro over the fill's own channels
-  assert.match(css, /--_sl-on:\s*clamp\(0\.16, \(var\(--_sl-pole-l\) - l\) \* 1000, 1\) 0 h;/);
+  assert.match(css, /--_sl-on:\s*clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 1\) 0 h;/);
+  assert.match(css, /--_sl-pole-dark:\s*0\.16;/);
   for (const s of ["success", "warning", "danger", "info"]) {
     assert.match(css, new RegExp(`--slc-on-${s}:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*var\\(--_sl-on\\)\\);`), s);
   }

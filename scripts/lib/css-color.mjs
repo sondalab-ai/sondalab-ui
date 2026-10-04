@@ -356,6 +356,8 @@ class Parser {
         case "max": return Math.max(...args);
         case "clamp": return Math.min(Math.max(args[1], args[0]), args[2]);
         case "pow": return Math.pow(args[0], args[1]);
+        case "cos": return Math.cos(args[0]);
+        case "sin": return Math.sin(args[0]);
         default: throw new Error(`unsupported math function ${tok.v}`);
       }
     }

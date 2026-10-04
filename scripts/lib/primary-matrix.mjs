@@ -207,7 +207,7 @@ export function tree(w, theme, context, classes, states) {
  *  cascade hides (display: none) paints nothing, and a tint whose
  *  background-image cannot compute (an unresolved var()) is `none`, as in a
  *  browser: the label then sits on whatever is behind it. */
-export function measure({ wiring, id, theme, context, state, danger = false }) {
+export function measure({ wiring, id, theme, context, state, danger = false, backdrops = null }) {
   const w = rulesFor(wiring, id);
   const { parent, control } = tree(w, theme, context, ["sl-btn", "sl-btn--primary", ...(danger ? ["sl-btn--danger"] : [])], STATES[state]);
   const env = customs(w.rules, control);
@@ -216,7 +216,10 @@ export function measure({ wiring, id, theme, context, state, danger = false }) {
   const host = evaluate(longhand(won, "background-color").value, env);
   const edge = evaluate(longhand(won, "border-color").value, env);
   const page = customs(w.rules, parent);
-  const grounds = Object.fromEntries(["canvas", "surface", "raised"].map((g) => [g, evaluate(`var(--slc-${g})`, page)]));
+  // `backdrops` (a stress sweep) replaces the page's three grounds with any
+  // flat colours behind the pane; the tint is still the page's canvas.
+  const grounds = backdrops ? Object.fromEntries(backdrops.map((b) => [b, evaluate(b, new Map())]))
+    : Object.fromEntries(["canvas", "surface", "raised"].map((g) => [g, evaluate(`var(--slc-${g})`, page)]));
   const surfaces = [];
   const tint = layered(context) ? el({ tag: "span", classes: ["sl-glass__tint"], parent: control }) : null;
   const shown = tint && cascaded(w.rules, tint).get("display")?.value.replace(/\s*!important$/, "") !== "none";

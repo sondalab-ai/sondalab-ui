@@ -173,7 +173,7 @@ for (const [product, p] of PRODUCTS) {
 // label is the pole its lightness picks. These mirror the CSS formulas:
 //   --slc-accent-text   oklch(from accent min(l, lmax) c h)   (gamut-mapped, or clipped as Chrome does)
 //   --sl-text-on-accent oklch(from accent var(--_sl-on)), the kit's one label
-//                       macro: clamp(0.16, (var(--_sl-pole-l) - l) * 1000, 1) 0 h
+//                       macro: clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 1) 0 h
 // The dark pole is L 0.16, the kit's own on every other labelled fill
 // (--slc-on-accent-fill, --slc-on-<status>); it was 0.22 until 0.32.1, which
 // read 5.03:1 at worst under a dark label across the registry where 0.16
@@ -182,6 +182,7 @@ for (const [product, p] of PRODUCTS) {
   const light = readFileSync(resolve(KIT, "themes/light.css"), "utf8");
   const COMPONENTS = readFileSync(resolve(KIT, "components.css"), "utf8");
   const POLE_L = Number(COMPONENTS.match(/--_sl-pole-l:\s*([0-9.]+);/)?.[1]);
+  const POLE_DARK = Number(COMPONENTS.match(/--_sl-pole-dark:\s*([0-9.]+);/)?.[1]);
   const lmax = Number(light.match(/--sl-accent-text-lmax:\s*([0-9.]+)/)[1]);
   const onAccent = light.match(/--sl-text-on-accent:\s*([^;]+);/)[1];
   const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
@@ -197,7 +198,7 @@ for (const [product, p] of PRODUCTS) {
   };
   const labelOf = (hex) => {
     const [L, , h] = toOklch(fromHex(hex));
-    return toHex(fromOklch([Math.min(1, Math.max(0.16, (POLE_L - L) * 1000)), 0, h]));
+    return toHex(fromOklch([Math.min(1, Math.max(POLE_DARK, (POLE_L - L) * 1000)), 0, h]));
   };
   const accents = Object.entries(registry.products)
     .map(([name, p]) => [name, p.light ?? registry.products[p.inherits]?.light ?? t["--sl-accent-default"]]);
@@ -206,7 +207,8 @@ for (const [product, p] of PRODUCTS) {
     assert.equal(t["--sl-accent-default"], "#FF9F1C");
     // one label rule: the theme's and every labelled fill's read the kit's macro
     assert.equal(onAccent, "oklch(from var(--sl-accent-default) var(--_sl-on))");
-    assert.match(COMPONENTS, /--_sl-on:\s*clamp\(0\.16, \(var\(--_sl-pole-l\) - l\) \* 1000, 1\) 0 h;/);
+    assert.match(COMPONENTS, /--_sl-on:\s*clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 1\) 0 h;/);
+    assert.equal(POLE_DARK, 0.16);
     assert.match(COMPONENTS, /--_sl-on-accent-fill:\s*oklch\(from var\(--slc-accent-fill\) var\(--_sl-on\)\);/);
     for (const s of ["success", "warning", "danger", "info"]) assert.match(COMPONENTS, new RegExp(`--slc-on-${s}:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*var\\(--_sl-on\\)\\);`), s);
     assert.match(light, /--sl-focus-ring: oklch\(from var\(--sl-accent-default\) min\(l, var\(--sl-accent-text-lmax\)\) c h\)/);

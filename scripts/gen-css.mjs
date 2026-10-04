@@ -19,12 +19,14 @@ function block(selector, entries) {
 /** An accent step is a literal colour string or a hue-relative derivation
  * recipe, so that overriding only --sl-accent-default re-derives the family
  * (the one-var contract). Two recipe shapes:
- *   { step: "hover" | "press" } -> the kit's own step away from the label,
- *                                  oklch(from var(--sl-accent-default)
- *                                  var(--_sl-step-<name>)): one macro in
- *                                  components.css :root, shared with the
- *                                  accent fill, the danger tone and the
- *                                  role-var fallbacks (0.32.1).
+ *   { step: "hover" | "press" } -> the kit's own step, oklch(from
+ *                                  var(--sl-accent-default)
+ *                                  var(--_sl-step-<name>)): toward black
+ *                                  unless the dark label would read under
+ *                                  5.4:1 pressed, then toward white; one
+ *                                  macro in components.css :root, shared
+ *                                  with the accent fill, the danger tone
+ *                                  and the role-var fallbacks (0.32.1).
  *   { mix: [ratio, anchor] }    -> color-mix() toward a colour keyword
  *                                  (high contrast's literal pair).
  * Returns [name, value] declarations. */

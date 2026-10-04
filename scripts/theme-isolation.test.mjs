@@ -13,9 +13,9 @@ import { dirname, resolve } from "node:path";
 // same commit. Baselines: 0.20.1, plus dark muted text #7C8D95 (0.21.1, AA),
 // plus the dark neutral ladder baked from the amber hue (0.29.0, Lumen), plus
 // the black casts and the new inset cast (0.31.0, Lumen depth; high contrast
-// reuses dark's), plus the accent's hover and press as the kit's step away
-// from the label (0.32.1, the components.css macros: lighter by 0.05 / 0.10
-// of oklch lightness where the press darkened toward its dark label); high
+// reuses dark's), plus the accent's hover and press as the kit's step
+// (0.32.1, the components.css macros: 0.05 / 0.10 of oklch lightness toward
+// black, or toward white where the dark label would read under 5.4:1); high
 // contrast took its values for the three
 // new neutral roles and its resets in 0.29.0, and is otherwise unchanged
 // since 0.20.1.

@@ -1195,7 +1195,7 @@
    a product's accent fill, or the danger, so a danger pane re-picks its
    label from the danger. */
 .sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
-  color: oklch(from var(--_slfx-pane) clamp(0.16, (var(--_sl-pole-l) - l) * 1000, 0.985) 0 h);
+  color: oklch(from var(--_slfx-pane) clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 0.985) 0 h);
 }
 /* The keycap a glass primary carries (0.31) follows the same pole. The
    kit's cap steps away from the OPAQUE accent's label (components.css), and

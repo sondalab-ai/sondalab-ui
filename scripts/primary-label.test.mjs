@@ -4,7 +4,8 @@ import { cells, marks, measure, worst, ratio, REGISTRY, THEMES, WIRINGS, CONTEXT
 import { evaluate, toHex, toOklch, linToOklab } from "./lib/css-color.mjs";
 
 // The primary's label holds 4.5:1 for every product, theme and state
-// (ui-kit 0.32.1). sondalab-site's composited sweep measured it under 4.5 on
+// (ui-kit 0.32.1), and hover and press step far enough to be seen, the way
+// the 5.4 rule picks (components.css :root). sondalab-site's composited sweep measured it under 4.5 on
 // 0.32.0: spexr's glass at rest on paper (4.34), introspect's press on paper
 // (3.71 opaque, 4.04 glass), local-agents' press on ink (4.45) and its glass
 // at rest on paper (4.45). Each cell is read through the cascade
@@ -12,6 +13,17 @@ import { evaluate, toHex, toOklch, linToOklab } from "./lib/css-color.mjs";
 // and the backdrop it composites over all come from the kit's own rules.
 
 const dE = (a, b) => { const x = linToOklab(a.lin), y = linToOklab(b.lin); return Math.hypot(...x.map((v, i) => v - y[i])) * 100; };
+const lum = (c) => { const [r, g, b] = c.lin; return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+/** The step rule, spelled out: a fill steps toward white only when its
+ *  label is the dark pole (fill above oklch L 0.59) and that pole (L 0.16)
+ *  would read under 5.4:1 on the fill pressed toward black, which is the
+ *  fill dimmed in linear light to lightness l - 0.10. */
+function lighterByRule(fill) {
+  const L = toOklch(fill)[0];
+  if (L <= 0.59) return false;
+  const pressed = lum(fill) * ((L - 0.1) / L) ** 3;
+  return (pressed + 0.05) / (0.16 ** 3 + 0.05) < 5.4;
+}
 const ALL = cells();
 const DANGER = cells({ danger: true });
 const key = (c) => `${c.wiring} / ${c.id} / ${c.theme}`;
@@ -43,26 +55,24 @@ for (const [k, group] of groups) {
     assert.deepEqual(low, []);
   });
 
-  // Hover and press step AWAY from the label's pole, as the danger tone's
-  // do: lighter under a dark label, darker under a white one, so the label
-  // never reads weaker than at rest. On glass it is the composite that must
-  // move away, over every ground.
-  test(`${k}: hover and press step away from the label`, () => {
-    const toward = [];
+  // Hover and press move ONE way, the one the 5.4 rule picks for the fill
+  // (components.css :root, --_sl-hold): toward black, unless the label is
+  // the dark pole and would read under 5.4:1 on the fill pressed toward
+  // black; then toward white. Decided once per fill, so hover and press
+  // never part; the press goes twice as far. Spelled out here from the
+  // fill's own luminance, independently of the macro.
+  test(`${k}: hover and press both step the way the 5.4 rule picks for the fill`, () => {
+    const wrong = [];
     for (const context of Object.keys(CONTEXTS)) {
       const at = (state) => group.find((c) => c.context === context && c.state === state);
-      const rest = at("rest");
-      if (!rest) continue;
-      for (const state of ["hover", "press"]) {
-        const s = at(state);
-        assert.equal(toHex(s.label), toHex(rest.label), `${context}: the label does not change with the state`);
-        s.surfaces.forEach((surf, i) => {
-          const before = ratio(rest.label, rest.surfaces[i].colour), after = ratio(s.label, surf.colour);
-          if (!(after > before)) toward.push(`${context} ${state} ${surf.where}: ${before.toFixed(2)} -> ${after.toFixed(2)}`);
-        });
-      }
+      const [rest, hover, press] = ["rest", "hover", "press"].map(at);
+      const fill = evaluate("var(--_sl-fill)", rest.env);
+      const want = lighterByRule(fill) ? 1 : -1;
+      const [l0, l1, l2] = [fill, evaluate("var(--_sl-fill-hover)", hover.env), evaluate("var(--_sl-fill-active)", press.env)].map((c) => toOklch(c)[0]);
+      if (!(Math.sign(l1 - l0) === want && Math.sign(l2 - l1) === want)) wrong.push(`${context}: ${l0.toFixed(3)} -> ${l1.toFixed(3)} -> ${l2.toFixed(3)}, want ${want > 0 ? "lighter" : "darker"}`);
+      for (const s of [hover, press]) assert.equal(toHex(s.label), toHex(rest.label), `${context}: the label does not change with the state`);
     }
-    assert.deepEqual(toward, []);
+    assert.deepEqual(wrong, []);
   });
 
   // ...and far enough to be seen (0.32.1 review: mixing toward white at
@@ -148,8 +158,8 @@ for (const wiring of Object.keys(WIRINGS)) for (const id of Object.keys(REGISTRY
 // ── the step, spelled out ───────────────────────────────────────────────────
 
 // The danger tone's pattern, size included (0.32.1): 0.05 of oklch lightness
-// hovered and 0.10 pressed, away from the label, along the line to the pole
-// it moves toward, so it stays inside sRGB. Darkening keeps chroma in
+// hovered and 0.10 pressed, the way the 5.4 rule picks, along the line to the
+// pole it moves toward, so it stays inside sRGB. Darkening keeps chroma in
 // proportion to lightness (a linear-light dim: exactly in gamut); lightening
 // eases chroma by (1 - step / (1 - l))^1.5, the least that keeps every sRGB
 // colour inside the gamut (1.4 leaves it on the sRGB cube's surface). The
@@ -161,7 +171,7 @@ const SPELLED = (hex, d, lighter) => lighter
 test("every step is the spelled-out lightness step from its own fill, inside sRGB", () => {
   for (const c of [...ALL, ...DANGER].filter((c) => c.context === "opaque" && c.state !== "rest")) {
     const rest = [...ALL, ...DANGER].find((r) => r.wiring === c.wiring && r.id === c.id && r.theme === c.theme && r.danger === c.danger && r.context === "opaque" && r.state === "rest");
-    const want = evaluate(SPELLED(toHex(rest.host), c.state === "hover" ? 0.05 : 0.1, toOklch(rest.label)[0] < 0.5), new Map());
+    const want = evaluate(SPELLED(toHex(rest.host), c.state === "hover" ? 0.05 : 0.1, lighterByRule(rest.host)), new Map());
     assert.equal(toHex(c.host), toHex(want), `${key(c)}${c.danger ? " danger" : ""} ${c.state}`);
     const out = Math.max(0, -Math.min(...c.host.lin), Math.max(...c.host.lin) - 1);
     assert.ok(out < 1e-9, `${key(c)} ${c.state}: outside sRGB by ${out}`);
@@ -171,6 +181,19 @@ test("every step is the spelled-out lightness step from its own fill, inside sRG
   for (const theme of THEMES) assert.deepEqual(spexr.filter((c) => c.theme === theme).map((c) => toHex(c.host)), SPEXR_STEPS, theme);
 });
 const SPEXR_STEPS = ["#4c58e9", "#424ccd", "#3841b1"];
+
+// Which fills the rule turns toward white, by name: introspect's teal on
+// paper (its press toward black read 3.15:1 on 0.32.0) and local-agents'
+// blue on ink (its glass press toward black read 4.40 over a dark page).
+// Every other registered fill, both dangers included, steps toward black.
+test("the 5.4 rule turns exactly introspect's light fill and local-agents' dark fill toward white", () => {
+  const up = new Set();
+  for (const c of [...ALL, ...DANGER].filter((c) => c.context === "opaque" && c.state === "hover")) {
+    const rest = [...ALL, ...DANGER].find((r) => r.wiring === c.wiring && r.id === c.id && r.theme === c.theme && r.danger === c.danger && r.context === "opaque" && r.state === "rest");
+    if (toOklch(c.host)[0] > toOklch(rest.host)[0]) up.add(`${c.danger ? "danger " : ""}${c.id}/${c.theme}`);
+  }
+  assert.deepEqual([...up].sort(), ["introspect/light", "local-agents/dark"]);
+});
 
 // ── the shade under a white label ───────────────────────────────────────────
 

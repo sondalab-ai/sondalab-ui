@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { evaluate, scope, within, toHex } from "./lib/css-color.mjs";
 import { parseSheet, el, cascaded, customs, matches, specificity, longhand } from "./lib/cascade.mjs";
@@ -121,4 +122,21 @@ test("pow() evaluates, and a custom property holding channel expressions is a ma
   const viaMacro = evaluate("oklch(from var(--f) var(--step))", env);
   const spelled = evaluate("oklch(from #4c58e9 calc(l - 0.05) calc(c * 0.25) h)", new Map());
   assert.ok(viaMacro.lin.every((v, i) => Math.abs(v - spelled.lin[i]) < 1e-12), "the macro's `l` and `c` bind to the colour it is used in, and pow(0.5, 2) is 0.25");
+});
+
+// 0.32.1: the step rule reads a fill's WCAG luminance from its own oklch
+// channels (--_sl-lum, components.css), with cos() and sin() of its hue in
+// radians; the evaluator must agree with the colour's real luminance.
+test("cos() and sin() evaluate in radians, and the kit's luminance macro is the fill's WCAG luminance", () => {
+  assert.ok(Math.abs(evaluate("oklch(calc(cos(0) * 0.5) 0 0)", new Map()).lin[0] - 0.125) < 1e-12);
+  assert.ok(Math.abs(evaluate("oklch(calc(sin(3.141592653589793 / 2) * 0.5) 0 0)", new Map()).lin[1] - 0.125) < 1e-12);
+  const macro = readFileSync(new URL("../packages/ui-kit/components.css", import.meta.url), "utf8").match(/--_sl-lum:\s*([^;]+);/)[1];
+  const env = new Map([["--_sl-lum", macro]]);
+  for (const hex of ["#FF9F1C", "#4c58e9", "#0e9c84", "#2ee6c0", "#58a6ff", "#fe8263"]) {
+    const c = evaluate(hex, env);
+    const Y = 0.2126 * c.lin[0] + 0.7152 * c.lin[1] + 0.0722 * c.lin[2];
+    // the macro's value, carried out as the lightness of a grey
+    const viaMacro = evaluate(`oklch(from ${hex} calc(var(--_sl-lum)) 0 0)`, env);
+    assert.ok(Math.abs(Math.cbrt(viaMacro.lin[1]) - Y) < 1e-6, hex);
+  }
 });
