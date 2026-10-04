@@ -1222,3 +1222,16 @@ test("the kill switches give an island or a float its own recipe back", () => {
     for (const p of parts) for (const h of hosts) assert.ok(p.includes(h), `${recipe}: ${h} in ${p}`);
   }
 });
+
+// ...and the workbench's focusable rows (0.33) are in the control restore:
+// their tile and their halo are the component's, not an effect's.
+test("the kill switches give the activity item and the tree row their depth and halo back", () => {
+  const depth = RULES.filter((r) => /box-shadow:\s*var\(--_sl-depth, 0 0 transparent\) !important/.test(r.body));
+  const halo = RULES.filter((r) => /box-shadow:\s*var\(--_sl-depth, 0 0 transparent\), var\(--_sl-halo, 0 0 transparent\) !important/.test(r.body));
+  for (const [name, list] of [["depth", depth], ["halo", halo]]) {
+    assert.equal(list.length, 1, name);
+    for (const part of list[0].selector.split(/,(?![^(]*\))/)) {
+      for (const cls of [".sl-activitybar__item", ".sl-tree__row"]) assert.ok(part.includes(cls), `${name}: ${cls} in ${part.trim()}`);
+    }
+  }
+});

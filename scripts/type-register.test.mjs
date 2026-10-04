@@ -54,7 +54,7 @@ const prop = (body, name) => {
 };
 const em = (v) => (v === undefined ? 0 : v === "0" ? 0 : parseFloat(v));
 
-const MICRO = [".sl-eyebrow", ".sl-nav__group", ".sl-stat__label", ".sl-section__idx", ".sl-figure__caption", ".sl-rule--labeled", ".sl-statusbar"];
+const MICRO = [".sl-eyebrow", ".sl-nav__group", ".sl-stat__label", ".sl-section__idx", ".sl-figure__caption", ".sl-rule--labeled", ".sl-statusbar", ".sl-palette__group"];
 const SENTENCE = [".sl-btn", ".sl-chip", ".sl-badge", ".sl-segmented__item", ".sl-table thead th", ".sl-callout__title", ".sl-field__label", ".sl-breadcrumb"];
 const HEADINGS = [".sl-card__title", ".sl-dialog__title", ".sl-empty__title"];
 

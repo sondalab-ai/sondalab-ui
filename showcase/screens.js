@@ -68,11 +68,11 @@
       </div>
     </header>`;
   const activity = (on = "files") => `
-    <nav class="ide-activity" aria-label="Views">
+    <nav class="ide-activity sl-activitybar" aria-label="Views">
       ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control", I.git, "3"], ["agent", "Agents", I.agent, "2"], ["beaker", "Tests", I.beaker]]
-        .map(([k, l, ic, n]) => `<button class="ide-activity__btn" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
+        .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
       <span class="ide-activity__spacer"></span>
-      <button class="ide-activity__btn" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
+      <button class="ide-activity__btn sl-activitybar__item" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
     </nav>`;
   // the frame's meta line is the kit's status bar (workbench.css, 0.33): facts
   // in the micro register on the canvas, never role="status" on the whole bar
@@ -100,11 +100,14 @@
       [0, "dir", "src", true], [1, "dir", "probe", true], [2, "file", "resolve.ts", false, "M", "sel"], [2, "file", "cache.ts"], [2, "file", "evidence.ts", false, "U"],
       [2, "file", "resolve.test.ts"], [1, "dir", "audit", false], [1, "dir", "tokens", false], [0, "dir", "tests", false], [0, "file", "package.json"], [0, "file", "README.md"], [0, "file", "sondalab.tokens.json", false, "M"],
     ];
-    return `<ul class="ide-tree" role="tree" aria-label="Files">${rows.map(([d, t, n, open, git, sel]) => `
-      <li class="ide-tree__row${sel ? " is-sel" : ""}" role="treeitem" ${sel ? 'aria-selected="true"' : 'aria-selected="false"'} ${t === "dir" ? `aria-expanded="${open}"` : ""} style="--d:${d}">
-        <span class="ide-tree__tw">${t === "dir" ? (open ? I.chevD : I.chevR) : ""}</span>
-        <span class="ide-tree__ic ide-tree__ic--${t}">${t === "dir" ? I.folder : I.file}</span>
-        <span class="ide-tree__name">${n}</span>
+    // the kit's tree (workbench.css, 0.33): its level written twice, for
+    // assistive tech and for the paint; the svg chevrons are the target's
+    // (the kit draws its own twisty), the icon a direct child of the row
+    return `<ul class="ide-tree sl-tree" role="tree" aria-label="Files">${rows.map(([d, t, n, open, git, sel]) => `
+      <li class="ide-tree__row sl-tree__row${sel ? " is-sel" : ""}" role="treeitem" aria-level="${d + 1}" ${sel ? 'aria-selected="true" tabindex="0"' : 'aria-selected="false" tabindex="-1"'} ${t === "dir" ? `aria-expanded="${open}"` : ""} style="--d:${d}; --sl-tree-level: ${d + 1}">
+        <span class="ide-tree__tw sl-tree__twisty" aria-hidden="true">${t === "dir" ? (open ? I.chevD : I.chevR) : ""}</span>
+        ${(t === "dir" ? I.folder : I.file).replace("<svg ", `<svg class="ide-tree__ic ide-tree__ic--${t}" `)}
+        <span class="ide-tree__name sl-tree__label">${n}</span>
         ${git ? `<span class="ide-tree__git" data-git="${git}">${git}</span>` : ""}
       </li>`).join("")}</ul>`;
   };
@@ -140,16 +143,16 @@
         <button class="sl-icon-btn ide-ghost" aria-label="Close panel">${I.close}</button>
       </div>
       <div class="ide-term">
-        <article class="ide-block" data-exit="0">
-          <header class="ide-block__head"><span class="ide-block__cmd"><b>$</b> pnpm test probe</span><span class="ide-block__meta"><time>14:02:11</time><span>2.4 s</span><span class="ide-block__exit">exit 0</span></span></header>
-          <pre class="ide-block__out"><span class="t-ok">✓</span> resolve › returns the cached answer <span class="t-dim">(3 ms)</span>
+        <article class="ide-block sl-term-block" data-exit="0">
+          <header class="ide-block__head sl-term-block__head"><span class="ide-block__cmd sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm test probe</span><span class="ide-block__meta sl-term-block__meta"><time>14:02:11</time><span>2.4 s</span><span class="ide-block__exit sl-term-block__exit">exit 0</span></span></header>
+          <pre class="ide-block__out sl-term-block__out"><span class="t-ok">✓</span> resolve › returns the cached answer <span class="t-dim">(3 ms)</span>
 <span class="t-ok">✓</span> resolve › re-runs a stale probe and keeps evidence <span class="t-dim">(41 ms)</span>
 <span class="t-ok">✓</span> cache › write is awaited before return <span class="t-dim">(2 ms)</span>
 <b>Tests</b>  <span class="t-ok">14 passed</span>, 14 total</pre>
         </article>
-        <article class="ide-block" data-exit="1" aria-current="true">
-          <header class="ide-block__head"><span class="ide-block__cmd"><b>$</b> pnpm sl-audit</span><span class="ide-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="ide-block__exit">exit 1</span></span></header>
-          <pre class="ide-block__out"><span class="t-err">R</span>  components.css:412  raw colour literal outside the role vars
+        <article class="ide-block sl-term-block" data-exit="1" aria-current="true">
+          <header class="ide-block__head sl-term-block__head"><span class="ide-block__cmd sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm sl-audit</span><span class="ide-block__meta sl-term-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="ide-block__exit sl-term-block__exit">exit 1</span></span></header>
+          <pre class="ide-block__out sl-term-block__out"><span class="t-err">R</span>  components.css:412  raw colour literal outside the role vars
 <span class="t-warn">A</span>  resolve.ts:46  floating promise in a hot path
 <b>1 finding blocks the build.</b> <span class="t-dim">Run with --fix to rewrite literals.</span></pre>
         </article>
@@ -195,19 +198,26 @@
         </div>
       </form>
     </aside>`;
+  // the kit's palette (workbench.css, 0.33): a sunken field that keeps the
+  // focus and points at the active option; the options are not focusable
+  const PK = (...keys) => `<span class="ide-keys sl-palette__keys">${keys.map((k) => `<kbd class="sl-kbd">${k}</kbd>`).join("")}</span>`;
   const palette = () => `
     <div class="ide-scrim" aria-hidden="false">
-      <div class="ide-pal" role="dialog" aria-label="Command palette">
-        <div class="ide-pal__in">${I.search18}<input class="ide-pal__input" value="run probe" aria-label="Command"><span class="ide-pal__scope">Commands</span></div>
-        <div class="ide-pal__list" role="listbox">
-          <p class="ide-pal__grp">Commands</p>
-          <div class="ide-pal__row" role="option" aria-selected="true">${I.play}<span class="ide-pal__t"><b>Run</b> probe q-8f2a</span><span class="ide-pal__m">resolve.ts</span>${K("⌘", "⏎")}</div>
-          <div class="ide-pal__row" role="option" aria-selected="false">${I.sync}<span class="ide-pal__t">Re-<b>run</b> cached <b>probe</b>s</span><span class="ide-pal__m">212 cached</span>${K("⇧", "⌘", "R")}</div>
-          <div class="ide-pal__row" role="option" aria-selected="false">${I.doc}<span class="ide-pal__t">Open <b>probe</b> evidence</span><span class="ide-pal__m">14 tool calls</span>${K("⌘", "E")}</div>
-          <p class="ide-pal__grp">Files</p>
-          <div class="ide-pal__row" role="option" aria-selected="false">${I.file}<span class="ide-pal__t"><b>probe</b>/resolve.test.ts</span><span class="ide-pal__m">src/probe</span></div>
+      <div class="ide-pal sl-palette" role="dialog" aria-label="Command palette">
+        <div class="ide-pal__in sl-palette__head">${I.search18}<input class="ide-pal__input sl-field__input sl-palette__input" value="run probe" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command"><span class="ide-pal__scope">Commands</span></div>
+        <div class="ide-pal__list sl-palette__list" id="pal-list" role="listbox" aria-label="Results">
+          <div role="group" aria-labelledby="pal-g1">
+            <p class="ide-pal__grp sl-palette__group" id="pal-g1" role="presentation">Commands</p>
+            <div class="ide-pal__row sl-palette__row" id="pal-1" role="option" aria-selected="true">${I.play}<span class="ide-pal__t sl-palette__label"><mark>Run</mark> probe q-8f2a</span><span class="ide-pal__m sl-palette__meta">resolve.ts</span>${PK("⌘", "⏎")}</div>
+            <div class="ide-pal__row sl-palette__row" id="pal-2" role="option" aria-selected="false">${I.sync}<span class="ide-pal__t sl-palette__label">Re-<mark>run</mark> cached <mark>probe</mark>s</span><span class="ide-pal__m sl-palette__meta">212 cached</span>${PK("⇧", "⌘", "R")}</div>
+            <div class="ide-pal__row sl-palette__row" id="pal-3" role="option" aria-selected="false">${I.doc}<span class="ide-pal__t sl-palette__label">Open <mark>probe</mark> evidence</span><span class="ide-pal__m sl-palette__meta">14 tool calls</span>${PK("⌘", "E")}</div>
+          </div>
+          <div role="group" aria-labelledby="pal-g2">
+            <p class="ide-pal__grp sl-palette__group" id="pal-g2" role="presentation">Files</p>
+            <div class="ide-pal__row sl-palette__row" id="pal-4" role="option" aria-selected="false">${I.file}<span class="ide-pal__t sl-palette__label"><mark>probe</mark>/resolve.test.ts</span><span class="ide-pal__m sl-palette__meta">src/probe</span></div>
+          </div>
         </div>
-        <footer class="ide-pal__foot"><span>${K("↑", "↓")} navigate</span><span>${K("⏎")} run</span><span>${K("⇥")} scope</span><span class="ide-pal__sp"></span><span>${K("esc")} close</span></footer>
+        <footer class="ide-pal__foot sl-palette__foot"><span>${K("↑", "↓")} navigate</span><span>${K("⏎")} run</span><span>${K("⇥")} scope</span><span class="ide-pal__sp"></span><span>${K("esc")} close</span></footer>
       </div>
     </div>`;
   // the kit's toast stack (components.css, 0.33): the stack is the live region
@@ -454,7 +464,7 @@
     if (!t) return;
     if (t.matches("a")) e.preventDefault();
     if (t.matches('[role="tab"], [role="option"]')) {
-      t.parentElement.querySelectorAll('[role="tab"],[role="option"]').forEach((b) => b.setAttribute("aria-selected", b === t ? "true" : "false"));
+      (t.closest('[role="listbox"], [role="tablist"]') || t.parentElement).querySelectorAll('[role="tab"],[role="option"]').forEach((b) => b.setAttribute("aria-selected", b === t ? "true" : "false"));
     } else if (t.matches('[role="treeitem"]')) {
       stage.querySelectorAll('[role="treeitem"]').forEach((b) => { b.setAttribute("aria-selected", b === t ? "true" : "false"); b.classList.toggle("is-sel", b === t); });
     } else if (t.hasAttribute("aria-pressed")) {
@@ -481,7 +491,7 @@
       ["Palette item", '.ide-pal__row[aria-selected="false"] .ide-pal__t'], ["Palette meta", '.ide-pal__row[aria-selected="false"] .ide-pal__m'], ["Palette selected", '.ide-pal__row[aria-selected="true"] .ide-pal__t'],
       ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
-      ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit']],
+      ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 0", '.ide-block[data-exit="0"] .ide-block__exit'], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit'], ["Terminal command", ".ide-block__cmd"], ["Palette match", '.ide-pal__row[aria-selected="false"] .ide-pal__t mark']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],
       ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .sl-btn--danger"], ["Secondary label", ".set-row .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
       ["Segmented off", '.set-sec .sl-segmented__item[aria-selected="false"]'], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Status bar", ".ide-status__item"]],
@@ -492,7 +502,7 @@
     hero: [["Headline", ".web-h1 .web-line"], ["Headline highlight", ".web-h1 em"], ["Lede", ".web-lede"], ["Nav link", ".web-links a:not([aria-current])"], ["Tag", ".web-hero .sl-tag"], ["Primary label", ".web-cta__p"], ["Card label", ".web-card__l"], ["Install", ".web-install code"], ["Eyebrow", ".web-sec .sl-eyebrow"]],
   };
   const EDGE = {
-    ide: [["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
+    ide: [["Palette input", ".ide-pal__input"], ["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
     settings: [["Field", "#s-name"], ["Select", "#s-br"], ["Checkbox", ".set-sec .sl-check__input:not(:checked) + .sl-check__box"], ["Radio", ".sl-radio__input:not(:checked) + .sl-radio__box"], ["Switch off", ".sl-switch__input:not(:checked):not(:disabled) + .sl-switch__track"],
       ["Segmented", ".set-sec .sl-segmented"], ["Secondary", ".set-row .sl-btn--ghost"], ["Ghost (info: text button, no edge by design)", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"]],
     data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"],

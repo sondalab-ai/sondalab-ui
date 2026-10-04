@@ -308,7 +308,7 @@
 :where(.sl-btn, .sl-link, .sl-field__input, .sl-tabs__tab, .sl-check__box, .sl-radio__box,
   .sl-switch__track, .sl-segmented__item, .sl-breadcrumb__item, .sl-icon-btn,
   .sl-pagination__item, .sl-chip, .sl-nav__item, .sl-list__row, .sl-disclosure,
-  .sl-resizer, .sl-slider, [data-sl-tooltip]) {
+  .sl-resizer, .sl-slider, [data-sl-tooltip], .sl-activitybar__item, .sl-tree__row) {
   --_sl-depth: 0 0 transparent;
   --_sl-halo: 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px) + var(--sl-focus-glow-width, 5px)) color-mix(in srgb, var(--slc-focus) calc(22% * min(1, var(--slc-glow) * 1000)), transparent);
 }
@@ -317,11 +317,13 @@
    plus halo; a state rule writes only --_sl-depth, never box-shadow, or it
    would outrank the focus rule and drop the halo. */
 :is(.sl-btn, .sl-icon-btn, .sl-field__input, .sl-check__box, .sl-radio__box, .sl-switch__track,
-  .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab) {
+  .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab,
+  .sl-activitybar__item, .sl-tree__row) {
   box-shadow: var(--_sl-depth);
 }
 
-/* Shared focus ring for keyboard nav — every interactive component uses it. */
+/* Shared focus ring for keyboard nav — every interactive component uses it,
+   the workbench's activity items and tree rows (workbench.css) included. */
 .sl-btn:focus-visible,
 .sl-link:focus-visible,
 .sl-field__input:focus-visible,
@@ -338,7 +340,9 @@
 .sl-list__row:focus-visible,
 .sl-disclosure:focus-visible,
 .sl-resizer:focus-visible,
-[data-sl-tooltip]:focus-visible {
+[data-sl-tooltip]:focus-visible,
+.sl-activitybar__item:focus-visible,
+.sl-tree__row:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 0px);
   /* Flush ring, and the border joins it: any other colour between the ring
@@ -2623,7 +2627,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   :where(.sl-btn, .sl-link, .sl-field__input, .sl-tabs__tab, .sl-check__box, .sl-radio__box,
     .sl-switch__track, .sl-segmented__item, .sl-breadcrumb__item, .sl-icon-btn,
     .sl-pagination__item, .sl-chip, .sl-nav__item, .sl-list__row, .sl-disclosure,
-    .sl-resizer, .sl-slider, [data-sl-tooltip]) { --_sl-halo: 0 0 transparent; }
+    .sl-resizer, .sl-slider, [data-sl-tooltip], .sl-activitybar__item, .sl-tree__row) { --_sl-halo: 0 0 transparent; }
   /* The checked boxes and the switch opt out of forced colours: their foot
      in the fill's shade would paint a page colour under Highlight. */
   :is(.sl-check__input:is(:checked, :indeterminate) + .sl-check__box,
@@ -2659,7 +2663,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
       .sl-switch__input:focus-visible + .sl-switch__track,
       .sl-segmented__item:focus-visible, .sl-btn:focus-visible, .sl-icon-btn:focus-visible,
       .sl-chip:focus-visible, .sl-pagination__item:focus-visible,
-      .sl-nav__item:focus-visible, .sl-list__row:focus-visible, .sl-tabs__tab:focus-visible) {
+      .sl-nav__item:focus-visible, .sl-list__row:focus-visible, .sl-tabs__tab:focus-visible,
+      .sl-activitybar__item:focus-visible, .sl-tree__row:focus-visible) {
     outline-color: CanvasText !important;
   }
 }

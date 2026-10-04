@@ -51,8 +51,8 @@ it and publish the next patch.
 | K2 | Neutral ladder baked to hex, tinted per product (`themes/products.css`, `neutrals.json`) | ui-kit 0.29.0, palette-py 0.3.3 | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/67) |
 | K3 | Geist and Geist Mono vendored in `fonts.css`; brand face for the wordmark; micro labels; sentence-case controls. Checkpoint A | ui-kit 0.30.0, palette-py 0.3.4 | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/68) |
 | K4 | Depth recipes, new radii, two motion curves, tile selection, keycap `.sl-kbd`, tile tabs | ui-kit 0.31.0, palette-py 0.3.5 | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/69) |
-| K5 | Controls: primary foot, raised ghost, sunken fields, check and switch, segmented, focus halo, `.sl-btn--danger`, the `--slc-accent-fill` role. Checkpoint B | ui-kit 0.32.0, palette-py 0.3.6 | In review (PR URL to be added) |
-| K6 | `workbench.css` (lit pane, status bar, activity bar, tree, palette, terminal block) and the toast stack. Checkpoint C | minor | Planned |
+| K5 | Controls: primary foot, raised ghost, sunken fields, check and switch, segmented, focus halo, `.sl-btn--danger`, the `--slc-accent-fill` role. Checkpoint B | ui-kit 0.32.0, palette-py 0.3.6 | Delivered (https://github.com/sondalab-ai/sondalab-ui/pull/70) |
+| K6 | `workbench.css` (lit pane, status bar, activity bar, tree, palette, terminal block) and the toast stack. Checkpoint C | ui-kit 0.33.0 | In review (https://github.com/sondalab-ai/sondalab-ui/pull/71) |
 | K7 | Remove the old faces and the lab reference; final documentation | 1.0.0 | Planned |
 
 The products follow each checkpoint, in this order: daos, then sondalab-site,

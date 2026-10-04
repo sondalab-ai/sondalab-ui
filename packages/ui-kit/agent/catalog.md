@@ -282,7 +282,7 @@ A message that arrives (0.33, Lumen), in a stack fixed to the bottom right, newe
   </div>
 </section>
 ```
-Consumes: `--slc-raised`, `--slc-edge-raised`, `--slc-depth-float`, `--slc-text`, `--slc-text-secondary`, `--slc-text-muted`, `--slc-glow`, `--slc-info`, `--slc-success`, `--slc-warning`, `--slc-danger`. A bare `sl-toast` is neutral: its tick and mark use the muted ink. The dismiss is an icon button at the small button's 24px, and it keeps the one control edge. Do: keep the stack in the DOM from page load. It is the live region (`aria-live="polite"`), and a region that is inserted together with its content is not announced. Give each toast `role="status"`, or `role="alert"` for one that must interrupt. Mount the stack as a child of `<body>`, never inside an `sl-invert` band, whose roles are washes of the band's own ground. Do: pause any auto-dismiss while the toast is hovered or focused, and never auto-dismiss a toast that offers an action. Don't: move focus to a toast, or put the only path to an action in one. Don't: put glass on a toast; the component owns its `::before`. `::after` is left free for the aurora.
+Consumes: `--slc-raised`, `--slc-edge-raised`, `--slc-depth-float`, `--slc-text`, `--slc-text-secondary`, `--slc-text-muted`, `--slc-glow`, `--slc-info`, `--slc-success`, `--slc-warning`, `--slc-danger`. A bare `sl-toast` is neutral: its tick and mark use the muted ink. The dismiss is an icon button at the small button's 24px, and it keeps the one control edge. Do: keep the stack in the DOM from page load. It is the live region (`aria-live="polite"`), and a region that is inserted together with its content is not announced. Give each toast `role="status"`, or `role="alert"` for one that must interrupt. Mount the stack as a child of `<body>`, never inside an `sl-invert` band, whose roles are washes of the band's own ground. Do: pause any auto-dismiss while the toast is hovered or focused, and never auto-dismiss a toast that offers an action. Don't: move focus to a toast, or put the only path to an action in one. Don't: put glass on a toast; the component owns its `::before`, and leaves `::after` free for the aurora.
 
 ## Navigation & state
 
@@ -451,7 +451,7 @@ Consumes: `--slc-border-subtle`, `--slc-accent`, `--slc-focus`. Do: make it keyb
 
 ## Workbench (opt-in, `workbench.css`)
 
-The chrome of a workbench: an IDE or a console (0.33, Lumen). It is a separate stylesheet imported after `components.css`, whose role-vars, depth recipes and shared focus rule it reads. It adds no role. Panes are islands of light on the darker frame (the canvas), and the pane that holds the focus is lit. The frame's own chrome (the status bar and the activity bar) sits on the canvas and paints no ground of its own. The workbench draws on `::before` only, so `::after` stays free for the aurora (L6).
+The chrome of a workbench: an IDE or a console (0.33, Lumen): panes, a status bar, an activity bar, a tree, a command palette and terminal blocks. It is a separate stylesheet imported after `components.css`, whose role-vars, depth recipes and shared focus rule it reads. It adds no role. Panes are islands of light on the darker frame (the canvas), and the pane that holds the focus is lit. The frame's own chrome (the status bar and the activity bar) sits on the canvas and paints no ground of its own. The workbench draws on `::before` only, so `::after` stays free for the aurora (L6).
 
 ### Pane — `sl-pane` (`[data-lit]`)
 An island: the surface rung on the canvas, drawn with the island recipe (a lit top hairline and the quieter ring) at `--sl-radius-pane` (10px), with no border of its own. `data-lit` marks the pane that holds the focus. That pane is the raised rung. A seam of the accent runs along its top edge as a line of light (`--slc-seam`): it fades in from the leading edge and out before the far one. The seam's light falls round the pane as strongly as `--slc-glow` allows. Substrate: **R** IDE, **A** App, **N/A** Page.
@@ -461,7 +461,7 @@ An island: the surface rung on the canvas, drawn with the island recipe (a lit t
   <main class="sl-pane" data-lit aria-label="Editor">…</main>
 </div>
 ```
-Consumes: `--slc-surface`, `--slc-raised`, `--slc-depth-island`, `--slc-seam`, `--slc-glow`. High contrast draws the island as a ring in the theme's line and the seam in its yellow. Under forced colours the pane gets a `CanvasText` outline inside its box, and the seam is drawn in `Highlight`. Do: set `data-lit` where the focus is, on one pane per workbench. Leave it there while a palette or a menu holds the focus over the pane. Do: put a gap between panes (`--sl-space-2`) and give the frame a little padding, so the rings and the glow have room. Don't: give a pane a border (a recipe host has none: the lit line sits flush under the ring), or put glass on it. Glass owns `::before`, which the seam needs, so glass on a pane is unsupported. Don't: light more than one pane.
+Consumes: `--slc-surface`, `--slc-raised`, `--slc-depth-island`, `--slc-seam`, `--slc-glow`. High contrast draws the island as a ring in the theme's line and the seam in its yellow. Under forced colours the pane gets a `CanvasText` outline inside its box, and the seam is drawn in `Highlight`. Do: set `data-lit` where the focus is, on one pane per workbench. Leave it there while a palette or a menu holds the focus over the pane. Do: put a gap between panes (`--sl-space-2`) and give the frame a little padding, so the rings and the glow have room. Don't: give a pane a border (a recipe host has none: the lit line sits flush under the ring), or put glass on it. Glass owns `::before`, which the seam needs, so glass on a pane is unsupported; `::after` is left free for the aurora. Don't: light more than one pane.
 
 ### Status bar — `sl-statusbar` (`__item` · `__sep` · `__dot` · `__spacer`)
 The workbench's meta line, on the canvas. Its facts are in the micro register (L1: mono, uppercase, `--sl-text-micro`, 500, +0.06em, the muted ink). A hairline separates groups of them. An accent dot marks a live state, while the words carry that state. The bar's height is its own (28px): an item with an icon or a dot cannot move it. Substrate: **R** IDE, **A** App, **N/A** Page.
@@ -475,7 +475,64 @@ The workbench's meta line, on the canvas. Its facts are in the micro register (L
   <span class="sl-statusbar__item">UTF-8</span>
 </footer>
 ```
-Consumes: `--slc-text-muted`, `--slc-border`, `--slc-accent-text`. The separator is a border, not a fill, so it survives forced colours. The dot is drawn in `CanvasText` there. Don't: put `role="status"` on the bar. Every fact in it would be read out each time the caret moves. Give a fact that must be heard when it changes a `role="status"` of its own. Do: keep items to facts. The register upper-cases them, so a case-sensitive identifier (a branch called `feat/K6`) reads in capitals. Put something that opens a view in a small plain button (`sl-btn sl-btn--sm`) beside the facts, not in an item.
+Consumes: `--slc-text-muted`, `--slc-border`, `--slc-accent-text`. The separator is a border, not a fill, so it survives forced colours. The dot is drawn in `CanvasText` there. Don't: put `role="status"` on the bar. Every fact in it would be read out each time the caret moves. Give a fact that must be heard when it changes a `role="status"` of its own. Do: keep items to facts. The register upper-cases them, so a case-sensitive identifier (a branch called `feat/K6`) reads in capitals. Put something that opens a view in a small plain button (`sl-btn sl-btn--sm`) beside the facts, not in an item: the bar clips only across, so the button's focus halo still shows.
+
+### Activity bar — `sl-activitybar` (`__item`)
+The column of views on the frame, on the canvas. Its items are chrome glyphs and **borderless**: with the tab's close glyph, they are the owner-approved exception to the one control edge (L3). A strip of glyphs, each in its own edge, would put an edge beside every edge. A glyph is in the muted ink (≥ 3:1 as a graphical object), and hover is a flat wash. The current view is a flat tile with the current nav item's seam on its leading edge, and its glyph is in the accent. Substrate: **R** IDE, **N/A** App/Page.
+```html
+<nav class="sl-activitybar" aria-label="Views">
+  <button class="sl-activitybar__item" aria-label="Explorer" aria-current="true"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><path d="M4 1.75h5l3.25 3.25v9H4Z"/></svg></button>
+  <button class="sl-activitybar__item" aria-label="Search"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="7" cy="7" r="4.25"/></svg></button>
+</nav>
+```
+Consumes: `--slc-text-muted`, `--slc-text`, `--slc-tile`, `--slc-depth-flat`, `--slc-seam`, `--slc-accent-text`, `--slc-focus`. The state is `aria-current` (a view, a link) or `aria-selected="true"` (a `role="tab"`, as an IDE's activity bar often is). Focus is the shared flush ring and halo. Do: name each view in `aria-label`, because the glyph is not a name. Don't: give an item a border or a fill at rest. Don't: use the borderlessness outside a strip of chrome glyphs. A lone icon button keeps its edge (`sl-icon-btn`).
+
+### Tree — `sl-tree` (`__row` · `__twisty` · `__label`)
+A file tree. Rows are 24px, on the 4px grid, and each is indented by its level, with a hairline guide under every ancestor's twisty. The twisty is a chevron drawn from two borders. It points at the hidden children and turns down with `aria-expanded`. Selection is a tile (the K4 recipe). While the tree has the focus, the selected row is the raised tile with its cast, and its icon is in the accent. While the focus is elsewhere, it is a flat tile (lit and ringed, no cast), and its icon keeps the muted ink. Substrate: **R** IDE, **A** App, **N/A** Page.
+```html
+<ul class="sl-tree" role="tree" aria-label="Files">
+  <li class="sl-tree__row" role="treeitem" aria-level="1" aria-expanded="true" aria-selected="false" tabindex="-1" style="--sl-tree-level: 1">
+    <span class="sl-tree__twisty" aria-hidden="true"></span><span class="sl-tree__label">src</span></li>
+  <li class="sl-tree__row" role="treeitem" aria-level="2" aria-selected="true" tabindex="0" style="--sl-tree-level: 2">
+    <span class="sl-tree__twisty" aria-hidden="true"></span><span class="sl-tree__label">resolve.ts</span></li>
+</ul>
+```
+Consumes: `--slc-text-secondary`, `--slc-text`, `--slc-text-muted`, `--slc-accent-text`, `--slc-tile`, `--slc-depth-tile`, `--slc-depth-flat`, `--slc-border-subtle`, `--slc-focus`. Write the level twice, `aria-level` for assistive tech and `--sl-tree-level` for the paint, because CSS cannot read a number out of an attribute (as `sl-progress` writes its value). The rows are a flat list of treeitems with one tab stop: a roving `tabindex`, with the arrow keys moving it, Right and Left opening and closing. The consumer wires those keys. An icon goes in as a direct `<svg>` child of the row. Do: keep a leaf's empty twisty, so its name lines up with its siblings'. Don't: draw selection with the accent. The accent is the focused selection's icon only.
+
+### Palette — `sl-palette` (`__head` · `__input` · `__list` · `__group` · `__row` · `__label` · `__meta` · `__keys` · `__foot`)
+The command palette. It floats: the raised rung, its own border in shade as the ring, and the float recipe. A seam of the accent runs along its top edge, because it holds the focus. The input is a sunken field (`sl-field__input`), and the active result is a raised tile. Shortcuts are keycaps, one cap per key. It **never animates**: it appears at once, and the active row moves without a transition, because a palette is driven at typing speed. Substrate: **R** IDE, **A** App, **N/A** Page.
+```html
+<div class="sl-palette" role="dialog" aria-label="Command palette">
+  <div class="sl-palette__head">
+    <input class="sl-field__input sl-palette__input" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command" value="run probe">
+  </div>
+  <div class="sl-palette__list" id="pal-list" role="listbox" aria-label="Results">
+    <div role="group" aria-labelledby="pal-g1">
+      <div class="sl-palette__group" id="pal-g1" role="presentation">Commands</div>
+      <div class="sl-palette__row" id="pal-1" role="option" aria-selected="true">
+        <span class="sl-palette__label"><mark>Run</mark> <mark>probe</mark> q-8f2a</span>
+        <span class="sl-palette__meta">resolve.ts</span>
+        <span class="sl-palette__keys"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">⏎</kbd></span>
+      </div>
+    </div>
+  </div>
+  <div class="sl-palette__foot"><span><kbd class="sl-kbd">esc</kbd> close</span></div>
+</div>
+```
+Consumes: `--slc-raised`, `--slc-edge-raised`, `--slc-depth-float`, `--slc-depth-tile`, `--slc-tile`, `--slc-seam`, `--slc-glow`, `--slc-text`, `--slc-text-muted`, `--slc-accent-text`, `--slc-sunken`, `--slc-focus`. A match is a `<mark>` in the primary ink, heavier and underlined in the accent, never the accent alone. The group label is a micro label. Do: keep the focus in the input and point it at the active option with `aria-activedescendant`. The options are not focusable. The input shows the field's ring and halo while it has the focus, as every field does. Do: mount the palette in the top layer or under `<body>`, never inside an `sl-invert` band. Don't: animate it, or the movement of its active row. Don't: put glass on it; it owns its `::before`.
+
+### Terminal block — `sl-term-block` (`[data-exit]` · `__head` · `__cmd` · `__prompt` · `__meta` · `__exit` · `__out`)
+One command and its output, as a small island in a pane: the raised rung with the island recipe. It is set in the product's coding mono where the product sets one (`--sl-font-code`, because a terminal is product content, L1), and in the kit's mono otherwise. The exit status is a short mark on the top edge, plus the exit text in the same ink. `data-exit="0"` is success. Any other code is the danger. A block with no `data-exit` is still running and has no mark. The exit text is what states the status; the mark only helps find it. Substrate: **R** IDE, **A** App, **A** Page (a real-content block, L3).
+```html
+<article class="sl-term-block" data-exit="1">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm sl-audit</span>
+    <span class="sl-term-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="sl-term-block__exit">exit 1</span></span>
+  </header>
+  <pre class="sl-term-block__out">R  components.css:412  raw colour literal outside the role vars</pre>
+</article>
+```
+Consumes: `--slc-raised`, `--slc-depth-island`, `--slc-text`, `--slc-text-secondary`, `--slc-text-muted`, `--slc-accent-text`, `--slc-success`, `--slc-danger`. It may sit straight on an inversion band (a real-content block on the ink surface). There its wash goes and the island's ring still draws it. Do: write the exit code in the words ("exit 1"), not only in the attribute, and mark a block that is running with `aria-busy="true"`. Don't: put glass on it; it owns its `::before`, and leaves `::after` free for the aurora.
 
 ## Identity & media
 
@@ -786,6 +843,6 @@ Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-
 
 - **Bind role-vars, never literals.** A component's colour comes from a `--slc-*`/`--sl-*` var. A raw hex fails `sl-audit`.
 - **Selection and scrollbars come with the kit.** `components.css` paints `::selection` as a 24% wash of the accent with the text paired to its ground (`--slc-text`; ≥ 8:1 in all three themes and in `sl-invert`), and gives the page's own scrollbar a thin `--slc-edge-control` thumb and no track (not on high contrast); `<body>` resets `scrollbar-color: auto` for everything inside it. A product's own `.x::selection` wins on specificity, a later bare `::selection` on order, any `scrollbar-color` on a scroller wins outright. A product ink block that does not re-derive `--slc-text` selects ink on ink: re-derive it, as `sl-invert` does. Inner scrollers, hand-drawn `::-webkit-scrollbar` ones included, are left as they were.
-- **Depth is lightness, and selection is a tile** (0.31, Lumen). A selected row, the current page or nav item, the chosen segment, an active tile tab and a selected table row are lifted as tiles from the depth recipes (`--slc-tile` + `--slc-depth-tile` / `--slc-depth-flat`); hover stays a flat wash; the accent marks only an icon (and the current nav item's seam). A host that wears a depth recipe carries no border of its own, so the lit line sits flush under the ring (no gap between lines). Reuse the recipes for your own chrome (a tree row, a palette row) instead of re-deriving them: `--slc-depth-tile`, `-flat`, `-island`, `-key`, `-sunk`, `-float`. High contrast rings them, forced colours turn them off.
+- **Depth is lightness, and selection is a tile** (0.31, Lumen). A selected row, the current page or nav item, the chosen segment, an active tile tab and a selected table row are lifted as tiles from the depth recipes (`--slc-tile` + `--slc-depth-tile` / `--slc-depth-flat`); hover stays a flat wash; the accent marks only an icon (and the current nav item's seam). A host that wears a depth recipe carries no border of its own, so the lit line sits flush under the ring (no gap between lines). The workbench (`workbench.css`, 0.33) ships the tree row and the palette row on them; reuse the recipes for any chrome of your own instead of re-deriving them: `--slc-depth-tile`, `-flat`, `-island`, `-key`, `-sunk`, `-float`. High contrast rings them, forced colours turn them off.
 - **One accent hue.** The accent varies per product (see `accent-registry.json`); status colours (success/warning/danger/info) are shared and independent of it.
 - **Spend surprise on composition, not materials.** Family resemblance comes from these shared components; distinctiveness comes from how you compose them (≥1 unexpected layout decision per screen).

@@ -228,12 +228,12 @@
    paints them, outranking the kill, both !important. The halo is still off
    in high contrast and under forced colours: it is drawn at --slc-glow's
    strength, which is 0 there. */
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
   box-shadow: var(--_sl-depth, 0 0 transparent) !important;
 }
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
   box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent) !important;
 }
 /* ...nor a surface's own recipe (0.33): an island (a workbench pane, a

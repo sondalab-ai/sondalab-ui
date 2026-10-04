@@ -655,3 +655,28 @@ test("the seam takes no pseudo-element: an effect family owns its host's ::befor
     assert.deepEqual(low, []);
   });
 }
+
+// The workbench (workbench.css, 0.33) spends the same recipes and adds none:
+// a tree row and a palette result are tiles, the current activity item and
+// an unfocused tree selection flat tiles, a pane and a terminal block
+// islands, the palette (like a dialog and a toast) a float.
+test("the workbench's selections and surfaces are the kit's depth recipes", () => {
+  const WB = [...bare(read("workbench.css")).matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ selector: m[1].trim().replace(/\s+/g, " "), body: m[2] }));
+  const wb = (sel) => { const r = WB.find((x) => x.selector === sel); assert.ok(r, `no rule ${sel}`); return r.body; };
+  for (const [sel, depth] of [
+    ['.sl-tree:focus-within .sl-tree__row[aria-selected="true"]', "tile"],
+    ['.sl-tree__row[aria-selected="true"]', "flat"],
+    ['.sl-activitybar__item:is([aria-current], [aria-selected="true"])', "flat"],
+    ['.sl-palette__row[aria-selected="true"]', "tile"],
+    [".sl-pane", "island"], [".sl-term-block", "island"], [".sl-palette", "float"],
+  ]) {
+    assert.equal(depthOf(wb(sel)), `var(--slc-depth-${depth})`, sel);
+  }
+  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-activitybar__item:is([aria-current], [aria-selected="true"])', '.sl-palette__row[aria-selected="true"]']) {
+    assert.match(wb(sel), /background-color:\s*var\(--slc-tile\)/, sel);
+  }
+  assert.match(decl(wb(".sl-pane[data-lit]"), "box-shadow"), /^var\(--slc-depth-island\), /, "the lit pane is an island and its glow");
+  // every host of a recipe carries no border, so the lit line sits flush under the ring
+  for (const sel of [".sl-pane", ".sl-term-block", ".sl-tree__row", ".sl-activitybar__item"]) assert.equal(decl(wb(sel), "border"), "0", sel);
+  assert.equal(decl(rule(".sl-toast"), "box-shadow"), "var(--slc-depth-float)");
+});

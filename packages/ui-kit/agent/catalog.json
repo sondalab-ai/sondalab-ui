@@ -801,6 +801,99 @@
       ]
     },
     {
+      "id": "activitybar",
+      "kind": "workbench",
+      "interactive": true,
+      "classes": [
+        "sl-activitybar",
+        "sl-activitybar__item"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-tile",
+        "--slc-depth-flat",
+        "--slc-seam",
+        "--slc-accent-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "tree",
+      "kind": "workbench",
+      "interactive": true,
+      "classes": [
+        "sl-tree",
+        "sl-tree__row",
+        "sl-tree__twisty",
+        "sl-tree__label"
+      ],
+      "roleVars": [
+        "--slc-text-secondary",
+        "--slc-text",
+        "--slc-text-muted",
+        "--slc-accent-text",
+        "--slc-tile",
+        "--slc-depth-tile",
+        "--slc-depth-flat",
+        "--slc-border-subtle",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "palette",
+      "kind": "workbench",
+      "classes": [
+        "sl-palette",
+        "sl-palette__head",
+        "sl-palette__input",
+        "sl-palette__list",
+        "sl-palette__group",
+        "sl-palette__row",
+        "sl-palette__label",
+        "sl-palette__meta",
+        "sl-palette__keys",
+        "sl-palette__foot"
+      ],
+      "roleVars": [
+        "--slc-raised",
+        "--slc-edge-raised",
+        "--slc-depth-float",
+        "--slc-depth-tile",
+        "--slc-tile",
+        "--slc-seam",
+        "--slc-glow",
+        "--slc-text",
+        "--slc-text-muted",
+        "--slc-accent-text",
+        "--slc-sunken",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "term-block",
+      "kind": "workbench",
+      "classes": [
+        "sl-term-block",
+        "sl-term-block__head",
+        "sl-term-block__cmd",
+        "sl-term-block__prompt",
+        "sl-term-block__meta",
+        "sl-term-block__exit",
+        "sl-term-block__out"
+      ],
+      "roleVars": [
+        "--slc-raised",
+        "--slc-depth-island",
+        "--slc-text",
+        "--slc-text-secondary",
+        "--slc-text-muted",
+        "--slc-accent-text",
+        "--slc-success",
+        "--slc-danger"
+      ]
+    },
+    {
       "id": "wordmark",
       "kind": "signature",
       "classes": [
