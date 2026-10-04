@@ -1,9 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { evaluate, scope, within, toHex } from "./lib/css-color.mjs";
-import * as cascade from "./lib/cascade.mjs";
-const { parseSheet, el, cascaded, customs, matches, specificity } = cascade;
-const longhand = (...a) => cascade.longhand(...a);
+import { parseSheet, el, cascaded, customs, matches, specificity, longhand } from "./lib/cascade.mjs";
 
 // The test evaluator and cascade themselves. The kit's contrast and cascade
 // tests are only as true as these: a flat map of declarations once let a role
@@ -88,12 +86,13 @@ test("the cascade reads an attribute value in single quotes, double quotes or no
   assert.ok(!matches(":root[data-sl-theme='dark'] [data-product]", section), "a single-quoted value that differs");
 });
 
-test("the cascade honours every attribute operator, and an unknown one never matches", () => {
+test("the cascade honours every attribute operator, and throws on a selector it cannot read", () => {
   const e = el({ attrs: { class: "sl-btn sl-btn--primary", lang: "en-GB", "data-x": "glass-pane" } });
   const yes = ['[data-x^="glass"]', '[data-x$="pane"]', '[data-x*="ss-p"]', '[class~="sl-btn--primary"]', '[lang|="en"]', '[lang|="en-GB"]'];
   const no = ['[data-x^="pane"]', '[data-x$="glass"]', '[data-x*="nope"]', '[class~="sl-btn--"]', '[lang|="e"]', '[lang|="GB"]'];
   for (const s of yes) assert.ok(matches(s, e), s);
   for (const s of no) assert.ok(!matches(s, e), s);
+  for (const s of ['[data-x!="glass"]', '[data-x="glass" i]']) assert.throws(() => matches(s, e), /cannot read the attribute selector/, s);
 });
 
 test("the cascade: a property repeated in one rule takes its last declaration, unless an earlier one is !important", () => {
@@ -112,4 +111,14 @@ test("the cascade resolves a colour longhand against its shorthand, and refuses 
   assert.equal(longhand(cascaded(parseSheet(".a.b { background: blue; } .a.b { background-color: red; }"), e), "background-color").value, "red", "a later longhand wins at equal weight");
   const c = el({ classes: ["c"], parent: el({ tag: "html" }) });
   assert.throws(() => longhand(cascaded(rules, c), "background-color"), /cannot read/);
+});
+
+// 0.32.1: the accent's steps are a macro -- a custom property holding channel
+// expressions, substituted into a relative colour where it is used -- and
+// they ease chroma with pow(), so the evaluator reads both as Chrome does.
+test("pow() evaluates, and a custom property holding channel expressions is a macro inside a relative colour", () => {
+  const env = new Map([["--f", "#4c58e9"], ["--step", "calc(l - 0.05) calc(c * pow(0.5, 2)) h"]]);
+  const viaMacro = evaluate("oklch(from var(--f) var(--step))", env);
+  const spelled = evaluate("oklch(from #4c58e9 calc(l - 0.05) calc(c * 0.25) h)", new Map());
+  assert.ok(viaMacro.lin.every((v, i) => Math.abs(v - spelled.lin[i]) < 1e-12), "the macro's `l` and `c` bind to the colour it is used in, and pow(0.5, 2) is 0.25");
 });

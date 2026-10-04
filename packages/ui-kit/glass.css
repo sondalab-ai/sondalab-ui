@@ -139,8 +139,8 @@
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-a, 18%), transparent),
-      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas)) var(--slg-tint-deep-a, 15%), transparent)
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas, var(--slc-canvas))) var(--slg-tint-a, 18%), transparent),
+      color-mix(in srgb, var(--slg-tint-color, var(--sl-bg-canvas, var(--slc-canvas))) var(--slg-tint-deep-a, 15%), transparent)
     );
 }
 

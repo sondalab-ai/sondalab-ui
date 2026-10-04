@@ -20,8 +20,8 @@
   --sl-status-info: #87a7fd;
   --sl-accent-default: #F5A83C;
   --sl-accent-band-text-lmax: 0.45;
-  --sl-accent-hover: color-mix(in srgb, var(--sl-accent-default) 80%, oklch(from var(--sl-text-on-accent) clamp(0, (0.5 - l) * 1000, 1) 0 h));
-  --sl-accent-active: color-mix(in srgb, var(--sl-accent-default) 76%, oklch(from var(--sl-text-on-accent) clamp(0, (0.5 - l) * 1000, 1) 0 h));
+  --sl-accent-hover: oklch(from var(--sl-accent-default) var(--_sl-step-hover));
+  --sl-accent-active: oklch(from var(--sl-accent-default) var(--_sl-step-press));
   --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 16%, transparent);
   --sl-accent-depth: #35A0B4;
   --sl-focus-ring: #F5A83C;

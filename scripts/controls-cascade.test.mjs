@@ -183,8 +183,10 @@ for (const theme of ["light", "dark"]) {
     const p = customs(rules, el({ tag: "button", classes: FILL_HOST, parent: section }));
     const want = new Map([["--slc-accent-fill", "#4c58e9"], ["--slc-shade-step", "0.075"], ["--slc-edge-accent-lmax", theme === "light" ? "0.59" : "1"]]);
     assert.equal(hex("var(--_sl-fill)", p), "#4c58e9");
-    assert.equal(hex("var(--_sl-fill-hover)", p), hex("color-mix(in srgb, #4c58e9 89%, black)", want));
-    assert.equal(hex("var(--_sl-fill-active)", p), hex("color-mix(in srgb, #4c58e9 76%, black)", want));
+    // the kit's step away from the white label: 0.05 / 0.10 darker along the
+    // line to black (0.32.1; 89% / 76% toward black until then)
+    assert.equal(hex("var(--_sl-fill-hover)", p), hex("oklch(from #4c58e9 calc(l - 0.05) calc(c * (l - 0.05) / l) h)", want));
+    assert.equal(hex("var(--_sl-fill-active)", p), hex("oklch(from #4c58e9 calc(l - 0.1) calc(c * (l - 0.1) / l) h)", want));
     assert.equal(hex("var(--_sl-on-fill)", p), "#ffffff");
     assert.equal(hex("var(--_sl-fill-edge)", p), hex("oklch(from #4c58e9 min(calc(l - 0.075), var(--slc-edge-accent-lmax)) c h)", want));
     for (const host of Object.values(checked(section))) {

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, toHex, toSrgb, within } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, toHex, toOklch, toSrgb, within } from "./lib/css-color.mjs";
 
 // Lumen controls (ui-kit 0.32): the primary's foot, the focus halo composed
 // with each control's depth, the danger tone and the accent-fill role,
@@ -303,12 +303,21 @@ for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
   });
 }
 
-test("spexr's registered fill is what lifts its light label over 4.5:1 (4.17 on the bare accent)", () => {
+// spexr registered its fill so its label could be WHITE: white on the bare
+// #5b6cff reads 4.17:1. Since 0.32.1 the bare accent takes the dark pole
+// instead (4.65:1, the better pole past the 0.59 threshold), so a spexr page
+// without its fill still reads; the fill keeps the white label the owner
+// chose (5.41:1).
+test("spexr's registered fill keeps its light label white over 4.5:1; its bare accent takes the better, dark pole", () => {
   const env = rootEnv("light", "spexr");
-  const bare = ratio(evaluate("var(--slc-on-accent-fill)", env), evaluate("var(--slc-accent)", env));
-  assert.ok(bare < 4.5, `the bare accent already reads ${bare.toFixed(2)}`);
+  const label = evaluate("var(--slc-on-accent-fill)", env), accent = evaluate("var(--slc-accent)", env);
+  assert.ok(toOklch(label)[0] < 0.5, "the bare accent's label is the dark pole");
+  assert.ok(ratio(label, accent) > ratio(evaluate("white", env), accent), "and it is the better pole there");
+  assert.ok(ratio(label, accent) >= 4.5, ratio(label, accent).toFixed(2));
   env.set("--slc-accent-fill", REGISTRY.spexr.fill.light);
-  assert.ok(ratio(evaluate("var(--slc-on-accent-fill)", env), evaluate("var(--slc-accent-fill)", env)) >= 4.5);
+  const white = evaluate("var(--slc-on-accent-fill)", env);
+  assert.equal(toHex(white), "#ffffff");
+  assert.ok(ratio(white, evaluate("var(--slc-accent-fill)", env)) >= 4.5);
 });
 
 test("every labelled accent fill reads the fill set on the control: primary, checked check, radio and switch", () => {

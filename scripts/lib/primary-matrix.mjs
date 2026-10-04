@@ -21,12 +21,14 @@
      tier B        a value-pinned page with no data-sl-theme, mapping only
                    the accent, its label, its registered fill and its
                    neutrals (README, "Tier B"), so the accent's steps are the
-                   kit's own :root fallbacks.
+                   kit's own :root fallbacks, and the glass tint has no
+                   --sl-bg-canvas to read.
    Contexts
      opaque        a plain primary.
      no script     the glass classes with no layers built: the opaque key.
-     fx off        a built glass primary inside [data-sl-fx="off"]: the
-                   layers stay, the label is the opaque one.
+     fx off        a built glass primary inside [data-sl-fx="off"]: since
+                   0.32.1 the layers are hidden and the host keeps its own
+                   fill, so it is the opaque key (asserted, not assumed).
      glass         a built glass pane: the label is picked from the
                    composite, the fill is the tint stack over the page.
      glass, lensed the same pane once glass-lens.js has lensed it (what
@@ -125,12 +127,12 @@ export const WIRINGS = {
       const fill = p.fill?.[t] ? `\n:root[data-sl-theme="${t}"] { --slc-accent-fill: ${p.fill[t]}; }` : "";
       return `[data-sl-theme="${t}"] { --sl-accent-default: ${p[t]};${ring}${steps} }${fill}`;
     }).join("\n");
-    return { css, root: { "data-sl-product": id }, section: null, glass: true };
+    return { css, root: { "data-sl-product": id }, section: null };
   },
   "site subtree": (id) => {
     const p = product(id);
     const acc = `[data-product] { --acc-light: ${p.light}; --acc-dark: ${p.dark}; --acc-fill-light: ${p.fill?.light ?? p.light}; --acc-fill-dark: ${p.fill?.dark ?? p.dark}; }`;
-    return { css: `${SITE}\n${acc}`, root: {}, section: { "data-product": "" }, glass: true };
+    return { css: `${SITE}\n${acc}`, root: {}, section: { "data-product": "" } };
   },
   "tier B": (id) => {
     const p = product(id);
@@ -140,8 +142,7 @@ export const WIRINGS = {
       const fill = p.fill?.[t] ? ` --slc-accent-fill: ${p.fill[t]};` : "";
       return `:root[data-theme="${t}"] { --slc-accent: ${p[t]}; --slc-on-accent: ${TIER_B_LABEL};${fill} --slc-canvas: ${n["bg-canvas"]}; --slc-surface: ${n["bg-surface"]}; --slc-raised: ${n["bg-surface-raised"]}; --slc-text: ${n["text-primary"]};${numbers} }`;
     }).join("\n");
-    // A Tier B page has no --sl-* ground for the glass tint to read.
-    return { css, root: {}, section: null, glass: false, themeAttr: "data-theme" };
+    return { css, root: {}, section: null, themeAttr: "data-theme" };
   },
 };
 
@@ -186,7 +187,7 @@ function rulesFor(wiring, id) {
 }
 
 /** html > body > [section] > [opt-out] > control, for one cell. */
-function tree(w, theme, context, classes, states) {
+export function tree(w, theme, context, classes, states) {
   const html = el({ tag: "html", attrs: { [w.themeAttr ?? "data-sl-theme"]: theme, ...w.root } });
   let parent = el({ tag: "body", parent: html });
   if (w.section) parent = el({ tag: "section", parent, attrs: w.section });
@@ -196,7 +197,10 @@ function tree(w, theme, context, classes, states) {
 
 /** One primary, measured: its label, every surface the label can sit on
  *  (one opaque fill, or the pane over each ground, its backdrop raw and
- *  filtered, at each gradient stop), its edge and its foot. */
+ *  filtered, at each gradient stop), its edge and its foot. A layer the
+ *  cascade hides (display: none) paints nothing, and a tint whose
+ *  background-image cannot compute (an unresolved var()) is `none`, as in a
+ *  browser: the label then sits on whatever is behind it. */
 export function measure({ wiring, id, theme, context, state, danger = false }) {
   const w = rulesFor(wiring, id);
   const { parent, control } = tree(w, theme, context, ["sl-btn", "sl-btn--primary", ...(danger ? ["sl-btn--danger"] : [])], STATES[state]);
@@ -208,10 +212,13 @@ export function measure({ wiring, id, theme, context, state, danger = false }) {
   const page = customs(w.rules, parent);
   const grounds = Object.fromEntries(["canvas", "surface", "raised"].map((g) => [g, evaluate(`var(--slc-${g})`, page)]));
   const surfaces = [];
-  if (layered(context)) {
-    const tint = el({ tag: "span", classes: ["sl-glass__tint"], parent: control });
+  const tint = layered(context) ? el({ tag: "span", classes: ["sl-glass__tint"], parent: control }) : null;
+  const shown = tint && cascaded(w.rules, tint).get("display")?.value.replace(/\s*!important$/, "") !== "none";
+  if (shown) {
     const backdrop = el({ tag: "span", classes: ["sl-glass__backdrop"], parent: control });
-    const layers = gradientStops(cascaded(w.rules, tint).get("background-image").value, customs(w.rules, tint));
+    let layers;
+    try { layers = gradientStops(cascaded(w.rules, tint).get("background-image").value, customs(w.rules, tint)); }
+    catch (e) { if (!/^unresolved /.test(e.message)) throw e; layers = []; }
     const bf = substitute(cascaded(w.rules, backdrop).get("backdrop-filter")?.value ?? "none", customs(w.rules, backdrop));
     const fn = (name) => Number(bf.match(new RegExp(`${name}\\(([0-9.]+)\\)`))?.[1] ?? 1);
     const filter = { saturate: fn("saturate"), brightness: fn("brightness"), contrast: fn("contrast") };
@@ -234,14 +241,14 @@ export function measure({ wiring, id, theme, context, state, danger = false }) {
     if (host.alpha < 1) throw new Error(`${wiring} ${id} ${theme} ${context} ${state}: an opaque primary with a translucent fill`);
     surfaces.push({ where: "fill", colour: host });
   }
-  const foot = layered(context) ? null : evaluate("var(--_sl-foot-color, var(--_sl-fill-edge))", env);
-  return { label, surfaces, edge, foot, host, grounds, env };
+  const foot = shown ? null : evaluate("var(--_sl-foot-color, var(--_sl-fill-edge))", env);
+  return { label, surfaces, edge, foot, host, grounds, env, layers: shown };
 }
 
 /** The tick, the dot and the knob on a checked check, radio and switch,
  *  each against its own fill (the pseudo-element's colour, read off the
  *  rule that paints it, in the box's computed values). */
-export function marks({ wiring, id, theme }) {
+export function marks({ wiring, id, theme, states = [] }) {
   const w = rulesFor(wiring, id);
   const css = read("components.css");
   const values = {
@@ -252,7 +259,7 @@ export function marks({ wiring, id, theme }) {
   const html = el({ tag: "html", attrs: { [w.themeAttr ?? "data-sl-theme"]: theme, ...w.root } });
   let parent = el({ tag: "body", parent: html });
   if (w.section) parent = el({ tag: "section", parent, attrs: w.section });
-  const box = (input, cls) => el({ tag: "span", classes: [cls], parent, prev: el({ tag: "input", classes: [input], states: ["checked"], parent }) });
+  const box = (input, cls) => el({ tag: "span", classes: [cls], states, parent, prev: el({ tag: "input", classes: [input], states: ["checked", ...states], parent }) });
   return Object.entries({ check: box("sl-check__input", "sl-check__box"), radio: box("sl-radio__input", "sl-radio__box"), switch: box("sl-switch__input", "sl-switch__track") })
     .map(([name, host]) => {
       const env = customs(w.rules, host);
@@ -265,7 +272,6 @@ export function cells({ danger = false } = {}) {
   const out = [];
   for (const wiring of Object.keys(WIRINGS)) for (const id of Object.keys(REGISTRY)) for (const theme of THEMES) {
     for (const context of Object.keys(CONTEXTS)) {
-      if (!rulesFor(wiring, id).glass && context !== "opaque") continue;
       for (const state of Object.keys(STATES)) {
         out.push({ wiring, id, theme, context, state, danger, ...measure({ wiring, id, theme, context, state, danger }) });
       }

@@ -2,7 +2,7 @@
    hex and rgba() literals, the transparent/white/black keywords, oklch() and
    oklab() absolute and relative (`from`), color(from … srgb-linear …),
    rgb(from …), color-mix() in srgb / srgb-linear / oklab / oklch, and the
-   math functions (calc, min, max, clamp) with the channel keywords bound the
+   math functions (calc, min, max, clamp, pow) with the channel keywords bound the
    way CSS Color 5 binds them. var() is substituted textually before parsing,
    as the cascade does, so a custom property holding a bare expression over
    channel keywords works as a macro inside a relative colour.
@@ -355,6 +355,7 @@ class Parser {
         case "min": return Math.min(...args);
         case "max": return Math.max(...args);
         case "clamp": return Math.min(Math.max(args[1], args[0]), args[2]);
+        case "pow": return Math.pow(args[0], args[1]);
         default: throw new Error(`unsupported math function ${tok.v}`);
       }
     }

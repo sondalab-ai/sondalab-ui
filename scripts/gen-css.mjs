@@ -19,31 +19,25 @@ function block(selector, entries) {
 /** An accent step is a literal colour string or a hue-relative derivation
  * recipe, so that overriding only --sl-accent-default re-derives the family
  * (the one-var contract). Two recipe shapes:
- *   { mix: [ratio, anchor] }        -> color-mix() (Baseline). The anchor is a
- *                                      colour keyword, or `away`: the pole
- *                                      opposite the theme's own label
- *                                      (--sl-text-on-accent), white under a
- *                                      dark label and black under a white
- *                                      one, so a hover or press step never
- *                                      moves the fill toward its label.
- *   { oklch: [L, C, H], fallback }  -> relative color (tighter floor); the
- *                                      fallback literal is emitted first so a
- *                                      browser without relative-color syntax
- *                                      keeps the hand-tuned value.
- * Returns an array of [name, value] declarations (usually one, two when a
- * relative-color step carries a fallback). */
-const AWAY_FROM_LABEL = "oklch(from var(--sl-text-on-accent) clamp(0, (0.5 - l) * 1000, 1) 0 h)";
+ *   { step: "hover" | "press" } -> the kit's own step away from the label,
+ *                                  oklch(from var(--sl-accent-default)
+ *                                  var(--_sl-step-<name>)): one macro in
+ *                                  components.css :root, shared with the
+ *                                  accent fill, the danger tone and the
+ *                                  role-var fallbacks (0.32.1).
+ *   { mix: [ratio, anchor] }    -> color-mix() toward a colour keyword
+ *                                  (high contrast's literal pair).
+ * Returns [name, value] declarations. */
 function accentDecls(name, v) {
+  if (v && typeof v === "object" && typeof v.step === "string") {
+    if (!["hover", "press"].includes(v.step)) throw new Error(`${name}: unknown step ${v.step}`);
+    return [[name, `oklch(from var(--sl-accent-default) var(--_sl-step-${v.step}))`]];
+  }
   if (v && typeof v === "object" && Array.isArray(v.mix)) {
     const [ratio, anchor] = v.mix;
-    const to = anchor === "away" ? AWAY_FROM_LABEL : anchor;
-    return [[name, `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${to})`]];
+    return [[name, `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${anchor})`]];
   }
-  if (v && typeof v === "object" && Array.isArray(v.oklch)) {
-    const [L, C, H] = v.oklch;
-    const derived = `oklch(from var(--sl-accent-default) ${L} ${C} ${H})`;
-    return v.fallback ? [[name, v.fallback], [name, derived]] : [[name, derived]];
-  }
+  if (v && typeof v === "object") throw new Error(`${name}: unknown accent recipe ${JSON.stringify(v)}`);
   return [[name, v]];
 }
 
