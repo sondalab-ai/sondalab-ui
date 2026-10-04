@@ -170,9 +170,15 @@ test("the glass shade is zero under a dark label: the pane is the fill at 90%, a
 
 test("the glass shade is off in an opt-out region and on high contrast", () => {
   for (const wiring of ["tier A", "site subtree"]) for (const id of ["spexr", "local-agents"]) {
+    const glass = measure({ wiring, id, theme: "light", context: "glass", state: "rest" });
+    assert.ok(glass.env.has("--_slfx-shade"), `${wiring} ${id}: the pane declares its shade`);
     const off = measure({ wiring, id, theme: "light", context: "fx off", state: "rest" });
+    assert.equal(off.env.has("--_slfx-shade"), false, `${wiring} ${id}: fx off declares no shade`);
     assert.ok(Math.abs(evaluate("var(--slfx-accent-t)", off.env).alpha - 0.9) < 1e-12, `${wiring} ${id}: fx off`);
+    // high contrast's fill is yellow under a dark label, so the gate alone
+    // would zero it: the declaration itself must be absent there
     const hc = measure({ wiring, id, theme: "high-contrast", context: "glass", state: "rest" });
+    assert.equal(hc.env.has("--_slfx-shade"), false, `${wiring} ${id}: high contrast declares no shade`);
     assert.ok(Math.abs(evaluate("var(--slfx-accent-t)", hc.env).alpha - 0.9) < 1e-12, `${wiring} ${id}: high contrast`);
   }
 });
