@@ -259,6 +259,36 @@
       ]
     },
     {
+      "id": "toast",
+      "kind": "primitive",
+      "classes": [
+        "sl-toast-stack",
+        "sl-toast",
+        "sl-toast--info",
+        "sl-toast--success",
+        "sl-toast--warning",
+        "sl-toast--danger",
+        "sl-toast__mark",
+        "sl-toast__content",
+        "sl-toast__title",
+        "sl-toast__body",
+        "sl-toast__dismiss"
+      ],
+      "roleVars": [
+        "--slc-raised",
+        "--slc-edge-raised",
+        "--slc-depth-float",
+        "--slc-text",
+        "--slc-text-secondary",
+        "--slc-text-muted",
+        "--slc-glow",
+        "--slc-info",
+        "--slc-success",
+        "--slc-warning",
+        "--slc-danger"
+      ]
+    },
+    {
       "id": "fx-glass",
       "kind": "effect",
       "classes": [
@@ -738,6 +768,36 @@
         "--slc-border-subtle",
         "--slc-accent",
         "--slc-focus"
+      ]
+    },
+    {
+      "id": "pane",
+      "kind": "workbench",
+      "classes": [
+        "sl-pane"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-raised",
+        "--slc-depth-island",
+        "--slc-seam",
+        "--slc-glow"
+      ]
+    },
+    {
+      "id": "statusbar",
+      "kind": "workbench",
+      "classes": [
+        "sl-statusbar",
+        "sl-statusbar__item",
+        "sl-statusbar__sep",
+        "sl-statusbar__dot",
+        "sl-statusbar__spacer"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-border",
+        "--slc-accent-text"
       ]
     },
     {

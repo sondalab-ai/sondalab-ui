@@ -74,3 +74,14 @@ test("the two curves are tokens, and reduced motion still zeroes every duration"
   // The backdrop fades on the same curve as its dialog.
   assert.match(body(".sl-dialog::backdrop"), new RegExp(`opacity ${ENTER.source}`));
 });
+
+// The toast (0.33) arrives the way the dialog does: a 6px rise and a fade from
+// @starting-style on the arrival curve, transitions only. No keyframe (the
+// test above pins the one the kit has), so reduced motion stills it.
+test("the toast rises into place on the motion tokens, from @starting-style", () => {
+  const t = body(".sl-toast");
+  for (const p of ["opacity", "translate"]) assert.match(t, new RegExp(`${p} ${ENTER.source}`), `${p} arrives on the enter curve`);
+  assert.doesNotMatch(t, /(^|;)\s*(transform|animation)\s*:/, "rises on translate; nothing plays on page load but its own arrival");
+  const start = [...css.matchAll(/@starting-style\s*\{([\s\S]*?\})\s*\}/g)].map((m) => m[1]).join("\n");
+  assert.match(start, /\.sl-toast \{\s*opacity:\s*0;\s*translate:\s*0 6px;\s*\}/);
+});

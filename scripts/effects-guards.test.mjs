@@ -1205,3 +1205,20 @@ test("forced colours hide every layer the kill switch hides, plus glass and ink"
   assert.match(block, /:is\(\.sl-fx-glitch__shard\) \{ opacity: 0 !important; \}/, "the shatter's bands go");
   assert.match(block, /:is\(\.sl-fx-glitch__text\) \{ opacity: 1 !important; \}/, "and the label comes back");
 });
+
+// The workbench's surfaces (0.33) draw their recipe in box-shadow and keep
+// ::after free for the aurora: an island (a pane, a terminal block) and a
+// float (a toast, a palette). The kill switches take a host's box-shadow, so
+// each recipe comes back after them, outranking them on specificity.
+test("the kill switches give an island or a float its own recipe back", () => {
+  const killAt = RULES.findIndex((r) => /box-shadow:\s*none !important/.test(r.body) && r.selector.startsWith(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
+  assert.ok(killAt > -1, "the kill rule");
+  for (const [recipe, hosts] of [["island", [".sl-pane", ".sl-term-block"]], ["float", [".sl-toast", ".sl-palette"]]]) {
+    const keep = RULES.find((r, i) => i > killAt && new RegExp(`box-shadow:\\s*var\\(--slc-depth-${recipe}\\) !important`).test(r.body));
+    assert.ok(keep, `a rule after the kill restores --slc-depth-${recipe}`);
+    const parts = keep.selector.split(/,(?![^(]*\))/).map((s) => s.trim());
+    assert.ok(parts.some((p) => p.startsWith(':root[data-sl-theme="high-contrast"]')), `${recipe}: high contrast`);
+    assert.ok(parts.some((p) => p.startsWith(':is([data-sl-fx="off"], [data-sl-fx="off"] *)')), `${recipe}: the opt-out`);
+    for (const p of parts) for (const h of hosts) assert.ok(p.includes(h), `${recipe}: ${h} in ${p}`);
+  }
+});

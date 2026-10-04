@@ -236,6 +236,21 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
   box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent) !important;
 }
+/* ...nor a surface's own recipe (0.33): an island (a workbench pane, a
+   terminal block) and an overlay that floats (a toast, a palette) draw their
+   ring and cast in box-shadow, and keep ::after free for the aurora. Under
+   the kill they keep the recipe -- in high contrast that is the island's
+   drawn ring, the edge that finds the pane on black. A lit pane's glow is
+   the one thing that stays off in an opt-out region; its seam is ::before,
+   which the aurora does not take. */
+:root[data-sl-theme="high-contrast"] :is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-island) !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-float) !important;
+}
 
 /* The goo's drift is the one thing this family animates, and it animates the
    MEMBER — an ordinary card or wrapper that keeps its own chrome. So the

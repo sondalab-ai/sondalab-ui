@@ -1,0 +1,123 @@
+/* @sondalab/ui-kit — workbench.css
+   Hand-authored (NOT generated). Opt-in: the chrome of a workbench (an IDE,
+   a console) on top of components.css, which it needs -- it reads the
+   kit's role-vars, its depth recipes and its shared focus rule, and adds no
+   role of its own. Import it after components.css (and before effects.css):
+     @import "@sondalab/ui-kit/components.css";
+     @import "@sondalab/ui-kit/workbench.css";
+
+   Lumen (owner, 2026-10-02): panes are islands of light on a darker frame
+   (the canvas), and the pane that holds the focus is lit. The frame's own
+   chrome -- the status bar, the activity bar -- sits on the canvas and
+   paints no ground of its own.
+
+   Paint layers: a pane draws its seam on ::before. ::after is never used
+   here, so the aurora (effects.css) can still ride a pane's edge. Glass on
+   a pane is unsupported: the material owns ::before too. */
+
+/* ══ PANE ════════════════════════════════════════════════════════════════════
+   An island: the surface rung on the canvas, the island recipe (a lit top
+   hairline and the quieter ring), the pane radius. A host that wears a
+   recipe carries no border of its own, so the lit line sits flush under the
+   ring (L6).
+   [data-lit] is the pane that holds the focus, set by the consumer where the
+   focus is (it stays lit while a palette or a menu has the focus over it).
+   It is the lighter rung, a seam of the accent as a line of light runs along
+   its top edge, and the seam's light falls round the pane as strong as
+   --slc-glow says (none in high contrast or under forced colours). The seam
+   fades in from the leading edge and out before the far one: lit from one
+   side, the way Lumen draws it. One lit pane per workbench. */
+.sl-pane {
+  position: relative;
+  background-color: var(--slc-surface);
+  border: 0;
+  border-radius: var(--sl-radius-pane, 10px);
+  box-shadow: var(--slc-depth-island);
+}
+.sl-pane[data-lit] {
+  background-color: var(--slc-raised);
+  box-shadow: var(--slc-depth-island), 0 0 24px -6px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
+}
+.sl-pane[data-lit]::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--sl-space-3, 0.75rem);
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background-image: linear-gradient(90deg, transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 110%), transparent);
+  pointer-events: none;
+}
+
+/* ══ STATUS BAR ══════════════════════════════════════════════════════════════
+   The workbench's meta line, on the canvas: facts in the micro register
+   (L1: mono, uppercase, --sl-text-micro, 500, +0.06em, the muted ink), a
+   hairline between groups of them, and a dot of the accent for a state that
+   is live ("2 agents running" -- the words carry the state, the dot is only
+   its mark). Its height is the bar's own, not its content's, so an item with
+   an icon or a dot cannot move it.
+     <footer class="sl-statusbar" aria-label="Status">
+       <span class="sl-statusbar__item">main ↑2</span>
+       <span class="sl-statusbar__sep" aria-hidden="true"></span>
+       <span class="sl-statusbar__item"><span class="sl-statusbar__dot" aria-hidden="true"></span>2 agents running</span>
+       <span class="sl-statusbar__spacer"></span>
+       <span class="sl-statusbar__item">Ln 42, Col 18</span>
+     </footer>
+   Never role="status" on the bar: every fact in it would be read out each
+   time the caret moves. A fact that must be heard when it changes gets a
+   role="status" of its own. Items are facts, not controls: a bar item that
+   opens something is a plain .sl-btn.sl-btn--sm beside them. */
+.sl-statusbar {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 1.75rem;
+  padding-inline: var(--sl-space-2, 0.5rem);
+  overflow: hidden;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-micro, 0.65625rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--slc-text-muted);
+  background-color: transparent;
+}
+.sl-statusbar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-space-1, 0.25rem);
+  box-sizing: border-box;
+  height: 1.25rem;
+  padding-inline: var(--sl-space-2, 0.5rem);
+}
+.sl-statusbar__item > svg { flex: none; }
+/* A border, not a fill: forced colours keep a border and repaint a fill as
+   the canvas. */
+.sl-statusbar__sep {
+  flex: none;
+  height: 0.75rem;
+  margin-inline: var(--sl-space-1, 0.25rem);
+  border-inline-start: 1px solid var(--slc-border);
+}
+.sl-statusbar__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--slc-accent-text);
+}
+.sl-statusbar__spacer { flex: 1; }
+
+/* ══ FORCED COLOURS ══════════════════════════════════════════════════════════
+   The user's palette replaces every colour and drops every shadow: a pane's
+   ring went with its island recipe, so it gets a drawn edge back (an
+   outline, inside its box, so nothing moves), and the lit pane's seam and
+   the live dot are drawn in system colours. */
+@media (forced-colors: active) {
+  .sl-pane { outline: 1px solid CanvasText !important; outline-offset: -1px; }
+  .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
+  .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; }
+}

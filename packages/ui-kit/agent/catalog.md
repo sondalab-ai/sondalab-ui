@@ -267,6 +267,23 @@ Visual shell for the native `<dialog>` (consumer wires open/close). Substrate: *
 ```
 Consumes: `--slc-raised`, `--slc-border`, `--slc-overlay`, `--slc-text`, `--slc-text-secondary`, `--slc-depth-float`. It floats on the overlay cast (`--slc-depth-float`, three layers under its own border in shade, which is the ring) at `--sl-radius-lg` (14px since 0.31). Opened with `showModal()`, it rises 6px and fades in with its backdrop, and falls back as it closes where `overlay` is supported (`@starting-style` and transitions on `--sl-motion-mid` with the arrival curve `--sl-motion-enter`; no keyframes). Reduced motion, or a browser without `@starting-style`, opens it at once. Don't: put a `display` of your own on a closed `sl-dialog` to show it — a closed dialog is transparent; set `open` instead.
 
+### Toast — `sl-toast-stack` · `sl-toast` (`--info` · `--success` · `--warning` · `--danger` · `__mark` · `__content` · `__title` · `__body` · `__dismiss`)
+A message that arrives (0.33, Lumen), in a stack fixed to the bottom right, newest last, nearest the corner. It floats like a dialog: the raised rung, its own border in shade as the ring and the float recipe as its cast. The tone is a short tick on its top edge, which glows as strongly as `--slc-glow` allows (not at all in high contrast or under forced colours), and the wash under its mark. The words stay neutral. It arrives as the dialog does: a 6px rise and a fade from `@starting-style`, on `--sl-motion-mid` and the arrival curve, with transitions only, so reduced motion shows it at once. In `components.css`. Substrate: **R** App/IDE, **A** Page.
+```html
+<section class="sl-toast-stack" aria-label="Notifications" aria-live="polite">
+  <div class="sl-toast sl-toast--success" role="status">
+    <span class="sl-toast__mark" aria-hidden="true"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+    <div class="sl-toast__content">
+      <p class="sl-toast__title">Probe saved</p>
+      <p class="sl-toast__body">q-8f2a re-runs in 14 days</p>
+    </div>
+    <button class="sl-btn sl-btn--sm">Undo</button>
+    <button class="sl-icon-btn sl-toast__dismiss" aria-label="Dismiss">×</button>
+  </div>
+</section>
+```
+Consumes: `--slc-raised`, `--slc-edge-raised`, `--slc-depth-float`, `--slc-text`, `--slc-text-secondary`, `--slc-text-muted`, `--slc-glow`, `--slc-info`, `--slc-success`, `--slc-warning`, `--slc-danger`. A bare `sl-toast` is neutral: its tick and mark use the muted ink. The dismiss is an icon button at the small button's 24px, and it keeps the one control edge. Do: keep the stack in the DOM from page load. It is the live region (`aria-live="polite"`), and a region that is inserted together with its content is not announced. Give each toast `role="status"`, or `role="alert"` for one that must interrupt. Mount the stack as a child of `<body>`, never inside an `sl-invert` band, whose roles are washes of the band's own ground. Do: pause any auto-dismiss while the toast is hovered or focused, and never auto-dismiss a toast that offers an action. Don't: move focus to a toast, or put the only path to an action in one. Don't: put glass on a toast; the component owns its `::before`. `::after` is left free for the aurora.
+
 ## Navigation & state
 
 ### Breadcrumb — `sl-breadcrumb` (`__item` · `__sep`)
@@ -431,6 +448,34 @@ The drag handle between two panes: a 9px hit area around a 1px rule, turning to 
 <div class="sl-resizer" role="separator" aria-orientation="vertical" aria-label="Resize the list" aria-valuenow="320" aria-valuemin="200" aria-valuemax="640" tabindex="0"></div>
 ```
 Consumes: `--slc-border-subtle`, `--slc-accent`, `--slc-focus`. Do: make it keyboard-operable (`tabindex="0"`, arrow keys move it, `aria-valuenow` tracks it). Don't: draw a second line beside it; the handle is the rule between the panes.
+
+## Workbench (opt-in, `workbench.css`)
+
+The chrome of a workbench: an IDE or a console (0.33, Lumen). It is a separate stylesheet imported after `components.css`, whose role-vars, depth recipes and shared focus rule it reads. It adds no role. Panes are islands of light on the darker frame (the canvas), and the pane that holds the focus is lit. The frame's own chrome (the status bar and the activity bar) sits on the canvas and paints no ground of its own. The workbench draws on `::before` only, so `::after` stays free for the aurora (L6).
+
+### Pane — `sl-pane` (`[data-lit]`)
+An island: the surface rung on the canvas, drawn with the island recipe (a lit top hairline and the quieter ring) at `--sl-radius-pane` (10px), with no border of its own. `data-lit` marks the pane that holds the focus. That pane is the raised rung. A seam of the accent runs along its top edge as a line of light (`--slc-seam`): it fades in from the leading edge and out before the far one. The seam's light falls round the pane as strongly as `--slc-glow` allows. Substrate: **R** IDE, **A** App, **N/A** Page.
+```html
+<div style="display: flex; gap: var(--sl-space-2); padding: var(--sl-space-2); background: var(--slc-canvas)">
+  <aside class="sl-pane" aria-label="Explorer">…</aside>
+  <main class="sl-pane" data-lit aria-label="Editor">…</main>
+</div>
+```
+Consumes: `--slc-surface`, `--slc-raised`, `--slc-depth-island`, `--slc-seam`, `--slc-glow`. High contrast draws the island as a ring in the theme's line and the seam in its yellow. Under forced colours the pane gets a `CanvasText` outline inside its box, and the seam is drawn in `Highlight`. Do: set `data-lit` where the focus is, on one pane per workbench. Leave it there while a palette or a menu holds the focus over the pane. Do: put a gap between panes (`--sl-space-2`) and give the frame a little padding, so the rings and the glow have room. Don't: give a pane a border (a recipe host has none: the lit line sits flush under the ring), or put glass on it. Glass owns `::before`, which the seam needs, so glass on a pane is unsupported. Don't: light more than one pane.
+
+### Status bar — `sl-statusbar` (`__item` · `__sep` · `__dot` · `__spacer`)
+The workbench's meta line, on the canvas. Its facts are in the micro register (L1: mono, uppercase, `--sl-text-micro`, 500, +0.06em, the muted ink). A hairline separates groups of them. An accent dot marks a live state, while the words carry that state. The bar's height is its own (28px): an item with an icon or a dot cannot move it. Substrate: **R** IDE, **A** App, **N/A** Page.
+```html
+<footer class="sl-statusbar" aria-label="Status">
+  <span class="sl-statusbar__item">main ↑2</span>
+  <span class="sl-statusbar__sep" aria-hidden="true"></span>
+  <span class="sl-statusbar__item"><span class="sl-statusbar__dot" aria-hidden="true"></span>2 agents running</span>
+  <span class="sl-statusbar__spacer"></span>
+  <span class="sl-statusbar__item">Ln 42, Col 18</span>
+  <span class="sl-statusbar__item">UTF-8</span>
+</footer>
+```
+Consumes: `--slc-text-muted`, `--slc-border`, `--slc-accent-text`. The separator is a border, not a fill, so it survives forced colours. The dot is drawn in `CanvasText` there. Don't: put `role="status"` on the bar. Every fact in it would be read out each time the caret moves. Give a fact that must be heard when it changes a `role="status"` of its own. Do: keep items to facts. The register upper-cases them, so a case-sensitive identifier (a branch called `feat/K6`) reads in capitals. Put something that opens a view in a small plain button (`sl-btn sl-btn--sm`) beside the facts, not in an item.
 
 ## Identity & media
 

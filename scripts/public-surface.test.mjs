@@ -14,7 +14,7 @@ const KIT = resolve(HERE, "../packages/ui-kit");
 const FIXTURE = resolve(HERE, "fixtures/public-surface.json");
 const FILES = [
   "tokens.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css",
-  "components.css", "compositions.css", "glass.css", "effects.css",
+  "components.css", "workbench.css", "compositions.css", "glass.css", "effects.css",
 ];
 
 function surface() {

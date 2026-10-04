@@ -74,22 +74,24 @@
       <span class="ide-activity__spacer"></span>
       <button class="ide-activity__btn" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
     </nav>`;
+  // the frame's meta line is the kit's status bar (workbench.css, 0.33): facts
+  // in the micro register on the canvas, never role="status" on the whole bar
   const status = (extra = "") => `
-    <footer class="ide-status" role="status">
-      <div class="ide-status__grp">
-        <span class="ide-status__item ide-status__branch">${I.branch}main<b data-count="2">↑2</b></span>
-        <span class="ide-status__item">${I.sync}synced</span>
-        <span class="ide-status__item ide-status__diag"><span class="ide-err">${I.err}<b>0</b></span><span class="ide-warn">${I.warn}<b>2</b></span></span>
-        <span class="ide-status__item ide-status__agents"><i class="ide-pulse" aria-hidden="true"></i>2 agents · 212 tools</span>
-      </div>
-      <div class="ide-status__grp">
-        ${extra}
-        <span class="ide-status__item">Ln 42, Col 18</span>
-        <span class="ide-status__item">UTF-8</span>
-        <span class="ide-status__item">LF</span>
-        <span class="ide-status__item">TypeScript</span>
-        <span class="ide-status__item ide-status__model">${I.sparkle}Opus · <b>1.2k</b> tok/s</span>
-      </div>
+    <footer class="ide-status sl-statusbar" aria-label="Status">
+      <span class="ide-status__item sl-statusbar__item ide-status__branch">${I.branch}main<b data-count="2">↑2</b></span>
+      <span class="ide-status__item sl-statusbar__item">${I.sync}synced</span>
+      <span class="sl-statusbar__sep" aria-hidden="true"></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__diag"><span class="ide-err">${I.err}<b>0</b></span><span class="ide-warn">${I.warn}<b>2</b></span></span>
+      <span class="sl-statusbar__sep" aria-hidden="true"></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__agents"><i class="ide-pulse sl-statusbar__dot" aria-hidden="true"></i>2 agents · 212 tools</span>
+      <span class="sl-statusbar__spacer"></span>
+      ${extra}
+      <span class="ide-status__item sl-statusbar__item">Ln 42, Col 18</span>
+      <span class="ide-status__item sl-statusbar__item">UTF-8</span>
+      <span class="ide-status__item sl-statusbar__item">LF</span>
+      <span class="ide-status__item sl-statusbar__item">TypeScript</span>
+      <span class="sl-statusbar__sep" aria-hidden="true"></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__model">${I.sparkle}Opus · <b>1.2k</b> tok/s</span>
     </footer>`;
 
   /* ── IDE ────────────────────────────────────────────────────────────────── */
@@ -155,7 +157,7 @@
       </div>
     </section>`;
   const agent = () => `
-    <aside class="ide-agent" aria-label="Agent">
+    <aside class="ide-agent sl-pane" aria-label="Agent">
       <header class="ide-agent__head">
         <div><p class="sl-eyebrow ide-agent__eb">Agent · q-8f2a</p><h2 class="ide-agent__title">Refactor the audit</h2></div>
         <span class="sl-tag ide-agent__model">Opus</span>
@@ -208,23 +210,24 @@
         <footer class="ide-pal__foot"><span>${K("↑", "↓")} navigate</span><span>${K("⏎")} run</span><span>${K("⇥")} scope</span><span class="ide-pal__sp"></span><span>${K("esc")} close</span></footer>
       </div>
     </div>`;
+  // the kit's toast stack (components.css, 0.33): the stack is the live region
   const toast = () => `
-    <div class="ide-toasts" aria-live="polite">
-      <div class="ide-toast ide-toast--back" aria-hidden="true"></div>
-      <div class="ide-toast" role="status" data-tone="success">
-        <span class="ide-toast__mark">${I.check}</span>
-        <div class="ide-toast__text"><p class="ide-toast__title">Probe saved</p><p class="ide-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
+    <section class="ide-toasts sl-toast-stack" aria-label="Notifications" aria-live="polite">
+      <div class="ide-toast ide-toast--back sl-toast" aria-hidden="true"></div>
+      <div class="ide-toast sl-toast sl-toast--success" role="status" data-tone="success">
+        <span class="ide-toast__mark sl-toast__mark" aria-hidden="true">${I.check}</span>
+        <div class="ide-toast__text sl-toast__content"><p class="ide-toast__title sl-toast__title">Probe saved</p><p class="ide-toast__body sl-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
         <button class="sl-btn sl-btn--sm ide-toast__undo lab-focus" data-key="⌘Z">Undo</button>
-        <button class="sl-icon-btn ide-toast__x" aria-label="Dismiss">${I.close}</button>
+        <button class="sl-icon-btn sl-toast__dismiss ide-toast__x" aria-label="Dismiss">${I.close}</button>
         <div class="sl-progress ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
       </div>
-    </div>`;
+    </section>`;
   const ide = () => `
     <div class="app ide" data-fig="fig. 01 — the workbench">
       ${titlebar("probe-engine <span>/</span> src <span>/</span> probe")}
       <div class="app__body">
         ${activity("files")}
-        <aside class="ide-side pane" aria-label="Explorer">
+        <aside class="ide-side pane sl-pane" aria-label="Explorer">
           <header class="pane__head"><span class="pane__label">Explorer</span><span class="pane__tools"><button class="sl-icon-btn ide-ghost" aria-label="New file">${I.plus}</button><button class="sl-icon-btn ide-ghost" aria-label="More">${I.more}</button></span></header>
           <p class="pane__sub">probe-engine</p>
           ${tree()}
@@ -235,7 +238,7 @@
             <button class="sl-list__row lab-hover" role="option" aria-selected="false"><span>Edge in shade</span><span class="sl-list__meta">done · 3h · 58 tools</span></button>
           </div>
         </aside>
-        <main class="ide-main pane pane--focus" aria-label="Editor">
+        <main class="ide-main pane pane--focus sl-pane" data-lit aria-label="Editor">
           <div class="ide-tabs sl-tabs__list sl-tabs--tile" role="tablist">
             <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="true" data-dirty="true">${I.file}<span>resolve.ts</span><i class="ide-tab__dot sl-tabs__dot" aria-hidden="true"></i><span class="sr">, unsaved</span></button>
             <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="false">${I.file}<span>cache.ts</span></button>
@@ -261,7 +264,7 @@
       ${titlebar("Settings <span>/</span> Workspace", false)}
       <div class="app__body">
         ${activity("gear")}
-        <aside class="set-nav pane" aria-label="Settings sections">
+        <aside class="set-nav pane sl-pane" aria-label="Settings sections">
           <div class="sl-field set-search"><input class="sl-field__input" placeholder="Search settings" aria-label="Search settings"><kbd class="sl-kbd set-search__k">/</kbd></div>
           <nav class="sl-nav">
             <p class="sl-nav__group">Workspace</p>
@@ -275,7 +278,7 @@
             <a class="sl-nav__item" href="#">Billing</a>
           </nav>
         </aside>
-        <main class="set-main pane pane--focus" aria-label="General settings">
+        <main class="set-main pane pane--focus sl-pane" data-lit aria-label="General settings">
           <header class="set-head">
             <div><p class="sl-eyebrow">Workspace · probe-engine</p><h1 class="set-title">General</h1><p class="set-lede">How this workspace caches evidence, runs agents and reports to the audit.</p></div>
             <div class="sl-segmented" role="tablist" aria-label="Scope"><button class="sl-segmented__item" role="tab" aria-selected="true">Workspace</button><button class="sl-segmented__item" role="tab" aria-selected="false">User</button></div>
@@ -341,7 +344,7 @@
       ${titlebar("probe-engine <span>/</span> Probes")}
       <div class="app__body">
         ${activity("beaker")}
-        <main class="dat-main pane pane--focus" aria-label="Probes">
+        <main class="dat-main pane pane--focus sl-pane" data-lit aria-label="Probes">
           <header class="dat-head">
             <div><p class="sl-eyebrow">Workspace · probe-engine</p><h1 class="set-title">Probes <span class="dat-count" data-count="1284">1,284</span></h1></div>
             <div class="dat-stats">
@@ -476,7 +479,7 @@
       ["Pane label", ".pane__label"], ["Session meta", '.sl-list__row[aria-selected="false"] .sl-list__meta'], ["Session meta, selected", '.sl-list__row[aria-selected="true"] .sl-list__meta'],
       ["Status bar", ".ide-status__item"], ["Terminal output", ".ide-block__out"], ["Terminal time", ".ide-block__meta time"], ["Terminal dim", ".ide-block__out .t-dim"], ["Breadcrumb", ".ide-crumbs span"],
       ["Palette item", '.ide-pal__row[aria-selected="false"] .ide-pal__t'], ["Palette meta", '.ide-pal__row[aria-selected="false"] .ide-pal__m'], ["Palette selected", '.ide-pal__row[aria-selected="true"] .ide-pal__t'],
-      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
+      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
       ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],

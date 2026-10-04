@@ -16,7 +16,9 @@ import { dirname, resolve } from "node:path";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const KIT = resolve(HERE, "../packages/ui-kit");
 const bare = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
-const css = bare(readFileSync(resolve(KIT, "components.css"), "utf8"));
+// workbench.css (0.33) speaks the same register: its status bar is a meta
+// line, so it is a micro label too.
+const css = bare(readFileSync(resolve(KIT, "components.css"), "utf8")) + "\n" + bare(readFileSync(resolve(KIT, "workbench.css"), "utf8"));
 const tokens = bare(readFileSync(resolve(KIT, "tokens.css"), "utf8"));
 
 /** Every style rule as [{ selectors, body, nested }] in source order; `nested`
@@ -52,7 +54,7 @@ const prop = (body, name) => {
 };
 const em = (v) => (v === undefined ? 0 : v === "0" ? 0 : parseFloat(v));
 
-const MICRO = [".sl-eyebrow", ".sl-nav__group", ".sl-stat__label", ".sl-section__idx", ".sl-figure__caption", ".sl-rule--labeled"];
+const MICRO = [".sl-eyebrow", ".sl-nav__group", ".sl-stat__label", ".sl-section__idx", ".sl-figure__caption", ".sl-rule--labeled", ".sl-statusbar"];
 const SENTENCE = [".sl-btn", ".sl-chip", ".sl-badge", ".sl-segmented__item", ".sl-table thead th", ".sl-callout__title", ".sl-field__label", ".sl-breadcrumb"];
 const HEADINGS = [".sl-card__title", ".sl-dialog__title", ".sl-empty__title"];
 

@@ -5,6 +5,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 ```css
 @import "@sondalab/ui-kit/tokens.css";        /* shared: type, spacing, radii, motion, shadow, z */
 @import "@sondalab/ui-kit/components.css";     /* .sl-* components (reads role-vars, see below) */
+@import "@sondalab/ui-kit/workbench.css";      /* optional: IDE and console chrome, see 0.33 below */
 @import "@sondalab/ui-kit/themes/light.css";  /* [data-sl-theme="light"]  surfaces, text, borders, status, accent */
 @import "@sondalab/ui-kit/themes/dark.css";
 @import "@sondalab/ui-kit/themes/high-contrast.css";
@@ -24,6 +25,14 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 ```
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
+
+**0.33.0 — the Lumen workbench.** A new opt-in stylesheet, `workbench.css`, carries the chrome of an IDE or a console, and `components.css` gains a toast stack (owner's Lumen plan, checkpoint C). Additive: no token, role or class changed or went away, and palette-py is unchanged.
+
+- **`workbench.css` (new).** Import it after `components.css` and before `effects.css`. It reads the kit's role-vars, its depth recipes and its shared focus rule, so it does nothing alone, and it adds no role, so a Tier B layer needs no new mapping. Shipped in the package `files` and as the `./workbench.css` export.
+- **`.sl-pane`** is an island. It is the surface rung on the canvas with the island recipe (a lit top line and the quieter ring) at `--sl-radius-pane`, and no border. **`[data-lit]`** marks the pane that holds the focus: the raised rung, a seam of the accent along its top edge (`--slc-seam`), and the seam's glow at `--slc-glow`'s strength. Set it where the focus is, on one pane. The seam is the pane's `::before`. Glass on a pane is unsupported. An aurora may ride it (`::after`). The pane is `position: relative` and `border: 0`. If your pane is a Lumino widget, its inline `position: absolute` still wins.
+- **`.sl-statusbar`** (`__item`, `__sep`, `__dot`, `__spacer`) is the workbench's meta line on the canvas, in the micro register: mono, uppercase, 10.5px, muted. It is 28px tall whatever it holds. Don't put `role="status"` on it.
+- **`.sl-toast-stack` / `.sl-toast`** (`--info`, `--success`, `--warning`, `--danger`; `__mark`, `__content`, `__title`, `__body`, `__dismiss`), in `components.css`. A fixed stack at the bottom right (`--sl-z-toast`) holds toasts that float like a dialog. The tone is a tick on the top edge and the mark's wash. A toast arrives with a 6px rise on the motion tokens, transitions only. The dismiss is an icon button at 24px that keeps its edge. Keep the stack in the DOM from page load as the live region (`aria-live="polite"`). Toasts are `role="status"`, or `role="alert"` for one that must interrupt. Mount the stack under `<body>`, never in an `sl-invert` band.
+- Effects: the kill switches (high contrast, `data-sl-fx="off"`) give a pane or a terminal block its island and a toast or a palette its float back, as they give a control its depth. In an opt-out region the lit pane keeps its seam and loses its glow.
 
 **0.32.1 — the primary's label holds 4.5:1 for every product, theme and state.** A patch: no public token or role is added or removed; the light theme's label and both themes' accent hover and press change value (sondalab-site's composited sweep measured the primary's label under 4.5:1 on 0.32.0 in five places). Measured through the cascade for every registered product, wired as a Tier A theme, as sondalab-site's product section and as a Tier B page, on both themes, opaque, with no script, in an opt-out region and on a built glass pane (lensed or not) over the canvas, a surface and a raised surface, at rest, hovered and pressed (450 cells, and the danger primary's 450): the worst label was 1.01:1 (a Tier B glass primary) and 3.15 elsewhere, and is now 4.84; every hover and press moves at least ΔE 4.5 (OKLab × 100), and the edge and foot follow it (`scripts/primary-label.test.mjs`).
 
@@ -151,7 +160,9 @@ Patterns (page-level composition, shipped classes since 0.10.0): `.sl-wrap`, `.s
 
 App structure: `.sl-nav` (`__group` / `__item` / `__count`; current item via `aria-current`), `.sl-list` (`__row` / `__meta`, `--dense`; selection via `aria-selected` or `aria-current`), `.sl-disclosure` (`aria-expanded`), `.sl-kv` (a `<dl>`), `.sl-resizer` (`--horizontal`; `role="separator"`, the drag is the consumer's).
 
-Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`).
+Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`), `.sl-toast-stack` / `.sl-toast` (0.33; the consumer adds, times and removes toasts).
+
+Workbench (`workbench.css`, opt-in since 0.33): `.sl-pane` (`[data-lit]`), `.sl-statusbar` (`__item` / `__sep` / `__dot` / `__spacer`).
 
 ### Colour contract — role-vars (`--slc-*`)
 

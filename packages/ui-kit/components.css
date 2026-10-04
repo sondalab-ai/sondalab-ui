@@ -213,14 +213,15 @@
   --slc-sunken: var(--sl-bg-sunken,  var(--slc-surface));
   --slc-lit:    var(--sl-border-lit, color-mix(in srgb, white 8%, transparent));
   /* The accent where it marks the focus of attention as a line of light
-     (the lit pane's seam, from 0.33). It is the accent as a thin line. */
+     (the current nav item's seam, the lit pane's, workbench.css). It is the
+     accent as a thin line. */
   --slc-seam:   var(--slc-accent-text);
   /* How strongly an accent glow shows: a number, not a colour, because it
      cannot be read off the ground. 0.5 here and on dark, 0.35 on the light
      theme, 0 on high contrast and under forced colours (blocks at the end).
-     A checked control's glow spends it (0.32), and so will the lit pane
-     (0.33); the focus halo only asks whether it is 0, and keeps its ~22%
-     on paper and ink alike (owner's ruling). */
+     A checked control's glow spends it (0.32), and so do the lit pane and
+     the toast's tick (0.33); the focus halo only asks whether it is 0, and
+     keeps its ~22% on paper and ink alike (owner's ruling). */
   --slc-glow:   0.5;
   --slc-depth-tile:   inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border), var(--slc-shadow-sm);
   /* A tile that does not leave its row: an active tab, a current activity
@@ -1331,6 +1332,110 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-dialog__body { font-family: var(--sl-font-sans, system-ui, sans-serif); font-size: var(--sl-text-sm, 0.875rem); line-height: var(--sl-line-normal, 1.5); color: var(--slc-text-secondary); margin: 0 0 var(--sl-space-5, 1.5rem); }
 .sl-dialog__actions { display: flex; justify-content: flex-end; gap: var(--sl-space-3, 0.75rem); }
+
+/* Toast (Lumen, 0.33) — a message that arrives, in a stack at the bottom
+   right, newest last (nearest the corner). The stack is the live region and
+   exists before the first toast does: a region inserted with its content is
+   not announced.
+     <section class="sl-toast-stack" aria-label="Notifications" aria-live="polite">
+       <div class="sl-toast sl-toast--success" role="status">
+         <span class="sl-toast__mark" aria-hidden="true"><svg …/></span>
+         <div class="sl-toast__content"><p class="sl-toast__title">Probe saved</p>
+           <p class="sl-toast__body">q-8f2a re-runs in 14 days</p></div>
+         <button class="sl-icon-btn sl-toast__dismiss" aria-label="Dismiss">…</button>
+       </div>
+     </section>
+   A toast that must interrupt is role="alert" instead. The stack lets the
+   pointer through where it has no toast. The overlay's own border in shade
+   is its ring and the float recipe its cast, as a dialog's. Its tone is a
+   measure tick on the top edge (the callout's, with the tone's glow as
+   strong as --slc-glow says) and the mark's wash; the words stay neutral. */
+.sl-toast-stack {
+  position: fixed;
+  inset-block-end: var(--sl-space-5, 1.5rem);
+  inset-inline-end: var(--sl-space-5, 1.5rem);
+  z-index: var(--sl-z-toast, 200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-space-2, 0.5rem);
+  width: min(22rem, calc(100vw - 2 * var(--sl-space-5, 1.5rem)));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.sl-toast-stack > * { pointer-events: auto; }
+.sl-toast {
+  --_sl-tone: var(--slc-text-muted);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-3, 0.75rem);
+  padding: var(--sl-space-3, 0.75rem) var(--sl-space-3, 0.75rem) var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text);
+  background-color: var(--slc-raised);
+  border: 1px solid var(--slc-edge-raised);
+  border-radius: var(--sl-radius-lg, 14px);
+  box-shadow: var(--slc-depth-float);
+  /* It arrives as the dialog does (L4): a 6px rise and a fade on the
+     arrival curve, transitions only, so reduced motion (which zeroes the
+     tokens) shows it at once, and so does a browser without @starting-style. */
+  transition:
+    opacity var(--sl-motion-mid, 220ms) var(--sl-motion-enter, var(--sl-motion-ease, ease)),
+    translate var(--sl-motion-mid, 220ms) var(--sl-motion-enter, var(--sl-motion-ease, ease));
+}
+@starting-style { .sl-toast { opacity: 0; translate: 0 6px; } }
+.sl-toast::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -1px;
+  inset-inline-start: var(--sl-space-4, 1rem);
+  width: 2.75rem;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background-color: var(--_sl-tone);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--_sl-tone) calc(var(--slc-glow) * 100%), transparent);
+  pointer-events: none;
+}
+.sl-toast--info    { --_sl-tone: var(--slc-info-text, var(--slc-info)); }
+.sl-toast--success { --_sl-tone: var(--slc-success-text, var(--slc-success)); }
+.sl-toast--warning { --_sl-tone: var(--slc-warning-text, var(--slc-warning)); }
+.sl-toast--danger  { --_sl-tone: var(--slc-danger-text, var(--slc-danger)); }
+/* The badge's recipe: the tone's ink on a 12% wash of itself, which
+   palette-contrast.test.mjs holds to 4.5:1 on every ground. */
+.sl-toast__mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  color: var(--_sl-tone);
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+.sl-toast__content { flex: 1; min-width: 0; }
+.sl-toast__title {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--slc-text);
+}
+.sl-toast__body {
+  margin: 0;
+  font-size: var(--sl-text-xs, 0.75rem);
+  color: var(--slc-text-secondary);
+}
+/* The small button's 24px, so it sits on the row of an action beside it.
+   It keeps the one control edge: only the tab's close glyph and the
+   activity bar's buttons are borderless chrome (L3). */
+.sl-icon-btn.sl-toast__dismiss {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--sl-radius-sm, 6px);
+}
 
 /* Tabs — visual only. Consumer supplies ARIA + panel switching:
    <div class="sl-tabs__list" role="tablist">

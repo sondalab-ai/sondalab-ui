@@ -13,11 +13,14 @@
    repeated property takes its last declaration), custom-property
    inheritance through scope() in css-color.mjs, and a colour longhand
    against its shorthand (longhand(), which throws on a shorthand it cannot
-   read). box() resolves the padding and border shorthands only.
-   Not covered: pseudo-elements (a part naming one never matches an
-   element), inherited font-size (box() reads the element's own or 16px),
-   @layer, shadow DOM, and anything a layout engine decides. An attribute
-   selector it cannot read throws rather than match. */
+   read). box() resolves the padding and border shorthands only. A
+   pseudo-element is a child of its originating element made with
+   el({ pseudo: "before", parent: origin }): it matches a selector ending
+   in ::before against that origin, and inherits from it; a part naming a
+   pseudo-element anywhere else never matches an element.
+   Not covered: inherited font-size (box() reads the element's own or
+   16px), @layer, shadow DOM, and anything a layout engine decides. An
+   attribute selector it cannot read throws rather than match. */
 import { scope, substitute } from "./css-color.mjs";
 
 const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -116,9 +119,11 @@ export function parseSheet(css, flags = {}, orderBase = 0) {
   return rules;
 }
 
-/** A mock element: { tag, classes, attrs, states, parent, prev }. */
-export function el({ tag = "div", classes = [], attrs = {}, states = [], parent = null, prev = null } = {}) {
-  return { tag, classes: new Set(classes), attrs: new Map(Object.entries(attrs)), states: new Set(states), parent, prev };
+/** A mock element: { tag, classes, attrs, states, parent, prev }. With
+ *  `pseudo` ("before", "after") it is that pseudo-element of `parent`. */
+export function el({ tag = "div", classes = [], attrs = {}, states = [], parent = null, prev = null, pseudo = null } = {}) {
+  if (pseudo && !parent) throw new Error("a pseudo-element needs its originating element as parent");
+  return { tag, classes: new Set(classes), attrs: new Map(Object.entries(attrs)), states: new Set(states), parent, prev, pseudo };
 }
 
 /** Splits a complex selector into [combinator, compound] pairs, right to left. */
@@ -195,8 +200,14 @@ function matchCompound(c, e) {
   return true;
 }
 
-/** Does a complex selector match the element? */
+/** Does a complex selector match the element? A pseudo-element matches a
+ *  selector whose subject ends in its own ::name, read on its origin. */
 export function matches(sel, e) {
+  if (e.pseudo) {
+    const m = sel.match(/::([\w-]+)$/);
+    if (!m || m[1] !== e.pseudo) return false;
+    return matches(sel.slice(0, -m[0].length) || "*", e.parent);
+  }
   const cs = compounds(sel);
   const step = (k, node) => {
     if (k < 0) return true;
@@ -315,4 +326,20 @@ export function box(rules, e) {
     if (later) { const [t, , b = t] = tokensOf(substitute(bw.value, env)).map((x) => px(x, env, fs)); border.top = t; border.bottom = b; }
   }
   return { height: border.top + padding.top + line + padding.bottom + border.bottom, border, padding, line, fontSize: fs, won, env };
+}
+
+/** The border-box height an element declares with `height`, or null when it
+ *  declares none: the value itself under border-box, plus its padding and
+ *  border under content-box. A line-driven box (a button) is box()'s. */
+export function declaredHeight(rules, e) {
+  const won = cascaded(rules, e);
+  if (!won.has("height")) return null;
+  const env = customs(rules, e);
+  const fs = won.has("font-size") ? px(won.get("font-size").value, env) : 16;
+  const h = px(won.get("height").value, env, fs);
+  if (substitute(won.get("box-sizing")?.value ?? "content-box", env).trim() === "border-box") return h;
+  const padding = sides(won, "padding", { top: "padding-top", bottom: "padding-bottom", "top,bottom": "padding-block" }, env, fs, tokensOf);
+  const width = (v) => [tokensOf(substitute(v, env).trim()).find((x) => /^(-?\d|calc\(|min\(|max\()/.test(x)) ?? "0"];
+  const border = sides(won, "border", { top: "border-top-width", bottom: "border-bottom-width", "top,bottom": "border-block-width" }, env, fs, width);
+  return h + padding.top + padding.bottom + border.top + border.bottom;
 }
