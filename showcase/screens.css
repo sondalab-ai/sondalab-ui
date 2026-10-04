@@ -63,7 +63,8 @@ svg { flex: none; }
    status bar's micro register and hairlines, the toast tick's width, the
    tree's guides and twisty, the palette's well, the exit mark's width. */
 [data-dir="lumen"] .ide-main.sl-pane::before { content: none; }
-[data-dir="lumen"] .sl-statusbar { height: auto; font-family: inherit; font-weight: inherit; letter-spacing: normal; text-transform: none; line-height: inherit; }
+[data-dir="lumen"] .sl-statusbar { height: auto; line-height: inherit; }
+[data-dir="lumen"] .sl-statusbar__item { line-height: 22px; }
 [data-dir="lumen"] .sl-statusbar__sep { display: none; }
 [data-dir="lumen"] .sl-toast::before { width: auto; }
 [data-dir="lumen"] .sl-toast__dismiss { width: 2rem; height: 2rem; }
@@ -182,7 +183,7 @@ svg { flex: none; }
 
 /* the status bar is the kit's (.sl-statusbar, 0.33): only the facts' own marks are the stage's */
 .ide-status__item b { font-weight: 500; }
-.ide-status__diag { gap: 0.6rem; } .ide-status__diag > span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.ide-status__diag > span { display: inline-flex; align-items: center; gap: 0.25rem; vertical-align: middle; } .ide-status__diag > span + span { margin-inline-start: 0.6rem; }
 .ide-warn { color: var(--slc-warning-text, var(--slc-warning)); }
 
 /* overlays */

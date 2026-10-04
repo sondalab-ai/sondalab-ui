@@ -210,7 +210,8 @@
         "--slc-text-muted",
         "--slc-border",
         "--slc-tile",
-        "--slc-depth-flat"
+        "--slc-depth-flat",
+        "--slc-seam"
       ]
     },
     {
@@ -263,6 +264,7 @@
       "kind": "primitive",
       "classes": [
         "sl-toast-stack",
+        "sl-toast-stack__live",
         "sl-toast",
         "sl-toast--info",
         "sl-toast--success",
@@ -581,7 +583,8 @@
         "--slc-depth-tile",
         "--slc-text-muted",
         "--slc-text",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -652,7 +655,8 @@
         "--slc-text",
         "--slc-tile",
         "--slc-depth-tile",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -729,7 +733,8 @@
         "--slc-accent-text",
         "--slc-tile",
         "--slc-depth-tile",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -790,12 +795,14 @@
       "classes": [
         "sl-statusbar",
         "sl-statusbar__item",
+        "sl-statusbar__value",
         "sl-statusbar__sep",
         "sl-statusbar__dot",
         "sl-statusbar__spacer"
       ],
       "roleVars": [
         "--slc-text-muted",
+        "--slc-text",
         "--slc-border",
         "--slc-accent-text"
       ]
@@ -837,7 +844,8 @@
         "--slc-depth-tile",
         "--slc-depth-flat",
         "--slc-border-subtle",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -867,7 +875,8 @@
         "--slc-text-muted",
         "--slc-accent-text",
         "--slc-sunken",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-text-secondary"
       ]
     },
     {
@@ -884,6 +893,7 @@
       ],
       "roleVars": [
         "--slc-raised",
+        "--slc-sunken",
         "--slc-depth-island",
         "--slc-text",
         "--slc-text-secondary",

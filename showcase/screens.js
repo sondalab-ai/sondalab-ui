@@ -78,7 +78,7 @@
   // in the micro register on the canvas, never role="status" on the whole bar
   const status = (extra = "") => `
     <footer class="ide-status sl-statusbar" aria-label="Status">
-      <span class="ide-status__item sl-statusbar__item ide-status__branch">${I.branch}main<b data-count="2">↑2</b></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__branch">${I.branch}<b class="sl-statusbar__value">main</b> <b data-count="2">↑2</b></span>
       <span class="ide-status__item sl-statusbar__item">${I.sync}synced</span>
       <span class="sl-statusbar__sep" aria-hidden="true"></span>
       <span class="ide-status__item sl-statusbar__item ide-status__diag"><span class="ide-err">${I.err}<b>0</b></span><span class="ide-warn">${I.warn}<b>2</b></span></span>
@@ -91,7 +91,7 @@
       <span class="ide-status__item sl-statusbar__item">LF</span>
       <span class="ide-status__item sl-statusbar__item">TypeScript</span>
       <span class="sl-statusbar__sep" aria-hidden="true"></span>
-      <span class="ide-status__item sl-statusbar__item ide-status__model">${I.sparkle}Opus · <b>1.2k</b> tok/s</span>
+      <span class="ide-status__item sl-statusbar__item ide-status__model">${I.sparkle}Opus · <b class="sl-statusbar__value">1.2k</b> tok/s</span>
     </footer>`;
 
   /* ── IDE ────────────────────────────────────────────────────────────────── */
@@ -100,11 +100,18 @@
       [0, "dir", "src", true], [1, "dir", "probe", true], [2, "file", "resolve.ts", false, "M", "sel"], [2, "file", "cache.ts"], [2, "file", "evidence.ts", false, "U"],
       [2, "file", "resolve.test.ts"], [1, "dir", "audit", false], [1, "dir", "tokens", false], [0, "dir", "tests", false], [0, "file", "package.json"], [0, "file", "README.md"], [0, "file", "sondalab.tokens.json", false, "M"],
     ];
-    // the kit's tree (workbench.css, 0.33): its level written twice, for
-    // assistive tech and for the paint; the svg chevrons are the target's
-    // (the kit draws its own twisty), the icon a direct child of the row
-    return `<ul class="ide-tree sl-tree" role="tree" aria-label="Files">${rows.map(([d, t, n, open, git, sel]) => `
-      <li class="ide-tree__row sl-tree__row${sel ? " is-sel" : ""}" role="treeitem" aria-level="${d + 1}" ${sel ? 'aria-selected="true" tabindex="0"' : 'aria-selected="false" tabindex="-1"'} ${t === "dir" ? `aria-expanded="${open}"` : ""} style="--d:${d}; --sl-tree-level: ${d + 1}">
+    // the kit's tree (workbench.css, 0.33): the indent reads aria-level; the
+    // svg chevrons are the target's (the kit draws its own twisty), the icon
+    // a direct child of the row
+    // a flat list carries its own hierarchy: each row's set is the run of rows at its level under the same parent
+    const place = rows.map(([d], i) => {
+      let from = i; while (from > 0 && rows[from - 1][0] >= d) from--;
+      let to = i; while (to < rows.length - 1 && rows[to + 1][0] >= d) to++;
+      const set = rows.slice(from, to + 1).map((r, k) => [r[0], from + k]).filter(([rd]) => rd === d).map(([, k]) => k);
+      return [set.length, set.indexOf(i) + 1];
+    });
+    return `<ul class="ide-tree sl-tree" role="tree" aria-label="Files">${rows.map(([d, t, n, open, git, sel], i) => `
+      <li class="ide-tree__row sl-tree__row${sel ? " is-sel" : ""}" role="treeitem" aria-level="${d + 1}" aria-setsize="${place[i][0]}" aria-posinset="${place[i][1]}" ${sel ? 'aria-selected="true" tabindex="0"' : 'aria-selected="false" tabindex="-1"'} ${t === "dir" ? `aria-expanded="${open}"` : ""}>
         <span class="ide-tree__tw sl-tree__twisty" aria-hidden="true">${t === "dir" ? (open ? I.chevD : I.chevR) : ""}</span>
         ${(t === "dir" ? I.folder : I.file).replace("<svg ", `<svg class="ide-tree__ic ide-tree__ic--${t}" `)}
         <span class="ide-tree__name sl-tree__label">${n}</span>
@@ -204,8 +211,8 @@
   const palette = () => `
     <div class="ide-scrim" aria-hidden="false">
       <div class="ide-pal sl-palette" role="dialog" aria-label="Command palette">
-        <div class="ide-pal__in sl-palette__head">${I.search18}<input class="ide-pal__input sl-field__input sl-palette__input" value="run probe" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command"><span class="ide-pal__scope">Commands</span></div>
-        <div class="ide-pal__list sl-palette__list" id="pal-list" role="listbox" aria-label="Results">
+        <div class="ide-pal__in sl-palette__head">${I.search18}<input class="ide-pal__input sl-field__input sl-palette__input" value="run probe" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command"><span class="ide-pal__scope">Commands</span></div>
+        <div class="ide-pal__list sl-palette__list" id="pal-list" role="listbox" aria-label="Results" tabindex="-1">
           <div role="group" aria-labelledby="pal-g1">
             <p class="ide-pal__grp sl-palette__group" id="pal-g1" role="presentation">Commands</p>
             <div class="ide-pal__row sl-palette__row" id="pal-1" role="option" aria-selected="true">${I.play}<span class="ide-pal__t sl-palette__label"><mark>Run</mark> probe q-8f2a</span><span class="ide-pal__m sl-palette__meta">resolve.ts</span>${PK("⌘", "⏎")}</div>
@@ -220,18 +227,19 @@
         <footer class="ide-pal__foot sl-palette__foot"><span>${K("↑", "↓")} navigate</span><span>${K("⏎")} run</span><span>${K("⇥")} scope</span><span class="ide-pal__sp"></span><span>${K("esc")} close</span></footer>
       </div>
     </div>`;
-  // the kit's toast stack (components.css, 0.33): the stack is the live region
+  // the kit's toast stack (components.css, 0.33): two live regions side by side, the toasts role-less
   const toast = () => `
-    <section class="ide-toasts sl-toast-stack" aria-label="Notifications" aria-live="polite">
-      <div class="ide-toast ide-toast--back sl-toast" aria-hidden="true"></div>
-      <div class="ide-toast sl-toast sl-toast--success" role="status" data-tone="success">
+    <div class="ide-toasts sl-toast-stack">
+      <div class="sl-toast-stack__live" aria-live="polite"><div class="ide-toast ide-toast--back sl-toast" aria-hidden="true"></div>
+      <div class="ide-toast sl-toast sl-toast--success" data-tone="success">
         <span class="ide-toast__mark sl-toast__mark" aria-hidden="true">${I.check}</span>
         <div class="ide-toast__text sl-toast__content"><p class="ide-toast__title sl-toast__title">Probe saved</p><p class="ide-toast__body sl-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
         <button class="sl-btn sl-btn--sm ide-toast__undo lab-focus" data-key="⌘Z">Undo</button>
         <button class="sl-icon-btn sl-toast__dismiss ide-toast__x" aria-label="Dismiss">${I.close}</button>
         <div class="sl-progress ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
-      </div>
-    </section>`;
+      </div></div>
+      <div class="sl-toast-stack__live" role="alert"></div>
+    </div>`;
   const ide = () => `
     <div class="app ide" data-fig="fig. 01 — the workbench">
       ${titlebar("probe-engine <span>/</span> src <span>/</span> probe")}
@@ -473,6 +481,8 @@
   });
   // the static focus mirror leaves the moment a real one arrives
   stage.addEventListener("focusin", () => stage.querySelectorAll(".lab-focus").forEach((n) => n.classList.remove("lab-focus")), { once: true });
+  // focus=tree puts the real focus in the explorer's tree, so a capture shows its focused seam
+  if (new URLSearchParams(location.search).get("focus") === "tree") stage.querySelector('.sl-tree__row[tabindex="0"]')?.focus();
 
   /* ── measurement ────────────────────────────────────────────────────────── */
   // the maths is screens-contrast.js (unit-tested); this part reads the DOM
@@ -515,6 +525,30 @@
   // ships .sl-btn--danger); they are the target's hooks, so they are sampled.
   const FORCED = ".lab-focus, .lab-hover";
   const pick = (sel) => [...stage.querySelectorAll(sel)].find((e) => !e.closest(FORCED)) || null;
+  // The state cue of a selected or current tile (ui-kit 0.33, THE SEAM): the
+  // seam's ink, resolved by a probe that paints it as its colour (currentColor
+  // is then the tile's, as in the seam's own gradient), against the tile's
+  // ground. Kit view only: the target draws none. A seam that is absent or a
+  // colour the canvas cannot read reports null, which counts as a failure.
+  const CUE = {
+    ide: [["Tree selection (unfocused)", ".ide-tree__row.is-sel"], ["Session selected", '.ide-sessions .sl-list__row[aria-selected="true"]'], ["Tile tab", '.ide-tab[aria-selected="true"]'],
+      ["Palette active row", '.ide-pal__row[aria-selected="true"]'], ["Current view", ".ide-activity__btn[aria-current]"]],
+    settings: [["Nav current", ".sl-nav__item[aria-current]"], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Scope segment", '.set-head .sl-segmented__item[aria-selected="true"]'], ["Current view", ".ide-activity__btn[aria-current]"]],
+    data: [["View segment", '.dat-tools .sl-segmented__item[aria-selected="true"]'], ["Current page", ".sl-pagination__item[aria-current]"], ["Current view", ".ide-activity__btn[aria-current]"]],
+  };
+  // the canvas keeps its last fillStyle when it cannot parse a string: an opaque sentinel unmasks that
+  const parseInk = (str) => { cx.clearRect(0, 0, 1, 1); cx.fillStyle = "rgb(1, 2, 3)"; cx.fillStyle = str; cx.fillRect(0, 0, 1, 1); const [r, g, b, a] = cx.getImageData(0, 0, 1, 1).data; return r === 1 && g === 2 && b === 3 && a === 255 ? null : [r, g, b, a / 255]; };
+  function cueContrast(el) {
+    if (!/gradient\(/.test(getComputedStyle(el).backgroundImage)) return null;
+    const probe = document.createElement("span");
+    probe.style.color = "var(--_sl-seam-ink)";
+    el.append(probe);
+    const ink = parseInk(getComputedStyle(probe).color);
+    probe.remove();
+    if (!ink) return null;
+    const g = groundOf(el);
+    return ratio(over(ink, g), g);
+  }
   // keycaps measured per screen: the first few carry every variant (primary, ghost, small)
   const MAX_KEYCAPS = 4;
   const SIDES = ["Top", "Right", "Bottom", "Left"];
@@ -541,7 +575,8 @@
     // entrance animations hold text at opacity 0 in a background tab (timers and
     // frames are frozen there): settle every finite one before reading colours
     document.getAnimations().forEach((a) => { try { if (a.effect && a.effect.getComputedTiming().endTime !== Infinity) a.finish(); } catch (e) {} });
-    const out = { text: [], edge: [], heights: {} };
+    const out = { text: [], edge: [], cue: [], heights: {} };
+    if (H.getAttribute("data-dir") === "kit") for (const [name, sel] of CUE[screen] || []) { const el = pick(sel); out.cue.push([name, el ? cueContrast(el) : null]); }
     for (const [name, sel] of TEXT[screen] || []) {
       const el = pick(sel); if (!el) { out.text.push([name, null]); continue; }
       const g = groundOf(el), cs = getComputedStyle(el), c = rgba(cs.color); c[3] *= opac(el);

@@ -201,7 +201,7 @@
     <section class="gutter report" aria-labelledby="report-title">
       <div class="report__head">
         <h2 id="report-title">Measured in each frame</h2>
-        <p>WCAG 2 contrast of every text role the screen shows against its composited ground (≥ 4.5 at any size), the contrast of each control's boundary against what surrounds it (≥ 3), and control heights against the kit's 32px. A ground is composited from background colours only: a gradient or image under the text is not sampled. Ratios are compared at full precision and shown floored to two decimals. Rows marked · are information, not checks.</p>
+        <p>WCAG 2 contrast of every text role the screen shows against its composited ground (≥ 4.5 at any size), the contrast of each control's boundary against what surrounds it (≥ 3), the seam that marks a selected or current tile against the tile (≥ 3; the kit view only), and control heights against the kit's 32px. A ground is composited from background colours only: a gradient or image under the text is not sampled. Ratios are compared at full precision and shown floored to two decimals. Rows marked · are information, not checks.</p>
         <button class="copy" id="copy" type="button">Copy as JSON</button>
       </div>
       <div class="reps" id="report"></div>
@@ -315,6 +315,8 @@
         if (m) {
           m.text.forEach(function (r) { if (r[1] != null) { checks++; if (r[1] < 4.5) fails++; } });
           m.edge.forEach(function (r) { if (r[1] != null && !/\(info/.test(r[0])) { checks++; if (r[1] < 3) fails++; } });
+          // a state cue that cannot be read is a failure, never a silent pass
+          (m.cue || []).forEach(function (r) { checks++; if (r[1] == null || r[1] < 3) fails++; });
           var hs = Object.keys(m.heights).map(function (k) {
             var control = CONTROLS.indexOf(k) > -1, v = m.heights[k];
             if (control && v != null) { checks++; if (v !== CONTROL_H) fails++; }
@@ -323,6 +325,7 @@
           }).join("");
           html += "<table><caption class=\"mono\">Text · ≥ 4.5</caption>" + rows(m.text, 4.5) + "</table>" +
             "<table><caption class=\"mono\">Control boundary · ≥ 3</caption>" + rows(m.edge, 3) + "</table>" +
+            (m.cue && m.cue.length ? "<table><caption class=\"mono\">Selected state cue · ≥ 3</caption>" + m.cue.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td class=\"" + (r[1] == null || r[1] < 3 ? "bad" : "ok") + "\">" + (r[1] == null ? "unread" : show(r[1])) + "</td></tr>"; }).join("") + "</table>" : "") +
             (hs ? "<table><caption class=\"mono\">Heights · controls " + CONTROL_H + "px</caption>" + hs + "</table>" : "");
         }
         var bad = h.sheets.filter(function (s) { return !s.ok; });

@@ -148,9 +148,13 @@ test("the cascade reads every attribute operator, and throws on a form it does n
   const e = el({ attrs: { "data-x": "foo-bar baz", lang: "en-GB" }, parent: el({ tag: "html" }) });
   for (const [sel, want] of [['[data-x^="foo"]', true], ['[data-x^="baz"]', false], ['[data-x$="baz"]', true], ['[data-x$="foo"]', false],
     ['[data-x~="baz"]', true], ['[data-x~="bar"]', false], ["[lang|=en]", true], ['[lang|="GB"]', false], ['[data-x*="o-b"]', true],
-    ["[data-x='foo-bar baz']", true], ["[data-x='foo']", false], ['[data-x="foo"]', false], ["[data-x]", true], ["[data-y]", false]]) {
+    ["[data-x='foo-bar baz']", true], ["[data-x='foo']", false], ['[data-x="foo"]', false], ["[data-x]", true], ["[data-y]", false],
+    // CSS: an empty or a whitespace-carrying ~= operand never matches
+    ['[data-x~=""]', false], ['[data-x~="foo-bar baz"]', false]]) {
     assert.equal(matches(sel, e), want, sel);
   }
+  // a value with a leading space splits into an empty word, which ~="" must still not match
+  assert.equal(matches('[data-y~=""]', el({ attrs: { "data-y": " lead" }, parent: el({ tag: "html" }) })), false, '~="" never matches');
   assert.throws(() => matches('[data-x!="y"]', e), /cannot read the attribute selector/);
   assert.throws(() => matches('[data-x="y" i]', e), /cannot read the attribute selector/);
 });

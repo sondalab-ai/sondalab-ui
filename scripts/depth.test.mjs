@@ -262,9 +262,9 @@ test("every depth recipe resolves on every product and theme, the band and Tier 
 
 // [host, its selected rule, the depth it lifts with, the rule its text colour comes from]
 const TILES = [
-  ["list row", '.sl-list__row:is([aria-selected="true"], [aria-current])', "tile", ".sl-list__row"],
-  ["nav item", ".sl-nav__item[aria-current]", "tile", ".sl-nav__item[aria-current]"],
-  ["pagination item", ".sl-pagination__item[aria-current]", "tile", ".sl-pagination__item[aria-current]"],
+  ["list row", '.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))', "tile", ".sl-list__row"],
+  ["nav item", '.sl-nav__item[aria-current]:not([aria-current="false"])', "tile", '.sl-nav__item[aria-current]:not([aria-current="false"])'],
+  ["pagination item", '.sl-pagination__item[aria-current]:not([aria-current="false"])', "tile", '.sl-pagination__item[aria-current]:not([aria-current="false"])'],
   ["segmented item", '.sl-segmented__item[aria-selected="true"], .sl-segmented__item[aria-pressed="true"]', "tile", '.sl-segmented__item[aria-selected="true"], .sl-segmented__item[aria-pressed="true"]'],
   ["table row", '.sl-table tbody tr[aria-selected="true"]', "tile", ".sl-table"],
   ["tile tab", '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]', "flat", '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]'],
@@ -312,7 +312,7 @@ test("hover never lifts: a flat wash, no depth", () => {
 });
 
 test("the accent marks only the icon of a selected row, item or tab", () => {
-  assert.equal(decl(rule(':is(.sl-list__row:is([aria-selected="true"], [aria-current]), .sl-nav__item[aria-current]) > svg'), "color"), "var(--slc-accent-text)");
+  assert.equal(decl(rule(':is(.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"])), .sl-nav__item[aria-current]:not([aria-current="false"])) > svg'), "color"), "var(--slc-accent-text)");
   assert.equal(decl(rule('.sl-tabs--tile .sl-tabs__tab[aria-selected="true"] > svg'), "color"), "var(--slc-accent-text)");
 });
 
@@ -328,7 +328,7 @@ for (const [theme, product] of CASES) {
         if (r < 4.5) low.push(`${label} ${host} ${r.toFixed(2)}`);
       }
       // the meta and count on a selected row or item step up to the secondary ink
-      const meta = decl(rule('.sl-list__row:is([aria-selected="true"], [aria-current]) .sl-list__meta, .sl-nav__item[aria-current] .sl-nav__count'), "color");
+      const meta = decl(rule('.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"])) .sl-list__meta, .sl-nav__item[aria-current]:not([aria-current="false"]) .sl-nav__count'), "color");
       const r = ratio(over(evaluate(meta, env), tile), tile);
       if (r < 4.5) low.push(`${label} meta ${r.toFixed(2)}`);
     }
@@ -351,7 +351,7 @@ test("forced colours: a selected tile becomes Highlight, a selected table row is
   const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
   const fill = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[2].includes("background: Highlight") && m[1].includes(".sl-segmented__item"));
   assert.ok(fill);
-  for (const s of [".sl-nav__item[aria-current]", '.sl-list__row:is([aria-selected="true"], [aria-current])', '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]', ".sl-pagination__item[aria-current]"]) {
+  for (const s of ['.sl-nav__item[aria-current]:not([aria-current="false"])', '.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))', '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]', '.sl-pagination__item[aria-current]:not([aria-current="false"])']) {
     assert.ok(fill[1].includes(s), s);
   }
   const close = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[1].includes(".sl-tabs__close") && /HighlightText/.test(m[2]));
@@ -585,7 +585,7 @@ test("a selected tile that wears an effect keeps its tile through the effects ki
   const cmp = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
   const at = FX_RULES.indexOf(kill);
   for (const [depth, hosts] of [
-    ["tile", [".sl-pagination__item[aria-current]", '.sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"])', ".sl-nav__item[aria-current]", '.sl-list__row:is([aria-selected="true"], [aria-current])']],
+    ["tile", ['.sl-pagination__item[aria-current]:not([aria-current="false"])', '.sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"])', '.sl-nav__item[aria-current]:not([aria-current="false"])', '.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))']],
     ["flat", ['.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]']],
   ]) {
     const keep = FX_RULES.find((r, i) => i > at && new RegExp(`box-shadow:\\s*var\\(--slc-depth-${depth}\\) !important`).test(r.body));
@@ -603,58 +603,72 @@ test("a selected tile that wears an effect keeps its tile through the effects ki
   }
 });
 
-// ── the current nav item's seam (owner, 2026-10-02) ─────────────────────────
+// ── the seam: the state cue of every selected or current tile (0.33) ─────────
 
-// The tile alone finds the current destination at about 1.0-1.3:1 against its
-// ground; the 2px accent edge it replaced read >= 5.24:1. The owner kept a
-// stronger cue: a seam of the accent, Lumen's mark for the focus of
-// attention, inside the tile's leading edge. It must read at 3:1 (a graphical
-// object) against the tile it sits on, everywhere the tile does.
-const NAV = ".sl-nav__item[aria-current]";
+// The tile is depth, not a state cue: its fill and its ring against its ground
+// measure 1.00-1.42:1. The nav item carried a seam since 0.31 (owner,
+// 2026-10-02); since 0.33 every selected or current tile does, from one rule:
+// the accent while its container holds the focus, the muted ink while it does
+// not. Its contrast in every context is workbench.test.mjs's (the cascade);
+// this holds the rule's shape.
+const SEAM_HOSTS = [
+  '.sl-nav__item[aria-current]:not([aria-current="false"])',
+  '.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])',
+  '.sl-tree__row[aria-selected="true"]',
+  '.sl-palette__row[aria-selected="true"]',
+  '.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))',
+  '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]',
+  '.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])',
+  '.sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"])',
+  '.sl-pagination__item[aria-current]:not([aria-current="false"])',
+];
+const SEAM = RULES.find((r) => /background-image:\s*linear-gradient\(var\(--_sl-seam-ink\)/.test(r.body));
 
-test("the current nav item carries a seam: 2px, half its height, centred, 3px in, a layer of its own background", () => {
-  const nav = rule(NAV);
-  for (const [p, v] of [["background-color", "var(--slc-tile)"], ["background-image", "linear-gradient(var(--slc-seam), var(--slc-seam))"], ["background-repeat", "no-repeat"], ["background-size", "2px 50%"], ["background-position", "3px 50%"], ["--_sl-depth", "var(--slc-depth-tile)"]]) {
-    assert.equal(decl(nav, p), v, p);
+test("one rule draws the seam on every selected or current tile, as a layer of its background", () => {
+  assert.ok(SEAM, "the shared seam rule");
+  assert.deepEqual(selectorParts(SEAM.selector), SEAM_HOSTS, "a comma list, so each state keeps its own weight");
+  for (const [p, v] of [["background-image", "linear-gradient(var(--_sl-seam-ink), var(--_sl-seam-ink)), var(--_sl-layer)"], ["background-repeat", "no-repeat, var(--_sl-layer-repeat)"],
+    ["background-size", "var(--_sl-seam-size), var(--_sl-layer-size)"], ["background-position", "var(--_sl-seam-position), var(--_sl-layer-position)"]]) {
+    assert.equal(decl(SEAM.body, p), v, p);
   }
-  // it arrives with the state and never animates: the image is not transitioned
-  assert.doesNotMatch(decl(rule(".sl-nav__item"), "transition"), /background-image|background-position|background-size|(^|,\s*)background\s/);
-  assert.doesNotMatch(nav, /transition|animation/);
-  // only the current item: hover is a flat wash and draws no seam
-  assert.doesNotMatch(rule(".sl-nav__item:hover"), /background-image/);
+  // the ink: the accent while the container holds the focus, the muted ink while it does not
+  const ink = vars([":where(.sl-nav__item, .sl-activitybar__item, .sl-tree__row, .sl-palette__row, .sl-list__row, .sl-tabs__tab, .sl-tabs__item, .sl-segmented__item, .sl-pagination__item)"]);
+  assert.equal(ink.get("--_sl-seam-ink"), "color-mix(in srgb, var(--slc-seam) calc(var(--_sl-seam-focus, 0) * 100%), var(--slc-text-muted))");
+  assert.equal(ink.get("--_sl-seam-size"), "2px 50%", "a row: half its height");
+  assert.equal(ink.get("--_sl-seam-position"), "3px 50%", "3px inside its leading edge");
+  const row = vars([":where(.sl-tabs__tab, .sl-tabs__item, .sl-segmented__item, .sl-pagination__item)"]);
+  assert.equal(row.get("--_sl-seam-size"), "40% 2px", "a tab, a segment, a page: a short line");
+  assert.equal(row.get("--_sl-seam-position"), "50% calc(100% - 3px)", "3px above its bottom edge");
+  // mirrored right to left on the leading-edge hosts
+  assert.equal(vars([":where(.sl-nav__item, .sl-activitybar__item, .sl-tree__row, .sl-palette__row, .sl-list__row):dir(rtl)"]).get("--_sl-seam-position"), "calc(100% - 3px) 50%");
+  assert.equal(vars([":where(.sl-nav, .sl-activitybar, .sl-tree, .sl-tabs__list, .sl-list, .sl-segmented, .sl-pagination):focus-within"]).get("--_sl-seam-focus"), "1");
+  assert.equal(vars([":where(.sl-palette)"]).get("--_sl-seam-focus"), "1", "a palette always holds the focus");
+  // it arrives with the state and never animates: no host transitions an image
+  for (const sel of [".sl-nav__item", ".sl-list__row", ".sl-segmented__item", ".sl-pagination__item", ".sl-tabs--tile .sl-tabs__tab"]) {
+    assert.doesNotMatch(decl(rule(sel), "transition") ?? "", /background-image|background-position|background-size|(^|,\s*)background\s/, sel);
+  }
+  // the hosts' own state rules set a fill, never the shorthand that would wipe the layer
+  for (const sel of ['.sl-nav__item[aria-current]:not([aria-current="false"])', '.sl-pagination__item[aria-current]:not([aria-current="false"])', '.sl-segmented__item[aria-selected="true"], .sl-segmented__item[aria-pressed="true"]']) {
+    assert.equal(decl(rule(sel), "background-color"), "var(--slc-tile)", sel);
+    assert.equal(decl(rule(sel), "background"), undefined, sel);
+  }
+  // the wrapper tab draws the one seam, the tab inside it none
+  assert.equal(decl(rule('.sl-tabs--tile .sl-tabs__item > .sl-tabs__tab[aria-selected="true"]'), "background-image"), "none");
   // forced colours: the Highlight fill is a shorthand, which resets the seam with the rest
   const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
-  const fill = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[1].includes(".sl-nav__item[aria-current]") && /Highlight/.test(m[2]));
+  const fill = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => m[1].includes(NAV) && /Highlight/.test(m[2]));
   assert.match(fill[2], /(^|;)\s*background:\s*Highlight !important/);
 });
+const NAV = '.sl-nav__item[aria-current]:not([aria-current="false"])';
 
 test("the seam takes no pseudo-element: an effect family owns its host's ::before", () => {
   // every effect family that paints a host's ::before ...
-  for (const fx of [".sl-fx-glass", ".sl-fx-press", ".sl-fx-aurora", ".sl-fx-glitch"]) {
+  for (const fx of [".sl-fx-glass", ".sl-fx-press", ".sl-fx-glitch"]) {
     assert.ok(FX_RULES.some((r) => new RegExp(`${fx.replace(".", "\\.")}[^,{]*::before`).test(r.selector)), `${fx} paints ::before`);
   }
-  // ... so components.css draws nothing on a nav item's pseudo-elements
-  assert.deepEqual(RULES.filter((r) => /\.sl-nav__item[^,{]*::(before|after)/.test(r.selector)).map((r) => r.selector), []);
+  // ... so components.css draws nothing on a seam host's pseudo-elements
+  assert.deepEqual(RULES.filter((r) => /\.sl-(nav__item|list__row|segmented__item|pagination__item|tabs__tab|tabs__item)[^,{]*::(before|after)/.test(r.selector)).map((r) => r.selector), []);
 });
-
-{
-  const envs = [
-    ...CASES.flatMap(([theme, product]) => [[`${theme} ${product}`, () => rootEnv(theme, product), () => evaluate("var(--slc-surface)", rootEnv(theme, product))],
-      [`${theme} ${product} band`, () => (theme === "high-contrast" ? hcBandEnv() : bandEnv(theme, product)), () => evaluate("var(--slc-text)", rootEnv(theme, product))]]),
-    ...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [`${t} ${p} Tier B`, () => tierBEnv(t, p), () => evaluate("var(--slc-surface)", tierBEnv(t, p))])),
-  ];
-  test("the seam reads at 3:1 against the tile, every product and theme, the band, high contrast and Tier B", () => {
-    const low = [];
-    for (const [label, envOf, groundOf] of envs) {
-      const env = envOf();
-      const tile = over(evaluate("var(--slc-tile)", env), groundOf());
-      const seam = decl(rule(NAV), "background-image").match(/^linear-gradient\((.+), \1\)$/)[1];
-      const r = ratio(over(evaluate(seam, env), tile), tile);
-      if (r < 3) low.push(`${label} ${r.toFixed(2)}`);
-    }
-    assert.deepEqual(low, []);
-  });
-}
 
 // The workbench (workbench.css, 0.33) spends the same recipes and adds none:
 // a tree row and a palette result are tiles, the current activity item and
@@ -666,13 +680,13 @@ test("the workbench's selections and surfaces are the kit's depth recipes", () =
   for (const [sel, depth] of [
     ['.sl-tree:focus-within .sl-tree__row[aria-selected="true"]', "tile"],
     ['.sl-tree__row[aria-selected="true"]', "flat"],
-    ['.sl-activitybar__item:is([aria-current], [aria-selected="true"])', "flat"],
+    ['.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])', "flat"],
     ['.sl-palette__row[aria-selected="true"]', "tile"],
     [".sl-pane", "island"], [".sl-term-block", "island"], [".sl-palette", "float"],
   ]) {
     assert.equal(depthOf(wb(sel)), `var(--slc-depth-${depth})`, sel);
   }
-  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-activitybar__item:is([aria-current], [aria-selected="true"])', '.sl-palette__row[aria-selected="true"]']) {
+  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])', '.sl-palette__row[aria-selected="true"]']) {
     assert.match(wb(sel), /background-color:\s*var\(--slc-tile\)/, sel);
   }
   assert.match(decl(wb(".sl-pane[data-lit]"), "box-shadow"), /^var\(--slc-depth-island\), /, "the lit pane is an island and its glow");
