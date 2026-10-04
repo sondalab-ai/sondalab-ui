@@ -881,7 +881,7 @@ test("a glass host keeps its own fill until the layers exist", () => {
   const glass = clears.filter((sel) => sel.includes(".sl-fx-glass"));
   assert.ok(glass.length > 0, "the translucency rule is still there");
   for (const sel of glass) assert.match(sel, /:where\(\.sl-glass\)/, `${sel} must wait for the layers`);
-  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*oklch\(from color-mix/)?.[0] ?? "";
+  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*oklch\(from var\(--_slfx-pane\)/)?.[0] ?? "";
   assert.match(label, /:where\(\.sl-glass\)/, "the composite-picked label only on a built pane");
   assert.match(label, /:not\(\[data-sl-theme="high-contrast"\]\)/, "and never under high contrast");
   assert.match(label, /data-sl-fx="off"/, "nor in an opt-out region");
@@ -1062,15 +1062,24 @@ test("the glass primary's label has no text-shadow", () => {
 // Owner, 2026-10-01: one 90% share for every fill, through a registered colour
 // so hover and press fade; the label is the pole that contrasts with the
 // composite of the RESTING accent, so it never flips mid-hover.
+// 0.32.1: the composite is written once (--_slfx-pane) and read by the
+// label, its keycap and the shade under a white label, and the shade's gate
+// is the label's own threshold (--_slfx-pole-l), so the shade can never
+// fall under a dark label.
 test("the glass primary rests at 90%, fades its fill, and picks its label from the composite", () => {
   const r = RULES.find((r) => r.selector.trim() === ".sl-btn--primary.sl-fx-glass" && /--slg-accent\s*:/.test(r.body));
   assert.ok(r, "the glass primary binds --slg-accent");
-  assert.match(r.body, /--slfx-accent-t:\s*oklch\(from var\(--slfx-fill\) l c h \/ 0\.9\)/);
+  assert.match(r.body, /--_slfx-pane:\s*color-mix\(in oklab, var\(--_sl-fill, var\(--slc-accent\)\) 90%, var\(--slc-canvas\)\);/, "the resting fill is the primary's own fill set (components.css, 0.32)");
+  assert.match(r.body, /--_slfx-pole-l:\s*0\.59;/);
+  // the fill at 90% over a shade that only a white label's composite earns
+  assert.match(r.body, /--slfx-accent-t:\s*color-mix\(in srgb, var\(--slfx-fill\) 90%, oklch\(from var\(--_slfx-pane\) 0 0 0 \/ calc\(clamp\(0, \(l - 0\.54\) \* 10, 1\) \* clamp\(0, \(var\(--_slfx-pole-l\) - l\) \* 1000, 1\)\)\)\);/);
   assert.match(r.body, /--slg-accent:\s*var\(--slfx-accent-t\)/);
   assert.match(r.body, /--slg-accent-a:\s*100%/);
   assert.match(effects, /@property\s+--slfx-accent-t\s*\{[^}]*syntax:\s*"<color>"/);
-  // the resting fill is the primary's own fill set (components.css, 0.32)
-  assert.match(effects, /color:\s*oklch\(from color-mix\(in oklab, var\(--_sl-fill, var\(--slc-accent\)\) 90%, var\(--slc-canvas\)\) clamp\(0\.16, \(0\.59 - l\) \* 1000, 0\.985\) 0 h\)/);
+  // the label and the keycap read the same pane and the same threshold
+  assert.match(effects, /color:\s*oklch\(from var\(--_slfx-pane\) clamp\(0\.16, \(var\(--_slfx-pole-l\) - l\) \* 1000, 0\.985\) 0 h\)/);
+  assert.match(effects, /--slfx-cap:\s*oklch\(from var\(--_slfx-pane\) calc\(l \+ 0\.085 \* clamp\(-1, \(l - var\(--_slfx-pole-l\)\) \* 1000, 1\)\) c h\)/);
+  assert.equal((effects.match(/\b0\.59\b/g) ?? []).length, 1, "the poles' threshold is one number, declared once");
 });
 
 // Regression, 2026-10-01: .sl-fx-glass--pane and .sl-fx-press reset `transition`

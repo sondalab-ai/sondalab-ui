@@ -277,19 +277,20 @@ test("high contrast resets a product's accent fill: the theme owns its accent", 
   assert.equal(toHex(evaluate("var(--slc-accent-fill, var(--slc-accent))", env)), "#ffff00");
 });
 
-// At rest for every product. Hovered and pressed where a product registers a
-// fill, whose steps the role derives: unset, they are the theme's own accent
-// steps, which this slice keeps exactly (introspect's light hover and press
-// read 4.09 / 3.15 under its dark label, as they did before 0.32: a theme
-// step, recorded in the slice's report, not changed here).
+// At rest, hovered and pressed for every product: with a registered fill the
+// role derives the steps, unset they are the theme's own accent steps. Both
+// step away from the label since 0.32.1 (introspect's light hover and press
+// read 4.09 / 3.15 under its dark label until then, the theme stepping toward
+// black). primary-label.test.mjs measures the same through the cascade, in
+// every wiring and context.
 for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
   const fill = REGISTRY[product].fill?.[theme];
-  test(`${theme} ${product}${fill ? ` (fill ${fill})` : ""}: every labelled accent fill reads at 4.5:1${fill ? ", at rest, hovered and pressed" : " at rest"}`, () => {
+  test(`${theme} ${product}${fill ? ` (fill ${fill})` : ""}: every labelled accent fill reads at 4.5:1, at rest, hovered and pressed`, () => {
     const env = rootEnv(theme, product);
     if (fill) env.set("--slc-accent-fill", fill);
     const low = [];
     const label = evaluate("var(--slc-on-accent-fill)", env);
-    const states = ["var(--slc-accent-fill, var(--slc-accent))", ...(fill ? ["var(--slc-accent-fill-hover)", "var(--slc-accent-fill-active)"] : [])];
+    const states = ["var(--slc-accent-fill, var(--slc-accent))", "var(--slc-accent-fill-hover)", "var(--slc-accent-fill-active)"];
     for (const p of states) {
       const r = ratio(label, evaluate(p, env));
       if (r < 4.5) low.push(`${p} ${r.toFixed(2)}`);

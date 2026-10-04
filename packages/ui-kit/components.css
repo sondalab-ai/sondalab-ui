@@ -27,9 +27,13 @@
   --slc-accent:        var(--sl-accent-default, #9A5300);
   /* Steps derive from --slc-accent so a bare --sl-accent-default override
      (or a Tier-B product that maps only --slc-accent) re-derives the whole
-     family — no amber leak. The theme layer still wins when it sets the step. */
-  --slc-accent-hover:  var(--sl-accent-hover,   color-mix(in srgb, var(--slc-accent) 89%, black));
-  --slc-accent-active: var(--sl-accent-active,  color-mix(in srgb, var(--slc-accent) 76%, black));
+     family — no amber leak. The theme layer still wins when it sets the step.
+     A step moves AWAY from the label (0.32.1): toward white under a dark
+     label, toward black under a white one, read off the label's own
+     lightness, so the label never reads weaker hovered or pressed than at
+     rest. Toward black under a dark label took introspect's press to 3.15:1. */
+  --slc-accent-hover:  var(--sl-accent-hover,   color-mix(in srgb, var(--slc-accent) 89%, oklch(from var(--slc-on-accent) clamp(0, (0.5 - l) * 1000, 1) 0 h)));
+  --slc-accent-active: var(--sl-accent-active,  color-mix(in srgb, var(--slc-accent) 76%, oklch(from var(--slc-on-accent) clamp(0, (0.5 - l) * 1000, 1) 0 h)));
   --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
   /* The accent as TEXT or a thin line. On the light theme the accent is a fill
      (the bright spectrum orange for the default), too light to read as text;
@@ -95,8 +99,10 @@
      fallback, so they are invalid until it is set and each public role
      falls back to the accent's step. Set, the label is the pole that
      contrasts with the fill and the states are the light theme's mixes on
-     every theme (the registry's spexr fill note). High contrast owns its
-     accent and resets it (below).
+     every theme, 89% and 76% of the fill toward the pole AWAY from that
+     label (0.32.1; black under spexr's white label, exactly as before, and
+     white under a dark one, which went toward black and under 4.5:1 until
+     then). High contrast owns its accent and resets it (below).
      These public roles compute HERE, on :root, so they follow a fill set on
      the root only: they are for a fill a product draws itself (a count
      badge). The kit's own filled controls compute the same derivations on
@@ -106,8 +112,8 @@
   --slc-accent-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
   --slc-accent-fill-active: var(--_sl-accent-fill-active, var(--slc-accent-active));
   --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, black);
-  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, black);
+  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, oklch(from var(--_sl-on-accent-fill) clamp(0, (0.5 - l) * 1000, 1) 0 h));
+  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, oklch(from var(--_sl-on-accent-fill) clamp(0, (0.5 - l) * 1000, 1) 0 h));
   /* surfaces + text */
   --slc-canvas:        var(--sl-bg-canvas,         #eae6e2);
   --slc-surface:       var(--sl-bg-surface,        #fcfaf9);
@@ -572,11 +578,13 @@
    --slc-edge-accent is re-declared here for the same reason. The private
    derivations reference --slc-accent-fill with no fallback, so they are
    invalid until it is set, and each fallback is the element's own role.
-   The danger tone swaps the set (below); glass reads it (effects.css). */
+   Hover and press step away from the label, as the danger tone's do (the
+   :root block above). The danger tone swaps the set (below); glass reads
+   it (effects.css). */
 :where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
   --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, black);
-  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, black);
+  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, oklch(from var(--_sl-on-accent-fill) clamp(0, (0.5 - l) * 1000, 1) 0 h));
+  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, oklch(from var(--_sl-on-accent-fill) clamp(0, (0.5 - l) * 1000, 1) 0 h));
   --slc-edge-accent: oklch(from var(--slc-accent-fill, var(--slc-accent)) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --_sl-fill:        var(--slc-accent-fill, var(--slc-accent));
   --_sl-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
@@ -1781,8 +1789,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
              label (--slc-on-danger), its edge the fill in shade. Hover and
              press step AWAY from the label (darker under white, lighter
              under the dark pole), so the label never reads weaker than at
-             rest; mixing toward black, as the accent does, took a dark
-             label under 4.5:1 on dark.
+             rest; mixing toward black, as the accent did until 0.32.1
+             (which now steps away from its label too), took a dark label
+             under 4.5:1 on dark.
      neutral .sl-btn--danger (plain or ghost) and .sl-icon-btn--danger take
              the danger ink on a 12% wash of itself, the danger badge's
              recipe, and a danger edge, so a lone destructive button never

@@ -172,7 +172,11 @@ for (const [product, p] of PRODUCTS) {
 // fill, its text is re-derived from it with the theme's lightness cap, and its
 // label is the pole its lightness picks. These mirror the CSS formulas:
 //   --slc-accent-text   oklch(from accent min(l, lmax) c h)   (gamut-mapped, or clipped as Chrome does)
-//   --sl-text-on-accent oklch(from accent clamp(0.22, (0.61 - l) * 1000, 1) 0 h)
+//   --sl-text-on-accent oklch(from accent clamp(0.16, (0.61 - l) * 1000, 1) 0 h)
+// The dark pole is L 0.16, the kit's own on every other labelled fill
+// (--slc-on-accent-fill, --slc-on-<status>); it was 0.22 until 0.32.1, which
+// read 5.03:1 at worst under a dark label across the registry where 0.16
+// reads 5.64 (primary-label.test.mjs measures every product and state).
 {
   const light = readFileSync(resolve(KIT, "themes/light.css"), "utf8");
   const lmax = Number(light.match(/--sl-accent-text-lmax:\s*([0-9.]+)/)[1]);
@@ -190,14 +194,16 @@ for (const [product, p] of PRODUCTS) {
   };
   const labelOf = (hex) => {
     const [L, , h] = toOklch(fromHex(hex));
-    return toHex(fromOklch([Math.min(1, Math.max(0.22, (0.61 - L) * 1000)), 0, h]));
+    return toHex(fromOklch([Math.min(1, Math.max(0.16, (0.61 - L) * 1000)), 0, h]));
   };
   const accents = Object.entries(registry.products)
     .map(([name, p]) => [name, p.light ?? registry.products[p.inherits]?.light ?? t["--sl-accent-default"]]);
 
   test("light: the theme's own accent is the bright fill, and derives both pole and text", () => {
     assert.equal(t["--sl-accent-default"], "#FF9F1C");
-    assert.match(onAccent, /oklch\(from var\(--sl-accent-default\) clamp\(0\.22, \(0\.61 - l\) \* 1000, 1\) 0 h\)/);
+    assert.match(onAccent, /oklch\(from var\(--sl-accent-default\) clamp\(0\.16, \(0\.61 - l\) \* 1000, 1\) 0 h\)/);
+    // one dark pole: the theme's label and the kit's labelled fills agree
+    assert.match(readFileSync(resolve(KIT, "components.css"), "utf8"), /--_sl-on-accent-fill:\s*oklch\(from var\(--slc-accent-fill\) clamp\(0\.16, /);
     assert.match(light, /--sl-focus-ring: oklch\(from var\(--sl-accent-default\) min\(l, var\(--sl-accent-text-lmax\)\) c h\)/);
   });
   for (const [name, hex] of accents) {
@@ -209,10 +215,17 @@ for (const [product, p] of PRODUCTS) {
         .map((bg) => [bg, ratio(text, bg)]).filter(([, r]) => r < 4.5).map(([bg, r]) => `${text} on ${bg} ${r.toFixed(2)}`));
       assert.deepEqual(bad, []);
     });
+    // The fill that carries the label: the product's registered fill where it
+    // has one (0.32), else its accent. spexr's bare accent (#5b6cff, L 0.6015)
+    // is never labelled -- spexr registers #4c58e9 for that -- and it sits in
+    // the one band the 0.61 threshold leaves to white although the 0.16 pole
+    // now reads better there (4.65 against 4.17; the poles meet near L 0.59
+    // for the registered hues). No labelled fill is in that band.
+    const fill = registry.products[name].fill?.light ?? hex;
     test(`light ${name}: the derived label is the better pole on the fill`, () => {
-      const label = labelOf(hex);
-      const other = label === "#ffffff" ? toHex(fromOklch([0.22, 0, 0])) : "#ffffff";
-      assert.ok(ratio(label, hex) >= ratio(other, hex), `${label} ${ratio(label, hex).toFixed(2)} < ${other} ${ratio(other, hex).toFixed(2)} on ${hex}`);
+      const label = labelOf(fill);
+      const other = label === "#ffffff" ? toHex(fromOklch([0.16, 0, 0])) : "#ffffff";
+      assert.ok(ratio(label, fill) >= ratio(other, fill), `${label} ${ratio(label, fill).toFixed(2)} < ${other} ${ratio(other, fill).toFixed(2)} on ${fill}`);
     });
   }
   test("light default: the label on the primary fill reads (4.5:1)", () => {

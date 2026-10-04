@@ -1116,10 +1116,29 @@
    primary was tinted with the default accent. */
 /* ONE SHARE, owner 2026-10-01: a dark fill at 72% read pale on paper and
    could not carry a white label; at 90% spexr's indigo carries it (~4.5:1).
-   The fill reaches the tint through --slfx-accent-t so hover and press fade. */
+   The fill reaches the tint through --slfx-accent-t so hover and press fade.
+   THE PANE AS IT COMPOSITES (--_slfx-pane) is the resting fill at 90% over
+   the canvas: the label's pole is picked from it (below), and so is the
+   shade under a white label. --_slfx-pole-l is where the two poles meet on
+   it, read by the label, its keycap and the shade alike.
+   THE SHADE UNDER A WHITE LABEL (0.32.1). "90%" measured ~4.5:1 for white on
+   spexr's indigo; over a real page it is 4.32 on paper (sondalab-site's
+   sweep read 4.34, local-agents' blue 4.45), because the tenth of the page
+   that shows through is lighter than the fill. So the composite is clamped:
+   under a white label the page behind the fill is put in shade, from none
+   while the pane composites at L 0.54 or darker to half at the pole's
+   threshold, so it reads >= 4.84:1 over the canvas, a surface and a raised
+   surface. It is the fill at 90% laid OVER that shade (a colour mixed with
+   a translucent black is that black composited under it), so the share,
+   the white label and the look stay "glass, white, 90%". On ink and on any
+   white-label fill already dark enough (the light danger) the pane lands
+   under L 0.54 and the shade is zero: those panes are unchanged. Never under
+   a dark label, which the shade would only darken toward. */
 .sl-btn--primary.sl-fx-glass {
   --slfx-fill-a: 72%;
-  --slfx-accent-t: oklch(from var(--slfx-fill) l c h / 0.9);
+  --_slfx-pole-l: 0.59;
+  --_slfx-pane: color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas));
+  --slfx-accent-t: color-mix(in srgb, var(--slfx-fill) 90%, oklch(from var(--_slfx-pane) 0 0 0 / calc(clamp(0, (l - 0.54) * 10, 1) * clamp(0, (var(--_slfx-pole-l) - l) * 1000, 1))));
   --slg-accent: var(--slfx-accent-t);
   --slg-accent-a: 100%;
 }
@@ -1148,7 +1167,7 @@
    a product's accent fill, or the danger, so a danger pane re-picks its
    label from the danger. */
 .sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) {
-  color: oklch(from color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas)) clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h);
+  color: oklch(from var(--_slfx-pane) clamp(0.16, (var(--_slfx-pole-l) - l) * 1000, 0.985) 0 h);
 }
 /* The keycap a glass primary carries (0.31) follows the same pole. The
    kit's cap steps away from the OPAQUE accent's label (components.css), and
@@ -1159,7 +1178,7 @@
    pole, darker under the light one, around the same 0.59 -- and stands on
    that fill in shade. Its text is the label (it inherits the colour above). */
 .sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) > .sl-kbd {
-  --slfx-cap: oklch(from color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas)) calc(l + 0.085 * clamp(-1, (l - 0.59) * 1000, 1)) c h);
+  --slfx-cap: oklch(from var(--_slfx-pane) calc(l + 0.085 * clamp(-1, (l - var(--_slfx-pole-l)) * 1000, 1)) c h);
   background: var(--slfx-cap);
   box-shadow: inset 0 -1px 0 oklch(from var(--slfx-cap) calc(l - var(--slc-shade-step, 0.075)) c h);
 }

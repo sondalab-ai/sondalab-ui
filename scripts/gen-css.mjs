@@ -19,17 +19,25 @@ function block(selector, entries) {
 /** An accent step is a literal colour string or a hue-relative derivation
  * recipe, so that overriding only --sl-accent-default re-derives the family
  * (the one-var contract). Two recipe shapes:
- *   { mix: [ratio, anchor] }        -> color-mix() (Baseline)
+ *   { mix: [ratio, anchor] }        -> color-mix() (Baseline). The anchor is a
+ *                                      colour keyword, or `away`: the pole
+ *                                      opposite the theme's own label
+ *                                      (--sl-text-on-accent), white under a
+ *                                      dark label and black under a white
+ *                                      one, so a hover or press step never
+ *                                      moves the fill toward its label.
  *   { oklch: [L, C, H], fallback }  -> relative color (tighter floor); the
  *                                      fallback literal is emitted first so a
  *                                      browser without relative-color syntax
  *                                      keeps the hand-tuned value.
  * Returns an array of [name, value] declarations (usually one, two when a
  * relative-color step carries a fallback). */
+const AWAY_FROM_LABEL = "oklch(from var(--sl-text-on-accent) clamp(0, (0.5 - l) * 1000, 1) 0 h)";
 function accentDecls(name, v) {
   if (v && typeof v === "object" && Array.isArray(v.mix)) {
     const [ratio, anchor] = v.mix;
-    return [[name, `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${anchor})`]];
+    const to = anchor === "away" ? AWAY_FROM_LABEL : anchor;
+    return [[name, `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${to})`]];
   }
   if (v && typeof v === "object" && Array.isArray(v.oklch)) {
     const [L, C, H] = v.oklch;

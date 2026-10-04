@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { evaluate, toHex } from "./lib/css-color.mjs";
-import { parseSheet, el, box, cascaded, customs, px } from "./lib/cascade.mjs";
+import { parseSheet, el, box, cascaded, customs, px, specificity, splitList } from "./lib/cascade.mjs";
 
 // The controls through a cascade (scripts/lib/cascade.mjs): the kit's
 // stylesheets, a consumer's own rules loaded after them, and a mock element
@@ -247,4 +247,26 @@ test("an opt-out region and high contrast keep a glass control's own depth, and 
       assert.ok(Math.abs(halo(customs(rules, b)) - wantHalo) < 1e-9, `${name} ${variant}: halo ${halo(customs(rules, b))}`);
     }
   }
+});
+
+// ── the weights the README quotes (0.32.1) ──────────────────────────────────
+
+// The README's 0.32.0 switch note told a consumer resizing the switch which
+// weights its held-state rules carry, and gave the checked twin as (0,5,1);
+// it is (0,6,1) (spexr measured it). Every `selector`, weighing (a,b,c) pair
+// the README quotes for a rule is computed here from the rule components.css
+// ships, so the prose cannot drift from the cascade again.
+test("every rule weight the README quotes is the weight of the rule components.css ships", () => {
+  const readme = readFileSync(resolve(KIT, "README.md"), "utf8");
+  const css = read("components.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const shipped = new Set([...css.matchAll(/([^{}]+)\{[^{}]*\}/g)].flatMap((m) => splitList(m[1].trim().replace(/\s+/g, " "))));
+  const quoted = [...readme.matchAll(/`([^`]+)`, weighing \((\d),(\d),(\d)\)/g)].map((m) => [m[1], m.slice(2, 5).map(Number)]);
+  assert.ok(quoted.length >= 2, "the switch note quotes both held-state rules");
+  for (const [sel, weight] of quoted) {
+    assert.ok(shipped.has(sel), `components.css ships no rule ${sel}`);
+    assert.deepEqual(specificity(sel), weight, sel);
+  }
+  // the two the switch note is about, by name
+  const held = quoted.filter(([sel]) => sel.startsWith(".sl-switch:active:not(:has(:disabled))"));
+  assert.deepEqual(held.map(([, w]) => w), [[0, 4, 1], [0, 6, 1]]);
 });

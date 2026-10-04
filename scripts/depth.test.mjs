@@ -493,10 +493,16 @@ const EFFECTS = bare(read("effects.css"));
 const PANE_HOST = '.sl-btn--primary.sl-fx-glass--pane:where(.sl-glass):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *))';
 const FX_RULES = [...EFFECTS.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ selector: m[1].trim().replace(/\s+/g, " "), body: m[2] }));
 const fxRule = (sel) => FX_RULES.find((r) => r.selector === sel)?.body;
-const PANE = "color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas))";
+// The pane as it composites is written once, on the glass primary
+// (--_slfx-pane, 0.32.1), with the lightness where the two poles meet on it.
+const GLASS_PRIMARY = FX_RULES.find((r) => r.selector === ".sl-btn--primary.sl-fx-glass" && /--_slfx-pane\s*:/.test(r.body))?.body ?? "";
+const GLASS_DECLS = [...GLASS_PRIMARY.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim().replace(/\s+/g, " ")]);
+const PANE = "var(--_slfx-pane)";
 
 test("the glass primary's label is the composite-picked pole the cap test reads", () => {
-  assert.equal(decl(fxRule(PANE_HOST) ?? "", "color"), `oklch(from ${PANE} clamp(0.16, (0.59 - l) * 1000, 0.985) 0 h)`);
+  assert.equal(decl(GLASS_PRIMARY, "--_slfx-pane"), "color-mix(in oklab, var(--_sl-fill, var(--slc-accent)) 90%, var(--slc-canvas))");
+  assert.equal(decl(GLASS_PRIMARY, "--_slfx-pole-l"), "0.59");
+  assert.equal(decl(fxRule(PANE_HOST) ?? "", "color"), "oklch(from var(--_slfx-pane) clamp(0.16, (var(--_slfx-pole-l) - l) * 1000, 0.985) 0 h)");
 });
 
 for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
@@ -505,7 +511,7 @@ for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
   test(`${theme} ${product}: a keycap in a glass primary reads against the pane's own label and stands apart from the pane`, () => {
     const low = [];
     for (const [accent, opts] of fills) {
-      const env = primary(rootEnv(theme, product), product, theme, opts);
+      const env = within(primary(rootEnv(theme, product), product, theme, opts), GLASS_DECLS);
       // the cascade: the glass rule where effects.css has one, else the kit's cap
       const glassCap = fxRule(`${PANE_HOST} > .sl-kbd`);
       const capDecls = glassCap ? new Map([...glassCap.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim()])) : new Map();

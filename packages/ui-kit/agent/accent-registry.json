@@ -15,7 +15,7 @@
         "light": { "hover": "#4858ee", "active": "#3645d4", "subtle": "#eef0ff" },
         "dark": { "hover": "#a3acff", "active": "#6b78f0", "subtle": "#1c1f3a" }
       },
-      "$fill-note": "spexr's filled primary is ONE deeper indigo on both themes, so its white label reads (5.41:1); the accent above still drives links, tags and the focus ring. Hover and active are not registered: they derive from the fill as the light theme derives the accent, color-mix(in srgb, <fill> 89% / 76%, black), on both themes (owner, 2026-10-02: less is more). White on them: 6.47 / 8.03.",
+      "$fill-note": "spexr's filled primary is ONE deeper indigo on both themes, so its white label reads (5.41:1); the accent above still drives links, tags and the focus ring. Hover and active are not registered: they derive from the fill as the light theme derives the accent, color-mix(in srgb, <fill> 89% / 76%, black), on both themes (owner, 2026-10-02: less is more); black because that is the pole away from its white label (ui-kit 0.32.1: every step moves away from its label). White on them: 6.47 / 8.03.",
       "fill": { "light": "#4c58e9", "dark": "#4c58e9" }
     },
     "introspect": { "light": "#0e9c84", "dark": "#2ee6c0" },

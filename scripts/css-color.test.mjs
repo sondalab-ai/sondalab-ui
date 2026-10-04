@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { evaluate, scope, within, toHex } from "./lib/css-color.mjs";
-import { parseSheet, el, cascaded, customs, matches, specificity } from "./lib/cascade.mjs";
+import * as cascade from "./lib/cascade.mjs";
+const { parseSheet, el, cascaded, customs, matches, specificity } = cascade;
+const longhand = (...a) => cascade.longhand(...a);
 
 // The test evaluator and cascade themselves. The kit's contrast and cascade
 // tests are only as true as these: a flat map of declarations once let a role
@@ -73,4 +75,41 @@ test("the cascade matches compounds, combinators and state pseudo-classes", () =
   const rules = parseSheet(":root { --a: #ff0000; --h: color-mix(in srgb, var(--a) 60%, black); } [data-sl-fx] { --a: #0000ff; }");
   assert.equal(toHex(evaluate("var(--h)", customs(rules, box))), "#990000");
   assert.equal(toHex(evaluate("var(--a)", customs(rules, box))), "#0000ff");
+});
+
+// The cascade's silent gaps (0.32.1): each of these used to answer wrongly
+// without a word, which a contrast matrix built on the cascade would inherit.
+test("the cascade reads an attribute value in single quotes, double quotes or none", () => {
+  const html = el({ tag: "html", attrs: { "data-sl-theme": "light" } });
+  const section = el({ tag: "section", parent: el({ tag: "body", parent: html }), attrs: { "data-product": "introspect" } });
+  assert.ok(matches(":root[data-sl-theme='light'] [data-product]", section), "single quotes");
+  assert.ok(matches(':root[data-sl-theme="light"] [data-product]', section), "double quotes");
+  assert.ok(matches(":root[data-sl-theme=light] [data-product=introspect]", section), "unquoted");
+  assert.ok(!matches(":root[data-sl-theme='dark'] [data-product]", section), "a single-quoted value that differs");
+});
+
+test("the cascade honours every attribute operator, and an unknown one never matches", () => {
+  const e = el({ attrs: { class: "sl-btn sl-btn--primary", lang: "en-GB", "data-x": "glass-pane" } });
+  const yes = ['[data-x^="glass"]', '[data-x$="pane"]', '[data-x*="ss-p"]', '[class~="sl-btn--primary"]', '[lang|="en"]', '[lang|="en-GB"]'];
+  const no = ['[data-x^="pane"]', '[data-x$="glass"]', '[data-x*="nope"]', '[class~="sl-btn--"]', '[lang|="e"]', '[lang|="GB"]'];
+  for (const s of yes) assert.ok(matches(s, e), s);
+  for (const s of no) assert.ok(!matches(s, e), s);
+});
+
+test("the cascade: a property repeated in one rule takes its last declaration, unless an earlier one is !important", () => {
+  const e = el({ classes: ["a"], parent: el({ tag: "html" }) });
+  const won = cascaded(parseSheet(".a { --x: #E0942A; --x: oklch(from red l c h); color: red !important; color: blue; }"), e);
+  assert.equal(won.get("--x").value, "oklch(from red l c h)", "the later declaration wins, as a browser's does");
+  assert.equal(won.get("color").value, "red", "!important still wins over a later normal one");
+  // across rules, source order still decides between equal weights
+  assert.equal(cascaded(parseSheet(".a { color: red; color: green; } .a { color: blue; }"), e).get("color").value, "blue");
+});
+
+test("the cascade resolves a colour longhand against its shorthand, and refuses a shorthand it cannot read", () => {
+  const e = el({ classes: ["a", "b"], parent: el({ tag: "html" }) });
+  const rules = parseSheet(".a { background-color: red; } .a.b { background: var(--f); } .c { background: url(x.png) no-repeat, red; }");
+  assert.equal(longhand(cascaded(rules, e), "background-color").value, "var(--f)", "the heavier shorthand sets the colour");
+  assert.equal(longhand(cascaded(parseSheet(".a.b { background: blue; } .a.b { background-color: red; }"), e), "background-color").value, "red", "a later longhand wins at equal weight");
+  const c = el({ classes: ["c"], parent: el({ tag: "html" }) });
+  assert.throws(() => longhand(cascaded(rules, c), "background-color"), /cannot read/);
 });
