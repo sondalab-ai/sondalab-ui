@@ -654,6 +654,19 @@
   background-position: 0 0;
   translate: 0 var(--_sl-foot);
 }
+/* The edge and the foot are the STATE's fill in shade (0.32.1), not the
+   resting one's: an edge is its own fill one step less bright, and a state
+   that steps toward the resting edge (a white label's fill darkening) put
+   the foot within ΔE 2.5 of the fill it stands under. The same derivation as
+   --slc-edge-accent, capped on paper the same way, so a pale pressed fill
+   keeps an edge that finds it on the page (>= 3:1). High contrast keeps its
+   drawn edge in every state. */
+.sl-btn--primary:where(:root:not([data-sl-theme="high-contrast"]) *):hover:not(:disabled) {
+  --_sl-fill-edge: oklch(from var(--_sl-fill-hover) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
+}
+.sl-btn--primary:where(:root:not([data-sl-theme="high-contrast"]) *):active:not(:disabled) {
+  --_sl-fill-edge: oklch(from var(--_sl-fill-active) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
+}
 .sl-btn--primary:focus-visible { --_sl-foot-color: var(--slc-focus); }
 /* THE SECONDARY KEY (Lumen, 0.32): the raised rung in the one control edge,
    lit along its top inside the edge and standing on a short cast -- the

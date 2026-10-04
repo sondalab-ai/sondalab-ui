@@ -19,8 +19,9 @@
                    (sondalab-site f2c55e9, src/pages/products/[slug].astro,
                    verbatim, single quotes included).
      tier B        a value-pinned page with no data-sl-theme, mapping only
-                   the accent, its label, its registered fill and its
-                   neutrals (README, "Tier B"), so the accent's steps are the
+                   the accent, its label, its registered fill, the status
+                   roles and its neutrals (README, "Tier B"), so the accent's
+                   steps are the
                    kit's own :root fallbacks, and the glass tint has no
                    --sl-bg-canvas to read.
    Contexts
@@ -115,6 +116,10 @@ const LIGHT_NUMBERS = (() => {
   const num = (src, name) => src.match(new RegExp(`${name}:\\s*([0-9.]+)`))[1];
   return { "--sl-accent-text-lmax": num(light, "--sl-accent-text-lmax"), "--slc-edge-accent-lmax": num(block, "--slc-edge-accent-lmax"), "--slc-glow": num(block, "--slc-glow") };
 })();
+/** A Tier B page maps the status roles to its own palette (README, "Tier B");
+ *  the mock maps the theme's own, read off the generated theme file. */
+const STATUS = Object.fromEntries(THEMES.map((t) => [t, Object.fromEntries(["success", "warning", "danger", "info"]
+  .map((s) => [s, read(`themes/${t}.css`).match(new RegExp(`--sl-status-${s}:\\s*(#[0-9a-fA-F]{6});`))[1]]))]));
 /** The light theme's own label rule, re-pointed at a Tier B page's accent. */
 const TIER_B_LABEL = read("themes/light.css").match(/--sl-text-on-accent:\s*([^;]+);/)[1].replace(/var\(--sl-accent-default\)/g, "var(--slc-accent)");
 
@@ -140,7 +145,8 @@ export const WIRINGS = {
       const n = (NEUTRALS[id].inherits ? NEUTRALS[NEUTRALS[id].inherits] : NEUTRALS[id])[t];
       const numbers = t === "light" ? Object.entries(LIGHT_NUMBERS).map(([k, v]) => ` ${k}: ${v};`).join("") : "";
       const fill = p.fill?.[t] ? ` --slc-accent-fill: ${p.fill[t]};` : "";
-      return `:root[data-theme="${t}"] { --slc-accent: ${p[t]}; --slc-on-accent: ${TIER_B_LABEL};${fill} --slc-canvas: ${n["bg-canvas"]}; --slc-surface: ${n["bg-surface"]}; --slc-raised: ${n["bg-surface-raised"]}; --slc-text: ${n["text-primary"]};${numbers} }`;
+      const status = Object.entries(STATUS[t]).map(([k, v]) => ` --slc-${k}: ${v};`).join("");
+      return `:root[data-theme="${t}"] { --slc-accent: ${p[t]}; --slc-on-accent: ${TIER_B_LABEL};${fill} --slc-canvas: ${n["bg-canvas"]}; --slc-surface: ${n["bg-surface"]}; --slc-raised: ${n["bg-surface-raised"]}; --slc-text: ${n["text-primary"]};${status}${numbers} }`;
     }).join("\n");
     return { css, root: {}, section: null, themeAttr: "data-theme" };
   },

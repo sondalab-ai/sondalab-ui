@@ -97,29 +97,46 @@ for (const [k, group] of groups) {
   });
 }
 
-// The edge is the resting fill in shade, which this patch does not move.
-// KNOWN, AN OWNER CALL, NOT THIS PATCH: spexr's dark primary edge (#3b3ecf,
-// its #4c58e9 fill one shade step down) reads 2.65 / 2.50 / 2.33:1 on the
-// dark canvas, surface and raised surface, as on 0.32.0; the fill itself
-// carries the boundary there (3.70 / 3.49 / 3.25). A lighter edge on ink would
-// break "edges in shade", so it is pinned by name here and must not fall.
-const EDGE_UNDER_3_ON_0_32_0 = { "spexr/dark": 2.65 };
+// THE BOUNDARY AND THE FOOT, in every state (0.32.1). The edge and the foot
+// are the STATE's fill in shade, capped on paper like the resting edge, so a
+// pale pressed fill (amber's, 1.1:1 on the light canvas) is found by its
+// edge, and the foot never sits within ΔE 3 of the fill it stands under (it
+// did on 0.32.0 in 90 cells, the resting edge under a darker state).
+// The boundary is whichever of the edge and the fill (the pane, on glass)
+// reads better against the ground, and it holds 3:1 on the canvas, a
+// surface and a raised surface.
+// KNOWN, AN OWNER CALL, NOT THIS PATCH: spexr's dark primary. Its edge
+// (#3b3ecf at rest, its #4c58e9 fill one shade step down) reads 2.65 /
+// 2.50 / 2.33:1 on the dark canvas, surface and raised surface, and the fill
+// carries the boundary at rest (3.70 / 3.49 / 3.25); its white label's
+// states darken toward the dark ground, so hovered and pressed neither does
+// (0.32.0: 2.72 / 2.33 opaque, 2.63 / 2.33 glass). A lighter edge on ink
+// would break "edges in shade", so its floors are pinned by name here.
+const SPEXR_DARK_BOUNDARY = { opaque: { rest: 3, hover: 2.63, press: 2.13 }, glass: { rest: 2.83, hover: 2.34, press: 1.93 } };
+const SHADE = (fill, theme) => `oklch(from ${fill} min(calc(l - 0.075), ${theme === "light" ? 0.59 : 1}) c h)`;
 
 for (const wiring of Object.keys(WIRINGS)) for (const id of Object.keys(REGISTRY)) for (const theme of THEMES) {
-  const mine = ALL.filter((c) => c.wiring === wiring && c.id === id && c.theme === theme && c.context === "opaque");
-  test(`${wiring} / ${id} / ${theme}: the primary's edge finds it on the canvas (3:1 where it did), and its foot is no harder to see hovered or pressed than at rest`, () => {
-    const rest = mine.find((c) => c.state === "rest");
-    const r = ratio(rest.edge, rest.grounds.canvas);
-    assert.ok(r >= (EDGE_UNDER_3_ON_0_32_0[`${id}/${theme}`] ?? 3) - 0.005, `edge on canvas ${r.toFixed(2)}`);
-    for (const c of mine) assert.equal(toHex(c.foot), toHex(rest.edge), `${c.state}: the foot is the fill in shade`);
-    // The foot is the resting fill in shade. Under a dark label the states
-    // now lighten, away from it; under a white one they darken exactly as
-    // they did on 0.32.0 (the step pins below), so the foot is as visible as
-    // it was. Either way a state never sits closer to the foot than rest
-    // does, unless it has crossed it (the white label's press, darker than
-    // its own shade, as before).
-    const dark = toOklch(rest.label)[0] < 0.5;
-    if (dark) for (const c of mine) assert.ok(ratio(c.foot, c.host) >= ratio(rest.foot, rest.host) - 1e-9, `${c.state}: the foot loses ground`);
+  const mine = [...ALL, ...DANGER].filter((c) => c.wiring === wiring && c.id === id && c.theme === theme);
+  test(`${wiring} / ${id} / ${theme}: hovered and pressed, the edge and the foot are the state's fill in shade`, () => {
+    for (const c of mine.filter((c) => c.state !== "rest" || !c.danger)) {
+      const want = toHex(evaluate(SHADE(`var(${{ rest: "--_sl-fill", hover: "--_sl-fill-hover", press: "--_sl-fill-active" }[c.state]})`, theme), c.env));
+      assert.equal(toHex(c.edge), want, `${c.danger ? "danger " : ""}${c.context} ${c.state}: the edge`);
+      if (c.foot) assert.equal(toHex(c.foot), want, `${c.danger ? "danger " : ""}${c.context} ${c.state}: the foot`);
+    }
+  });
+  test(`${wiring} / ${id} / ${theme}: the boundary holds 3:1 on every ground, and the foot stands ΔE 3 off its fill, in every state`, () => {
+    const low = [];
+    for (const c of mine) {
+      for (const [g, G] of Object.entries(c.grounds)) {
+        const fill = Math.min(...c.surfaces.filter((s) => s.where === "fill" || s.where.startsWith(g)).map((s) => ratio(s.colour, G)));
+        const b = Math.max(ratio(c.edge, G), fill);
+        const kind = c.context.startsWith("glass") ? "glass" : "opaque";
+        const floor = id === "spexr" && theme === "dark" && !c.danger ? SPEXR_DARK_BOUNDARY[kind][c.state] : 3;
+        if (b < floor - 0.005) low.push(`${c.danger ? "danger " : ""}${c.context} ${c.state} on ${g}: ${b.toFixed(2)}`);
+      }
+      if (c.foot && dE(c.foot, c.host) < 3) low.push(`${c.danger ? "danger " : ""}${c.context} ${c.state}: foot ΔE ${dE(c.foot, c.host).toFixed(1)}`);
+    }
+    assert.deepEqual(low, []);
   });
   test(`${wiring} / ${id} / ${theme}: the tick, the dot and the knob read on a checked control's fill (4.5:1), at rest, hovered and pressed`, () => {
     const low = Object.entries(STATES).flatMap(([state, states]) => marks({ wiring, id, theme, states })
