@@ -104,7 +104,7 @@ const over = (top, under) => {
   const t = toSrgb(top), u = toSrgb(under);
   return fromSrgb(t.map((v, i) => v * top.alpha + u[i] * (1 - top.alpha)));
 };
-const DEPTH = ["tile", "flat", "island", "key", "sunk", "float"].map((n) => `--slc-depth-${n}`);
+const DEPTH = ["tile", "flat", "island", "key", "sunk", "float", "cast"].map((n) => `--slc-depth-${n}`);
 const CASES = [
   ...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [t, p])),
   ["high-contrast", "default"],
@@ -186,6 +186,10 @@ test("the depth recipes are role-vars built from roles, never a literal colour",
   assert.match(root.get("--slc-depth-tile"), /^inset 0 1px 0 var\(--slc-lit\), 0 0 0 1px var\(--slc-border\), var\(--slc-shadow-sm\)$/);
   assert.match(root.get("--slc-depth-key"), /inset 0 -1\.5px 0 var\(--slc-edge-surface\)/, "a key stands on its own fill in shade");
   assert.equal(root.get("--slc-depth-float"), "var(--slc-shadow-lg)");
+  // 0.34: Lumen's cast, for an overlay that keeps no border of its own (the
+  // palette, the toast): the float with the overlay's ring folded in -- its
+  // own fill in shade, as the bordered float draws it -- and lit along the top.
+  assert.equal(root.get("--slc-depth-cast"), "inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg)");
 });
 
 test("the inversion band re-declares every depth recipe as written, so it reads the band's roles", () => {
@@ -212,6 +216,9 @@ test("high contrast trades depth for drawn rings: selection in the accent, a key
   // (a control's depth plus its focus halo, 0.32), and `none` voids a list
   assert.equal(hc.get("--slc-depth-sunk"), "0 0 transparent");
   assert.equal(hc.get("--slc-depth-float"), "0 0 transparent");
+  // the cast's ring is the overlay's only edge (it keeps no border): it is
+  // drawn in the theme's line, as an island's is
+  assert.equal(hc.get("--slc-depth-cast"), "0 0 0 1px var(--slc-border)");
   assert.equal(hc.get("--slc-glow"), "0");
   assert.equal(vars([':root[data-sl-theme="light"]']).get("--slc-glow"), "0.35");
 });
@@ -224,6 +231,7 @@ test("high contrast keeps its rings inside the inversion band, where the band re
   assert.equal(band.get("--slc-depth-key"), "0 0 0 1px var(--slc-border)");
   assert.equal(band.get("--slc-depth-sunk"), "0 0 transparent");
   assert.equal(band.get("--slc-depth-float"), "0 0 transparent");
+  assert.equal(band.get("--slc-depth-cast"), "0 0 0 1px var(--slc-border)");
   // the ring finds the tile on the band's ground (3:1, a boundary)
   const env = hcBandEnv();
   const ground = evaluate("var(--slc-text)", rootEnv("high-contrast"));
@@ -479,7 +487,19 @@ test("tile tabs: no rule under the strip, no underline, a flat tile, the dot and
   // the shared focus ring covers the tab, and the outline follows its 6px
   const ring = RULES.find((r) => /outline: var\(--sl-focus-ring-width/.test(r.body));
   assert.ok(ring.selector.includes(".sl-tabs__tab:focus-visible"));
-  assert.equal(decl(tab, "border-radius"), "var(--sl-radius-sm, 6px)");
+  // Lumen's tab (0.34): r7, 13px at 500, 12px in (Lumen's 11.2 on the 4px
+  // grid), and hover lifts the ink to the secondary, not the primary (the
+  // active tab keeps the primary)
+  assert.equal(decl(tab, "border-radius"), "7px");
+  assert.equal(decl(tab, "font-size"), "0.8125rem");
+  assert.equal(decl(tab, "padding"), "0 var(--sl-space-3, 0.75rem)");
+  assert.equal(decl(rule(".sl-tabs__tab"), "font-weight"), "500");
+  assert.match(rule(".sl-tabs--tile .sl-tabs__tab:hover"), /(?:^|;)\s*color:\s*var\(--slc-text-secondary\)/);
+  assert.equal(decl(rule(".sl-tabs--tile .sl-tabs__item"), "border-radius"), "7px", "the wrapper is the same tile");
+  // the focus rule rounds square hosts to 6px; the tile tab keeps its own 7,
+  // because its rule comes later at the same weight
+  const at = (sel) => css.indexOf(`${sel} {`);
+  assert.ok(at(".sl-tabs--tile .sl-tabs__tab") > css.indexOf(".sl-tabs__tab:focus-visible,\n.sl-breadcrumb__item:focus-visible"), "the tile tab's radius outranks the soft ring's");
 });
 
 // ── the keycap in a glass primary ──────────────────────────────────────────
@@ -683,15 +703,18 @@ test("the workbench's selections and surfaces are the kit's depth recipes", () =
     ['.sl-tree__row[aria-selected="true"]', "flat"],
     ['.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])', "flat"],
     ['.sl-palette__row[aria-selected="true"]', "tile"],
-    [".sl-pane", "island"], [".sl-term-block", "island"], [".sl-palette", "float"],
+    [".sl-pane", "island"], [".sl-term-block", "island"], [".sl-palette", "cast"],
   ]) {
     assert.equal(depthOf(wb(sel)), `var(--slc-depth-${depth})`, sel);
   }
-  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])', '.sl-palette__row[aria-selected="true"]']) {
+  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-palette__row[aria-selected="true"]']) {
     assert.match(wb(sel), /background-color:\s*var\(--slc-tile\)/, sel);
   }
+  // the current view rests on the surface rung, as Lumen renders it (0.34):
+  // the bar sits on the canvas, and its flat tile is the rung above it
+  assert.match(wb('.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])'), /background-color:\s*var\(--slc-surface\)/);
   assert.match(decl(wb(".sl-pane[data-lit]"), "box-shadow"), /^var\(--slc-depth-island\), /, "the lit pane is an island and its glow");
   // every host of a recipe carries no border, so the lit line sits flush under the ring
   for (const sel of [".sl-pane", ".sl-term-block", ".sl-tree__row", ".sl-activitybar__item"]) assert.equal(decl(wb(sel), "border"), "0", sel);
-  assert.equal(decl(rule(".sl-toast"), "box-shadow"), "var(--slc-depth-float)");
+  assert.equal(decl(rule(".sl-toast"), "box-shadow"), "var(--slc-depth-cast)");
 });

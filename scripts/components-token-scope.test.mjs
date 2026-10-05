@@ -151,5 +151,11 @@ test("workbench.css declares no role of its own, and the band re-derives every n
 test("workbench motion reads the motion tokens, never a literal duration", () => {
   const flat = wbBare.replace(/var\([^()]*\)/g, "var()");
   assert.deepEqual([...flat.matchAll(/(?:transition|animation)[^;{}]*?\b\d*\.?\d+m?s\b/g)].map((m) => m[0]), []);
-  assert.doesNotMatch(wbBare, /@keyframes|animation\s*:/, "the workbench animates nothing: no page-load choreography");
+  // One animation, an ambient state, never page-load choreography: the live
+  // dot breathes (0.34), on a motion token, only where motion is wanted
+  assert.deepEqual([...wbBare.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]), ["sl-statusbar-breathe"]);
+  const anims = [...wbBare.matchAll(/animation\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
+  assert.deepEqual(anims.filter((a) => !/^none( !important)?$/.test(a)), ["sl-statusbar-breathe calc(var(--sl-motion-fast, 120ms) * 20) var(--sl-motion-enter, ease) infinite"]);
+  const gate = wbBare.indexOf("@media (prefers-reduced-motion: no-preference)");
+  assert.ok(gate > -1 && wbBare.indexOf("animation: sl-statusbar-breathe") > gate, "inside the no-preference gate");
 });

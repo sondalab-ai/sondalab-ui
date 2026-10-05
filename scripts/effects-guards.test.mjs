@@ -937,7 +937,8 @@ function targets(sel, { block = true } = {}) {
 
 test("data-sl-fx-still freezes every loop the kit starts", () => {
   const components = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  const all = [...RULES, ...rules(components)];
+  const workbench = readFileSync(resolve(KIT, "workbench.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const all = [...RULES, ...rules(components), ...rules(workbench)];
   const still = RULES.filter((r) => /\[data-sl-fx-still\]/.test(r.selector));
   assert.ok(still.length, "the flag has rules");
   for (const r of still) {
@@ -956,6 +957,8 @@ test("data-sl-fx-still freezes every loop the kit starts", () => {
     for (const s of selectorList(r.selector)) {
       if (/::(?:before|after)$/.test(s)) continue;
       if (s === ":root[data-sl-fx-still] .sl-fx-goo--drift .sl-fx-goo__member") continue;
+      // the status bar's live dot (0.34) is the kit's own element, not a host
+      if (s === ":root[data-sl-fx-still] .sl-statusbar__dot") continue;
       assert.match(s, /\.is-glitching/, `a still rule on a bare host reaches the product's own animations: ${s}`);
     }
   }
@@ -1213,7 +1216,7 @@ test("forced colours hide every layer the kill switch hides, plus glass and ink"
 test("the kill switches give an island or a float its own recipe back", () => {
   const killAt = RULES.findIndex((r) => /box-shadow:\s*none !important/.test(r.body) && r.selector.startsWith(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
   assert.ok(killAt > -1, "the kill rule");
-  for (const [recipe, hosts] of [["island", [".sl-pane", ".sl-term-block"]], ["float", [".sl-toast", ".sl-palette"]]]) {
+  for (const [recipe, hosts] of [["island", [".sl-pane", ".sl-term-block"]], ["cast", [".sl-toast", ".sl-palette"]]]) {
     const keep = RULES.find((r, i) => i > killAt && new RegExp(`box-shadow:\\s*var\\(--slc-depth-${recipe}\\) !important`).test(r.body));
     assert.ok(keep, `a rule after the kill restores --slc-depth-${recipe}`);
     const parts = keep.selector.split(/,(?![^(]*\))/).map((s) => s.trim());
@@ -1225,13 +1228,14 @@ test("the kill switches give an island or a float its own recipe back", () => {
 
 // ...and the workbench's focusable rows (0.33) are in the control restore:
 // their tile and their halo are the component's, not an effect's.
-test("the kill switches give the activity item and the tree row their depth and halo back", () => {
+test("the kill switches give the workbench's controls their depth and halo back", () => {
   const depth = RULES.filter((r) => /box-shadow:\s*var\(--_sl-depth, 0 0 transparent\) !important/.test(r.body));
   const halo = RULES.filter((r) => /box-shadow:\s*var\(--_sl-depth, 0 0 transparent\), var\(--_sl-halo, 0 0 transparent\) !important/.test(r.body));
   for (const [name, list] of [["depth", depth], ["halo", halo]]) {
     assert.equal(list.length, 1, name);
     for (const part of list[0].selector.split(/,(?![^(]*\))/)) {
-      for (const cls of [".sl-activitybar__item", ".sl-tree__row"]) assert.ok(part.includes(cls), `${name}: ${cls} in ${part.trim()}`);
+      // 0.34: a status item that is a button, and the title bar's command field
+      for (const cls of [".sl-activitybar__item", ".sl-tree__row", ".sl-statusbar__item", ".sl-titlebar__cmd"]) assert.ok(part.includes(cls), `${name}: ${cls} in ${part.trim()}`);
     }
   }
 });

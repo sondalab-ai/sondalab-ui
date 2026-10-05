@@ -52,25 +52,29 @@
   const K = (...keys) => `<span class="ide-keys">${keys.map((k) => `<kbd class="sl-kbd">${k}</kbd>`).join("")}</span>`;
 
   /* ── shared chrome ──────────────────────────────────────────────────────── */
+  // the kit's title bar (workbench.css, 0.34): the mark with its dot, the
+  // crumb, the command field with its keys, the cluster; the .ide-* hooks
+  // stay beside it for the Lumen target
+  const crumbOf = (parts) => parts.join(' <span class="sl-titlebar__sep" aria-hidden="true">/</span> ');
   const titlebar = (crumb, center = true) => `
-    <header class="ide-title">
-      <div class="ide-title__l">
+    <header class="ide-title sl-titlebar">
+      <div class="ide-title__l sl-titlebar__l">
         <span class="ide-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="ide-mark" data-mark="spexr">spexr</span>
-        <span class="ide-title__crumb">${crumb}</span>
+        <span class="ide-mark sl-titlebar__mark" data-mark="spexr">spexr<span class="sl-titlebar__dot" aria-hidden="true"></span></span>
+        <span class="ide-title__crumb sl-titlebar__crumb">${crumbOf(crumb)}</span>
       </div>
-      ${center ? `<button class="ide-cmd" type="button" aria-label="Search or run a command">${I.search}<span>Search files, run a command</span>${K("⌘", "K")}</button>` : "<span></span>"}
-      <div class="ide-title__r">
+      ${center ? `<button class="ide-cmd sl-titlebar__cmd" type="button" aria-label="Search or run a command" aria-keyshortcuts="Meta+K">${I.search}<span class="sl-titlebar__cmd-text">Search files, run a command</span><span class="ide-keys sl-titlebar__keys" aria-hidden="true"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd></span></button>` : "<span></span>"}
+      <div class="ide-title__r sl-titlebar__r">
         <span class="sl-badge sl-badge--info sl-badge--live ide-live">2 agents running</span>
-        <button class="sl-icon-btn" aria-label="Toggle split">${I.split}</button>
-        <button class="sl-icon-btn" aria-label="Notifications" data-count="3">${I.bell}</button>
+        <button class="sl-icon-btn sl-titlebar__btn" aria-label="Toggle split">${I.split}</button>
+        <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__btn--dot" aria-label="Notifications, 3 unread" data-count="3">${I.bell}</button>
         <span class="sl-avatar sl-avatar--sm ide-avatar" aria-label="Marcello"><span>MB</span></span>
       </div>
     </header>`;
   const activity = (on = "files") => `
     <nav class="ide-activity sl-activitybar" aria-label="Views">
-      ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control", I.git, "3"], ["agent", "Agents", I.agent, "2"], ["beaker", "Tests", I.beaker]]
-        .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
+      ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control, 3 changes", I.git, "3"], ["agent", "Agents, 2 running", I.agent, "2"], ["beaker", "Tests", I.beaker]]
+        .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}${n ? `<span class="sl-activitybar__badge" aria-hidden="true">${n}</span>` : ""}</button>`).join("")}
       <span class="ide-activity__spacer"></span>
       <button class="ide-activity__btn sl-activitybar__item" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
     </nav>`;
@@ -236,13 +240,13 @@
         <div class="ide-toast__text sl-toast__content"><p class="ide-toast__title sl-toast__title">Probe saved</p><p class="ide-toast__body sl-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
         <button class="sl-btn sl-btn--sm ide-toast__undo lab-focus" data-key="⌘Z">Undo</button>
         <button class="sl-icon-btn sl-toast__dismiss ide-toast__x" aria-label="Dismiss">${I.close}</button>
-        <div class="sl-progress ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
+        <div class="sl-progress sl-toast__timer ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
       </div></div>
       <div class="sl-toast-stack__live" role="alert"></div>
     </div>`;
   const ide = () => `
     <div class="app ide" data-fig="fig. 01 — the workbench">
-      ${titlebar("probe-engine <span>/</span> src <span>/</span> probe")}
+      ${titlebar(["probe-engine", "src", "probe"])}
       <div class="app__body">
         ${activity("files")}
         <aside class="ide-side pane sl-pane" aria-label="Explorer">
@@ -279,7 +283,7 @@
   /* ── Settings ───────────────────────────────────────────────────────────── */
   const settings = () => `
     <div class="app settings" data-fig="fig. 02 — settings">
-      ${titlebar("Settings <span>/</span> Workspace", false)}
+      ${titlebar(["Settings", "Workspace"], false)}
       <div class="app__body">
         ${activity("gear")}
         <aside class="set-nav pane sl-pane" aria-label="Settings sections">
@@ -359,7 +363,7 @@
   ];
   const data = () => `
     <div class="app data" data-fig="fig. 03 — probes">
-      ${titlebar("probe-engine <span>/</span> Probes")}
+      ${titlebar(["probe-engine", "Probes"])}
       <div class="app__body">
         ${activity("beaker")}
         <main class="dat-main pane pane--focus sl-pane" data-lit aria-label="Probes">
@@ -499,17 +503,17 @@
       ["Pane label", ".pane__label"], ["Session meta", '.sl-list__row[aria-selected="false"] .sl-list__meta'], ["Session meta, selected", '.sl-list__row[aria-selected="true"] .sl-list__meta'],
       ["Status bar", ".ide-status__item"], ["Terminal output", ".ide-block__out"], ["Terminal time", ".ide-block__meta time"], ["Terminal dim", ".ide-block__out .t-dim"], ["Breadcrumb", ".ide-crumbs span"],
       ["Palette item", '.ide-pal__row[aria-selected="false"] .ide-pal__t'], ["Palette meta", '.ide-pal__row[aria-selected="false"] .ide-pal__m'], ["Palette selected", '.ide-pal__row[aria-selected="true"] .ide-pal__t'],
-      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
+      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"], ["Count badge", '[data-dir="kit"] .sl-activitybar__badge'],
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
       ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 0", '.ide-block[data-exit="0"] .ide-block__exit'], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit'], ["Terminal command", ".ide-block__cmd"], ["Palette match", '.ide-pal__row[aria-selected="false"] .ide-pal__t mark']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],
       ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .sl-btn--danger"], ["Secondary label", ".set-row .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
-      ["Segmented off", '.set-sec .sl-segmented__item[aria-selected="false"]'], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Status bar", ".ide-status__item"]],
+      ["Segmented off", '.set-sec .sl-segmented__item[aria-selected="false"]'], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Status bar", ".ide-status__item"], ["Count badge", '[data-dir="kit"] .sl-activitybar__badge']],
     data: [["Table cell", ".sl-table tbody td:nth-child(3)"], ["Table head", ".sl-table thead th:nth-child(2)"], ["Dim cell", ".sl-table tbody tr:not([aria-selected]) .dat-dim"], ["Selected row", '.sl-table tbody tr[aria-selected="true"] td:nth-child(3)'],
       ["Selected row dim", '.sl-table tbody tr[aria-selected="true"] .dat-dim'], ["Probe id", ".dat-id"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Chip on", '.sl-chip[aria-pressed="true"]'], ["Badge ok", ".sl-badge--success"], ["Badge warn", ".sl-badge--warning"],
       ["Badge err", ".sl-badge--danger"], ["Badge info", ".dat-table .sl-badge--info"], ["Stat label", ".sl-stat__label"], ["Empty body", ".sl-empty__body"], ["Pagination", ".sl-pagination__item:not([aria-current])"],
-      ["Danger ghost label", ".dat-bulk__act .sl-btn--danger"]],
-    hero: [["Headline", ".web-h1 .web-line"], ["Headline highlight", ".web-h1 em"], ["Lede", ".web-lede"], ["Nav link", ".web-links a:not([aria-current])"], ["Tag", ".web-hero .sl-tag"], ["Primary label", ".web-cta__p"], ["Card label", ".web-card__l"], ["Install", ".web-install code"], ["Eyebrow", ".web-sec .sl-eyebrow"]],
+      ["Danger ghost label", ".dat-bulk__act .sl-btn--danger"], ["Count badge", '[data-dir="kit"] .sl-activitybar__badge']],
+    hero: [["Headline", ".web-h1 .web-line"], ["Headline highlight", ".web-h1 em"], ["Lede", ".web-lede"], ["Nav link", ".web-links a:not([aria-current])"], ["Tag", ".web-hero .sl-tag"], ["Primary label", ".web-cta__p"], ["Card label", ".web-card__l"], ["Install", ".web-install code"], ["Eyebrow", ".web-sec .sl-eyebrow"], ["Count badge", '[data-dir="kit"] .sl-activitybar__badge']],
   };
   const EDGE = {
     ide: [["Palette input", ".ide-pal__input"], ["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
@@ -599,7 +603,8 @@
       out.text.push([name, ratio(c, g), parseFloat(ks.fontSize)]);
     });
     // labels a direction draws as generated content on a filled ground
-    for (const [name, sel, pe] of [["Switch state glyph", ".sl-switch__input:checked + .sl-switch__track", "::before"], ["Count badge", ".ide-activity__btn[data-count]", "::after"]]) {
+    // the kit's count badge is a child (0.34), read with the text rows; the target draws its own as ::after
+    for (const [name, sel, pe] of [["Switch state glyph", ".sl-switch__input:checked + .sl-switch__track", "::before"], ["Count badge", '[data-dir="lumen"] .ide-activity__btn[data-count]', "::after"]]) {
       const el = pick(sel); if (!el) continue;
       const a = getComputedStyle(el, pe); if (!a.content || a.content === "none" || a.content === '""' || a.display === "none") continue;
       const fillEl = pe === "::before" && name.startsWith("Switch") ? getComputedStyle(el).backgroundColor : a.backgroundColor;

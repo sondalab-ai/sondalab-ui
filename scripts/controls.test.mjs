@@ -458,11 +458,12 @@ test("forced colours: the halo is off on every control whatever --slc-glow a pro
 // list: the ring, the private depth and halo, the painter, and both
 // forced-colours resets. A row missing from one loses its halo, paints no
 // tile under focus, or keeps a page-colour halo or outline on Highlight.
-test("the activity item and the tree row are members of every shared focus list", () => {
+test("the workbench's focusable pieces are members of every shared focus list", () => {
   const fc = css.slice(css.lastIndexOf("@media (forced-colors: active)"));
   const fcHalo = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => /--_sl-halo\s*:\s*0 0 transparent/.test(m[2]));
   const fcRing = [...fc.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find((m) => /outline-color:\s*CanvasText !important/.test(m[2]));
-  for (const cls of [".sl-activitybar__item", ".sl-tree__row"]) {
+  // 0.34: a status item that is a button, and the title bar's command field
+  for (const cls of [".sl-activitybar__item", ".sl-tree__row", ".sl-statusbar__item", ".sl-titlebar__cmd"]) {
     assert.ok(members(RESET.selector).includes(cls), `${cls}: --_sl-depth / --_sl-halo`);
     assert.ok(members(APPLY.selector).includes(cls), `${cls}: the depth painter`);
     assert.ok(FOCUS.selector.split(",").map((s) => s.trim()).includes(`${cls}:focus-visible`), `${cls}: the shared ring`);
@@ -472,6 +473,7 @@ test("the activity item and the tree row are members of every shared focus list"
   // and the workbench's own rules write their depth into --_sl-depth, never box-shadow
   const wb = bare(read("workbench.css"));
   for (const m of wb.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    if (/\.sl-(activitybar__item|tree__row)/.test(m[1]) && !/forced-colors/.test(m[1])) assert.doesNotMatch(m[2], /(?:^|;)\s*box-shadow\s*:/, m[1].trim());
+    // a pseudo-element on one (the count badge) is no control: its own shadow is its ring
+    if (/\.sl-(activitybar__item|tree__row|statusbar__item|titlebar__cmd)/.test(m[1]) && !/forced-colors|::(before|after)/.test(m[1])) assert.doesNotMatch(m[2], /(?:^|;)\s*box-shadow\s*:/, m[1].trim());
   }
 });

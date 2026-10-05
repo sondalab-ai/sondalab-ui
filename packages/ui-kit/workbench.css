@@ -8,22 +8,185 @@
 
    Lumen (owner, 2026-10-02): panes are islands of light on a darker frame
    (the canvas), and the pane that holds the focus is lit. The frame's own
-   chrome -- the status bar, the activity bar -- sits on the canvas and
-   paints no ground of its own.
+   chrome -- the title bar, the status bar, the activity bar -- sits on the
+   canvas and paints no ground of its own. Since 0.34 the chrome follows the
+   Lumen IDE screen at 1440x900 within a pixel or two, on the kit's 4px grid
+   (owner, 2026-10-05; L2): where the demo sits between two steps, the kit's
+   rules decide (one control height), then the demo's invariants (a 44px
+   activity pitch, 4px round a status item, 10px round the palette's
+   field), then the 0.33 value. The lit pane's light is three roles in
+   components.css (with the depth recipes), so this sheet still declares
+   no role of its own.
 
    Paint layers: glass, press and glitch own an effect host's ::before, the
-   aurora its ::after. A selected tile's seam (components.css, THE SEAM)
-   and the palette's are layers of their host's background, so an effect
-   keeps its own; a `background` shorthand of yours on such a host wipes
-   the seam (set background-color). Three marks are a ::before instead: the
-   lit pane's seam, which must paint over the pane's children (a header, a
-   tab strip with a ground of its own), the terminal block's exit mark and
-   the toast's tick (components.css). Glass, press and glitch are therefore
-   unsupported on a pane, a terminal block and a toast; the aurora is not.
+   aurora its ::after. A selected tile's seam (components.css, THE SEAM) is
+   a layer of its host's background, so an effect keeps its own; a
+   `background` shorthand of yours on such a host wipes the seam (set
+   background-color). Four marks are a ::before instead: the lit pane's
+   seam, which must paint over the pane's children (a header, a tab strip
+   with a ground of its own), the palette's seam (0.34, a line that glows),
+   the terminal block's exit mark and the toast's tick (components.css).
+   Glass, press and glitch are therefore unsupported on a pane, a palette,
+   a terminal block and a toast; the aurora is not. Nothing takes ::after.
+   The title bar and the activity bar's count badge (a child element) take
+   no pseudo-element at all.
 
    The inversion band: of these only .sl-term-block is supported inside an
    .sl-invert band, set straight on it (a real-content block, L3). The rest
    is the chrome of a workbench, which lives on the workbench's frame. */
+
+/* ══ TITLE BAR ═══════════════════════════════════════════════════════════════
+   The workbench's top frame (0.34), on the canvas as Lumen draws it: a 44px
+   grid of three tracks -- the left and right share what the centre leaves,
+   the centre holds up to 32rem (512px) -- with the product's mark and a
+   crumb on the left, the command field in the centre, a cluster of icon
+   buttons on the right.
+     <header class="sl-titlebar">
+       <div class="sl-titlebar__l">
+         <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__menu" aria-label="Menu">…</button>
+         <span class="sl-titlebar__mark">spexr<span class="sl-titlebar__dot" aria-hidden="true"></span></span>
+         <span class="sl-titlebar__crumb">probe-engine<span class="sl-titlebar__sep" aria-hidden="true">/</span>src</span>
+       </div>
+       <button class="sl-titlebar__cmd" type="button" aria-keyshortcuts="Meta+P">
+         <svg …/><span class="sl-titlebar__cmd-text">Search files, run a command</span>
+         <span class="sl-titlebar__keys" aria-hidden="true"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">P</kbd></span>
+       </button>
+       <div class="sl-titlebar__r">
+         <button class="sl-icon-btn sl-titlebar__btn" aria-label="Toggle the right panel">…</button>
+         <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__btn--dot" aria-label="Notifications, 3 unread">…</button>
+       </div>
+     </header>
+   __menu is the slot for a compact menu button (an app whose menus are not
+   the system's: Windows, Linux); leave it out where the system draws them.
+   __mark is the product's mark in the display face, 700 at 15px, tracked
+   -0.04em, with a dot of the accent (a child, not a pseudo-element: an
+   effect may own those); it is not the Sondalab wordmark, which is the
+   brand face's (L3). __cmd opens the command palette: the one control
+   edge on the surface rung, lit along its top, the raised rung under the
+   pointer, the shared flush ring and halo on focus; its __keys are the
+   product's real shortcut, in keycaps, hidden from its name (the button
+   says them in aria-keyshortcuts). A title-bar icon button (__btn on an
+   .sl-icon-btn) rests on the surface rung in its own edge; --dot draws an
+   unread dot on its corner, a layer of its background, so its pseudo-
+   elements stay an effect's. The button's name carries the state ("3
+   unread"): forced colours drop the dot with every image.
+   The bar is the window's drag region (-webkit-app-region for Electron,
+   app-region for a web app's window-controls overlay), and everything in it
+   that takes the pointer is not: a button, a link, a field, a summary, a
+   label, an editable, a tab stop. The region is hit-tested as a rectangle,
+   so a popup from elsewhere in the page that overlaps the bar (a menu, a
+   palette dropped from it) is eaten by it unless the popup is no-drag
+   itself. A product that draws the system's window buttons (macOS traffic
+   lights) gives the bar the room they take as its own
+   padding-inline-start. */
+.sl-titlebar {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 32rem) 1fr;
+  align-items: center;
+  gap: var(--sl-space-4, 1rem);
+  box-sizing: border-box;
+  height: 44px;
+  padding-inline: var(--sl-space-4, 1rem) var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  color: var(--slc-text);
+  background-color: transparent;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.sl-titlebar :is(button, a, input, select, textarea, summary, label, [contenteditable]:not([contenteditable="false"]), [role="button"], [tabindex]) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+.sl-titlebar__l,
+.sl-titlebar__r {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-3, 0.75rem);
+  min-width: 0;
+}
+.sl-titlebar__r { justify-content: flex-end; gap: var(--sl-space-2, 0.5rem); }
+.sl-titlebar__menu { flex: none; }
+.sl-titlebar__mark {
+  flex: none;
+  font-family: var(--sl-font-display, system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: var(--slc-text);
+}
+/* The dot sits on the line 1px up, as Lumen sets it: font-independent. */
+.sl-titlebar__dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-inline-start: var(--sl-space-1, 0.25rem);
+  vertical-align: 1px;
+  border-radius: 50%;
+  background-color: var(--slc-accent);
+}
+.sl-titlebar__crumb {
+  min-width: 0;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--slc-text-secondary);
+}
+.sl-titlebar__sep { margin-inline: var(--sl-space-1, 0.25rem); color: var(--slc-text-muted); }
+.sl-titlebar__cmd {
+  --_sl-depth: inset 0 1px 0 var(--slc-lit);
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 2rem;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--sl-space-3, 0.75rem) var(--sl-space-2, 0.5rem);
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--slc-text-muted);
+  background-color: var(--slc-surface);
+  border: 1px solid var(--slc-edge-control);
+  border-radius: var(--sl-radius-md, 8px);
+  cursor: pointer;
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+/* Not while focused: the hover edge would sit inside the ring, a band. */
+.sl-titlebar__cmd:hover { background-color: var(--slc-raised); }
+.sl-titlebar__cmd:hover:not(:focus-visible) { border-color: var(--slc-edge-control-hover); }
+.sl-titlebar__cmd > svg { flex: none; }
+.sl-titlebar__cmd-text {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sl-titlebar__keys { flex: none; display: inline-flex; gap: var(--sl-space-1, 0.25rem); }
+/* At rest on the surface; a pressed toggle (aria-pressed, the right panel's)
+   keeps the kit's pressed tint and edge, which says its state. */
+.sl-icon-btn.sl-titlebar__btn:not([aria-pressed="true"]) { background-color: var(--slc-surface); }
+/* Lumen's 6px dot, 5px in from the corner, ringed 2px in the surface so it
+   reads apart from the glyph. The labelled fill where a product sets one,
+   the accent as a mark (its text reading, >= 3:1) where it does not.
+   Declared at hover's weight too: the icon button's hover resets the
+   background shorthand. */
+.sl-icon-btn.sl-titlebar__btn--dot,
+.sl-icon-btn.sl-titlebar__btn--dot:hover:not(:disabled) {
+  --_sl-titlebar-dot: var(--slc-accent-fill, var(--slc-accent-text));
+  background-image: radial-gradient(circle at calc(100% - 8px) 8px, var(--_sl-titlebar-dot) 2.75px, var(--slc-surface) 3.25px 4.75px, transparent 5.25px);
+  background-repeat: no-repeat;
+}
 
 /* ══ PANE ════════════════════════════════════════════════════════════════════
    An island: the surface rung on the canvas, the island recipe (a lit top
@@ -33,10 +196,18 @@
    [data-lit] is the pane that holds the focus, set by the consumer where the
    focus is (it stays lit while a palette or a menu has the focus over it).
    It is the lighter rung, a seam of the accent as a line of light runs along
-   its top edge, and the seam's light falls round the pane as strong as
+   its top edge, starting where the pane's corner ends, and the seam's light
+   falls below the pane (--slc-lit-drop, components.css) as strong as
    --slc-glow says (none in high contrast or under forced colours). The seam
    fades in from the leading edge and out before the far one, mirrored right
-   to left: lit from one side, the way Lumen draws it. One lit pane per
+   to left: lit from one side, the way Lumen draws it. As Lumen renders it
+   (0.34, owner: no accent rim round the pane): the light that falls INTO the
+   pane is the product's to paint on its own chrome -- --slc-lit-wash on the
+   tab strip or head along the top edge, --slc-lit-tint on the row under it
+   -- because a strip or a header with a ground of its own would cover any
+   layer the pane painted. A layout that clips the pane's own shadow (Lumino's
+   contain: strict) wears the drop inward on the element right under the
+   pane: `box-shadow: inset var(--slc-lit-drop)`. One lit pane per
    workbench. Lit and focused are two things: the pane stays lit while a
    palette holds the focus over it, and a tree in it then reads unfocused. */
 .sl-pane {
@@ -48,7 +219,7 @@
 }
 .sl-pane[data-lit] {
   background-color: var(--slc-raised);
-  box-shadow: var(--slc-depth-island), 0 0 24px -6px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
+  box-shadow: var(--slc-depth-island), var(--slc-lit-drop);
 }
 /* A pseudo-element above the pane's children, not a layer of its background:
    a pane's header or tab strip usually paints a ground of its own across
@@ -71,13 +242,17 @@
 
 /* ══ STATUS BAR ══════════════════════════════════════════════════════════════
    The workbench's meta line, on the canvas, as Lumen draws it: facts in the
-   sans at the small step, sentence case, the muted ink; a value read as
+   sans at the small step, sentence case, the muted ink, each a 20px pill
+   at r6; one that does something (a button, a link) brings the surface rung
+   up under the pointer (0.34); a value read as
    data -- a branch, a model, a count -- in the mono at the primary ink, as
-   written (a branch is case-sensitive); a hairline between groups of facts,
-   and a dot of the accent for a state that is live ("2 agents running" --
-   the words carry the state, the dot is only its mark). Its height is the
-   bar's own, not its content's, so an item with an icon or a dot cannot
-   move it; a fact that does not fit ends in an ellipsis.
+   written (a branch is case-sensitive); and a dot of the accent for a state
+   that is live ("2 agents running" -- the words carry the state, the dot is
+   only its mark), which breathes where motion is wanted. Hairlines between
+   groups of facts are off, as Lumen draws none: .sl-statusbar--separators
+   turns them on. Its height is the bar's own (28px, Lumen's 30 on the 4px
+   grid), not its content's, so an item with an icon or a dot cannot move it; a fact
+   that does not fit ends in an ellipsis.
      <footer class="sl-statusbar" aria-label="Status">
        <span class="sl-statusbar__item"><span class="sl-statusbar__value">main</span> ↑2</span>
        <span class="sl-statusbar__sep" aria-hidden="true"></span>
@@ -87,14 +262,15 @@
      </footer>
    Never role="status" on the bar: every fact in it would be read out each
    time the caret moves. A fact that must be heard when it changes gets a
-   role="status" of its own. Items are facts, not controls: a bar item that
-   opens something is a plain .sl-btn.sl-btn--sm beside them. */
+   role="status" of its own. An item that opens something is a <button> (or
+   a link) with the same class: it takes the shared flush ring and halo, and
+   the button's own chrome is reset. */
 .sl-statusbar {
   display: flex;
   align-items: center;
   box-sizing: border-box;
   height: 1.75rem;
-  padding-inline: var(--sl-space-2, 0.5rem);
+  padding-inline: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
   /* Across, a long bar clips; up and down a focus halo on a small button in
      it may still show. The height above is what holds the bar steady. */
   overflow-x: clip;
@@ -109,16 +285,32 @@
    ellipsis where the bar runs out (the text of a flex box is an anonymous
    item, which never does). */
 .sl-statusbar__item {
+  appearance: none;
   display: block;
   flex: 0 1 auto;
   min-width: 0;
   box-sizing: border-box;
   height: 1.25rem;
+  margin: 0;
+  padding-block: 0;
   padding-inline: var(--sl-space-2, 0.5rem);
+  font: inherit;
   line-height: 1.25rem;
+  color: inherit;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sl-radius-sm, 6px);
   overflow: hidden;
   text-overflow: ellipsis;
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
+/* Only an item that does something answers the pointer: a fact under it
+   stays on the canvas, so it promises nothing. */
+.sl-statusbar__item:is(button, a, [role="button"]) { cursor: pointer; }
+a.sl-statusbar__item { text-decoration: none; }
+.sl-statusbar__item:is(button, a, [role="button"]):hover { color: var(--slc-text); background-color: var(--slc-surface); }
 .sl-statusbar__item > svg { vertical-align: middle; margin-inline-end: var(--sl-space-1, 0.25rem); }
 .sl-statusbar__value {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
@@ -126,13 +318,20 @@
   color: var(--slc-text);
 }
 /* A border, not a fill: forced colours keep a border and repaint a fill as
-   the canvas. */
+   the canvas. Off unless the bar asks (0.34). */
 .sl-statusbar__sep {
+  display: none;
   flex: none;
   height: 0.75rem;
   margin-inline: var(--sl-space-1, 0.25rem);
   border-inline-start: 1px solid var(--slc-border);
 }
+.sl-statusbar--separators .sl-statusbar__sep { display: block; }
+/* The dot is the accent as text, a thin mark: on paper the accent itself is
+   a fill (the default's amber reads 1.6:1 on the canvas). It breathes, a
+   ring of itself that swells and fades every 2.4s on the arrival curve
+   (Lumen's); reduced motion stills it, and forced colours, where it opts
+   out to paint in the system's ink, stop it too. */
 .sl-statusbar__dot {
   display: inline-block;
   vertical-align: middle;
@@ -141,6 +340,13 @@
   margin-inline-end: var(--sl-space-1, 0.25rem);
   border-radius: 50%;
   background-color: var(--slc-accent-text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sl-statusbar__dot { animation: sl-statusbar-breathe calc(var(--sl-motion-fast, 120ms) * 20) var(--sl-motion-enter, ease) infinite; }
+}
+@keyframes sl-statusbar-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--slc-accent-text) 45%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--slc-accent-text) 0%, transparent); }
 }
 .sl-statusbar__spacer { flex: 1; }
 
@@ -161,14 +367,18 @@
      </nav> */
 .sl-activitybar {
   display: flex;
+  flex: none;
   flex-direction: column;
   align-items: center;
-  gap: var(--sl-space-1, 0.25rem);
-  padding-block: var(--sl-space-2, 0.5rem);
+  box-sizing: border-box;
+  width: 52px;
+  gap: var(--sl-space-2, 0.5rem);
+  padding-block: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
   background-color: transparent;
 }
 .sl-activitybar__item {
   appearance: none;
+  position: relative;
   display: grid;
   place-items: center;
   box-sizing: border-box;
@@ -179,7 +389,7 @@
   color: var(--slc-text-muted);
   background-color: transparent;
   border: 0;
-  border-radius: var(--sl-radius-md, 8px);
+  border-radius: 9px;
   cursor: pointer;
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -190,14 +400,39 @@
 .sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) {
   --_sl-depth: var(--slc-depth-flat);
   color: var(--slc-text);
-  background-color: var(--slc-tile);
+  background-color: var(--slc-surface);
 }
 .sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) > svg { color: var(--slc-accent-text); }
+/* The count badge (0.34): a child of the item, never a pseudo-element (the
+   item is an effect host, and the aurora owns its ::after), in the mono on
+   the accent fill that carries a label (--slc-accent-fill where the product
+   sets one, the accent where it does not), its label picked on that fill as
+   the primary's is, ringed in the canvas so it reads apart from the glyph.
+   The item says the count in its name (aria-label="Source control, 3
+   changes"), so the badge is aria-hidden.
+     <button class="sl-activitybar__item" aria-label="Source control, 3 changes">
+       <svg …/><span class="sl-activitybar__badge" aria-hidden="true">3</span></button> */
+.sl-activitybar__badge {
+  position: absolute;
+  inset-block-start: var(--sl-space-1, 0.25rem);
+  inset-inline-end: var(--sl-space-1, 0.25rem);
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 1rem;
+  padding: 0 var(--sl-space-1, 0.25rem);
+  font: 600 9px/1rem var(--sl-font-mono, ui-monospace, monospace);
+  text-align: center;
+  color: oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-on));
+  background-color: var(--slc-accent-fill, var(--slc-accent));
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--slc-canvas);
+  pointer-events: none;
+}
 
 /* ══ TREE ════════════════════════════════════════════════════════════════════
-   A file tree: rows on the 4px grid (24px), each indented by its level, with
-   a hairline guide under every ancestor's twisty, a twisty that turns with
-   aria-expanded, and selection as a tile (the K4 recipe) with the kit's
+   A file tree, as Lumen draws it (0.34): 24px rows at 13px, each indented by
+   its level, a twisty that turns with aria-expanded, and selection as a
+   tile (the K4 recipe) with the kit's
    seam (components.css, THE SEAM). Focused and unfocused selection differ:
    while the tree holds the focus the selected row is the raised tile, cast
    and all, its seam and its icon in the accent; while the focus is
@@ -215,9 +450,10 @@
    deeper tree that wants its full indent writes the level again as
    --sl-tree-level (inline), because CSS cannot read a number out of an
    attribute. A leaf keeps its (empty) twisty so its name lines up with its
-   siblings'. The guides are a layer of the row's background, handed to the
-   seam as --_sl-layer so a selected row keeps both; forced colours, which
-   drop images, lose them. */
+   siblings'. Hairline guides under every ancestor's twisty are opt-in,
+   .sl-tree--guides on the tree (Lumen draws none; on before 0.34): a layer
+   of the row's background, handed to the seam as --_sl-layer so a selected
+   row keeps both; forced colours, which drop images, lose them. */
 .sl-tree {
   display: flex;
   flex-direction: column;
@@ -234,11 +470,13 @@
 :where(.sl-tree__row[aria-level="6"]) { --sl-tree-level: 6; }
 :where(.sl-tree__row[aria-level="7"]) { --sl-tree-level: 7; }
 :where(.sl-tree__row[aria-level="8"]) { --sl-tree-level: 8; }
-.sl-tree__row {
+.sl-tree--guides .sl-tree__row {
   --_sl-layer: repeating-linear-gradient(90deg, var(--slc-border-subtle) 0 1px, transparent 1px 1rem);
   --_sl-layer-size: calc((var(--sl-tree-level, 1) - 1) * 1rem) 100%;
   --_sl-layer-position: calc(var(--sl-space-1, 0.25rem) + 0.5rem) 0;
   --_sl-layer-repeat: no-repeat;
+}
+.sl-tree__row {
   display: flex;
   align-items: center;
   gap: var(--sl-space-1, 0.25rem);
@@ -247,7 +485,7 @@
   padding-block: 0;
   padding-inline: calc(var(--sl-space-1, 0.25rem) + (var(--sl-tree-level, 1) - 1) * 1rem) var(--sl-space-2, 0.5rem);
   font-family: var(--sl-font-sans, system-ui, sans-serif);
-  font-size: var(--sl-text-sm, 0.875rem);
+  font-size: 0.8125rem;
   line-height: 1.25rem;
   white-space: nowrap;
   color: var(--slc-text-secondary);
@@ -282,37 +520,50 @@
   color: var(--slc-text-muted);
 }
 /* The chevron is drawn from two borders, as the disclosure's is: it points
-   at the children, right while they are hidden, down while they show. */
+   at the children, right while they are hidden, down while they show. It is
+   the size of Lumen's 12px chevron glyph (6px tall, 3px deep, a 1.05px
+   stroke, here the 1.25px a border paints at one or two device pixels) and
+   CSS, not the glyph: it needs no markup and no icon, and it turns between
+   the two states where two glyphs could only swap. Two borders of a square
+   of side 6/sqrt(2) turned 45deg; the tip sits half its depth past the
+   square's centre, so it is shifted back by that much. */
 .sl-tree__row[aria-expanded] > .sl-tree__twisty::before {
   content: "";
-  width: 0.35rem;
-  height: 0.35rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
+  width: 4.25px;
+  height: 4.25px;
+  border-right: 1.25px solid currentColor;
+  border-bottom: 1.25px solid currentColor;
   /* Two independent properties, so it turns as a rotation, not through a
      matrix between two transform lists. */
-  translate: -1px 0;
+  translate: -1.5px 0;
   rotate: -45deg;
   transition:
     rotate var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     translate var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-.sl-tree__row[aria-expanded="true"] > .sl-tree__twisty::before { translate: 0 -1px; rotate: 45deg; }
+.sl-tree__row[aria-expanded="true"] > .sl-tree__twisty::before { translate: 0 -1.5px; rotate: 45deg; }
 .sl-tree__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* ══ PALETTE ═════════════════════════════════════════════════════════════════
-   The command palette: an overlay that floats (the raised rung, its own
-   border in shade as the ring, the float recipe), a seam of the accent just
-   inside its top edge (it holds the focus), a sunken input -- the kit's
-   field -- and a list of results in which the active one is a raised tile
-   with the kit's seam, in the accent, since the palette always holds the
-   focus. It never animates: it appears, and the active row moves without a
-   transition, because a palette is driven at typing speed. The input keeps
-   the focus and points at the active option; the options are not focusable,
-   and the list takes no tab stop of its own (a scroller without focusable
-   children is one, in Chromium 130 and later).
+   The command palette, as Lumen draws it (0.34): an overlay that floats on
+   Lumen's cast (--slc-depth-cast: the ring is the cast's, so it keeps no
+   border), 580px wide, the raised rung at 94% under a blur of what it covers
+   where the browser can blur it (opaque where it cannot, where the user
+   asks for less transparency, in high contrast and under forced colours), a line of the accent just inside its top edge
+   -- from 16px in, gone 40% before the end, glowing (it holds the focus) --
+   a 52px head over a hairline, its field at 16px with no fill or well, and
+   a list of 36px results in which the active one is a raised tile with the
+   kit's seam, in the accent, since the palette always holds the focus. Its
+   foot sits on the surface rung at 70% over a hairline. It never animates:
+   it appears, and the active row moves without a transition, because a
+   palette is driven at typing speed. The input keeps the focus and points
+   at the active option; the options are not focusable, and the list takes
+   no tab stop of its own (a scroller without focusable children is one, in
+   Chromium 130 and later). The seam is the palette's ::before, so glass,
+   press and glitch are unsupported on it.
      <div class="sl-palette" role="dialog" aria-label="Command palette">
        <div class="sl-palette__head">
+         <svg …/>
          <input class="sl-field__input sl-palette__input" role="combobox" aria-expanded="true"
                 aria-autocomplete="list" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command">
        </div>
@@ -333,41 +584,83 @@
 .sl-palette {
   position: relative;
   box-sizing: border-box;
-  width: min(36rem, 100%);
+  width: min(580px, 100%);
   padding: 0;
   font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-sm, 0.875rem);
   line-height: var(--sl-line-normal, 1.5);
   color: var(--slc-text);
   background-color: var(--slc-raised);
-  /* The lit pane's seam, one pixel deep, flush under the top border: a layer
-     of the background, which starts inside the border. */
-  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
-  background-repeat: no-repeat;
-  background-size: calc(100% - 2 * var(--sl-space-4, 1rem)) 1px;
-  background-position: var(--sl-space-4, 1rem) 0;
-  border: 1px solid var(--slc-edge-raised);
+  border: 0;
   border-radius: var(--sl-radius-lg, 14px);
-  box-shadow: var(--slc-depth-float);
+  box-shadow: var(--slc-depth-cast);
+}
+/* Translucent only where the blur is there to keep what shows through from
+   reading as text: without it the raised rung stays opaque. Every text in
+   the palette holds 4.5:1 with the page's own ink under the 6%. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sl-palette {
+    background-color: color-mix(in srgb, var(--slc-raised) 94%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    backdrop-filter: blur(24px) saturate(1.3);
+  }
+}
+/* Where the user asks for less transparency, the raised rung, opaque. */
+@media (prefers-reduced-transparency: reduce) {
+  .sl-palette {
+    background-color: var(--slc-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+/* A line of light, not a layer: it glows as Lumen draws it, at 55% wherever
+   --slc-glow is not 0 (Lumen's is the same on both themes). Mirrored right
+   to left. */
+.sl-palette::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 16px 40%;
+  height: 1px;
+  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), var(--slc-seam), transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--slc-seam) calc(55% * min(1, var(--slc-glow) * 1000)), transparent);
+  pointer-events: none;
 }
 .sl-palette__head {
   display: flex;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
-  padding: var(--sl-space-2, 0.5rem);
-  border-bottom: 1px solid var(--slc-edge-raised);
+  box-sizing: border-box;
+  height: 52px;
+  padding-inline: var(--sl-space-4, 1rem);
+  border-bottom: 1px solid var(--slc-border-subtle);
 }
-/* The field's own colour transitions would fade its ring in as the palette
+.sl-palette__head > svg { flex: none; color: var(--slc-text-muted); }
+/* The kit's field in the head: the palette is its ground, so it has no
+   fill and no well, and it keeps the one control edge (Lumen's is
+   borderless; a field's boundary is what finds it, >= 3:1). In use the
+   palette always holds the focus, so the field shows the kit's flush ring
+   and its border joins it. 16px on a 20px line, 6px above and below: 34px.
+   The field's own colour transitions would fade its ring in as the palette
    appears: the palette never animates, its field included. Two classes, so
    it outranks the field whatever order the sheets load in. */
-.sl-field__input.sl-palette__input { flex: 1; min-width: 0; transition: none; }
+.sl-field__input.sl-palette__input {
+  --_sl-depth: 0 0 transparent;
+  flex: 1;
+  min-width: 0;
+  padding-inline: var(--sl-space-2, 0.5rem);
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  background-color: transparent;
+  transition: none;
+}
 .sl-palette__list {
   display: flex;
   flex-direction: column;
   max-height: 20rem;
   overflow-y: auto;
   margin: 0;
-  padding: var(--sl-space-2, 0.5rem);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem) var(--sl-space-2, 0.5rem);
   list-style: none;
 }
 .sl-palette__group {
@@ -411,15 +704,18 @@
   font-size: var(--sl-text-xs, 0.75rem);
   color: var(--slc-text-muted);
 }
-.sl-palette__keys { flex: none; display: inline-flex; gap: 3px; }
+.sl-palette__keys { flex: none; display: inline-flex; gap: var(--sl-space-1, 0.25rem); }
+/* Its fill keeps to the palette's corners: the palette clips nothing. */
 .sl-palette__foot {
   display: flex;
   align-items: center;
   gap: var(--sl-space-4, 1rem);
   padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
-  border-top: 1px solid var(--slc-edge-raised);
+  border-top: 1px solid var(--slc-border-subtle);
+  border-radius: 0 0 var(--sl-radius-lg, 14px) var(--sl-radius-lg, 14px);
   font-size: var(--sl-text-xs, 0.75rem);
   color: var(--slc-text-muted);
+  background-color: color-mix(in srgb, var(--slc-surface) 70%, transparent);
 }
 
 /* ══ TERMINAL BLOCK ══════════════════════════════════════════════════════════
@@ -511,19 +807,40 @@
   color: var(--slc-text-secondary);
 }
 
+/* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════
+   Nothing shows through an overlay: the palette is its opaque rung, unblurred. */
+:root[data-sl-theme="high-contrast"] .sl-palette {
+  background-color: var(--slc-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* ══ FORCED COLOURS ══════════════════════════════════════════════════════════
    The user's palette replaces every colour, drops every shadow and every
    gradient: a pane's and a terminal block's ring went with the island
    recipe, so each gets a drawn edge back (an outline, inside its box, so
-   nothing moves), the lit pane a heavier one in Highlight and its seam in
-   Highlight too, the exit mark and the live dot are drawn in system colours,
-   and a selection is the system's. */
+   nothing moves), and so does the palette, whose ring was its cast's; the
+   lit pane a heavier one in Highlight, and its seam and the palette's in
+   Highlight too; the palette is opaque, unblurred; the exit mark, the live
+   dot (which stops breathing) and a count badge are drawn in system
+   colours (the badge ringed, so it keeps its shape on a current item), the
+   bell's unread dot becomes a Highlight edge on its button, and a
+   selection is the system's. */
 @media (forced-colors: active) {
-  :is(.sl-pane, .sl-term-block) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
+  :is(.sl-pane, .sl-term-block, .sl-palette) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
   .sl-pane[data-lit] { outline: 2px solid Highlight !important; outline-offset: -2px; }
-  .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
+  :is(.sl-pane[data-lit], .sl-palette)::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
+  /* Opaque: the user's canvas, nothing blurred through it. */
+  .sl-palette { background-color: Canvas !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
-  .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; }
+  .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; animation: none !important; }
+  /* A badge in the selection's colours, ringed in their text colour: on a
+     current item, which is Highlight itself, the ring keeps its shape. */
+  .sl-activitybar__badge { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; outline: 1px solid HighlightText !important; }
+  /* The bell's dot is an image, which forced colours drop: the button says
+     "unread" with a heavier edge in Highlight (its name says it in words),
+     except under the focus ring, which takes the edge as everywhere. */
+  .sl-icon-btn.sl-titlebar__btn--dot:not(:focus-visible) { border: 2px solid Highlight !important; }
   /* Selection that was only a fill and a shadow is the system's selection;
      the seam goes with the shorthand, and its parts take the selection's
      text colour. Opting out also stops the forced outline colour: the shared

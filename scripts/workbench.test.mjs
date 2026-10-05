@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { evaluate, fromSrgb, substitute, toHex, toSrgb } from "./lib/css-color.mjs";
+import { evaluate, fromSrgb, gamutExcess, substitute, toHex, toSrgb } from "./lib/css-color.mjs";
 import { parseSheet, el, cascaded, customs as rawCustoms, declaredHeight, box, px } from "./lib/cascade.mjs";
 
 // The workbench (ui-kit 0.33, Lumen): the lit pane, the status bar, the
@@ -243,7 +243,7 @@ const BUILD = {
     const selLabel = el({ tag: "span", classes: ["sl-palette__label"], parent: sel });
     const foot = el({ classes: ["sl-palette__foot"], parent: pal });
     return {
-      palette: pal,
+      palette: pal, "palette seam": el({ pseudo: "before", parent: pal }), "palette head": head,
       "palette input": el({ tag: "input", classes: ["sl-field__input", "sl-palette__input"], attrs: { role: "combobox" }, parent: head }),
       "palette group": el({ tag: "p", classes: ["sl-palette__group"], parent: group }),
       "palette row": row, "palette label": label, "palette match": el({ tag: "mark", parent: label }), "palette meta": el({ tag: "span", classes: ["sl-palette__meta"], parent: row }), "palette icon": el({ tag: "svg", parent: row }),
@@ -286,6 +286,9 @@ const BUILD = {
       out[`toast ${key} mark`] = el({ tag: "span", classes: ["sl-toast__mark"], parent: t });
       out[`toast ${key} tick`] = el({ pseudo: "before", parent: t });
       out[`toast ${key} dismiss`] = el({ tag: "button", classes: ["sl-icon-btn", "sl-toast__dismiss"], parent: t });
+      const timer = el({ classes: ["sl-progress", "sl-toast__timer"], attrs: { role: "progressbar" }, parent: t });
+      out[`toast ${key} timer`] = timer;
+      out[`toast ${key} timer bar`] = el({ tag: "span", classes: ["sl-progress__bar"], parent: timer });
     }
     return out;
   },
@@ -323,7 +326,7 @@ const READINGS = [
     [`tree selected icon${w}${f}`, 3, "text"],
   ])),
   ["tree chevron", 3, "border"],
-  ["palette", 3, "layer"],
+  ["palette seam", 3, "mark"],
   ["palette input", 4.5, "text"],
   ["palette group", 4.5, "text"],
   ["palette label", 4.5, "text"],
@@ -349,6 +352,8 @@ const READINGS = [
     [`toast ${t} title`, 4.5, "text"],
     [`toast ${t} body`, 4.5, "text"],
     [`toast ${t} mark`, 4.5, "text"],
+    [`toast ${t} tick`, 3, "mark"],
+    [`toast ${t} timer bar`, 3, "fill"],
   ]),
 ];
 
@@ -406,14 +411,17 @@ test("a pane is an island: the surface rung, the island recipe, the pane radius,
   assert.equal(won.get("border").value, "0", "a recipe host carries no border: the lit line sits flush under the ring");
   const l = cascaded(RULES_A, lit);
   assert.equal(l.get("background-color").value, "var(--slc-raised)", "the lit pane is the lighter rung");
-  assert.match(l.get("box-shadow").value, /^var\(--slc-depth-island\), 0 0 24px -6px color-mix\(in srgb, var\(--slc-seam\) calc\(var\(--slc-glow\) \* 40%\), transparent\)$/);
+  // 0.34, as Lumen renders it: the seam's light falls below the pane (the
+  // drop), not round it; no accent rim (owner, 2026-10-05)
+  assert.equal(l.get("box-shadow").value, "var(--slc-depth-island), var(--slc-lit-drop)");
 });
 
 test("the lit pane's seam and glow spend --slc-glow, which is 0 in high contrast", () => {
   const glowAlpha = (ctx) => {
     const { lit } = build(ctx);
-    const v = cascaded(RULES_A, lit).get("box-shadow").value;
-    return value(RULES_A, lit, v.slice(v.indexOf("color-mix(")), BLACK).alpha;
+    const v = substitute(cascaded(RULES_A, lit).get("box-shadow").value, customs(RULES_A, lit));
+    const at = v.indexOf("color-mix(");
+    return at < 0 ? 0 : value(RULES_A, lit, v.slice(at), BLACK).alpha;
   };
   assert.ok(Math.abs(glowAlpha(dark) - 0.2) < 1e-9, `dark ${glowAlpha(dark)}`);
   assert.ok(Math.abs(glowAlpha(CONTEXTS.find((c) => c.name === "light default")) - 0.14) < 1e-9);
@@ -424,13 +432,162 @@ test("the lit pane's seam and glow spend --slc-glow, which is 0 in high contrast
   assert.equal(env.get("--slc-depth-island"), `0 0 0 1px ${env.get("--slc-border")}`);
 });
 
+// ── the lit pane as it renders (0.34) ─────────────────────────────────────
+
+// Lumen's IDE screen, rendered (owner, 2026-10-05: "as rendered", no 46%
+// rim): the seam along the top edge, a radial wash on the tab strip or head,
+// a 7% tint on the breadcrumbs row and a glow that falls below the pane.
+// Three roles carry the last three, so a product spends them on its own
+// chrome without a literal; each reads --slc-glow (0 in high contrast and
+// under forced colours, where they are also remapped to nothing).
+const LIT = {
+  "--slc-lit-wash": { kind: "image", peak: 0.416 },
+  "--slc-lit-tint": { kind: "image", peak: 0.07 },
+  "--slc-lit-drop": { kind: "shadow", peak: 0.4 },
+};
+/** The colour stops of a role's first gradient, or its shadow's colour. */
+function litColours(rules, e, role) {
+  const v = substitute(`var(${role})`, customs(rules, e)).trim();
+  if (v === "none" || v === "0 0 transparent") return [];
+  if (LIT[role].kind === "shadow") return [value(rules, e, v.slice(v.indexOf("color-mix(")), BLACK)];
+  const inner = v.slice(v.indexOf("(") + 1, v.lastIndexOf(")"));
+  return splitTop(inner).filter((s) => /^(color-mix|transparent)/.test(s)).map((s) => value(rules, e, s.replace(/\s+[\d.]+%$/, ""), BLACK));
+}
+
+test("the lit roles are the rendered recipes, on every theme, at --slc-glow's strength", () => {
+  for (const [ctx, glow] of [[dark, 0.5], [CONTEXTS.find((c) => c.name === "light default"), 0.35], [CONTEXTS.find((c) => c.name === "light spexr"), 0.35]]) {
+    const { lit } = build(ctx);
+    for (const [role, { peak }] of Object.entries(LIT)) {
+      const cols = litColours(RULES_A, lit, role);
+      assert.ok(cols.length > 0, `${ctx.name} ${role}`);
+      const top = Math.max(...cols.map((c) => c.alpha));
+      assert.ok(Math.abs(top - glow * peak) < 1e-9, `${ctx.name} ${role}: peak ${top}, want ${glow * peak}`);
+      // the seam's own colour at the peak; the wash's is capped at oklch L
+      // 0.65 at 80% of Lumen's strength, so no seam can lift the ground under
+      // a muted label in the strip below 4.5:1, wherever the label sits
+      const seam = toHex(value(RULES_A, lit, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h)" : "var(--slc-seam)", BLACK));
+      assert.equal(toHex({ ...cols.find((c) => c.alpha === top), alpha: 1 }), seam, `${ctx.name} ${role}: the seam's hue`);
+    }
+  }
+  // on paper the seam is the accent as text (L <= 0.46), which the cap leaves alone
+  const { lit: paper } = build(CONTEXTS.find((c) => c.name === "light spexr"));
+  const peak = litColours(RULES_A, paper, "--slc-lit-wash").reduce((a, b) => (b.alpha > a.alpha ? b : a));
+  assert.equal(toHex({ ...peak, alpha: 1 }), toHex(value(RULES_A, paper, "var(--slc-seam)", BLACK)), "light spexr: the seam's own colour");
+  // the wash is radial, peaking toward the seam's leading end, gone by 78%
+  const env = customs(RULES_A, build(dark).lit);
+  assert.match(substitute("var(--slc-lit-wash)", env), /^radial-gradient\(80% 100% at 30% 0%, color-mix\(in srgb, oklch\(from .+ min\(l, 0\.65\) calc\(c \* min\(1, 0\.65 \/ l\)\) h\) .+\), transparent 78%\)$/);
+  assert.match(substitute("var(--slc-lit-tint)", env), /^linear-gradient\(color-mix\(.+\), transparent\)$/);
+});
+
+test("the drop is one shadow a product can wear outward on the pane or inward below it", () => {
+  const { lit } = build(dark);
+  const drop = substitute("var(--slc-lit-drop)", customs(RULES_A, lit));
+  assert.equal(splitTop(drop).length, 1, "one shadow, so `inset var(--slc-lit-drop)` is one shadow too");
+  const [x, y, blur, spread] = words(drop).slice(0, 4).map((w) => px(w, new Map()));
+  assert.deepEqual([x, y, blur, spread], [0, 18, 30, -18], "Lumen's 0 18px 30px -18px");
+  // Worn outward the shadow's shape ends at the pane's bottom edge (offset +
+  // spread = 0), so the glow starts at that edge and falls 30px below it.
+  // Worn inward (inset) by the element right under the pane, the shape's
+  // outside starts at that element's top edge: the same falloff, from the
+  // same line, inside a box a clipping parent cannot cut (spexr's split
+  // handle, under Lumino's contain: strict).
+  assert.equal(y + spread, 0);
+});
+
+test("the lit roles are nothing in high contrast and under forced colours, and the band re-derives them", () => {
+  const { lit } = build(hc);
+  for (const role of Object.keys(LIT)) assert.deepEqual(litColours(RULES_A, lit, role).filter((c) => c.alpha > 0), [], `high contrast ${role}`);
+  const env = customs(RULES_A, el({ tag: "html", attrs: { "data-sl-theme": "high-contrast" } }));
+  assert.equal(env.get("--slc-lit-wash"), "none");
+  assert.equal(env.get("--slc-lit-tint"), "none");
+  assert.equal(env.get("--slc-lit-drop"), "0 0 transparent", "never none: it joins a box-shadow list");
+  const fc = parseSheet(read("components.css"), { forcedColors: true });
+  for (const [name, e] of [["root", el({ tag: "html", attrs: { "data-sl-theme": "dark" } })], ["pane", el({ classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) }) })]]) {
+    const v = customs(fc, e);
+    assert.equal(v.get("--slc-lit-wash"), "none", `forced colours ${name}`);
+    assert.equal(v.get("--slc-lit-drop"), "0 0 transparent", `forced colours ${name}`);
+  }
+  // in the band each role reads the band's own seam
+  for (const ctx of CONTEXTS.filter((c) => c.band && !c.name.startsWith("high"))) {
+    const at = mount(ctx);
+    for (const role of Object.keys(LIT)) {
+      const want = toHex(value(ctx.rules, at, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h)" : "var(--slc-seam)", BLACK));
+      const cols = litColours(ctx.rules, at, role).filter((c) => c.alpha > 0);
+      assert.ok(cols.length, `${ctx.name} ${role}`);
+      assert.equal(toHex({ ...cols[0], alpha: 1 }), want, `${ctx.name} ${role}: the band's seam`);
+    }
+  }
+});
+
+test("the lit pane's seam stays 12px in, on the grid (Lumen's 10)", () => {
+  const { lit } = build(dark);
+  const env = customs(RULES_A, lit);
+  const seam = cascaded(RULES_A, el({ pseudo: "before", parent: lit }));
+  assert.equal(px(seam.get("inset-inline").value, env), 12);
+});
+
+// Chrome clips an out-of-gamut colour per channel, the test reader does not:
+// the capped wash keeps the seam's chroma at a lower lightness, so every
+// product's capped stop must lie in sRGB for the contrast below to be the
+// one Chrome paints.
+// The cap lowers the lightness and the chroma with it, toward black, as the
+// kit's own steps do: a seam inside sRGB stays inside it (a light seam's own
+// excess, the accent text a theme caps on paper or the band's floor lifts,
+// is the seam's, documented with it, and the cap adds none).
+test("the wash's capped colour adds no gamut excess to the seam's, and is in sRGB on ink", () => {
+  const out = [];
+  for (const ctx of CONTEXTS.filter((c) => c !== hc && !c.name.startsWith("high"))) {
+    const at = mount(ctx);
+    const e = ctx.band ? at : build(ctx).lit;
+    const capped = gamutExcess(value(ctx.rules, e, "oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h)", BLACK));
+    const seam = gamutExcess(value(ctx.rules, e, "var(--slc-seam)", BLACK));
+    if (capped > seam + 1e-4) out.push(`${ctx.name}: ${capped.toFixed(4)} over the seam's ${seam.toFixed(4)}`);
+    if (ctx.name.startsWith("dark") && !ctx.band && capped > 1e-4) out.push(`${ctx.name}: ${capped.toFixed(4)} out of sRGB on ink`);
+  }
+  assert.deepEqual(out, []);
+});
+
+// Text on the lit chrome: a tab strip under the wash, a breadcrumbs row under
+// the tint, every product and theme, read at each role's peak over the lit
+// pane's fill -- the strip's top edge under the seam's leading end -- so a
+// label reads wherever the product sets it in the strip.
+test("text on the lit chrome reads at 4.5:1 where the wash and the tint peak", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    const { lit } = build(ctx);
+    const fill = groundOf(ctx.rules, lit);
+    for (const role of ["--slc-lit-wash", "--slc-lit-tint"]) {
+      const cols = litColours(ctx.rules, lit, role);
+      const peak = cols.length ? cols.reduce((a, b) => (b.alpha > a.alpha ? b : a)) : { lin: [0, 0, 0], alpha: 0 };
+      const g = over(peak, fill);
+      for (const ink of ["--slc-text", "--slc-text-secondary", "--slc-text-muted"]) {
+        const r = ratio(over(value(ctx.rules, lit, `var(${ink})`, BLACK), g), g);
+        if (!(r >= 4.5)) low.push(`${ctx.name} ${role} ${ink} ${r.toFixed(2)}`);
+      }
+    }
+  }
+  assert.deepEqual(low, []);
+});
+
+test("a section's accent reaches the lit roles of a pane in it", () => {
+  const rules = [...RULES_A, ...parse(['[data-section] { --slc-accent: #1d63d8; }'])];
+  const at = mount(dark);
+  const lit = el({ tag: "section", classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: el({ tag: "section", attrs: { "data-section": "" }, parent: at }) });
+  const want = toHex(value(rules, lit, "var(--slc-seam)", BLACK));
+  assert.equal(want, toHex(evaluate("#1d63d8", new Map())));
+  for (const role of Object.keys(LIT)) {
+    const c = litColours(rules, lit, role).reduce((a, b) => (b.alpha > a.alpha ? b : a));
+    assert.equal(toHex({ ...c, alpha: 1 }), want, role);
+  }
+});
+
 // ── the status bar ─────────────────────────────────────────────────────────
 
 test("the status bar keeps its own height: the items, a dot and a separator fit inside it", () => {
   for (const ctx of [dark, hc]) {
     const p = build(ctx);
     const bar = declaredHeight(ctx.rules, p.bar);
-    assert.equal(bar, 28, "28px, the kit's 4px grid");
+    assert.equal(bar, 28, "28px: Lumen's 30 on the 4px grid, the 0.33 height");
     assert.equal(bar % 4, 0);
     // the declared height holds it; it clips only across, so a small button's halo in it still shows
     assert.equal(cascaded(ctx.rules, p.bar).get("overflow-x").value, "clip");
@@ -464,14 +621,98 @@ test("the status bar speaks as Lumen draws it: sentence case in the sans, data i
   assert.equal(cascaded(RULES_A, p.sep).get("border-inline-start").value, "1px solid var(--slc-border)");
 });
 
+test("status items are 20px pills (Lumen's 22 on the grid, 4px above and below as in the demo): r6, a surface under the pointer where they do something, the bar 4px in at the start", () => {
+  const ctxs = [dark, CONTEXTS.find((c) => c.name === "light default")];
+  for (const ctx of ctxs) {
+    const p = build(ctx);
+    const env = customs(ctx.rules, p["status item"]);
+    const bar = cascaded(ctx.rules, p.bar);
+    assert.deepEqual(words(bar.get("padding-inline").value).map((w) => px(w, env)), [4, 8], "Lumen's 0 8 0 4");
+    const item = cascaded(ctx.rules, p["status item"]);
+    assert.equal(declaredHeight(ctx.rules, p["status item"]), 20);
+    assert.equal(px(item.get("line-height").value, env), 20, "one line, centred in the pill");
+    assert.equal(px(item.get("border-radius").value, env), 6);
+    assert.equal(px(item.get("padding-inline").value, env), 8);
+    // hovered, an item that does something (a button, a link) brings the
+    // surface rung up under it in the primary ink, at 4.5:1; a fact does not
+    // answer the pointer, so it promises nothing
+    for (const [tag, attrs] of [["button", {}], ["a", { href: "#" }], ["span", { role: "button" }]]) {
+      const hovered = el({ tag, attrs, classes: ["sl-statusbar__item"], states: ["hover"], parent: p.bar });
+      const h = cascaded(ctx.rules, hovered);
+      assert.equal(h.get("background-color").value, "var(--slc-surface)", `${tag}`);
+      assert.equal(h.get("color").value, "var(--slc-text)");
+      assert.equal(h.get("cursor")?.value, "pointer", `${tag}: a pointer`);
+      assert.ok(textContrast(ctx.rules, hovered) >= 4.5, `${ctx.name} hovered item ${textContrast(ctx.rules, hovered).toFixed(2)}`);
+    }
+    const fact = cascaded(ctx.rules, el({ tag: "span", classes: ["sl-statusbar__item"], states: ["hover"], parent: p.bar }));
+    assert.equal(fact.get("background-color").value, "transparent", "a fact under the pointer stays on the canvas");
+    assert.equal(fact.get("cursor"), undefined);
+    assert.equal(cascaded(ctx.rules, el({ tag: "a", attrs: { href: "#" }, classes: ["sl-statusbar__item"], parent: p.bar })).get("text-decoration")?.value, "none", "a link item is not underlined");
+    assert.match(item.get("transition").value, /^color var\(--sl-motion-fast/);
+  }
+});
+
+test("status separators are off unless the bar asks for them", () => {
+  const at = mount(dark);
+  const plain = el({ tag: "footer", classes: ["sl-statusbar"], parent: at });
+  assert.equal(cascaded(RULES_A, el({ tag: "span", classes: ["sl-statusbar__sep"], parent: plain })).get("display").value, "none", "Lumen draws none");
+  const ruled = el({ tag: "footer", classes: ["sl-statusbar", "sl-statusbar--separators"], parent: at });
+  const sep = el({ tag: "span", classes: ["sl-statusbar__sep"], parent: ruled });
+  assert.equal(cascaded(RULES_A, sep).get("display").value, "block");
+  assert.equal(cascaded(RULES_A, sep).get("border-inline-start").value, "1px solid var(--slc-border)", "still a border, which forced colours keep");
+});
+
+test("the live dot breathes on the motion tokens, only where motion is wanted, never under forced colours", () => {
+  const css = bare(read("workbench.css"));
+  const dot = (flags) => cascaded(parseSheet(read("workbench.css"), flags), el({ classes: ["sl-statusbar__dot"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }));
+  const on = dot({});
+  assert.match(on.get("animation").value, /^sl-statusbar-breathe calc\(var\(--sl-motion-fast, 120ms\) \* 20\) var\(--sl-motion-enter, ease\) infinite$/, "2.4s, the arrival curve, as Lumen breathes it");
+  assert.equal(dot({ reducedMotion: true }).get("animation"), undefined, "reduced motion: still");
+  assert.equal(dot({ forcedColors: true }).get("animation").value, "none", "forced colours: the dot opts out, so a page-colour ring would paint");
+  const frames = css.match(/@keyframes sl-statusbar-breathe \{([\s\S]*?\})\s*\}/)?.[1] ?? "";
+  assert.match(frames, /0%, 100% \{ box-shadow: 0 0 0 0 color-mix\(in srgb, var\(--slc-accent-text\) 45%, transparent\); \}/);
+  assert.match(frames, /50% \{ box-shadow: 0 0 0 4px color-mix\(in srgb, var\(--slc-accent-text\) 0%, transparent\); \}/);
+  // the dot's own fill stays the accent as text: on paper the amber accent
+  // itself reads 1.6:1, too faint for a state's mark
+  assert.equal(on.get("background-color").value, "var(--slc-accent-text)");
+  // the effects layer's switches hold it too: an opt-out region stops it,
+  // and the app's pause (data-sl-fx-still on <html>) freezes it where it is
+  const FX = parse([read("workbench.css"), read("effects.css")]);
+  const html = (attrs) => el({ tag: "html", attrs });
+  const off = el({ classes: ["sl-statusbar__dot"], parent: el({ attrs: { "data-sl-fx": "off" }, parent: el({ tag: "body", parent: html({}) }) }) });
+  assert.equal(cascaded(FX, off).get("animation").value, "none", "in an opt-out region");
+  assert.ok(cascaded(FX, off).get("animation").important);
+  const self = el({ classes: ["sl-statusbar__dot"], attrs: { "data-sl-fx": "off" }, parent: el({ tag: "body", parent: html({}) }) });
+  assert.equal(cascaded(FX, self).get("animation").value, "none", "opted out itself");
+  const still = cascaded(FX, el({ classes: ["sl-statusbar__dot"], parent: el({ tag: "body", parent: html({ "data-sl-fx-still": "" }) }) }));
+  assert.equal(still.get("animation-play-state").value, "paused", "held where it is");
+  assert.ok(still.get("animation-play-state").important);
+});
+
+test("a status item that is a button takes the shared flush ring and its halo", () => {
+  for (const ctx of [dark, hc]) {
+    const at = mount(ctx);
+    const item = el({ tag: "button", classes: ["sl-statusbar__item"], states: ["focus-visible"], parent: el({ tag: "footer", classes: ["sl-statusbar"], parent: at }) });
+    const won = cascaded(ctx.rules, item);
+    assert.equal(won.get("outline").value, "var(--sl-focus-ring-width, 2px) solid var(--slc-focus)");
+    assert.equal(won.get("box-shadow").value, "var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent)");
+    const rest = cascaded(ctx.rules, el({ tag: "button", classes: ["sl-statusbar__item"], parent: at }));
+    for (const [prop, v] of [["appearance", "none"], ["border", "0"], ["font", "inherit"], ["color", "inherit"]]) assert.equal(rest.get(prop)?.value, v, `${ctx.name} ${prop}`);
+  }
+});
+
 // ── the toast ──────────────────────────────────────────────────────────────
 
-test("the toast floats: its border in shade is the ring, the float recipe the cast", () => {
+test("the toast floats on Lumen's cast, whose ring is its edge: no border, r12, Lumen's padding", () => {
   const p = build(dark);
   const won = cascaded(RULES_A, p["toast success"]);
-  assert.equal(won.get("border").value, "1px solid var(--slc-edge-raised)");
-  assert.equal(won.get("box-shadow").value, "var(--slc-depth-float)");
+  const env = customs(RULES_A, p["toast success"]);
+  assert.equal(won.get("border").value, "0");
+  assert.equal(won.get("box-shadow").value, "var(--slc-depth-cast)");
   assert.equal(won.get("background-color").value, "var(--slc-raised)");
+  assert.equal(px(won.get("border-radius").value, env), 12);
+  assert.deepEqual(words(won.get("padding-block").value).map((w) => px(w, env)), [12, 16], "Lumen's 12.8 / 14.4 on the grid");
+  assert.deepEqual(words(won.get("padding-inline").value).map((w) => px(w, env)), [16, 12], "Lumen's 16 / 12.8 on the grid");
   // the stack lets the pointer through, a toast takes it
   assert.equal(cascaded(RULES_A, p["toast stack"]).get("pointer-events").value, "none");
   assert.equal(cascaded(RULES_A, p["toast success"]).get("pointer-events")?.value, "auto");
@@ -538,25 +779,66 @@ test("each tone is the kit's status role: its band-safe ink where a band derives
   }
 });
 
-test("the dismiss keeps the one control edge, at the small button's 24px", () => {
+test("the dismiss keeps the one control edge, at the icon button's 32px", () => {
   const p = build(dark);
   const d = p["toast success dismiss"];
   const won = cascaded(RULES_A, d);
   assert.equal(won.get("border").value, "1px solid var(--slc-edge-control)", "only the tab's close and the activity bar are borderless chrome");
-  assert.equal(declaredHeight(RULES_A, d), 24);
+  assert.equal(declaredHeight(RULES_A, d), 32, "Lumen's 32px (0.34; 24 before)");
+  assert.equal(px(won.get("border-radius").value, customs(RULES_A, d)), 8);
+});
+
+test("the toast's tick is Lumen's: a 1px line of its tone from 16px in (Lumen's 14) to the middle, glowing", () => {
+  for (const [ctx, glow] of [[dark, 0.5], [CONTEXTS.find((c) => c.name === "light default"), 0.5], [hc, 0]]) {
+    const p = build(ctx);
+    const tick = cascaded(ctx.rules, p["toast success tick"]);
+    const env = customs(ctx.rules, p["toast success tick"]);
+    assert.equal(px(tick.get("inset-block-start").value, env), 0, "on the top edge: there is no border to sit over");
+    assert.deepEqual(words(tick.get("inset-inline").value).map((w) => (w.endsWith("%") ? w : px(w, env))), [16, "50%"]);
+    assert.equal(px(tick.get("height").value, env), 1);
+    assert.equal(tick.get("background-image").value, "linear-gradient(var(--_sl-seam-dir, 90deg), var(--_sl-tone), transparent)");
+    const shadow = substitute(tick.get("box-shadow").value, env);
+    const a = value(ctx.rules, p["toast success tick"], shadow.slice(shadow.indexOf("color-mix(")), BLACK).alpha;
+    assert.ok(Math.abs(a - glow) < 1e-9, `${ctx.name}: glow ${a}, Lumen's 50% on both themes, none in high contrast`);
+  }
+});
+
+test("the toast's mark is 24px (Lumen's 26) on a 16% wash of its tone, and its timer a 2px bar along the bottom", () => {
+  const p = build(dark);
+  const env = customs(RULES_A, p["toast success mark"]);
+  const mark = cascaded(RULES_A, p["toast success mark"]);
+  assert.equal(px(mark.get("width").value, env), 24);
+  assert.equal(px(mark.get("height").value, env), 24);
+  assert.equal(mark.get("background-color").value, "color-mix(in srgb, currentColor 16%, transparent)");
+  const timer = cascaded(RULES_A, p["toast success timer"]);
+  assert.equal(timer.get("position").value, "absolute");
+  assert.equal(px(timer.get("inset-inline").value, env), 16);
+  assert.equal(px(timer.get("inset-block-end").value, env), 0, "inside the edge: the toast has no border to sit on");
+  assert.equal(timer.get("width").value, "auto", "between its insets, never past the toast");
+  assert.equal(px(timer.get("height").value, env), 2);
+  assert.equal(timer.get("background-color").value, "transparent", "no track: the bar alone");
+  assert.equal(timer.get("border-radius").value, "0");
+  assert.equal(cascaded(RULES_A, p["toast success timer bar"]).get("background-color").value, "color-mix(in srgb, var(--_sl-tone) 70%, transparent)");
+});
+
+test("forced colours: a toast keeps a drawn edge, its cast being gone", () => {
+  const fc = parseSheet(read("components.css"), { forcedColors: true });
+  const won = cascaded(fc, el({ classes: ["sl-toast"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }));
+  assert.equal(won.get("outline").value, "1px solid CanvasText");
+  assert.ok(won.get("outline").important);
 });
 
 // ── pseudo-elements: ::before is the component's, ::after the aurora's ───────
 
-test("pseudo-elements: a tile's and the palette's seams are background layers; the lit pane's seam, the toast's tick and the exit mark are a ::before; nothing takes ::after", () => {
+test("pseudo-elements: a tile's seam is a background layer; the lit pane's and the palette's seams, the toast's tick and the exit mark are a ::before; nothing takes ::after", () => {
   const sels = [...WB, ...CO.filter((r) => /\.sl-toast/.test(r.selector))].map((r) => r.selector);
   assert.deepEqual(sels.filter((s) => /::after/.test(s)), [], "::after stays free for the aurora");
   const before = sels.filter((s) => /::before/.test(s) && !/sl-tree__twisty/.test(s)).map((s) => s.replace(/^.*?(\.sl-[\w-]+)[^,]*$/, "$1"));
-  assert.deepEqual([...new Set(before)].sort(), [".sl-pane", ".sl-term-block", ".sl-toast"], "the three marks, and nothing else");
-  // the lit pane's seam is a pseudo-element (it paints over the pane's children), the palette's a layer
+  assert.deepEqual([...new Set(before)].sort(), [".sl-palette", ".sl-pane", ".sl-term-block", ".sl-toast"], "the four marks, and nothing else");
+  // the lit pane's seam is a pseudo-element (it paints over the pane's children), and the palette's since 0.34 (Lumen's line with its glow)
   assert.match(rule(WB, ".sl-pane[data-lit]::before"), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), transparent, var\(--slc-seam\) 18%/);
   assert.doesNotMatch(rule(WB, ".sl-pane[data-lit]"), /background-image/);
-  assert.match(rule(WB, ".sl-palette"), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), transparent, var\(--slc-seam\) 18%/);
+  assert.match(rule(WB, ".sl-palette::before"), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), var\(--slc-seam\), transparent\)/);
   // mirrored right to left
   assert.equal(decl(rule(WB, ":where(.sl-pane, .sl-palette):dir(rtl)"), "--_sl-seam-dir"), "270deg");
 });
@@ -617,10 +899,15 @@ test("every focusable workbench piece takes the shared flush ring and its halo, 
   }
 });
 
-// ── heights on the 4px grid ─────────────────────────────────────────────────
+// ── heights: Lumen's rendered geometry (0.34) ──────────────────────────────
 
-test("a tree row, a palette row and an activity item sit on the 4px grid, and their line fits", () => {
+// The workbench chrome takes the geometry the Lumen IDE screen renders at
+// 1440x900 (owner, 2026-10-05: "almost pixel by pixel"), which steps off the
+// kit's 4px grid: a 26px tree row, a 38px palette row, a 38px activity item.
+test("a tree row, a palette row and an activity item sit on the 4px grid, within 2px of Lumen's, and their line fits", () => {
   const p = build(dark);
+  // Lumen renders 26 / 38 / 38; the kit keeps its grid (owner, 2026-10-05),
+  // and where both neighbours are 2px off it keeps the 0.33 height
   for (const [name, e, want] of [["tree row", p["tree row"], 24], ["selected tree row", p["tree selected"], 24], ["palette row", p["palette row"], 36], ["selected palette row", p["palette selected"], 36], ["activity item", p["activity item"], 36]]) {
     const h = declaredHeight(RULES_A, e);
     assert.equal(h, want, name);
@@ -630,7 +917,8 @@ test("a tree row, a palette row and an activity item sit on the 4px grid, and th
   // the tree row's line inside its own height
   const row = box(RULES_A, p["tree row"]);
   assert.ok(row.line <= 24, `tree line ${row.line}`);
-  // the palette input is the kit's field: 32px
+  assert.equal(px(cascaded(RULES_A, p["tree row"]).get("font-size").value, row.env), 13, "Lumen's 13px rows");
+  // the palette input is the kit's field, the one control height: 32px (Lumen's 34)
   assert.equal(box(RULES_A, p["palette input"]).height, 32);
 });
 
@@ -643,13 +931,88 @@ test("the activity bar's glyphs are borderless chrome, the current one a flat ti
   assert.equal(item.get("background-color").value, "transparent");
   for (const name of ["activity current", "activity tab"]) {
     const won = cascaded(RULES_A, p[name]);
-    assert.equal(won.get("background-color").value, "var(--slc-tile)", name);
+    // 0.34, Lumen: the current view rests on the surface rung (the tile is
+    // a selection lifted out of a pane; the bar sits on the canvas)
+    assert.equal(won.get("background-color").value, "var(--slc-surface)", name);
     assert.equal(won.get("background-image").value, "linear-gradient(var(--_sl-seam-ink), var(--_sl-seam-ink)), var(--_sl-layer)", `${name}: the shared seam`);
     assert.equal(customs(RULES_A, p[name]).get("--_sl-depth"), customs(RULES_A, p[name]).get("--slc-depth-flat"), `${name}: a flat tile`);
   }
   // hover is a flat wash and keeps the seam's layer
   assert.equal(cascaded(RULES_A, p["activity hovered"]).get("background-color").value, "color-mix(in srgb, var(--slc-text) 5%, transparent)");
   assert.equal(cascaded(RULES_A, p["activity hovered"]).get("box-shadow").value, "var(--_sl-depth)");
+});
+
+test("the activity bar keeps Lumen's 52px column and 44px pitch on the grid: 36px items at r9, 8px apart, 4px from the top", () => {
+  const at = mount(dark);
+  const bar = el({ tag: "nav", classes: ["sl-activitybar"], parent: at });
+  const item = el({ tag: "button", classes: ["sl-activitybar__item"], parent: bar });
+  const env = customs(RULES_A, item);
+  const b = cascaded(RULES_A, bar);
+  assert.equal(px(b.get("width").value, env), 52);
+  assert.equal(b.get("box-sizing").value, "border-box");
+  assert.equal(px(b.get("gap").value, env), 8);
+  assert.deepEqual(words(b.get("padding-block").value).map((w) => px(w, env)), [4, 8]);
+  const i = cascaded(RULES_A, item);
+  assert.equal(px(i.get("width").value, env), 36);
+  assert.equal(px(i.get("height").value, env), 36);
+  assert.equal(px(i.get("height").value, env) + px(b.get("gap").value, env), 44, "Lumen's pitch, 38 + 6");
+  assert.equal(px(i.get("border-radius").value, env), 9);
+  assert.equal(i.get("position").value, "relative", "the count badge's containing block");
+  assert.equal(cascaded(RULES_A, el({ pseudo: "after", parent: el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "data-count": "3" }, parent: bar }) })).get("content"), undefined, "a data-count draws nothing: the badge is a child");
+});
+
+test("a count badge: a child of the item, mono 9px on the accent fill, ringed in the canvas", () => {
+  const at = mount(dark);
+  const bar = el({ tag: "nav", classes: ["sl-activitybar"], parent: at });
+  const counted = el({ tag: "button", classes: ["sl-activitybar__item"], parent: bar });
+  const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], attrs: { "aria-hidden": "true" }, parent: counted });
+  const won = cascaded(RULES_A, badge);
+  const env = customs(RULES_A, badge);
+  assert.equal(won.get("position").value, "absolute");
+  assert.equal(px(won.get("inset-block-start").value, env), 4);
+  assert.equal(px(won.get("inset-inline-end").value, env), 4, "mirrored right to left");
+  // Lumen renders 20 x 14 (a 14px content box and 3px padding); on the grid, 20 x 16, a full pill
+  assert.equal(won.get("box-sizing").value, "border-box");
+  assert.equal(px(won.get("min-width").value, env), 20);
+  assert.equal(px(won.get("height").value, env), 16);
+  assert.equal(px(won.get("padding").value.split(" ")[1], env), 4);
+  assert.match(won.get("font").value, /^600 9px\/1rem var\(--sl-font-mono/);
+  assert.equal(won.get("background-color").value, "var(--slc-accent-fill, var(--slc-accent))");
+  assert.equal(won.get("box-shadow").value, "0 0 0 2px var(--slc-canvas)");
+  assert.equal(won.get("pointer-events").value, "none");
+  // the label is picked on the fill itself, as the primary's is, so a Tier B
+  // page and a subtree fill get it too
+  assert.equal(won.get("color").value, "oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-on))");
+});
+
+// The item is an effect host (effects.css restores its depth and halo), and
+// the aurora owns its ::after: a badge drawn there lost its count to the
+// aurora's opacity and mask. A child keeps both.
+test("a count badge survives the aurora on its item: neither takes the other's paint", () => {
+  const FX = parse([...TIER_A, read("effects.css")]);
+  const at = mount(dark);
+  const item = el({ tag: "button", classes: ["sl-activitybar__item", "sl-fx-aurora"], attrs: { "aria-current": "true" }, parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: at }) });
+  const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], parent: item });
+  const b = cascaded(FX, badge);
+  for (const prop of ["opacity", "mask", "mask-image", "-webkit-mask", "visibility", "display", "content"]) {
+    assert.ok(!b.has(prop) || !/^(0|none|hidden)$/.test(b.get(prop).value) || prop === "content", `${prop}: ${b.get(prop)?.value}`);
+  }
+  assert.equal(b.get("background-color").value, "var(--slc-accent-fill, var(--slc-accent))", "the badge keeps its fill");
+  // and nothing in the workbench writes into the item's ::after, the aurora's
+  const after = cascaded(RULES_A, el({ pseudo: "after", parent: item }));
+  assert.equal(after.get("content"), undefined, "the item's ::after is left to the aurora");
+});
+
+test("a count badge's label reads at 4.5:1 on its fill, every product, theme and tier", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    const at = mount(ctx);
+    const item = el({ tag: "button", classes: ["sl-activitybar__item"], parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: at }) });
+    const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], parent: item });
+    const r = textContrast(ctx.rules, badge);
+    if (!(r >= 4.5)) low.push(`${ctx.name} ${r.toFixed(2)}`);
+  }
+  assert.deepEqual(low, []);
 });
 
 // ── the tree ────────────────────────────────────────────────────────────────
@@ -669,7 +1032,8 @@ test("tree selection: a raised tile while the tree has the focus, a flat tile wh
 
 test("tree rows indent by aria-level, a guide under each ancestor's twisty, and the twisty turns with aria-expanded", () => {
   const at = mount(dark);
-  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: at });
+  // the guides are opt-in since 0.34 (Lumen draws none)
+  const tree = el({ tag: "ul", classes: ["sl-tree", "sl-tree--guides"], parent: at });
   const row = (level, attrs = {}) => el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": String(level), ...attrs }, parent: tree });
   for (const level of [1, 2, 4, 8]) {
     const r = row(level);
@@ -708,17 +1072,48 @@ test("tree rows indent by aria-level, a guide under each ancestor's twisty, and 
   assert.equal(cascaded(RULES_A, leaf).get("content"), undefined, "a leaf draws no chevron");
 });
 
+test("a tree draws no guides unless it asks for them, and a selected row then carries the seam alone", () => {
+  const at = mount(dark);
+  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: at });
+  const row = el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": "3" }, parent: tree });
+  assert.equal(customs(RULES_A, row).get("--_sl-layer"), "none", "no guides by default, as Lumen draws the tree");
+  const sel = el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": "3", "aria-selected": "true" }, parent: tree });
+  const layers = splitTop(substitute(cascaded(RULES_A, sel).get("background-image").value, customs(RULES_A, sel)));
+  assert.equal(layers.length, 2);
+  assert.equal(layers[1], "none", "the seam over no guide layer");
+});
+
+test("the twisty is a 16px box holding a chevron the size of Lumen's 12px glyph", () => {
+  const at = mount(dark);
+  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: at });
+  const twisty = (expanded) => el({ tag: "span", classes: ["sl-tree__twisty"], parent: el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": "1", "aria-expanded": expanded }, parent: tree }) });
+  const box = twisty("false");
+  const env = customs(RULES_A, box);
+  const t = cascaded(RULES_A, box);
+  assert.equal(px(t.get("width").value, env), 16);
+  assert.equal(px(t.get("height").value, env), 16);
+  // Lumen's chevron: the path m6 4 4 4-4 4 in a 16-unit box at 12px, so 6px
+  // tall and 3px deep. Two borders of a square of side 6/sqrt(2), turned
+  // 45deg, draw it; the tip sits s/sqrt(2) from the square's centre and the
+  // open side on it, so it is shifted back by half that to sit centred.
+  const closed = cascaded(RULES_A, el({ pseudo: "before", parent: box }));
+  const side = px(closed.get("width").value, env);
+  assert.equal(px(closed.get("height").value, env), side);
+  assert.ok(Math.abs(side * Math.SQRT2 - 6) < 0.02, `6px tall: ${side * Math.SQRT2}`);
+  assert.equal(closed.get("border-right").value, "1.25px solid currentColor", "the 12px glyph's 1.05px stroke, rounded to what a border paints");
+  assert.equal(closed.get("translate").value, "-1.5px 0", "centred: back by half its 3px depth");
+  const open = cascaded(RULES_A, el({ pseudo: "before", parent: twisty("true") }));
+  assert.equal(open.get("translate").value, "0 -1.5px");
+});
+
 // ── the palette ─────────────────────────────────────────────────────────────
 
-test("the palette floats, holds a seam inside its top edge and never animates", () => {
+test("the palette floats on Lumen's cast, keeps no border, and never animates", () => {
   const p = build(dark);
   const won = cascaded(RULES_A, p.palette);
-  assert.equal(won.get("border").value, "1px solid var(--slc-edge-raised)");
-  assert.equal(won.get("box-shadow").value, "var(--slc-depth-float)");
-  const env = customs(RULES_A, p.palette);
-  assert.equal(px(words(won.get("background-size").value)[1], env), 1, "one pixel deep");
-  assert.equal(px(words(won.get("background-position").value)[1], env), 0, "flush under the top border (the background starts inside it)");
-  assert.equal(won.get("background-origin"), undefined, "the default origin, the padding box");
+  assert.equal(won.get("border").value, "0", "the cast's ring is its edge (0.34)");
+  assert.equal(won.get("box-shadow").value, "var(--slc-depth-cast)");
+  assert.equal(won.get("background-image"), undefined, "the seam is its ::before now, not a layer");
   assert.equal(cascaded(RULES_A, p["palette selected"]).get("box-shadow").value, "var(--slc-depth-tile)");
   // no transition and no animation anywhere in the palette, the field included
   const pal = WB.filter((r) => /\.sl-palette/.test(r.selector));
@@ -729,10 +1124,102 @@ test("the palette floats, holds a seam inside its top edge and never animates", 
   // ...at two classes, so it holds whatever order the sheets load in
   const reversed = parse([read("workbench.css"), read("components.css")]);
   assert.equal(cascaded(reversed, p["palette input"]).get("transition").value, "none", "workbench.css loaded first");
-  // the input is the kit's sunken field
+});
+
+test("the palette is Lumen's on the grid: 580 wide, a 52px head, a 16px input with no fill or well, 36px rows, a foot on the surface", () => {
+  const p = build(dark);
+  const env = customs(RULES_A, p.palette);
+  const pal = cascaded(RULES_A, p.palette);
+  assert.equal(pal.get("width").value, "min(580px, 100%)");
+  assert.equal(pal.get("border-radius").value, "var(--sl-radius-lg, 14px)");
+  const head = cascaded(RULES_A, p["palette head"]);
+  assert.equal(declaredHeight(RULES_A, p["palette head"]), 52, "Lumen's 54, keeping its 10px round a 32px field");
+  assert.equal(px(head.get("padding-inline").value, env), 16);
+  assert.equal(px(head.get("gap").value, env), 8);
+  assert.equal(head.get("border-bottom").value, "1px solid var(--slc-border-subtle)", "a hairline");
   const input = cascaded(RULES_A, p["palette input"]);
-  assert.equal(input.get("background").value, "var(--slc-sunken)");
-  assert.equal(customs(RULES_A, p["palette input"]).get("--_sl-depth"), customs(RULES_A, p["palette input"]).get("--slc-depth-sunk"));
+  assert.equal(px(input.get("font-size").value, env), 16);
+  assert.equal(input.get("letter-spacing").value, "-0.01em");
+  assert.equal(px(input.get("padding-inline").value, env), 8);
+  assert.equal(input.get("padding").value, "0.3125rem 0.75rem", "the field's own padding round its 20px line: 32px");
+  assert.equal(input.get("background-color").value, "transparent", "no fill: the palette is its ground");
+  assert.equal(customs(RULES_A, p["palette input"]).get("--_sl-depth"), "0 0 transparent", "no well");
+  // the one control edge stays (Lumen draws none): a field is found by its
+  // boundary, >= 3:1, which the screens report checks
+  assert.equal(input.get("border").value, "1px solid var(--slc-edge-control)");
+  assert.equal(input.get("border-color"), undefined, "nothing hides it at rest");
+  const hovered = el({ tag: "input", classes: ["sl-field__input", "sl-palette__input"], states: ["hover"], parent: p["palette head"] });
+  assert.equal(cascaded(RULES_A, hovered).get("border-color").value, "var(--slc-edge-control-hover)", "the kit's hover step");
+  const focused = el({ tag: "input", classes: ["sl-field__input", "sl-palette__input"], states: ["focus", "focus-visible"], parent: p["palette head"] });
+  assert.equal(cascaded(RULES_A, focused).get("border-color").value, "var(--slc-focus)", "focused, the kit's flush ring and its border");
+  const list = cascaded(RULES_A, p["palette row"].parent.parent);
+  assert.deepEqual(words(list.get("padding").value).map((w) => px(w, env)), [4, 8, 8]);
+  const row = cascaded(RULES_A, p["palette row"]);
+  assert.equal(px(row.get("gap").value, env), 12);
+  assert.equal(px(row.get("border-radius").value, env), 8);
+  const foot = cascaded(RULES_A, p["palette foot"]);
+  assert.equal(foot.get("border-top").value, "1px solid var(--slc-border-subtle)");
+  assert.equal(foot.get("background-color").value, "color-mix(in srgb, var(--slc-surface) 70%, transparent)");
+  assert.deepEqual(words(foot.get("padding").value).map((w) => px(w, env)), [8, 16]);
+  assert.equal(foot.get("border-radius").value, "0 0 var(--sl-radius-lg, 14px) var(--sl-radius-lg, 14px)", "its fill keeps to the palette's corners");
+});
+
+test("the palette is translucent only where the backdrop blurs: opaque without it, in high contrast and under forced colours", () => {
+  const at = mount(dark);
+  const pal = (rules) => cascaded(rules, el({ classes: ["sl-palette"], attrs: { role: "dialog" }, parent: at }));
+  const glass = pal(RULES_A);
+  assert.equal(glass.get("background-color").value, "color-mix(in srgb, var(--slc-raised) 94%, transparent)");
+  assert.equal(glass.get("backdrop-filter").value, "blur(24px) saturate(1.3)");
+  assert.equal(glass.get("-webkit-backdrop-filter").value, "blur(24px) saturate(1.3)");
+  const plainRules = (() => { let o = 1e6; return [...TIER_A, accents(), PAGE].flatMap((css) => { const r = parseSheet(css, { backdrop: false }, o); o += r.length + 1; return r; }); })();
+  const opaque = cascaded(plainRules, el({ classes: ["sl-palette"], parent: mount(dark) }));
+  assert.equal(opaque.get("background-color").value, "var(--slc-raised)", "no backdrop-filter: the raised rung, opaque");
+  assert.equal(opaque.get("backdrop-filter"), undefined);
+  const h = cascaded(RULES_A, el({ classes: ["sl-palette"], parent: mount(hc) }));
+  assert.equal(h.get("background-color").value, "var(--slc-raised)", "high contrast: opaque");
+  assert.equal(h.get("backdrop-filter").value, "none");
+  const fc = cascaded(parseSheet(read("workbench.css"), { forcedColors: true }), el({ classes: ["sl-palette"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }));
+  assert.equal(fc.get("outline").value, "1px solid CanvasText", "forced colours: its drawn edge, as a pane's");
+  assert.equal(fc.get("background-color").value, "Canvas");
+  assert.equal(fc.get("backdrop-filter").value, "none");
+});
+
+test("the palette's seam is Lumen's: a 1px line from 16px in, gone by 40% from the end, glowing", () => {
+  for (const [ctx, glow] of [[dark, 0.55], [CONTEXTS.find((c) => c.name === "light default"), 0.55], [hc, 0]]) {
+    const p = build(ctx);
+    const seam = cascaded(ctx.rules, p["palette seam"]);
+    const env = customs(ctx.rules, p["palette seam"]);
+    assert.equal(seam.get("content").value, '""');
+    assert.equal(seam.get("position").value, "absolute");
+    assert.equal(px(seam.get("inset-block-start").value, env), 0);
+    assert.equal(seam.get("inset-inline").value, "16px 40%");
+    assert.equal(px(seam.get("height").value, env), 1);
+    assert.equal(seam.get("background-image").value, "linear-gradient(var(--_sl-seam-dir, 90deg), var(--slc-seam), transparent)");
+    const shadow = substitute(seam.get("box-shadow").value, env);
+    const a = value(ctx.rules, p["palette seam"], shadow.slice(shadow.indexOf("color-mix(")), BLACK).alpha;
+    assert.ok(Math.abs(a - glow) < 1e-9, `${ctx.name}: glow ${a}, Lumen's 55% on both themes, none in high contrast`);
+  }
+  const fc = cascaded(parseSheet(read("workbench.css"), { forcedColors: true }), el({ pseudo: "before", parent: el({ classes: ["sl-palette"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }) }));
+  assert.equal(fc.get("background").value, "Highlight");
+  assert.equal(fc.get("forced-color-adjust").value, "none");
+});
+
+// The palette floats over the workbench, and a blur shows what is under it
+// at 6%: its text is read over a ground of the palette composited on the
+// canvas (above) and on the page's own ink, the opposite pole, so a bright
+// line of code behind it cannot take a label under 4.5:1.
+test("every text in the palette reads at 4.5:1 with the page's ink behind it", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    const rules = [...ctx.rules, ...parse([".under-ink { background-color: var(--slc-text); }"])];
+    const at = el({ classes: ["under-ink"], parent: mount(ctx) });
+    const p = BUILD.palette(at);
+    for (const name of ["palette input", "palette group", "palette label", "palette match", "palette meta", "palette selected label", "palette selected meta", "palette key", "palette foot"]) {
+      const r = textContrast(rules, p[name]);
+      if (!(r >= 4.5)) low.push(`${ctx.name} ${name} ${r.toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(low, []);
 });
 
 test("a palette match is never only a colour: heavier and underlined in the accent, anywhere in the palette", () => {
@@ -1014,8 +1501,8 @@ test("the effects kill switches never outrank a restore: an island, a float and 
       ["pane", ["sl-pane"], {}, "var(--slc-depth-island)"],
       ["lit pane", ["sl-pane"], { "data-lit": "" }, "var(--slc-depth-island)"],
       ["terminal block", ["sl-term-block"], {}, "var(--slc-depth-island)"],
-      ["toast", ["sl-toast"], {}, "var(--slc-depth-float)"],
-      ["palette", ["sl-palette"], {}, "var(--slc-depth-float)"],
+      ["toast", ["sl-toast"], {}, "var(--slc-depth-cast)"],
+      ["palette", ["sl-palette"], {}, "var(--slc-depth-cast)"],
       ["activity item", ["sl-activitybar__item"], { "aria-current": "true" }, "var(--_sl-depth, 0 0 transparent)"],
       ["tree row", ["sl-tree__row"], { "aria-selected": "true" }, "var(--_sl-depth, 0 0 transparent)"],
     ]) {
@@ -1076,4 +1563,162 @@ test("a Tier B layer's numbers come from the README's recipes, and the dark one 
   assert.deepEqual(LAYER_NUMBERS.dark, { "--sl-accent-band-text-lmax": "0.45" });
   const kitDark = bare(read("themes/dark.css"));
   assert.match(kitDark, /--sl-accent-band-text-lmax:\s*0\.45;/, "the number the kit's own dark theme sets");
+});
+
+// ── the 4px grid (owner, 2026-10-05: the kit keeps it) ──────────────────────
+
+// The workbench follows the Lumen demo within a pixel or two, on the kit's
+// grid (design-language L2): every gap, padding, margin and inset in
+// workbench.css, and in the components.css rules 0.34 touched (the tile tab,
+// the toast), is a whole number of 4px steps, and so is every row, bar and
+// control height or width named below. Radii, type, line weights, shadows,
+// glyph sizes, translate and vertical-align are not spacing and are not read.
+// A value here that predates 0.34 and steps off the grid is listed by
+// selector, property and value, so a change to it trips the sweep too.
+const GRID_PROPS = /^(?:padding|margin|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-|$)/;
+const SPACE = Object.fromEntries([...bare(read("tokens.css")).matchAll(/(--sl-space-\d+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+const GRID_ENV = new Map([...Object.entries(SPACE), ["--sl-tree-level", "1"], ["--sl-radius-pane", "10px"], ["--sl-radius-lg", "14px"]]);
+// before 0.34, off the grid on purpose (design-language L2, its one legacy exception)
+const GRID_LEGACY = new Set([
+  ".sl-tabs--tile::gap=2px", // 2px between tile tabs, since 0.31
+]);
+const GRID_WORDS = /^(?:auto|0|inherit|initial|unset|-?[\d.]+%)$/;
+/** The off-grid or unreadable spacing declarations among `rules`. A word is a
+ *  keyword, a bare percentage, or a length the reader evaluates; a % inside a
+ *  calc() counts as 0, so the rest of the sum must sit on the grid on its own
+ *  (calc(100% - 3px) is off). min(), max(), clamp() and a var() left without
+ *  a value cannot be read on a grid, and say so. */
+function gridOff(rules) {
+  const off = [];
+  for (const r of rules) {
+    for (const d of r.body.split(";")) {
+      const m = d.match(/^\s*([\w-]+)\s*:\s*([\s\S]+?)\s*$/);
+      if (!m || !GRID_PROPS.test(m[1])) continue;
+      const raw = m[2].replace(/\s*!important$/, "");
+      if (GRID_LEGACY.has(`${r.selector}::${m[1]}=${raw}`)) continue;
+      let text;
+      try { text = substitute(raw, GRID_ENV).trim(); } catch { off.push(`${r.selector} { ${m[1]}: ${raw} }: cannot be read on the grid (an unresolved var())`); continue; }
+      for (const w of words(text)) {
+        if (GRID_WORDS.test(w)) continue;
+        if (/\b(?:min|max|clamp)\(|var\(/.test(w)) { off.push(`${r.selector} { ${m[1]}: ${raw} }: cannot be read on the grid (${w})`); continue; }
+        let v;
+        try { v = px(w.replace(/-?[\d.]+%/g, "0"), GRID_ENV); } catch { off.push(`${r.selector} { ${m[1]}: ${raw} }: cannot be read on the grid (${w})`); continue; }
+        if (Math.abs(v / 4 - Math.round(v / 4)) > 1e-9) off.push(`${r.selector} { ${m[1]}: ${raw} } = ${v}px`);
+      }
+    }
+  }
+  return off;
+}
+test("the workbench's spacing sits on the 4px grid", () => {
+  const co = RULES(COMPONENTS).filter((r) => /\.sl-tabs--tile|\.sl-toast/.test(r.selector));
+  assert.deepEqual(gridOff([...RULES(WORKBENCH), ...co]), []);
+});
+
+test("the grid sweep reads a sum, refuses what it cannot read, and pins its exceptions by value", () => {
+  const sweep = (css) => gridOff(RULES(css));
+  assert.deepEqual(sweep(".a { inset-inline: calc(100% - 4px) 40%; padding: 0 var(--sl-space-3); }"), [], "on the grid");
+  assert.equal(sweep(".a { inset-inline: calc(100% - 3px); }").length, 1, "the length beside a % is read");
+  for (const v of ["min(8px, 1rem)", "clamp(4px, 1vw, 8px)", "var(--nope)"]) assert.match(sweep(`.a { gap: ${v}; }`)[0] ?? "", /cannot be read/, v);
+  assert.deepEqual(sweep(".sl-tabs--tile { gap: 2px; }"), [], "the exception at its value");
+  assert.equal(sweep(".sl-tabs--tile { gap: 3px; }").length, 1, "an exception that moves is off again");
+});
+
+test("the workbench's rows, bars and controls are whole 4px steps tall and wide", () => {
+  const p = build(dark);
+  const at = mount(dark);
+  const sizes = [
+    ["title bar", el({ tag: "header", classes: ["sl-titlebar"], parent: at }), "height"],
+    ["command field", el({ tag: "button", classes: ["sl-titlebar__cmd"], parent: at }), "height"],
+    ["activity bar", el({ tag: "nav", classes: ["sl-activitybar"], parent: at }), "width"],
+    ["activity item", p["activity item"], "height"], ["activity item", p["activity item"], "width"],
+    ["count badge", el({ tag: "span", classes: ["sl-activitybar__badge"], parent: p["activity item"] }), "height"],
+    ["count badge", el({ tag: "span", classes: ["sl-activitybar__badge"], parent: p["activity item"] }), "min-width"],
+    ["status bar", p.bar, "height"], ["status item", p["status item"], "height"],
+    ["tree row", p["tree row"], "height"],
+    ["palette", p.palette, "width"], ["palette head", p["palette head"], "height"], ["palette row", p["palette row"], "height"],
+    ["toast mark", p["toast success mark"], "height"], ["toast dismiss", p["toast success dismiss"], "height"],
+    ["tile tab", el({ tag: "button", classes: ["sl-tabs__tab"], parent: el({ classes: ["sl-tabs__list", "sl-tabs--tile"], parent: at }) }), "height"],
+  ];
+  const off = [];
+  for (const [name, e, prop] of sizes) {
+    const v = cascaded(RULES_A, e).get(prop)?.value;
+    assert.ok(v, `${name} declares its ${prop}`);
+    const n = px(v.replace(/^min\((.+), 100%\)$/, "$1"), customs(RULES_A, e));
+    if (n % 4 !== 0) off.push(`${name} ${prop} ${n}`);
+  }
+  // the palette's field is the kit's one control height, 32px
+  if (box(RULES_A, p["palette input"]).height !== 32) off.push(`palette input ${box(RULES_A, p["palette input"]).height}`);
+  assert.deepEqual(off, []);
+});
+
+// ── forced colours and high contrast: the marks 0.34 added keep their shape ──
+
+test("forced colours: the bell's unread dot becomes a Highlight edge, and a count badge keeps its shape on a current item", () => {
+  const wb = parseSheet(read("workbench.css"), { forcedColors: true });
+  const at = el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) });
+  // the dot is an image, which forced colours drop: the button says it with its edge
+  const bell = cascaded(wb, el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn", "sl-titlebar__btn--dot"], parent: at }));
+  assert.equal(bell.get("border").value, "2px solid Highlight");
+  assert.ok(bell.get("border").important);
+  // the badge opts out and is drawn in the selection's colours, ringed in
+  // their text colour, so on a current item (Highlight itself) it keeps a shape
+  const current = el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "aria-current": "true" }, parent: at });
+  const badge = cascaded(wb, el({ tag: "span", classes: ["sl-activitybar__badge"], parent: current }));
+  assert.equal(badge.get("forced-color-adjust").value, "none");
+  assert.equal(badge.get("background").value, "Highlight");
+  assert.equal(badge.get("color").value, "HighlightText");
+  assert.equal(badge.get("outline").value, "1px solid HighlightText");
+  assert.ok(badge.get("outline").important);
+  assert.equal(cascaded(wb, current).get("background").value, "Highlight", "the item it sits on");
+});
+
+test("a toast's timer stays a 2px bar under high contrast and forced colours, never a bordered box", () => {
+  const timer = (rules) => cascaded(rules, el({ classes: ["sl-progress", "sl-toast__timer"], parent: el({ classes: ["sl-toast"], parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "high-contrast" } }) }) }) }));
+  const h = timer(RULES_A);
+  assert.equal(h.get("border").value, "0", "high contrast draws the progress track's edge; the timer has no track");
+  const fc = timer(parseSheet(read("components.css"), { forcedColors: true }));
+  assert.equal(fc.get("border").value, "0");
+  assert.ok(fc.get("border").important, "outranks forced colours' drawn progress edge");
+  const bar = cascaded(parseSheet(read("components.css"), { forcedColors: true }), el({ tag: "span", classes: ["sl-progress__bar"], parent: el({ classes: ["sl-progress", "sl-toast__timer"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }) }));
+  assert.equal(bar.get("background").value, "Highlight", "the bar itself in the system's colour");
+});
+
+test("the palette is opaque where the user asks for less transparency", () => {
+  let o = 2e6;
+  const rules = [...TIER_A, accents(), PAGE].flatMap((css) => { const r = parseSheet(css, { reducedTransparency: true }, o); o += r.length + 1; return r; });
+  const pal = cascaded(rules, el({ classes: ["sl-palette"], parent: mount(dark) }));
+  assert.equal(pal.get("background-color").value, "var(--slc-raised)");
+  assert.equal(pal.get("backdrop-filter").value, "none");
+  assert.equal(pal.get("-webkit-backdrop-filter").value, "none");
+});
+
+// The field keeps the one control edge (Lumen draws it borderless, 1.00:1):
+// a field is found by its boundary, >= 3:1 against the palette it sits in,
+// with the canvas or the page's own ink under the palette's 6%.
+test("the palette's field is found by its edge at 3:1, every product, theme and tier", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    for (const under of ["", "under-ink"]) {
+      const rules = under ? [...ctx.rules, ...parse([".under-ink { background-color: var(--slc-text); }"])] : ctx.rules;
+      const at = under ? el({ classes: [under], parent: mount(ctx) }) : mount(ctx);
+      const p = BUILD.palette(at);
+      const input = p["palette input"];
+      const won = cascaded(rules, input);
+      // the border colour that wins: a longhand of the palette's over the field's shorthand, or the shorthand's colour
+      const bc = won.get("border-color"), b = won.get("border");
+      const text = bc && (!b || cmp(bc, b) > 0) ? bc.value : words(b.value).slice(2).join(" ");
+      const edge = value(rules, input, text, colorOf(rules, input));
+      const g = groundOf(rules, input.parent);
+      const r = ratio(over(edge, g), g);
+      if (!(r >= 3)) low.push(`${ctx.name}${under ? " over ink" : ""} ${r.toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(low, []);
+});
+
+test("forced colours: a focused bell takes the focus ring alone, with no Highlight edge inside it", () => {
+  const wb = parseSheet(read("workbench.css"), { forcedColors: true });
+  const at = el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) });
+  const focused = cascaded(wb, el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn", "sl-titlebar__btn--dot"], states: ["focus-visible"], parent: at }));
+  assert.equal(focused.get("border"), undefined, "the edge stands down under the ring");
 });

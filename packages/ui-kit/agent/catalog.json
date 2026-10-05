@@ -207,6 +207,7 @@
       "roleVars": [
         "--slc-accent",
         "--slc-text",
+        "--slc-text-secondary",
         "--slc-text-muted",
         "--slc-border",
         "--slc-tile",
@@ -274,12 +275,12 @@
         "sl-toast__content",
         "sl-toast__title",
         "sl-toast__body",
-        "sl-toast__dismiss"
+        "sl-toast__dismiss",
+        "sl-toast__timer"
       ],
       "roleVars": [
         "--slc-raised",
-        "--slc-edge-raised",
-        "--slc-depth-float",
+        "--slc-depth-cast",
         "--slc-text",
         "--slc-text-secondary",
         "--slc-text-muted",
@@ -776,6 +777,40 @@
       ]
     },
     {
+      "id": "titlebar",
+      "kind": "workbench",
+      "interactive": true,
+      "classes": [
+        "sl-titlebar",
+        "sl-titlebar__l",
+        "sl-titlebar__menu",
+        "sl-titlebar__mark",
+        "sl-titlebar__dot",
+        "sl-titlebar__crumb",
+        "sl-titlebar__sep",
+        "sl-titlebar__cmd",
+        "sl-titlebar__cmd-text",
+        "sl-titlebar__keys",
+        "sl-titlebar__r",
+        "sl-titlebar__btn",
+        "sl-titlebar__btn--dot"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-text-secondary",
+        "--slc-text-muted",
+        "--slc-accent",
+        "--slc-accent-fill",
+        "--slc-accent-text",
+        "--slc-surface",
+        "--slc-raised",
+        "--slc-lit",
+        "--slc-edge-control",
+        "--slc-edge-control-hover",
+        "--slc-focus"
+      ]
+    },
+    {
       "id": "pane",
       "kind": "workbench",
       "classes": [
@@ -786,7 +821,8 @@
         "--slc-raised",
         "--slc-depth-island",
         "--slc-seam",
-        "--slc-glow"
+        "--slc-glow",
+        "--slc-lit-drop"
       ]
     },
     {
@@ -794,6 +830,7 @@
       "kind": "workbench",
       "classes": [
         "sl-statusbar",
+        "sl-statusbar--separators",
         "sl-statusbar__item",
         "sl-statusbar__value",
         "sl-statusbar__sep",
@@ -804,7 +841,9 @@
         "--slc-text-muted",
         "--slc-text",
         "--slc-border",
-        "--slc-accent-text"
+        "--slc-accent-text",
+        "--slc-surface",
+        "--slc-focus"
       ]
     },
     {
@@ -813,15 +852,19 @@
       "interactive": true,
       "classes": [
         "sl-activitybar",
-        "sl-activitybar__item"
+        "sl-activitybar__item",
+        "sl-activitybar__badge"
       ],
       "roleVars": [
         "--slc-text-muted",
         "--slc-text",
-        "--slc-tile",
+        "--slc-surface",
         "--slc-depth-flat",
         "--slc-seam",
         "--slc-accent-text",
+        "--slc-accent-fill",
+        "--slc-accent",
+        "--slc-canvas",
         "--slc-focus"
       ]
     },
@@ -831,6 +874,7 @@
       "interactive": true,
       "classes": [
         "sl-tree",
+        "sl-tree--guides",
         "sl-tree__row",
         "sl-tree__twisty",
         "sl-tree__label"
@@ -865,18 +909,19 @@
       ],
       "roleVars": [
         "--slc-raised",
-        "--slc-edge-raised",
-        "--slc-depth-float",
+        "--slc-depth-cast",
         "--slc-depth-tile",
         "--slc-tile",
         "--slc-seam",
         "--slc-glow",
         "--slc-text",
         "--slc-text-muted",
+        "--slc-text-secondary",
         "--slc-accent-text",
-        "--slc-sunken",
-        "--slc-focus",
-        "--slc-text-secondary"
+        "--slc-border-subtle",
+        "--slc-surface",
+        "--slc-edge-control",
+        "--slc-focus"
       ]
     },
     {
