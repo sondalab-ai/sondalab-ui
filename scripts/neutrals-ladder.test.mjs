@@ -66,6 +66,33 @@ test("the theme files carry the default product's neutrals in hex", () => {
   }
 });
 
+// components.css is hand-written, and each role-var falls back to a literal
+// for a bare import with no theme (`--slc-text: var(--sl-text-primary,
+// #191511)`). Those literals are the default product's light values: this
+// fence holds them to what the generator wrote into themes/light.css, so a
+// regenerated ladder cannot leave them behind. Two are deliberately not the
+// light theme's: the bare-import accent is a text-safe amber (the light
+// theme's accent is a fill since 0.24) and its label the white pole (the
+// theme derives its label).
+test("components.css's bare-import fallback literals are the default product's light values", () => {
+  const root = read("components.css").replace(/\/\*[\s\S]*?\*\//g, "").match(/^:root \{([\s\S]*?)\n\}/m)[1];
+  const light = new Map([...read("themes/light.css").matchAll(/(--sl-[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  const NOT_THE_THEME = new Map([["--slc-accent", "#9A5300"], ["--slc-on-accent", "#FFFFFF"]]);
+  const literal = (v) => !/var\(|\bfrom\b|color-mix/.test(v) && /#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(v);
+  const checked = [], bad = [];
+  for (const [, role, token, fallback] of root.matchAll(/(--slc-[\w-]+):\s*var\((--sl-[\w-]+),\s*([^;]+)\);/g)) {
+    const v = fallback.trim();
+    if (!literal(v)) continue;
+    if (NOT_THE_THEME.has(role)) { assert.equal(v, NOT_THE_THEME.get(role), role); continue; }
+    checked.push(role);
+    if (v.toLowerCase() !== light.get(token)?.toLowerCase()) bad.push(`${role}: ${v}, light.css ${token}: ${light.get(token)}`);
+  }
+  assert.deepEqual(bad, []);
+  for (const role of ["--slc-canvas", "--slc-surface", "--slc-raised", "--slc-overlay", "--slc-text", "--slc-text-secondary", "--slc-text-muted", "--slc-border", "--slc-border-subtle", "--slc-border-strong", "--slc-success", "--slc-danger"]) {
+    assert.ok(checked.includes(role), `${role} is fenced`);
+  }
+});
+
 test("the package exports and ships products.css and neutrals.json", () => {
   const pkg = JSON.parse(read("package.json"));
   assert.equal(pkg.exports["./themes/products.css"], "./themes/products.css");
