@@ -191,7 +191,9 @@ test("the depth recipes are role-vars built from roles, never a literal colour",
 test("the inversion band re-declares every depth recipe as written, so it reads the band's roles", () => {
   const root = vars([":root"]);
   const band = vars([".sl-invert > *"]);
-  for (const n of [...DEPTH, "--slc-seam"]) assert.equal(band.get(n), root.get(n), n);
+  for (const n of DEPTH) assert.equal(band.get(n), root.get(n), n);
+  // the seam is floored a step above the band's accent text (0.72 against 0.68)
+  assert.equal(band.get("--slc-seam"), "oklch(from var(--slc-accent) min(max(l, 0.72), var(--sl-accent-band-text-lmax, 1)) c h)");
   assert.equal(band.get("--slc-tile"), "color-mix(in srgb, currentColor 16%, transparent)");
   assert.equal(band.get("--slc-sunken"), "color-mix(in srgb, currentColor 4%, transparent)");
   assert.equal(band.get("--slc-lit"), "color-mix(in srgb, white 8%, transparent)");
@@ -618,7 +620,6 @@ const SEAM_HOSTS = [
   '.sl-palette__row[aria-selected="true"]',
   '.sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))',
   '.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]',
-  '.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])',
   '.sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"])',
   '.sl-pagination__item[aria-current]:not([aria-current="false"])',
 ];
@@ -633,7 +634,7 @@ test("one rule draws the seam on every selected or current tile, as a layer of i
   }
   // the ink: the accent while the container holds the focus, the muted ink while it does not
   const ink = vars([":where(.sl-nav__item, .sl-activitybar__item, .sl-tree__row, .sl-palette__row, .sl-list__row, .sl-tabs__tab, .sl-tabs__item, .sl-segmented__item, .sl-pagination__item)"]);
-  assert.equal(ink.get("--_sl-seam-ink"), "color-mix(in srgb, var(--slc-seam) calc(var(--_sl-seam-focus, 0) * 100%), var(--slc-text-muted))");
+  assert.equal(ink.get("--_sl-seam-ink"), "color-mix(in srgb, var(--slc-seam) calc(var(--_sl-seam-focus, var(--sl-seam-focus, 0)) * 100%), var(--slc-text-muted))");
   assert.equal(ink.get("--_sl-seam-size"), "2px 50%", "a row: half its height");
   assert.equal(ink.get("--_sl-seam-position"), "3px 50%", "3px inside its leading edge");
   const row = vars([":where(.sl-tabs__tab, .sl-tabs__item, .sl-segmented__item, .sl-pagination__item)"]);

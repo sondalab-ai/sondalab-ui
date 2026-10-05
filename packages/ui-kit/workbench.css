@@ -11,14 +11,15 @@
    chrome -- the status bar, the activity bar -- sits on the canvas and
    paints no ground of its own.
 
-   Paint layers: every seam here -- the lit pane's, the palette's, a
-   selected tile's (components.css, THE SEAM) -- is a layer of its host's
-   background, never a pseudo-element, so an effect family keeps its own:
-   glass, press and glitch own an effect host's ::before, the aurora its
-   ::after. The terminal block's exit mark is its ::before, so those three
-   are unsupported on a block; the aurora is not. A child that paints a
-   ground across a seam covers it, and a `background` shorthand of yours on
-   a seam's host wipes it: set background-color.
+   Paint layers: glass, press and glitch own an effect host's ::before, the
+   aurora its ::after. A selected tile's seam (components.css, THE SEAM)
+   and the palette's are layers of their host's background, so an effect
+   keeps its own; a `background` shorthand of yours on such a host wipes
+   the seam (set background-color). Three marks are a ::before instead: the
+   lit pane's seam, which must paint over the pane's children (a header, a
+   tab strip with a ground of its own), the terminal block's exit mark and
+   the toast's tick (components.css). Glass, press and glitch are therefore
+   unsupported on a pane, a terminal block and a toast; the aurora is not.
 
    The inversion band: of these only .sl-term-block is supported inside an
    .sl-invert band, set straight on it (a real-content block, L3). The rest
@@ -47,11 +48,24 @@
 }
 .sl-pane[data-lit] {
   background-color: var(--slc-raised);
-  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
-  background-repeat: no-repeat;
-  background-size: calc(100% - 2 * var(--sl-space-3, 0.75rem)) 2px;
-  background-position: var(--sl-space-3, 0.75rem) 0;
   box-shadow: var(--slc-depth-island), 0 0 24px -6px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
+}
+/* A pseudo-element above the pane's children, not a layer of its background:
+   a pane's header or tab strip usually paints a ground of its own across
+   the top edge, which would cover a layer. z-index 1 lifts it over a child
+   that is positioned too; the pane makes no stacking context, so an overlay
+   with a z-index of its own (--sl-z-*) still paints over it. */
+.sl-pane[data-lit]::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--sl-space-3, 0.75rem);
+  z-index: 1;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 110%), transparent);
+  pointer-events: none;
 }
 :where(.sl-pane, .sl-palette):dir(rtl) { --_sl-seam-dir: 270deg; }
 
@@ -197,8 +211,9 @@
        <li class="sl-tree__row" role="treeitem" aria-level="2" aria-setsize="1" aria-posinset="1" aria-selected="true" tabindex="0">
          <span class="sl-tree__twisty" aria-hidden="true"></span><svg …/><span class="sl-tree__label">resolve.ts</span></li>
      </ul>
-   The indent reads aria-level up to 8; a deeper tree writes the level again
-   as --sl-tree-level (inline), because CSS cannot read a number out of an
+   The indent reads aria-level up to 8, and a deeper row holds at 8; a
+   deeper tree that wants its full indent writes the level again as
+   --sl-tree-level (inline), because CSS cannot read a number out of an
    attribute. A leaf keeps its (empty) twisty so its name lines up with its
    siblings'. The guides are a layer of the row's background, handed to the
    seam as --_sl-layer so a selected row keeps both; forced colours, which
@@ -210,6 +225,7 @@
   padding: 0;
   list-style: none;
 }
+:where(.sl-tree__row[aria-level]) { --sl-tree-level: 8; }
 :where(.sl-tree__row[aria-level="1"]) { --sl-tree-level: 1; }
 :where(.sl-tree__row[aria-level="2"]) { --sl-tree-level: 2; }
 :where(.sl-tree__row[aria-level="3"]) { --sl-tree-level: 3; }
@@ -499,12 +515,13 @@
    The user's palette replaces every colour, drops every shadow and every
    gradient: a pane's and a terminal block's ring went with the island
    recipe, so each gets a drawn edge back (an outline, inside its box, so
-   nothing moves), the lit pane a heavier one in Highlight (its seam was a
-   gradient), the exit mark and the live dot are drawn in system colours,
+   nothing moves), the lit pane a heavier one in Highlight and its seam in
+   Highlight too, the exit mark and the live dot are drawn in system colours,
    and a selection is the system's. */
 @media (forced-colors: active) {
   :is(.sl-pane, .sl-term-block) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
   .sl-pane[data-lit] { outline: 2px solid Highlight !important; outline-offset: -2px; }
+  .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
   .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; }
   /* Selection that was only a fill and a shadow is the system's selection;

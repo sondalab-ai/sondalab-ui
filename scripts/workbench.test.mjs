@@ -40,6 +40,14 @@ const accents = () => PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => {
  *  README's role-vars from the product's neutrals (status from the shared
  *  status values, as a Tier B layer copies them) and sets the light numbers. */
 const STATUS = Object.fromEntries(["light", "dark"].map((t) => [t, Object.fromEntries([...bare(read(`themes/${t}.css`)).matchAll(/--sl-status-(\w+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]))]));
+/** The numbers a Tier B layer cannot read off its colours, taken from the
+ *  README's light- and dark-layer recipes, so a recipe that drops one fails here. */
+const README_TEXT = readFileSync(resolve(KIT, "README.md"), "utf8");
+const LAYER_NUMBERS = Object.fromEntries(["light", "dark"].map((t) => {
+  const block = README_TEXT.match(new RegExp(`\`\`\`css\\n:root\\[data-theme="${t}"\\] \\{\\n([\\s\\S]*?)\\}\\n\`\`\``));
+  assert.ok(block, `the README's ${t}-layer recipe`);
+  return [t, Object.fromEntries([...block[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]))];
+}));
 const tierB = () => PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => {
   const n = NEUTRALS[p][t];
   const map = {
@@ -47,7 +55,7 @@ const tierB = () => PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => {
     "--slc-overlay": n["bg-overlay"], "--slc-text": n["text-primary"], "--slc-text-secondary": n["text-secondary"], "--slc-text-muted": n["text-muted"],
     "--slc-border": n["border-default"], "--slc-border-subtle": n["border-subtle"], "--slc-border-strong": n["border-strong"], "--slc-focus": REGISTRY[p][t],
     ...Object.fromEntries(["success", "warning", "danger", "info"].map((s) => [`--slc-${s}`, STATUS[t][s]])),
-    ...(t === "light" ? { "--sl-accent-text-lmax": "0.46", "--slc-edge-accent-lmax": "0.59", "--slc-glow": "0.35" } : {}),
+    ...LAYER_NUMBERS[t],
   };
   return `:root[data-product="${p}"][data-theme="${t}"] { ${Object.entries(map).map(([k, v]) => `${k}: ${v};`).join(" ")} }`;
 })).join("\n");
@@ -64,6 +72,7 @@ const CONTEXTS = [
     { name: `${t} ${p}`, rules: RULES_A, attrs: { "data-sl-theme": t, "data-sl-product": p } },
     { name: `${t} ${p} band`, rules: RULES_A, attrs: { "data-sl-theme": t, "data-sl-product": p }, band: true },
     { name: `${t} ${p} Tier B`, rules: RULES_B, attrs: { "data-theme": t, "data-product": p } },
+    { name: `${t} ${p} Tier B band`, rules: RULES_B, attrs: { "data-theme": t, "data-product": p }, band: true },
   ])),
   { name: "high-contrast", rules: RULES_A, attrs: { "data-sl-theme": "high-contrast" } },
   { name: "high-contrast band", rules: RULES_A, attrs: { "data-sl-theme": "high-contrast" }, band: true },
@@ -189,7 +198,7 @@ const BUILD = {
   pane(at) {
     const pane = el({ tag: "section", classes: ["sl-pane"], parent: at });
     const lit = el({ tag: "section", classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: at });
-    return { pane, lit, "text in a pane": el({ tag: "p", parent: pane }), "text in the lit pane": el({ tag: "p", parent: lit }) };
+    return { pane, lit, seam: el({ pseudo: "before", parent: lit }), "text in a pane": el({ tag: "p", parent: pane }), "text in the lit pane": el({ tag: "p", parent: lit }) };
   },
   statusbar(at) {
     const bar = el({ tag: "footer", classes: ["sl-statusbar"], parent: at });
@@ -296,7 +305,7 @@ const build = (ctx) => { const at = mount(ctx); return Object.assign({}, ...Obje
 const READINGS = [
   ["text in a pane", 4.5, "text"],
   ["text in the lit pane", 4.5, "text"],
-  ["lit", 3, "layer"],
+  ["seam", 3, "mark"],
   ["status item", 4.5, "text"],
   ["status value", 4.5, "text"],
   ["dot", 3, "fill"],
@@ -505,6 +514,19 @@ test("the toast stack holds two live regions side by side, and the toasts in the
   assert.match(section, /add `popover="manual"` to the stack and call `showPopover\(\)` once\. Without that call the popover stack stays hidden/);
 });
 
+test("a region is spaced only when it holds a toast, never hidden, and a re-shown popover takes its toast a frame later", () => {
+  const regionRules = CO.filter((r) => r.selector.includes("sl-toast-stack__live"));
+  for (const r of regionRules) {
+    assert.doesNotMatch(r.body, /display:\s*(none|contents)/, `${r.selector}: a hidden region is not heard`);
+    assert.doesNotMatch(r.selector, /:not\(:empty\)/, `${r.selector}: whitespace is content to :empty`);
+  }
+  assert.ok(regionRules.some((r) => r.selector === ".sl-toast-stack__live:has(> *) ~ .sl-toast-stack__live:has(> *)" && /margin-block-start/.test(r.body)));
+  for (const doc of [readFileSync(resolve(KIT, "agent/catalog.md"), "utf8"), readFileSync(resolve(KIT, "README.md"), "utf8")]) {
+    assert.match(doc, /Add the toast a frame later \(`requestAnimationFrame`\)/);
+    assert.match(doc, /hidden live regions?/);
+  }
+});
+
 test("each tone is the kit's status role: its band-safe ink where a band derives one, the role itself on the page", () => {
   for (const tone of ["info", "success", "warning", "danger"]) {
     assert.equal(decl(rule(CO, `.sl-toast--${tone}`), "--_sl-tone"), `var(--slc-${tone}-text, var(--slc-${tone}))`, tone);
@@ -526,13 +548,15 @@ test("the dismiss keeps the one control edge, at the small button's 24px", () =>
 
 // ── pseudo-elements: ::before is the component's, ::after the aurora's ───────
 
-test("pseudo-elements: a seam is a layer of its host's background; only the toast's tick and the exit mark are a ::before; nothing takes ::after", () => {
+test("pseudo-elements: a tile's and the palette's seams are background layers; the lit pane's seam, the toast's tick and the exit mark are a ::before; nothing takes ::after", () => {
   const sels = [...WB, ...CO.filter((r) => /\.sl-toast/.test(r.selector))].map((r) => r.selector);
   assert.deepEqual(sels.filter((s) => /::after/.test(s)), [], "::after stays free for the aurora");
   const before = sels.filter((s) => /::before/.test(s) && !/sl-tree__twisty/.test(s)).map((s) => s.replace(/^.*?(\.sl-[\w-]+)[^,]*$/, "$1"));
-  assert.deepEqual([...new Set(before)].sort(), [".sl-term-block", ".sl-toast"], "the two marks, and nothing else");
-  // the lit pane's and the palette's seams are background layers
-  for (const sel of [".sl-pane[data-lit]", ".sl-palette"]) assert.match(rule(WB, sel), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), transparent, var\(--slc-seam\) 18%/, sel);
+  assert.deepEqual([...new Set(before)].sort(), [".sl-pane", ".sl-term-block", ".sl-toast"], "the three marks, and nothing else");
+  // the lit pane's seam is a pseudo-element (it paints over the pane's children), the palette's a layer
+  assert.match(rule(WB, ".sl-pane[data-lit]::before"), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), transparent, var\(--slc-seam\) 18%/);
+  assert.doesNotMatch(rule(WB, ".sl-pane[data-lit]"), /background-image/);
+  assert.match(rule(WB, ".sl-palette"), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), transparent, var\(--slc-seam\) 18%/);
   // mirrored right to left
   assert.equal(decl(rule(WB, ":where(.sl-pane, .sl-palette):dir(rtl)"), "--_sl-seam-dir"), "270deg");
 });
@@ -548,7 +572,7 @@ test("forced colours: a pane and a terminal block get a drawn edge, the lit pane
     assert.equal(won.get("outline").value, outline, name);
     assert.ok(won.get("outline").important, name);
   }
-  for (const [name, sheet, origin, colour] of [["exit mark", fc, el({ classes: ["sl-term-block"], attrs: { "data-exit": "1" }, parent: at }), "CanvasText"], ["toast tick", fcKit, el({ classes: ["sl-toast"], parent: at }), "CanvasText"]]) {
+  for (const [name, sheet, origin, colour] of [["exit mark", fc, el({ classes: ["sl-term-block"], attrs: { "data-exit": "1" }, parent: at }), "CanvasText"], ["toast tick", fcKit, el({ classes: ["sl-toast"], parent: at }), "CanvasText"], ["lit pane seam", fc, el({ classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: at }), "Highlight"]]) {
     const won = cascaded(sheet, el({ pseudo: "before", parent: origin }));
     assert.equal(won.get("forced-color-adjust").value, "none", name);
     assert.equal(won.get("background").value, colour, name);
@@ -661,7 +685,7 @@ test("tree rows indent by aria-level, a guide under each ancestor's twisty, and 
   }
   // past the ladder, the level is written again inline; a written value wins at any weight
   const deep = row(12);
-  assert.equal(customs(RULES_A, deep).get("--sl-tree-level"), undefined, "the ladder stops at 8");
+  assert.equal(customs(RULES_A, deep).get("--sl-tree-level"), "8", "past the ladder, a row holds at 8");
   const written = [...RULES_A, ...parse(['.sl-tree__row[aria-level="2"] { --sl-tree-level: 5; }'])];
   assert.equal(customs(written, row(2)).get("--sl-tree-level"), "5", "the ladder weighs nothing");
   // selected, the row keeps its guides under the seam, with paired lists
@@ -839,8 +863,11 @@ const WHERE = {
   "on the canvas": (at) => at,
 };
 
+// The floors the docs state: 5.24:1 on the page, 3.4 in the band (whose seam
+// is floored at oklch L 0.72 for a hue the light band clips).
 for (const ctx of CONTEXTS) {
-  test(`${ctx.name}: every selected or current tile carries a seam of 3:1 against the tile, focused and not`, () => {
+  const floor = ctx.band ? 3.4 : 5.24;
+  test(`${ctx.name}: every selected or current tile carries a seam of ${floor}:1 against the tile and its ground, focused and not`, () => {
     const low = [];
     const at = mount(ctx);
     for (const [surface, make] of Object.entries(SURFACES)) {
@@ -850,7 +877,7 @@ for (const ctx of CONTEXTS) {
         for (const [focus, states] of [["focused", ["focus-within"]], ["unfocused", []]]) {
           const e = make(host(at), states);
           const r = seamContrast(ctx.rules, e);
-          if (!(r >= 3)) low.push(`${surface} ${where}, ${focus}: ${r.toFixed(2)}`);
+          if (!(r >= floor)) low.push(`${surface} ${where}, ${focus}: ${r.toFixed(3)}`);
           // the ink is the accent while the container holds the focus, the muted ink while it does not
           const ink = toHex(value(ctx.rules, e, "var(--_sl-seam-ink)", colorOf(ctx.rules, e)));
           const want = toHex(value(ctx.rules, e, surface === "palette row" || focus === "focused" ? "var(--slc-seam)" : "var(--slc-text-muted)", colorOf(ctx.rules, e)));
@@ -872,10 +899,13 @@ test("the tile alone is no cue: on the light theme a palette's active row and a 
   }
 });
 
-test("the tile tab's wrapper (a :has() selector) carries the shared seam, and the tab inside it none", () => {
+test("the tile tab's wrapper (a :has() selector) carries the shared seam in a rule of its own, and the tab inside it none", () => {
   // the test cascade never matches :has(), so the rule is read as written
-  const seam = CO.find((r) => /background-image:\s*linear-gradient\(var\(--_sl-seam-ink\)/.test(r.body));
-  assert.ok(splitTop(seam.selector).includes('.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])'));
+  const seams = CO.filter((r) => /background-image:\s*linear-gradient\(var\(--_sl-seam-ink\)/.test(r.body));
+  assert.equal(seams.length, 2, "the shared list, and the wrapper on its own");
+  assert.ok(!seams[0].selector.includes(":has("), "no :has() in the shared list: a browser without it would drop all nine surfaces");
+  assert.equal(seams[1].selector, '.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])');
+  assert.equal(seams[1].body.replace(/\s+/g, " "), seams[0].body.replace(/\s+/g, " "), "the same four declarations");
   assert.equal(decl(rule(CO, '.sl-tabs--tile .sl-tabs__item > .sl-tabs__tab[aria-selected="true"]'), "background-image"), "none");
   assert.equal(decl(rule(CO, '.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"])'), "background-color"), "var(--slc-tile)");
 });
@@ -996,4 +1026,54 @@ test("the effects kill switches never outrank a restore: an island, a float and 
       }
     }
   }
+});
+
+// ── the review's second round (N1-N5) ──────────────────────────────────────
+
+test("a lit pane's seam paints over a child that has a ground of its own", () => {
+  const rules = [...RULES_A, ...parse([".pane-head { background-color: var(--slc-surface); position: relative; }"])];
+  const lit = el({ tag: "section", classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: mount(dark) });
+  el({ tag: "header", classes: ["pane-head"], parent: lit });
+  const seam = cascaded(rules, el({ pseudo: "before", parent: lit }));
+  assert.equal(seam.get("content").value, '""');
+  assert.equal(seam.get("position").value, "absolute");
+  assert.ok(+seam.get("z-index").value >= 1, "above a child that is positioned too (z-index auto), in the pane's own layer");
+  assert.equal(px(seam.get("inset-block-start").value, customs(rules, lit)), 0, "on the pane's top edge");
+  assert.equal(cascaded(rules, lit).get("position").value, "relative", "the pane is its containing block");
+  assert.equal(cascaded(rules, lit).get("isolation"), undefined, "no stacking context of its own: an overlay with a z-index still paints over the seam");
+  assert.equal(cascaded(rules, lit).get("background-image"), undefined, "not a layer a child's ground would cover");
+});
+
+test("a host outside a kit container opts into the focused seam with --sl-seam-focus", () => {
+  const ctx = CONTEXTS.find((c) => c.name === "light default");
+  const rules = [...ctx.rules, ...parse(['.my-tree:focus-within { --sl-seam-focus: 1; }', '.my-nav { --sl-seam-focus: 1; }'])];
+  const at = mount(ctx);
+  const ink = (e) => toHex(value(rules, e, "var(--_sl-seam-ink)", colorOf(rules, e)));
+  const want = (e, v) => toHex(value(rules, e, v, colorOf(rules, e)));
+  const row = (parent) => el({ classes: ["sl-list__row"], attrs: { "aria-selected": "true" }, parent });
+  const bare = row(el({ classes: ["my-tree"], parent: at }));
+  assert.equal(ink(bare), want(bare, "var(--slc-text-muted)"), "a container-less row: muted");
+  const focused = row(el({ classes: ["my-tree"], states: ["focus-within"], parent: at }));
+  assert.equal(ink(focused), want(focused, "var(--slc-seam)"), "its own container under :focus-within: the accent");
+  assert.ok(seamContrast(rules, focused) >= 3);
+  // a kit container honours the hook at rest
+  const nav = el({ tag: "a", classes: ["sl-nav__item"], attrs: { "aria-current": "page" }, parent: el({ tag: "nav", classes: ["sl-nav", "my-nav"], parent: at }) });
+  assert.equal(ink(nav), want(nav, "var(--slc-seam)"), "a kit container set to 1 at rest");
+});
+
+test("a tree row past level 8 holds at 8, without an inline level", () => {
+  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: mount(dark) });
+  for (const [level, want] of [["9", "8"], ["14", "8"], ["8", "8"], ["3", "3"]]) {
+    const r = el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": level }, parent: tree });
+    assert.equal(customs(RULES_A, r).get("--sl-tree-level"), want, `aria-level ${level}`);
+  }
+  const none = el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem" }, parent: tree });
+  assert.equal(customs(RULES_A, none).get("--sl-tree-level"), undefined, "no aria-level: the fallback, level 1");
+});
+
+test("a Tier B layer's numbers come from the README's recipes, and the dark one caps the accent in a band", () => {
+  assert.deepEqual(Object.keys(LAYER_NUMBERS.light).sort(), ["--sl-accent-text-lmax", "--slc-edge-accent-lmax", "--slc-glow"]);
+  assert.deepEqual(LAYER_NUMBERS.dark, { "--sl-accent-band-text-lmax": "0.45" });
+  const kitDark = bare(read("themes/dark.css"));
+  assert.match(kitDark, /--sl-accent-band-text-lmax:\s*0\.45;/, "the number the kit's own dark theme sets");
 });

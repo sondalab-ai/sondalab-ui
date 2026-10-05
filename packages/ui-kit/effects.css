@@ -37,10 +37,10 @@
    ── Paint layers ────────────────────────────────────────────────────────────
    ::after is the edge (glass at rest, the aurora's arc when lit). ::before is
    the pane's body (glass --pane), the press's light and glitch's ghost; the
-   aurora leaves it free. The components keep their state cues off both: a
-   seam is a layer of the host's background (components.css, THE SEAM), and
-   only a toast and a terminal block draw a mark on ::before, so glass, press
-   and glitch are unsupported on those two. The aurora's
+   aurora leaves it free. A selected tile's seam is a layer of the host's
+   background (components.css, THE SEAM), so an effect keeps its own; a lit
+   pane, a toast and a terminal block draw a mark on ::before, so glass,
+   press and glitch are unsupported on those three. The aurora's
    bloom is a CHILD, not a pseudo-element, because CSS
    applies a filter before a mask: a ring masked on one box can only be
    blurred by a box around it. effects.js injects the child at mount(); it

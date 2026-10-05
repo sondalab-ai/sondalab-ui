@@ -1359,13 +1359,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      </div>
    A modal dialog (showModal) sits in the top layer, above any z-index: a
    stack that must show over one is a manual popover (popover="manual", an
-   opt-in: without showPopover() it stays hidden). Show it once
-   (showPopover); after a dialog opens, hide and show it again so it is the
-   later of the two in the top layer, then add the toast. The UA styles a
-   popover as a centred, bordered, padded box; the stack undoes that, and a
-   closed one is hidden as the UA would hide it, which this rule's display
-   would otherwise override. The stack lets the pointer through where it has
-   no toast. The overlay's own border in shade is a toast's ring and the
+   opt-in: without showPopover() it stays hidden, and a closed popover's
+   regions are out of the accessibility tree like any hidden region). Show
+   it once (showPopover); after a dialog opens, hide and show it again so it
+   is the later of the two in the top layer, and add the toast a frame
+   later (requestAnimationFrame): the regions have just come back into the
+   accessibility tree, and an addition in the same frame may not be heard.
+   The UA styles a popover as a centred, bordered, padded box; the stack
+   undoes that, and a closed one is hidden as the UA would hide it, which
+   this rule's display would otherwise override. The stack lets the pointer
+   through where it has no toast. The overlay's own border in shade is a toast's ring and the
    float recipe its cast, as a dialog's. Its tone is a measure tick on the
    top edge (the callout's, with the tone's glow as strong as --slc-glow
    says) and the mark's wash; the words stay neutral. */
@@ -1396,8 +1399,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 /* Spaced by a margin, never hidden: a region that is display: none (or
    contents) while empty is not in the accessibility tree, and so is not
-   heard when a toast arrives in it. */
-.sl-toast-stack__live:not(:empty) ~ .sl-toast-stack__live:not(:empty) { margin-block-start: var(--sl-space-2, 0.5rem); }
+   heard when a toast arrives in it. :has(> *), not :not(:empty), which
+   counts a region holding only whitespace as full. */
+.sl-toast-stack__live:has(> *) ~ .sl-toast-stack__live:has(> *) { margin-block-start: var(--sl-space-2, 0.5rem); }
 .sl-toast-stack .sl-toast { pointer-events: auto; }
 .sl-toast {
   --_sl-tone: var(--slc-text-muted);
@@ -1726,7 +1730,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      still 5.5:1 or better on those light bands. */
   --slc-accent-text:   oklch(from var(--slc-accent) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
   --slc-focus:         var(--slc-accent-text);
-  --slc-seam:          var(--slc-accent-text);
+  /* The seam is a 2px line on a tile, the band's 16% wash: floored a step
+     above the text (0.72), so a dark product hue lifted out of sRGB on the
+     light theme's dark band (spexr's indigo at 0.68) still clears 3:1 with
+     room. On the dark theme's light band the cap decides, not the floor. */
+  --slc-seam:          oklch(from var(--slc-accent) min(max(l, 0.72), var(--sl-accent-band-text-lmax, 1)) c h);
   /* The wash under a tag, chip or selected row. High contrast's own subtle is
      an OPAQUE near-black mix, and a product may register an opaque light one
      (spexr's registered step): on the band either is a pill of the wrong ground under
@@ -2447,13 +2455,16 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    on a subtree (a product page painting one section in another product's
    hue) reached the tile's fill set (0.32) but not a seam, a link, an icon on
    a tile or the workbench's marks, which kept the root's hue. So the two
-   are derived again on every host that reads them, from the accent in
-   effect there, at zero weight. The inversion band re-derives them for its
-   ground (.sl-invert > *, below the band); a host deeper in a band declares
-   its own, so the band's formula is repeated for it here, later and at the
-   same zero weight, as the high-contrast remap is repeated on the fill set.
-   The focus ring and its halo (--slc-focus) still follow the theme, not a
-   subtree accent. */
+   are derived again, from the accent in effect there and at zero weight, on
+   the hosts listed here: a link, the navigation and selection components
+   that carry a seam, and the workbench. The inversion band re-derives them
+   for its ground (.sl-invert > *, below the band); a host deeper in a band
+   declares its own, so the band's formula is repeated for it here, later
+   and at the same zero weight, as the high-contrast remap is repeated on the
+   fill set. Not listed, and still the root's: a tag, inline code, a
+   progress bar, a slider, a resizer, a callout's tick, a pressed button,
+   icon button or chip, a breadcrumb's hover, and the focus ring and its
+   halo (--slc-focus), which follow the theme. */
 :where(.sl-link, .sl-nav, .sl-nav__item, .sl-tabs__list, .sl-tabs__tab, .sl-tabs__item,
   .sl-list, .sl-list__row, .sl-segmented, .sl-segmented__item, .sl-pagination, .sl-pagination__item,
   .sl-pane, .sl-statusbar, .sl-activitybar, .sl-activitybar__item, .sl-tree, .sl-tree__row,
@@ -2466,7 +2477,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   .sl-pane, .sl-statusbar, .sl-activitybar, .sl-activitybar__item, .sl-tree, .sl-tree__row,
   .sl-palette, .sl-palette__row, .sl-term-block) {
   --slc-accent-text: oklch(from var(--slc-accent) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
-  --slc-seam: var(--slc-accent-text);
+  --slc-seam: oklch(from var(--slc-accent) min(max(l, 0.72), var(--sl-accent-band-text-lmax, 1)) c h);
 }
 
 /* ══ THE SEAM — the state cue of a selected or current tile (0.33) ══════════
@@ -2478,11 +2489,17 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    height, 3px inside its leading edge (a row, a column), or a short line
    3px above its bottom edge (a tab, a segment, a page, which sit in a row).
    Its ink says where the focus is: the accent as a line of light
-   (--slc-seam, >= 5.97:1 against the tile) while the container holds the
-   focus, the muted ink (>= 5.66) while it does not -- the selection a
-   keyboard would act on lights up. The container carries the flag, the item
-   mixes its own two inks by it, so a subtree accent (above) and a nested
-   container each get theirs; a palette always holds the focus.
+   (--slc-seam) while the container holds the focus, the muted ink while it
+   does not -- the selection a keyboard would act on lights up. Against the
+   tile and the ground around it: >= 5.24:1 on the page, >= 3.4 in the band
+   (on the light theme's dark band the seam is floored a step above the
+   accent text, at oklch L 0.72, for a dark product hue the floor lifts out
+   of sRGB). The container carries the
+   flag, the item mixes its own two inks by it, so a subtree accent (above)
+   and a nested container each get theirs; a palette always holds the focus.
+   A host outside a kit container -- a row in a product's own list -- opts in
+   with the public --sl-seam-focus: 1 (on itself or an ancestor, under the
+   product's own :focus-within), which a kit container also honours at rest.
    A background layer, never a pseudo-element: glass, press and glitch own
    an effect host's ::before and the aurora its ::after, and an image
    composes with all of them. A host with an image of its own (a tree row's
@@ -2491,12 +2508,12 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    animates; hover draws none. Forced colours' Highlight fill resets it with
    the rest of the background. A selected table row has none: its state is
    carried in its content (.sl-table, above). */
-:where(.sl-nav, .sl-activitybar, .sl-tree, .sl-tabs__list, .sl-list, .sl-segmented, .sl-pagination) { --_sl-seam-focus: 0; }
+:where(.sl-nav, .sl-activitybar, .sl-tree, .sl-tabs__list, .sl-list, .sl-segmented, .sl-pagination) { --_sl-seam-focus: var(--sl-seam-focus, 0); }
 :where(.sl-nav, .sl-activitybar, .sl-tree, .sl-tabs__list, .sl-list, .sl-segmented, .sl-pagination):focus-within { --_sl-seam-focus: 1; }
 :where(.sl-palette) { --_sl-seam-focus: 1; }
 :where(.sl-nav__item, .sl-activitybar__item, .sl-tree__row, .sl-palette__row, .sl-list__row,
   .sl-tabs__tab, .sl-tabs__item, .sl-segmented__item, .sl-pagination__item) {
-  --_sl-seam-ink: color-mix(in srgb, var(--slc-seam) calc(var(--_sl-seam-focus, 0) * 100%), var(--slc-text-muted));
+  --_sl-seam-ink: color-mix(in srgb, var(--slc-seam) calc(var(--_sl-seam-focus, var(--sl-seam-focus, 0)) * 100%), var(--slc-text-muted));
   --_sl-seam-size: 2px 50%;
   --_sl-seam-position: 3px 50%;
   --_sl-layer: none;
@@ -2517,9 +2534,16 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-palette__row[aria-selected="true"],
 .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"])),
 .sl-tabs--tile .sl-tabs__tab[aria-selected="true"],
-.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"]),
 .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]),
 .sl-pagination__item[aria-current]:not([aria-current="false"]) {
+  background-image: linear-gradient(var(--_sl-seam-ink), var(--_sl-seam-ink)), var(--_sl-layer);
+  background-repeat: no-repeat, var(--_sl-layer-repeat);
+  background-size: var(--_sl-seam-size), var(--_sl-layer-size);
+  background-position: var(--_sl-seam-position), var(--_sl-layer-position);
+}
+/* A rule of its own: a selector list is dropped whole when one member is not
+   understood, and :has() is new (Firefox 121). */
+.sl-tabs--tile .sl-tabs__item:has(> .sl-tabs__tab[aria-selected="true"]) {
   background-image: linear-gradient(var(--_sl-seam-ink), var(--_sl-seam-ink)), var(--_sl-layer);
   background-repeat: no-repeat, var(--_sl-layer-repeat);
   background-size: var(--_sl-seam-size), var(--_sl-layer-size);
