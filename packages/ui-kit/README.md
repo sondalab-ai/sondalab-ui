@@ -26,6 +26,66 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
+**0.34.0 — Lumen parity: the workbench and its frame.** The workbench chrome takes the values the Lumen IDE screen renders at 1440×900 (owner, 2026-10-05: spexr is to look like the demo "almost pixel by pixel"), and `workbench.css` gains a title bar. No token changes, so palette-py is unchanged. Four role-vars are added, all derived from roles you already map, so a Tier B layer maps nothing new. Classes are only added, but most workbench pieces, the tile tab and the toast render differently. The geometry steps off the kit's 4px grid and spacing scale on purpose (design-language L2); the rest of the kit keeps the scales. The three owner rules hold throughout: every selected or current tile keeps its seam (Lumen draws none), focus is the kit's flush ring and halo (not Lumen's glow ring), and nothing animates on page load.
+
+- **`.sl-titlebar` (new).** It has these parts: `__l`, `__menu`, `__mark`, `__dot`, `__crumb`, `__sep`, `__cmd`, `__cmd-text`, `__keys`, `__r`, `__btn` and `__btn--dot`.
+  - **The bar** is a 44px grid on the canvas, `1fr minmax(0, 32rem) 1fr`, with a 16px gap, 14.4px in at the start and 9.6px at the end.
+  - **The left side** holds a compact-menu slot, the product's mark and a crumb. The mark is the display face at 700, 15px, tracked -0.04em, with a 5px accent dot (a child element). The crumb is 13px in the secondary ink.
+  - **The command field** is 30px at r8, in the one control edge, on the surface rung, lit along its top. Under the pointer it takes the raised rung and the edge's hover step. On focus it takes the shared flush ring and halo.
+  - **The right cluster** holds icon buttons that rest on the surface rung in their own edge. `--dot` adds Lumen's 6px unread dot as a background layer, in `--slc-accent-fill` (or the accent as a mark).
+  - **Drag region.** The bar is the window's drag region: `-webkit-app-region: drag` and `app-region: drag`. Buttons, links, fields, `role="button"` and tab stops inside it are `no-drag`. A control of yours that is none of those needs `no-drag` of its own.
+  - **macOS.** For the traffic lights, give the bar their room as its own `padding-inline-start`.
+- **The lit pane, as rendered.** `.sl-pane[data-lit]` changes in three ways, with no accent rim (owner decision):
+  - Its seam starts where its corner ends, 10px in (it was 12).
+  - Its 24px glow all round is replaced by `--slc-lit-drop`, a glow that falls below the pane.
+  - Two roles are for your own chrome inside the lit pane:
+    - `--slc-lit-wash`: an image for the tab strip or head along its top. It is a radial wash of the seam, 26% at its peak on ink and 18% on paper. Its colour is capped at oklch L 0.72, so a muted label centred in a 38px strip reads ≥ 4.55:1 for every product.
+    - `--slc-lit-tint`: an image for the row under it. It is the seam at 7%, fading down the row.
+
+  All three read `--slc-glow` and are nothing in high contrast and under forced colours. **If your layout clips the pane's shadow** (Lumino's `contain: strict`), wear the drop inward on the element right under the pane: `box-shadow: inset var(--slc-lit-drop)`. The falloff and the line it starts from are the same.
+- **`--slc-depth-cast` (new role).** Lumen's overlay cast for an overlay with no border: the float, plus the ring folded in (the overlay's own fill in shade), lit along its top. High contrast draws the ring in the theme's line. Forced colours turn it off, and the palette and the toast then get a drawn outline. The effects kill switches now restore it on a toast and a palette, where they restored `--slc-depth-float`.
+- **Activity bar.** The bar is 52px wide, items are 6px apart and the first starts 4px from the top. Each item is 38×38 at r9 (it was 36×36 at r8).
+  - **The current view** is a flat tile on the surface rung (it was the tile rung) and keeps its seam.
+  - **`data-count` on an item** draws a count badge on its corner: the mono at 9px, on the accent fill that carries a label, with its label picked on that fill, ringed in the canvas, at least 20×14px. It is the item's `::after`, so an item with a count cannot wear the aurora. Put the count in the item's name too ("Source control, 3 changes").
+- **Status bar.**
+  - The bar is 30px (it was 28), 4px in at the start and 8 at the end.
+  - Each item is a 22px pill at r6 (it was 20px, square), and brings the surface rung up under the pointer. An item may be a `<button>` or a link: it then takes the shared ring.
+  - **Separators are off.** Add `.sl-statusbar--separators` to the bar to get them back. This is a silent visual removal for any bar that relied on them.
+  - The live dot breathes every 2.4s, only under `prefers-reduced-motion: no-preference` and never under forced colours.
+- **Tree.**
+  - Rows are 26px at 13px (they were 24px at 14px).
+  - The twisty's chevron is sized to Lumen's 12px glyph: 6px tall, 3px deep, a 1.25px stroke (it was a 1.5px stroke on a 5.6px square). It is still CSS, so it needs no markup and still turns.
+  - **Indent guides are opt-in:** `.sl-tree--guides` on the tree. A tree that relied on them loses them silently.
+- **Tile tabs.** A tab is 28px at r7 (it was r6), 13px at weight 500 (it was 14px), with 11.2px of padding (it was 12px). Hover lifts the ink to the secondary (it was the primary). The `sl-tabs__item` wrapper is r7 too.
+- **Palette.**
+  - It is 580px wide (it was 576) and has no border. It sits on `--slc-depth-cast`.
+  - Where the backdrop can blur, it is the raised rung at 94% under `blur(24px) saturate(1.3)`. It stays opaque where it cannot, in high contrast and under forced colours.
+  - Its seam is Lumen's: a 1px line from 16px in, gone 40% before the end, glowing at 55%. It is the palette's `::before` (it was a background layer), so glass, press and glitch are unsupported on a palette.
+  - The head is 54px over a hairline (`--slc-border-subtle`; it was the raised edge in shade).
+  - The input is the kit's field at 16px on a 34px line, with no fill or well, in the one control edge. Lumen draws it borderless; the kit keeps the edge, because a field is found by its boundary.
+  - Rows are 38px (they were 36) with 11.2px between the icon and the label.
+  - The foot sits on the surface at 70%, over a hairline.
+- **Toast.**
+  - It is r12 (it was r14), has no border (it was the raised edge in shade) and sits on `--slc-depth-cast`. Padding is 12.8 / 12.8 / 14.4 / 16px.
+  - The tone tick is a 1px line from 14px in to the middle, fading and glowing at 50% (it was a solid 2px tick, 2.75rem long).
+  - The mark is 26px on a 16% wash (it was 24px on 12%).
+  - The dismiss is the icon button's own 32px at r8 (it was 24px at r6).
+  - `.sl-toast__timer` (new) on an `.sl-progress` draws a 2px bar of the tone along the bottom.
+- **Paint layers.** Four marks are a `::before`: the lit pane's seam, the palette's seam, the toast's tick and the terminal block's exit mark. One mark is an `::after`: the activity item's count badge. The title bar takes no pseudo-element.
+
+**Migration.** Class names are unchanged. Re-check any rule of yours that sets the sizes above. If you relied on status separators or tree guides, add `--separators` or `--guides`. If you wrote a `--slc-depth-float` restore for a toast or a palette, change it to `--slc-depth-cast`.
+
+**For spexr** (checked against `spexr-wt-lumen-d` at `86e69e0`). spexr renders only `.sl-pane` directly, on its islands. It mirrors the rest in its own Theia CSS, and S5b–S5f take the new values there.
+- **Islands.** The kit's lit-pane seam moves from 12px in to 10px in. `.spexr-island.sl-pane[data-lit] { box-shadow: none }` also removes the new drop. S5f wears the drop inward on the bottom split panel's handle, and paints `--slc-lit-wash` on the main tab bar and `--slc-lit-tint` on the breadcrumbs. The inward 24px glow on the island's `::after` goes then.
+- **Mirrored values to move:**
+  - the activity item 36 → 38px, at r9 (it is r8);
+  - the status bar: spexr's 22px Theia row → 30, with 22px items;
+  - tree rows 24 → 26;
+  - tile tabs r6 → r7, at 13px;
+  - the toast: border, float and 2.75rem tick → no border, the cast, the 1px tick and a 32px dismiss;
+  - the palette: S5f.
+- **Power-save.** spexr's power-save copy of the kill-switch restore (`spexr.css`, `:root[data-spexr-power-save] :is(.sl-toast, .sl-palette)…`) still restores `--slc-depth-float`. Move it to `--slc-depth-cast`.
+
 **0.33.1 — `sl-audit` runs when called through its bin.** A patch to the audit script only: no token, role, class or stylesheet changes, and palette-py is unchanged. Since the bin shipped (0.3.0), `sl-audit` printed nothing and exited 0 when it was reached through npm's `node_modules/.bin/sl-audit` symlink (so also through `npx sl-audit`) or through pnpm's shim, which calls node on a path inside the linked package directory. A CI step gating on `--fail-on R` therefore passed whatever the surface held. The script decides whether it was started as a program by comparing the path it was called by with its own path; the first was the unresolved link, the second the resolved file. It now resolves both. `scripts/sl-audit.test.mjs` runs it directly, through a symlink to the file and through a linked package directory, and asserts the finding and the exit code each way. The exit codes are unchanged: 2 on a usage error, 1 on an R finding only with `--fail-on R`, otherwise 0. If you call `node node_modules/@sondalab/ui-kit/agent/sl-audit.mjs` to work around this (spexr does), `npx sl-audit` works again; both stay supported.
 
 **0.33.0 — the Lumen workbench.** A new opt-in stylesheet, `workbench.css`, carries the chrome of an IDE or a console: a lit pane, a status bar, an activity bar, a tree, a command palette and terminal blocks. `components.css` gains a toast stack and one state cue for every selected or current tile, the seam (owner's Lumen plan, checkpoint C). No token or role is added, changed or removed, and palette-py is unchanged. Classes are only added, but selected and current tiles across the kit now render differently (the seam, below).
@@ -194,9 +254,9 @@ Patterns (page-level composition, shipped classes since 0.10.0): `.sl-wrap`, `.s
 
 App structure: `.sl-nav` (`__group` / `__item` / `__count`; current item via `aria-current`), `.sl-list` (`__row` / `__meta`, `--dense`; selection via `aria-selected` or `aria-current`), `.sl-disclosure` (`aria-expanded`), `.sl-kv` (a `<dl>`), `.sl-resizer` (`--horizontal`; `role="separator"`, the drag is the consumer's).
 
-Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`), `.sl-toast-stack` (`__live`) / `.sl-toast` (0.33; the consumer adds, times and removes toasts).
+Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`), `.sl-toast-stack` (`__live`) / `.sl-toast` (0.33; `__timer` 0.34; the consumer adds, times and removes toasts).
 
-Workbench (`workbench.css`, opt-in since 0.33; inside an `sl-invert` band only `.sl-term-block`): `.sl-pane` (`[data-lit]`), `.sl-statusbar` (`__item` / `__value` / `__sep` / `__dot` / `__spacer`), `.sl-activitybar` (`__item`), `.sl-tree` (`__row` / `__twisty` / `__label`; `--sl-tree-level` past level 8), `.sl-palette` (`__head` / `__input` / `__list` / `__group` / `__row` / `__label` / `__meta` / `__keys` / `__foot`), `.sl-term-block` (`[data-exit]`; `__head` / `__cmd` / `__prompt` / `__meta` / `__exit` / `__out`).
+Workbench (`workbench.css`, opt-in since 0.33; inside an `sl-invert` band only `.sl-term-block`): `.sl-titlebar` (0.34; `__l` / `__menu` / `__mark` / `__dot` / `__crumb` / `__sep` / `__cmd` / `__cmd-text` / `__keys` / `__r` / `__btn` / `__btn--dot`), `.sl-pane` (`[data-lit]`; its light is `--slc-lit-wash` / `--slc-lit-tint` / `--slc-lit-drop`), `.sl-statusbar` (`--separators`; `__item` / `__value` / `__sep` / `__dot` / `__spacer`), `.sl-activitybar` (`__item`, `data-count`), `.sl-tree` (`--guides`; `__row` / `__twisty` / `__label`; `--sl-tree-level` past level 8), `.sl-palette` (`__head` / `__input` / `__list` / `__group` / `__row` / `__label` / `__meta` / `__keys` / `__foot`), `.sl-term-block` (`[data-exit]`; `__head` / `__cmd` / `__prompt` / `__meta` / `__exit` / `__out`).
 
 ### Colour contract — role-vars (`--slc-*`)
 
