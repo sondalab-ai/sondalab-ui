@@ -621,7 +621,7 @@ test("the status bar speaks as Lumen draws it: sentence case in the sans, data i
   assert.equal(cascaded(RULES_A, p.sep).get("border-inline-start").value, "1px solid var(--slc-border)");
 });
 
-test("status items are 20px pills (Lumen's 22 on the grid, 4px above and below as in the demo): r6, a surface under the pointer, the bar 4px in at the start", () => {
+test("status items are 20px pills (Lumen's 22 on the grid, 4px above and below as in the demo): r6, a surface under the pointer where they do something, the bar 4px in at the start", () => {
   const ctxs = [dark, CONTEXTS.find((c) => c.name === "light default")];
   for (const ctx of ctxs) {
     const p = build(ctx);
@@ -633,12 +633,21 @@ test("status items are 20px pills (Lumen's 22 on the grid, 4px above and below a
     assert.equal(px(item.get("line-height").value, env), 20, "one line, centred in the pill");
     assert.equal(px(item.get("border-radius").value, env), 6);
     assert.equal(px(item.get("padding-inline").value, env), 8);
-    // hovered: the surface rung under it, the primary ink on it, at 4.5:1
-    const hovered = el({ tag: "span", classes: ["sl-statusbar__item"], states: ["hover"], parent: p.bar });
-    const h = cascaded(ctx.rules, hovered);
-    assert.equal(h.get("background-color").value, "var(--slc-surface)");
-    assert.equal(h.get("color").value, "var(--slc-text)");
-    assert.ok(textContrast(ctx.rules, hovered) >= 4.5, `${ctx.name} hovered item ${textContrast(ctx.rules, hovered).toFixed(2)}`);
+    // hovered, an item that does something (a button, a link) brings the
+    // surface rung up under it in the primary ink, at 4.5:1; a fact does not
+    // answer the pointer, so it promises nothing
+    for (const [tag, attrs] of [["button", {}], ["a", { href: "#" }], ["span", { role: "button" }]]) {
+      const hovered = el({ tag, attrs, classes: ["sl-statusbar__item"], states: ["hover"], parent: p.bar });
+      const h = cascaded(ctx.rules, hovered);
+      assert.equal(h.get("background-color").value, "var(--slc-surface)", `${tag}`);
+      assert.equal(h.get("color").value, "var(--slc-text)");
+      assert.equal(h.get("cursor")?.value, "pointer", `${tag}: a pointer`);
+      assert.ok(textContrast(ctx.rules, hovered) >= 4.5, `${ctx.name} hovered item ${textContrast(ctx.rules, hovered).toFixed(2)}`);
+    }
+    const fact = cascaded(ctx.rules, el({ tag: "span", classes: ["sl-statusbar__item"], states: ["hover"], parent: p.bar }));
+    assert.equal(fact.get("background-color").value, "transparent", "a fact under the pointer stays on the canvas");
+    assert.equal(fact.get("cursor"), undefined);
+    assert.equal(cascaded(ctx.rules, el({ tag: "a", attrs: { href: "#" }, classes: ["sl-statusbar__item"], parent: p.bar })).get("text-decoration")?.value, "none", "a link item is not underlined");
     assert.match(item.get("transition").value, /^color var\(--sl-motion-fast/);
   }
 });
