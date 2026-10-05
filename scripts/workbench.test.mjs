@@ -1323,7 +1323,8 @@ test("forced colours: a current activity item and a selected row are the system'
 
 // ── the seam: every selected or current tile carries a cue of 3:1 ────────────
 
-// The tile is depth, not a state cue (1.00-1.42:1 against its ground, 1.00 on
+// The tile is depth, not a state cue (1.00-1.34:1 against its ground, 1.42
+// before the 0.35 hairlines; 1.00 on
 // a light lit pane or palette, where the tile is the raised rung). Every
 // selected or current tile carries the shared seam (components.css): the
 // accent while its container holds the focus, the muted ink while it does

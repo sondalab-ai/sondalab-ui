@@ -119,7 +119,9 @@ function main() {
     const split = own ? splitRoles(own) : null;
     const theme = own ? mergeAuthored(split.theme, t.themes[id], THEME_SLOTS, `themes.${id}`) : t.themes[id];
     const accent = t.accent[id];
-    const code = own ? mergeAuthored(split.code, t.code?.[id], CODE_SLOTS, `code.${id}`) : t.code?.[id];
+    // The syntax hues are baked from their oklch triples (neutrals.code),
+    // fixed for every product; fg, comment and null are ladder rungs.
+    const code = own ? mergeAuthored(split.code, neutrals.code[id], CODE_SLOTS, `code.${id}`) : neutrals.code[id];
     const entries = [
       ...Object.entries(theme).map(([k, v]) => [`--sl-${k}`, v]),
       ...Object.entries(accent).flatMap(([k, v]) => accentDecls(`--sl-accent-${k}`, v)),
@@ -129,8 +131,9 @@ function main() {
       ["--sl-focus-ring", accent["text-lmax"] === undefined
         ? accent.default
         : "oklch(from var(--sl-accent-default) min(l, var(--sl-accent-text-lmax)) c h)"],
-      // Syntax palette (--sl-code-*): per-theme, atom-one. Omitted where the
-      // token file has no entry for the theme (e.g. high-contrast).
+      // Syntax palette (--sl-code-*): per theme, Lumen's hues since 0.35.
+      // Omitted where the token file has no entry for the theme
+      // (high-contrast, which resets them below).
       ...(code ? Object.entries(code).map(([k, v]) => [`--sl-code-${k}`, v]) : []),
       // Categorical ramp at the lightness this theme's grounds need; the
       // shared ramp on :root stays as the default for a page with no theme.
@@ -162,6 +165,9 @@ function main() {
   writeFileSync(resolve(OUT, "neutrals.json"), neutralsJson(neutrals));
 
   console.log("gen-css: wrote @sondalab/ui-kit tokens.css + 3 themes + themes/products.css + neutrals.json");
+  for (const { theme, role, asked: [L, C, h], held } of neutrals.code.reduced) {
+    console.log(`gen-css: code ${theme} ${role}: oklch(${L} ${C} ${h}) is outside sRGB; held at chroma ${held.toFixed(4)} (${neutrals.code[theme][role]}), lightness and hue kept`);
+  }
   for (const theme of ["light", "dark"]) {
     const p = closestDistinctPair(neutrals, theme);
     if (p) console.log(`gen-css: closest distinct-hue products on ${theme}: ${p.a} / ${p.b} — max channel delta ${p.maxChannel}, max OKLab distance ${p.maxDE.toFixed(4)}, ${p.sameRoles}/${p.roles} roles identical`);

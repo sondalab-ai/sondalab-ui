@@ -135,10 +135,12 @@
      default, so each of those is the accent and each role below is the
      accent's own (the theme's hover, active and label, exactly as before):
      read it as var(--slc-accent-fill, var(--slc-accent)). A product whose
-     accent cannot carry a label at 4.5:1 sets this one role (spexr: its
-     registered fill, #4c58e9, where white on the #5b6cff accent read
-     4.17:1), and the label, the two states and the edge (--slc-edge-accent,
-     above) follow from it. The private values reference it with no
+     accent cannot carry a label at 4.5:1 registers a fill, and this one
+     role carries it (spexr: #4c58e9, where white on the #5b6cff accent read
+     4.17:1); since 0.35 themes/products.css sets it from the registry on
+     the product's theme element, and a Tier B layer copies it from
+     neutrals.json. The label, the two states and the edge
+     (--slc-edge-accent, above) follow from it. The private values reference it with no
      fallback, so they are invalid until it is set and each public role
      falls back to the accent's step. Set, the label is the pole that
      contrasts with the fill and the states are the kit's steps (above),
@@ -159,14 +161,14 @@
   --slc-canvas:        var(--sl-bg-canvas,         #eae6e2);
   --slc-surface:       var(--sl-bg-surface,        #fcfaf9);
   --slc-raised:        var(--sl-bg-surface-raised, #ffffff);
-  --slc-overlay:       var(--sl-bg-overlay,        rgba(32,28,24,0.4));
-  --slc-text:          var(--sl-text-primary,   #201c18);
+  --slc-overlay:       var(--sl-bg-overlay,        rgba(25,21,17,0.4));
+  --slc-text:          var(--sl-text-primary,   #191511);
   --slc-text-secondary:var(--sl-text-secondary, #47413c);
   --slc-text-muted:    var(--sl-text-muted,     #605953);
   /* lines */
-  --slc-border:        var(--sl-border-default, rgba(32,28,24,0.16));
-  --slc-border-subtle: var(--sl-border-subtle,  rgba(32,28,24,0.09));
-  --slc-border-strong: var(--sl-border-strong,  rgba(32,28,24,0.28));
+  --slc-border:        var(--sl-border-default, rgba(25,21,17,0.14));
+  --slc-border-subtle: var(--sl-border-subtle,  rgba(25,21,17,0.08));
+  --slc-border-strong: var(--sl-border-strong,  rgba(25,21,17,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent-text));
   /* The spectrum paints no edge, rim or arc by default (owner, 2026-10-02:
      "drop rainbow from fields and everything else"). It survives only in the
@@ -2574,7 +2576,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 
 /* ══ THE SEAM — the state cue of a selected or current tile (0.33) ══════════
    The tile is depth, not a state cue: its fill against its ground and its
-   ring measure 1.00-1.42:1 (a white tile on a white table, a lit pane or a
+   ring measure 1.00-1.34:1 (1.42 before the 0.35 hairlines; a white tile on a white table, a lit pane or a
    palette on the light theme is 1.00), and a label that only steps from the
    muted to the primary ink is 2.31-2.49. Every selected or current tile
    carries a seam, the nav item's since 0.31: a 2px line, half the tile's
@@ -2732,7 +2734,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 /* The fill set is declared on the controls themselves (0.32), so the remap
    above is repeated there: a filled control's edge is the accent, and a
-   product's accent fill does not reach high contrast at any scope. */
+   product's accent fill does not reach a control anywhere under a
+   high-contrast root. Both rules are keyed to :root: a high-contrast island
+   inside a light or dark page is not reset, and inherits that page's fill. */
 :root[data-sl-theme="high-contrast"] :where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
   --slc-accent-fill: initial;
   --slc-edge-accent: var(--slc-accent);

@@ -628,7 +628,7 @@ test("a selected tile that wears an effect keeps its tile through the effects ki
 // ── the seam: the state cue of every selected or current tile (0.33) ─────────
 
 // The tile is depth, not a state cue: its fill and its ring against its ground
-// measure 1.00-1.42:1. The nav item carried a seam since 0.31 (owner,
+// measure 1.00-1.34:1 (1.42 before the 0.35 hairlines). The nav item carried a seam since 0.31 (owner,
 // 2026-10-02); since 0.33 every selected or current tile does, from one rule:
 // the accent while its container holds the focus, the muted ink while it does
 // not. Its contrast in every context is workbench.test.mjs's (the cascade);

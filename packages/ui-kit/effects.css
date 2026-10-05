@@ -142,9 +142,11 @@
      The colour is the page's own light pole — the sheen where the sheen is
      bright, its lightness mirrored where it is dark — so it is near-white on
      both themes without a [data-sl-theme] branch. The alpha is linear in the
-     sheen's lightness through the two published anchors: 0.09 at L 0.91
-     (ink), 0.85 at L 0.24 (paper). */
-  --slfx-veil: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h / clamp(0, 1.12 - 1.13 * l, 1));
+     sheen's lightness through the two published anchors it was fitted to,
+     0.09 at L 0.91 and 0.85 at L 0.24. The shipped inks sit at L 0.94 (ink,
+     0.058) and, since 0.35, L 0.20 (paper, 0.894; 0.86 at the L 0.23 ink
+     before). The colour's mirror is the glint's (1.17 since 0.35, below). */
+  --slfx-veil: oklch(from var(--slfx-sheen) max(l, 1.17 - l) c h / clamp(0, 1.12 - 1.13 * l, 1));
 
   /* glass stops — rebound per state; transparent means "no ring" */
   --slfx-s0: transparent;
@@ -618,13 +620,17 @@
 :is(.sl-fx-glass, .sl-fx-aurora) {
   /* The glint: the light pole of the neutral pair, which the hairline's
      bright stop and the arc's hot core are made of. On ink that is the sheen
-     itself (the text token, L 0.91). On paper the sheen is the DARK pole
-     (L 0.24), and a highlight made of it is a grey line — so the glint is
-     its lightness mirrored: 1.2 − l lands at 0.96, the chrome's own paper
-     pole (effects-shader.js puts it at 0.985), and max() leaves a bright
-     sheen alone. The same criterion the shader applies at runtime: whichever
-     of the neutral pair is the brighter is the pole. */
-  --slfx-glint: oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h);
+     itself (the text token, L 0.94). On paper the sheen is the DARK pole
+     (L 0.20), and a highlight made of it is a grey line — so the glint is
+     its lightness mirrored: 1.17 − l lands at 0.97, near the chrome's own
+     paper pole (effects-shader.js puts it at 0.985), and max() leaves a
+     bright sheen alone. The mirror was 1.2 until 0.35, with the ink at
+     L 0.23: the same 0.97. A higher glint at the ink's chroma leaves sRGB,
+     and the generator fails the build on it (scripts/lib/neutrals.mjs
+     GLINT_MIRROR, which this number and the three beside it must equal).
+     The same criterion the shader applies at runtime: whichever of the
+     neutral pair is the brighter is the pole. */
+  --slfx-glint: oklch(from var(--slfx-sheen) max(l, 1.17 - l) c h);
   --slfx-edge-hi: color-mix(in srgb, var(--slfx-glint) 55%, var(--slc-border-strong, var(--sl-border-strong)));
   --slfx-edge-lo: var(--slc-border-subtle, var(--sl-border-subtle));
   --slfx-edge-mid: var(--slc-border-strong, var(--sl-border-strong));
@@ -1111,8 +1117,9 @@
   /* Read by glass.css's __shine, which scales its rim by it. */
   --slfx-lit: 0;
   /* The dark pole of the neutral pair, the way --slfx-glint is the light
-     one: the sheen where it is dark (paper, L 0.24), its lightness mirrored
-     below where it is bright (ink: 1 − 0.91 = 0.09, under the surface). */
+     one: the sheen where it is dark (paper, L 0.20 since 0.35), its
+     lightness mirrored below where it is bright (ink: 1 − 0.94 = 0.06,
+     under the surface). */
   --slfx-shade: oklch(from var(--slfx-sheen) min(l, 1 - l) c h);
 }
 /* ══ SLICE 1 — BUTTONS ════════════════════════════════════════════════════════
@@ -1125,8 +1132,9 @@
 
    Ruling 10 — the remainder is the PAGE, not the veil. The shared rule mixes the
    fill with --slfx-veil so a filled control is lifted rather than darkened, and
-   that reasoning holds on ink. It does not hold on paper: the veil's alpha is
-   0.854 there by construction and the pane resolves to 0.915 — effectively
+   that reasoning holds on ink. It does not hold on paper: the veil's alpha was
+   0.854 there by construction (the L 0.24 ink of the time; 0.894 with the
+   L 0.20 ink of 0.35) and the pane resolved to 0.915 — effectively
    solid, which is the opposite of what a glass button is for. Measured on
    lab/1g. So on a button the remainder is transparency and the page shows
    through, which is the owner's ruling of 2026-09-11 overruling §Translucency
@@ -1387,7 +1395,7 @@
   /* The light: the page's light pole, warmed a little toward the accent, so
      a pressed control glows in its own register rather than in a neutral
      white. Near-white on both themes; the sheen decides, as for the glint. */
-  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.2 - l) c h) 82%, var(--slc-accent, var(--sl-accent-default)));
+  --slfx-press-light: color-mix(in oklab, oklch(from var(--slfx-sheen) max(l, 1.17 - l) c h) 82%, var(--slc-accent, var(--sl-accent-default)));
   position: relative;
   isolation: isolate;
   /* The sink and the return, on the spring. The duration is a motion token,

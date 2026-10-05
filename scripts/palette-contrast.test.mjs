@@ -322,3 +322,68 @@ for (const [product, p] of PRODUCTS) {
     }
   }
 }
+
+// ── the code palette in an editor (0.35, Lumen parity) ──────────────────────
+// An editor paints code on the surface or the raised rung, under the current
+// line (the primary ink at 4.5% over raised) and under the selection (the
+// product's accent at 18% over raised): the grounds spexr's Monaco theme
+// draws (its colour registry). Read from neutrals.json, the values that
+// theme is built from, for every product and both themes.
+const TOKENS = JSON.parse(readFileSync(resolve(HERE, "../sondalab.tokens.json"), "utf8"));
+const LUMEN_HUES = ["keyword", "string", "function", "number", "builtin"];
+for (const theme of ["light", "dark"]) for (const [product, p] of PRODUCTS) {
+  test(`${theme} ${product}: code reads in an editor -- on the surface, raised, the current line (4.5% ink) and the selection (18% accent) (4.5:1, comment 3:1)`, () => {
+    const n = p[theme];
+    const grounds = {
+      surface: n["bg-surface"],
+      raised: n["bg-surface-raised"],
+      "current line": lerp(n["bg-surface-raised"], n["text-primary"], 0.045),
+      selection: lerp(n["bg-surface-raised"], p.accent[theme], 0.18),
+    };
+    const bad = [];
+    for (const [g, bg] of Object.entries(grounds)) {
+      for (const role of ["fg", "keyword", "string", "number", "boolean", "function", "tag", "builtin", "comment", "null"]) {
+        const ink = n[`code-${role}`];
+        const min = role === "comment" || role === "null" ? 3 : 4.5;
+        if (!ink) { bad.push(`code-${role} missing from neutrals.json`); continue; }
+        const r = ratio(ink, bg);
+        if (r < min) bad.push(`code-${role} ${ink} on ${g} ${bg} ${r.toFixed(2)}`);
+      }
+    }
+    assert.deepEqual(bad, []);
+  });
+}
+
+// The hues are authored as oklch and baked to hex by the generator: a triple
+// outside sRGB gives up chroma at its own lightness and hue (CSS Color 4 gamut
+// mapping), never a per-channel clip, which would move both.
+test("the code hues are the token triples baked into sRGB by chroma alone", () => {
+  for (const theme of ["light", "dark"]) {
+    const t = vars(`themes/${theme}.css`);
+    for (const role of LUMEN_HUES) {
+      const v = TOKENS.code[theme][role];
+      assert.ok(Array.isArray(v) && v.length === 3, `code.${theme}.${role} is an oklch triple, not ${JSON.stringify(v)}`);
+      const [L, C, h] = v;
+      const held = Math.min(C, maxChroma(L, h));
+      assert.equal(t[`--sl-code-${role}`], toHex(fromOklch([L, held, h])), `${theme} ${role}`);
+      const [l2, c2, h2] = toOklch(fromHex(t[`--sl-code-${role}`]));
+      assert.ok(Math.abs(l2 - L) < 0.004 && Math.abs(h2 - h) < 1.5 && c2 <= C + 0.004, `${theme} ${role}: oklch(${l2.toFixed(3)} ${c2.toFixed(3)} ${h2.toFixed(1)}) for oklch(${L} ${C} ${h})`);
+    }
+    assert.equal(t["--sl-code-boolean"], t["--sl-code-number"], `${theme}: boolean reads as number`);
+    assert.equal(t["--sl-code-tag"], t["--sl-code-keyword"], `${theme}: tag reads as keyword`);
+    // five hues, no more: every chromatic role is one of the target's
+    const hues = new Set(["keyword", "string", "number", "boolean", "function", "tag", "builtin"].map((r) => t[`--sl-code-${r}`]));
+    assert.equal(hues.size, LUMEN_HUES.length, `${theme}: ${[...hues].join(" ")}`);
+  }
+});
+
+// The target's hues, frozen in scripts/fixtures/lumen-target-colour.json (the
+// lab file is checked against it while it exists, neutrals-ladder.test.mjs),
+// so this keeps running once K7 removes lab/.
+test("the code hues are the Lumen target's", () => {
+  const target = JSON.parse(readFileSync(resolve(HERE, "fixtures/lumen-target-colour.json"), "utf8")).code;
+  for (const theme of ["light", "dark"]) {
+    assert.deepEqual(Object.keys(target[theme]).sort(), [...LUMEN_HUES].sort(), `${theme}: the target's five hues`);
+    for (const role of LUMEN_HUES) assert.deepEqual(TOKENS.code[theme][role], target[theme][role], `${theme} ${role}`);
+  }
+});

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cells, marks, measure, worst, ratio, REGISTRY, THEMES, WIRINGS, CONTEXTS, STATES } from "./lib/primary-matrix.mjs";
-import { evaluate, toHex, toOklch, linToOklab } from "./lib/css-color.mjs";
+import { evaluate, fromHex, toHex, toOklch, linToOklab } from "./lib/css-color.mjs";
 
 // The primary's label holds 4.5:1 for every product, theme and state
 // (ui-kit 0.32.1), and hover and press step far enough to be seen, the way
@@ -176,23 +176,35 @@ test("every step is the spelled-out lightness step from its own fill, inside sRG
     const out = Math.max(0, -Math.min(...c.host.lin), Math.max(...c.host.lin) - 1);
     assert.ok(out < 1e-9, `${key(c)} ${c.state}: outside sRGB by ${out}`);
   }
-  // spexr's registered fill, by name (it was #444ecf / #3a43b1 on 0.32.0)
-  const spexr = ALL.filter((c) => c.wiring === "tier A" && c.id === "spexr" && c.context === "opaque");
-  for (const theme of THEMES) assert.deepEqual(spexr.filter((c) => c.theme === theme).map((c) => toHex(c.host)), SPEXR_STEPS, theme);
+  // spexr's primary rests on its registered fill, read from the registry so a
+  // fill change is one registry line (0.35); on #4c58e9 the steps are
+  // #424ccd / #3841b1 (#444ecf / #3a43b1 on 0.32.0), checked above.
+  const spexr = ALL.filter((c) => c.wiring === "tier A" && c.id === "spexr" && c.context === "opaque" && c.state === "rest");
+  for (const theme of THEMES) assert.equal(toHex(spexr.find((c) => c.theme === theme).host), REGISTRY.spexr.fill[theme].toLowerCase(), theme);
 });
-const SPEXR_STEPS = ["#4c58e9", "#424ccd", "#3841b1"];
 
-// Which fills the rule turns toward white, by name: introspect's teal on
-// paper (its press toward black read 3.15:1 on 0.32.0) and local-agents'
-// blue on ink (its glass press toward black read 4.40 over a dark page).
-// Every other registered fill, both dangers included, steps toward black.
-test("the 5.4 rule turns exactly introspect's light fill and local-agents' dark fill toward white", () => {
+// Which fills the rule turns toward white, decided from the registry's own
+// values (the fill where one is registered, else the accent) and the theme's
+// danger, so a registry change moves the expectation with it. With the
+// registry as it stands: introspect's teal on paper (its press toward black
+// read 3.15:1 on 0.32.0) and local-agents' blue on ink (its glass press
+// toward black read 4.40 over a dark page); every other registered fill, both
+// dangers included, steps toward black.
+test("the 5.4 rule turns exactly the registered fills it picks toward white, in every wiring", () => {
   const up = new Set();
-  for (const c of [...ALL, ...DANGER].filter((c) => c.context === "opaque" && c.state === "hover")) {
-    const rest = [...ALL, ...DANGER].find((r) => r.wiring === c.wiring && r.id === c.id && r.theme === c.theme && r.danger === c.danger && r.context === "opaque" && r.state === "rest");
+  const cells = [...ALL, ...DANGER].filter((c) => c.context === "opaque");
+  for (const c of cells.filter((c) => c.state === "hover")) {
+    const rest = cells.find((r) => r.wiring === c.wiring && r.id === c.id && r.theme === c.theme && r.danger === c.danger && r.state === "rest");
     if (toOklch(c.host)[0] > toOklch(rest.host)[0]) up.add(`${c.danger ? "danger " : ""}${c.id}/${c.theme}`);
   }
-  assert.deepEqual([...up].sort(), ["introspect/light", "local-agents/dark"]);
+  const want = new Set();
+  for (const c of cells.filter((c) => c.state === "rest")) {
+    const p = REGISTRY[c.id].inherits ? REGISTRY[REGISTRY[c.id].inherits] : REGISTRY[c.id];
+    const registered = c.danger ? toHex(c.host) : (p.fill?.[c.theme] ?? p[c.theme]);
+    if (lighterByRule(fromHex(registered))) want.add(`${c.danger ? "danger " : ""}${c.id}/${c.theme}`);
+  }
+  assert.deepEqual([...up].sort(), [...want].sort());
+  assert.ok(want.size > 0, "the rule turns at least one registered fill");
 });
 
 // ── the shade under a white label ───────────────────────────────────────────

@@ -62,15 +62,16 @@
 
 /* The LIGHT POLE of the neutral pair, and the one colour every highlight here
    is made of. Not --sl-text-primary directly: on ink that token IS the bright
-   pole (L 0.91), but on paper it is the dark one (L 0.24), and a highlight
+   pole (L 0.94), but on paper it is the dark one (L 0.20), and a highlight
    made of it would paint a black band where the reference has a white one.
-   Mirroring its lightness — 1.2 − l lands at 0.96 on paper — and taking the
+   Mirroring its lightness — 1.17 − l lands at 0.97 on paper (1.2 until 0.35,
+   with the ink at L 0.23) — and taking the
    brighter of the two is the same criterion effects.css applies to --slfx-glint
    and the shader applies at runtime. Written out rather than imported so this
    stylesheet stands on its own; effects.css binds --slg-spec to its own glint
    when both are loaded, so there is still one source. */
 .sl-glass {
-  --slg-pole: oklch(from var(--sl-text-primary) max(l, 1.2 - l) c h);
+  --slg-pole: oklch(from var(--sl-text-primary) max(l, 1.17 - l) c h);
   position: relative;
   isolation: isolate;
   border-radius: var(--slg-radius, var(--sl-radius-md));

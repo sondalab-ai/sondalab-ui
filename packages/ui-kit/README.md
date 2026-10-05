@@ -26,6 +26,54 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
+**0.35.0 — Lumen parity: colour.** The light ink, the syntax palette, the hairlines and the accent fill now match the Lumen target (owner's Lumen parity plan, slice K9). No token or role is added, renamed or removed: values change, `neutrals.json` gains keys, and `themes/products.css` gains one declaration per registered fill. palette-py 0.3.8 ships alongside; its output is unchanged.
+
+- **Light primary text is oklch L 0.20 (was 0.23), on every product.**
+  - The default and daos go from `#201c18` to `#191511`, spexr from `#1b1d22` to `#14161b`, introspect from `#181f1d` to `#111816`, and local-agents from `#1a1d22` to `#13161b`.
+  - The light borders and the light overlay are cast in the product's ink, so they take the new ink.
+  - The worst primary text on a light ground goes from 13.62:1 to 14.62:1. Secondary and muted text, `code-fg` and `code-comment` are unchanged; the code hues change (below).
+  - The glass glint mirrors a dark ink's lightness about 1.17 (it was 1.2), so on paper it stays at L 0.97. This applies to `--slfx-glint`, `--slfx-veil` and `--slfx-press-light` in `effects.css`, and `--slg-pole` in `glass.css`. The generator fails the build if the glint leaves sRGB, and a test holds the four expressions to the generator's number.
+  - The veil over a paper glass pane is slightly more opaque: alpha 0.894, was 0.86.
+- **The syntax palette is the Lumen target's.** Before → after:
+
+  | Role | Light | Dark |
+  |---|---|---|
+  | keyword | `#4460b6` → `#5847b7` | `#87a7fd` → `#a9b0fd` |
+  | string | `#536d0b` → `#316a23` | `#99b860` → `#9ccf7f` |
+  | function | `#1f6a96` → `#006191` | `#6db3e4` → `#75caf2` |
+  | number, boolean | `#aa442b` → `#b13e06` | `#f5886c` → `#fd9976` |
+  | builtin | `#865d06` → `#865900` | `#d4a14a` → `#e5bf6d` |
+  | tag | `#b33c1e` → `#5847b7` | `#fe8263` → `#a9b0fd` |
+
+  - `tag` now reads as `keyword`: the target has no tag colour, and atom-one's tag sat within OKLab ΔE 1.5 of the new `number` on paper. The palette is five hues. `fg` and `comment` are unchanged.
+  - The hues are authored as oklch in `sondalab.tokens.json` and baked to hex by the generator, the same for every product.
+  - Two are outside sRGB: light `function`, oklch(0.47 0.12 240), and light `builtin`, oklch(0.5 0.11 75). Each keeps its lightness and hue and gives up chroma (0.1077 and 0.1055), never a per-channel clip. The target, clipped by Chrome, paints `#006197` and `#875800`.
+  - `boolean` is now an alias of `number`, and `tag` of `keyword`.
+  - Every role reads at 4.5:1 or more (comment and null 3:1) on every product's canvas, surface, raised, tile and sunken grounds, and in an editor: on raised under the current line (the primary ink at 4.5%) and under the selection (the product's accent at 18%). The tightest is light `number` at 4.54:1, on local-agents' selection.
+- **`neutrals.json` carries the whole syntax palette.** `products.<id>.<light|dark>` now holds `code-keyword`, `code-string`, `code-number`, `code-boolean`, `code-function`, `code-tag` and `code-builtin` beside `code-fg`, `code-comment` and `code-null`. An editor or terminal theme can be built without reading CSS.
+- **Hairlines are the Lumen target's, in the product's own ink.**
+  - `--sl-border-subtle` goes from 0.09 to 0.08 on light and from 0.07 to 0.065 on dark.
+  - `--sl-border-default` goes from 0.16 to 0.14 on light and from 0.13 to 0.11 on dark.
+  - `--sl-border-strong` keeps its alpha (0.28); on light its colour follows the new ink.
+  - Dividers, table rows, rules, the island and tile rings, figure and avatar borders and the tab list's baseline are a little fainter. For example, a solid `border-default` over spexr's surface is `#dadbdd` on light (was `#d6d7da`) and `#28292c` on dark (was `#2c2d30`).
+  - No boundary that must read at 3:1 is drawn in these roles. Controls are outlined in `--slc-edge-control`, and a glass control's edge is that edge too.
+  - The one interactive line drawn in `--slc-border-subtle` is a resizer at rest: 1.11–1.18:1, was 1.13–1.20. It has never been a 3:1 boundary. Hovered, pressed or focused it turns to the accent text.
+- **The registered fill is generated.** `themes/products.css` now sets `--slc-accent-fill` from the registry's `fill` on each product's light and dark blocks; today that is spexr, `#4c58e9` on both themes. `neutrals.json` exports it as `products.<id>.fill.<light|dark>`, and a product with no fill has no `fill` key.
+  - **Migration (spexr):** delete `--slc-accent-fill: #4c58e9` from `spexr-overrides.css`. The fill arrives with `data-sl-product="spexr"` on the theme element and `products.css` loaded, which spexr already has.
+    - spexr's `theia-chrome-css.test.ts` ("Theia's labelled fills") asserts that literal in `spexr-overrides.css`. Update that test in the same change, to read the fill from `neutrals.json` or the registry.
+    - Until the literal goes, it wins. `:root:not([data-sl-theme="high-contrast"])` weighs (0,2,0), the same as the `products.css` block, and `spexr-overrides.css` loads after `products.css`, so a fill changed in the registry does not reach spexr.
+  - **A fill a product sets itself.** A rule of your own that weighs less than (0,2,0) now loses to `products.css` wherever your product registers a fill. That includes a plain `:root { --slc-accent-fill: … }` at (0,1,0), and it loses silently. Delete it and register the fill, or give your rule the weight it needs. A fill set on a subtree, below the theme element, still wins there, because it is nearer.
+  - **What a fill change takes:**
+    - edit the registry's `fill`;
+    - run `npm run gen:tokens` and commit the regenerated `products.css` and `neutrals.json`;
+    - dual-bump (`AGENTS.md`).
+  - No kit test pins the value. The tests derive the label, hover and press from the registry and hold them to 4.5:1. With spexr's dark fill set to `#8b96ff`, the whole suite passes unchanged, and its label turns to the dark pole.
+  - The prose that quotes the value is a separate edit: the registry's `$fill-note`, the accent table in `docs/design-language.md`, and this README.
+  - spexr receives the change at its next kit upgrade, once its own literal is gone.
+  - High contrast is unchanged: `products.css` has no high-contrast block, and `components.css` resets the fill on the high-contrast root and on the filled controls under it.
+- `components.css`'s fallback literals, used by a bare import with no theme, follow the default product's new light ink and borders.
+- **Migration (Tier B):** a Tier A host (`data-sl-theme`, the theme files and `products.css`) needs no action. A Tier B layer that copied the old values gets `sl-audit` R findings on them: they no longer ship anywhere. Re-copy `text-primary`, the borders, the overlay and the `code-*` roles from `neutrals.json` → `products.<id>.<light|dark>`. For example, introspect's `web/src/theme.css` copies the old code hues in eleven declarations. Its dark `keyword` (`#87a7fd`) still audits clean only because it equals dark `--sl-status-info`.
+
 **0.34.0 — Lumen parity: the workbench and its frame.** The workbench chrome follows the Lumen IDE screen as it renders at 1440×900 (owner, 2026-10-05: spexr is to look like the demo), within a pixel or two: the kit keeps its 4px grid (owner, same day), so every gap, padding, inset and row, bar or control size below is a whole number of 4px steps, and where the demo sits between two steps the kit's own rules decide (one control height, 32px), then the demo's invariants (the activity bar's 44px pitch, 4px round a status item, 10px round the palette's field), then the 0.33 value. Several sizes therefore stay what they were in 0.33 (the activity item, the status bar, the tree row, the palette row); what changes is the shape, the paint and the spacing round them. `workbench.css` gains a title bar. No token changes, so palette-py is unchanged. Four role-vars are added, all derived from roles you already map, so a Tier B layer maps nothing new. Classes are only added, but most workbench pieces, the tile tab and the toast render differently; the tile tab and the toast live in `components.css`, so they change for every product that upgrades, not only a workbench. The three owner rules hold throughout: every selected or current tile keeps its seam (Lumen draws none), focus is the kit's flush ring and halo (not Lumen's glow ring), and nothing animates on page load.
 
 - **`.sl-titlebar` (new).** It has these parts: `__l`, `__menu`, `__mark`, `__dot`, `__crumb`, `__sep`, `__cmd`, `__cmd-text`, `__keys`, `__r`, `__btn` and `__btn--dot`.
@@ -91,7 +139,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 **0.33.0 — the Lumen workbench.** A new opt-in stylesheet, `workbench.css`, carries the chrome of an IDE or a console: a lit pane, a status bar, an activity bar, a tree, a command palette and terminal blocks. `components.css` gains a toast stack and one state cue for every selected or current tile, the seam (owner's Lumen plan, checkpoint C). No token or role is added, changed or removed, and palette-py is unchanged. Classes are only added, but selected and current tiles across the kit now render differently (the seam, below).
 
 - **The seam on every selected or current tile (visible change).**
-  - The tile's fill, ring and cast are depth, not a state cue: they measure 1.00–1.42:1 against their ground. The nav item has carried a seam since 0.31. Now every selected or current tile carries one, from one rule in `components.css`: the current nav item, the current activity item, a selected tree row, the palette's active result, a selected or current list row, the active tile tab (or its `sl-tabs__item` wrapper), the chosen segment and the current page. A selected table row has none: its state lives in its content.
+  - The tile's fill, ring and cast are depth, not a state cue: they measure 1.00–1.42:1 against their ground (1.00–1.34 since the 0.35 hairlines). The nav item has carried a seam since 0.31. Now every selected or current tile carries one, from one rule in `components.css`: the current nav item, the current activity item, a selected tree row, the palette's active result, a selected or current list row, the active tile tab (or its `sl-tabs__item` wrapper), the chosen segment and the current page. A selected table row has none: its state lives in its content.
   - In a row or column the seam is a 2px line, half the tile's height, 3px inside its leading edge (mirrored right to left). In a tab, a segment or a page it is a short line 3px above the bottom edge.
   - Its colour says where the focus is: the accent (`--slc-seam`) while the container holds the focus, and the muted ink while it does not. A palette always holds the focus. Measured against the tile and against the ground around it, the seam reads at least 5.24:1 on the page and 3.4 in the band. On the light theme's dark band the seam is floored one step above the band's accent text, at oklch L 0.72 instead of 0.68, so a dark product hue that the floor lifts out of sRGB (spexr's indigo) still clears 3:1. On the dark theme's light band the cap decides, so the floor changes nothing there. **The nav item's seam, accent-coloured at all times until 0.33, is now muted while the nav lacks the focus.**
   - **A host outside a kit container** never sees the focus flag, so its seam stays muted. A row in your own list is an example. Set `--sl-seam-focus: 1` on the host or an ancestor, for example under your container's `:focus-within`, to give it the focused seam. A kit container also honours the hook at rest. The kit's containers are `sl-nav`, `sl-list`, `sl-tree`, `sl-tabs__list`, `sl-segmented`, `sl-pagination` and `sl-activitybar`.
@@ -315,10 +363,10 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
 }
 ```
 
-**An accent that cannot carry its label (0.32).** If neither white nor the dark pole reads at 4.5:1 on your accent, register a deeper `fill` for it and set it once, as a role, where your theme is set (your root; a subtree works for the kit's controls too):
+**An accent that cannot carry its label (0.32).** If neither white nor the dark pole reads at 4.5:1 on your accent, register a deeper `fill` for it in `agent/accent-registry.json`. Since 0.35 a Tier A host needs nothing more: `themes/products.css` sets it as the role `--slc-accent-fill` on the product's theme blocks. A Tier B layer sets the role once, where its theme is set (your root; a subtree works for the kit's controls too), from `neutrals.json` → `products.<id>.fill.<light|dark>`:
 
 ```css
-:root:not([data-sl-theme="high-contrast"]) { --slc-accent-fill: #4c58e9; }   /* spexr's registered fill */
+[data-theme="light"], [data-theme="dark"] { --slc-accent-fill: var(--your-fill); }   /* neutrals.json products.<id>.fill */
 ```
 
 The primary, a checked check, radio or switch and any count badge you draw with `var(--slc-accent-fill, var(--slc-accent))` take it, with its label (`--slc-on-accent-fill`), its hover and press (`--slc-accent-fill-hover|active`) and its edge (`--slc-edge-accent`). Unset, all of them are the accent's own. Those public roles compute on `:root`, so a badge of yours follows a root fill only; the kit's controls derive theirs on themselves and follow a fill or an accent set at any scope. Never re-bind `--slc-accent` on a component for this: the accent still drives links, tags, the ring and selection.

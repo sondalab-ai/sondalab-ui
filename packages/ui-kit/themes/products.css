@@ -1,5 +1,6 @@
 /* GENERATED from sondalab.tokens.json (neutrals) + agent/accent-registry.json — do not edit. Run `npm run gen:tokens`.
-   Each product's neutrals, tinted with its accent hue. Put data-sl-product on the element that carries
+   Each product's neutrals, tinted with its accent hue, and its registered accent fill (--slc-accent-fill, the
+   registry's `fill`) where it has one. Put data-sl-product on the element that carries
    data-sl-theme, or on an ancestor of it; load after the theme files or before, the selector outranks them.
    One product per theme subtree: every block here weighs the same, so with two products nested the later
    block in this file wins, not the nearer ancestor. */
@@ -10,12 +11,12 @@
   --sl-bg-surface-raised: #ffffff;
   --sl-bg-tile: #ffffff;
   --sl-bg-sunken: #f9f6f4;
-  --sl-bg-overlay: rgba(32,28,24,0.4);
-  --sl-border-subtle: rgba(32,28,24,0.09);
-  --sl-border-default: rgba(32,28,24,0.16);
-  --sl-border-strong: rgba(32,28,24,0.28);
+  --sl-bg-overlay: rgba(25,21,17,0.4);
+  --sl-border-subtle: rgba(25,21,17,0.08);
+  --sl-border-default: rgba(25,21,17,0.14);
+  --sl-border-strong: rgba(25,21,17,0.28);
   --sl-border-lit: rgba(255,255,255,0.9);
-  --sl-text-primary: #201c18;
+  --sl-text-primary: #191511;
   --sl-text-secondary: #47413c;
   --sl-text-muted: #605953;
   --sl-code-fg: #2a2621;
@@ -29,8 +30,8 @@
   --sl-bg-surface-raised: #1c1915;
   --sl-bg-tile: #26221e;
   --sl-bg-sunken: #0e0c09;
-  --sl-border-subtle: rgba(238,234,231,0.07);
-  --sl-border-default: rgba(238,234,231,0.13);
+  --sl-border-subtle: rgba(238,234,231,0.065);
+  --sl-border-default: rgba(238,234,231,0.11);
   --sl-border-strong: rgba(238,234,231,0.28);
   --sl-border-lit: rgba(255,255,255,0.07);
   --sl-text-primary: #eeeae7;
@@ -47,12 +48,12 @@
   --sl-bg-surface-raised: #ffffff;
   --sl-bg-tile: #ffffff;
   --sl-bg-sunken: #f9f6f4;
-  --sl-bg-overlay: rgba(32,28,24,0.4);
-  --sl-border-subtle: rgba(32,28,24,0.09);
-  --sl-border-default: rgba(32,28,24,0.16);
-  --sl-border-strong: rgba(32,28,24,0.28);
+  --sl-bg-overlay: rgba(25,21,17,0.4);
+  --sl-border-subtle: rgba(25,21,17,0.08);
+  --sl-border-default: rgba(25,21,17,0.14);
+  --sl-border-strong: rgba(25,21,17,0.28);
   --sl-border-lit: rgba(255,255,255,0.9);
-  --sl-text-primary: #201c18;
+  --sl-text-primary: #191511;
   --sl-text-secondary: #47413c;
   --sl-text-muted: #605953;
   --sl-code-fg: #2a2621;
@@ -66,8 +67,8 @@
   --sl-bg-surface-raised: #1c1915;
   --sl-bg-tile: #26221e;
   --sl-bg-sunken: #0e0c09;
-  --sl-border-subtle: rgba(238,234,231,0.07);
-  --sl-border-default: rgba(238,234,231,0.13);
+  --sl-border-subtle: rgba(238,234,231,0.065);
+  --sl-border-default: rgba(238,234,231,0.11);
   --sl-border-strong: rgba(238,234,231,0.28);
   --sl-border-lit: rgba(255,255,255,0.07);
   --sl-text-primary: #eeeae7;
@@ -84,17 +85,18 @@
   --sl-bg-surface-raised: #ffffff;
   --sl-bg-tile: #ffffff;
   --sl-bg-sunken: #f6f7f9;
-  --sl-bg-overlay: rgba(27,29,34,0.4);
-  --sl-border-subtle: rgba(27,29,34,0.09);
-  --sl-border-default: rgba(27,29,34,0.16);
-  --sl-border-strong: rgba(27,29,34,0.28);
+  --sl-bg-overlay: rgba(20,22,27,0.4);
+  --sl-border-subtle: rgba(20,22,27,0.08);
+  --sl-border-default: rgba(20,22,27,0.14);
+  --sl-border-strong: rgba(20,22,27,0.28);
   --sl-border-lit: rgba(255,255,255,0.9);
-  --sl-text-primary: #1b1d22;
+  --sl-text-primary: #14161b;
   --sl-text-secondary: #404249;
   --sl-text-muted: #585a63;
   --sl-code-fg: #25262b;
   --sl-code-comment: #61636a;
   --sl-code-null: #61636a;
+  --slc-accent-fill: #4c58e9;
 }
 [data-sl-product="spexr"][data-sl-theme="dark"],
 [data-sl-product="spexr"] [data-sl-theme="dark"] {
@@ -103,8 +105,8 @@
   --sl-bg-surface-raised: #18191d;
   --sl-bg-tile: #212228;
   --sl-bg-sunken: #0b0c0f;
-  --sl-border-subtle: rgba(234,235,239,0.07);
-  --sl-border-default: rgba(234,235,239,0.13);
+  --sl-border-subtle: rgba(234,235,239,0.065);
+  --sl-border-default: rgba(234,235,239,0.11);
   --sl-border-strong: rgba(234,235,239,0.28);
   --sl-border-lit: rgba(255,255,255,0.07);
   --sl-text-primary: #eaebef;
@@ -113,6 +115,7 @@
   --sl-code-fg: #dcdee3;
   --sl-code-comment: #9698a0;
   --sl-code-null: #9698a0;
+  --slc-accent-fill: #4c58e9;
 }
 [data-sl-product="introspect"][data-sl-theme="light"],
 [data-sl-product="introspect"] [data-sl-theme="light"] {
@@ -121,12 +124,12 @@
   --sl-bg-surface-raised: #ffffff;
   --sl-bg-tile: #ffffff;
   --sl-bg-sunken: #f4f8f7;
-  --sl-bg-overlay: rgba(24,31,29,0.4);
-  --sl-border-subtle: rgba(24,31,29,0.09);
-  --sl-border-default: rgba(24,31,29,0.16);
-  --sl-border-strong: rgba(24,31,29,0.28);
+  --sl-bg-overlay: rgba(17,24,22,0.4);
+  --sl-border-subtle: rgba(17,24,22,0.08);
+  --sl-border-default: rgba(17,24,22,0.14);
+  --sl-border-strong: rgba(17,24,22,0.28);
   --sl-border-lit: rgba(255,255,255,0.9);
-  --sl-text-primary: #181f1d;
+  --sl-text-primary: #111816;
   --sl-text-secondary: #3c4542;
   --sl-text-muted: #535e5a;
   --sl-code-fg: #212826;
@@ -140,8 +143,8 @@
   --sl-bg-surface-raised: #161b19;
   --sl-bg-tile: #1e2422;
   --sl-bg-sunken: #0a0d0c;
-  --sl-border-subtle: rgba(231,236,235,0.07);
-  --sl-border-default: rgba(231,236,235,0.13);
+  --sl-border-subtle: rgba(231,236,235,0.065);
+  --sl-border-default: rgba(231,236,235,0.11);
   --sl-border-strong: rgba(231,236,235,0.28);
   --sl-border-lit: rgba(255,255,255,0.07);
   --sl-text-primary: #e7eceb;
@@ -158,12 +161,12 @@
   --sl-bg-surface-raised: #ffffff;
   --sl-bg-tile: #ffffff;
   --sl-bg-sunken: #f5f7f9;
-  --sl-bg-overlay: rgba(26,29,34,0.4);
-  --sl-border-subtle: rgba(26,29,34,0.09);
-  --sl-border-default: rgba(26,29,34,0.16);
-  --sl-border-strong: rgba(26,29,34,0.28);
+  --sl-bg-overlay: rgba(19,22,27,0.4);
+  --sl-border-subtle: rgba(19,22,27,0.08);
+  --sl-border-default: rgba(19,22,27,0.14);
+  --sl-border-strong: rgba(19,22,27,0.28);
   --sl-border-lit: rgba(255,255,255,0.9);
-  --sl-text-primary: #1a1d22;
+  --sl-text-primary: #13161b;
   --sl-text-secondary: #3f4349;
   --sl-text-muted: #565b63;
   --sl-code-fg: #24272b;
@@ -177,8 +180,8 @@
   --sl-bg-surface-raised: #171a1d;
   --sl-bg-tile: #1f2328;
   --sl-bg-sunken: #0a0c0f;
-  --sl-border-subtle: rgba(232,235,239,0.07);
-  --sl-border-default: rgba(232,235,239,0.13);
+  --sl-border-subtle: rgba(232,235,239,0.065);
+  --sl-border-default: rgba(232,235,239,0.11);
   --sl-border-strong: rgba(232,235,239,0.28);
   --sl-border-lit: rgba(255,255,255,0.07);
   --sl-text-primary: #e8ebef;

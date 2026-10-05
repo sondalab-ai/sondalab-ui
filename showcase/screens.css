@@ -14,23 +14,20 @@
    which the kit does not ship; the stage does not load it from a CDN. */
 :root { --lab-code: var(--sl-font-mono); }
 
-/* spexr's filled indigo — mirrored byte for byte from showcase/index.html
-   (scripts/showcase-accent.test.mjs holds both to accent-registry.json): every
-   accent fill that carries a label is a deeper indigo than the accent, so the
-   label can be white (white on #5b6cff is 4.17:1). Since ui-kit 0.32 that is
-   one role on the root, --slc-accent-fill: the primary, a checked switch,
-   check or radio and the count badges follow it, with their label, hover,
-   press and edge; the accent itself (#5b6cff / #8b96ff) still drives links,
-   tags and the ring. (Until 0.32 the primary re-bound --slc-accent alone.) */
-[data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) {
-  --slc-accent-fill: #4c58e9;
-}
+/* spexr's filled indigo: every accent fill that carries a label is a deeper
+   indigo than the accent, so the label can be white (white on #5b6cff is
+   4.17:1). It is the kit's --slc-accent-fill role, and since ui-kit 0.35
+   themes/products.css sets it from the registry's "fill" under
+   data-sl-product="spexr" (the stage sets the attribute): the primary, a
+   checked switch, check or radio and the count badges follow it, with their
+   label, hover, press and edge; the accent itself (#5b6cff / #8b96ff) still
+   drives links, tags and the ring. */
 /* Target only: Lumen paints with --slc-accent, so it widens the fill by
    re-binding the accent on each fill that carries a label (the primary, its
    foot included, the count badges, a checked switch, the highlighted
-   headline). The kit view reads the role above. */
+   headline) to the role above. */
 [data-dir="lumen"][data-demo-accent="indigo"]:not([data-sl-theme="high-contrast"]) :is(.sl-btn--primary, .ide-activity__btn[data-count], .sl-switch__input:checked + .sl-switch__track, .ide-title__r .sl-icon-btn[data-count], .web-h1 em) {
-  --slc-accent: #4c58e9;
+  --slc-accent: var(--slc-accent-fill);
   --slc-on-accent: #ffffff;
 }
 
