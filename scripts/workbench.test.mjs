@@ -406,14 +406,17 @@ test("a pane is an island: the surface rung, the island recipe, the pane radius,
   assert.equal(won.get("border").value, "0", "a recipe host carries no border: the lit line sits flush under the ring");
   const l = cascaded(RULES_A, lit);
   assert.equal(l.get("background-color").value, "var(--slc-raised)", "the lit pane is the lighter rung");
-  assert.match(l.get("box-shadow").value, /^var\(--slc-depth-island\), 0 0 24px -6px color-mix\(in srgb, var\(--slc-seam\) calc\(var\(--slc-glow\) \* 40%\), transparent\)$/);
+  // 0.34, as Lumen renders it: the seam's light falls below the pane (the
+  // drop), not round it; no accent rim (owner, 2026-10-05)
+  assert.equal(l.get("box-shadow").value, "var(--slc-depth-island), var(--slc-lit-drop)");
 });
 
 test("the lit pane's seam and glow spend --slc-glow, which is 0 in high contrast", () => {
   const glowAlpha = (ctx) => {
     const { lit } = build(ctx);
-    const v = cascaded(RULES_A, lit).get("box-shadow").value;
-    return value(RULES_A, lit, v.slice(v.indexOf("color-mix(")), BLACK).alpha;
+    const v = substitute(cascaded(RULES_A, lit).get("box-shadow").value, customs(RULES_A, lit));
+    const at = v.indexOf("color-mix(");
+    return at < 0 ? 0 : value(RULES_A, lit, v.slice(at), BLACK).alpha;
   };
   assert.ok(Math.abs(glowAlpha(dark) - 0.2) < 1e-9, `dark ${glowAlpha(dark)}`);
   assert.ok(Math.abs(glowAlpha(CONTEXTS.find((c) => c.name === "light default")) - 0.14) < 1e-9);
@@ -422,6 +425,141 @@ test("the lit pane's seam and glow spend --slc-glow, which is 0 in high contrast
   const { lit } = build(hc);
   const env = customs(RULES_A, lit);
   assert.equal(env.get("--slc-depth-island"), `0 0 0 1px ${env.get("--slc-border")}`);
+});
+
+// ── the lit pane as it renders (0.34) ─────────────────────────────────────
+
+// Lumen's IDE screen, rendered (owner, 2026-10-05: "as rendered", no 46%
+// rim): the seam along the top edge, a radial wash on the tab strip or head,
+// a 7% tint on the breadcrumbs row and a glow that falls below the pane.
+// Three roles carry the last three, so a product spends them on its own
+// chrome without a literal; each reads --slc-glow (0 in high contrast and
+// under forced colours, where they are also remapped to nothing).
+const LIT = {
+  "--slc-lit-wash": { kind: "image", peak: 0.52 },
+  "--slc-lit-tint": { kind: "image", peak: 0.07 },
+  "--slc-lit-drop": { kind: "shadow", peak: 0.4 },
+};
+/** The colour stops of a role's first gradient, or its shadow's colour. */
+function litColours(rules, e, role) {
+  const v = substitute(`var(${role})`, customs(rules, e)).trim();
+  if (v === "none" || v === "0 0 transparent") return [];
+  if (LIT[role].kind === "shadow") return [value(rules, e, v.slice(v.indexOf("color-mix(")), BLACK)];
+  const inner = v.slice(v.indexOf("(") + 1, v.lastIndexOf(")"));
+  return splitTop(inner).filter((s) => /^(color-mix|transparent)/.test(s)).map((s) => value(rules, e, s.replace(/\s+[\d.]+%$/, ""), BLACK));
+}
+
+test("the lit roles are the rendered recipes, on every theme, at --slc-glow's strength", () => {
+  for (const [ctx, glow] of [[dark, 0.5], [CONTEXTS.find((c) => c.name === "light default"), 0.35], [CONTEXTS.find((c) => c.name === "light spexr"), 0.35]]) {
+    const { lit } = build(ctx);
+    for (const [role, { peak }] of Object.entries(LIT)) {
+      const cols = litColours(RULES_A, lit, role);
+      assert.ok(cols.length > 0, `${ctx.name} ${role}`);
+      const top = Math.max(...cols.map((c) => c.alpha));
+      assert.ok(Math.abs(top - glow * peak) < 1e-9, `${ctx.name} ${role}: peak ${top}, want ${glow * peak}`);
+      // the seam's own colour at the peak; the wash's is capped at oklch L
+      // 0.72, so a light seam (amber, mint on ink) cannot lift the ground
+      // under a muted label in the strip below 4.5:1 (spexr's indigo, L 0.71,
+      // is the demo's own and passes through untouched)
+      const seam = toHex(value(RULES_A, lit, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) c h)" : "var(--slc-seam)", BLACK));
+      assert.equal(toHex({ ...cols.find((c) => c.alpha === top), alpha: 1 }), seam, `${ctx.name} ${role}: the seam's hue`);
+    }
+  }
+  for (const t of ["dark", "light"]) {
+    const { lit } = build(CONTEXTS.find((c) => c.name === `${t} spexr`));
+    const peak = litColours(RULES_A, lit, "--slc-lit-wash").reduce((a, b) => (b.alpha > a.alpha ? b : a));
+    assert.equal(toHex({ ...peak, alpha: 1 }), toHex(value(RULES_A, lit, "var(--slc-seam)", BLACK)), `${t} spexr: the demo's wash, uncapped`);
+  }
+  // the wash is radial, peaking toward the seam's leading end, gone by 78%
+  const env = customs(RULES_A, build(dark).lit);
+  assert.match(substitute("var(--slc-lit-wash)", env), /^radial-gradient\(80% 100% at 30% 0%, color-mix\(in srgb, oklch\(from .+ min\(l, 0\.72\) c h\) .+\), transparent 78%\)$/);
+  assert.match(substitute("var(--slc-lit-tint)", env), /^linear-gradient\(color-mix\(.+\), transparent\)$/);
+});
+
+test("the drop is one shadow a product can wear outward on the pane or inward below it", () => {
+  const { lit } = build(dark);
+  const drop = substitute("var(--slc-lit-drop)", customs(RULES_A, lit));
+  assert.equal(splitTop(drop).length, 1, "one shadow, so `inset var(--slc-lit-drop)` is one shadow too");
+  const [x, y, blur, spread] = words(drop).slice(0, 4).map((w) => px(w, new Map()));
+  assert.deepEqual([x, y, blur, spread], [0, 18, 30, -18], "Lumen's 0 18px 30px -18px");
+  // Worn outward the shadow's shape ends at the pane's bottom edge (offset +
+  // spread = 0), so the glow starts at that edge and falls 30px below it.
+  // Worn inward (inset) by the element right under the pane, the shape's
+  // outside starts at that element's top edge: the same falloff, from the
+  // same line, inside a box a clipping parent cannot cut (spexr's split
+  // handle, under Lumino's contain: strict).
+  assert.equal(y + spread, 0);
+});
+
+test("the lit roles are nothing in high contrast and under forced colours, and the band re-derives them", () => {
+  const { lit } = build(hc);
+  for (const role of Object.keys(LIT)) assert.deepEqual(litColours(RULES_A, lit, role).filter((c) => c.alpha > 0), [], `high contrast ${role}`);
+  const env = customs(RULES_A, el({ tag: "html", attrs: { "data-sl-theme": "high-contrast" } }));
+  assert.equal(env.get("--slc-lit-wash"), "none");
+  assert.equal(env.get("--slc-lit-tint"), "none");
+  assert.equal(env.get("--slc-lit-drop"), "0 0 transparent", "never none: it joins a box-shadow list");
+  const fc = parseSheet(read("components.css"), { forcedColors: true });
+  for (const [name, e] of [["root", el({ tag: "html", attrs: { "data-sl-theme": "dark" } })], ["pane", el({ classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) }) })]]) {
+    const v = customs(fc, e);
+    assert.equal(v.get("--slc-lit-wash"), "none", `forced colours ${name}`);
+    assert.equal(v.get("--slc-lit-drop"), "0 0 transparent", `forced colours ${name}`);
+  }
+  // in the band each role reads the band's own seam
+  for (const ctx of CONTEXTS.filter((c) => c.band && !c.name.startsWith("high"))) {
+    const at = mount(ctx);
+    for (const role of Object.keys(LIT)) {
+      const want = toHex(value(ctx.rules, at, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) c h)" : "var(--slc-seam)", BLACK));
+      const cols = litColours(ctx.rules, at, role).filter((c) => c.alpha > 0);
+      assert.ok(cols.length, `${ctx.name} ${role}`);
+      assert.equal(toHex({ ...cols[0], alpha: 1 }), want, `${ctx.name} ${role}: the band's seam`);
+    }
+  }
+});
+
+test("the lit pane's seam starts where its corner ends", () => {
+  const { lit } = build(dark);
+  const env = customs(RULES_A, lit);
+  const seam = cascaded(RULES_A, el({ pseudo: "before", parent: lit }));
+  assert.equal(seam.get("inset-inline").value, "var(--sl-radius-pane, 10px)");
+  assert.equal(px(seam.get("inset-inline").value, env), 10, "Lumen's 10px, the pane's own radius");
+});
+
+// Text on the lit chrome: a tab strip under the wash, a breadcrumbs row under
+// the tint, every product and theme. The wash falls from the seam's edge: a
+// line of text centred in a strip starts (its line box, ink included) where
+// the wash has fallen by that distance, read along the ellipse's short axis
+// under its peak, the worst column. Lumen's 38px strip with a 20px line
+// starts 9px down; the tint is read at its peak, the top of its row.
+const WASH_FALL = (strip, line) => (strip - line) / 2 / strip / 0.78;
+test("text on the lit chrome reads at 4.5:1 where the wash and the tint reach it", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    const { lit } = build(ctx);
+    const fill = groundOf(ctx.rules, lit);
+    for (const role of ["--slc-lit-wash", "--slc-lit-tint"]) {
+      const cols = litColours(ctx.rules, lit, role);
+      const top = cols.length ? cols.reduce((a, b) => (b.alpha > a.alpha ? b : a)) : { lin: [0, 0, 0], alpha: 0 };
+      const peak = role === "--slc-lit-wash" ? { ...top, alpha: top.alpha * (1 - WASH_FALL(38, 20)) } : top;
+      const g = over(peak, fill);
+      for (const ink of ["--slc-text", "--slc-text-secondary", "--slc-text-muted"]) {
+        const r = ratio(over(value(ctx.rules, lit, `var(${ink})`, BLACK), g), g);
+        if (!(r >= 4.5)) low.push(`${ctx.name} ${role} ${ink} ${r.toFixed(2)}`);
+      }
+    }
+  }
+  assert.deepEqual(low, []);
+});
+
+test("a section's accent reaches the lit roles of a pane in it", () => {
+  const rules = [...RULES_A, ...parse(['[data-section] { --slc-accent: #1d63d8; }'])];
+  const at = mount(dark);
+  const lit = el({ tag: "section", classes: ["sl-pane"], attrs: { "data-lit": "" }, parent: el({ tag: "section", attrs: { "data-section": "" }, parent: at }) });
+  const want = toHex(value(rules, lit, "var(--slc-seam)", BLACK));
+  assert.equal(want, toHex(evaluate("#1d63d8", new Map())));
+  for (const role of Object.keys(LIT)) {
+    const c = litColours(rules, lit, role).reduce((a, b) => (b.alpha > a.alpha ? b : a));
+    assert.equal(toHex({ ...c, alpha: 1 }), want, role);
+  }
 });
 
 // ── the status bar ─────────────────────────────────────────────────────────

@@ -246,6 +246,35 @@
      top. One recipe on every theme: each part is a role the theme already
      sets (the lit line, the raised rung, the cast ramp). */
   --slc-depth-cast:   inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg);
+  /* THE LIT PANE'S LIGHT (0.34): where the seam of a lit pane (workbench.css)
+     throws its light, as Lumen's IDE screen renders it (owner, 2026-10-05:
+     "as rendered", no accent rim round the pane). The pane spends the drop;
+     its chrome, which only the product knows, spends the other two. Each
+     reads --slc-glow, and each is nothing in high contrast and under forced
+     colours (below).
+       --slc-lit-wash  an image, for the tab strip or the head along the lit
+                       pane's top edge: a radial wash of the seam, peaking
+                       toward the seam's leading end (mirrored right to left)
+                       and gone at 78%, sized by the box it is painted on
+                       (Lumen's 38px strip). Its colour is the seam capped at
+                       oklch L 0.72: on ink a lighter seam (amber, mint) lifted
+                       the ground under a muted label centred in the strip to
+                       4.14:1; capped, every product reads >= 4.60. spexr's
+                       indigo (L 0.71) is the demo's and passes untouched. Text
+                       set against the strip's top edge, where the wash
+                       peaks, would read less: centre it.
+       --slc-lit-tint  an image, for the row under it (breadcrumbs): the seam
+                       at 7% fading down the row, over the row's own fill.
+       --slc-lit-drop  ONE shadow: the glow below the lit pane. Worn outward
+                       on the pane it starts at the pane's bottom edge; worn
+                       inward (`inset var(--slc-lit-drop)`) by the element
+                       right under the pane it starts at that element's top
+                       edge -- the same falloff from the same line, for a
+                       product whose layout clips the pane's own shadow. */
+  --_sl-lit-x: 30%;
+  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.72) c h) calc(var(--slc-glow) * 52%), transparent), transparent 78%);
+  --slc-lit-tint: linear-gradient(color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 7%), transparent), transparent);
+  --slc-lit-drop: 0 18px 30px -18px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
   /* A recipe is a member of a box-shadow LIST (a control's depth composes
      with the focus halo, 0.32), so where a theme turns one off it is an
      empty shadow, `0 0 transparent`, never `none`, which would void the
@@ -1723,6 +1752,12 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-depth-sunk:    var(--slc-shadow-inset);
   --slc-depth-float:   var(--slc-shadow-lg);
   --slc-depth-cast:    inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg);
+  /* The lit pane's light, re-declared as written so it reads the band's
+     seam (a lit pane is not supported in a band; a product's own chrome
+     that spends the roles there still gets the band's hue). */
+  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x, 30%) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.72) c h) calc(var(--slc-glow) * 52%), transparent), transparent 78%);
+  --slc-lit-tint: linear-gradient(color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 7%), transparent), transparent);
+  --slc-lit-drop: 0 18px 30px -18px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
   /* The band's ground is the page's ink: dark on the light theme, where the
      uncapped accent reads (the orange ~7.8:1, the capped text ~2.7), and LIGHT
      on the dark and high-contrast themes, where the bright accent is ~1.3:1.
@@ -2487,6 +2522,23 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-seam: oklch(from var(--slc-accent) min(max(l, 0.72), var(--sl-accent-band-text-lmax, 1)) c h);
 }
 
+/* The lit pane's light (:root, 0.34) follows the pane's own seam: a pane in
+   a section painted in another accent throws that accent's light, on its
+   own drop and on the chrome inside it. Zero weight, after the seam it
+   reads; high contrast keeps nothing there either. The wash peaks toward
+   the seam's leading end, so it mirrors with it. */
+:where(.sl-pane) {
+  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x, 30%) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.72) c h) calc(var(--slc-glow) * 52%), transparent), transparent 78%);
+  --slc-lit-tint: linear-gradient(color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 7%), transparent), transparent);
+  --slc-lit-drop: 0 18px 30px -18px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
+}
+:where(:root, .sl-pane):dir(rtl) { --_sl-lit-x: 70%; }
+:root[data-sl-theme="high-contrast"] :where(.sl-pane) {
+  --slc-lit-wash: none;
+  --slc-lit-tint: none;
+  --slc-lit-drop: 0 0 transparent;
+}
+
 /* ══ THE SEAM — the state cue of a selected or current tile (0.33) ══════════
    The tile is depth, not a state cue: its fill against its ground and its
    ring measure 1.00-1.42:1 (a white tile on a white table, a lit pane or a
@@ -2637,6 +2689,10 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   /* An overlay that keeps no border (0.34) is found by its cast's ring:
      drawn in the theme's line, as an island's is. */
   --slc-depth-cast:   0 0 0 1px var(--slc-border);
+  /* No light: the lit pane is found by its drawn ring (workbench.css). */
+  --slc-lit-wash: none;
+  --slc-lit-tint: none;
+  --slc-lit-drop: 0 0 transparent;
   /* High contrast owns its accent outright: a product's accent fill (0.32)
      does not reach it, and every labelled fill is the theme's yellow. */
   --slc-accent-fill:  initial;
@@ -2663,6 +2719,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-depth-sunk:   0 0 transparent;
   --slc-depth-float:  0 0 transparent;
   --slc-depth-cast:   0 0 0 1px var(--slc-border);
+  --slc-lit-wash: none;
+  --slc-lit-tint: none;
+  --slc-lit-drop: 0 0 transparent;
 }
 /* The in-button key draws its own base line instead of the key depth, so it
    is ringed here, in its label's colour: white on a neutral button, black on
@@ -2762,6 +2821,13 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     --slc-depth-float: 0 0 transparent;
     --slc-depth-cast: 0 0 transparent;
     --slc-glow: 0;
+  }
+  /* The lit pane's light too, on the panes that re-derive it (THE ACCENT,
+     WHERE IT IS READ). */
+  :root, :root[data-sl-theme], .sl-invert > *, :root[data-sl-theme] .sl-invert > *, :where(.sl-pane) {
+    --slc-lit-wash: none;
+    --slc-lit-tint: none;
+    --slc-lit-drop: 0 0 transparent;
   }
   /* The halo too, on every control, whatever --slc-glow a product's own
      light layer sets (a Tier B [data-theme="light"] root outweighs the

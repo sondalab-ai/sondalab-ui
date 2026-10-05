@@ -33,10 +33,18 @@
    [data-lit] is the pane that holds the focus, set by the consumer where the
    focus is (it stays lit while a palette or a menu has the focus over it).
    It is the lighter rung, a seam of the accent as a line of light runs along
-   its top edge, and the seam's light falls round the pane as strong as
+   its top edge, starting where the pane's corner ends, and the seam's light
+   falls below the pane (--slc-lit-drop, components.css) as strong as
    --slc-glow says (none in high contrast or under forced colours). The seam
    fades in from the leading edge and out before the far one, mirrored right
-   to left: lit from one side, the way Lumen draws it. One lit pane per
+   to left: lit from one side, the way Lumen draws it. As Lumen renders it
+   (0.34, owner: no accent rim round the pane): the light that falls INTO the
+   pane is the product's to paint on its own chrome -- --slc-lit-wash on the
+   tab strip or head along the top edge, --slc-lit-tint on the row under it
+   -- because a strip or a header with a ground of its own would cover any
+   layer the pane painted. A layout that clips the pane's own shadow (Lumino's
+   contain: strict) wears the drop inward on the element right under the
+   pane: `box-shadow: inset var(--slc-lit-drop)`. One lit pane per
    workbench. Lit and focused are two things: the pane stays lit while a
    palette holds the focus over it, and a tree in it then reads unfocused. */
 .sl-pane {
@@ -48,7 +56,7 @@
 }
 .sl-pane[data-lit] {
   background-color: var(--slc-raised);
-  box-shadow: var(--slc-depth-island), 0 0 24px -6px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
+  box-shadow: var(--slc-depth-island), var(--slc-lit-drop);
 }
 /* A pseudo-element above the pane's children, not a layer of its background:
    a pane's header or tab strip usually paints a ground of its own across
@@ -59,7 +67,7 @@
   content: "";
   position: absolute;
   inset-block-start: 0;
-  inset-inline: var(--sl-space-3, 0.75rem);
+  inset-inline: var(--sl-radius-pane, 10px);
   z-index: 1;
   height: 2px;
   border-radius: 0 0 2px 2px;
