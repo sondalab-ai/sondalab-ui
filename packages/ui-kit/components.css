@@ -1999,6 +1999,12 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border: 1px solid var(--slc-edge-control);
   border-radius: var(--sl-radius-md, 8px);
   overflow: hidden;
+  /* Its members never move under the finger (0.36): a member that sinks to
+     97% pulls its edges in from the 1px rules beside it and they open to
+     about 2.7px (no gap between lines, owner 2026-10-01). The press reads
+     this knob; compositions.css binds the same value for a glass member,
+     and this one holds where compositions.css is not loaded. */
+  --slfx-pane-swell: 1;
 }
 /* Its members sit flat in it: one control casts no shadow between its keys
    (and the group's overflow would clip it), and the foot would make a
@@ -2698,14 +2704,19 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    A text button sinks instead (Lumen, 0.36): held, it shrinks to 97% about
    its centre, keeping its shape, and springs back the same way. It is an
    answer to the finger, not an entrance, so nothing of it plays on a page
-   load. The primary's foot still moves to its top (translate, above). */
+   load. The primary's foot still moves to its top (translate, above). The
+   amount reads the effects layer's press knob, --slfx-pane-swell (1.03 by
+   default: a 3% sink; 1: none), with its default at the point of use, so
+   the one binding that stands a glass pane down stands every button press
+   down with it: a button group binds it (below), because a member that
+   sinks inside it opens the 1px rules between its keys. */
 :is(.sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled, [aria-disabled="true"]) {
   transform: scale(1.02, 0.968);
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
 .sl-btn:active:not(:disabled, [aria-disabled="true"]) {
-  transform: scale(0.97);
+  transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1)));
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }

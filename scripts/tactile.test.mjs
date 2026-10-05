@@ -20,7 +20,15 @@ const R = rules(components);
 const SQUASH = "scale(1.02, 0.968)";
 // 0.36 (Lumen): a text button sinks to 97% instead of squashing; the other
 // pressable controls keep the squash.
-const SINK_BTN = "scale(0.97)";
+// 0.36 (Lumen): a text button sinks to 97%, read off the press knob
+// --slfx-pane-swell (1.03 by default; 1 stands it down, as a button group
+// binds it), so the one binding holds every press path still.
+const SINK_BTN = "scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1)))";
+/** The scale SINK_BTN resolves to at a given knob value. */
+const sinkAt = (swell) => {
+  const e = SINK_BTN.replace("var(--slfx-pane-swell, 1.03)", String(swell)).match(/^scale\(calc\((.*)\)\)$/)[1];
+  return Function(`"use strict"; return (${e});`)();
+};
 const SQUASHERS = ["sl-icon-btn", "sl-chip", "sl-segmented__item", "sl-pagination__item"];
 const PRESSABLE = ["sl-btn", ...SQUASHERS];
 
@@ -32,6 +40,11 @@ test("every pressable control but the text button squashes while held, and never
   assert.match(press.selector, /:not\(:disabled, \[aria-disabled="true"\]\)/);
   assert.match(press.body, /transition-duration:\s*var\(--sl-motion-fast/);
   assert.match(press.body, /transition-timing-function:\s*var\(--sl-motion-ease/);
+});
+
+test("the button's sink reads the press knob: 97% at its default, none at 1", () => {
+  assert.ok(Math.abs(sinkAt(1.03) - 0.97) < 1e-12, `default ${sinkAt(1.03)}`);
+  assert.equal(sinkAt(1), 1);
 });
 
 test("a text button sinks to 97% while held (Lumen), quickly, on the motion tokens, and never when disabled", () => {

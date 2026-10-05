@@ -1419,9 +1419,11 @@
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
-/* A text button sinks to 97% instead (0.36, components.css's TACTILE block). */
+/* A text button sinks to 97% instead (0.36, components.css's TACTILE block),
+   reading the same knob, so a button group's --slfx-pane-swell: 1 holds a
+   pressed member still here too. */
 .sl-btn.sl-fx-press:active:not(:disabled, [aria-disabled="true"]) {
-  transform: scale(0.97);
+  transform: scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1)));
 }
 
 /* The press light, on ::before at z-index -1: above the host's own fill (the

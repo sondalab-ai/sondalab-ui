@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { parseSheet, el, box, cascaded, customs, px } from "./lib/cascade.mjs";
-import { evaluate, fromOklch, fromSrgb, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
+import { evaluate, fromOklch, fromSrgb, substitute, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
 
 // Lumen parity, the controls (ui-kit 0.36, slice K10): the button, the badge,
 // the tag, the chip, the keycap and the check box move to the Lumen IDE
@@ -124,6 +124,55 @@ test("a small glass button keeps r7: glass.css's host radius reads the knob the 
   assert.equal(px(value(rules, host, "border-radius"), customs(rules, host)), 7);
   const big = el({ tag: "button", classes: ["sl-btn", "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"], parent: at() });
   assert.equal(px(value(rules, big, "border-radius"), customs(rules, big)), 8);
+});
+
+/** The [x, y] scale an element's winning `transform` resolves to (1, 1 when
+ *  it has none), its var()s read where the element computes them. */
+function scaleOf(rules, e) {
+  const t = value(rules, e, "transform");
+  if (!t || t === "none") return [1, 1];
+  const text = substitute(t, customs(rules, e)).trim();
+  const m = text.match(/^scale\((.*)\)$/);
+  assert.ok(m, `a scale: ${text}`);
+  const args = []; let d = 0, f = 0;
+  for (let i = 0; i <= m[1].length; i++) { const ch = m[1][i]; if (ch === "(") d++; else if (ch === ")") d--; else if ((ch === "," && d === 0) || i === m[1].length) { args.push(m[1].slice(f, i).trim()); f = i + 1; } }
+  const num = (x) => Function(`"use strict"; return (${x.replace(/\bcalc\(/g, "(")});`)();
+  const [sx, sy = sx] = args.map(num);
+  return [sx, sy];
+}
+const WITH_COMPOSITIONS = sheets(read("compositions.css"));
+
+test("held, a standalone button sinks to 97% on every press path: bare, sl-fx-press and a glass pane", () => {
+  for (const [name, rules] of [["kit + effects", KIT_RULES], ["kit + effects + compositions", WITH_COMPOSITIONS]]) {
+    for (const extra of [[], ["sl-fx-press"], ["sl-fx-glass", "sl-fx-glass--pane", "sl-glass"]]) {
+      for (const variant of Object.keys(VARIANTS)) {
+        const b = el({ tag: "button", classes: ["sl-btn", ...VARIANTS[variant], ...extra], states: ["active", "hover"], parent: at() });
+        const [sx, sy] = scaleOf(rules, b);
+        assert.ok(Math.abs(sx - 0.97) < 1e-9 && Math.abs(sy - 0.97) < 1e-9, `${name} / ${variant} ${extra.join(" ")}: ${sx}, ${sy}`);
+      }
+    }
+  }
+});
+
+test("held, a member of a button group does not move on any press path, so the 1px rules between its keys stay 1px", () => {
+  // A member sunk to 97% pulls its edges in from the group's 1px rules (the
+  // group's own ground, through its 1px gap): measured in Chrome with the
+  // middle of three pressed, the rules opened to about 2.7px. The group
+  // binds the press knob, in components.css itself, so it holds with or
+  // without compositions.css and with effects.css loaded after it.
+  for (const [name, rules] of [["kit + effects", KIT_RULES], ["kit + effects + compositions", WITH_COMPOSITIONS]]) {
+    const group = el({ classes: ["sl-btn-group"], parent: at() });
+    for (const extra of [[], ["sl-fx-press"], ["sl-fx-glass", "sl-fx-glass--pane", "sl-glass"]]) {
+      for (const variant of ["plain", "secondary", "primary"]) {
+        const b = el({ tag: "button", classes: ["sl-btn", ...VARIANTS[variant], ...extra], states: ["active", "hover"], parent: group });
+        assert.deepEqual(scaleOf(rules, b), [1, 1], `${name} / ${variant} ${extra.join(" ")}`);
+      }
+    }
+  }
+  // the knob is bound on the group in components.css, not only in compositions.css
+  const kitOnly = (() => { let o = 0; return ["tokens.css", "components.css"].map(read).flatMap((css) => { const r = parseSheet(css, {}, o); o += r.length + 1; return r; }); })();
+  const member = el({ tag: "button", classes: ["sl-btn"], states: ["active"], parent: el({ classes: ["sl-btn-group"], parent: at() }) });
+  assert.deepEqual(scaleOf(kitOnly, member), [1, 1], "components.css alone");
 });
 
 // ── badge, tag, chip: r6, 8px in, on the grid, whole-pixel rows ───────────────
