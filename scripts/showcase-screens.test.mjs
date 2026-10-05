@@ -202,12 +202,17 @@ test("contrast maths: compositing and rings", () => {
 // accent fill, so it reads the kit's accent-fill role (the indigo count read
 // 4.17:1 on the bare accent); the danger buttons are the kit's tone, and the
 // .lab-danger hooks the target draws from paint nothing in the kit view.
-test("the stage's count badge reads the accent-fill role, and its danger buttons are the kit's", () => {
+test("the stage's count badge is the kit's (0.34), and its danger buttons are the kit's", () => {
   const css = read("showcase/screens.css");
-  const badge = css.match(/\.ide-activity__btn\[data-count\]::after \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(badge, /background:\s*var\(--slc-accent-fill, var\(--slc-accent\)\)/);
-  assert.match(badge, /color:\s*var\(--slc-on-accent-fill\)/);
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  // the kit draws the badge from data-count (workbench.css); the stage only
+  // keeps the target's content box under the overlay
+  for (const m of bare.matchAll(/([^{}]*\[data-count\]::after)\s*\{([^}]*)\}/g)) {
+    assert.match(m[1].trim(), /^\[data-dir="lumen"\]/, `${m[1].trim()}: only the target's own quirk`);
+    assert.doesNotMatch(m[2], /(?:^|;)\s*(background[\w-]*|color|content)\s*:/, "the kit paints the badge");
+  }
+  const kit = read("packages/ui-kit/workbench.css").match(/\.sl-activitybar__item\[data-count\]::after \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(kit, /background-color:\s*var\(--slc-accent-fill, var\(--slc-accent\)\)/);
   assert.doesNotMatch(bare, /\.lab-danger(-ghost)?\s*\{/, "the stage paints no danger of its own");
   const js = read("showcase/screens.js");
   assert.match(js, /class="sl-btn sl-btn--primary sl-btn--danger lab-danger"/);

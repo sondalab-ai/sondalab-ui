@@ -60,45 +60,42 @@ svg { flex: none; }
    primitive paints a layer the target never resets, the kit stands down
    under the overlay, so the overlay shows the target and nothing of the kit:
    the lit pane's seam on the editor (the target lights its tab strip), the
-   status bar's micro register and hairlines, the toast tick's width, the
-   tree's guides and twisty, the palette's well, the exit mark's width. */
+   tree's twisty (the target draws an svg chevron; this rule lost to the
+   kit's at (0,3,1) until 0.34, and the target showed both), the mark's dot
+   (the target's ::after), the exit mark's width. Since 0.34 the kit is
+   Lumen's status bar, toast tick and dismiss and tree guides, so their
+   stand-downs are gone. The palette's field stays: the target's own field
+   well (a canvas well at (0,2,0), later than the kit's palette field) would
+   otherwise land on it. The target's quirks are kept so it renders as it
+   did: its count badge's content box, its toast timer's full width and 1px
+   drop below the edge, its palette foot's square corners and its tick's
+   rounded ends (both the kit's before 0.34). */
 [data-dir="lumen"] .ide-main.sl-pane::before { content: none; }
-[data-dir="lumen"] .sl-statusbar { height: auto; line-height: inherit; }
-[data-dir="lumen"] .sl-statusbar__item { line-height: 22px; }
-[data-dir="lumen"] .sl-statusbar__sep { display: none; }
-[data-dir="lumen"] .sl-toast::before { width: auto; }
-[data-dir="lumen"] .sl-toast__dismiss { width: 2rem; height: 2rem; }
-[data-dir="lumen"] .sl-tree__row { background-image: none; }
-[data-dir="lumen"] .sl-tree__twisty::before { content: none; }
-[data-dir="lumen"] .ide-pal__in > .ide-pal__input.sl-field__input { background: transparent; border-color: transparent; box-shadow: none; }
+[data-dir="lumen"] .sl-tree__row[aria-expanded] > .sl-tree__twisty::before { content: none; }
+[data-dir="lumen"] .sl-titlebar__dot { display: none; }
 [data-dir="lumen"] .sl-term-block::before { width: auto; border-radius: 0; }
+[data-dir="lumen"] .ide-pal__in > .ide-pal__input.sl-field__input { background: transparent; border-color: transparent; box-shadow: none; }
+[data-dir="lumen"] .ide-activity__btn[data-count]::after { box-sizing: content-box; }
+[data-dir="lumen"] .ide-toast__timer { width: 100%; inset-inline: 14px; inset-block-end: -1px; }
+[data-dir="lumen"] .ide-pal__foot { border-radius: 0; }
+[data-dir="lumen"] .ide-toast::before { border-radius: 0 0 2px 2px; }
 
 /* ── app shell ─────────────────────────────────────────────────────────── */
 /* The frame is the canvas and the panes are the kit's islands on it
-   (workbench.css, 0.33): a gap between them, no border between them. The
-   status row is the kit's status bar's own height. */
-.app { position: relative; width: 1440px; height: 900px; display: grid; grid-template-rows: 40px minmax(0, 1fr) 1.75rem; overflow: hidden; background: var(--slc-canvas); }
-.app__body { display: flex; gap: var(--sl-space-2); padding-inline-end: var(--sl-space-2); min-height: 0; }
+   (workbench.css): a 6px gap between them, as Lumen draws it, no border
+   between them. The title and status rows are the kit's title bar's and
+   status bar's own heights (0.34: 44 and 30). */
+.app { position: relative; width: 1440px; height: 900px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; background: var(--slc-canvas); }
+.app__body { display: flex; gap: 6px; padding-inline-end: 6px; min-height: 0; }
 
-.ide-title { display: grid; grid-template-columns: 1fr minmax(0, 32rem) 1fr; align-items: center; gap: 1rem; padding: 0 0.75rem; }
-.ide-title__l, .ide-title__r { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
-.ide-title__r { justify-content: flex-end; gap: 0.5rem; }
+/* the title bar is the kit's (.sl-titlebar, 0.34); the traffic lights are the stage's, as a mac product's are the system's */
 .ide-dots { display: inline-flex; gap: 6px; } .ide-dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb, var(--slc-text) 18%, transparent); }
-.ide-mark { font-family: var(--sl-font-display); font-weight: 600; font-size: 16px; letter-spacing: -0.03em; }
-.ide-title__crumb { font-size: 13px; color: var(--slc-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ide-title__crumb span { color: var(--slc-text-muted); margin: 0 0.15rem; }
-.ide-cmd { display: flex; align-items: center; gap: 0.5rem; height: 28px; padding: 0 0.4rem 0 0.65rem; border: 1px solid var(--slc-edge-control); border-radius: var(--sl-radius-md); background: color-mix(in srgb, var(--slc-text) 4%, var(--slc-raised)); color: var(--slc-text-muted); font-size: 13px; cursor: pointer; }
-.ide-cmd span:not(.ide-keys) { flex: 1; text-align: left; }
 .ide-keys { display: inline-flex; gap: 3px; }
 .ide-live { font-size: 11px; }
 .ide-avatar { --sl-avatar-size: 26px; font: 600 10px/1 var(--sl-font-mono); color: var(--slc-text-secondary); }
 [data-count] { position: relative; }
 
-/* the activity bar is the kit's (.sl-activitybar, 0.33): borderless glyphs on the canvas, the current view a flat tile with the seam */
-.ide-activity { width: 48px; flex: none; }
-.ide-activity__btn { position: relative; }
-/* a count is a labelled accent fill: the kit's accent-fill role (0.32) */
-.ide-activity__btn[data-count]::after { content: attr(data-count); position: absolute; top: 3px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--slc-accent-fill, var(--slc-accent)); color: var(--slc-on-accent-fill); font: 600 9px/15px var(--sl-font-mono); text-align: center; }
+/* the activity bar is the kit's (.sl-activitybar, 0.34): Lumen's 52px column, the current view a flat tile on the surface with the seam, a count the kit's badge (data-count) */
 .ide-activity__spacer { flex: 1; }
 
 .ide-side { width: 264px; flex: none; display: flex; flex-direction: column; overflow: hidden; }
@@ -110,21 +107,34 @@ svg { flex: none; }
 .ide-ghost.sl-icon-btn:hover { color: var(--slc-text); background: color-mix(in srgb, var(--slc-text) 7%, transparent); }
 .pane__sub { padding: 0.6rem 0.9rem 0.3rem; font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slc-text-muted); }
 /* the tree is the kit's (.sl-tree, 0.33): rows, guides, twisty and the tile; the svg chevrons are the target's, the kit draws its own */
-.ide-tree { padding: 0 0.4rem; }
+.ide-tree { padding: 0 0.45rem; }
 [data-dir="kit"] .ide-tree__tw > svg { display: none; }
 .ide-tree__git { font-family: var(--sl-font-mono); font-size: 10px; color: var(--slc-warning-text, var(--slc-warning)); }
 .ide-tree__git[data-git="U"] { color: var(--slc-success-text, var(--slc-success)); }
 .ide-sessions { padding: 0 0.4rem; }
 .ide-sessions .sl-list__row { display: flex; flex-direction: column; justify-content: center; min-height: 32px; padding-block: 0.3rem; }
 
-.ide-main { flex: 1; min-width: 0; display: grid; grid-template-rows: 36px 28px minmax(0, 1fr) 214px; overflow: hidden; }
-/* the editor's strip is the kit's tile tabs (.sl-tabs--tile, 0.31): the tile, the dot and the icon's accent are the kit's; it sits in the lit pane's own light */
+/* The editor is the lit pane (the kit's seam along its top) and the panel
+   an island 6px below it, inside one grid, as a product whose layout keeps
+   the two apart: the pane's own ground and shadow stand down, its parts
+   carry the raised rung, and the lit pane's light is the kit's roles (0.34)
+   -- the wash on the tab strip, the tint on the breadcrumbs, the drop under
+   the code, in the gap. */
+.ide-main { flex: 1; min-width: 0; display: grid; grid-template-rows: 38px 30px minmax(0, 1fr) 210px; overflow: hidden; }
+.ide-main.sl-pane[data-lit] { background-color: transparent; box-shadow: none; }
+.ide-main > :is(.ide-tabs, .ide-crumbs, .ide-code) { background-color: var(--slc-raised); }
+.ide-main > .ide-tabs { border-radius: var(--sl-radius-pane) var(--sl-radius-pane) 0 0; }
+.ide-main > .ide-code { border-radius: 0 0 var(--sl-radius-pane) var(--sl-radius-pane); }
+.ide-main[data-lit] > .ide-tabs { background-image: var(--slc-lit-wash); }
+.ide-main[data-lit] > .ide-crumbs { background-image: var(--slc-lit-tint); }
+.ide-main[data-lit] > .ide-code { box-shadow: var(--slc-lit-drop); }
+/* the editor's strip is the kit's tile tabs (.sl-tabs--tile, 0.34: r7, 13px): the tile, the dot and the icon's accent are the kit's */
 .ide-tabs { display: flex; padding: 0 0.4rem; }
-.ide-tab { font-size: 13px; position: relative; }
+.ide-tab { position: relative; }
 .ide-tab svg { color: var(--slc-text-muted); }
 .ide-tabs__sp { flex: 1; }
 .ide-tabs > .sl-icon-btn { align-self: center; }
-.ide-crumbs { display: flex; align-items: center; gap: 0.3rem; padding: 0 1rem; font-size: 12px; color: var(--slc-text-muted); border-bottom: 1px solid var(--slc-edge-raised); }
+.ide-crumbs { display: flex; align-items: center; gap: 0.3rem; padding: 0 1rem; font-size: 12px; color: var(--slc-text-muted); border-bottom: 1px solid var(--slc-border-subtle); }
 .ide-crumbs b { color: var(--slc-text); font-weight: 500; }
 .ide-crumbs__sp { flex: 1; }
 .ide-crumbs__meta { font-family: var(--sl-font-mono); font-size: 11px; }
@@ -140,7 +150,7 @@ svg { flex: none; }
 .ide-squiggle { text-decoration: underline wavy var(--slc-warning-text, var(--slc-warning)); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .ide-diag { margin-left: 1.5rem; padding: 0 0.5rem; font-family: var(--sl-font-sans); font-size: 12px; color: var(--slc-warning-text, var(--slc-warning)); background: color-mix(in srgb, var(--slc-warning) 12%, transparent); border-radius: var(--sl-radius-sm); }
 
-.ide-panel { display: grid; grid-template-rows: 34px minmax(0, 1fr); border-top: 1px solid var(--slc-edge-surface); background: var(--slc-surface); min-height: 0; }
+.ide-panel { display: grid; grid-template-rows: 34px minmax(0, 1fr); margin-top: 6px; border-radius: var(--sl-radius-pane); background: var(--slc-surface); box-shadow: var(--slc-depth-island); min-height: 0; }
 .ide-panel__tabs { display: flex; align-items: center; gap: 0.25rem; padding: 0 0.5rem 0 0.75rem; }
 .ide-ptab { height: 26px; border: 0; border-radius: var(--sl-radius-sm); background: transparent; color: var(--slc-text-muted); font-family: var(--sl-font-sans); font-size: 12px; font-weight: 500; padding: 0 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; }
 .ide-ptab[aria-selected="true"] { color: var(--slc-text); background: var(--slc-tile); box-shadow: var(--slc-depth-flat); }
@@ -158,7 +168,7 @@ svg { flex: none; }
 .ide-prompt__sym { color: var(--slc-accent-text); }
 .ide-caret { width: 8px; height: 16px; background: var(--slc-text); }
 
-.ide-agent { width: 344px; flex: none; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.ide-agent { width: 352px; flex: none; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
 .ide-agent__head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--slc-edge-surface); }
 .ide-agent__eb { margin: 0 0 0.2rem; font-size: 10.5px; }
 .ide-agent__title { margin: 0; font-family: var(--sl-font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.015em; }
@@ -181,18 +191,18 @@ svg { flex: none; }
 .ide-composer__bar { display: flex; align-items: center; gap: 0.4rem; }
 .ide-composer__sp { flex: 1; }
 
-/* the status bar is the kit's (.sl-statusbar, 0.33): only the facts' own marks are the stage's */
+/* the status bar is the kit's (.sl-statusbar, 0.34): only the facts' own marks are the stage's, and the live agents' pill, which spexr draws as its own (.spexr-status--live) */
 .ide-status__item b { font-weight: 500; }
+.ide-status__agents { color: var(--slc-text); background-color: var(--slc-surface); box-shadow: 0 0 0 1px var(--slc-border); margin-inline-start: 0.25rem; }
 .ide-status__diag > span { display: inline-flex; align-items: center; gap: 0.25rem; vertical-align: middle; } .ide-status__diag > span + span { margin-inline-start: 0.6rem; }
 .ide-warn { color: var(--slc-warning-text, var(--slc-warning)); }
 
 /* overlays */
 /* quick-open style: anchored under the title bar, no scrim, so the IDE stays readable behind it */
-.ide-scrim { position: absolute; left: 312px; right: 344px; top: 110px; height: 0; display: grid; justify-items: center; align-items: start; }
-/* the palette is the kit's (.sl-palette, 0.33): the float, the seam, the sunken input, the tile rows */
-.ide-pal { width: 560px; }
+.ide-scrim { position: absolute; left: 316px; right: 358px; top: 118px; height: 0; display: grid; justify-items: center; align-items: start; }
+/* the palette is the kit's (.sl-palette, 0.34): Lumen's 580px, the cast, the seam, the borderless field, the 38px tile rows */
 .ide-pal__in > svg { color: var(--slc-text-muted); }
-.ide-pal__scope { font-family: var(--sl-font-sans); font-size: 12px; font-weight: 500; padding: 0.2rem 0.45rem; border-radius: 4px; background: color-mix(in srgb, var(--slc-text) 8%, transparent); color: var(--slc-text-secondary); }
+.ide-pal__scope { font-family: var(--sl-font-sans); font-size: 12px; font-weight: 500; padding: 0.2rem 0.45rem; border-radius: var(--sl-radius-sm); background: color-mix(in srgb, var(--slc-text) 8%, transparent); color: var(--slc-text-secondary); }
 .ide-diffcard { margin: 0; border: 1px solid var(--slc-edge-surface); border-radius: var(--sl-radius-md); overflow: hidden; font-family: var(--lab-code); font-size: 11.5px; }
 .ide-diffcard figcaption { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.6rem; background: color-mix(in srgb, var(--slc-text) 4%, transparent); color: var(--slc-text-secondary); }
 .ide-diffcard figcaption span:first-child { display: inline-flex; gap: 0.35rem; align-items: center; }
@@ -203,12 +213,11 @@ svg { flex: none; }
 .ide-pal__foot > span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .ide-pal__sp { flex: 1; }
 
-/* the toast is the kit's (.sl-toast in .sl-toast-stack, 0.33), placed in the frame instead of the viewport;
+/* the toast is the kit's (.sl-toast in .sl-toast-stack, 0.34, with its .sl-toast__timer), placed in the frame instead of the viewport;
    a second toast waits behind it, and its timer runs along the flat of its bottom edge */
-.ide-toasts { position: absolute; right: 360px; bottom: 44px; width: 360px; }
+.ide-toasts { position: absolute; right: 372px; bottom: 48px; width: 360px; }
 .ide-toast--back { position: absolute; inset: 0; transform: translateY(-10px) scale(0.95); opacity: 0.6; z-index: -1; }
 .ide-toast--back::before { content: none; }
-.ide-toast__timer { position: absolute; inset-inline: var(--sl-radius-lg); bottom: -1px; height: 2px; border-radius: 0; }
 
 /* ── settings ──────────────────────────────────────────────────────────── */
 .set-nav { width: 240px; flex: none; padding: 0.75rem 0.5rem; }

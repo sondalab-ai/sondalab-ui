@@ -52,24 +52,28 @@
   const K = (...keys) => `<span class="ide-keys">${keys.map((k) => `<kbd class="sl-kbd">${k}</kbd>`).join("")}</span>`;
 
   /* ── shared chrome ──────────────────────────────────────────────────────── */
+  // the kit's title bar (workbench.css, 0.34): the mark with its dot, the
+  // crumb, the command field with its keys, the cluster; the .ide-* hooks
+  // stay beside it for the Lumen target
+  const crumbOf = (parts) => parts.join(' <span class="sl-titlebar__sep" aria-hidden="true">/</span> ');
   const titlebar = (crumb, center = true) => `
-    <header class="ide-title">
-      <div class="ide-title__l">
+    <header class="ide-title sl-titlebar">
+      <div class="ide-title__l sl-titlebar__l">
         <span class="ide-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="ide-mark" data-mark="spexr">spexr</span>
-        <span class="ide-title__crumb">${crumb}</span>
+        <span class="ide-mark sl-titlebar__mark" data-mark="spexr">spexr<span class="sl-titlebar__dot" aria-hidden="true"></span></span>
+        <span class="ide-title__crumb sl-titlebar__crumb">${crumbOf(crumb)}</span>
       </div>
-      ${center ? `<button class="ide-cmd" type="button" aria-label="Search or run a command">${I.search}<span>Search files, run a command</span>${K("⌘", "K")}</button>` : "<span></span>"}
-      <div class="ide-title__r">
+      ${center ? `<button class="ide-cmd sl-titlebar__cmd" type="button" aria-label="Search or run a command" aria-keyshortcuts="Meta+K">${I.search}<span class="sl-titlebar__cmd-text">Search files, run a command</span><span class="ide-keys sl-titlebar__keys" aria-hidden="true"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd></span></button>` : "<span></span>"}
+      <div class="ide-title__r sl-titlebar__r">
         <span class="sl-badge sl-badge--info sl-badge--live ide-live">2 agents running</span>
-        <button class="sl-icon-btn" aria-label="Toggle split">${I.split}</button>
-        <button class="sl-icon-btn" aria-label="Notifications" data-count="3">${I.bell}</button>
+        <button class="sl-icon-btn sl-titlebar__btn" aria-label="Toggle split">${I.split}</button>
+        <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__btn--dot" aria-label="Notifications, 3 unread" data-count="3">${I.bell}</button>
         <span class="sl-avatar sl-avatar--sm ide-avatar" aria-label="Marcello"><span>MB</span></span>
       </div>
     </header>`;
   const activity = (on = "files") => `
     <nav class="ide-activity sl-activitybar" aria-label="Views">
-      ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control", I.git, "3"], ["agent", "Agents", I.agent, "2"], ["beaker", "Tests", I.beaker]]
+      ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control, 3 changes", I.git, "3"], ["agent", "Agents, 2 running", I.agent, "2"], ["beaker", "Tests", I.beaker]]
         .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
       <span class="ide-activity__spacer"></span>
       <button class="ide-activity__btn sl-activitybar__item" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
@@ -236,13 +240,13 @@
         <div class="ide-toast__text sl-toast__content"><p class="ide-toast__title sl-toast__title">Probe saved</p><p class="ide-toast__body sl-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
         <button class="sl-btn sl-btn--sm ide-toast__undo lab-focus" data-key="⌘Z">Undo</button>
         <button class="sl-icon-btn sl-toast__dismiss ide-toast__x" aria-label="Dismiss">${I.close}</button>
-        <div class="sl-progress ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
+        <div class="sl-progress sl-toast__timer ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
       </div></div>
       <div class="sl-toast-stack__live" role="alert"></div>
     </div>`;
   const ide = () => `
     <div class="app ide" data-fig="fig. 01 — the workbench">
-      ${titlebar("probe-engine <span>/</span> src <span>/</span> probe")}
+      ${titlebar(["probe-engine", "src", "probe"])}
       <div class="app__body">
         ${activity("files")}
         <aside class="ide-side pane sl-pane" aria-label="Explorer">
@@ -279,7 +283,7 @@
   /* ── Settings ───────────────────────────────────────────────────────────── */
   const settings = () => `
     <div class="app settings" data-fig="fig. 02 — settings">
-      ${titlebar("Settings <span>/</span> Workspace", false)}
+      ${titlebar(["Settings", "Workspace"], false)}
       <div class="app__body">
         ${activity("gear")}
         <aside class="set-nav pane sl-pane" aria-label="Settings sections">
@@ -359,7 +363,7 @@
   ];
   const data = () => `
     <div class="app data" data-fig="fig. 03 — probes">
-      ${titlebar("probe-engine <span>/</span> Probes")}
+      ${titlebar(["probe-engine", "Probes"])}
       <div class="app__body">
         ${activity("beaker")}
         <main class="dat-main pane pane--focus sl-pane" data-lit aria-label="Probes">
