@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { declarations, evaluate, fromHex, fromOklch, maxChroma, toHex, toOklch } from "./lib/css-color.mjs";
+import { parseSheet, el, customs } from "./lib/cascade.mjs";
 import { loadTokens, loadRegistry } from "./lib/tokens.mjs";
 import {
   buildNeutrals, validateNeutrals, productPairs, neutralsJson, productsCss, accentFor, mergeAuthored, splitRoles,
@@ -337,8 +338,9 @@ test("products.css sets each registered fill on its product's theme blocks, and 
     const body = css.slice(at + sel.length, css.indexOf("}", at));
     assert.equal(body.match(/--slc-accent-fill:\s*([^;]+);/)?.[1], fillFor(registry, id)?.[theme], `${id} ${theme}`);
   }
-  assert.equal((css.match(/--slc-accent-fill:/g) ?? []).length, 2, "spexr light and dark only");
-  assert.match(css, /--slc-accent-fill: #4c58e9;/);
+  const registered = Object.keys(registry.products).flatMap((id) => Object.keys(fillFor(registry, id) ?? {}));
+  assert.ok(registered.length > 0, "the registry has a fill to emit");
+  assert.equal((css.match(/--slc-accent-fill:/g) ?? []).length, registered.length, "one declaration per registered fill");
   assert.doesNotMatch(css, /high-contrast/);
 });
 
@@ -351,7 +353,43 @@ test("neutrals.json exports the registered fill beside the accent, and no fill k
   assert.deepEqual(shipped.products.spexr.fill, registry.products.spexr.fill);
 });
 
-test("a dark-fill change is one registry line: the regenerated dark block carries it and its label turns to the dark pole", () => {
+/** A primary on a product page (html[data-sl-product][data-sl-theme] > body >
+ *  button) through the kit's own sheets, with `products` as products.css:
+ *  its fill set as the control derives it (components.css) and the root's
+ *  public roles, as evaluated colours. */
+function fillSet(products, id, theme) {
+  const rules = [];
+  let order = 0;
+  for (const css of [read("tokens.css"), read("themes/light.css"), read("themes/dark.css"), read("themes/high-contrast.css"), products, read("components.css")]) {
+    const r = parseSheet(css, {}, order);
+    order += r.length + 1;
+    rules.push(...r);
+  }
+  const html = el({ tag: "html", attrs: { "data-sl-theme": theme, "data-sl-product": id } });
+  const p = customs(rules, el({ tag: "button", classes: ["sl-btn", "sl-btn--primary"], parent: el({ tag: "body", parent: html }) }));
+  const r = customs(rules, html);
+  const v = (n, env) => evaluate(`var(${n})`, env);
+  return {
+    control: { fill: v("--_sl-fill", p), label: v("--_sl-on-fill", p), hover: v("--_sl-fill-hover", p), press: v("--_sl-fill-active", p) },
+    root: { fill: v("--slc-accent-fill", r), label: v("--slc-on-accent-fill", r), hover: v("--slc-accent-fill-hover", r), press: v("--slc-accent-fill-active", r) },
+  };
+}
+/** Every reading of the label under 4.5:1 on its fill, hovered and pressed. */
+const labelMisses = (set, where) => Object.entries(set).flatMap(([scope, s]) => ["fill", "hover", "press"]
+  .map((k) => [k, ratioY(Yc(s.label), Yc(s[k]))]).filter(([, r]) => r < 4.5).map(([k, r]) => `${where} ${scope} ${k} ${r.toFixed(2)}`));
+
+test("every registered fill reaches the primary and the root's roles from products.css, and its label reads at rest, hovered and pressed (4.5:1)", () => {
+  const css = read("themes/products.css");
+  const bad = [];
+  for (const id of Object.keys(registry.products)) for (const [theme, want] of Object.entries(fillFor(registry, id) ?? {})) {
+    const set = fillSet(css, id, theme);
+    for (const scope of ["control", "root"]) assert.equal(toHex(set[scope].fill), want.toLowerCase(), `${id} ${theme} ${scope}`);
+    bad.push(...labelMisses(set, `${id} ${theme}`));
+  }
+  assert.deepEqual(bad, []);
+});
+
+test("a dark-fill change is one registry line: the regenerated products.css carries it and the kit's own chain labels it at 4.5:1", () => {
   const reg = structuredClone(registry);
   reg.products.spexr.fill.dark = "#8b96ff";
   const b = buildNeutrals(tokens, reg);
@@ -359,14 +397,14 @@ test("a dark-fill change is one registry line: the regenerated dark block carrie
   const css = productsCss(b);
   const block = (theme) => css.slice(css.indexOf(`[data-sl-product="spexr"][data-sl-theme="${theme}"]`)).split("}")[0];
   assert.match(block("dark"), /--slc-accent-fill: #8b96ff;/);
-  assert.match(block("light"), /--slc-accent-fill: #4c58e9;/);
-  assert.deepEqual(JSON.parse(neutralsJson(b)).products.spexr.fill, { light: "#4c58e9", dark: "#8b96ff" });
-  // the kit derives the label from the fill: white on #4c58e9, the dark pole on #8b96ff
-  const env = new Map();
-  for (const m of read("tokens.css").replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
-  const label = (fill) => toOklch(evaluate(`oklch(from ${fill} var(--_sl-on))`, env))[0];
-  assert.ok(Math.abs(label("#8b96ff") - 0.16) < 1e-6, `${label("#8b96ff")}`);
-  assert.ok(Math.abs(label("#4c58e9") - 1) < 1e-6, `${label("#4c58e9")}`);
+  assert.match(block("light"), new RegExp(`--slc-accent-fill: ${registry.products.spexr.fill.light};`));
+  assert.deepEqual(JSON.parse(neutralsJson(b)).products.spexr.fill, { light: registry.products.spexr.fill.light, dark: "#8b96ff" });
+  // through components.css: the control's fill set and the root's roles
+  const dark = fillSet(css, "spexr", "dark");
+  for (const scope of ["control", "root"]) assert.equal(toHex(dark[scope].fill), "#8b96ff", scope);
+  assert.ok(toOklch(dark.control.label)[0] < 0.5, "a light fill takes the dark pole");
+  assert.deepEqual(labelMisses(dark, "spexr dark"), []);
+  assert.deepEqual(labelMisses(fillSet(css, "spexr", "light"), "spexr light"), []);
 });
 
 test("guard: a registered fill that is not a 6-digit hex fails the build", () => {

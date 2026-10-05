@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromHex } from "./lib/css-color.mjs";
+import { declarations, evaluate, toHex } from "./lib/css-color.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(HERE, p), "utf8");
@@ -102,7 +102,8 @@ for (const theme of ["light", "dark"]) {
     assert.equal(emittedFill(theme), registeredFill[theme]);
     const env = kitEnv(theme, emittedFill(theme));
     const label = evaluate("var(--slc-on-accent-fill)", env);
-    assert.equal(contrast(label, fromHex("#ffffff")), 1, `${theme}: the label is white`);
+    // the kit's pole for the fill, derived: a fill change is one registry line
+    assert.equal(toHex(label), toHex(evaluate(`oklch(from ${emittedFill(theme)} var(--_sl-on))`, env)), `${theme}: the label is the fill's pole`);
     for (const p of ["--slc-accent-fill", "--slc-accent-fill-hover", "--slc-accent-fill-active"]) {
       const r = contrast(label, evaluate(`var(${p})`, env));
       assert.ok(r >= 4.5, `${theme} ${p} ${r.toFixed(2)}:1`);

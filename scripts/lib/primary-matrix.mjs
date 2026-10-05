@@ -9,10 +9,10 @@
 
    Wirings
      tier A        the product overrides --sl-accent-default on its theme
-                   (README, "Per-product accent"), its registered steps if it
-                   has any, and its registered fill as --slc-accent-fill on
-                   the root (README, "An accent that cannot carry its label"),
-                   with its own neutrals through data-sl-product.
+                   (README, "Per-product accent") and its registered steps if
+                   it has any; its neutrals and, since 0.35, its registered
+                   fill (--slc-accent-fill) come from themes/products.css
+                   through data-sl-product, with no rule of its own.
      site subtree  sondalab-site's product page: the default page, and a
                    section that re-binds the accent and sets the fill
                    (registered fill, else the accent) as --slc-accent-fill
@@ -132,8 +132,7 @@ export const WIRINGS = {
     const css = THEMES.map((t) => {
       const steps = p.steps?.[t] ? Object.entries(p.steps[t]).map(([k, v]) => ` --sl-accent-${k}: ${v};`).join("") : "";
       const ring = t === "dark" ? ` --sl-focus-ring: ${p.dark};` : "";
-      const fill = p.fill?.[t] ? `\n:root[data-sl-theme="${t}"] { --slc-accent-fill: ${p.fill[t]}; }` : "";
-      return `[data-sl-theme="${t}"] { --sl-accent-default: ${p[t]};${ring}${steps} }${fill}`;
+      return `[data-sl-theme="${t}"] { --sl-accent-default: ${p[t]};${ring}${steps} }`;
     }).join("\n");
     return { css, root: { "data-sl-product": id }, section: null };
   },

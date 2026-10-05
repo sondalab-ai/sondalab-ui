@@ -137,6 +137,12 @@ function under(theme, sectionAttrs = {}) {
   return el({ tag: "section", parent: body, attrs: sectionAttrs });
 }
 const hex = (v, env) => toHex(evaluate(v, env));
+/** WCAG 2 contrast of two evaluated colours. */
+const contrast = (a, b) => {
+  const Y = (c) => 0.2126 * c.lin[0] + 0.7152 * c.lin[1] + 0.0722 * c.lin[2];
+  const [hi, lo] = [Y(a), Y(b)].sort((p, q) => q - p);
+  return (hi + 0.05) / (lo + 0.05);
+};
 /** A checked check box, radio box and switch track under `parent`. */
 function checked(parent) {
   const box = (input, cls) => el({ tag: "span", classes: [cls], parent, prev: el({ tag: "input", classes: [input], states: ["checked"], parent }) });
@@ -245,11 +251,19 @@ for (const theme of ["light", "dark"]) {
     const fill = REGISTRY.spexr.fill[theme];
     const p = customs(rules, el({ tag: "button", classes: FILL_HOST, parent: host }));
     assert.equal(hex("var(--_sl-fill)", p), fill);
-    assert.equal(hex("var(--_sl-on-fill)", p), "#ffffff");
+    // the label is the kit's pole for that fill, derived, not pinned: a fill
+    // change is one registry line
+    const label = hex(`oklch(from ${fill} var(--_sl-on))`, p);
+    assert.equal(hex("var(--_sl-on-fill)", p), label);
+    for (const v of ["--_sl-fill", "--_sl-fill-hover", "--_sl-fill-active"]) {
+      const r = contrast(evaluate(`var(${v})`, p), evaluate(label, p));
+      assert.ok(r >= 4.5, `${v} ${r.toFixed(2)}:1`);
+    }
     // the public roles compute on :root, where the product attribute sits
     const root = customs(rules, html);
-    assert.equal(hex("var(--slc-on-accent-fill)", root), "#ffffff");
+    assert.equal(hex("var(--slc-on-accent-fill)", root), label);
     assert.equal(hex("var(--slc-accent-fill-hover)", root), hex("var(--_sl-fill-hover)", p));
+    assert.equal(hex("var(--slc-accent-fill-active)", root), hex("var(--_sl-fill-active)", p));
     for (const box of Object.values(checked(host))) assert.equal(hex("var(--_sl-fill)", customs(rules, box)), fill);
   });
 

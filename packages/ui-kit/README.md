@@ -60,8 +60,17 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
   - The one interactive line drawn in `--slc-border-subtle` is a resizer at rest: 1.11–1.18:1, was 1.13–1.20. It has never been a 3:1 boundary. Hovered, pressed or focused it turns to the accent text.
 - **The registered fill is generated.** `themes/products.css` now sets `--slc-accent-fill` from the registry's `fill` on each product's light and dark blocks; today that is spexr, `#4c58e9` on both themes. `neutrals.json` exports it as `products.<id>.fill.<light|dark>`, and a product with no fill has no `fill` key.
   - **Migration (spexr):** delete `--slc-accent-fill: #4c58e9` from `spexr-overrides.css`. The fill arrives with `data-sl-product="spexr"` on the theme element and `products.css` loaded, which spexr already has.
-  - A change to a fill is now one registry line, a regeneration and a dual bump (`AGENTS.md`).
-  - High contrast is unchanged: `products.css` has no high-contrast block, and `components.css` still resets the fill there.
+    - spexr's `theia-chrome-css.test.ts` ("Theia's labelled fills") asserts that literal in `spexr-overrides.css`. Update that test in the same change, to read the fill from `neutrals.json` or the registry.
+    - Until the literal goes, it wins. `:root:not([data-sl-theme="high-contrast"])` weighs (0,2,0), the same as the `products.css` block, and `spexr-overrides.css` loads after `products.css`, so a fill changed in the registry does not reach spexr.
+  - **A fill a product sets itself.** A rule of your own that weighs less than (0,2,0) now loses to `products.css` wherever your product registers a fill. That includes a plain `:root { --slc-accent-fill: … }` at (0,1,0), and it loses silently. Delete it and register the fill, or give your rule the weight it needs. A fill set on a subtree, below the theme element, still wins there, because it is nearer.
+  - **What a fill change takes:**
+    - edit the registry's `fill`;
+    - run `npm run gen:tokens` and commit the regenerated `products.css` and `neutrals.json`;
+    - dual-bump (`AGENTS.md`).
+  - No kit test pins the value. The tests derive the label, hover and press from the registry and hold them to 4.5:1. With spexr's dark fill set to `#8b96ff`, the whole suite passes unchanged, and its label turns to the dark pole.
+  - The prose that quotes the value is a separate edit: the registry's `$fill-note`, the accent table in `docs/design-language.md`, and this README.
+  - spexr receives the change at its next kit upgrade, once its own literal is gone.
+  - High contrast is unchanged: `products.css` has no high-contrast block, and `components.css` resets the fill on the high-contrast root and on the filled controls under it.
 - `components.css`'s fallback literals, used by a bare import with no theme, follow the default product's new light ink and borders.
 - **Migration (Tier B):** a Tier A host (`data-sl-theme`, the theme files and `products.css`) needs no action. A Tier B layer that copied the old values gets `sl-audit` R findings on them: they no longer ship anywhere. Re-copy `text-primary`, the borders, the overlay and the `code-*` roles from `neutrals.json` → `products.<id>.<light|dark>`. For example, introspect's `web/src/theme.css` copies the ten old code hues.
 
