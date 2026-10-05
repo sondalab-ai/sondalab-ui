@@ -288,3 +288,29 @@ test("spexr's bell dot is its registered fill, the demo's #4c58e9", () => {
     assert.equal(toHex(value(ctx.rules, p.bell, "var(--_sl-titlebar-dot)", BLACK)), REGISTRY.spexr.fill[t].toLowerCase());
   }
 });
+
+// A section painted in another product's accent (a product page) re-binds
+// --slc-accent on a subtree. Every dot in the frame follows it: the mark's
+// dot reads the accent itself, the bell's reads the accent as a mark, which
+// is derived again on the title bar (THE ACCENT, WHERE IT IS READ), and the
+// activity bar's count badge reads the accent (or the product's fill).
+test("a section's accent reaches the title bar's dots and the activity bar's badge", () => {
+  for (const ctx of [dark, CONTEXTS.find((c) => c.name === "light default")]) {
+    const rules = [...ctx.rules, ...parse(["[data-section] { --slc-accent: #1d63d8; }"])];
+    const html = el({ tag: "html", attrs: ctx.attrs });
+    const section = el({ tag: "section", attrs: { "data-section": "" }, parent: el({ tag: "body", parent: html }) });
+    const bar = el({ tag: "header", classes: ["sl-titlebar"], parent: section });
+    const mark = el({ tag: "span", classes: ["sl-titlebar__mark"], parent: el({ classes: ["sl-titlebar__l"], parent: bar }) });
+    const dot = el({ tag: "span", classes: ["sl-titlebar__dot"], parent: mark });
+    const bell = el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn", "sl-titlebar__btn--dot"], parent: el({ classes: ["sl-titlebar__r"], parent: bar }) });
+    const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], parent: el({ tag: "button", classes: ["sl-activitybar__item"], parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: section }) }) });
+    const lmax = rawCustoms(rules, bell).get("--_sl-accent-text-lmax") ?? "1";
+    const asText = toHex(evaluate(`oklch(from #1d63d8 min(l, ${lmax}) c h)`, new Map()));
+    const root = toHex(value(rules, html, "var(--slc-accent-text)", BLACK));
+    assert.equal(toHex(value(rules, dot, cascaded(rules, dot).get("background-color").value, BLACK)), "#1d63d8", `${ctx.name}: the mark's dot`);
+    const bellDot = toHex(value(rules, bell, "var(--_sl-titlebar-dot)", BLACK));
+    assert.equal(bellDot, asText, `${ctx.name}: the bell's dot, the section's accent as a mark`);
+    assert.notEqual(bellDot, root, `${ctx.name}: not the root's`);
+    assert.equal(toHex(value(rules, badge, cascaded(rules, badge).get("background-color").value, BLACK)), "#1d63d8", `${ctx.name}: the badge`);
+  }
+});

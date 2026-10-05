@@ -2529,7 +2529,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    a tile or the workbench's marks, which kept the root's hue. So the two
    are derived again, from the accent in effect there and at zero weight, on
    the hosts listed here: a link, the navigation and selection components
-   that carry a seam, and the workbench. The inversion band re-derives them
+   that carry a seam, and the workbench (the title bar too since 0.34,
+   whose bell dot reads the accent as a mark). The inversion band re-derives them
    for its ground (.sl-invert > *, below the band); a host deeper in a band
    declares its own, so the band's formula is repeated for it here, later
    and at the same zero weight, as the high-contrast remap is repeated on the
@@ -2540,14 +2541,14 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 :where(.sl-link, .sl-nav, .sl-nav__item, .sl-tabs__list, .sl-tabs__tab, .sl-tabs__item,
   .sl-list, .sl-list__row, .sl-segmented, .sl-segmented__item, .sl-pagination, .sl-pagination__item,
   .sl-pane, .sl-statusbar, .sl-activitybar, .sl-activitybar__item, .sl-tree, .sl-tree__row,
-  .sl-palette, .sl-palette__row, .sl-term-block) {
+  .sl-palette, .sl-palette__row, .sl-term-block, .sl-titlebar) {
   --slc-accent-text: oklch(from var(--slc-accent) min(l, var(--_sl-accent-text-lmax, 1)) c h);
   --slc-seam: var(--slc-accent-text);
 }
 :where(.sl-invert) :where(.sl-link, .sl-nav, .sl-nav__item, .sl-tabs__list, .sl-tabs__tab, .sl-tabs__item,
   .sl-list, .sl-list__row, .sl-segmented, .sl-segmented__item, .sl-pagination, .sl-pagination__item,
   .sl-pane, .sl-statusbar, .sl-activitybar, .sl-activitybar__item, .sl-tree, .sl-tree__row,
-  .sl-palette, .sl-palette__row, .sl-term-block) {
+  .sl-palette, .sl-palette__row, .sl-term-block, .sl-titlebar) {
   --slc-accent-text: oklch(from var(--slc-accent) min(max(l, 0.68), var(--sl-accent-band-text-lmax, 1)) c h);
   --slc-seam: oklch(from var(--slc-accent) min(max(l, 0.72), var(--sl-accent-band-text-lmax, 1)) c h);
 }
