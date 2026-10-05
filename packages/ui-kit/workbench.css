@@ -529,7 +529,7 @@
    where the browser can blur it (opaque where it cannot, in high contrast
    and under forced colours), a line of the accent just inside its top edge
    -- from 16px in, gone 40% before the end, glowing (it holds the focus) --
-   a 54px head over a hairline, its input borderless in the head at 16px, and
+   a 54px head over a hairline, its input at 16px with no fill or well, and
    a list of 38px results in which the active one is a raised tile with the
    kit's seam, in the accent, since the palette always holds the focus. Its
    foot sits on the surface rung at 70% over a hairline. It never animates:
@@ -606,13 +606,14 @@
   border-bottom: 1px solid var(--slc-border-subtle);
 }
 .sl-palette__head > svg { flex: none; color: var(--slc-text-muted); }
-/* The kit's field, borderless in the head: the palette is its ground, so
-   it has no fill, no edge (at rest or under the pointer) and no well; the
-   focus still draws the kit's flush ring, its border joining it. 16px on a
-   20px line, 6px above and below: 34px. The field's own colour transitions
-   would fade its ring in as the palette appears: the palette never
-   animates, its field included. Two classes, so it outranks the field
-   whatever order the sheets load in. */
+/* The kit's field in the head: the palette is its ground, so it has no
+   fill and no well, and it keeps the one control edge (Lumen's is
+   borderless; a field's boundary is what finds it, >= 3:1). In use the
+   palette always holds the focus, so the field shows the kit's flush ring
+   and its border joins it. 16px on a 20px line, 6px above and below: 34px.
+   The field's own colour transitions would fade its ring in as the palette
+   appears: the palette never animates, its field included. Two classes, so
+   it outranks the field whatever order the sheets load in. */
 .sl-field__input.sl-palette__input {
   --_sl-depth: 0 0 transparent;
   flex: 1;
@@ -621,11 +622,8 @@
   font-size: 1rem;
   letter-spacing: -0.01em;
   background-color: transparent;
-  border-color: transparent;
   transition: none;
 }
-.sl-field__input.sl-palette__input:hover:not(:disabled, :focus) { border-color: transparent; }
-.sl-field__input.sl-palette__input:focus { border-color: var(--slc-focus); }
 .sl-palette__list {
   display: flex;
   flex-direction: column;

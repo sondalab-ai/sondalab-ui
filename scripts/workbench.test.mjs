@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { evaluate, fromSrgb, substitute, toHex, toSrgb } from "./lib/css-color.mjs";
+import { evaluate, fromSrgb, gamutExcess, substitute, toHex, toSrgb } from "./lib/css-color.mjs";
 import { parseSheet, el, cascaded, customs as rawCustoms, declaredHeight, box, px } from "./lib/cascade.mjs";
 
 // The workbench (ui-kit 0.33, Lumen): the lit pane, the status bar, the
@@ -466,7 +466,7 @@ test("the lit roles are the rendered recipes, on every theme, at --slc-glow's st
       // 0.72, so a light seam (amber, mint on ink) cannot lift the ground
       // under a muted label in the strip below 4.5:1 (spexr's indigo, L 0.71,
       // is the demo's own and passes through untouched)
-      const seam = toHex(value(RULES_A, lit, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) c h)" : "var(--slc-seam)", BLACK));
+      const seam = toHex(value(RULES_A, lit, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h)" : "var(--slc-seam)", BLACK));
       assert.equal(toHex({ ...cols.find((c) => c.alpha === top), alpha: 1 }), seam, `${ctx.name} ${role}: the seam's hue`);
     }
   }
@@ -477,7 +477,7 @@ test("the lit roles are the rendered recipes, on every theme, at --slc-glow's st
   }
   // the wash is radial, peaking toward the seam's leading end, gone by 78%
   const env = customs(RULES_A, build(dark).lit);
-  assert.match(substitute("var(--slc-lit-wash)", env), /^radial-gradient\(80% 100% at 30% 0%, color-mix\(in srgb, oklch\(from .+ min\(l, 0\.72\) c h\) .+\), transparent 78%\)$/);
+  assert.match(substitute("var(--slc-lit-wash)", env), /^radial-gradient\(80% 100% at 30% 0%, color-mix\(in srgb, oklch\(from .+ min\(l, 0\.72\) calc\(c \* min\(1, 0\.72 \/ l\)\) h\) .+\), transparent 78%\)$/);
   assert.match(substitute("var(--slc-lit-tint)", env), /^linear-gradient\(color-mix\(.+\), transparent\)$/);
 });
 
@@ -513,7 +513,7 @@ test("the lit roles are nothing in high contrast and under forced colours, and t
   for (const ctx of CONTEXTS.filter((c) => c.band && !c.name.startsWith("high"))) {
     const at = mount(ctx);
     for (const role of Object.keys(LIT)) {
-      const want = toHex(value(ctx.rules, at, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) c h)" : "var(--slc-seam)", BLACK));
+      const want = toHex(value(ctx.rules, at, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h)" : "var(--slc-seam)", BLACK));
       const cols = litColours(ctx.rules, at, role).filter((c) => c.alpha > 0);
       assert.ok(cols.length, `${ctx.name} ${role}`);
       assert.equal(toHex({ ...cols[0], alpha: 1 }), want, `${ctx.name} ${role}: the band's seam`);
@@ -527,6 +527,27 @@ test("the lit pane's seam starts where its corner ends", () => {
   const seam = cascaded(RULES_A, el({ pseudo: "before", parent: lit }));
   assert.equal(seam.get("inset-inline").value, "var(--sl-radius-pane, 10px)");
   assert.equal(px(seam.get("inset-inline").value, env), 10, "Lumen's 10px, the pane's own radius");
+});
+
+// Chrome clips an out-of-gamut colour per channel, the test reader does not:
+// the capped wash keeps the seam's chroma at a lower lightness, so every
+// product's capped stop must lie in sRGB for the contrast below to be the
+// one Chrome paints.
+// The cap lowers the lightness and the chroma with it, toward black, as the
+// kit's own steps do: a seam inside sRGB stays inside it (a light seam's own
+// excess, the accent text a theme caps on paper or the band's floor lifts,
+// is the seam's, documented with it, and the cap adds none).
+test("the wash's capped colour adds no gamut excess to the seam's, and is in sRGB on ink", () => {
+  const out = [];
+  for (const ctx of CONTEXTS.filter((c) => c !== hc && !c.name.startsWith("high"))) {
+    const at = mount(ctx);
+    const e = ctx.band ? at : build(ctx).lit;
+    const capped = gamutExcess(value(ctx.rules, e, "oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h)", BLACK));
+    const seam = gamutExcess(value(ctx.rules, e, "var(--slc-seam)", BLACK));
+    if (capped > seam + 1e-4) out.push(`${ctx.name}: ${capped.toFixed(4)} over the seam's ${seam.toFixed(4)}`);
+    if (ctx.name.startsWith("dark") && !ctx.band && capped > 1e-4) out.push(`${ctx.name}: ${capped.toFixed(4)} out of sRGB on ink`);
+  }
+  assert.deepEqual(out, []);
 });
 
 // Text on the lit chrome: a tab strip under the wash, a breadcrumbs row under
@@ -1075,7 +1096,7 @@ test("the palette floats on Lumen's cast, keeps no border, and never animates", 
   assert.equal(cascaded(reversed, p["palette input"]).get("transition").value, "none", "workbench.css loaded first");
 });
 
-test("the palette is Lumen's: 580 wide, a 54px head, a 16px borderless input, 38px rows, a foot on the surface", () => {
+test("the palette is Lumen's: 580 wide, a 54px head, a 16px input with no fill or well, 38px rows, a foot on the surface", () => {
   const p = build(dark);
   const env = customs(RULES_A, p.palette);
   const pal = cascaded(RULES_A, p.palette);
@@ -1090,11 +1111,14 @@ test("the palette is Lumen's: 580 wide, a 54px head, a 16px borderless input, 38
   assert.equal(px(input.get("font-size").value, env), 16);
   assert.equal(input.get("letter-spacing").value, "-0.01em");
   assert.deepEqual(words(input.get("padding").value).map((w) => px(w, env)), [6, 8]);
-  assert.equal(input.get("background-color").value, "transparent", "borderless: the palette is its ground");
-  assert.equal(input.get("border-color").value, "transparent");
+  assert.equal(input.get("background-color").value, "transparent", "no fill: the palette is its ground");
   assert.equal(customs(RULES_A, p["palette input"]).get("--_sl-depth"), "0 0 transparent", "no well");
+  // the one control edge stays (Lumen draws none): a field is found by its
+  // boundary, >= 3:1, which the screens report checks
+  assert.equal(input.get("border").value, "1px solid var(--slc-edge-control)");
+  assert.equal(input.get("border-color"), undefined, "nothing hides it at rest");
   const hovered = el({ tag: "input", classes: ["sl-field__input", "sl-palette__input"], states: ["hover"], parent: p["palette head"] });
-  assert.equal(cascaded(RULES_A, hovered).get("border-color").value, "transparent", "no edge under the pointer either");
+  assert.equal(cascaded(RULES_A, hovered).get("border-color").value, "var(--slc-edge-control-hover)", "the kit's hover step");
   const focused = el({ tag: "input", classes: ["sl-field__input", "sl-palette__input"], states: ["focus", "focus-visible"], parent: p["palette head"] });
   assert.equal(cascaded(RULES_A, focused).get("border-color").value, "var(--slc-focus)", "focused, the kit's flush ring and its border");
   const list = cascaded(RULES_A, p["palette row"].parent.parent);
