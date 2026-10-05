@@ -459,6 +459,7 @@
         "sl-check__label"
       ],
       "roleVars": [
+        "--slc-canvas",
         "--slc-sunken",
         "--slc-edge-control",
         "--slc-accent",
