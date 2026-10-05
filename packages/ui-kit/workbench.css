@@ -9,10 +9,12 @@
    Lumen (owner, 2026-10-02): panes are islands of light on a darker frame
    (the canvas), and the pane that holds the focus is lit. The frame's own
    chrome -- the title bar, the status bar, the activity bar -- sits on the
-   canvas and paints no ground of its own. Since 0.34 the chrome takes the
-   geometry the Lumen IDE screen renders at 1440x900 (owner, 2026-10-05),
-   which steps off the kit's 4px grid and spacing scale (L2): the values
-   below are written as measured. The lit pane's light is three roles in
+   canvas and paints no ground of its own. Since 0.34 the chrome follows the
+   Lumen IDE screen at 1440x900 within a pixel or two, on the kit's 4px grid
+   (owner, 2026-10-05; L2): where the demo sits between two steps, the kit's
+   rules decide (one control height), then the demo's invariants (a 44px
+   activity pitch, 4px round a status item, 10px round the palette's
+   field), then the 0.33 value. The lit pane's light is three roles in
    components.css (with the depth recipes), so this sheet still declares
    no role of its own.
 
@@ -428,7 +430,7 @@ a.sl-statusbar__item { text-decoration: none; }
 }
 
 /* ══ TREE ════════════════════════════════════════════════════════════════════
-   A file tree, as Lumen draws it (0.34): 26px rows at 13px, each indented by
+   A file tree, as Lumen draws it (0.34): 24px rows at 13px, each indented by
    its level, a twisty that turns with aria-expanded, and selection as a
    tile (the K4 recipe) with the kit's
    seam (components.css, THE SEAM). Focused and unfocused selection differ:
@@ -549,8 +551,8 @@ a.sl-statusbar__item { text-decoration: none; }
    where the browser can blur it (opaque where it cannot, where the user
    asks for less transparency, in high contrast and under forced colours), a line of the accent just inside its top edge
    -- from 16px in, gone 40% before the end, glowing (it holds the focus) --
-   a 54px head over a hairline, its input at 16px with no fill or well, and
-   a list of 38px results in which the active one is a raised tile with the
+   a 52px head over a hairline, its field at 16px with no fill or well, and
+   a list of 36px results in which the active one is a raised tile with the
    kit's seam, in the accent, since the palette always holds the focus. Its
    foot sits on the surface rung at 70% over a hairline. It never animates:
    it appears, and the active row moves without a transition, because a

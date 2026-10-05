@@ -1410,9 +1410,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    through where it has no toast. A toast is Lumen's (0.34): r12 on Lumen's
    cast (--slc-depth-cast), whose ring is its only edge, so it keeps no
    border (forced colours, which drop the cast, draw one back). Its tone is
-   a line of light on the top edge -- from 14px in to the middle, fading,
+   a line of light on the top edge -- from 16px in to the middle, fading,
    glowing at 50% wherever --slc-glow is not 0 -- and the wash under its
-   26px mark; the words stay neutral. A timer, where a toast dismisses
+   24px mark; the words stay neutral. A timer, where a toast dismisses
    itself, is a 2px bar of the tone along the bottom (.sl-toast__timer on an
    .sl-progress), the rest of the time its track:
      <div class="sl-progress sl-toast__timer" role="progressbar" aria-label="Time left"
@@ -1594,8 +1594,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   gap: var(--sl-space-2, 0.5rem);
   height: 1.75rem;
   margin: 0;
-  /* Lumen's tab (0.34): 13px, 11.2px in, r7 -- off the kit's radius and
-     spacing scales, as the workbench chrome it lives in is (L2). */
+  /* Lumen's tab (0.34): 13px, 12px in (Lumen's 11.2, on the 4px grid), r7
+     -- off the radius scale, which is not spacing. */
   padding: 0 var(--sl-space-3, 0.75rem);
   font-size: 0.8125rem;
   border: 0;
