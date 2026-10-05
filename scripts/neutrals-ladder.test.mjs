@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { declarations, evaluate, fromHex, fromOklch, maxChroma, toHex, toOklch } from "./lib/css-color.mjs";
 import { loadTokens, loadRegistry } from "./lib/tokens.mjs";
 import {
   buildNeutrals, validateNeutrals, productPairs, neutralsJson, productsCss, accentFor, mergeAuthored, splitRoles,
-  CHROMA_LIMIT, RGB_SPREAD_LIMIT, THEMES, THEME_SLOTS,
+  bakeCode, fillFor, CHROMA_LIMIT, RGB_SPREAD_LIMIT, THEMES, THEME_SLOTS, CODE_SLOTS, GLINT_MIRROR,
 } from "./lib/neutrals.mjs";
 
 // The neutral ladder (0.29, Lumen): one [L, C] per role per theme, tinted with
@@ -211,7 +211,8 @@ test("guard: a role outside sRGB fails the build", () => {
 });
 
 test("guard: paper ink too dark for its glass glint fails the build", () => {
-  const errors = withLadder((n) => { n.ladder.light["text-primary"] = [0.2, 0.01]; });
+  // 0.17 mirrors to L 1.0, where no chroma is left; 0.20 (0.35) mirrors to 0.97.
+  const errors = withLadder((n) => { n.ladder.light["text-primary"] = [0.17, 0.01]; });
   assert.ok(errors.some((e) => /light text-primary: its glass glint/.test(e)), errors.join("\n"));
 });
 
@@ -249,4 +250,146 @@ test("guard: a registry cycle or a dangling inherit fails the build", () => {
   assert.throws(() => buildNeutrals(tokens, cyc), /circular/);
   const dangling = { products: { ...registry.products, c: { inherits: "nope" } } };
   assert.throws(() => buildNeutrals(tokens, dangling), /unknown product/);
+});
+
+// ── Lumen parity: colour (0.35) ─────────────────────────────────────────────
+// The light ink moves to the Lumen target's L 0.20, the syntax palette ships
+// in neutrals.json for hex-only consumers (spexr's Monaco theme), and a
+// product's registered fill is generated into products.css and neutrals.json,
+// so a fill change is one registry line and a regeneration.
+
+const REPO = resolve(HERE, "..");
+const LUMEN = resolve(REPO, "lab/directions-2/dir-lumen.css");
+/** The Lumen target's declarations per theme (html[data-dir=lumen][data-sl-theme=t] blocks). */
+const lumenTheme = (theme) => {
+  const css = readFileSync(LUMEN, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const out = new Map();
+  for (const m of css.matchAll(new RegExp(`html\\[data-dir="lumen"\\]\\[data-sl-theme="${theme}"\\]\\s*\\{([^}]*)\\}`, "g"))) {
+    for (const d of m[1].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) out.set(d[1], d[2].trim());
+  }
+  return out;
+};
+
+test("light primary text is the Lumen ink, oklch L 0.20, on every product", () => {
+  assert.deepEqual(tokens.neutrals.ladder.light["text-primary"], [0.2, 0.01]);
+  for (const [id, p] of Object.entries(shipped.products)) {
+    const [L] = toOklch(fromHex(p.light["text-primary"]));
+    assert.ok(Math.abs(L - 0.2) < 0.003, `${id} ${p.light["text-primary"]} is L ${L.toFixed(4)}`);
+  }
+  // spexr #1b1d22 and the default #201c18 until 0.35 (L 0.23)
+  assert.equal(shipped.products.spexr.light["text-primary"], "#14161b");
+  assert.equal(shipped.products.default.light["text-primary"], "#191511");
+});
+
+test("every neutral rung and hairline the Lumen target declares is the ladder's", (t) => {
+  if (!existsSync(LUMEN)) return t.skip("the lab reference is gone");
+  const bad = [];
+  for (const theme of THEMES) {
+    const lumen = lumenTheme(theme);
+    for (const [prop, v] of lumen) {
+      const m = v.match(/^oklch\(from var\(--sl-accent-default\) ([\d.]+) ([\d.]+) h\)$/);
+      if (!m || !prop.startsWith("--sl-")) continue;
+      const role = prop.slice(5);
+      const want = [Number(m[1]), Number(m[2])];
+      if (JSON.stringify(tokens.neutrals.ladder[theme][role]) !== JSON.stringify(want)) bad.push(`${theme} ${role}: ladder ${JSON.stringify(tokens.neutrals.ladder[theme][role])}, Lumen ${JSON.stringify(want)}`);
+    }
+    // --lu-hair is the island's hairline (border-subtle), --lu-hair-2 a ring
+    // and a rule (border-default); the kit keeps its own product-tinted ink.
+    const alpha = (name) => Number(lumen.get(name)?.match(/\/\s*([\d.]+)\)$/)?.[1]);
+    if (tokens.neutrals.border[theme].subtle !== alpha("--lu-hair")) bad.push(`${theme} border-subtle ${tokens.neutrals.border[theme].subtle}, Lumen ${alpha("--lu-hair")}`);
+    if (tokens.neutrals.border[theme].default !== alpha("--lu-hair-2")) bad.push(`${theme} border-default ${tokens.neutrals.border[theme].default}, Lumen ${alpha("--lu-hair-2")}`);
+  }
+  assert.deepEqual(bad, []);
+});
+
+test("the glass glint's mirror is one number in the generator and in the four CSS expressions, and the paper glint stays at L 0.97", () => {
+  const found = ["effects.css", "glass.css"].flatMap((f) => [...read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/max\(l, ([\d.]+) - l\)/g)].map((m) => [f, Number(m[1])]));
+  assert.deepEqual(found.map(([f]) => f), ["effects.css", "effects.css", "effects.css", "glass.css"], "the veil, the glint, the press light and glass.css's pole");
+  for (const [f, k] of found) assert.equal(k, GLINT_MIRROR, f);
+  // 1.2 - 0.23 until 0.35; the same light on paper with the darker ink
+  assert.ok(Math.abs((GLINT_MIRROR - tokens.neutrals.ladder.light["text-primary"][0]) - 0.97) < 1e-9);
+});
+
+const CODE_HUES = ["keyword", "string", "number", "boolean", "function", "tag", "builtin"];
+test("neutrals.json carries the whole syntax palette per product and theme: the rungs tinted, the hues fixed and equal to the theme files", () => {
+  const decl = (css, name) => css.match(new RegExp(`^\\s*${name}:\\s*([^;]+);`, "m"))?.[1];
+  for (const theme of THEMES) {
+    const css = read(`themes/${theme}.css`);
+    for (const [id, p] of Object.entries(shipped.products)) {
+      const roles = Object.keys(p[theme]).filter((k) => k.startsWith("code-")).map((k) => k.slice(5));
+      assert.deepEqual([...roles].sort(), [...CODE_SLOTS].sort(), `${id} ${theme}`);
+      for (const role of CODE_SLOTS) assert.match(p[theme][`code-${role}`], /^#[0-9a-f]{6}$/, `${id} ${theme} code-${role}`);
+      for (const role of CODE_HUES) assert.equal(p[theme][`code-${role}`], decl(css, `--sl-code-${role}`), `${id} ${theme} code-${role}`);
+      assert.equal(p[theme]["code-boolean"], p[theme]["code-number"], "boolean reads as number");
+    }
+  }
+  // the rungs are the product's: spexr's light code-fg is not the default's
+  assert.notEqual(shipped.products.spexr.light["code-fg"], shipped.products.default.light["code-fg"]);
+});
+
+test("products.css sets each registered fill on its product's theme blocks, and no fill anywhere else", () => {
+  const css = read("themes/products.css");
+  for (const id of Object.keys(registry.products)) for (const theme of THEMES) {
+    const sel = `[data-sl-product="${id}"][data-sl-theme="${theme}"],\n[data-sl-product="${id}"] [data-sl-theme="${theme}"] {`;
+    const at = css.indexOf(sel);
+    assert.ok(at >= 0, `${id} ${theme}`);
+    const body = css.slice(at + sel.length, css.indexOf("}", at));
+    assert.equal(body.match(/--slc-accent-fill:\s*([^;]+);/)?.[1], fillFor(registry, id)?.[theme], `${id} ${theme}`);
+  }
+  assert.equal((css.match(/--slc-accent-fill:/g) ?? []).length, 2, "spexr light and dark only");
+  assert.match(css, /--slc-accent-fill: #4c58e9;/);
+  assert.doesNotMatch(css, /high-contrast/);
+});
+
+test("neutrals.json exports the registered fill beside the accent, and no fill key where there is none", () => {
+  for (const [id, p] of Object.entries(shipped.products)) {
+    const want = fillFor(registry, id);
+    if (want) assert.deepEqual(p.fill, want, id);
+    else assert.equal("fill" in p, false, id);
+  }
+  assert.deepEqual(shipped.products.spexr.fill, registry.products.spexr.fill);
+});
+
+test("a dark-fill change is one registry line: the regenerated dark block carries it and its label turns to the dark pole", () => {
+  const reg = structuredClone(registry);
+  reg.products.spexr.fill.dark = "#8b96ff";
+  const b = buildNeutrals(tokens, reg);
+  assert.deepEqual(validateNeutrals(b), []);
+  const css = productsCss(b);
+  const block = (theme) => css.slice(css.indexOf(`[data-sl-product="spexr"][data-sl-theme="${theme}"]`)).split("}")[0];
+  assert.match(block("dark"), /--slc-accent-fill: #8b96ff;/);
+  assert.match(block("light"), /--slc-accent-fill: #4c58e9;/);
+  assert.deepEqual(JSON.parse(neutralsJson(b)).products.spexr.fill, { light: "#4c58e9", dark: "#8b96ff" });
+  // the kit derives the label from the fill: white on #4c58e9, the dark pole on #8b96ff
+  const env = new Map();
+  for (const m of read("tokens.css").replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  const label = (fill) => toOklch(evaluate(`oklch(from ${fill} var(--_sl-on))`, env))[0];
+  assert.ok(Math.abs(label("#8b96ff") - 0.16) < 1e-6, `${label("#8b96ff")}`);
+  assert.ok(Math.abs(label("#4c58e9") - 1) < 1e-6, `${label("#4c58e9")}`);
+});
+
+test("guard: a registered fill that is not a 6-digit hex fails the build", () => {
+  const reg = structuredClone(registry);
+  reg.products.spexr.fill.dark = "indigo";
+  assert.throws(() => buildNeutrals(tokens, reg), /"spexr" fill\.dark indigo is not a 6-digit hex/);
+  const inheriting = { products: { ...registry.products, fork: { inherits: "spexr" } } };
+  assert.deepEqual(fillFor(inheriting, "fork"), registry.products.spexr.fill, "a product inheriting spexr takes its fill");
+});
+
+test("guard: a code triple outside sRGB keeps its lightness and hue and gives up chroma, never clipped", () => {
+  const baked = bakeCode({ light: { keyword: [0.47, 0.3, 240] }, dark: {} });
+  const [L, C, h] = toOklch(fromHex(baked.light.keyword));
+  assert.equal(baked.reduced.length, 1);
+  assert.ok(Math.abs(L - 0.47) < 0.004 && Math.abs(h - 240) < 1.5, `${baked.light.keyword} L ${L} h ${h}`);
+  assert.ok(C < 0.3 && Math.abs(C - maxChroma(0.47, 240)) < 0.004, `${C}`);
+  assert.notEqual(baked.light.keyword, toHex(fromOklch([0.47, 0.3, 240])), "not the per-channel clip");
+});
+
+test("guard: a malformed code role, an alias with no target and a role the ladder owns fail the build", () => {
+  assert.throws(() => bakeCode({ light: { keyword: [0.5, 0.1] }, dark: {} }), /code\.light\.keyword/);
+  assert.throws(() => bakeCode({ light: { keyword: "#12345" }, dark: {} }), /not a 6-digit hex/);
+  assert.throws(() => bakeCode({ light: {}, dark: {}, alias: { boolean: "number" } }), /code\.alias\.boolean: light has no number/);
+  const t = structuredClone(tokens);
+  t.code.light.fg = [0.3, 0, 0];
+  assert.throws(() => buildNeutrals(t, registry), /the neutral ladder owns code-fg/);
 });

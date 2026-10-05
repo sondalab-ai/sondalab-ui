@@ -135,10 +135,12 @@
      default, so each of those is the accent and each role below is the
      accent's own (the theme's hover, active and label, exactly as before):
      read it as var(--slc-accent-fill, var(--slc-accent)). A product whose
-     accent cannot carry a label at 4.5:1 sets this one role (spexr: its
-     registered fill, #4c58e9, where white on the #5b6cff accent read
-     4.17:1), and the label, the two states and the edge (--slc-edge-accent,
-     above) follow from it. The private values reference it with no
+     accent cannot carry a label at 4.5:1 registers a fill, and this one
+     role carries it (spexr: #4c58e9, where white on the #5b6cff accent read
+     4.17:1); since 0.35 themes/products.css sets it from the registry on
+     the product's theme element, and a Tier B layer copies it from
+     neutrals.json. The label, the two states and the edge
+     (--slc-edge-accent, above) follow from it. The private values reference it with no
      fallback, so they are invalid until it is set and each public role
      falls back to the accent's step. Set, the label is the pole that
      contrasts with the fill and the states are the kit's steps (above),
@@ -159,14 +161,14 @@
   --slc-canvas:        var(--sl-bg-canvas,         #eae6e2);
   --slc-surface:       var(--sl-bg-surface,        #fcfaf9);
   --slc-raised:        var(--sl-bg-surface-raised, #ffffff);
-  --slc-overlay:       var(--sl-bg-overlay,        rgba(32,28,24,0.4));
-  --slc-text:          var(--sl-text-primary,   #201c18);
+  --slc-overlay:       var(--sl-bg-overlay,        rgba(25,21,17,0.4));
+  --slc-text:          var(--sl-text-primary,   #191511);
   --slc-text-secondary:var(--sl-text-secondary, #47413c);
   --slc-text-muted:    var(--sl-text-muted,     #605953);
   /* lines */
-  --slc-border:        var(--sl-border-default, rgba(32,28,24,0.16));
-  --slc-border-subtle: var(--sl-border-subtle,  rgba(32,28,24,0.09));
-  --slc-border-strong: var(--sl-border-strong,  rgba(32,28,24,0.28));
+  --slc-border:        var(--sl-border-default, rgba(25,21,17,0.14));
+  --slc-border-subtle: var(--sl-border-subtle,  rgba(25,21,17,0.08));
+  --slc-border-strong: var(--sl-border-strong,  rgba(25,21,17,0.28));
   --slc-focus:         var(--sl-focus-ring, var(--slc-accent-text));
   /* The spectrum paints no edge, rim or arc by default (owner, 2026-10-02:
      "drop rainbow from fields and everything else"). It survives only in the

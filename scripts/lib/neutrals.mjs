@@ -7,7 +7,7 @@
    scripts and sl-audit all read neutrals as hex, which is why the tint is not
    a runtime `oklch(from var(--sl-accent-default) L C h)`. */
 
-import { fromHex, fromOklch, toOklch, toHex, gamutExcess, linToOklab } from "./css-color.mjs";
+import { fromHex, fromOklch, toOklch, toHex, gamutExcess, linToOklab, maxChroma } from "./css-color.mjs";
 
 /** colour.js isChromatic(): an oklch chroma above this is a hue, not a grey. */
 export const CHROMA_LIMIT = 0.04;
@@ -22,18 +22,28 @@ const SAME_HUE_DEG = 0.05;
 /** An accent below this oklch chroma is a grey: its hue is noise (a pure grey
  *  has none, and CSS reads it as 0, a pink), so its neutrals are untinted. */
 export const ACHROMATIC_C = 0.002;
+/** The glass glint mirrors a dark sheen's lightness about this number
+ *  (effects.css --slfx-glint, --slfx-veil, --slfx-press-light and glass.css
+ *  --slg-pole: max(l, GLINT_MIRROR - l)). 1.17 puts the glint of the L 0.20
+ *  paper ink at L 0.97, where 1.2 put the glint of the L 0.23 ink until 0.35.
+ *  The CSS repeats the number; scripts/neutrals-ladder.test.mjs holds the four
+ *  expressions to this one. */
+export const GLINT_MIRROR = 1.17;
 
 export const THEMES = ["light", "dark"];
 
 export const PRODUCTS_CSS_HEADER =
   "/* GENERATED from sondalab.tokens.json (neutrals) + agent/accent-registry.json — do not edit. Run `npm run gen:tokens`.\n" +
-  "   Each product's neutrals, tinted with its accent hue. Put data-sl-product on the element that carries\n" +
+  "   Each product's neutrals, tinted with its accent hue, and its registered accent fill (--slc-accent-fill, the\n" +
+  "   registry's `fill`) where it has one. Put data-sl-product on the element that carries\n" +
   "   data-sl-theme, or on an ancestor of it; load after the theme files or before, the selector outranks them.\n" +
   "   One product per theme subtree: every block here weighs the same, so with two products nested the later\n" +
   "   block in this file wins, not the nearer ancestor. */\n";
 export const NEUTRALS_JSON_NOTE =
   "GENERATED from sondalab.tokens.json (neutrals) + agent/accent-registry.json — do not edit. Run `npm run gen:tokens`. " +
-  "products.<id>.<theme>.<role> is the literal value of --sl-<role> for that product; ladder is [oklch L, C] per role, tinted with the product's accent hue.";
+  "products.<id>.<theme>.<role> is the literal value of --sl-<role> for that product; ladder is [oklch L, C] per role, tinted with the product's accent hue. " +
+  "The code-* roles carry the whole syntax palette: fg and comment (null) are ladder rungs, the hues are fixed and the same for every product. " +
+  "products.<id>.fill.<theme>, where present, is the product's registered accent fill (--slc-accent-fill); a product without one has no fill key.";
 
 /** The product's own registry entry after following `inherits`.
  *  Throws on a cycle or a dangling name, so a registry typo fails the build. */
@@ -92,16 +102,72 @@ export function rolesFor(spec, theme, h) {
   return { roles: out, info };
 }
 
+const HEX6 = /^#[0-9a-fA-F]{6}$/;
+
+/** The syntax palette's chromatic roles, baked to hex per theme (0.35, Lumen).
+ *  A role is an oklch triple [L, C, h] or a 6-digit hex; `alias` maps a role
+ *  to another's value (boolean reads as number). A triple outside sRGB keeps
+ *  its lightness and hue and gives up chroma, to the most sRGB holds there
+ *  (CSS Color 4 gamut mapping, never a per-channel clip); each reduction is
+ *  listed in `reduced` so the generator can report it. The hues are fixed:
+ *  code is viz, it never takes the product's tint (Decision 3). Throws on a
+ *  malformed role, so a token typo fails the build. */
+export function bakeCode(spec) {
+  const out = { reduced: [] };
+  for (const theme of THEMES) {
+    const roles = {};
+    for (const [role, v] of Object.entries(spec?.[theme] ?? {})) {
+      if (typeof v === "string") {
+        if (!HEX6.test(v)) throw new Error(`code.${theme}.${role}: ${v} is not a 6-digit hex`);
+        roles[role] = v;
+        continue;
+      }
+      const [L, C, h] = Array.isArray(v) && v.length === 3 && v.every(Number.isFinite) ? v : [];
+      if (!(L >= 0 && L <= 1 && C >= 0 && h >= 0 && h < 360)) throw new Error(`code.${theme}.${role}: ${JSON.stringify(v)} is not an oklch [L 0..1, C >= 0, h 0..360)`);
+      const held = Math.min(C, maxChroma(L, h));
+      if (held < C) out.reduced.push({ theme, role, asked: [L, C, h], held });
+      roles[role] = toHex(fromOklch([L, held, h]));
+    }
+    for (const [alias, role] of Object.entries(spec?.alias ?? {})) {
+      if (alias in roles) throw new Error(`code.${theme}.${alias}: written by hand and also an alias of ${role}`);
+      if (!(role in roles)) throw new Error(`code.alias.${alias}: ${theme} has no ${role} to read`);
+      roles[alias] = roles[role];
+    }
+    out[theme] = roles;
+  }
+  return out;
+}
+
+/** A product's registered accent fill per theme (the registry's `fill`, after
+ *  following `inherits`), or null when it registers none: then the kit leaves
+ *  --slc-accent-fill unset and every labelled fill is the accent. */
+export function fillFor(registry, id) {
+  const { entry } = resolveRegistryEntry(registry, id);
+  if (!entry.fill) return null;
+  const fill = {};
+  for (const theme of THEMES) {
+    const hex = entry.fill[theme];
+    if (hex === undefined) continue;
+    if (!HEX6.test(hex)) throw new Error(`accent-registry: "${id}" fill.${theme} ${hex} is not a 6-digit hex`);
+    fill[theme] = hex;
+  }
+  return Object.keys(fill).length ? fill : null;
+}
+
 /** The whole build: the ladder as given plus every registered product's
- *  roles on both themes. `info` (per-role L, C, gamut excess) is for the
- *  validator and is not written to neutrals.json. */
+ *  roles on both themes, the baked syntax palette (`code`, the same for every
+ *  product) and each product's registered fill. `info` (per-role L, C, gamut
+ *  excess) is for the validator and is not written to neutrals.json. */
 export function buildNeutrals(tokens, registry) {
   const spec = tokens.neutrals;
+  const code = bakeCode(tokens.code);
   const products = {};
   for (const id of Object.keys(registry.products)) {
     const p = { hue: {}, accent: {}, info: {} };
     const inherits = registry.products[id].inherits;
     if (inherits) p.inherits = inherits;
+    const fill = fillFor(registry, id);
+    if (fill) p.fill = fill;
     for (const theme of THEMES) {
       const accent = accentFor(tokens, registry, id, theme);
       const h = hueOf(accent);
@@ -111,9 +177,14 @@ export function buildNeutrals(tokens, registry) {
       p[theme] = roles;
       p.info[theme] = info;
     }
+    for (const theme of THEMES) {
+      for (const role of Object.keys(code[theme])) {
+        if (`code-${role}` in p[theme]) throw new Error(`code.${theme}.${role}: the neutral ladder owns code-${role}; remove it from the code palette`);
+      }
+    }
     products[id] = p;
   }
-  return { spec, products };
+  return { spec, code, products };
 }
 
 const isHex = (v) => /^#[0-9a-f]{6}$/.test(v);
@@ -144,16 +215,17 @@ export function validateNeutrals(build) {
     }
   }
   // The glass glint is the primary text's lightness mirrored, at the same
-  // chroma and hue (effects.css --slfx-glint: max(l, 1.2 - l)). Paper ink
-  // darker than ~L 0.22 asks for a near-white that sRGB cannot tint, and
-  // Chrome clips it -- so the ink has a floor that depends on its hue.
+  // chroma and hue (effects.css --slfx-glint: max(l, GLINT_MIRROR - l)).
+  // Paper ink much darker than GLINT_MIRROR - 0.97 asks for a near-white that
+  // sRGB cannot tint, and Chrome clips it -- so the ink has a floor that
+  // depends on its hue and on the mirror.
   for (const [id, p] of Object.entries(build.products)) {
     for (const theme of THEMES) {
       const ink = p.info[theme]["text-primary"];
       if (!ink) continue;
-      const glint = fromOklch([Math.max(ink.L, 1.2 - ink.L), ink.C, p.hue[theme] ?? 0]);
-      const excess = gamutExcess(glint);
-      if (excess > GAMUT_EPSILON) errors.push(`${id} ${theme} text-primary: its glass glint (L ${Math.max(ink.L, 1.2 - ink.L).toFixed(3)}, C ${ink.C}) is outside sRGB by ${excess.toFixed(5)}`);
+      const L = Math.max(ink.L, GLINT_MIRROR - ink.L);
+      const excess = gamutExcess(fromOklch([L, ink.C, p.hue[theme] ?? 0]));
+      if (excess > GAMUT_EPSILON) errors.push(`${id} ${theme} text-primary: its glass glint (L ${L.toFixed(3)}, C ${ink.C}) is outside sRGB by ${excess.toFixed(5)}`);
     }
   }
   for (const theme of THEMES) {
@@ -249,17 +321,24 @@ export function declarationsFor(roles) {
   ];
 }
 
-/** neutrals.json: the ladder as authored plus every product's baked roles.
+/** neutrals.json: the ladder as authored plus every product's baked roles,
+ *  the syntax palette's fixed hues beside its neutral rungs (so an editor
+ *  theme needs no CSS), and the registered fill where there is one.
  *  Hue is rounded for reading; the hex is what consumers copy. */
 export function neutralsJson(build, header = NEUTRALS_JSON_NOTE) {
   const products = {};
+  const withCode = (roles, theme) => ({
+    ...roles,
+    ...Object.fromEntries(slotted(build.code[theme], CODE_SLOTS).map(([k, v]) => [`code-${k}`, v])),
+  });
   for (const [id, p] of Object.entries(build.products)) {
     products[id] = {
       ...(p.inherits ? { inherits: p.inherits } : {}),
       accent: p.accent,
+      ...(p.fill ? { fill: p.fill } : {}),
       hue: Object.fromEntries(THEMES.map((t) => [t, p.hue[t] === null ? null : Math.round(p.hue[t] * 100) / 100])),
-      light: p.light,
-      dark: p.dark,
+      light: withCode(p.light, "light"),
+      dark: withCode(p.dark, "dark"),
     };
   }
   const { ladder, border, alias } = build.spec;
@@ -268,16 +347,20 @@ export function neutralsJson(build, header = NEUTRALS_JSON_NOTE) {
   return text.replace(/\[\s+(-?[\d.e-]+),\s+(-?[\d.e-]+)\s+\]/g, "[$1, $2]") + "\n";
 }
 
-/** themes/products.css: one neutral-only block per product per theme. The
- *  product attribute sits on the theme element or an ancestor of it; the
- *  two-attribute selector outranks the theme file's own (0,1,0) block
- *  whatever the load order. */
+/** themes/products.css: one block per product per theme, its neutrals and,
+ *  where the registry has one, its accent fill (--slc-accent-fill, the
+ *  kit's role since 0.32). The product attribute sits on the theme element or
+ *  an ancestor of it; the two-attribute selector outranks the theme file's
+ *  own (0,1,0) block whatever the load order. No high-contrast block: the
+ *  theme owns its accent, and components.css resets the fill there. */
 export function productsCss(build, header = PRODUCTS_CSS_HEADER) {
   let css = header;
   for (const [id, p] of Object.entries(build.products)) {
     for (const theme of THEMES) {
       const sel = `[data-sl-product="${id}"][data-sl-theme="${theme}"],\n[data-sl-product="${id}"] [data-sl-theme="${theme}"]`;
-      css += `${sel} {\n${declarationsFor(p[theme]).map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}\n`;
+      const decls = declarationsFor(p[theme]);
+      if (p.fill?.[theme]) decls.push(["--slc-accent-fill", p.fill[theme]]);
+      css += `${sel} {\n${decls.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}\n`;
     }
   }
   return css;

@@ -15,7 +15,7 @@
         "light": { "hover": "#4858ee", "active": "#3645d4", "subtle": "#eef0ff" },
         "dark": { "hover": "#a3acff", "active": "#6b78f0", "subtle": "#1c1f3a" }
       },
-      "$fill-note": "spexr's filled primary is ONE deeper indigo on both themes, so its white label reads (5.41:1); the accent above still drives links, tags and the focus ring. Hover and active are not registered: they derive from the fill with the kit's one step (components.css --_sl-step-hover / -press), 0.05 / 0.10 of oklch lightness toward black (its white label holds there), on both themes (owner, 2026-10-02: less is more): #424ccd / #3841b1, white on them 6.67 / 8.21 (until ui-kit 0.32.1 the mixes color-mix(in srgb, <fill> 89% / 76%, black), #444ecf / #3a43b1, 6.47 / 8.03).",
+      "$fill-note": "spexr's filled primary is ONE deeper indigo on both themes, so its white label reads (5.41:1); the accent above still drives links, tags and the focus ring. Generated since ui-kit 0.35: gen-css writes each theme's value into themes/products.css as --slc-accent-fill on the product's theme blocks and into neutrals.json as products.spexr.fill, so changing a value here is a token change (regenerate, dual-bump) and the product sets no literal of its own. Hover and active are not registered: they derive from the fill with the kit's one step (components.css --_sl-step-hover / -press), 0.05 / 0.10 of oklch lightness toward black (its white label holds there), on both themes (owner, 2026-10-02: less is more): #424ccd / #3841b1, white on them 6.67 / 8.21 (until ui-kit 0.32.1 the mixes color-mix(in srgb, <fill> 89% / 76%, black), #444ecf / #3a43b1, 6.47 / 8.03).",
       "fill": { "light": "#4c58e9", "dark": "#4c58e9" }
     },
     "introspect": { "light": "#0e9c84", "dark": "#2ee6c0" },

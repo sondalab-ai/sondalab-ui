@@ -226,6 +226,59 @@ test("high contrast: a filled control's edge is the accent, and no accent fill r
   assert.equal(hex("var(--_sl-on-fill)", p), "#000000");
 });
 
+// ── the registered fill, generated into products.css (0.35) ─────────────────
+// A product with a registered `fill` gets --slc-accent-fill from products.css
+// on its theme element, with no rule of its own: spexr deletes its literal.
+
+const REGISTRY = JSON.parse(read("agent/accent-registry.json")).products;
+/** html[data-sl-product][data-sl-theme] > body > [island] > control. */
+function productPage(product, theme, island = null) {
+  const html = el({ tag: "html", attrs: { "data-sl-theme": theme, "data-sl-product": product } });
+  const body = el({ tag: "body", parent: html });
+  return { html, host: island ? el({ tag: "section", parent: body, attrs: { "data-sl-theme": island } }) : body };
+}
+
+for (const theme of ["light", "dark"]) {
+  test(`${theme}: spexr's registered fill reaches the primary and the root's roles from products.css alone`, () => {
+    const rules = sheets();
+    const { html, host } = productPage("spexr", theme);
+    const fill = REGISTRY.spexr.fill[theme];
+    const p = customs(rules, el({ tag: "button", classes: FILL_HOST, parent: host }));
+    assert.equal(hex("var(--_sl-fill)", p), fill);
+    assert.equal(hex("var(--_sl-on-fill)", p), "#ffffff");
+    // the public roles compute on :root, where the product attribute sits
+    const root = customs(rules, html);
+    assert.equal(hex("var(--slc-on-accent-fill)", root), "#ffffff");
+    assert.equal(hex("var(--slc-accent-fill-hover)", root), hex("var(--_sl-fill-hover)", p));
+    for (const box of Object.values(checked(host))) assert.equal(hex("var(--_sl-fill)", customs(rules, box)), fill);
+  });
+
+  test(`${theme}: a product with no registered fill keeps the accent as its fill`, () => {
+    const rules = sheets();
+    for (const product of ["default", "introspect"]) {
+      const { host } = productPage(product, theme);
+      const p = customs(rules, el({ tag: "button", classes: FILL_HOST, parent: host }));
+      assert.equal(p.get("--slc-accent-fill"), undefined, product);
+      assert.equal(hex("var(--_sl-fill)", p), hex("var(--slc-accent)", p), product);
+    }
+  });
+}
+
+test("a theme island inside a spexr page takes that theme's registered fill", () => {
+  const rules = sheets();
+  const { host } = productPage("spexr", "light", "dark");
+  assert.equal(hex("var(--_sl-fill)", customs(rules, el({ tag: "button", classes: FILL_HOST, parent: host }))), REGISTRY.spexr.fill.dark);
+});
+
+test("high contrast: products.css brings no fill, and spexr's primary is the theme's yellow", () => {
+  const rules = sheets();
+  const { html, host } = productPage("spexr", "high-contrast");
+  assert.equal(customs(rules, html).get("--slc-accent-fill"), undefined);
+  const p = customs(rules, el({ tag: "button", classes: FILL_HOST, parent: host }));
+  assert.equal(hex("var(--_sl-fill)", p), "#ffff00");
+  assert.equal(hex("var(--_sl-on-fill)", p), "#000000");
+});
+
 // ── the effects kill switches keep a control's depth and halo (finding S1) ──
 
 test("an opt-out region and high contrast keep a glass control's own depth, and its halo where the theme draws one", () => {
