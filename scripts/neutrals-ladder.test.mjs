@@ -385,6 +385,16 @@ test("guard: a code triple outside sRGB keeps its lightness and hue and gives up
   assert.notEqual(baked.light.keyword, toHex(fromOklch([0.47, 0.3, 240])), "not the per-channel clip");
 });
 
+test("guard: a code role name outside the palette fails the build, so a typo ships no new token", () => {
+  assert.throws(() => bakeCode({ light: { keywrd: [0.48, 0.17, 285] }, dark: {} }), /code\.light: "keywrd" is not a code role/);
+  assert.throws(() => bakeCode({ light: {}, dark: {}, alias: { bool: "number" } }), /code\.alias: "bool" is not a code role/);
+  assert.throws(() => bakeCode({ light: {}, dark: {}, alias: { boolean: "numbr" } }), /code\.alias\.boolean: "numbr" is not a code role/);
+  assert.throws(() => bakeCode({ ligth: {}, dark: {} }), /code\.ligth: not a theme or "alias"/);
+  const t = structuredClone(tokens);
+  t.code.dark.keywrd = t.code.dark.keyword;
+  assert.throws(() => buildNeutrals(t, registry), /"keywrd" is not a code role/);
+});
+
 test("guard: a malformed code role, an alias with no target and a role the ladder owns fail the build", () => {
   assert.throws(() => bakeCode({ light: { keyword: [0.5, 0.1] }, dark: {} }), /code\.light\.keyword/);
   assert.throws(() => bakeCode({ light: { keyword: "#12345" }, dark: {} }), /not a 6-digit hex/);

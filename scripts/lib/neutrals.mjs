@@ -111,12 +111,21 @@ const HEX6 = /^#[0-9a-fA-F]{6}$/;
  *  (CSS Color 4 gamut mapping, never a per-channel clip); each reduction is
  *  listed in `reduced` so the generator can report it. The hues are fixed:
  *  code is viz, it never takes the product's tint (Decision 3). Throws on a
- *  malformed role, so a token typo fails the build. */
+ *  malformed value and on a role name outside CODE_SLOTS, so a token typo
+ *  fails the build instead of shipping a new --sl-code-* token. */
 export function bakeCode(spec) {
   const out = { reduced: [] };
+  const known = (role, where) => {
+    if (!CODE_SLOTS.includes(role)) throw new Error(`${where}: "${role}" is not a code role (${CODE_SLOTS.join(", ")})`);
+  };
+  for (const key of Object.keys(spec ?? {})) {
+    if (![...THEMES, "alias", "high-contrast"].includes(key) && !key.startsWith("$")) throw new Error(`code.${key}: not a theme or "alias"`);
+  }
+  for (const [alias, role] of Object.entries(spec?.alias ?? {})) { known(alias, "code.alias"); known(role, `code.alias.${alias}`); }
   for (const theme of THEMES) {
     const roles = {};
     for (const [role, v] of Object.entries(spec?.[theme] ?? {})) {
+      known(role, `code.${theme}`);
       if (typeof v === "string") {
         if (!HEX6.test(v)) throw new Error(`code.${theme}.${role}: ${v} is not a 6-digit hex`);
         roles[role] = v;
