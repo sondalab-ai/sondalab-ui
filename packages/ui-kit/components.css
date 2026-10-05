@@ -256,15 +256,14 @@
                        pane's top edge: a radial wash of the seam, peaking
                        toward the seam's leading end (mirrored right to left)
                        and gone at 78%, sized by the box it is painted on
-                       (Lumen's 38px strip). Its colour is the seam capped at
-                       oklch L 0.72, its chroma scaled with the lightness (a
-                       step toward black, which stays in sRGB): on ink a
-                       lighter seam (amber, mint) lifted the ground under a
-                       muted label centred in the strip to 4.14:1; capped,
-                       every product reads >= 4.55. spexr's indigo (L 0.71) is
-                       the demo's and passes untouched. Text set against the
-                       strip's top edge, where the wash peaks, would read
-                       less: centre it.
+                       (Lumen's strip). At its peak it is the seam at 80% of
+                       Lumen's strength (20.8% on ink, 14.6% on paper; Lumen
+                       26 / 18.2), its colour capped at oklch L 0.65, chroma
+                       scaled with the lightness (a step toward black, which
+                       stays in sRGB). Lumen's own wash took a muted label at
+                       the strip's top edge, where it peaks, to 3.84-4.01:1 on
+                       ink (spexr's indigo 4.01); this one holds it at >= 4.60
+                       for every product, wherever the label sits.
        --slc-lit-tint  an image, for the row under it (breadcrumbs): the seam
                        at 7% fading down the row, over the row's own fill.
        --slc-lit-drop  ONE shadow: the glow below the lit pane. Worn outward
@@ -274,7 +273,7 @@
                        edge -- the same falloff from the same line, for a
                        product whose layout clips the pane's own shadow. */
   --_sl-lit-x: 30%;
-  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h) calc(var(--slc-glow) * 52%), transparent), transparent 78%);
+  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h) calc(var(--slc-glow) * 41.6%), transparent), transparent 78%);
   --slc-lit-tint: linear-gradient(color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 7%), transparent), transparent);
   --slc-lit-drop: 0 18px 30px -18px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
   /* A recipe is a member of a box-shadow LIST (a control's depth composes
@@ -1785,7 +1784,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   /* The lit pane's light, re-declared as written so it reads the band's
      seam (a lit pane is not supported in a band; a product's own chrome
      that spends the roles there still gets the band's hue). */
-  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x, 30%) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h) calc(var(--slc-glow) * 52%), transparent), transparent 78%);
+  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x, 30%) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h) calc(var(--slc-glow) * 41.6%), transparent), transparent 78%);
   --slc-lit-tint: linear-gradient(color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 7%), transparent), transparent);
   --slc-lit-drop: 0 18px 30px -18px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
   /* The band's ground is the page's ink: dark on the light theme, where the
@@ -2559,7 +2558,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    reads; high contrast keeps nothing there either. The wash peaks toward
    the seam's leading end, so it mirrors with it. */
 :where(.sl-pane) {
-  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x, 30%) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h) calc(var(--slc-glow) * 52%), transparent), transparent 78%);
+  --slc-lit-wash: radial-gradient(80% 100% at var(--_sl-lit-x, 30%) 0%, color-mix(in srgb, oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h) calc(var(--slc-glow) * 41.6%), transparent), transparent 78%);
   --slc-lit-tint: linear-gradient(color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 7%), transparent), transparent);
   --slc-lit-drop: 0 18px 30px -18px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
 }

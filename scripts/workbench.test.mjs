@@ -441,7 +441,7 @@ test("the lit pane's seam and glow spend --slc-glow, which is 0 in high contrast
 // chrome without a literal; each reads --slc-glow (0 in high contrast and
 // under forced colours, where they are also remapped to nothing).
 const LIT = {
-  "--slc-lit-wash": { kind: "image", peak: 0.52 },
+  "--slc-lit-wash": { kind: "image", peak: 0.416 },
   "--slc-lit-tint": { kind: "image", peak: 0.07 },
   "--slc-lit-drop": { kind: "shadow", peak: 0.4 },
 };
@@ -463,21 +463,19 @@ test("the lit roles are the rendered recipes, on every theme, at --slc-glow's st
       const top = Math.max(...cols.map((c) => c.alpha));
       assert.ok(Math.abs(top - glow * peak) < 1e-9, `${ctx.name} ${role}: peak ${top}, want ${glow * peak}`);
       // the seam's own colour at the peak; the wash's is capped at oklch L
-      // 0.72, so a light seam (amber, mint on ink) cannot lift the ground
-      // under a muted label in the strip below 4.5:1 (spexr's indigo, L 0.71,
-      // is the demo's own and passes through untouched)
-      const seam = toHex(value(RULES_A, lit, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h)" : "var(--slc-seam)", BLACK));
+      // 0.65 at 80% of Lumen's strength, so no seam can lift the ground under
+      // a muted label in the strip below 4.5:1, wherever the label sits
+      const seam = toHex(value(RULES_A, lit, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h)" : "var(--slc-seam)", BLACK));
       assert.equal(toHex({ ...cols.find((c) => c.alpha === top), alpha: 1 }), seam, `${ctx.name} ${role}: the seam's hue`);
     }
   }
-  for (const t of ["dark", "light"]) {
-    const { lit } = build(CONTEXTS.find((c) => c.name === `${t} spexr`));
-    const peak = litColours(RULES_A, lit, "--slc-lit-wash").reduce((a, b) => (b.alpha > a.alpha ? b : a));
-    assert.equal(toHex({ ...peak, alpha: 1 }), toHex(value(RULES_A, lit, "var(--slc-seam)", BLACK)), `${t} spexr: the demo's wash, uncapped`);
-  }
+  // on paper the seam is the accent as text (L <= 0.46), which the cap leaves alone
+  const { lit: paper } = build(CONTEXTS.find((c) => c.name === "light spexr"));
+  const peak = litColours(RULES_A, paper, "--slc-lit-wash").reduce((a, b) => (b.alpha > a.alpha ? b : a));
+  assert.equal(toHex({ ...peak, alpha: 1 }), toHex(value(RULES_A, paper, "var(--slc-seam)", BLACK)), "light spexr: the seam's own colour");
   // the wash is radial, peaking toward the seam's leading end, gone by 78%
   const env = customs(RULES_A, build(dark).lit);
-  assert.match(substitute("var(--slc-lit-wash)", env), /^radial-gradient\(80% 100% at 30% 0%, color-mix\(in srgb, oklch\(from .+ min\(l, 0\.72\) calc\(c \* min\(1, 0\.72 \/ l\)\) h\) .+\), transparent 78%\)$/);
+  assert.match(substitute("var(--slc-lit-wash)", env), /^radial-gradient\(80% 100% at 30% 0%, color-mix\(in srgb, oklch\(from .+ min\(l, 0\.65\) calc\(c \* min\(1, 0\.65 \/ l\)\) h\) .+\), transparent 78%\)$/);
   assert.match(substitute("var(--slc-lit-tint)", env), /^linear-gradient\(color-mix\(.+\), transparent\)$/);
 });
 
@@ -513,7 +511,7 @@ test("the lit roles are nothing in high contrast and under forced colours, and t
   for (const ctx of CONTEXTS.filter((c) => c.band && !c.name.startsWith("high"))) {
     const at = mount(ctx);
     for (const role of Object.keys(LIT)) {
-      const want = toHex(value(ctx.rules, at, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h)" : "var(--slc-seam)", BLACK));
+      const want = toHex(value(ctx.rules, at, role === "--slc-lit-wash" ? "oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h)" : "var(--slc-seam)", BLACK));
       const cols = litColours(ctx.rules, at, role).filter((c) => c.alpha > 0);
       assert.ok(cols.length, `${ctx.name} ${role}`);
       assert.equal(toHex({ ...cols[0], alpha: 1 }), want, `${ctx.name} ${role}: the band's seam`);
@@ -541,7 +539,7 @@ test("the wash's capped colour adds no gamut excess to the seam's, and is in sRG
   for (const ctx of CONTEXTS.filter((c) => c !== hc && !c.name.startsWith("high"))) {
     const at = mount(ctx);
     const e = ctx.band ? at : build(ctx).lit;
-    const capped = gamutExcess(value(ctx.rules, e, "oklch(from var(--slc-seam) min(l, 0.72) calc(c * min(1, 0.72 / l)) h)", BLACK));
+    const capped = gamutExcess(value(ctx.rules, e, "oklch(from var(--slc-seam) min(l, 0.65) calc(c * min(1, 0.65 / l)) h)", BLACK));
     const seam = gamutExcess(value(ctx.rules, e, "var(--slc-seam)", BLACK));
     if (capped > seam + 1e-4) out.push(`${ctx.name}: ${capped.toFixed(4)} over the seam's ${seam.toFixed(4)}`);
     if (ctx.name.startsWith("dark") && !ctx.band && capped > 1e-4) out.push(`${ctx.name}: ${capped.toFixed(4)} out of sRGB on ink`);
@@ -550,21 +548,17 @@ test("the wash's capped colour adds no gamut excess to the seam's, and is in sRG
 });
 
 // Text on the lit chrome: a tab strip under the wash, a breadcrumbs row under
-// the tint, every product and theme. The wash falls from the seam's edge: a
-// line of text centred in a strip starts (its line box, ink included) where
-// the wash has fallen by that distance, read along the ellipse's short axis
-// under its peak, the worst column. Lumen's 38px strip with a 20px line
-// starts 9px down; the tint is read at its peak, the top of its row.
-const WASH_FALL = (strip, line) => (strip - line) / 2 / strip / 0.78;
-test("text on the lit chrome reads at 4.5:1 where the wash and the tint reach it", () => {
+// the tint, every product and theme, read at each role's peak over the lit
+// pane's fill -- the strip's top edge under the seam's leading end -- so a
+// label reads wherever the product sets it in the strip.
+test("text on the lit chrome reads at 4.5:1 where the wash and the tint peak", () => {
   const low = [];
   for (const ctx of CONTEXTS.filter((c) => !c.band)) {
     const { lit } = build(ctx);
     const fill = groundOf(ctx.rules, lit);
     for (const role of ["--slc-lit-wash", "--slc-lit-tint"]) {
       const cols = litColours(ctx.rules, lit, role);
-      const top = cols.length ? cols.reduce((a, b) => (b.alpha > a.alpha ? b : a)) : { lin: [0, 0, 0], alpha: 0 };
-      const peak = role === "--slc-lit-wash" ? { ...top, alpha: top.alpha * (1 - WASH_FALL(38, 20)) } : top;
+      const peak = cols.length ? cols.reduce((a, b) => (b.alpha > a.alpha ? b : a)) : { lin: [0, 0, 0], alpha: 0 };
       const g = over(peak, fill);
       for (const ink of ["--slc-text", "--slc-text-secondary", "--slc-text-muted"]) {
         const r = ratio(over(value(ctx.rules, lit, `var(${ink})`, BLACK), g), g);
