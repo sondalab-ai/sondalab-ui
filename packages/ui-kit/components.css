@@ -1533,6 +1533,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-radius: 0;
 }
 .sl-toast__timer .sl-progress__bar { background-color: color-mix(in srgb, var(--_sl-tone) 70%, transparent); }
+/* High contrast and forced colours draw a progress track's edge; a timer has
+   no track, so it stays a 2px bar, never a bordered 4px box. */
+:root[data-sl-theme="high-contrast"] .sl-progress.sl-toast__timer { border: 0; }
 
 /* Tabs — visual only. Consumer supplies ARIA + panel switching:
    <div class="sl-tabs__list" role="tablist">
@@ -2841,6 +2844,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      inside its box, so nothing moves. */
   .sl-toast::before { forced-color-adjust: none; background: CanvasText !important; box-shadow: none !important; }
   .sl-toast { outline: 1px solid CanvasText !important; outline-offset: -1px; }
+  .sl-progress.sl-toast__timer { border: 0 !important; }
   /* Depth is off: the browser drops shadows, but not on the hosts above that
      opt out, where a tile's ring and cast would paint in page colours. So is
      every accent glow -- a checked control's and the focus halo, which would

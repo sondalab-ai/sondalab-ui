@@ -1619,3 +1619,35 @@ test("the workbench's rows, bars and controls are whole 4px steps tall and wide"
   if (box(RULES_A, p["palette input"]).height !== 32) off.push(`palette input ${box(RULES_A, p["palette input"]).height}`);
   assert.deepEqual(off, []);
 });
+
+// ── forced colours and high contrast: the marks 0.34 added keep their shape ──
+
+test("forced colours: the bell's unread dot becomes a Highlight edge, and a count badge keeps its shape on a current item", () => {
+  const wb = parseSheet(read("workbench.css"), { forcedColors: true });
+  const at = el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) });
+  // the dot is an image, which forced colours drop: the button says it with its edge
+  const bell = cascaded(wb, el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn", "sl-titlebar__btn--dot"], parent: at }));
+  assert.equal(bell.get("border").value, "2px solid Highlight");
+  assert.ok(bell.get("border").important);
+  // the badge opts out and is drawn in the selection's colours, ringed in
+  // their text colour, so on a current item (Highlight itself) it keeps a shape
+  const current = el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "aria-current": "true" }, parent: at });
+  const badge = cascaded(wb, el({ tag: "span", classes: ["sl-activitybar__badge"], parent: current }));
+  assert.equal(badge.get("forced-color-adjust").value, "none");
+  assert.equal(badge.get("background").value, "Highlight");
+  assert.equal(badge.get("color").value, "HighlightText");
+  assert.equal(badge.get("outline").value, "1px solid HighlightText");
+  assert.ok(badge.get("outline").important);
+  assert.equal(cascaded(wb, current).get("background").value, "Highlight", "the item it sits on");
+});
+
+test("a toast's timer stays a 2px bar under high contrast and forced colours, never a bordered box", () => {
+  const timer = (rules) => cascaded(rules, el({ classes: ["sl-progress", "sl-toast__timer"], parent: el({ classes: ["sl-toast"], parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "high-contrast" } }) }) }) }));
+  const h = timer(RULES_A);
+  assert.equal(h.get("border").value, "0", "high contrast draws the progress track's edge; the timer has no track");
+  const fc = timer(parseSheet(read("components.css"), { forcedColors: true }));
+  assert.equal(fc.get("border").value, "0");
+  assert.ok(fc.get("border").important, "outranks forced colours' drawn progress edge");
+  const bar = cascaded(parseSheet(read("components.css"), { forcedColors: true }), el({ tag: "span", classes: ["sl-progress__bar"], parent: el({ classes: ["sl-progress", "sl-toast__timer"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }) }));
+  assert.equal(bar.get("background").value, "Highlight", "the bar itself in the system's colour");
+});

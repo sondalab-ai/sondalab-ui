@@ -808,7 +808,9 @@
    lit pane a heavier one in Highlight, and its seam and the palette's in
    Highlight too; the palette is opaque, unblurred; the exit mark, the live
    dot (which stops breathing) and a count badge are drawn in system
-   colours, and a selection is the system's. */
+   colours (the badge ringed, so it keeps its shape on a current item), the
+   bell's unread dot becomes a Highlight edge on its button, and a
+   selection is the system's. */
 @media (forced-colors: active) {
   :is(.sl-pane, .sl-term-block, .sl-palette) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
   .sl-pane[data-lit] { outline: 2px solid Highlight !important; outline-offset: -2px; }
@@ -817,7 +819,12 @@
   .sl-palette { background-color: Canvas !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
   .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; animation: none !important; }
-  .sl-activitybar__badge { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; }
+  /* A badge in the selection's colours, ringed in their text colour: on a
+     current item, which is Highlight itself, the ring keeps its shape. */
+  .sl-activitybar__badge { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; outline: 1px solid HighlightText !important; }
+  /* The bell's dot is an image, which forced colours drop: the button says
+     "unread" with a heavier edge in Highlight (its name says it in words). */
+  .sl-icon-btn.sl-titlebar__btn--dot { border: 2px solid Highlight !important; }
   /* Selection that was only a fill and a shadow is the system's selection;
      the seam goes with the shorthand, and its parts take the selection's
      text colour. Opting out also stops the forced outline colour: the shared
