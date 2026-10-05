@@ -11,7 +11,7 @@
 // identically in-repo and when installed in a consumer's node_modules.
 // Surface globs resolve against the caller's cwd.
 
-import { readFileSync, globSync } from "node:fs";
+import { readFileSync, globSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative } from "node:path";
 
@@ -583,6 +583,19 @@ function printBucket(label, findings) {
   console.log("");
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+/** True when node was started on this file. argv[1] is the path the caller
+ * gave: npm's .bin symlink, or a path through pnpm's linked package directory.
+ * import.meta.url is already resolved, so compare real paths on both sides.
+ * A path that does not resolve (an import from `node -e`) is not this file. */
+function isMain() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMain()) {
   main();
 }
