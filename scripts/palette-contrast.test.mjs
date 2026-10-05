@@ -370,6 +370,10 @@ test("the code hues are the token triples baked into sRGB by chroma alone", () =
       assert.ok(Math.abs(l2 - L) < 0.004 && Math.abs(h2 - h) < 1.5 && c2 <= C + 0.004, `${theme} ${role}: oklch(${l2.toFixed(3)} ${c2.toFixed(3)} ${h2.toFixed(1)}) for oklch(${L} ${C} ${h})`);
     }
     assert.equal(t["--sl-code-boolean"], t["--sl-code-number"], `${theme}: boolean reads as number`);
+    assert.equal(t["--sl-code-tag"], t["--sl-code-keyword"], `${theme}: tag reads as keyword`);
+    // five hues, no more: every chromatic role is one of the target's
+    const hues = new Set(["keyword", "string", "number", "boolean", "function", "tag", "builtin"].map((r) => t[`--sl-code-${r}`]));
+    assert.equal(hues.size, LUMEN_HUES.length, `${theme}: ${[...hues].join(" ")}`);
   }
 });
 

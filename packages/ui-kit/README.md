@@ -43,12 +43,13 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
   | function | `#1f6a96` → `#006191` | `#6db3e4` → `#75caf2` |
   | number, boolean | `#aa442b` → `#b13e06` | `#f5886c` → `#fd9976` |
   | builtin | `#865d06` → `#865900` | `#d4a14a` → `#e5bf6d` |
+  | tag | `#b33c1e` → `#5847b7` | `#fe8263` → `#a9b0fd` |
 
-  - `tag`, `fg` and `comment` are unchanged.
+  - `tag` now reads as `keyword`: the target has no tag colour, and atom-one's tag sat within OKLab ΔE 1.5 of the new `number` on paper. The palette is five hues. `fg` and `comment` are unchanged.
   - The hues are authored as oklch in `sondalab.tokens.json` and baked to hex by the generator, the same for every product.
   - Two are outside sRGB: light `function`, oklch(0.47 0.12 240), and light `builtin`, oklch(0.5 0.11 75). Each keeps its lightness and hue and gives up chroma (0.1077 and 0.1055), never a per-channel clip. The target, clipped by Chrome, paints `#006197` and `#875800`.
-  - `boolean` is now an alias of `number`.
-  - Every role reads at 4.5:1 or more (comment and null 3:1) on every product's canvas, surface, raised, tile and sunken grounds, and in an editor: on raised under the current line (the primary ink at 4.5%) and under the selection (the product's accent at 18%). The tightest are light `number` at 4.54:1 and light `tag` at 4.52, both on local-agents' selection.
+  - `boolean` is now an alias of `number`, and `tag` of `keyword`.
+  - Every role reads at 4.5:1 or more (comment and null 3:1) on every product's canvas, surface, raised, tile and sunken grounds, and in an editor: on raised under the current line (the primary ink at 4.5%) and under the selection (the product's accent at 18%). The tightest is light `number` at 4.54:1, on local-agents' selection.
 - **`neutrals.json` carries the whole syntax palette.** `products.<id>.<light|dark>` now holds `code-keyword`, `code-string`, `code-number`, `code-boolean`, `code-function`, `code-tag` and `code-builtin` beside `code-fg`, `code-comment` and `code-null`. An editor or terminal theme can be built without reading CSS.
 - **Hairlines are the Lumen target's, in the product's own ink.**
   - `--sl-border-subtle` goes from 0.09 to 0.08 on light and from 0.07 to 0.065 on dark.

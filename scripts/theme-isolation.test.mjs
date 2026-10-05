@@ -19,7 +19,7 @@ import { parseSheet, el, customs } from "./lib/cascade.mjs";
 // (0.32.1, the components.css macros: 0.05 / 0.10 of oklch lightness toward
 // black, or toward white where the dark label would read under 5.4:1), plus
 // the Lumen hairlines (border-subtle 0.065, border-default 0.11) and the Lumen
-// syntax hues baked from their oklch values (0.35.0); high
+// syntax hues baked from their oklch values, tag reading as keyword (0.35.0); high
 // contrast took its values for the three
 // new neutral roles and its resets in 0.29.0, and is otherwise unchanged
 // since 0.20.1.

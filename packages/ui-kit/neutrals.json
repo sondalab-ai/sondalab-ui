@@ -77,7 +77,7 @@
         "code-number": "#b13e06",
         "code-boolean": "#b13e06",
         "code-function": "#006191",
-        "code-tag": "#b33c1e",
+        "code-tag": "#5847b7",
         "code-builtin": "#865900"
       },
       "dark": {
@@ -101,7 +101,7 @@
         "code-number": "#fd9976",
         "code-boolean": "#fd9976",
         "code-function": "#75caf2",
-        "code-tag": "#fe8263",
+        "code-tag": "#a9b0fd",
         "code-builtin": "#e5bf6d"
       }
     },
@@ -137,7 +137,7 @@
         "code-number": "#b13e06",
         "code-boolean": "#b13e06",
         "code-function": "#006191",
-        "code-tag": "#b33c1e",
+        "code-tag": "#5847b7",
         "code-builtin": "#865900"
       },
       "dark": {
@@ -161,7 +161,7 @@
         "code-number": "#fd9976",
         "code-boolean": "#fd9976",
         "code-function": "#75caf2",
-        "code-tag": "#fe8263",
+        "code-tag": "#a9b0fd",
         "code-builtin": "#e5bf6d"
       }
     },
@@ -200,7 +200,7 @@
         "code-number": "#b13e06",
         "code-boolean": "#b13e06",
         "code-function": "#006191",
-        "code-tag": "#b33c1e",
+        "code-tag": "#5847b7",
         "code-builtin": "#865900"
       },
       "dark": {
@@ -224,7 +224,7 @@
         "code-number": "#fd9976",
         "code-boolean": "#fd9976",
         "code-function": "#75caf2",
-        "code-tag": "#fe8263",
+        "code-tag": "#a9b0fd",
         "code-builtin": "#e5bf6d"
       }
     },
@@ -259,7 +259,7 @@
         "code-number": "#b13e06",
         "code-boolean": "#b13e06",
         "code-function": "#006191",
-        "code-tag": "#b33c1e",
+        "code-tag": "#5847b7",
         "code-builtin": "#865900"
       },
       "dark": {
@@ -283,7 +283,7 @@
         "code-number": "#fd9976",
         "code-boolean": "#fd9976",
         "code-function": "#75caf2",
-        "code-tag": "#fe8263",
+        "code-tag": "#a9b0fd",
         "code-builtin": "#e5bf6d"
       }
     },
@@ -318,7 +318,7 @@
         "code-number": "#b13e06",
         "code-boolean": "#b13e06",
         "code-function": "#006191",
-        "code-tag": "#b33c1e",
+        "code-tag": "#5847b7",
         "code-builtin": "#865900"
       },
       "dark": {
@@ -342,7 +342,7 @@
         "code-number": "#fd9976",
         "code-boolean": "#fd9976",
         "code-function": "#75caf2",
-        "code-tag": "#fe8263",
+        "code-tag": "#a9b0fd",
         "code-builtin": "#e5bf6d"
       }
     }

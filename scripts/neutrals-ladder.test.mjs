@@ -321,6 +321,7 @@ test("neutrals.json carries the whole syntax palette per product and theme: the 
       for (const role of CODE_SLOTS) assert.match(p[theme][`code-${role}`], /^#[0-9a-f]{6}$/, `${id} ${theme} code-${role}`);
       for (const role of CODE_HUES) assert.equal(p[theme][`code-${role}`], decl(css, `--sl-code-${role}`), `${id} ${theme} code-${role}`);
       assert.equal(p[theme]["code-boolean"], p[theme]["code-number"], "boolean reads as number");
+      assert.equal(p[theme]["code-tag"], p[theme]["code-keyword"], "tag reads as keyword");
     }
   }
   // the rungs are the product's: spexr's light code-fg is not the default's
