@@ -2576,7 +2576,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 
 /* ══ THE SEAM — the state cue of a selected or current tile (0.33) ══════════
    The tile is depth, not a state cue: its fill against its ground and its
-   ring measure 1.00-1.42:1 (a white tile on a white table, a lit pane or a
+   ring measure 1.00-1.34:1 (1.42 before the 0.35 hairlines; a white tile on a white table, a lit pane or a
    palette on the light theme is 1.00), and a label that only steps from the
    muted to the primary ink is 2.31-2.49. Every selected or current tile
    carries a seam, the nav item's since 0.31: a 2px line, half the tile's
@@ -2734,7 +2734,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 /* The fill set is declared on the controls themselves (0.32), so the remap
    above is repeated there: a filled control's edge is the accent, and a
-   product's accent fill does not reach high contrast at any scope. */
+   product's accent fill does not reach a control anywhere under a
+   high-contrast root. Both rules are keyed to :root: a high-contrast island
+   inside a light or dark page is not reset, and inherits that page's fill. */
 :root[data-sl-theme="high-contrast"] :where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
   --slc-accent-fill: initial;
   --slc-edge-accent: var(--slc-accent);
