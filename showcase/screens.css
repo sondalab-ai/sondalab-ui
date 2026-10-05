@@ -87,6 +87,11 @@ svg { flex: none; }
 [data-dir="lumen"] .sl-statusbar__item { line-height: 22px; }
 [data-dir="lumen"] .ide-cmd { padding: 0 0.4rem 0 0.65rem; }
 [data-dir="lumen"] .ide-title__crumb .sl-titlebar__sep { margin-inline: 0.15rem; }
+/* ui-kit 0.36 (K10) gives the button and the chip a 14px line and the tag a
+   12px one and 8px in, which the target never set: its own, the type size
+   and the tag's 0.35 padding, are restated so it renders as before. */
+[data-dir="lumen"] :is(.sl-btn, .sl-chip, .sl-tag) { line-height: 1; }
+[data-dir="lumen"] .sl-tag { padding: var(--sl-space-1) var(--sl-space-3); }
 
 /* ── app shell ─────────────────────────────────────────────────────────── */
 /* The frame is the canvas and the panes are the kit's islands on it
@@ -99,7 +104,6 @@ svg { flex: none; }
 /* the title bar is the kit's (.sl-titlebar, 0.34); the traffic lights are the stage's, as a mac product's are the system's */
 .ide-dots { display: inline-flex; gap: 6px; } .ide-dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb, var(--slc-text) 18%, transparent); }
 .ide-keys { display: inline-flex; gap: 3px; }
-.ide-live { font-size: 11px; }
 .ide-avatar { --sl-avatar-size: 26px; font: 600 10px/1 var(--sl-font-mono); color: var(--slc-text-secondary); }
 [data-count] { position: relative; }
 
