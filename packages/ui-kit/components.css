@@ -1116,7 +1116,13 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
-.sl-check__box { border-radius: var(--sl-radius-sm, 6px); }
+/* The check box is Lumen's (0.36): r5, the keycap's corner (it was r6), on
+   the canvas, a deeper well than the sunken rung on paper (it was the
+   sunken rung, which the radio, the switch and the field keep). Checked,
+   the fill set paints over it as before. In the inversion band the canvas
+   is the band's ink, so a box there stays on the band's sunken wash. */
+.sl-check__box { border-radius: 5px; background: var(--slc-canvas); }
+.sl-invert .sl-check__box { background: var(--slc-sunken); }
 .sl-radio__box { border-radius: 50%; }
 
 .sl-check__input:checked + .sl-check__box,

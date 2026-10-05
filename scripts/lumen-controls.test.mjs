@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { parseSheet, el, box, cascaded, customs, px } from "./lib/cascade.mjs";
-import { evaluate, fromOklch, fromSrgb, toOklch, toSrgb } from "./lib/css-color.mjs";
+import { evaluate, fromOklch, fromSrgb, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
 
 // Lumen parity, the controls (ui-kit 0.36, slice K10): the button, the badge,
 // the tag, the chip, the keycap and the check box move to the Lumen IDE
@@ -212,4 +212,62 @@ test("a keycap's base is Lumen's shade on every product: within 0.015 oklch L of
     if (Math.abs(L - Lt) > 0.015) out.push(`${theme} ${product}: base L ${L.toFixed(3)}, Lumen ${Lt.toFixed(3)}`);
   }
   assert.deepEqual(out, []);
+});
+
+// ── check box ────────────────────────────────────────────────────────────────
+
+const YL = (c) => { const [r, g, b] = c.lin.map((v) => Math.min(1, Math.max(0, v))); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const ratio = (a, b) => { const [hi, lo] = [YL(a), YL(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
+/** A check box in a label on a ground: [box, the ground's colour, env]. */
+function checkBox(theme, { product = null, band = false, checked = false } = {}) {
+  const parent = at(theme, { product, band });
+  const label = el({ tag: "label", classes: ["sl-check"], parent });
+  const input = el({ tag: "input", classes: ["sl-check__input"], states: checked ? ["checked"] : [], parent: label });
+  return el({ tag: "span", classes: ["sl-check__box"], parent: label, prev: input });
+}
+
+test("the check box is Lumen's: r5 on the canvas, and checked it is the fill set as before", () => {
+  const b = checkBox("dark");
+  assert.equal(value(KIT_RULES, b, "border-radius"), "5px");
+  assert.equal(value(KIT_RULES, b, "background"), "var(--slc-canvas)");
+  const on = checkBox("dark", { checked: true });
+  assert.equal(value(KIT_RULES, on, "background"), "var(--_sl-fill)");
+  assert.equal(value(KIT_RULES, on, "border-color"), "var(--_sl-fill-edge)");
+  // the radio keeps its round box on the sunken rung
+  const radio = el({ tag: "span", classes: ["sl-radio__box"], parent: at() });
+  assert.equal(value(KIT_RULES, radio, "border-radius"), "50%");
+  assert.equal(value(KIT_RULES, radio, "background"), "var(--slc-sunken)");
+});
+
+test("the check box's edge finds it at 3:1 against its canvas well and the ground round it, on every product and theme", () => {
+  const out = [];
+  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    const env = customs(KIT_RULES, checkBox(theme, { product }));
+    const edge = evaluate("var(--slc-edge-control)", env);
+    for (const ground of ["--slc-canvas", "--slc-surface", "--slc-raised"]) {
+      const r = ratio(edge, evaluate(`var(${ground})`, env));
+      if (r < 3) out.push(`${theme} ${product}: edge on ${ground} ${r.toFixed(2)}`);
+    }
+  }
+  const hc = customs(KIT_RULES, checkBox("high-contrast"));
+  const r = ratio(evaluate("var(--slc-edge-control)", hc), evaluate("var(--slc-canvas)", hc));
+  if (r < 3) out.push(`high contrast: ${r.toFixed(2)}`);
+  assert.deepEqual(out, []);
+});
+
+test("in the inversion band the check box stays on the band's sunken wash, never the band's ink", () => {
+  for (const theme of ["light", "dark", "high-contrast"]) {
+    const b = checkBox(theme, { band: true });
+    assert.equal(value(KIT_RULES, b, "background"), "var(--slc-sunken)", theme);
+    // the band's sunken rung is a 4% wash of its ink (currentColor, which
+    // the band binds to the page canvas), not a solid of that ink
+    const env = customs(KIT_RULES, b);
+    const ink = toHex(evaluate("var(--slc-canvas)", env));
+    const sunken = value(KIT_RULES, b.parent.parent, "--slc-sunken") ?? value(KIT_RULES, b.parent, "--slc-sunken");
+    assert.match(sunken, /currentColor 4%, transparent/, theme);
+    const fill = evaluate(sunken.replace(/currentColor/g, ink), env);
+    assert.ok(fill.alpha < 0.1, `${theme}: a wash over the band's ground (alpha ${fill.alpha}), not a solid of its ink ${ink}`);
+    // checked, the fill set still wins in the band
+    assert.equal(value(KIT_RULES, checkBox(theme, { band: true, checked: true }), "background"), "var(--_sl-fill)", theme);
+  }
 });
