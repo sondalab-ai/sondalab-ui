@@ -1660,3 +1660,36 @@ test("a toast's timer stays a 2px bar under high contrast and forced colours, ne
   const bar = cascaded(parseSheet(read("components.css"), { forcedColors: true }), el({ tag: "span", classes: ["sl-progress__bar"], parent: el({ classes: ["sl-progress", "sl-toast__timer"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }) }));
   assert.equal(bar.get("background").value, "Highlight", "the bar itself in the system's colour");
 });
+
+test("the palette is opaque where the user asks for less transparency", () => {
+  let o = 2e6;
+  const rules = [...TIER_A, accents(), PAGE].flatMap((css) => { const r = parseSheet(css, { reducedTransparency: true }, o); o += r.length + 1; return r; });
+  const pal = cascaded(rules, el({ classes: ["sl-palette"], parent: mount(dark) }));
+  assert.equal(pal.get("background-color").value, "var(--slc-raised)");
+  assert.equal(pal.get("backdrop-filter").value, "none");
+  assert.equal(pal.get("-webkit-backdrop-filter").value, "none");
+});
+
+// The field keeps the one control edge (Lumen draws it borderless, 1.00:1):
+// a field is found by its boundary, >= 3:1 against the palette it sits in,
+// with the canvas or the page's own ink under the palette's 6%.
+test("the palette's field is found by its edge at 3:1, every product, theme and tier", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    for (const under of ["", "under-ink"]) {
+      const rules = under ? [...ctx.rules, ...parse([".under-ink { background-color: var(--slc-text); }"])] : ctx.rules;
+      const at = under ? el({ classes: [under], parent: mount(ctx) }) : mount(ctx);
+      const p = BUILD.palette(at);
+      const input = p["palette input"];
+      const won = cascaded(rules, input);
+      // the border colour that wins: a longhand of the palette's over the field's shorthand, or the shorthand's colour
+      const bc = won.get("border-color"), b = won.get("border");
+      const text = bc && (!b || cmp(bc, b) > 0) ? bc.value : words(b.value).slice(2).join(" ");
+      const edge = value(rules, input, text, colorOf(rules, input));
+      const g = groundOf(rules, input.parent);
+      const r = ratio(over(edge, g), g);
+      if (!(r >= 3)) low.push(`${ctx.name}${under ? " over ink" : ""} ${r.toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(low, []);
+});

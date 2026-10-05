@@ -546,8 +546,8 @@ a.sl-statusbar__item { text-decoration: none; }
    The command palette, as Lumen draws it (0.34): an overlay that floats on
    Lumen's cast (--slc-depth-cast: the ring is the cast's, so it keeps no
    border), 580px wide, the raised rung at 94% under a blur of what it covers
-   where the browser can blur it (opaque where it cannot, in high contrast
-   and under forced colours), a line of the accent just inside its top edge
+   where the browser can blur it (opaque where it cannot, where the user
+   asks for less transparency, in high contrast and under forced colours), a line of the accent just inside its top edge
    -- from 16px in, gone 40% before the end, glowing (it holds the focus) --
    a 54px head over a hairline, its input at 16px with no fill or well, and
    a list of 38px results in which the active one is a raised tile with the
@@ -601,6 +601,14 @@ a.sl-statusbar__item { text-decoration: none; }
     background-color: color-mix(in srgb, var(--slc-raised) 94%, transparent);
     -webkit-backdrop-filter: blur(24px) saturate(1.3);
     backdrop-filter: blur(24px) saturate(1.3);
+  }
+}
+/* Where the user asks for less transparency, the raised rung, opaque. */
+@media (prefers-reduced-transparency: reduce) {
+  .sl-palette {
+    background-color: var(--slc-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 /* A line of light, not a layer: it glows as Lumen draws it, at 55% wherever

@@ -69,7 +69,7 @@ export function specificity(sel) {
  *  `flags` decides the conditional blocks: forcedColors, reducedMotion,
  *  hover (default true), backdrop (@supports backdrop-filter, default true). */
 export function parseSheet(css, flags = {}, orderBase = 0) {
-  const f = { forcedColors: false, reducedMotion: false, hover: true, backdrop: true, ...flags };
+  const f = { forcedColors: false, reducedMotion: false, reducedTransparency: false, hover: true, backdrop: true, ...flags };
   const src = strip(css);
   const rules = [];
   let order = orderBase;
@@ -78,6 +78,7 @@ export function parseSheet(css, flags = {}, orderBase = 0) {
       if (/forced-colors:\s*active/.test(prelude)) return f.forcedColors;
       if (/prefers-reduced-motion:\s*reduce/.test(prelude)) return f.reducedMotion;
       if (/prefers-reduced-motion:\s*no-preference/.test(prelude)) return !f.reducedMotion;
+      if (/prefers-reduced-transparency:\s*reduce/.test(prelude)) return f.reducedTransparency;
       if (/hover:\s*hover/.test(prelude)) return f.hover;
       return true;
     }
