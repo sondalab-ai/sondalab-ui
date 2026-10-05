@@ -65,6 +65,8 @@
         "--slc-edge-accent",
         "--slc-edge-control",
         "--slc-edge-control-hover",
+        "--slc-edge-pressed",
+        "--slc-seam",
         "--slc-raised",
         "--slc-tile",
         "--slc-lit",
@@ -635,6 +637,8 @@
       "roleVars": [
         "--slc-edge-control",
         "--slc-edge-control-hover",
+        "--slc-edge-pressed",
+        "--slc-seam",
         "--slc-surface",
         "--slc-text-secondary",
         "--slc-text",

@@ -108,7 +108,6 @@
   /* It is the edge of whatever accent FILL is painted: the accent, or the
      product's own --slc-accent-fill (below) where it sets one. */
   --slc-edge-accent:   oklch(from var(--slc-accent-fill, var(--slc-accent)) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
-  --slc-edge-pressed:  oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
   /* A form control's box must be found before it is read: steps AWAY from
      the surface, toward contrast -- darker on paper, LIGHTER on ink. In
      shade on ink it was near-black on near-black (1.06:1, owner 2026-10-01:
@@ -126,9 +125,16 @@
      and buttons have darker ones -- they should all be consistent"). Every
      neutral control -- field, select, checkbox, radio, switch, secondary,
      ghost and icon buttons, chip, segmented -- is outlined in
-     --slc-edge-control; a filled one (primary, pressed) keeps its fill in
-     shade, because the fill is what finds it. Hover is two steps further. */
+     --slc-edge-control; a filled one (the primary, a checked box) keeps its
+     fill in shade, because the fill is what finds it. Hover is two steps
+     further. */
   --slc-edge-control-hover: oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * (var(--slc-edge-control-steps) + 0.5 * clamp(0, (l - 0.5) * 1000, 1) + 2) * clamp(-1, (0.5 - l) * 1000, 1)) c h);
+  /* A pressed toggle keeps the one control edge (0.36.2). Its 12% wash is no
+     fill that finds it: the wash in shade, its edge until 0.36.1, read
+     1.01-1.36:1 on the page and 1.04-1.41 in a band. Its state is the seam
+     (THE SEAM, below) or, on a chip, the filled dot. High contrast keeps
+     the accent here (below). */
+  --slc-edge-pressed:  var(--slc-edge-control);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* THE ACCENT AS A FILL THAT CARRIES A LABEL (0.32): the primary, a checked
      check, radio or switch, a count badge. --slc-accent-fill is UNSET by
@@ -463,8 +469,11 @@
 /* Chip — a toggleable filter. A row of them (.sl-chips) is a multi-select:
    each is a <button aria-pressed> and any number may be on (one-of-N is
    sl-segmented). Off, it is outlined in the muted ink with a hollow dot; on,
-   it takes the tag's accent dress and the dot fills — so "on" reads by
-   colour, fill and glyph, never by colour alone.
+   it takes the tag's accent ink and wash and the dot fills — so "on" reads by
+   colour, fill and glyph, never by colour alone. The filled dot is the state
+   cue (0.36.2): the accent text, >= 4.6:1 on the "on" wash and >= 5.2 where
+   the hollow dot showed the ground. The edge stays the one control edge in
+   both states (the wash in shade read 1.36:1).
    Lumen's shape (0.36): the mono at 12.5px, 500, untracked, at r6, 8px in
    and 4px above and below (its 9.6 and 4.8 on the 4px grid), on the
    button's 14px line, so it is 24px tall, the small button's row it sits
@@ -767,9 +776,14 @@
 
 /* Toggle state — an on/off button is a plain or ghost button, or an icon
    button, carrying aria-pressed. The CSS reads the attribute, so the
-   accessible state and the visible one cannot drift apart. Colour and edge
-   carry "on" as well as the fill: a glass host clears its own background and
-   gets the fill back through its pane (effects.css). A primary never toggles —
+   accessible state and the visible one cannot drift apart. "On" is the
+   accent ink, a 12% wash of the accent and a seam (0.36.2; THE SEAM,
+   below): the wash and the ink read only 1.0-2.6:1 against the button at
+   rest, so the seam, a line of the accent that rest does not draw, is what
+   says it at 3:1, as on a selected tile. The edge is the one control edge in
+   both states, which finds the button (--slc-edge-pressed). A glass host
+   clears its own background and gets the wash back through its pane
+   (effects.css); the seam is an image and stays. A primary never toggles —
    its fill already reads as "on", so there would be nothing left to switch to. */
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"],
 .sl-icon-btn[aria-pressed="true"] {
@@ -782,6 +796,14 @@
 .sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:hover:not(:disabled),
 .sl-icon-btn[aria-pressed="true"]:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--slc-accent) 20%, transparent);
+}
+/* Hovered, the deeper wash took the rest edge under 3:1 against it (down to
+   2.70 on paper, local-agents, and 2.81 on ink), so the edge steps to its
+   hover, as every control's does (the icon button's own hover already
+   outranks the pressed rule). High contrast keeps its one edge; focus keeps
+   the ring's. */
+.sl-btn:not(.sl-btn--primary)[aria-pressed="true"]:where(:root:not([data-sl-theme="high-contrast"]) *):hover:not(:disabled, :focus-visible) {
+  border-color: var(--slc-edge-control-hover);
 }
 /* The shared focus rule hands the border to the ring, but these state rules
    outrank it: an "on" or hovered border left inside the ring is a band. */
@@ -1894,7 +1916,25 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      (60%) drew 38% at 23%. Hover stays 14 points further, as it was. */
   --slc-edge-control:  oklch(from var(--slc-canvas) l c h / calc(0.48 + 0.05 * clamp(0, (0.5 - l) * 1000, 1)));
   --slc-edge-control-hover: oklch(from var(--slc-canvas) l c h / calc(0.62 + 0.05 * clamp(0, (0.5 - l) * 1000, 1)));
-  --slc-edge-pressed:  color-mix(in srgb, var(--slc-accent) 35%, transparent);
+  /* A pressed toggle keeps the band's control edge, as on the page (0.36.2;
+     35% of the accent until then, 1.04-1.41:1 on the band). */
+  --slc-edge-pressed:  var(--slc-edge-control);
+  /* THE ACCENT FILL'S EDGE IN A BAND (0.36.2). The fill itself cannot find
+     a primary or a checked box here: on the dark and high-contrast themes'
+     light bands a bright fill reads 1.07-2.4:1 (high contrast's yellow,
+     introspect's mint), and on the light theme's dark band a dark fill
+     hovered or pressed sinks to 2.2:1 (local-agents' blue). So the edge
+     does, held to the mid-tones: the fill one shade step down, floored at
+     oklch L 0.55 and capped at 0.59 (paper's own cap), which reads 3:1
+     against a dark band and a light one alike -- no theme branch, so a
+     Tier B band gets it too. Its chroma follows its lightness (in
+     proportion toward black, eased toward white as the hover step does), so
+     it stays in sRGB. A MACRO, like the label's: channels a relative colour
+     substitutes, oklch(from <fill> var(--_sl-band-edge)). The kit's filled
+     controls draw it in every state (the fill set in a band, below); the
+     public role is re-derived for a fill a product draws itself. */
+  --_sl-band-edge: min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) calc(c * min(min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) / l, pow(max(0, 1 - (min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) - l) / max(1 - l, 0.001)), 1.5))) h;
+  --slc-edge-accent:   oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-band-edge));
 }
 
 /* Cells paint their own surface; the 1px gap over the line colour IS the rule.
@@ -2171,6 +2211,20 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 .sl-invert .sl-btn--danger:not(.sl-btn--primary),
 .sl-invert .sl-icon-btn--danger { background-color: transparent; }
+
+/* THE FILL SET IN A BAND (0.36.2): a filled control's edge and foot are its
+   fill held to the band's mid-tones (--_sl-band-edge, .sl-invert > *), in
+   every state and on every theme, high contrast's yellow included, since
+   the fill itself does not find the control there. One edge from the
+   resting fill: hovered and pressed fills move a step, and the mid-tones
+   absorb it. After the danger tone, at its weight, so a danger primary in
+   a band takes it too; the hover and press rules above are outranked by
+   (0,4,0). The fill and its label are untouched, and the checked box's
+   tick, dot or knob still says it is checked, as on paper. */
+.sl-invert :is(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track),
+.sl-invert .sl-btn--primary:is(:hover, :active):not(:disabled) {
+  --_sl-fill-edge: oklch(from var(--_sl-fill) var(--_sl-band-edge));
+}
 .sl-btn--danger:not(.sl-btn--primary):hover:not(:disabled),
 .sl-icon-btn--danger:hover:not(:disabled) {
   color: var(--slc-on-danger);
@@ -2714,6 +2768,38 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   background-repeat: no-repeat, var(--_sl-layer-repeat);
   background-size: var(--_sl-seam-size), var(--_sl-layer-size);
   background-position: var(--_sl-seam-position), var(--_sl-layer-position);
+}
+/* A pressed toggle (0.36.2) carries the seam a segment does, a short line
+   3px above its bottom edge, 1px on a small button, whose 14px line sits
+   2px lower in its 24px. Always the accent as a line of light: a pressed
+   button is its own state, not a selection the keyboard would act on in a
+   container that holds the focus, and its label is in the accent already.
+   It reads >= 4.3:1 against the "on" wash (hovered too) and >= 4.1 against
+   the button at rest, on the page, in a band and in high contrast; nothing
+   else about "on" reaches 3:1 there (the wash and the ink, 1.0-2.6:1). The
+   icon button's hover resets its background, so the hovered state is
+   listed at hover's weight. A host
+   image (the title bar's unread dot, workbench.css) is handed over as
+   --_sl-layer. A built glass pane paints its tint over the host's
+   background, so there its specular layer draws the seam again, from the
+   same two private values (effects.css). Forced colours' Highlight fill
+   resets it with the rest of the background, and Highlight says "on" there. */
+:where(.sl-btn, .sl-icon-btn) {
+  --_sl-toggle-seam-size: 40% 2px;
+  --_sl-toggle-seam-position: 50% calc(100% - 3px);
+  --_sl-layer: none;
+  --_sl-layer-size: auto;
+  --_sl-layer-position: 0 0;
+  --_sl-layer-repeat: no-repeat;
+}
+:where(.sl-btn--sm) { --_sl-toggle-seam-position: 50% calc(100% - 1px); }
+.sl-btn:not(.sl-btn--primary)[aria-pressed="true"],
+.sl-icon-btn[aria-pressed="true"],
+.sl-icon-btn[aria-pressed="true"]:hover:not(:disabled) {
+  background-image: linear-gradient(var(--slc-seam), var(--slc-seam)), var(--_sl-layer);
+  background-repeat: no-repeat, var(--_sl-layer-repeat);
+  background-size: var(--_sl-toggle-seam-size), var(--_sl-layer-size);
+  background-position: var(--_sl-toggle-seam-position), var(--_sl-layer-position);
 }
 
 /* ══ TACTILE — the controls give under the finger ══════════════════════════════

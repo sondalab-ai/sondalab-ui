@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { parseSheet, el, box, cascaded, customs, longhand, px } from "./lib/cascade.mjs";
+import { parseSheet, el, box, cascaded, customs, longhand, px, splitList } from "./lib/cascade.mjs";
 import { evaluate, fromOklch, fromSrgb, substitute, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
 
 // Lumen parity, the controls (ui-kit 0.36, slice K10): the button, the badge,
@@ -572,4 +572,227 @@ test("in a band a group of glass members keeps only its soft inner lines (a know
     }
   }
   assert.deepEqual(out, []);
+});
+
+// ── state indicators and boundaries at 3:1 (0.36.2) ──────────────────────────
+
+// Three gaps the 0.36.1 review measured in Chrome 154, each a boundary or a
+// state indicator under the owner's 3:1:
+//  1. a pressed toggle's edge was its 12% wash in shade, 1.01-1.36:1 on the
+//     page and 1.04-1.41 in a band, and nothing about "on" read 3:1 against
+//     the toggle at rest (the wash and the ink, 1.0-2.6:1);
+//  2. an accent fill in a band: a primary's edge read 1.71:1 on the dark
+//     theme's light band (introspect) and 1.07 on high contrast's white one,
+//     and a dark fill hovered or pressed sank to 1.58 on the light theme's
+//     dark band (local-agents);
+//  3. a checked check box, radio or switch in a band, the same fill set:
+//     1.07:1 on high contrast's band, 1.71 on the dark theme's (introspect).
+// Read with each registered product's own accent: Tier A as the README's
+// "Per-product accent" wires it, with products.css (its neutrals and fill);
+// Tier B as a [data-theme] layer mapping the accent, its label, its fill, its
+// neutrals and the README's light- and dark-layer numbers. The comparison a
+// state indicator is held to is the ground beside it and the toggle at rest
+// in the same spot; a pressed edge against the rest edge is not one (the
+// accent and the neutral edge sit at the same lightness, about 1.0-1.9:1), so
+// "on" is carried by a mark rest does not draw: the seam, or the chip's dot.
+
+const REG = JSON.parse(read("agent/accent-registry.json")).products;
+const productOf = (id) => (REG[id].inherits ? { ...REG[REG[id].inherits], ...REG[id] } : REG[id]);
+const README_TEXT = readFileSync(resolve(KIT, "README.md"), "utf8");
+const README_LAYER = Object.fromEntries(["light", "dark"].map((t) => {
+  const block = README_TEXT.match(new RegExp(`\`\`\`css\\n:root\\[data-theme="${t}"\\] \\{\\n([\\s\\S]*?)\\}\\n\`\`\``));
+  return [t, Object.fromEntries([...block[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]))];
+}));
+const STATE_PAGE = "html, body { background-color: var(--slc-canvas); color: var(--slc-text); }";
+const STATE_ACCENTS = PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => {
+  const a = productOf(p), steps = a.steps?.[t] ? Object.entries(a.steps[t]).map(([k, v]) => ` --sl-accent-${k}: ${v};`).join("") : "";
+  return `:root[data-sl-product="${p}"][data-sl-theme="${t}"] { --sl-accent-default: ${a[t]};${t === "dark" ? ` --sl-focus-ring: ${a[t]};` : ""}${steps} }`;
+})).join("\n");
+const STATE_TIER_B = PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => {
+  const a = productOf(p), n = NEUTRALS[p][t];
+  const map = {
+    "--slc-accent": a[t], "--slc-on-accent": "oklch(from var(--slc-accent) var(--_sl-on))", ...(a.fill?.[t] ? { "--slc-accent-fill": a.fill[t] } : {}), "--slc-focus": "var(--slc-accent-text)",
+    "--slc-canvas": n["bg-canvas"], "--slc-surface": n["bg-surface"], "--slc-raised": n["bg-surface-raised"], "--slc-text": n["text-primary"],
+    "--slc-text-secondary": n["text-secondary"], "--slc-text-muted": n["text-muted"], "--slc-border": n["border-default"], "--slc-border-subtle": n["border-subtle"],
+    "--slc-border-strong": n["border-strong"], "--slc-tile": n["bg-tile"], "--slc-sunken": n["bg-sunken"], "--slc-lit": n["border-lit"], ...README_LAYER[t],
+  };
+  return `:root[data-product="${p}"][data-theme="${t}"] { ${Object.entries(map).map(([k, v]) => `${k}: ${v};`).join(" ")} }`;
+})).join("\n");
+const stateRules = (texts) => { let o = 0; return texts.flatMap((css) => { const r = parseSheet(css, {}, o); o += r.length + 1; return r; }); };
+const STATE_A = stateRules([...["tokens.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css", "themes/products.css", "components.css", "workbench.css", "effects.css"].map(read), STATE_ACCENTS, STATE_PAGE]);
+const STATE_B = stateRules([...["tokens.css", "components.css", "workbench.css"].map(read), STATE_TIER_B, STATE_PAGE]);
+/** Every product, light and dark, Tier A and B, and high contrast. */
+const STATE_CONTEXTS = [
+  ...PRODUCTS.flatMap((p) => ["light", "dark"].flatMap((t) => [
+    { name: `${t} ${p}`, rules: STATE_A, attrs: { "data-sl-theme": t, "data-sl-product": p } },
+    { name: `Tier B ${t} ${p}`, rules: STATE_B, attrs: { "data-theme": t, "data-product": p } },
+  ])),
+  { name: "high contrast", rules: STATE_A, attrs: { "data-sl-theme": "high-contrast" } },
+];
+/** The parent a control is built in, on the page (body) or in a band (the band's child). */
+function mountIn(ctx, band) {
+  const body = el({ tag: "body", parent: el({ tag: "html", attrs: ctx.attrs }) });
+  return band ? el({ parent: el({ classes: ["sl-invert"], parent: body }) }) : body;
+}
+/** The opaque ground under a control's parent: the canvas, or the band's own fill. */
+const groundIn = (rules, parent, band) => (band ? groundOf(rules, parent) : paint(rules, parent, "var(--slc-canvas)"));
+/** The colour of the first layer of a background image that is a seam (a
+ *  linear gradient of one colour), or null. */
+function seamOf(rules, e) {
+  const won = cascaded(rules, e), long = won.get("background-image"), short = won.get("background");
+  // the background shorthand resets the image unless it names one
+  const img = long && (!short || later(long, short)) ? long.value.trim() : (short?.value.match(/linear-gradient\(.*\)/)?.[0] ?? "none");
+  const first = splitList(img)[0] ?? "";
+  const m = first.match(/^linear-gradient\((.+)\)$/);
+  if (!m) return null;
+  const [a, b] = splitList(m[1]);
+  assert.equal(a, b, `a seam is one colour: ${first}`);
+  return paint(rules, e, a);
+}
+
+/** Every pressed toggle: [name, build(parent, { on, states }), its indicator, page only?]. */
+const TOGGLES = [
+  ["plain button", (p, o) => el({ tag: "button", classes: ["sl-btn"], attrs: { "aria-pressed": String(o.on) }, states: o.states, parent: p }), "seam"],
+  ["secondary", (p, o) => el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], attrs: { "aria-pressed": String(o.on) }, states: o.states, parent: p }), "seam"],
+  ["small secondary", (p, o) => el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost", "sl-btn--sm"], attrs: { "aria-pressed": String(o.on) }, states: o.states, parent: p }), "seam"],
+  ["icon button", (p, o) => el({ tag: "button", classes: ["sl-icon-btn"], attrs: { "aria-pressed": String(o.on) }, states: o.states, parent: p }), "seam"],
+  ["title-bar button", (p, o) => el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn"], attrs: { "aria-pressed": String(o.on) }, states: o.states, parent: el({ classes: ["sl-titlebar__r"], parent: p }) }), "seam", true],
+  ["chip", (p, o) => el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": String(o.on) }, states: o.states, parent: el({ classes: ["sl-chips"], parent: p }) }), "dot"],
+];
+/** A toggle's indicator colour and the face it is read on, or null. */
+function indicatorOf(rules, e, kind) {
+  if (kind === "seam") return seamOf(rules, e);
+  const dot = el({ pseudo: "before", parent: e });
+  const fill = fillOf(rules, dot);
+  return fill === "transparent" ? null : paint(rules, dot, fill, colourOf(rules, e));
+}
+
+test("a pressed toggle is found by the one control edge at 3:1, against its ground and its own wash, pressed and hovered, on the page and in a band (fails on 0.36.1)", () => {
+  const out = [];
+  for (const ctx of STATE_CONTEXTS) for (const band of [false, true]) for (const [name, make, , pageOnly] of TOGGLES) {
+    if (band && pageOnly) continue; // the title bar is a workbench's frame, never in a band
+    const parent = mountIn(ctx, band);
+    const ground = groundIn(ctx.rules, parent, band);
+    for (const states of [[], ["hover"]]) {
+      const e = make(parent, { on: true, states });
+      const edge = over(paint(ctx.rules, e, borderOf(ctx.rules, e)), ground);
+      const face = over(paint(ctx.rules, e, fillOf(ctx.rules, e)), ground);
+      const where = `${ctx.name} ${band ? "band" : "page"} ${name}${states.length ? " hovered" : ""}`;
+      if (ratio(edge, ground) < 3) out.push(`${where}: edge on the ground ${ratio(edge, ground).toFixed(2)}`);
+      if (ratio(edge, face) < 3) out.push(`${where}: edge on its wash ${ratio(edge, face).toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(out, []);
+  // the role: the one control edge, the accent's where high contrast draws selection in it
+  const html = el({ tag: "html", attrs: { "data-sl-theme": "dark" } });
+  assert.equal(cascaded(STATE_A, html).get("--slc-edge-pressed").value, "var(--slc-edge-control)");
+  assert.equal(cascaded(STATE_A, el({ parent: el({ classes: ["sl-invert"], parent: el({ tag: "body", parent: html }) }) })).get("--slc-edge-pressed").value, "var(--slc-edge-control)", "the band's own control edge");
+  assert.equal(cascaded(STATE_A, el({ tag: "html", attrs: { "data-sl-theme": "high-contrast" } })).get("--slc-edge-pressed").value, "var(--slc-accent)");
+});
+
+test("a pressed toggle says so with a mark rest does not draw, at 3:1 against its wash and against the toggle at rest: the seam, or the chip's dot (fails on 0.36.1)", () => {
+  const out = [];
+  for (const ctx of STATE_CONTEXTS) for (const band of [false, true]) for (const [name, make, kind, pageOnly] of TOGGLES) {
+    if (band && pageOnly) continue;
+    const parent = mountIn(ctx, band);
+    const ground = groundIn(ctx.rules, parent, band);
+    const rest = make(parent, { on: false, states: [] });
+    const restFace = over(paint(ctx.rules, rest, fillOf(ctx.rules, rest)), ground);
+    if (indicatorOf(ctx.rules, rest, kind)) out.push(`${ctx.name} ${name}: rest draws the ${kind} too`);
+    for (const states of [[], ["hover"]]) {
+      const e = make(parent, { on: true, states });
+      const where = `${ctx.name} ${band ? "band" : "page"} ${name}${states.length ? " hovered" : ""}`;
+      const mark = indicatorOf(ctx.rules, e, kind);
+      if (!mark) { out.push(`${where}: no ${kind}`); continue; }
+      const face = over(paint(ctx.rules, e, fillOf(ctx.rules, e)), ground);
+      const ink = over(mark, face);
+      if (ratio(ink, face) < 3) out.push(`${where}: ${kind} on its wash ${ratio(ink, face).toFixed(2)}`);
+      if (ratio(over(mark, restFace), restFace) < 3) out.push(`${where}: ${kind} against the toggle at rest ${ratio(over(mark, restFace), restFace).toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(out, []);
+  // the seam is the segment's: a 2px line, 40% wide, 3px above the bottom edge (1px on a small button)
+  const pressed = (cls) => el({ tag: "button", classes: cls, attrs: { "aria-pressed": "true" }, parent: at() });
+  const geometry = (cls) => { const e = pressed(cls), env = customs(STATE_A, e), won = cascaded(STATE_A, e);
+    return ["background-size", "background-position"].map((p) => substitute(won.get(p).value, env)); };
+  assert.deepEqual(geometry(["sl-btn", "sl-btn--ghost"]), ["40% 2px, auto", "50% calc(100% - 3px), 0 0"]);
+  assert.deepEqual(geometry(["sl-icon-btn"]), ["40% 2px, auto", "50% calc(100% - 3px), 0 0"]);
+  assert.deepEqual(geometry(["sl-btn", "sl-btn--ghost", "sl-btn--sm"]), ["40% 2px, auto", "50% calc(100% - 1px), 0 0"]);
+  assert.equal(cascaded(STATE_A, pressed(["sl-btn", "sl-btn--primary"])).get("background-image").value, "linear-gradient(var(--_sl-foot-color, var(--_sl-fill-edge)), var(--_sl-foot-color, var(--_sl-fill-edge)))", "a primary never toggles: its foot, no seam");
+  // a built glass pane paints its tint over the host's background: its specular layer draws the seam again, from the same values
+  for (const cls of [["sl-btn", "sl-btn--ghost"], ["sl-icon-btn"], ["sl-btn", "sl-btn--sm"]]) {
+    const host = pressed([...cls, "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"]);
+    const spec = el({ tag: "span", classes: ["sl-glass__specular"], parent: host });
+    const bg = substitute(cascaded(STATE_A, spec).get("background").value, customs(STATE_A, spec));
+    assert.equal(bg, `linear-gradient(${substitute("var(--slc-seam)", customs(STATE_A, spec))}, ${substitute("var(--slc-seam)", customs(STATE_A, spec))}) no-repeat ${geometry(cls)[1].split(", ")[0]} / 40% 2px`, cls.join(" "));
+  }
+  // ...on the page only: in a band the glass tint is the page's canvas, a known gap the seam cannot cure
+  const inBand = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost", "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"], attrs: { "aria-pressed": "true" }, parent: at("dark", { band: true }) });
+  assert.equal(cascaded(STATE_A, el({ tag: "span", classes: ["sl-glass__specular"], parent: inBand })).get("background"), undefined, "no seam on the specular in a band");
+});
+
+/** A checked control in its label: [the painted box or track, its knob or mark, the same control unchecked]. */
+const CHECKED = {
+  check: (p, checked) => choiceBox("check", null, { root: p, checked }),
+  mixed: (p) => { const label = el({ tag: "label", classes: ["sl-check"], parent: p }); return el({ tag: "span", classes: ["sl-check__box"], parent: label, prev: el({ tag: "input", classes: ["sl-check__input"], states: ["indeterminate"], parent: label }) }); },
+  radio: (p, checked) => choiceBox("radio", null, { root: p, checked }),
+  switch: (p, checked) => { const label = el({ tag: "label", classes: ["sl-switch"], parent: p }); return el({ tag: "span", classes: ["sl-switch__track"], parent: label, prev: el({ tag: "input", classes: ["sl-switch__input"], states: checked ? ["checked"] : [], parent: label }) }); },
+};
+
+test("in a band a primary is found by its edge at 3:1 at rest, hovered and pressed, plain or danger, and its label holds 4.5:1 on its fill (fails on 0.36.1)", () => {
+  const out = [];
+  for (const ctx of STATE_CONTEXTS) {
+    const parent = mountIn(ctx, true);
+    const ground = groundIn(ctx.rules, parent, true);
+    for (const tone of [[], ["sl-btn--danger"]]) for (const size of [[], ["sl-btn--sm"]]) for (const states of [[], ["hover"], ["active", "hover"]]) {
+      const b = el({ tag: "button", classes: ["sl-btn", "sl-btn--primary", ...tone, ...size], states, parent });
+      const where = `${ctx.name} ${tone.length ? "danger " : ""}primary${size.length ? " small" : ""} ${states[0] ?? "rest"}`;
+      const edge = over(paint(ctx.rules, b, borderOf(ctx.rules, b)), ground);
+      const fill = over(paint(ctx.rules, b, fillOf(ctx.rules, b)), ground);
+      if (ratio(edge, ground) < 3) out.push(`${where}: edge on the band ${ratio(edge, ground).toFixed(2)}`);
+      if (ratio(over(colourOf(ctx.rules, b), fill), fill) < 4.5) out.push(`${where}: label ${ratio(over(colourOf(ctx.rules, b), fill), fill).toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(out, []);
+  // the page keeps its own edge: the fill in shade, capped on paper
+  for (const ctx of STATE_CONTEXTS) {
+    const b = el({ tag: "button", classes: ["sl-btn", "sl-btn--primary"], parent: mountIn(ctx, false) });
+    assert.equal(cascaded(ctx.rules, b).get("--_sl-fill-edge").value, "var(--slc-edge-accent)", `${ctx.name}: the page is untouched`);
+  }
+});
+
+test("in a band a checked check box, radio or switch is found by its edge at 3:1, its tick, dot or knob reads 3:1 on the fill, and its fill or that mark reads 3:1 where the unchecked control is (fails on 0.36.1)", () => {
+  const out = [];
+  for (const ctx of STATE_CONTEXTS) {
+    const parent = mountIn(ctx, true);
+    const ground = groundIn(ctx.rules, parent, true);
+    for (const [name, make] of Object.entries(CHECKED)) {
+      const on = make(parent, true), off = (name === "mixed" ? CHECKED.check : make)(parent, false);
+      const where = `${ctx.name} ${name}`;
+      const edge = over(paint(ctx.rules, on, borderOf(ctx.rules, on)), ground);
+      const fill = over(paint(ctx.rules, on, fillOf(ctx.rules, on)), ground);
+      const offFace = over(paint(ctx.rules, off, fillOf(ctx.rules, off)), ground);
+      const mark = over(paint(ctx.rules, on, "var(--_sl-on-fill)"), fill);
+      if (ratio(edge, ground) < 3) out.push(`${where}: edge on the band ${ratio(edge, ground).toFixed(2)}`);
+      if (ratio(mark, fill) < 3) out.push(`${where}: mark on the fill ${ratio(mark, fill).toFixed(2)}`);
+      // checked against unchecked: on the light theme's dark band the fill
+      // says it (a dark tick on amber is near the band's dark well there); on
+      // the light bands, as on paper, the tick, dot or knob does
+      const byFill = ratio(fill, offFace), byMark = ratio(over(paint(ctx.rules, on, "var(--_sl-on-fill)"), offFace), offFace);
+      if (Math.max(byFill, byMark) < 3) out.push(`${where}: against the unchecked control, fill ${byFill.toFixed(2)}, mark ${byMark.toFixed(2)}`);
+    }
+    // the mark the test reads is the one painted
+    const sw = CHECKED.switch(parent, true);
+    assert.equal(fillOf(ctx.rules, el({ pseudo: "after", parent: sw })), "var(--_sl-on-fill)", `${ctx.name}: the knob is the fill's label`);
+  }
+  assert.deepEqual(out, []);
+});
+
+test("the band's fill edge is written on the fill, held to the mid-tones with no theme branch, never currentColor", () => {
+  const band = read("components.css").replace(/\/\*[\s\S]*?\*\//g, "").match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  const macro = band.match(/--_sl-band-edge:\s*([^;]+);/)?.[1] ?? "";
+  assert.match(macro, /^min\(max\(calc\(l - var\(--slc-shade-step\)\), 0\.55\), 0\.59\) /, "the fill one shade step down, floored at 0.55, capped at 0.59");
+  assert.doesNotMatch(macro, /currentColor|data-sl-theme|--sl-accent-band-text-lmax/i);
+  assert.match(band, /--slc-edge-accent:\s*oklch\(from var\(--slc-accent-fill, var\(--slc-accent\)\) var\(--_sl-band-edge\)\);/, "the public role, re-derived for the band");
+  assert.match(read("components.css"), /\.sl-invert :is\(\.sl-btn--primary, \.sl-check__box, \.sl-radio__box, \.sl-switch__track\),\n\.sl-invert \.sl-btn--primary:is\(:hover, :active\):not\(:disabled\) \{\n  --_sl-fill-edge: oklch\(from var\(--_sl-fill\) var\(--_sl-band-edge\)\);\n\}/);
 });

@@ -241,9 +241,20 @@ test("a title-bar icon button rests on the surface in the one control edge; the 
   for (const states of [[], ["hover"]]) {
     const b = build(dark, { states: { bell: states } });
     const won = cascaded(RULES_A, b.bell);
-    const img = won.get("background-image")?.value ?? "";
+    // the dot is the button's --_sl-layer (0.36.2), so a pressed bell draws it under its seam
+    assert.equal(won.get("background-image")?.value, "var(--_sl-layer)", `${states.join() || "rest"}: the layer is the whole image`);
+    const img = won.get("--_sl-layer")?.value ?? "";
     assert.match(img, /^radial-gradient\(circle at calc\(100% - 8px\) 8px, var\(--_sl-titlebar-dot\) 2\.75px, var\(--slc-surface\) 3\.25px 4\.75px, transparent 5\.25px\)$/, `${states.join() || "rest"}: Lumen's 6px dot, 5px from the corner, ringed in the surface`);
     assert.equal(won.get("background-repeat")?.value, "no-repeat");
+  }
+  // pressed (a bell that also toggles a panel): the seam, and the dot under it, hovered too
+  for (const states of [[], ["hover"]]) {
+    const html = el({ tag: "html", attrs: { "data-sl-theme": "dark" } });
+    const r = el({ classes: ["sl-titlebar__r"], parent: el({ tag: "header", classes: ["sl-titlebar"], parent: el({ tag: "body", parent: html }) }) });
+    const bell = el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn", "sl-titlebar__btn--dot"], attrs: { "aria-pressed": "true" }, states, parent: r });
+    const won = cascaded(RULES_A, bell);
+    assert.equal(won.get("background-image")?.value, "linear-gradient(var(--slc-seam), var(--slc-seam)), var(--_sl-layer)", `pressed ${states.join() || "rest"}: the seam over the dot`);
+    assert.match(won.get("--_sl-layer")?.value ?? "", /^radial-gradient\(circle at calc\(100% - 8px\) 8px, var\(--_sl-titlebar-dot\)/, `pressed ${states.join() || "rest"}: the dot is the layer`);
   }
   assert.equal(customs(RULES_A, p.bell).get("--_sl-titlebar-dot") !== undefined, true);
   assert.equal(cascaded(RULES_A, p.bell).get("--_sl-titlebar-dot")?.value, "var(--slc-accent-fill, var(--slc-accent-text))", "the labelled fill where a product sets one (spexr's #4c58e9), the accent as a mark otherwise");

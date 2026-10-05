@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { evaluate, fromSrgb, gamutExcess } from "./lib/css-color.mjs";
+import { evaluate, fromSrgb, gamutExcess, toOklch } from "./lib/css-color.mjs";
 
 // The hover and press step stays inside sRGB for EVERY colour, not only the
 // registered fills (ui-kit 0.32.1). The step runs along the line to the pole
@@ -60,6 +60,28 @@ test("the hover and press step stays inside sRGB for every colour, lightened or 
         if (e > 1e-6) out.push(`${from} ${lighter === "1" ? "lighter" : "darker"} ${step}: ${e.toExponential(2)}`);
       }
     }
+  }
+  assert.deepEqual(out.slice(0, 10), []);
+});
+
+// The accent fill's edge inside an inversion band (ui-kit 0.36.2): the fill
+// held to the mid-tones, oklch L 0.55-0.59, its chroma in proportion toward
+// black and eased toward white as the step above eases it. Read off the
+// band's own block in components.css, at the kit's shade step.
+test("the band's fill edge stays inside sRGB for every colour, at oklch L 0.55-0.59", () => {
+  const css = readFileSync(resolve(HERE, "../packages/ui-kit/components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const band = css.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  const macro = band.match(/--_sl-band-edge:\s*([^;]+);/);
+  assert.ok(macro, "the band declares its fill-edge macro, --_sl-band-edge");
+  const env = new Map([["--_sl-band-edge", macro[1]], ["--slc-shade-step", css.match(/--slc-shade-step:\s*([^;]+);/)[1]]]);
+  const out = [];
+  for (const [r, g, b] of samples()) {
+    const from = `color(srgb ${r} ${g} ${b})`;
+    if (gamutExcess(fromSrgb([r, g, b])) > 0) continue;
+    const edge = evaluate(`oklch(from ${from} var(--_sl-band-edge))`, env);
+    const e = gamutExcess(edge), [L] = toOklch(edge);
+    if (e > 1e-6) out.push(`${from}: out of sRGB by ${e.toExponential(2)}`);
+    if (L < 0.55 - 1e-6 || L > 0.59 + 1e-6) out.push(`${from}: L ${L.toFixed(4)}`);
   }
   assert.deepEqual(out.slice(0, 10), []);
 });

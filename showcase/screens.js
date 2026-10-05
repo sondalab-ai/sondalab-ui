@@ -516,10 +516,10 @@
     hero: [["Headline", ".web-h1 .web-line"], ["Headline highlight", ".web-h1 em"], ["Lede", ".web-lede"], ["Nav link", ".web-links a:not([aria-current])"], ["Tag", ".web-hero .sl-tag"], ["Primary label", ".web-cta__p"], ["Card label", ".web-card__l"], ["Install", ".web-install code"], ["Eyebrow", ".web-sec .sl-eyebrow"], ["Count badge", '[data-dir="kit"] .sl-activitybar__badge']],
   };
   const EDGE = {
-    ide: [["Palette input", ".ide-pal__input"], ["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
+    ide: [["Palette input", ".ide-pal__input"], ["Composer", ".ide-composer"], ["Chip on (composer)", '.ide-composer .sl-chip[aria-pressed="true"]'], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
     settings: [["Field", "#s-name"], ["Select", "#s-br"], ["Checkbox", ".set-sec .sl-check__input:not(:checked) + .sl-check__box"], ["Radio", ".sl-radio__input:not(:checked) + .sl-radio__box"], ["Switch off", ".sl-switch__input:not(:checked):not(:disabled) + .sl-switch__track"],
       ["Segmented", ".set-sec .sl-segmented"], ["Secondary", ".set-row .sl-btn--ghost"], ["Ghost (info: text button, no edge by design)", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"]],
-    data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"],
+    data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Chip on", '.sl-chip[aria-pressed="true"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"],
       ["Danger ghost (Archive)", ".dat-bulk__act .sl-btn--danger"]],
     hero: [["Secondary", ".web-cta .sl-btn--ghost"], ["Install box (info: display, not a control)", ".web-install"]],
   };

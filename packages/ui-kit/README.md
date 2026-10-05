@@ -26,6 +26,46 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
+**0.36.2 — state indicators and boundaries read 3:1.** Three gaps predate this patch and fell under the owner's 3:1 rule for boundaries and state indicators (text stays at 4.5:1). A pressed toggle lost its edge. A primary in an inversion band had no edge. A checked check box, radio or switch in a band had none either. No token, role or class is added, renamed or removed, so palette-py is unchanged. One role changes value: `--slc-edge-pressed`. The changes are in `components.css`, plus two rules in `workbench.css` (the title bar's dot) and one in `effects.css` (the seam on glass). Figures are from Chrome 154, every registered product, Tier A and Tier B.
+
+- **A pressed toggle keeps the one control edge.** This covers a plain, secondary or icon button with `aria-pressed="true"`, a chip that is on, and a title-bar toggle. Their edge was `--slc-edge-pressed`, the 12% wash in shade: 1.01–1.36:1 on the page and 1.04–1.41 in a band, so pressing a toggle lost its boundary.
+  - `--slc-edge-pressed` is now `--slc-edge-control`, the band's own in a band. High contrast keeps the accent.
+  - It reads ≥ 3.51:1 on the page and ≥ 3.98 in a band. Against the toggle's own wash it reads ≥ 3.00 on the page (local-agents, on paper) and ≥ 3.87 in a band.
+  - Hovered, a pressed plain or secondary button steps to the hover edge, as every control does. The deeper 20% wash had taken the rest edge to 2.70:1 against it. It now reads ≥ 4.86. High contrast keeps its one edge (≥ 4.39 in its band).
+- **"On" is a mark the toggle at rest does not draw.** Against the toggle at rest, the wash and the accent ink read only 1.0–2.6:1, and the accent edge would have read at the neutral edge's lightness. So:
+  - **A pressed button carries the seam,** the chosen segment's: a 2px line of the accent (`--slc-seam`), 40% wide, 3px above the bottom edge. On a small button it sits 1px above, which keeps it clear of the descenders.
+    - It reads ≥ 4.31:1 against the "on" wash (hovered too) and ≥ 4.10 against the button at rest.
+    - On a built glass pane it is drawn again on the pane's specular layer, because the tint veiled it to as little as 2.4:1 on paper. There it reads ≥ 4.26 (pixels at DPR 4).
+    - The title bar's unread dot is now the button's `--_sl-layer`, so a pressed bell draws both.
+  - **A chip says "on" with its filled dot,** as it did. The dot reads ≥ 4.68:1 on the wash and ≥ 5.27 where the hollow dot showed the ground.
+- **A filled control in a band is found by its edge.** This covers the primary, a danger primary, and a checked check box, radio or switch. In a band, the edge and foot are the fill held to the mid-tones: one shade step down, floored at oklch L 0.55 and capped at 0.59, which is paper's own cap.
+  - That window reads 3:1 against a dark band and a light band alike, so there is no theme branch, and a Tier B band needs no new number.
+  - Chroma follows lightness, so the edge stays in sRGB for every colour.
+  - The fill and the label are unchanged.
+  - The public `--slc-edge-accent` is re-derived the same way in a band.
+
+  | Band, edge against the band, tightest product | 0.36.1 | 0.36.2 |
+  |---|---|---|
+  | Dark theme's light band (introspect's mint) | 1.71 | 3.28 |
+  | High contrast's white band | 1.07 | 4.03 |
+  | Light theme's dark band, hovered and pressed (local-agents) | 1.92 / 1.58 | 3.51 (spexr, every state) |
+  | Light theme's dark band, danger primary pressed | 1.29 | 3.49 |
+- **A checked box in a band now reads 3:1 against the band and against the unchecked box.** The edge is the boundary; the state is the fill or the mark, whichever contrasts with the unchecked box. This is the light page's own standard: an amber check reads 1.65:1 on paper and is found by its edge and its tick.
+  - High contrast's band: the yellow fill still reads 1.07:1 on white. The edge reads 4.03 (it was 1.07), and the black tick, dot or knob reads 19.3:1 where the unchecked box is.
+  - The dark theme's light band: the edge reads ≥ 3.28 (introspect; it was 1.71). A light fill's dark tick reads ≥ 15.2:1 against the unchecked box; spexr's deep fill reads 4.17 by itself.
+  - The light theme's dark band: the edge reads ≥ 3.51 (it was 2.37, local-agents). A light fill reads ≥ 4.81 against the unchecked box; a dark fill's white tick ≥ 16.6.
+- **Known gap: glass in a band.** A glass pane in an inversion band is tinted with the page's canvas. On the light theme's dark band that makes a mid-grey face.
+  - On that face, a pressed glass toggle's label already read 1.4–2.7:1 on 0.36.1, and an unpressed one 4.05 (spexr).
+  - The seam there stays the host's, under the tint: 2.5–4.2:1, varying by a few tenths between renders.
+  - Keep a band's toggles bare, as the catalog already asks of a band's button group.
+- **Not changed:** on the dark page, spexr's pressed primary still reads 2.44:1 (fill) and 1.76 (edge) against the canvas. This was a known limit in 0.32.1 and is outside these three gaps.
+- **What each product sees at its next kit upgrade.** Of the four, only introspect and spexr have a control this patch changes, and none puts a primary or a check in an `sl-invert` band.
+  - **introspect** (Tier B): the live rail's pause toggle (a small pressed secondary) gains the seam and the control edge, and the event-kind chips keep the control edge when on. It needs no new mapping.
+  - **spexr**: the smart-search filter chips keep the control edge when on. Its pressed segments are unchanged.
+  - **sondalab.eu and daos**: nothing visible. Neither has a pressed button or chip, and their bands hold no primary or check.
+  - **Migration, sondalab.eu:** its product page re-declares `--slc-edge-pressed` with the 0.36.1 formula under `[data-product]`. Drop that line, or a pressed toggle placed there gets the 1.36:1 edge back.
+  - Nothing to rename anywhere. A band of your own built from the `.sl-invert > *` recipe does not get the filled controls' edge: that is a rule on the controls inside `.sl-invert`, not a role. Put `sl-invert` on the band, or copy the band's `--slc-edge-pressed`, `--_sl-band-edge` and `--slc-edge-accent` lines and the fill set's band rule (`components.css`, THE FILL SET IN A BAND) keyed to your own band class.
+
 **0.36.1 — the control edge in an inversion band reads 3:1.** Inside `.sl-invert` every control's edge was the band's strong line, 38% of `currentColor`. That read 2.52:1 on the dark theme's light band and 2.31 against a box's own wash, and less on a control set in a lighter ink: `currentColor` in a custom property is read where the property is used, so a chip, in the muted 60%, drew it at 23% (1.67:1). No token, role or class is added, renamed or removed, so palette-py is unchanged; everything is in `components.css`.
 
 - **Band control edges are stronger.** The band binds its own `--slc-edge-control`: the band's ink (`--slc-canvas`, never `currentColor`) at 48% on the light theme's dark band and 53% on the dark and high-contrast themes' light bands, read off the ink's lightness, so a Tier B band gets it too. It is the least share that clears 3:1 against the band and against the raised wash a secondary paints. The tightest control, a secondary against its raised face with the edge over the bare band, computes 3.13 / 3.07 / 3.36:1 (light / dark / high contrast); Chrome, which keeps the alpha in 8 bits, paints 3.10 / 3.05 / 3.34. In Chrome's own pixels the edge reads higher, since Chrome draws a border over the control's own fill, but not uniformly: the tightest reading is not the secondary but a sunk well on the dark theme's light band, a segmented track or a field, whose inset shadow darkens the inside of its top edge. It reads 3.4:1 or more there (3.44 against the pixels just inside it at DPR 4). The hover edge stays 14 points further (62%, 67%). `--slc-border-strong` is unchanged.
@@ -300,7 +340,7 @@ Dark and high contrast paint what they did in 0.27, apart from `.sl-anchor` bein
 
 Primitives: `.sl-eyebrow`, `.sl-tag` (`--plain`), `.sl-btn` (`--primary` / `--ghost` / `--sm`, and the `--danger` tone on any of them), `.sl-card` (`__title` / `__body`), `.sl-badge` (`--success` / `--warning` / `--danger` / `--info`), `.sl-field` (`__label` / `__input` / `__control` / `__hint` / `__error`; `aria-invalid="true"` on the input is the invalid state), `.sl-kbd`, `.sl-code`, `.sl-link`, `.sl-rule` (`--labeled`).
 
-Toggle buttons: any non-primary `.sl-btn` or `.sl-icon-btn` with `aria-pressed` — the attribute is the state, no extra class.
+Toggle buttons: any non-primary `.sl-btn` or `.sl-icon-btn` with `aria-pressed` — the attribute is the state, no extra class. On, it carries the accent seam the chosen segment does (0.36.2).
 
 Form controls: `.sl-check` (mixed: set `input.indeterminate = true` from script — `:indeterminate` is the only hook, since a native checkbox may not carry `aria-checked`), `.sl-radio`, `.sl-switch` (each `__input` / `__box`-or-`__track` / `__label`), `.sl-select` (a wrapper on `.sl-field__control`), `.sl-slider` (a native range; write `--sl-slider-value` for the fill).
 
@@ -373,7 +413,7 @@ Components never read theme tokens directly (those resolve only under `[data-sl-
 **Derived roles — never map these.** Two families are computed from the ones above, so a Tier B product gets them in its own colours for free:
 
 - `--slc-accent-text` is the accent as text or a thin line: `oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h)`. On the light theme the accent is a *fill* and the cap (`0.46` since 0.29, `0.5` before) darkens it until it reads at 4.5:1; elsewhere it is the accent. Links, tags, tabs, pressed labels and the focus ring use it. On a solid status fill use `--slc-on-success|warning|danger|info` instead of `--slc-on-accent`: each picks the pole that contrasts with its own fill (white on the light theme, near-black on the dark), where the accent's partner can be dark on dark. Inside `.sl-invert` the ground is the theme's ink — light on the dark and high-contrast themes — so the band re-derives it with its own cap, `--sl-accent-band-text-lmax` (0.45 there, none on light), and a fixed floor (oklch L 0.68) that lifts a dark product hue on the light theme's band. The band also derives `--slc-success-text` / `-warning-` / `-danger-` / `-info-text` (status as text or a thin mark, same floor and cap) and its own translucent `--slc-accent-subtle`; outside a band those four are unset and components fall back to the status role.
-- `--slc-edge-*` (`ground`, `surface`, `raised`, `wash`, `accent`, `pressed`, `control`) is each edge as its own fill one step less bright (`--slc-shade-step`, 0.075 of oklch lightness). Every bordered component uses them instead of the neutral `--slc-border*` lines; high contrast maps them back to its drawn border, the inversion band to its re-derived neutrals, except the control edge and its hover, which the band takes from its own ink at a share (0.36.1).
+- `--slc-edge-*` (`ground`, `surface`, `raised`, `wash`, `accent`, `pressed`, `control`) is each edge as its own fill one step less bright (`--slc-shade-step`, 0.075 of oklch lightness). Every bordered component uses them instead of the neutral `--slc-border*` lines; high contrast maps them back to its drawn border, the inversion band to its re-derived neutrals, except the control edge and its hover, which the band takes from its own ink at a share (0.36.1). Two are not a shade: `pressed` is the control edge itself since 0.36.2 (a pressed toggle's wash in shade read 1.01–1.41:1; high contrast keeps the accent), and in a band `accent` is the fill held to the mid-tones, oklch L 0.55–0.59 (0.36.2).
 
 **Light-layer numbers (Tier B).** The kit sets three numbers only on `:root[data-sl-theme="light"]` and the light theme file, which a `[data-theme]` layer never matches, because they cannot be read off the colours themselves. Set them in your light layer, on the root element (the role-vars resolve there):
 
