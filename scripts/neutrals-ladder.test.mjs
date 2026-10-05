@@ -309,25 +309,43 @@ test("light primary text is the Lumen ink, oklch L 0.20, on every product", () =
   assert.equal(shipped.products.default.light["text-primary"], "#191511");
 });
 
-test("every neutral rung and hairline the Lumen target declares is the ladder's", (t) => {
-  if (!existsSync(LUMEN)) return t.skip("the lab reference is gone");
+// The target's values, frozen (scripts/fixtures/lumen-target-colour.json),
+// so these parity checks keep running once K7 removes lab/. While the lab
+// file exists, the fixture is checked against it.
+const TARGET = JSON.parse(readFileSync(resolve(HERE, "fixtures/lumen-target-colour.json"), "utf8"));
+
+test("every neutral rung and hairline of the Lumen target is the ladder's", () => {
   const bad = [];
   for (const theme of THEMES) {
-    const lumen = lumenTheme(theme);
-    for (const [prop, v] of lumen) {
-      const m = v.match(/^oklch\(from var\(--sl-accent-default\) ([\d.]+) ([\d.]+) h\)$/);
-      if (!m || !prop.startsWith("--sl-")) continue;
-      const role = prop.slice(5);
-      const want = [Number(m[1]), Number(m[2])];
+    for (const [role, want] of Object.entries(TARGET.neutrals[theme])) {
       if (JSON.stringify(tokens.neutrals.ladder[theme][role]) !== JSON.stringify(want)) bad.push(`${theme} ${role}: ladder ${JSON.stringify(tokens.neutrals.ladder[theme][role])}, Lumen ${JSON.stringify(want)}`);
     }
     // --lu-hair is the island's hairline (border-subtle), --lu-hair-2 a ring
     // and a rule (border-default); the kit keeps its own product-tinted ink.
-    const alpha = (name) => Number(lumen.get(name)?.match(/\/\s*([\d.]+)\)$/)?.[1]);
-    if (tokens.neutrals.border[theme].subtle !== alpha("--lu-hair")) bad.push(`${theme} border-subtle ${tokens.neutrals.border[theme].subtle}, Lumen ${alpha("--lu-hair")}`);
-    if (tokens.neutrals.border[theme].default !== alpha("--lu-hair-2")) bad.push(`${theme} border-default ${tokens.neutrals.border[theme].default}, Lumen ${alpha("--lu-hair-2")}`);
+    for (const k of ["subtle", "default"]) {
+      if (tokens.neutrals.border[theme][k] !== TARGET.hairline[theme][k]) bad.push(`${theme} border-${k} ${tokens.neutrals.border[theme][k]}, Lumen ${TARGET.hairline[theme][k]}`);
+    }
   }
+  assert.ok(Object.keys(TARGET.neutrals.light).includes("text-primary"), "the fixture carries the light ink");
   assert.deepEqual(bad, []);
+});
+
+test("the frozen Lumen fixture is the lab target's, while the lab file exists", (t) => {
+  if (!existsSync(LUMEN)) return t.skip("the lab reference is gone; the fixture stands in for it");
+  for (const theme of THEMES) {
+    const lumen = lumenTheme(theme);
+    const neutrals = {}, code = {};
+    for (const [prop, v] of lumen) {
+      let m = v.match(/^oklch\(from var\(--sl-accent-default\) ([\d.]+) ([\d.]+) h\)$/);
+      if (m && prop.startsWith("--sl-")) neutrals[prop.slice(5)] = [Number(m[1]), Number(m[2])];
+      m = v.match(/^oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)$/);
+      if (m && prop.startsWith("--sl-code-")) code[prop.slice(10)] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    }
+    const alpha = (name) => Number(lumen.get(name)?.match(/\/\s*([\d.]+)\)$/)?.[1]);
+    assert.deepEqual(neutrals, TARGET.neutrals[theme], `${theme} neutrals`);
+    assert.deepEqual(code, TARGET.code[theme], `${theme} code`);
+    assert.deepEqual({ subtle: alpha("--lu-hair"), default: alpha("--lu-hair-2") }, TARGET.hairline[theme], `${theme} hairlines`);
+  }
 });
 
 test("the glass glint's mirror is one number in the generator and in the four CSS expressions, and the paper glint stays at L 0.97", () => {

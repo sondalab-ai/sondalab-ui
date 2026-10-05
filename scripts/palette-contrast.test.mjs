@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { fromHex, fromOklch, linToOklab, maxChroma, toHex, toOklch } from "./lib/css-color.mjs";
@@ -377,16 +377,13 @@ test("the code hues are the token triples baked into sRGB by chroma alone", () =
   }
 });
 
-test("the code hues are the Lumen target's (lab/directions-2/dir-lumen.css)", (t) => {
-  const path = resolve(HERE, "../lab/directions-2/dir-lumen.css");
-  if (!existsSync(path)) return t.skip("the lab reference is gone");
-  const css = readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+// The target's hues, frozen in scripts/fixtures/lumen-target-colour.json (the
+// lab file is checked against it while it exists, neutrals-ladder.test.mjs),
+// so this keeps running once K7 removes lab/.
+test("the code hues are the Lumen target's", () => {
+  const target = JSON.parse(readFileSync(resolve(HERE, "fixtures/lumen-target-colour.json"), "utf8")).code;
   for (const theme of ["light", "dark"]) {
-    const lumen = {};
-    for (const m of css.matchAll(new RegExp(`html\\[data-dir="lumen"\\]\\[data-sl-theme="${theme}"\\]\\s*\\{([^}]*)\\}`, "g"))) {
-      for (const d of m[1].matchAll(/--sl-code-(\w+):\s*oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/g)) lumen[d[1]] = [d[2], d[3], d[4]].map(Number);
-    }
-    assert.deepEqual(Object.keys(lumen).sort(), [...LUMEN_HUES].sort(), `${theme}: the target's five hues`);
-    for (const role of LUMEN_HUES) assert.deepEqual(TOKENS.code[theme][role], lumen[role], `${theme} ${role}`);
+    assert.deepEqual(Object.keys(target[theme]).sort(), [...LUMEN_HUES].sort(), `${theme}: the target's five hues`);
+    for (const role of LUMEN_HUES) assert.deepEqual(TOKENS.code[theme][role], target[theme][role], `${theme} ${role}`);
   }
 });

@@ -1,0 +1,50 @@
+{
+  "$note": "The Lumen target colour values K9 (ui-kit 0.35) matched, frozen from lab/directions-2/dir-lumen.css at 1a39581 so the parity tests (neutrals-ladder, palette-contrast) keep running once K7 removes lab/. neutrals: the ladder rungs the target derives from the accent hue, oklch [L, C]. hairline: --lu-hair (border-subtle) and --lu-hair-2 (border-default) alphas; the kit keeps its own product-tinted ink. code: the five syntax hues, oklch [L, C, h]. While the lab file exists, neutrals-ladder.test.mjs checks this fixture against it.",
+  "neutrals": {
+    "light": {
+      "bg-canvas": [0.928, 0.007],
+      "bg-surface": [0.987, 0.003],
+      "text-primary": [0.2, 0.01],
+      "text-secondary": [0.38, 0.012],
+      "text-muted": [0.47, 0.014],
+      "code-fg": [0.27, 0.01],
+      "code-comment": [0.5, 0.012]
+    },
+    "dark": {
+      "bg-canvas": [0.135, 0.006],
+      "bg-surface": [0.178, 0.007],
+      "bg-surface-raised": [0.215, 0.008],
+      "text-primary": [0.94, 0.006],
+      "text-secondary": [0.79, 0.008],
+      "text-muted": [0.69, 0.01],
+      "code-fg": [0.9, 0.008],
+      "code-comment": [0.68, 0.012]
+    }
+  },
+  "hairline": {
+    "light": {
+      "subtle": 0.08,
+      "default": 0.14
+    },
+    "dark": {
+      "subtle": 0.065,
+      "default": 0.11
+    }
+  },
+  "code": {
+    "light": {
+      "keyword": [0.48, 0.17, 285],
+      "string": [0.47, 0.12, 140],
+      "function": [0.47, 0.12, 240],
+      "number": [0.52, 0.16, 40],
+      "builtin": [0.5, 0.11, 75]
+    },
+    "dark": {
+      "keyword": [0.78, 0.11, 280],
+      "string": [0.8, 0.12, 135],
+      "function": [0.8, 0.1, 230],
+      "number": [0.78, 0.13, 40],
+      "builtin": [0.82, 0.11, 85]
+    }
+  }
+}
