@@ -235,9 +235,17 @@
   --slc-depth-flat:   inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border);
   /* An island pane on a darker frame: lit, with the quieter ring. */
   --slc-depth-island: inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border-subtle);
-  /* A keycap: ringed, lit along its top, standing on a base that is its own
-     fill in shade (the edge-in-shade rule, so no per-theme number). */
-  --slc-depth-key:    0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--slc-edge-surface);
+  /* A keycap: ringed in the default line, lit along its top, standing on a
+     base that is the bottom of its own fill (the surface) in shade. As
+     Lumen's renders (0.36): a full shade step on paper, where Lumen's base
+     (the ink at 12%) lands within 0.01 of it, and a quarter of a step on
+     ink, where a full step read as a black line under the key and Lumen's
+     base (black at 28%) sits about 0.02 below the surface. Which half is read off the
+     surface's own lightness, as the control edge's sign is, so no theme
+     branch. Computed here, on :root, as --slc-edge-surface is, so the
+     inversion band's key stands on the page's shade exactly as before. */
+  --_sl-key-base:     oklch(from var(--slc-surface) calc(l - var(--slc-shade-step) * (0.25 + 0.75 * clamp(0, (l - 0.5) * 1000, 1))) c h);
+  --slc-depth-key:    0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--_sl-key-base);
   --slc-depth-sunk:   var(--slc-shadow-inset);
   /* The overlay cast: three layers. The fourth, the ring, is the overlay's
      own border in shade, which a dialog already has. */
@@ -946,9 +954,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   background: currentColor;
 }
 
-/* Kbd — a keycap (Lumen, 0.31): every shortcut is a small physical key, lit
-   along its top and standing on a base that is its own fill in shade
-   (--slc-depth-key). 20px tall at least and as wide, one cap per key
+/* Kbd — a keycap (Lumen, 0.31): every shortcut is a small physical key,
+   ringed in the default line, lit along its top and standing on a base that
+   is its own fill in shade (--slc-depth-key; a quarter of a step on ink
+   since 0.36). 20px tall at least and as wide, one cap per key
    (<kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd>). The fill steps
    from raised to surface; the colour is declared on its own so the glass
    family can name it as the fill (effects.css). */
@@ -959,7 +968,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   box-sizing: border-box;
   min-width: 20px;
   height: 20px;
-  padding: 0 0.3125rem;
+  /* 4px in: Lumen's 5.12 on the 4px grid (0.36; it was 5). A one-glyph cap
+     is the 20px square either way. */
+  padding: 0 var(--sl-space-1, 0.25rem);
   font-family: var(--sl-font-mono, ui-monospace, monospace);
   font-size: 0.6875rem;
   font-weight: 500;
@@ -1807,7 +1818,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-depth-tile:    inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border), var(--slc-shadow-sm);
   --slc-depth-flat:    inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border);
   --slc-depth-island:  inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-border-subtle);
-  --slc-depth-key:     0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--slc-edge-surface);
+  --slc-depth-key:     0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--_sl-key-base);
   --slc-depth-sunk:    var(--slc-shadow-inset);
   --slc-depth-float:   var(--slc-shadow-lg);
   --slc-depth-cast:    inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg);

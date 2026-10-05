@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { parseSheet, el, box, cascaded, customs, px } from "./lib/cascade.mjs";
+import { evaluate, fromOklch, fromSrgb, toOklch, toSrgb } from "./lib/css-color.mjs";
 
 // Lumen parity, the controls (ui-kit 0.36, slice K10): the button, the badge,
 // the tag, the chip, the keycap and the check box move to the Lumen IDE
@@ -42,9 +43,12 @@ function sheets(consumer = "") {
 const KIT_RULES = sheets();
 const SPEXR_RULES = sheets(SPEXR);
 
-/** html[data-sl-theme] > body > [.sl-invert > div] > element. */
-function at(theme = "dark", { band = false } = {}) {
-  const html = el({ tag: "html", attrs: { "data-sl-theme": theme } });
+const NEUTRALS = JSON.parse(read("neutrals.json")).products;
+const PRODUCTS = Object.keys(NEUTRALS).filter((p) => !NEUTRALS[p].inherits);
+
+/** html[data-sl-theme][data-sl-product] > body > [.sl-invert > div] > element. */
+function at(theme = "dark", { band = false, product = null } = {}) {
+  const html = el({ tag: "html", attrs: { "data-sl-theme": theme, ...(product ? { "data-sl-product": product } : {}) } });
   const body = el({ tag: "body", parent: html });
   if (!band) return body;
   return el({ parent: el({ classes: ["sl-invert"], parent: body }) });
@@ -176,4 +180,36 @@ test("a chip is Lumen's composer chip: mono 12.5/500 at r6 (it was a 12px sans p
   // the one control edge, unchanged
   const off = el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": "false" }, parent: at() });
   assert.equal(value(KIT_RULES, off, "border"), "1px solid var(--slc-edge-control)");
+});
+
+// ── keycap ───────────────────────────────────────────────────────────────────
+
+/** Colour t over the opaque colour u (source-over, in sRGB). */
+const over = (t, u) => { const a = toSrgb(t), b = toSrgb(u); return fromSrgb(a.map((v, i) => v * t.alpha + b[i] * (1 - t.alpha))); };
+
+test("a keycap is 4px in (Lumen's 5.12 on the grid), ringed in the default line, on the 20px square", () => {
+  const k = el({ tag: "kbd", classes: ["sl-kbd"], parent: at() });
+  const { padding } = box(KIT_RULES, k);
+  assert.deepEqual([padding.top, padding.right, padding.bottom, padding.left], [0, 4, 0, 4]);
+  assert.equal(len(KIT_RULES, k, "min-width"), 20);
+  assert.equal(len(KIT_RULES, k, "height"), 20);
+  assert.equal(value(KIT_RULES, k, "box-shadow"), "var(--slc-depth-key)");
+  const html = at().parent;
+  assert.match(value(KIT_RULES, html, "--slc-depth-key"), /^0 0 0 1px var\(--slc-border\),/, "the ring is the default line");
+});
+
+test("a keycap's base is Lumen's shade on every product: within 0.015 oklch L of black 28% on ink and the ink 12% on paper", () => {
+  const LUMEN_INK = fromOklch([0.2, 0.01, 60]);
+  const BLACK = fromSrgb([0, 0, 0]);
+  const out = [];
+  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    const env = customs(KIT_RULES, el({ tag: "kbd", classes: ["sl-kbd"], parent: at(theme, { product }) }));
+    const surface = evaluate("var(--slc-surface)", env);
+    const base = evaluate("var(--_sl-key-base)", env);
+    const lumen = theme === "dark" ? over({ ...BLACK, alpha: 0.28 }, surface) : over({ ...LUMEN_INK, alpha: 0.12 }, surface);
+    const [L] = toOklch(base), [Lt] = toOklch(lumen), [Ls] = toOklch(surface);
+    assert.ok(L < Ls, `${theme} ${product}: the base is in shade`);
+    if (Math.abs(L - Lt) > 0.015) out.push(`${theme} ${product}: base L ${L.toFixed(3)}, Lumen ${Lt.toFixed(3)}`);
+  }
+  assert.deepEqual(out, []);
 });

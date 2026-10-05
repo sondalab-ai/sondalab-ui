@@ -184,7 +184,10 @@ test("the depth recipes are role-vars built from roles, never a literal colour",
     assert.doesNotMatch(v, /#[0-9a-f]{3,8}\b|rgba?\(|oklch\(\s*[\d.]/i, `${n} carries a literal: ${v}`);
   }
   assert.match(root.get("--slc-depth-tile"), /^inset 0 1px 0 var\(--slc-lit\), 0 0 0 1px var\(--slc-border\), var\(--slc-shadow-sm\)$/);
-  assert.match(root.get("--slc-depth-key"), /inset 0 -1\.5px 0 var\(--slc-edge-surface\)/, "a key stands on its own fill in shade");
+  // 0.36: the base is the surface in shade, a full step on paper and a
+  // quarter of a step on ink (Lumen's), read off the surface's own lightness
+  assert.equal(root.get("--slc-depth-key"), "0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--_sl-key-base)", "a key stands on its own fill in shade");
+  assert.equal(root.get("--_sl-key-base"), "oklch(from var(--slc-surface) calc(l - var(--slc-shade-step) * (0.25 + 0.75 * clamp(0, (l - 0.5) * 1000, 1))) c h)");
   assert.equal(root.get("--slc-depth-float"), "var(--slc-shadow-lg)");
   // 0.34: Lumen's cast, for an overlay that keeps no border of its own (the
   // palette, the toast): the float with the overlay's ring folded in -- its
