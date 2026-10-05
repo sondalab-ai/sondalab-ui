@@ -704,7 +704,7 @@ a.sl-statusbar__item { text-decoration: none; }
   font-size: var(--sl-text-xs, 0.75rem);
   color: var(--slc-text-muted);
 }
-.sl-palette__keys { flex: none; display: inline-flex; gap: 3px; }
+.sl-palette__keys { flex: none; display: inline-flex; gap: var(--sl-space-1, 0.25rem); }
 /* Its fill keeps to the palette's corners: the palette clips nothing. */
 .sl-palette__foot {
   display: flex;
@@ -838,8 +838,9 @@ a.sl-statusbar__item { text-decoration: none; }
      current item, which is Highlight itself, the ring keeps its shape. */
   .sl-activitybar__badge { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; outline: 1px solid HighlightText !important; }
   /* The bell's dot is an image, which forced colours drop: the button says
-     "unread" with a heavier edge in Highlight (its name says it in words). */
-  .sl-icon-btn.sl-titlebar__btn--dot { border: 2px solid Highlight !important; }
+     "unread" with a heavier edge in Highlight (its name says it in words),
+     except under the focus ring, which takes the edge as everywhere. */
+  .sl-icon-btn.sl-titlebar__btn--dot:not(:focus-visible) { border: 2px solid Highlight !important; }
   /* Selection that was only a fill and a shadow is the system's selection;
      the seam goes with the shorthand, and its parts take the selection's
      text colour. Opting out also stops the forced outline colour: the shared

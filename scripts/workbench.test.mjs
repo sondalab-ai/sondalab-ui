@@ -1573,32 +1573,54 @@ test("a Tier B layer's numbers come from the README's recipes, and the dark one 
 // the toast), is a whole number of 4px steps, and so is every row, bar and
 // control height or width named below. Radii, type, line weights, shadows,
 // glyph sizes, translate and vertical-align are not spacing and are not read.
-// A value here that predates 0.34 and steps off the grid is listed by name.
+// A value here that predates 0.34 and steps off the grid is listed by
+// selector, property and value, so a change to it trips the sweep too.
 const GRID_PROPS = /^(?:padding|margin|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-|$)/;
 const SPACE = Object.fromEntries([...bare(read("tokens.css")).matchAll(/(--sl-space-\d+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
 const GRID_ENV = new Map([...Object.entries(SPACE), ["--sl-tree-level", "1"], ["--sl-radius-pane", "10px"], ["--sl-radius-lg", "14px"]]);
-// values before 0.34, off the grid on purpose: a glyph-level nudge, not a spacing step
+// before 0.34, off the grid on purpose (design-language L2, its one legacy exception)
 const GRID_LEGACY = new Set([
-  ".sl-palette__keys::gap", // 3px between keycaps, since 0.33 (the title bar's keys take 4)
-  ".sl-tabs--tile::gap", // 2px between tile tabs, since 0.31
+  ".sl-tabs--tile::gap=2px", // 2px between tile tabs, since 0.31
 ]);
-/** The px of each length word in a value; null for a word that is no length (auto, a %). */
-const gridLengths = (v) => words(substitute(v, GRID_ENV).trim()).map((w) => (/%|auto|^0$|^inherit$|^initial$/.test(w) ? null : px(w, GRID_ENV)));
-test("the workbench's spacing sits on the 4px grid", () => {
+const GRID_WORDS = /^(?:auto|0|inherit|initial|unset|-?[\d.]+%)$/;
+/** The off-grid or unreadable spacing declarations among `rules`. A word is a
+ *  keyword, a bare percentage, or a length the reader evaluates; a % inside a
+ *  calc() counts as 0, so the rest of the sum must sit on the grid on its own
+ *  (calc(100% - 3px) is off). min(), max(), clamp() and a var() left without
+ *  a value cannot be read on a grid, and say so. */
+function gridOff(rules) {
   const off = [];
-  const wb = RULES(WORKBENCH);
-  const co = RULES(COMPONENTS).filter((r) => /\.sl-tabs--tile|\.sl-toast/.test(r.selector));
-  for (const r of [...wb, ...co]) {
+  for (const r of rules) {
     for (const d of r.body.split(";")) {
       const m = d.match(/^\s*([\w-]+)\s*:\s*([\s\S]+?)\s*$/);
       if (!m || !GRID_PROPS.test(m[1])) continue;
-      if (GRID_LEGACY.has(`${r.selector}::${m[1]}`)) continue;
-      let values;
-      try { values = gridLengths(m[2].replace(/\s*!important$/, "")); } catch { continue; }
-      for (const v of values) if (v !== null && Math.abs(v / 4 - Math.round(v / 4)) > 1e-9) off.push(`${r.selector} { ${m[1]}: ${m[2]} } = ${v}px`);
+      const raw = m[2].replace(/\s*!important$/, "");
+      if (GRID_LEGACY.has(`${r.selector}::${m[1]}=${raw}`)) continue;
+      let text;
+      try { text = substitute(raw, GRID_ENV).trim(); } catch { off.push(`${r.selector} { ${m[1]}: ${raw} }: cannot be read on the grid (an unresolved var())`); continue; }
+      for (const w of words(text)) {
+        if (GRID_WORDS.test(w)) continue;
+        if (/\b(?:min|max|clamp)\(|var\(/.test(w)) { off.push(`${r.selector} { ${m[1]}: ${raw} }: cannot be read on the grid (${w})`); continue; }
+        let v;
+        try { v = px(w.replace(/-?[\d.]+%/g, "0"), GRID_ENV); } catch { off.push(`${r.selector} { ${m[1]}: ${raw} }: cannot be read on the grid (${w})`); continue; }
+        if (Math.abs(v / 4 - Math.round(v / 4)) > 1e-9) off.push(`${r.selector} { ${m[1]}: ${raw} } = ${v}px`);
+      }
     }
   }
-  assert.deepEqual(off, []);
+  return off;
+}
+test("the workbench's spacing sits on the 4px grid", () => {
+  const co = RULES(COMPONENTS).filter((r) => /\.sl-tabs--tile|\.sl-toast/.test(r.selector));
+  assert.deepEqual(gridOff([...RULES(WORKBENCH), ...co]), []);
+});
+
+test("the grid sweep reads a sum, refuses what it cannot read, and pins its exceptions by value", () => {
+  const sweep = (css) => gridOff(RULES(css));
+  assert.deepEqual(sweep(".a { inset-inline: calc(100% - 4px) 40%; padding: 0 var(--sl-space-3); }"), [], "on the grid");
+  assert.equal(sweep(".a { inset-inline: calc(100% - 3px); }").length, 1, "the length beside a % is read");
+  for (const v of ["min(8px, 1rem)", "clamp(4px, 1vw, 8px)", "var(--nope)"]) assert.match(sweep(`.a { gap: ${v}; }`)[0] ?? "", /cannot be read/, v);
+  assert.deepEqual(sweep(".sl-tabs--tile { gap: 2px; }"), [], "the exception at its value");
+  assert.equal(sweep(".sl-tabs--tile { gap: 3px; }").length, 1, "an exception that moves is off again");
 });
 
 test("the workbench's rows, bars and controls are whole 4px steps tall and wide", () => {
@@ -1692,4 +1714,11 @@ test("the palette's field is found by its edge at 3:1, every product, theme and 
     }
   }
   assert.deepEqual(low, []);
+});
+
+test("forced colours: a focused bell takes the focus ring alone, with no Highlight edge inside it", () => {
+  const wb = parseSheet(read("workbench.css"), { forcedColors: true });
+  const at = el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) });
+  const focused = cascaded(wb, el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn", "sl-titlebar__btn--dot"], states: ["focus-visible"], parent: at }));
+  assert.equal(focused.get("border"), undefined, "the edge stands down under the ring");
 });

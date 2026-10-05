@@ -62,7 +62,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
   - Its seam is Lumen's: a 1px line from 16px in, gone 40% before the end, glowing at 55%. It is the palette's `::before` (it was a background layer), as the pane's seam and the toast's tick are, so glass, press and glitch are unsupported on a palette; the aurora is not.
   - The head is 52px (Lumen's 54) over a hairline (`--slc-border-subtle`; it was the raised edge in shade), 10px round the field as in the demo.
   - The input is the kit's field, the one control height, 32px (Lumen's 34), at 16px, 8px in, with no fill or well, in the one control edge. Lumen draws it borderless (1.00:1); the kit keeps the edge, because a field is found by its boundary (≥ 3:1 against the palette, over the canvas or the page's ink).
-  - The list is 4px in at the top and 8 elsewhere; rows keep their 36px (Lumen's 38), 12px between the icon and the label.
+  - The list is 4px in at the top and 8 elsewhere; rows keep their 36px (Lumen's 38), 12px between the icon and the label. Its keycaps are 4px apart (they were 3), as the title bar's are.
   - The foot sits on the surface at 70%, over a hairline.
 - **Toast** (`components.css`, every product).
   - It is r12 (it was r14), has no border (it was the raised edge in shade) and sits on `--slc-depth-cast`. Padding is 12 / 12 / 16 / 16px (top, end, bottom, start; Lumen's 12.8 / 12.8 / 14.4 / 16).
@@ -70,7 +70,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
   - The mark keeps its 24px (Lumen's 26), now on a 16% wash (it was 12%).
   - The dismiss is the icon button's own 32px at r8 (it was 24px at r6).
   - `.sl-toast__timer` (new) on an `.sl-progress` draws a 2px bar of the tone along the bottom, 16px in from either end; it stays a 2px bar in high contrast and under forced colours.
-- **Paint layers.** Four marks are a `::before`: the lit pane's seam, the palette's seam, the toast's tick and the terminal block's exit mark, so glass, press and glitch are unsupported on those four hosts (the palette joins them in 0.34). Nothing takes `::after`. The title bar's dots and the activity item's count badge are children or background layers, so they take no pseudo-element.
+- **Paint layers.** Four marks are a `::before`: the lit pane's seam, the palette's seam, the toast's tick and the terminal block's exit mark, so glass, press and glitch are unsupported on those four hosts (the palette joins them in 0.34). No workbench piece takes `::after`, which stays the aurora's. The title bar's dots and the activity item's count badge are children or background layers, so they take no pseudo-element.
 
 **Migration.** Class names are unchanged. Re-check any rule of yours that sets the sizes above. If you relied on status separators or tree guides, add `--separators` or `--guides`. If you wrote a `--slc-depth-float` restore for a toast or a palette, change it to `--slc-depth-cast`. A status item that is a `<span>` no longer answers the pointer; make the ones that do something buttons or links.
 
