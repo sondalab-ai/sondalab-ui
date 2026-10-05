@@ -666,6 +666,18 @@ test("the live dot breathes on the motion tokens, only where motion is wanted, n
   // the dot's own fill stays the accent as text: on paper the amber accent
   // itself reads 1.6:1, too faint for a state's mark
   assert.equal(on.get("background-color").value, "var(--slc-accent-text)");
+  // the effects layer's switches hold it too: an opt-out region stops it,
+  // and the app's pause (data-sl-fx-still on <html>) freezes it where it is
+  const FX = parse([read("workbench.css"), read("effects.css")]);
+  const html = (attrs) => el({ tag: "html", attrs });
+  const off = el({ classes: ["sl-statusbar__dot"], parent: el({ attrs: { "data-sl-fx": "off" }, parent: el({ tag: "body", parent: html({}) }) }) });
+  assert.equal(cascaded(FX, off).get("animation").value, "none", "in an opt-out region");
+  assert.ok(cascaded(FX, off).get("animation").important);
+  const self = el({ classes: ["sl-statusbar__dot"], attrs: { "data-sl-fx": "off" }, parent: el({ tag: "body", parent: html({}) }) });
+  assert.equal(cascaded(FX, self).get("animation").value, "none", "opted out itself");
+  const still = cascaded(FX, el({ classes: ["sl-statusbar__dot"], parent: el({ tag: "body", parent: html({ "data-sl-fx-still": "" }) }) }));
+  assert.equal(still.get("animation-play-state").value, "paused", "held where it is");
+  assert.ok(still.get("animation-play-state").important);
 });
 
 test("a status item that is a button takes the shared flush ring and its halo", () => {

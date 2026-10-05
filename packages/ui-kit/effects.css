@@ -232,12 +232,12 @@
    paints them, outranking the kill, both !important. The halo is still off
    in high contrast and under forced colours: it is drawn at --slc-glow's
    strength, which is 0 there. */
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
   box-shadow: var(--_sl-depth, 0 0 transparent) !important;
 }
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
   box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent) !important;
 }
 /* ...nor a surface's own recipe (0.33): an island (a workbench pane, a
@@ -266,6 +266,12 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-goo__member,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *).sl-fx-goo__member,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-goo__member { animation: none !important; }
+
+/* The status bar's live dot (workbench.css, 0.34) breathes on its own, not
+   as an effect family, but an opt-out region is where a product asks for
+   stillness: the breath stops there. */
+[data-sl-fx="off"] .sl-statusbar__dot,
+.sl-statusbar__dot[data-sl-fx="off"] { animation: none !important; }
 
 /* The shatter variant replaces the label with jumping bands, so restoring the
    text is part of switching it off, not a separate concern. */
@@ -2187,7 +2193,9 @@
 
    The live badge's breath is components.css's, but that file may not name an
    effect attribute (effects-showcase.test.mjs), so it is paused here: a
-   product that loads components.css alone keeps the badge breathing.
+   product that loads components.css alone keeps the badge breathing. The
+   status bar's live dot (workbench.css, 0.34) is paused here for the same
+   reason.
 
    The kit's loops run on paint layers, not on the hosts (a drifting goo
    member and a glitch aside), so the hosts themselves are not named here:
@@ -2195,6 +2203,7 @@
    pause with !important would take it away with no way back. */
 :root[data-sl-fx-still] .sl-fx-goo--drift .sl-fx-goo__member,
 :root[data-sl-fx-still] .sl-badge--live::before,
+:root[data-sl-fx-still] .sl-statusbar__dot,
 :root[data-sl-fx-still] :is(.sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-glass)::before,
 :root[data-sl-fx-still] :is(.sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-glass)::after {
   animation-play-state: paused !important;
