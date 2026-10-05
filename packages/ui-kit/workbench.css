@@ -375,18 +375,25 @@
 .sl-tree__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* ══ PALETTE ═════════════════════════════════════════════════════════════════
-   The command palette: an overlay that floats (the raised rung, its own
-   border in shade as the ring, the float recipe), a seam of the accent just
-   inside its top edge (it holds the focus), a sunken input -- the kit's
-   field -- and a list of results in which the active one is a raised tile
-   with the kit's seam, in the accent, since the palette always holds the
-   focus. It never animates: it appears, and the active row moves without a
-   transition, because a palette is driven at typing speed. The input keeps
-   the focus and points at the active option; the options are not focusable,
-   and the list takes no tab stop of its own (a scroller without focusable
-   children is one, in Chromium 130 and later).
+   The command palette, as Lumen draws it (0.34): an overlay that floats on
+   Lumen's cast (--slc-depth-cast: the ring is the cast's, so it keeps no
+   border), 580px wide, the raised rung at 94% under a blur of what it covers
+   where the browser can blur it (opaque where it cannot, in high contrast
+   and under forced colours), a line of the accent just inside its top edge
+   -- from 16px in, gone 40% before the end, glowing (it holds the focus) --
+   a 54px head over a hairline, its input borderless in the head at 16px, and
+   a list of 38px results in which the active one is a raised tile with the
+   kit's seam, in the accent, since the palette always holds the focus. Its
+   foot sits on the surface rung at 70% over a hairline. It never animates:
+   it appears, and the active row moves without a transition, because a
+   palette is driven at typing speed. The input keeps the focus and points
+   at the active option; the options are not focusable, and the list takes
+   no tab stop of its own (a scroller without focusable children is one, in
+   Chromium 130 and later). The seam is the palette's ::before, so glass,
+   press and glitch are unsupported on it.
      <div class="sl-palette" role="dialog" aria-label="Command palette">
        <div class="sl-palette__head">
+         <svg …/>
          <input class="sl-field__input sl-palette__input" role="combobox" aria-expanded="true"
                 aria-autocomplete="list" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command">
        </div>
@@ -407,41 +414,77 @@
 .sl-palette {
   position: relative;
   box-sizing: border-box;
-  width: min(36rem, 100%);
+  width: min(580px, 100%);
   padding: 0;
   font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-sm, 0.875rem);
   line-height: var(--sl-line-normal, 1.5);
   color: var(--slc-text);
   background-color: var(--slc-raised);
-  /* The lit pane's seam, one pixel deep, flush under the top border: a layer
-     of the background, which starts inside the border. */
-  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
-  background-repeat: no-repeat;
-  background-size: calc(100% - 2 * var(--sl-space-4, 1rem)) 1px;
-  background-position: var(--sl-space-4, 1rem) 0;
-  border: 1px solid var(--slc-edge-raised);
+  border: 0;
   border-radius: var(--sl-radius-lg, 14px);
-  box-shadow: var(--slc-depth-float);
+  box-shadow: var(--slc-depth-cast);
+}
+/* Translucent only where the blur is there to keep what shows through from
+   reading as text: without it the raised rung stays opaque. Every text in
+   the palette holds 4.5:1 with the page's own ink under the 6%. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sl-palette {
+    background-color: color-mix(in srgb, var(--slc-raised) 94%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    backdrop-filter: blur(24px) saturate(1.3);
+  }
+}
+/* A line of light, not a layer: it glows as Lumen draws it, at 55% wherever
+   --slc-glow is not 0 (Lumen's is the same on both themes). Mirrored right
+   to left. */
+.sl-palette::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 16px 40%;
+  height: 1px;
+  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), var(--slc-seam), transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--slc-seam) calc(55% * min(1, var(--slc-glow) * 1000)), transparent);
+  pointer-events: none;
 }
 .sl-palette__head {
   display: flex;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
-  padding: var(--sl-space-2, 0.5rem);
-  border-bottom: 1px solid var(--slc-edge-raised);
+  box-sizing: border-box;
+  height: 54px;
+  padding-inline: var(--sl-space-4, 1rem);
+  border-bottom: 1px solid var(--slc-border-subtle);
 }
-/* The field's own colour transitions would fade its ring in as the palette
-   appears: the palette never animates, its field included. Two classes, so
-   it outranks the field whatever order the sheets load in. */
-.sl-field__input.sl-palette__input { flex: 1; min-width: 0; transition: none; }
+.sl-palette__head > svg { flex: none; color: var(--slc-text-muted); }
+/* The kit's field, borderless in the head: the palette is its ground, so
+   it has no fill, no edge (at rest or under the pointer) and no well; the
+   focus still draws the kit's flush ring, its border joining it. 16px on a
+   20px line, 6px above and below: 34px. The field's own colour transitions
+   would fade its ring in as the palette appears: the palette never
+   animates, its field included. Two classes, so it outranks the field
+   whatever order the sheets load in. */
+.sl-field__input.sl-palette__input {
+  --_sl-depth: 0 0 transparent;
+  flex: 1;
+  min-width: 0;
+  padding: 0.375rem 0.5rem;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  background-color: transparent;
+  border-color: transparent;
+  transition: none;
+}
+.sl-field__input.sl-palette__input:hover:not(:disabled, :focus) { border-color: transparent; }
+.sl-field__input.sl-palette__input:focus { border-color: var(--slc-focus); }
 .sl-palette__list {
   display: flex;
   flex-direction: column;
   max-height: 20rem;
   overflow-y: auto;
   margin: 0;
-  padding: var(--sl-space-2, 0.5rem);
+  padding: 0.35rem var(--sl-space-2, 0.5rem) var(--sl-space-2, 0.5rem);
   list-style: none;
 }
 .sl-palette__group {
@@ -457,9 +500,9 @@
 .sl-palette__row {
   display: flex;
   align-items: center;
-  gap: var(--sl-space-3, 0.75rem);
+  gap: 0.7rem;
   box-sizing: border-box;
-  height: 2.25rem;
+  height: 38px;
   padding: 0 var(--sl-space-3, 0.75rem);
   color: var(--slc-text);
   border-radius: var(--sl-radius-md, 8px);
@@ -486,14 +529,17 @@
   color: var(--slc-text-muted);
 }
 .sl-palette__keys { flex: none; display: inline-flex; gap: 3px; }
+/* Its fill keeps to the palette's corners: the palette clips nothing. */
 .sl-palette__foot {
   display: flex;
   align-items: center;
   gap: var(--sl-space-4, 1rem);
   padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
-  border-top: 1px solid var(--slc-edge-raised);
+  border-top: 1px solid var(--slc-border-subtle);
+  border-radius: 0 0 var(--sl-radius-lg, 14px) var(--sl-radius-lg, 14px);
   font-size: var(--sl-text-xs, 0.75rem);
   color: var(--slc-text-muted);
+  background-color: color-mix(in srgb, var(--slc-surface) 70%, transparent);
 }
 
 /* ══ TERMINAL BLOCK ══════════════════════════════════════════════════════════
@@ -585,6 +631,14 @@
   color: var(--slc-text-secondary);
 }
 
+/* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════
+   Nothing shows through an overlay: the palette is its opaque rung, unblurred. */
+:root[data-sl-theme="high-contrast"] .sl-palette {
+  background-color: var(--slc-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* ══ FORCED COLOURS ══════════════════════════════════════════════════════════
    The user's palette replaces every colour, drops every shadow and every
    gradient: a pane's and a terminal block's ring went with the island
@@ -593,9 +647,11 @@
    Highlight too, the exit mark and the live dot are drawn in system colours,
    and a selection is the system's. */
 @media (forced-colors: active) {
-  :is(.sl-pane, .sl-term-block) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
+  :is(.sl-pane, .sl-term-block, .sl-palette) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
   .sl-pane[data-lit] { outline: 2px solid Highlight !important; outline-offset: -2px; }
-  .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
+  :is(.sl-pane[data-lit], .sl-palette)::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
+  /* Opaque: the user's canvas, nothing blurred through it. */
+  .sl-palette { background-color: Canvas !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
   .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; animation: none !important; }
   .sl-activitybar__item[data-count]::after { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; }

@@ -702,7 +702,7 @@ test("the workbench's selections and surfaces are the kit's depth recipes", () =
     ['.sl-tree__row[aria-selected="true"]', "flat"],
     ['.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])', "flat"],
     ['.sl-palette__row[aria-selected="true"]', "tile"],
-    [".sl-pane", "island"], [".sl-term-block", "island"], [".sl-palette", "float"],
+    [".sl-pane", "island"], [".sl-term-block", "island"], [".sl-palette", "cast"],
   ]) {
     assert.equal(depthOf(wb(sel)), `var(--slc-depth-${depth})`, sel);
   }
