@@ -104,7 +104,7 @@ const over = (top, under) => {
   const t = toSrgb(top), u = toSrgb(under);
   return fromSrgb(t.map((v, i) => v * top.alpha + u[i] * (1 - top.alpha)));
 };
-const DEPTH = ["tile", "flat", "island", "key", "sunk", "float"].map((n) => `--slc-depth-${n}`);
+const DEPTH = ["tile", "flat", "island", "key", "sunk", "float", "cast"].map((n) => `--slc-depth-${n}`);
 const CASES = [
   ...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [t, p])),
   ["high-contrast", "default"],
@@ -186,6 +186,10 @@ test("the depth recipes are role-vars built from roles, never a literal colour",
   assert.match(root.get("--slc-depth-tile"), /^inset 0 1px 0 var\(--slc-lit\), 0 0 0 1px var\(--slc-border\), var\(--slc-shadow-sm\)$/);
   assert.match(root.get("--slc-depth-key"), /inset 0 -1\.5px 0 var\(--slc-edge-surface\)/, "a key stands on its own fill in shade");
   assert.equal(root.get("--slc-depth-float"), "var(--slc-shadow-lg)");
+  // 0.34: Lumen's cast, for an overlay that keeps no border of its own (the
+  // palette, the toast): the float with the overlay's ring folded in -- its
+  // own fill in shade, as the bordered float draws it -- and lit along the top.
+  assert.equal(root.get("--slc-depth-cast"), "inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg)");
 });
 
 test("the inversion band re-declares every depth recipe as written, so it reads the band's roles", () => {
@@ -212,6 +216,9 @@ test("high contrast trades depth for drawn rings: selection in the accent, a key
   // (a control's depth plus its focus halo, 0.32), and `none` voids a list
   assert.equal(hc.get("--slc-depth-sunk"), "0 0 transparent");
   assert.equal(hc.get("--slc-depth-float"), "0 0 transparent");
+  // the cast's ring is the overlay's only edge (it keeps no border): it is
+  // drawn in the theme's line, as an island's is
+  assert.equal(hc.get("--slc-depth-cast"), "0 0 0 1px var(--slc-border)");
   assert.equal(hc.get("--slc-glow"), "0");
   assert.equal(vars([':root[data-sl-theme="light"]']).get("--slc-glow"), "0.35");
 });
@@ -224,6 +231,7 @@ test("high contrast keeps its rings inside the inversion band, where the band re
   assert.equal(band.get("--slc-depth-key"), "0 0 0 1px var(--slc-border)");
   assert.equal(band.get("--slc-depth-sunk"), "0 0 transparent");
   assert.equal(band.get("--slc-depth-float"), "0 0 transparent");
+  assert.equal(band.get("--slc-depth-cast"), "0 0 0 1px var(--slc-border)");
   // the ring finds the tile on the band's ground (3:1, a boundary)
   const env = hcBandEnv();
   const ground = evaluate("var(--slc-text)", rootEnv("high-contrast"));

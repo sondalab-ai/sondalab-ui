@@ -238,8 +238,14 @@
   --slc-depth-key:    0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--slc-edge-surface);
   --slc-depth-sunk:   var(--slc-shadow-inset);
   /* The overlay cast: three layers. The fourth, the ring, is the overlay's
-     own border in shade, which a dialog, a palette or a toast already has. */
+     own border in shade, which a dialog already has. */
   --slc-depth-float:  var(--slc-shadow-lg);
+  /* Lumen's cast (0.34), for an overlay that keeps no border of its own (the
+     palette, the toast): the float with the overlay's ring folded in -- its
+     own fill in shade, the ring the bordered float draws -- and lit along its
+     top. One recipe on every theme: each part is a role the theme already
+     sets (the lit line, the raised rung, the cast ramp). */
+  --slc-depth-cast:   inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg);
   /* A recipe is a member of a box-shadow LIST (a control's depth composes
      with the focus halo, 0.32), so where a theme turns one off it is an
      empty shadow, `0 0 transparent`, never `none`, which would void the
@@ -1716,6 +1722,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-depth-key:     0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--slc-edge-surface);
   --slc-depth-sunk:    var(--slc-shadow-inset);
   --slc-depth-float:   var(--slc-shadow-lg);
+  --slc-depth-cast:    inset 0 1px 0 var(--slc-lit), 0 0 0 1px var(--slc-edge-raised), var(--slc-shadow-lg);
   /* The band's ground is the page's ink: dark on the light theme, where the
      uncapped accent reads (the orange ~7.8:1, the capped text ~2.7), and LIGHT
      on the dark and high-contrast themes, where the bright accent is ~1.3:1.
@@ -2627,6 +2634,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-depth-key:    0 0 0 1px var(--slc-border);
   --slc-depth-sunk:   0 0 transparent;
   --slc-depth-float:  0 0 transparent;
+  /* An overlay that keeps no border (0.34) is found by its cast's ring:
+     drawn in the theme's line, as an island's is. */
+  --slc-depth-cast:   0 0 0 1px var(--slc-border);
   /* High contrast owns its accent outright: a product's accent fill (0.32)
      does not reach it, and every labelled fill is the theme's yellow. */
   --slc-accent-fill:  initial;
@@ -2652,6 +2662,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-depth-key:    0 0 0 1px var(--slc-border);
   --slc-depth-sunk:   0 0 transparent;
   --slc-depth-float:  0 0 transparent;
+  --slc-depth-cast:   0 0 0 1px var(--slc-border);
 }
 /* The in-button key draws its own base line instead of the key depth, so it
    is ringed here, in its label's colour: white on a neutral button, black on
@@ -2749,6 +2760,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     --slc-depth-key: 0 0 transparent;
     --slc-depth-sunk: 0 0 transparent;
     --slc-depth-float: 0 0 transparent;
+    --slc-depth-cast: 0 0 transparent;
     --slc-glow: 0;
   }
   /* The halo too, on every control, whatever --slc-glow a product's own
