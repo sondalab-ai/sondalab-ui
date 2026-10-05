@@ -425,3 +425,51 @@ test("spexr's filled primary audits clean under spexr's registry entry", async (
     assert.throws(() => productNeutralBases({ products: { a: { inherits: "b" }, b: { inherits: "a" } } }, "a"), /circular/);
   });
 }
+
+// --- the bin runs however it is reached (0.33.1) ---
+// npm's node_modules/.bin/sl-audit is a symlink to this file, and pnpm's shim
+// calls node on a path through a linked package directory; either way
+// process.argv[1] is not the module's real path. Until 0.33.1 the main-module
+// guard compared the two unresolved, so through either the audit printed
+// nothing and exited 0, and a consumer gating on it passed silently.
+{
+  const { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { spawnSync } = await import("node:child_process");
+  const { fileURLToPath } = await import("node:url");
+  const { after } = await import("node:test");
+
+  const kitDir = fileURLToPath(new URL("../packages/ui-kit", import.meta.url));
+  const script = join(kitDir, "agent", "sl-audit.mjs");
+  const literal = "#3aa0ff";
+  const tmp = mkdtempSync(join(tmpdir(), "sl-audit-bin-"));
+  after(() => rmSync(tmp, { recursive: true, force: true }));
+  writeFileSync(join(tmp, "fixture.css"), `.x { color: ${literal}; }\n`);
+
+  const binDir = join(tmp, "node_modules", ".bin");
+  mkdirSync(binDir, { recursive: true });
+  symlinkSync(script, join(binDir, "sl-audit"));
+  mkdirSync(join(tmp, "node_modules", "@sondalab"));
+  symlinkSync(kitDir, join(tmp, "node_modules", "@sondalab", "ui-kit"), "dir");
+
+  const run = (entry) =>
+    spawnSync(process.execPath, [entry, "--surface", "fixture.css", "--product", "default", "--fail-on", "R"], {
+      cwd: tmp,
+      encoding: "utf8",
+    });
+
+  for (const [how, entry] of [
+    ["directly", script],
+    ["through a symlink to the file (npm's .bin)", join(binDir, "sl-audit")],
+    ["through a linked package directory (pnpm)", join(tmp, "node_modules", "@sondalab", "ui-kit", "agent", "sl-audit.mjs")],
+  ]) {
+    test(`the bin reports an R finding and exits 1 when run ${how}`, () => {
+      const r = run(entry);
+      const out = `status ${r.status}\n--- stdout\n${r.stdout}\n--- stderr\n${r.stderr}`;
+      assert.match(r.stdout, /R-violation \([1-9]\d*\)/, out);
+      assert.match(r.stdout, new RegExp(`fixture\\.css:1 .*${literal}`), out);
+      assert.equal(r.status, 1, out);
+    });
+  }
+}
