@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { parseSheet, el, box, cascaded, customs, px } from "./lib/cascade.mjs";
+import { parseSheet, el, box, cascaded, customs, longhand, px } from "./lib/cascade.mjs";
 import { evaluate, fromOklch, fromSrgb, substitute, toHex, toOklch, toSrgb } from "./lib/css-color.mjs";
 
 // Lumen parity, the controls (ui-kit 0.36, slice K10): the button, the badge,
@@ -341,37 +341,234 @@ test("the check and radio edge finds the box at 3:1 on canvas, surface, raised a
   assert.deepEqual(out, []);
 });
 
-// KNOWN GAP, NOT K10's (it is the same on 0.35.0): in an inversion band every
-// control's edge is the band's strong line, 38% of the band's ink
-// (.sl-invert > * { --slc-edge-control: var(--slc-border-strong) }), and that
-// reads under 3:1 there -- 2.52 against the dark theme's light band, 2.86
-// against a box's own wash on the light theme's dark band, and in the high
-// contrast band 2.68 against its ground and 2.45 against the wash. 0.36 changes
-// neither the box's edge nor its well in the band, so this fence holds the
-// box to the band's one control edge, to a wash (never a solid of the band's
-// ink) and to its 0.35 figures; raising the band's control edge is a change
-// to every control in a band, left to the owner.
-test("in a band a check or radio box is a wash in the band's one control edge, no weaker than on 0.35 (a known kit-wide gap under 3:1)", () => {
-  const FLOOR = { light: { ground: 3.0, wash: 2.85 }, dark: { ground: 2.5, wash: 2.3 }, "high-contrast": { ground: 2.65, wash: 2.4 } };
+// ── the control edge in an inversion band (0.36.1) ───────────────────────────
+
+// In a band every control is found by the band's own control edge: the band's
+// ink (--slc-canvas, which the band never re-derives) at a share read off the
+// ink's lightness, 48% on the light theme's dark band and 53% on the dark and
+// high-contrast themes' light bands -- the least that clears 3:1 against the
+// band's ground and against the raised wash a secondary paints. Until 0.36.1
+// it was the band's strong line, 38% of currentColor: 2.52:1 on the dark
+// theme's band, 2.31 against a box's own wash, and less on any control set in
+// a lighter ink, because currentColor in a custom property is read where the
+// property is used (a chip, in the muted 60%, drew its edge at 23%: 1.67:1).
+
+/** The colour currentColor is on an element: its own `color`, read against
+ *  the colour it inherits, or the one it inherits. */
+function colourOf(rules, e) {
+  const inherited = e.parent ? colourOf(rules, e.parent) : null;
+  const d = cascaded(rules, e).get("color");
+  return d ? paint(rules, e, d.value, inherited) : inherited;
+}
+/** A colour expression as an element paints it, currentColor as `current`
+ *  (by default the element's own colour). */
+function paint(rules, e, expr, current = colourOf(rules, e)) {
+  const env = customs(rules, e);
+  let text = substitute(expr, env);
+  if (/currentcolor/i.test(text)) {
+    assert.ok(current, `currentColor with no colour to read: ${expr}`);
+    const [r, g, b] = toSrgb(current);
+    text = text.replace(/currentcolor/gi, `color(srgb ${r} ${g} ${b} / ${current.alpha})`);
+  }
+  return evaluate(text, env);
+}
+const rank = (d) => [d.important ? 1 : 0, ...d.spec, d.order, d.at];
+const later = (a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] > y[i]; return false; };
+/** The colour expression a box's border is drawn in: its border-color or the
+ *  colour in its border shorthand, whichever wins. */
+function borderOf(rules, e) {
+  const won = cascaded(rules, e);
+  const long = won.get("border-color"), short = won.get("border");
+  if (long && (!short || later(long, short))) return long.value.trim();
+  const m = short?.value.trim().match(/^\S+\s+solid\s+(.+)$/);
+  assert.ok(m, `a drawn border: ${short?.value}`);
+  return m[1];
+}
+const fillOf = (rules, e) => longhand(cascaded(rules, e), "background-color")?.value.trim() ?? "transparent";
+
+/** The band's children, Tier A (the kit's theme files) or Tier B (a product's
+ *  own [data-theme] layer): [name, rules, the band's child]. */
+function bands() {
   const out = [];
-  // high contrast has no per-product neutrals: one row, under no product
-  const CASES = [...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [p, t])), [null, "high-contrast"]];
-  for (const kind of ["check", "radio"]) for (const [product, theme] of CASES) {
-    const b = choiceBox(kind, theme, { product, band: true });
-    const child = b.parent.parent;
-    assert.equal(value(KIT_RULES, b, "border"), "1px solid var(--slc-edge-control)", "the one control edge");
-    assert.equal(value(KIT_RULES, child, "--slc-edge-control"), "var(--slc-border-strong)", "the band's control edge, as for every control there");
-    const env = customs(KIT_RULES, b);
-    const ground = evaluate("var(--slc-text)", customs(KIT_RULES, child.parent));
-    const ink = toHex(evaluate("var(--slc-canvas)", env));
-    const sunken = value(KIT_RULES, child, "--slc-sunken");
-    assert.match(sunken, /currentColor 4%, transparent/);
-    const wash = evaluate(sunken.replace(/currentColor/g, ink), env);
-    assert.ok(wash.alpha < 0.1, `${kind} ${theme}${product ? ` ${product}` : ""}: a wash over the band's ground, never a solid of its ink ${ink}`);
-    const edge = over(evaluate(value(KIT_RULES, child, "--slc-border-strong").replace(/currentColor/g, ink), env), ground);
-    for (const [g, colour] of [["ground", ground], ["wash", over(wash, ground)]]) {
-      const r = ratio(edge, colour);
-      if (r < FLOOR[theme][g]) out.push(`${kind} ${theme}${product ? ` ${product}` : ""} band: edge on the ${g} ${r.toFixed(2)} < ${FLOOR[theme][g]}`);
+  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    out.push([`${theme} ${product}`, KIT_RULES, at(theme, { band: true, product })]);
+    const body = el({ tag: "body", parent: el({ tag: "html", attrs: { "data-theme": theme, "data-product": product } }) });
+    out.push([`Tier B ${theme} ${product}`, TIER_B_RULES, el({ parent: el({ classes: ["sl-invert"], parent: body }) })]);
+  }
+  out.push(["high contrast", KIT_RULES, at("high-contrast", { band: true })]);
+  return out;
+}
+/** Every control that draws the one control edge, built in a band's child. */
+const BAND_CONTROLS = {
+  check: (p) => choiceBox("check", null, { root: p }),
+  radio: (p) => choiceBox("radio", null, { root: p }),
+  switch: (p) => { const label = el({ tag: "label", classes: ["sl-switch"], parent: p }); return el({ tag: "span", classes: ["sl-switch__track"], parent: label, prev: el({ tag: "input", classes: ["sl-switch__input"], parent: label }) }); },
+  field: (p) => el({ tag: "input", classes: ["sl-field__input"], parent: el({ classes: ["sl-field"], parent: p }) }),
+  select: (p) => el({ tag: "select", classes: ["sl-field__input"], parent: el({ tag: "span", classes: ["sl-field__control", "sl-select"], parent: p }) }),
+  segmented: (p) => el({ classes: ["sl-segmented"], parent: p }),
+  secondary: (p) => el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], parent: p }),
+  chip: (p) => el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": "false" }, parent: el({ classes: ["sl-chips"], parent: p }) }),
+  "icon button": (p) => el({ tag: "button", classes: ["sl-icon-btn"], parent: p }),
+  "button group": (p) => el({ classes: ["sl-btn-group"], parent: p }),
+};
+/** The band's ground (the page's ink) under a band's child. */
+const groundOf = (rules, child) => paint(rules, child.parent, fillOf(rules, child.parent));
+/** The edge drawn in a band, as the conservative model reads it: the edge over
+ *  the band's ground, against the ground and against the control's own face
+ *  (its fill over the ground). A fill painted under the border, as Chrome
+ *  paints it, only adds to both. */
+function bandEdge(rules, child, e) {
+  const ground = groundOf(rules, child);
+  const edge = over(paint(rules, e, borderOf(rules, e)), ground);
+  const face = over(paint(rules, e, fillOf(rules, e)), ground);
+  return { ground, edge, face, onGround: ratio(edge, ground), onFace: ratio(edge, face) };
+}
+
+test("in a band every control's edge reads 3:1 against the band and against its own face, on every product, Tier A and B, and in high contrast", () => {
+  const out = [];
+  const lows = {};
+  for (const [band, rules, child] of bands()) {
+    for (const [name, make] of Object.entries(BAND_CONTROLS)) {
+      const e = make(child);
+      assert.equal(paint(rules, e, borderOf(rules, e)).alpha < 1, true, `${band} ${name}: a share of the band's ink, never a solid`);
+      const { onGround, onFace } = bandEdge(rules, child, e);
+      const key = band.replace(/^Tier B /, "").split(" ")[0];
+      lows[key] = Math.min(lows[key] ?? 99, onGround, onFace);
+      if (onGround < 3) out.push(`${band} ${name}: edge on the band ${onGround.toFixed(2)}`);
+      if (onFace < 3) out.push(`${band} ${name}: edge on its own face (${fillOf(rules, e)}) ${onFace.toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(out, []);
+  // the least that clears 3:1, not more -- IN THIS MODEL ONLY (the edge over
+  // the bare band): the tightest control on each band computes under 3.5
+  // (0.36.1: 3.13 light, 3.07 dark, 3.36 high contrast). Chrome draws the
+  // border over the control's own fill and reads higher (3.4:1 or more in
+  // its pixels at DPR 4), so this ceiling is not a rendered figure; a
+  // deliberate raise moves it.
+  for (const [k, v] of Object.entries(lows)) assert.ok(v < 3.5, `${k}: the band's tightest edge ${v.toFixed(2)}`);
+});
+
+test("the band's control edge is its ink at a share, never currentColor, so a control in a lighter ink keeps it (fails on 0.36.0)", () => {
+  // currentColor in a custom property is read where it is used: on 0.36.0 a
+  // chip (muted, 60%) drew the band's 38% at 23%, an icon button (secondary,
+  // 78%) at 30%. Read through each control's own colour, every control in a
+  // band draws the same edge as the check box beside it.
+  const band = read("components.css").match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  for (const role of ["--slc-edge-control", "--slc-edge-control-hover"]) {
+    const v = band.match(new RegExp(`${role}:\\s*([^;]+);`))?.[1] ?? "";
+    assert.match(v, /var\(--slc-canvas\)/, `${role}: the band's ink`);
+    assert.doesNotMatch(v, /currentColor/i, `${role}: not currentColor`);
+  }
+  for (const [name, rules, child] of bands()) {
+    const box = paint(rules, BAND_CONTROLS.check(child), "var(--slc-edge-control)");
+    for (const c of ["chip", "icon button", "secondary"]) {
+      const e = BAND_CONTROLS[c](child);
+      assert.equal(toHex(paint(rules, e, borderOf(rules, e))), toHex(box), `${name} ${c}`);
+      assert.ok(Math.abs(paint(rules, e, borderOf(rules, e)).alpha - box.alpha) < 1e-9, `${name} ${c}: alpha`);
+    }
+  }
+});
+
+test("hovered, a control in a band steps further: above its rest edge, and 3:1 on its hover face", () => {
+  const out = [];
+  const HOVER = [["secondary", (p) => el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], states: ["hover"], parent: p })],
+    ["chip", (p) => el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": "false" }, states: ["hover"], parent: p })],
+    ["icon button", (p) => el({ tag: "button", classes: ["sl-icon-btn"], states: ["hover"], parent: p })],
+    ["field", (p) => el({ tag: "input", classes: ["sl-field__input"], states: ["hover"], parent: p })]];
+  for (const [band, rules, child] of bands()) for (const [name, make] of HOVER) {
+    const rest = bandEdge(rules, child, BAND_CONTROLS[name](child)), hov = bandEdge(rules, child, make(child));
+    // high contrast draws the secondary and the icon button in its one line
+    // whatever their state, in a band as on its page: hovered, the tile says it
+    if (band === "high contrast" && ["secondary", "icon button"].includes(name)) {
+      if (toHex(hov.edge) !== toHex(rest.edge)) out.push(`${band} ${name}: hover ${toHex(hov.edge)}, rest ${toHex(rest.edge)}`);
+    } else if (!(hov.onGround > rest.onGround)) out.push(`${band} ${name}: hover ${hov.onGround.toFixed(2)} not above rest ${rest.onGround.toFixed(2)}`);
+    if (Math.min(hov.onGround, hov.onFace) < 3) out.push(`${band} ${name} hovered: ${hov.onGround.toFixed(2)} / ${hov.onFace.toFixed(2)} on its face`);
+  }
+  assert.deepEqual(out, []);
+});
+
+test("in a band the switch's knob reads 3:1 on its track, and the box stays a wash of the band, never a solid of its ink", () => {
+  const out = [];
+  for (const [band, rules, child] of bands()) {
+    const track = BAND_CONTROLS.switch(child);
+    const knob = el({ pseudo: "after", parent: track });
+    assert.equal(fillOf(rules, knob), "var(--slc-edge-control)", "the off knob is the control edge");
+    const { ground, face } = bandEdge(rules, child, track);
+    const k = over(paint(rules, knob, fillOf(rules, knob), colourOf(rules, track)), face);
+    if (ratio(k, face) < 3) out.push(`${band}: knob on its track ${ratio(k, face).toFixed(2)}`);
+    for (const kind of ["check", "radio"]) {
+      const b = BAND_CONTROLS[kind](child);
+      assert.equal(fillOf(rules, b), "var(--slc-sunken)", `${band} ${kind}: the band's sunken wash`);
+      assert.ok(paint(rules, b, fillOf(rules, b)).alpha < 0.1, `${band} ${kind}: a wash over ${toHex(ground)}`);
+    }
+  }
+  assert.deepEqual(out, []);
+});
+
+test("in a band a button group's faces are its members' own, its rules the control edge: members' text 4.5:1, rules 3:1", () => {
+  // The group's ground is its rule colour, which its members' opaque surface
+  // hides everywhere but the 1px gaps. In a band the surface is a 7% wash,
+  // so on 0.36.0 the rule colour showed across every face (member text 4.08:1
+  // on the light theme's band, the rules 1.13:1 against the faces). There the
+  // group paints no ground, and each member after the first draws the rule
+  // to its left as its depth.
+  const out = [];
+  for (const [band, rules, child] of bands()) {
+    const group = BAND_CONTROLS["button group"](child);
+    const first = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], parent: group });
+    const second = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], parent: group, prev: first });
+    const ground = over(paint(rules, group, fillOf(rules, group)), groundOf(rules, child));
+    const depth = value(rules, second, "--_sl-depth");
+    const m = depth.match(/^-1px 0 0 (.+)$/);
+    assert.ok(m, `${band}: the rule is the member's depth, 1px to its left (${depth})`);
+    assert.equal(value(rules, first, "--_sl-depth"), "0 0 transparent", `${band}: the first member draws none`);
+    const rule = over(paint(rules, second, m[1]), ground);
+    for (const member of [first, second]) {
+      const face = over(paint(rules, member, fillOf(rules, member)), ground);
+      const text = over(colourOf(rules, member), face);
+      if (ratio(text, face) < 4.5) out.push(`${band}: member text ${ratio(text, face).toFixed(2)}`);
+      if (ratio(rule, face) < 3) out.push(`${band}: rule on a member ${ratio(rule, face).toFixed(2)}`);
+    }
+  }
+  assert.deepEqual(out, []);
+  // right to left the gap is on the member's other side (the test cascade
+  // does not read :dir(), so the rule is read off the sheet)
+  assert.match(read("components.css"), /\.sl-invert \.sl-btn-group > \.sl-btn \+ \.sl-btn:dir\(rtl\) \{ --_sl-depth: 1px 0 0 var\(--slc-edge-control\); \}/);
+});
+
+// KNOWN GAP (0.36.1): glass owns its host's box-shadow, so a glass member of
+// a band group does not paint the rule its depth carries; between two glass
+// members only their soft inner lines (the control edge at half strength)
+// and the band's ground in the 1px gap say where one ends. Measured 1.98:1
+// against the band and 1.69 against a face on the light theme's dark band,
+// 1.84 and 1.59 on the dark theme's light band (it was 1.13 against the faces
+// on 0.36.0, when the group's ground showed through them). High contrast's
+// kill switch gives the depth back, so there the rule paints. This fence holds
+// the figures where they are until the gap is closed.
+test("in a band a group of glass members keeps only its soft inner lines (a known gap, no weaker than on 0.36.1)", () => {
+  const FLOOR = { light: { ground: 1.95, face: 1.65 }, dark: { ground: 1.8, face: 1.55 } };
+  const GLASS = ["sl-btn", "sl-btn--ghost", "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"];
+  const out = [];
+  for (const [band, rules, child] of bands()) {
+    if (band.startsWith("Tier B")) continue; // the Tier B cascade here loads no effects.css
+    const group = BAND_CONTROLS["button group"](child);
+    const first = el({ tag: "button", classes: GLASS, parent: group });
+    const second = el({ tag: "button", classes: GLASS, parent: group, prev: first });
+    const ground = over(paint(rules, group, fillOf(rules, group)), groundOf(rules, child));
+    const face = over(paint(rules, second, fillOf(rules, second)), ground);
+    const shadow = cascaded(rules, second).get("box-shadow").value;
+    if (band === "high contrast") {
+      assert.match(shadow, /^var\(--_sl-depth/, "high contrast: the kill switch gives the depth back");
+      const rule = over(paint(rules, second, value(rules, second, "--_sl-depth").match(/^-1px 0 0 (.+)$/)[1]), ground);
+      if (ratio(rule, face) < 3) out.push(`${band}: rule on a glass member ${ratio(rule, face).toFixed(2)}`);
+      continue;
+    }
+    assert.doesNotMatch(shadow, /--_sl-depth/, `${band}: glass owns the shadow, so the rule does not paint (the gap)`);
+    const soft = over(paint(rules, second, "var(--slfx-control-edge-soft)"), ground);
+    const floor = FLOOR[band.split(" ")[0]];
+    for (const [g, colour] of [["ground", ground], ["face", face]]) {
+      const r = ratio(soft, colour);
+      if (r < floor[g]) out.push(`${band}: soft line on the ${g} ${r.toFixed(2)} < ${floor[g]}`);
     }
   }
   assert.deepEqual(out, []);
