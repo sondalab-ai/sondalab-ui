@@ -1883,8 +1883,17 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   --slc-edge-surface:  var(--slc-border-subtle);
   --slc-edge-raised:   var(--slc-border-subtle);
   --slc-edge-wash:     var(--slc-border-subtle);
-  --slc-edge-control:  var(--slc-border-strong);
-  --slc-edge-control-hover: color-mix(in srgb, currentColor 52%, transparent);
+  /* The one control edge is the band's ink at a share, the least that clears
+     3:1 against the band's ground and against the raised wash a secondary
+     paints, on every product: 48% on the light theme's dark band, 53% on the
+     dark and high-contrast themes' light bands, read off the ink's own
+     lightness (no theme branch, so a Tier B band gets it too). It was the
+     strong line, 38%: 2.52:1 on the dark theme's band, 2.31 on a box's wash.
+     The ink is --slc-canvas, never currentColor: currentColor in a custom
+     property is read where the property is used, so a chip in the muted ink
+     (60%) drew 38% at 23%. Hover stays 14 points further, as it was. */
+  --slc-edge-control:  oklch(from var(--slc-canvas) l c h / calc(0.48 + 0.05 * clamp(0, (0.5 - l) * 1000, 1)));
+  --slc-edge-control-hover: oklch(from var(--slc-canvas) l c h / calc(0.62 + 0.05 * clamp(0, (0.5 - l) * 1000, 1)));
   --slc-edge-pressed:  color-mix(in srgb, var(--slc-accent) 35%, transparent);
 }
 
@@ -2016,6 +2025,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    them, so a transparent ghost would show the line colour across its whole
    face instead of only in the 1px gap. A filled variant brings its own. */
 .sl-btn-group > .sl-btn:not(.sl-btn--primary) { background: var(--slc-surface); }
+/* In an inversion band the surface is a 7% wash, which hides nothing: the
+   group's ground showed across every face (0.36.0: its members' text 4.08:1
+   on the light theme's band, its rules 1.13 against the faces). There the
+   group paints no ground, and each member after the first draws the rule in
+   1px gap before it as its depth (to its left, to its right in a
+   right-to-left group), which the focus rule keeps under the halo. */
+.sl-invert .sl-btn-group { background: transparent; }
+.sl-invert .sl-btn-group > .sl-btn + .sl-btn { --_sl-depth: -1px 0 0 var(--slc-edge-control); }
+.sl-invert .sl-btn-group > .sl-btn + .sl-btn:dir(rtl) { --_sl-depth: 1px 0 0 var(--slc-edge-control); }
 
 /* The track is sunk (Lumen, 0.32): the sunken rung and the sunk recipe
    inside the one control edge (it was a 6% wash of the ink), so the chosen
@@ -2844,6 +2862,17 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   .sl-callout,
   .sl-switch__track
 ) { border-color: var(--slc-border); }
+/* In an inversion band that border is the band's 22% hairline (0.36.0: a
+   secondary's edge 1.69:1 there): the controls among them take the band's
+   own control edge, as every control in a band does. The band weighs
+   nothing (:where), so this is the rule above's weight and the focus rule
+   below still hands the border to the ring. */
+:root[data-sl-theme="high-contrast"] :where(.sl-invert) :is(
+  .sl-btn--ghost:not(.sl-btn-group > *),
+  .sl-icon-btn,
+  .sl-segmented,
+  .sl-switch__track
+) { border-color: var(--slc-edge-control); }
 /* ...and that drawn edge outranks the shared focus rule: under focus the
    border is the ring's again, or a white line sits inside the yellow ring. */
 :root[data-sl-theme="high-contrast"] :is(.sl-btn--ghost, .sl-icon-btn):focus-visible,
