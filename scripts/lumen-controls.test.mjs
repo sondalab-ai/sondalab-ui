@@ -267,56 +267,109 @@ test("a keycap's base is Lumen's shade on every product: within 0.015 oklch L of
 
 const YL = (c) => { const [r, g, b] = c.lin.map((v) => Math.min(1, Math.max(0, v))); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [hi, lo] = [YL(a), YL(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
-/** A check box in a label on a ground: [box, the ground's colour, env]. */
-function checkBox(theme, { product = null, band = false, checked = false } = {}) {
-  const parent = at(theme, { product, band });
-  const label = el({ tag: "label", classes: ["sl-check"], parent });
-  const input = el({ tag: "input", classes: ["sl-check__input"], states: checked ? ["checked"] : [], parent: label });
-  return el({ tag: "span", classes: ["sl-check__box"], parent: label, prev: input });
+/** A check or radio box in its label: html > body > [band >] label > input + box. */
+function choiceBox(kind, theme, { product = null, band = false, checked = false, root = null } = {}) {
+  const parent = root ?? at(theme, { product, band });
+  const label = el({ tag: "label", classes: [`sl-${kind}`], parent });
+  const input = el({ tag: "input", classes: [`sl-${kind}__input`], states: checked ? ["checked"] : [], parent: label });
+  return el({ tag: "span", classes: [`sl-${kind}__box`], parent: label, prev: input });
 }
+const checkBox = (theme, o = {}) => choiceBox("check", theme, o);
 
-test("the check box is Lumen's: r5 on the canvas, and checked it is the fill set as before", () => {
+test("the check box is Lumen's r5 on the canvas, and checked it is the fill set as before", () => {
   const b = checkBox("dark");
   assert.equal(value(KIT_RULES, b, "border-radius"), "5px");
   assert.equal(value(KIT_RULES, b, "background"), "var(--slc-canvas)");
   const on = checkBox("dark", { checked: true });
   assert.equal(value(KIT_RULES, on, "background"), "var(--_sl-fill)");
   assert.equal(value(KIT_RULES, on, "border-color"), "var(--_sl-fill-edge)");
-  // the radio keeps its round box on the sunken rung
-  const radio = el({ tag: "span", classes: ["sl-radio__box"], parent: at() });
-  assert.equal(value(KIT_RULES, radio, "border-radius"), "50%");
-  assert.equal(value(KIT_RULES, radio, "background"), "var(--slc-sunken)");
+  const radio = choiceBox("radio", "dark");
+  assert.equal(value(KIT_RULES, radio, "border-radius"), "50%", "the radio keeps its round box");
 });
 
-test("the check box's edge finds it at 3:1 against its canvas well and the ground round it, on every product and theme", () => {
-  const out = [];
-  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
-    const env = customs(KIT_RULES, checkBox(theme, { product }));
-    const edge = evaluate("var(--slc-edge-control)", env);
-    for (const ground of ["--slc-canvas", "--slc-surface", "--slc-raised"]) {
-      const r = ratio(edge, evaluate(`var(${ground})`, env));
-      if (r < 3) out.push(`${theme} ${product}: edge on ${ground} ${r.toFixed(2)}`);
+test("a check box and a radio are the same well: the canvas on the page, the band's sunken wash in a band, the fill set when checked", () => {
+  for (const theme of ["light", "dark", "high-contrast"]) for (const band of [false, true]) {
+    const want = band ? "var(--slc-sunken)" : "var(--slc-canvas)";
+    const [c, r] = ["check", "radio"].map((k) => choiceBox(k, theme, { band }));
+    assert.equal(value(KIT_RULES, c, "background"), want, `${theme}${band ? " band" : ""}: check`);
+    assert.equal(value(KIT_RULES, r, "background"), want, `${theme}${band ? " band" : ""}: radio`);
+    if (!band) assert.equal(toHex(evaluate(want, customs(KIT_RULES, c))), toHex(evaluate(want, customs(KIT_RULES, r))), `${theme}: one colour`);
+    for (const k of ["check", "radio"]) {
+      assert.equal(value(KIT_RULES, choiceBox(k, theme, { band, checked: true }), "background"), "var(--_sl-fill)", `${theme}${band ? " band" : ""}: a checked ${k} is the fill set`);
     }
   }
+  // the field and the switch track keep the sunken rung
+  assert.equal(value(KIT_RULES, el({ tag: "input", classes: ["sl-field__input"], parent: at() }), "background"), "var(--slc-sunken)");
+  assert.equal(value(KIT_RULES, el({ tag: "span", classes: ["sl-switch__track"], parent: at() }), "background"), "var(--slc-sunken)");
+});
+
+/** A Tier B page: no theme file; its own [data-theme] layer maps the role-vars from the product's neutrals. */
+const TIER_B_RULES = (() => {
+  const map = PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => {
+    const n = NEUTRALS[p][t];
+    const roles = { "--slc-canvas": n["bg-canvas"], "--slc-surface": n["bg-surface"], "--slc-raised": n["bg-surface-raised"], "--slc-text": n["text-primary"],
+      "--slc-text-secondary": n["text-secondary"], "--slc-text-muted": n["text-muted"], "--slc-border": n["border-default"], "--slc-border-subtle": n["border-subtle"], "--slc-border-strong": n["border-strong"] };
+    return `:root[data-product="${p}"][data-theme="${t}"] { ${Object.entries(roles).map(([k, v]) => `${k}: ${v};`).join(" ")} }`;
+  })).join("\n");
+  let o = 0;
+  return ["tokens.css", "components.css"].map(read).concat(map).flatMap((css) => { const r = parseSheet(css, {}, o); o += r.length + 1; return r; });
+})();
+
+test("the check and radio edge finds the box at 3:1 on canvas, surface, raised and tile, on every product, on Tier B and in high contrast", () => {
+  const out = [];
+  const check = (name, env, grounds) => {
+    const edge = evaluate("var(--slc-edge-control)", env);
+    for (const [g, colour] of Object.entries(grounds)) {
+      const r = ratio(edge, colour);
+      if (r < 3) out.push(`${name}: edge on ${g} ${r.toFixed(2)}`);
+    }
+  };
+  const GROUNDS = ["--slc-canvas", "--slc-surface", "--slc-raised", "--slc-tile"];
+  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    // Tier A, on the page (the canvas is also the box's own well)
+    const env = customs(KIT_RULES, checkBox(theme, { product }));
+    check(`${theme} ${product}`, env, Object.fromEntries(GROUNDS.map((g) => [g, evaluate(`var(${g})`, env)])));
+    // Tier B: the product's own [data-theme] layer, no theme file
+    const root = el({ tag: "body", parent: el({ tag: "html", attrs: { "data-theme": theme, "data-product": product } }) });
+    const tb = choiceBox("check", theme, { root });
+    assert.equal(value(TIER_B_RULES, tb, "background"), "var(--slc-canvas)");
+    const benv = customs(TIER_B_RULES, tb);
+    check(`Tier B ${theme} ${product}`, benv, Object.fromEntries(GROUNDS.map((g) => [g, evaluate(`var(${g})`, benv)])));
+  }
   const hc = customs(KIT_RULES, checkBox("high-contrast"));
-  const r = ratio(evaluate("var(--slc-edge-control)", hc), evaluate("var(--slc-canvas)", hc));
-  if (r < 3) out.push(`high contrast: ${r.toFixed(2)}`);
+  check("high contrast", hc, { "--slc-canvas": evaluate("var(--slc-canvas)", hc), "--slc-surface": evaluate("var(--slc-surface)", hc) });
   assert.deepEqual(out, []);
 });
 
-test("in the inversion band the check box stays on the band's sunken wash, never the band's ink", () => {
-  for (const theme of ["light", "dark", "high-contrast"]) {
-    const b = checkBox(theme, { band: true });
-    assert.equal(value(KIT_RULES, b, "background"), "var(--slc-sunken)", theme);
-    // the band's sunken rung is a 4% wash of its ink (currentColor, which
-    // the band binds to the page canvas), not a solid of that ink
+// KNOWN GAP, NOT K10's (it is the same on 0.35.0): in an inversion band every
+// control's edge is the band's strong line, 38% of the band's ink
+// (.sl-invert > * { --slc-edge-control: var(--slc-border-strong) }), and that
+// reads under 3:1 there -- 2.52 against the dark theme's light band, 2.86
+// against a box's own wash on the light theme's dark band. 0.36 changes
+// neither the box's edge nor its well in the band, so this fence holds the
+// box to the band's one control edge, to a wash (never a solid of the band's
+// ink) and to its 0.35 figures; raising the band's control edge is a change
+// to every control in a band, left to the owner.
+test("in a band a check or radio box is a wash in the band's one control edge, no weaker than on 0.35 (a known kit-wide gap under 3:1)", () => {
+  const FLOOR = { light: { ground: 3.0, wash: 2.85 }, dark: { ground: 2.5, wash: 2.3 } };
+  const out = [];
+  for (const kind of ["check", "radio"]) for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    const b = choiceBox(kind, theme, { product, band: true });
+    const child = b.parent.parent;
+    assert.equal(value(KIT_RULES, b, "border"), "1px solid var(--slc-edge-control)", "the one control edge");
+    assert.equal(value(KIT_RULES, child, "--slc-edge-control"), "var(--slc-border-strong)", "the band's control edge, as for every control there");
     const env = customs(KIT_RULES, b);
+    const ground = evaluate("var(--slc-text)", customs(KIT_RULES, child.parent));
     const ink = toHex(evaluate("var(--slc-canvas)", env));
-    const sunken = value(KIT_RULES, b.parent.parent, "--slc-sunken") ?? value(KIT_RULES, b.parent, "--slc-sunken");
-    assert.match(sunken, /currentColor 4%, transparent/, theme);
-    const fill = evaluate(sunken.replace(/currentColor/g, ink), env);
-    assert.ok(fill.alpha < 0.1, `${theme}: a wash over the band's ground (alpha ${fill.alpha}), not a solid of its ink ${ink}`);
-    // checked, the fill set still wins in the band
-    assert.equal(value(KIT_RULES, checkBox(theme, { band: true, checked: true }), "background"), "var(--_sl-fill)", theme);
+    const sunken = value(KIT_RULES, child, "--slc-sunken");
+    assert.match(sunken, /currentColor 4%, transparent/);
+    const wash = evaluate(sunken.replace(/currentColor/g, ink), env);
+    assert.ok(wash.alpha < 0.1, `${kind} ${theme} ${product}: a wash over the band's ground, never a solid of its ink ${ink}`);
+    const edge = over(evaluate(value(KIT_RULES, child, "--slc-border-strong").replace(/currentColor/g, ink), env), ground);
+    for (const [g, colour] of [["ground", ground], ["wash", over(wash, ground)]]) {
+      const r = ratio(edge, colour);
+      if (r < FLOOR[theme][g]) out.push(`${kind} ${theme} ${product} band: edge on the ${g} ${r.toFixed(2)} < ${FLOOR[theme][g]}`);
+    }
   }
+  assert.deepEqual(out, []);
 });

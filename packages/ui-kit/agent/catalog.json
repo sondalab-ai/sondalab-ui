@@ -482,6 +482,7 @@
         "sl-radio__label"
       ],
       "roleVars": [
+        "--slc-canvas",
         "--slc-sunken",
         "--slc-edge-control",
         "--slc-accent",

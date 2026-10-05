@@ -1096,8 +1096,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   white-space: nowrap;
 }
 
-/* A box is a small well on the sunken rung (Lumen, 0.32; it was the
-   surface), found by the one control edge. Checked, it fills with the
+/* A box is a small well on the canvas (Lumen, 0.36; the sunken rung from
+   0.32, the surface before), found by the one control edge: on paper a
+   deeper well than the sunken rung. Checked, it fills with the
    accent fill on a foot -- an inset base in the fill's own shade under the
    edge, so the bottom reads deeper with nothing of another colour between
    -- and a soft glow of the fill, as strong as --slc-glow says (none on
@@ -1108,7 +1109,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   flex: none;
   width: 1rem;
   height: 1rem;
-  background: var(--slc-sunken);
+  background: var(--slc-canvas);
   border: 1px solid var(--slc-edge-control);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1116,14 +1117,15 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     transform var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease));
 }
-/* The check box is Lumen's (0.36): r5, the keycap's corner (it was r6), on
-   the canvas, a deeper well than the sunken rung on paper (it was the
-   sunken rung, which the radio, the switch and the field keep). Checked,
-   the fill set paints over it as before. In the inversion band the canvas
-   is the band's ink, so a box there stays on the band's sunken wash. */
-.sl-check__box { border-radius: 5px; background: var(--slc-canvas); }
-.sl-invert .sl-check__box { background: var(--slc-sunken); }
+/* The check box is Lumen's r5, the keycap's corner (0.36; it was r6). Both
+   boxes share the canvas, so a check and a radio in one form are the same
+   well; the switch and the field keep the sunken rung. In the inversion
+   band the canvas is the band's ink, which would paint an unchecked box as
+   a solid square, so there a box stays on the band's sunken wash; at
+   (0,2,0) it is below every checked rule (0,3,0), which still fills it. */
+.sl-check__box { border-radius: 5px; }
 .sl-radio__box { border-radius: 50%; }
+.sl-invert :is(.sl-check__box, .sl-radio__box) { background: var(--slc-sunken); }
 
 .sl-check__input:checked + .sl-check__box,
 .sl-radio__input:checked + .sl-radio__box {
