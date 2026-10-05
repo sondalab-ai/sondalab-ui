@@ -1213,7 +1213,7 @@ test("forced colours hide every layer the kill switch hides, plus glass and ink"
 test("the kill switches give an island or a float its own recipe back", () => {
   const killAt = RULES.findIndex((r) => /box-shadow:\s*none !important/.test(r.body) && r.selector.startsWith(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
   assert.ok(killAt > -1, "the kill rule");
-  for (const [recipe, hosts] of [["island", [".sl-pane", ".sl-term-block"]], ["float", [".sl-toast"]], ["cast", [".sl-palette"]]]) {
+  for (const [recipe, hosts] of [["island", [".sl-pane", ".sl-term-block"]], ["cast", [".sl-toast", ".sl-palette"]]]) {
     const keep = RULES.find((r, i) => i > killAt && new RegExp(`box-shadow:\\s*var\\(--slc-depth-${recipe}\\) !important`).test(r.body));
     assert.ok(keep, `a rule after the kill restores --slc-depth-${recipe}`);
     const parts = keep.selector.split(/,(?![^(]*\))/).map((s) => s.trim());

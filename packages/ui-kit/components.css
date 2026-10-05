@@ -1404,10 +1404,17 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    The UA styles a popover as a centred, bordered, padded box; the stack
    undoes that, and a closed one is hidden as the UA would hide it, which
    this rule's display would otherwise override. The stack lets the pointer
-   through where it has no toast. The overlay's own border in shade is a toast's ring and the
-   float recipe its cast, as a dialog's. Its tone is a measure tick on the
-   top edge (the callout's, with the tone's glow as strong as --slc-glow
-   says) and the mark's wash; the words stay neutral. */
+   through where it has no toast. A toast is Lumen's (0.34): r12 on Lumen's
+   cast (--slc-depth-cast), whose ring is its only edge, so it keeps no
+   border (forced colours, which drop the cast, draw one back). Its tone is
+   a line of light on the top edge -- from 14px in to the middle, fading,
+   glowing at 50% wherever --slc-glow is not 0 -- and the wash under its
+   26px mark; the words stay neutral. A timer, where a toast dismisses
+   itself, is a 2px bar of the tone along the bottom (.sl-toast__timer on an
+   .sl-progress), the rest of the time its track:
+     <div class="sl-progress sl-toast__timer" role="progressbar" aria-label="Time left"
+          aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%">
+       <span class="sl-progress__bar"></span></div> */
 .sl-toast-stack {
   position: fixed;
   inset: auto;
@@ -1445,15 +1452,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   display: flex;
   align-items: center;
   gap: var(--sl-space-3, 0.75rem);
-  padding: var(--sl-space-3, 0.75rem) var(--sl-space-3, 0.75rem) var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
+  padding-block: 0.8rem 0.9rem;
+  padding-inline: var(--sl-space-4, 1rem) 0.8rem;
   font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-sm, 0.875rem);
   line-height: var(--sl-line-normal, 1.5);
   color: var(--slc-text);
   background-color: var(--slc-raised);
-  border: 1px solid var(--slc-edge-raised);
-  border-radius: var(--sl-radius-lg, 14px);
-  box-shadow: var(--slc-depth-float);
+  border: 0;
+  border-radius: 12px;
+  box-shadow: var(--slc-depth-cast);
   /* It arrives as the dialog does (L4): a 6px rise and a fade on the
      arrival curve, transitions only, so reduced motion (which zeroes the
      tokens) shows it at once, and so does a browser without @starting-style. */
@@ -1465,30 +1473,29 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-toast::before {
   content: "";
   position: absolute;
-  inset-block-start: -1px;
-  inset-inline-start: var(--sl-space-4, 1rem);
-  width: 2.75rem;
-  height: 2px;
-  border-radius: 0 0 2px 2px;
-  background-color: var(--_sl-tone);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--_sl-tone) calc(var(--slc-glow) * 100%), transparent);
+  inset-block-start: 0;
+  inset-inline: 14px 50%;
+  height: 1px;
+  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), var(--_sl-tone), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--_sl-tone) calc(50% * min(1, var(--slc-glow) * 1000)), transparent);
   pointer-events: none;
 }
+:where(.sl-toast):dir(rtl) { --_sl-seam-dir: 270deg; }
 .sl-toast--info    { --_sl-tone: var(--slc-info-text, var(--slc-info)); }
 .sl-toast--success { --_sl-tone: var(--slc-success-text, var(--slc-success)); }
 .sl-toast--warning { --_sl-tone: var(--slc-warning-text, var(--slc-warning)); }
 .sl-toast--danger  { --_sl-tone: var(--slc-danger-text, var(--slc-danger)); }
-/* The badge's recipe: the tone's ink on a 12% wash of itself, which
-   palette-contrast.test.mjs holds to 4.5:1 on every ground. */
+/* The tone's ink on a 16% wash of itself (Lumen's; the badge's is 12%),
+   which workbench.test.mjs holds to 4.5:1 for every tone, product and theme. */
 .sl-toast__mark {
   flex: none;
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.625rem;
+  height: 1.625rem;
   border-radius: 50%;
   color: var(--_sl-tone);
-  background-color: color-mix(in srgb, currentColor 12%, transparent);
+  background-color: color-mix(in srgb, currentColor 16%, transparent);
 }
 .sl-toast__content { flex: 1; min-width: 0; }
 .sl-toast__title {
@@ -1502,14 +1509,27 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   font-size: var(--sl-text-xs, 0.75rem);
   color: var(--slc-text-secondary);
 }
-/* The small button's 24px, so it sits on the row of an action beside it.
-   It keeps the one control edge: only the tab's close glyph and the
-   activity bar's buttons are borderless chrome (L3). */
+/* The icon button's own 32px (Lumen's; 24 before 0.34), at its r8. It keeps
+   the one control edge: only the tab's close glyph and the activity bar's
+   buttons are borderless chrome (L3). */
 .sl-icon-btn.sl-toast__dismiss {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: var(--sl-radius-sm, 6px);
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--sl-radius-md, 8px);
 }
+/* The timer: no track, a bar of the tone at 70% along the flat of the
+   bottom edge, between the corners. */
+.sl-progress.sl-toast__timer {
+  position: absolute;
+  inset-inline: 14px;
+  inset-block-end: 0;
+  width: auto;
+  height: 2px;
+  background-color: transparent;
+  border-radius: 0;
+}
+.sl-toast__timer .sl-progress__bar { background-color: color-mix(in srgb, var(--_sl-tone) 70%, transparent); }
 
 /* Tabs — visual only. Consumer supplies ARIA + panel switching:
    <div class="sl-tabs__list" role="tablist">
@@ -2812,8 +2832,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      one and flatten the other: it gets a drawn edge back. Border-box at a
      fixed height, so the cap stays 20px (18 in a button). */
   .sl-kbd { border: 1px solid CanvasText !important; }
-  /* A toast's tone tick is a fill: drawn in the palette's ink, or it is gone. */
+  /* A toast's tone tick is a fill: drawn in the palette's ink, or it is gone.
+     Its edge was its cast's ring, which goes with every shadow: drawn back,
+     inside its box, so nothing moves. */
   .sl-toast::before { forced-color-adjust: none; background: CanvasText !important; box-shadow: none !important; }
+  .sl-toast { outline: 1px solid CanvasText !important; outline-offset: -1px; }
   /* Depth is off: the browser drops shadows, but not on the hosts above that
      opt out, where a tile's ring and cast would paint in page colours. So is
      every accent glow -- a checked control's and the focus halo, which would

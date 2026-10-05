@@ -286,6 +286,9 @@ const BUILD = {
       out[`toast ${key} mark`] = el({ tag: "span", classes: ["sl-toast__mark"], parent: t });
       out[`toast ${key} tick`] = el({ pseudo: "before", parent: t });
       out[`toast ${key} dismiss`] = el({ tag: "button", classes: ["sl-icon-btn", "sl-toast__dismiss"], parent: t });
+      const timer = el({ classes: ["sl-progress", "sl-toast__timer"], attrs: { role: "progressbar" }, parent: t });
+      out[`toast ${key} timer`] = timer;
+      out[`toast ${key} timer bar`] = el({ tag: "span", classes: ["sl-progress__bar"], parent: timer });
     }
     return out;
   },
@@ -349,6 +352,8 @@ const READINGS = [
     [`toast ${t} title`, 4.5, "text"],
     [`toast ${t} body`, 4.5, "text"],
     [`toast ${t} mark`, 4.5, "text"],
+    [`toast ${t} tick`, 3, "mark"],
+    [`toast ${t} timer bar`, 3, "fill"],
   ]),
 ];
 
@@ -662,12 +667,16 @@ test("a status item that is a button takes the shared flush ring and its halo", 
 
 // ── the toast ──────────────────────────────────────────────────────────────
 
-test("the toast floats: its border in shade is the ring, the float recipe the cast", () => {
+test("the toast floats on Lumen's cast, whose ring is its edge: no border, r12, Lumen's padding", () => {
   const p = build(dark);
   const won = cascaded(RULES_A, p["toast success"]);
-  assert.equal(won.get("border").value, "1px solid var(--slc-edge-raised)");
-  assert.equal(won.get("box-shadow").value, "var(--slc-depth-float)");
+  const env = customs(RULES_A, p["toast success"]);
+  assert.equal(won.get("border").value, "0");
+  assert.equal(won.get("box-shadow").value, "var(--slc-depth-cast)");
   assert.equal(won.get("background-color").value, "var(--slc-raised)");
+  assert.equal(px(won.get("border-radius").value, env), 12);
+  assert.deepEqual(words(won.get("padding-block").value).map((w) => px(w, env)), [12.8, 14.4]);
+  assert.deepEqual(words(won.get("padding-inline").value).map((w) => px(w, env)), [16, 12.8]);
   // the stack lets the pointer through, a toast takes it
   assert.equal(cascaded(RULES_A, p["toast stack"]).get("pointer-events").value, "none");
   assert.equal(cascaded(RULES_A, p["toast success"]).get("pointer-events")?.value, "auto");
@@ -734,12 +743,53 @@ test("each tone is the kit's status role: its band-safe ink where a band derives
   }
 });
 
-test("the dismiss keeps the one control edge, at the small button's 24px", () => {
+test("the dismiss keeps the one control edge, at the icon button's 32px", () => {
   const p = build(dark);
   const d = p["toast success dismiss"];
   const won = cascaded(RULES_A, d);
   assert.equal(won.get("border").value, "1px solid var(--slc-edge-control)", "only the tab's close and the activity bar are borderless chrome");
-  assert.equal(declaredHeight(RULES_A, d), 24);
+  assert.equal(declaredHeight(RULES_A, d), 32, "Lumen's 32px (0.34; 24 before)");
+  assert.equal(px(won.get("border-radius").value, customs(RULES_A, d)), 8);
+});
+
+test("the toast's tick is Lumen's: a 1px line of its tone from 14px in to the middle, glowing", () => {
+  for (const [ctx, glow] of [[dark, 0.5], [CONTEXTS.find((c) => c.name === "light default"), 0.5], [hc, 0]]) {
+    const p = build(ctx);
+    const tick = cascaded(ctx.rules, p["toast success tick"]);
+    const env = customs(ctx.rules, p["toast success tick"]);
+    assert.equal(px(tick.get("inset-block-start").value, env), 0, "on the top edge: there is no border to sit over");
+    assert.equal(tick.get("inset-inline").value, "14px 50%");
+    assert.equal(px(tick.get("height").value, env), 1);
+    assert.equal(tick.get("background-image").value, "linear-gradient(var(--_sl-seam-dir, 90deg), var(--_sl-tone), transparent)");
+    const shadow = substitute(tick.get("box-shadow").value, env);
+    const a = value(ctx.rules, p["toast success tick"], shadow.slice(shadow.indexOf("color-mix(")), BLACK).alpha;
+    assert.ok(Math.abs(a - glow) < 1e-9, `${ctx.name}: glow ${a}, Lumen's 50% on both themes, none in high contrast`);
+  }
+});
+
+test("the toast's mark is 26px on a 16% wash of its tone, and its timer a 2px bar along the bottom", () => {
+  const p = build(dark);
+  const env = customs(RULES_A, p["toast success mark"]);
+  const mark = cascaded(RULES_A, p["toast success mark"]);
+  assert.equal(px(mark.get("width").value, env), 26);
+  assert.equal(px(mark.get("height").value, env), 26);
+  assert.equal(mark.get("background-color").value, "color-mix(in srgb, currentColor 16%, transparent)");
+  const timer = cascaded(RULES_A, p["toast success timer"]);
+  assert.equal(timer.get("position").value, "absolute");
+  assert.equal(timer.get("inset-inline").value, "14px");
+  assert.equal(px(timer.get("inset-block-end").value, env), 0, "inside the edge: the toast has no border to sit on");
+  assert.equal(timer.get("width").value, "auto", "between its insets, never past the toast");
+  assert.equal(px(timer.get("height").value, env), 2);
+  assert.equal(timer.get("background-color").value, "transparent", "no track: the bar alone");
+  assert.equal(timer.get("border-radius").value, "0");
+  assert.equal(cascaded(RULES_A, p["toast success timer bar"]).get("background-color").value, "color-mix(in srgb, var(--_sl-tone) 70%, transparent)");
+});
+
+test("forced colours: a toast keeps a drawn edge, its cast being gone", () => {
+  const fc = parseSheet(read("components.css"), { forcedColors: true });
+  const won = cascaded(fc, el({ classes: ["sl-toast"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }));
+  assert.equal(won.get("outline").value, "1px solid CanvasText");
+  assert.ok(won.get("outline").important);
 });
 
 // ── pseudo-elements: ::before is the component's, ::after the aurora's ───────
@@ -1396,7 +1446,7 @@ test("the effects kill switches never outrank a restore: an island, a float and 
       ["pane", ["sl-pane"], {}, "var(--slc-depth-island)"],
       ["lit pane", ["sl-pane"], { "data-lit": "" }, "var(--slc-depth-island)"],
       ["terminal block", ["sl-term-block"], {}, "var(--slc-depth-island)"],
-      ["toast", ["sl-toast"], {}, "var(--slc-depth-float)"],
+      ["toast", ["sl-toast"], {}, "var(--slc-depth-cast)"],
       ["palette", ["sl-palette"], {}, "var(--slc-depth-cast)"],
       ["activity item", ["sl-activitybar__item"], { "aria-current": "true" }, "var(--_sl-depth, 0 0 transparent)"],
       ["tree row", ["sl-tree__row"], { "aria-selected": "true" }, "var(--_sl-depth, 0 0 transparent)"],

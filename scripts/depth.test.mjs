@@ -715,5 +715,5 @@ test("the workbench's selections and surfaces are the kit's depth recipes", () =
   assert.match(decl(wb(".sl-pane[data-lit]"), "box-shadow"), /^var\(--slc-depth-island\), /, "the lit pane is an island and its glow");
   // every host of a recipe carries no border, so the lit line sits flush under the ring
   for (const sel of [".sl-pane", ".sl-term-block", ".sl-tree__row", ".sl-activitybar__item"]) assert.equal(decl(wb(sel), "border"), "0", sel);
-  assert.equal(decl(rule(".sl-toast"), "box-shadow"), "var(--slc-depth-float)");
+  assert.equal(decl(rule(".sl-toast"), "box-shadow"), "var(--slc-depth-cast)");
 });
