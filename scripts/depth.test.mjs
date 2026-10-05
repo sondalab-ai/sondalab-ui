@@ -184,7 +184,10 @@ test("the depth recipes are role-vars built from roles, never a literal colour",
     assert.doesNotMatch(v, /#[0-9a-f]{3,8}\b|rgba?\(|oklch\(\s*[\d.]/i, `${n} carries a literal: ${v}`);
   }
   assert.match(root.get("--slc-depth-tile"), /^inset 0 1px 0 var\(--slc-lit\), 0 0 0 1px var\(--slc-border\), var\(--slc-shadow-sm\)$/);
-  assert.match(root.get("--slc-depth-key"), /inset 0 -1\.5px 0 var\(--slc-edge-surface\)/, "a key stands on its own fill in shade");
+  // 0.36: the base is the surface in shade, a full step on paper and a
+  // quarter of a step on ink (Lumen's), read off the surface's own lightness
+  assert.equal(root.get("--slc-depth-key"), "0 0 0 1px var(--slc-border), inset 0 1px 0 var(--slc-lit), inset 0 -1.5px 0 var(--_sl-key-base)", "a key stands on its own fill in shade");
+  assert.equal(root.get("--_sl-key-base"), "oklch(from var(--slc-surface) calc(l - var(--slc-shade-step) * (0.25 + 0.75 * clamp(0, (l - 0.5) * 1000, 1))) c h)");
   assert.equal(root.get("--slc-depth-float"), "var(--slc-shadow-lg)");
   // 0.34: Lumen's cast, for an overlay that keeps no border of its own (the
   // palette, the toast): the float with the overlay's ring folded in -- its
@@ -399,14 +402,18 @@ test("a key inside a button keeps the 32px and 24px rows", () => {
   const key = rule(".sl-btn > .sl-kbd"), smKey = rule(".sl-btn--sm > .sl-kbd");
   const margin = px(decl(key, "margin-block"));
   assert.ok(margin < 0, "the cap gives back its height");
-  // the label's font size, read from the rule and resolved through its token
-  const size = (body) => px(substitute(decl(body, "font-size"), SHARED));
-  for (const [name, fontSize, padBlock, keyH, rowH] of [
-    ["button", size(btn), px(decl(btn, "padding").split(" ")[0]), px(decl(key, "height")), 32],
-    ["small button", size(sm), px(decl(sm, "padding").split(" ")[0]), px(decl(smKey, "height")), 24],
-  ]) {
-    assert.equal(decl(btn, "line-height"), "1", "the label's line is its font size");
-    const content = Math.max(fontSize, keyH + 2 * margin);
+  // 0.36: the label's line is a fixed 14px, whatever its type size (Lumen's
+  // 13.5 and 12.5), and the small button inherits it; the padding is read
+  // from the rule and resolved through its token
+  const len = (v) => px(substitute(v, SHARED).trim());
+  assert.equal(decl(sm, "line-height"), undefined, "the small button keeps the button's line");
+  const line = len(decl(btn, "line-height"));
+  assert.equal(line, 14, "a 14px line");
+  for (const [name, body, keyH, rowH] of [["button", btn, px(decl(key, "height")), 32], ["small button", sm, px(decl(smKey, "height")), 24]]) {
+    const padBlock = len(decl(body, "padding").match(/^(var\([^)]*\)\)?|\S+)/)[1]);
+    assert.ok(len(decl(body, "font-size")) <= line, `${name}: the type fits its line`);
+    const content = Math.max(line, keyH + 2 * margin);
+    assert.equal(content, line, `${name}: the cap gives back all it adds`);
     assert.equal(content + 2 * padBlock + 2, rowH, `${name}: ${content} + 2 x ${padBlock} + 2`);
   }
   assert.equal(decl(key, "height"), "18px");

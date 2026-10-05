@@ -17,7 +17,7 @@ The micro label above a heading: mono, uppercase, `--sl-text-micro` (10.5px), we
 Consumes: `--slc-text-muted`, `--sl-font-mono`, `--sl-text-micro`. Don't: sentence-case it, use a sans face, or put it on anything you operate — controls speak in sentence case (L1).
 
 ### Tag / tier marker — `sl-tag` (`--plain`)
-Accent-tinted mono pill with a leading dot, in sentence case, tracked `0.02em`; classification/status. Substrate: **R** App/Page.
+Accent-tinted mono mark with a leading dot, in sentence case, tracked `0.02em`; classification/status. Since 0.36 it is Lumen's: 11.5px at r6 (it was a 12px pill), 8px in and 4px above and below, 22px tall as before. Substrate: **R** App/Page.
 ```html
 <span class="sl-tag">Delivered</span>
 <span class="sl-tag sl-tag--plain">Draft</span>
@@ -25,7 +25,7 @@ Accent-tinted mono pill with a leading dot, in sentence case, tracked `0.02em`; 
 Consumes: `--slc-accent`, `--slc-accent-subtle` (`--plain`: `--slc-text-muted`, `--slc-border`). Don't: introduce a second accent hue for tags, or write the label in capitals — the class no longer upper-cases it (0.30).
 
 ### Filter chip — `sl-chip` (`__count`) in `sl-chips`
-A toggleable filter; a row of them is a multi-select where any number may be on. A control, so sentence case in the sans; the count stays mono (L1). Off: an outlined pill in the muted ink with a hollow dot. On: the tag's accent dress, dot filled — so the state reads by colour, fill and glyph. Substrate: **R** App/IDE, **A** Page.
+A toggleable filter; a row of them is a multi-select where any number may be on. A control, so sentence case, untracked; since 0.36 it is Lumen's composer chip, in the mono at 12.5px (it was the sans at 12), because what it names is a reference or a value, as a tag's is (L1). It is r6 (it was a pill), 8px in and 4px above and below on a 14px line, so it is 24px tall, the small button's row (it was 22), and its dot is a rounded square (r2). Off: outlined in the one control edge, in the muted ink, with a hollow dot. On: the tag's accent dress, dot filled — so the state reads by colour, fill and glyph. Substrate: **R** App/IDE, **A** Page.
 ```html
 <div class="sl-chips" role="group" aria-label="Event kinds">
   <button class="sl-chip" aria-pressed="true">Tool <span class="sl-chip__count">42</span></button>
@@ -36,7 +36,7 @@ A toggleable filter; a row of them is a multi-select where any number may be on.
 Consumes: `--slc-text-muted`, `--slc-text`, `--slc-border`, `--slc-border-strong`, `--slc-accent`, `--slc-accent-subtle`, `--slc-focus`. Do: drive it with `aria-pressed` and label the group. Don't: use chips for one-of-N (that is `sl-segmented`), or for a label that does nothing (that is `sl-tag`).
 
 ### Button — `sl-btn` (`--primary` · `--ghost` · `--sm` · `--danger`)
-Three Lumen keys (0.32, L2). The primary is a flat key on a **foot**: its accent fill (`--slc-accent-fill` where the product sets one, at any scope), edged in the fill in shade, with one more pixel of that edge along the bottom as a background layer, so its box is a plain button's and the row stays 32px (24px small) whatever padding a product gives `.sl-btn`; pressed, the foot moves to the top and the key sinks a pixel. The secondary (`--ghost`) is a raised key: the raised rung in the one control edge, lit inside its top, on a short cast; hover lifts it to the tile rung. A plain `sl-btn` is text. Substrate: **R** App/IDE, **A** Page.
+Three Lumen keys (0.32, L2). The primary is a flat key on a **foot**: its accent fill (`--slc-accent-fill` where the product sets one, at any scope), edged in the fill in shade, with one more pixel of that edge along the bottom as a background layer, so its box is a plain button's and the row stays 32px (24px small) whatever padding a product gives `.sl-btn`; pressed, the foot moves to the top and the key sinks a pixel. Since 0.36 every button is Lumen's: 13.5px type (12.5px small) on a fixed 14px line, so the rows hold at a product's own type size too; 8px between an icon, the label and a key; 12px in (8px small); the small button at r7. Held, a button sinks to 97% about its centre (Lumen's press) and springs back, except inside `sl-btn-group`, whose members do not move (a sunk member would open the 1px rules between them), or under any ancestor that sets `--slfx-pane-swell: 1`, which every press path reads, bare, `sl-fx-press` or glass; icon buttons, chips, segments and pagination items keep the squash. The secondary (`--ghost`) is a raised key: the raised rung in the one control edge, lit inside its top, on a short cast; hover lifts it to the tile rung. A plain `sl-btn` is text. Substrate: **R** App/IDE, **A** Page.
 ```html
 <button class="sl-btn sl-btn--primary">Save changes</button>
 <button class="sl-btn sl-btn--ghost">Cancel</button>
@@ -74,7 +74,7 @@ Underlined, accent on hover. Substrate: **R** App/Page.
 Consumes: `--slc-accent`. Don't: remove the underline (leave the affordance).
 
 ### Badge — `sl-badge` (`--success` · `--warning` · `--danger` · `--info` · `--live`)
-Semantic status pill, in sentence case in the sans (L1). Semantic colour is **independent of the accent hue** and shared. Substrate: **R** App/IDE.
+Semantic status mark, in sentence case in the sans (L1). Semantic colour is **independent of the accent hue** and shared. Since 0.36 it is Lumen's shape: r6 (it was a pill), 8px in and 4px above and below (it was 12px in), 22px tall as before. Substrate: **R** App/IDE.
 ```html
 <span class="sl-badge sl-badge--success">Passing</span>
 <span class="sl-badge sl-badge--danger">Failed</span>
@@ -130,7 +130,7 @@ A `<label>` host, a visually-hidden but focusable `<input>`, a `<span>` that pai
 ```
 Mixed (a parent box over a partly-checked set): set `input.indeterminate = true` from script — there is no attribute for it; the box fills and shows a dash instead of the tick. Don't: put `aria-checked` on the native checkbox (ARIA in HTML forbids it, and a screen reader announces the native state anyway).
 
-Consumes: `--slc-sunken`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. The box is a small well on the sunken rung (0.32); checked or mixed, it is the accent fill on an inset foot of its own shade, with a soft glow of the fill as strong as `--slc-glow`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
+Consumes: `--slc-canvas`, `--slc-sunken`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. The box is a small well at r5 on the canvas (0.36, Lumen's; it was r6 on the sunken rung), the radio's well too, and in an inversion band, where the canvas is the band's ink, on the band's sunken wash; checked or mixed, it is the accent fill on an inset foot of its own shade, with a soft glow of the fill as strong as `--slc-glow`. Do: keep the four parts in that order — `sl-check__box` is styled by an adjacent-sibling selector, so an element between it and `sl-check__input` breaks every checked state. Don't: hide the input with `display:none` or `visibility:hidden`; both remove it from the focus order and the control stops being reachable by keyboard.
 
 ### Radio — `sl-radio` (`__input` · `__box` · `__label`)
 The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A** Page.
@@ -141,7 +141,7 @@ The checkbox's shape with a round box and a dot. Substrate: **R** IDE/App, **A**
   <span class="sl-radio__label">Tier A — full theme selector</span>
 </label>
 ```
-Consumes: `--slc-sunken`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. Checked, like a checkbox: the accent fill on its foot, with its glow. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
+Consumes: `--slc-canvas`, `--slc-sunken`, `--slc-edge-control`, `--slc-accent`, `--slc-accent-fill`, `--slc-on-accent-fill`, `--slc-edge-accent`, `--slc-glow`, `--slc-text`, `--slc-focus`. The box is the checkbox's well on the canvas (0.36; the sunken rung before), and the band's sunken wash inside an inversion band. Checked, like a checkbox: the accent fill on its foot, with its glow. Do: give every radio in a set the same `name`. Don't: use a radio where only one option exists — that is a checkbox.
 
 ### Switch — `sl-switch` (`__input` · `__track` · `__label`)
 A checkbox that reads as a state rather than a choice: use it where the change takes effect immediately, and a checkbox where it takes effect on submit. Substrate: **R** IDE/App, **A** Page.
@@ -247,7 +247,7 @@ A CSS-only label above its host, in the inverted ink. The text lives in `data-sl
 Consumes: `--slc-text`, `--slc-raised`. It rises 4px into place as it fades in, on `--sl-motion-mid` and the arrival curve `--sl-motion-enter` (still under reduced motion). Do: keep it to one short line (it never wraps). Don't: put anything a user must read to act in a tooltip — it is a hint, invisible on touch; and on an icon button repeat the text in `aria-label`, since the pseudo-element is not its accessible name.
 
 ### Kbd / inline code — `sl-kbd` · `sl-code`
-A keycap (0.31, Lumen) and inline monospace code. The keycap is a small physical key: Geist Mono 500, at least 20px square, radius 5, a fill that steps from raised to surface, a ring, a lit top line and a base that is its own fill in shade (`--slc-depth-key`). One cap per key. High contrast rings it in white; under forced colours, which drop the depth, it gets a drawn `CanvasText` edge. Inside a button it is the in-button key (see Button). Substrate: **A**.
+A keycap (0.31, Lumen) and inline monospace code. The keycap is a small physical key: Geist Mono 500, at least 20px square, 4px in (5 before 0.36), radius 5, a fill that steps from raised to surface, a ring in the default line, a lit top line and a base that is its own fill in shade (`--slc-depth-key`; since 0.36 a full step on paper and a quarter of one on ink, Lumen's, where a full step read as a black line). One cap per key. High contrast rings it in white; under forced colours, which drop the depth, it gets a drawn `CanvasText` edge. Inside a button it is the in-button key (see Button). Substrate: **A**.
 ```html
 Press <kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd>, then run <code class="sl-code">sl-audit</code>.
 ```
@@ -771,7 +771,7 @@ Attributes: `data-sl-grid` is cells per side (16–256, default 96); `data-sl-se
 Consumes: the canvas's inherited `color` (set it with a role-var, e.g. `var(--slc-text)` or `var(--slc-accent)`). Don't: feed it a busy photo or a dark render — only one iconic subject with near-binary contrast reads, at ≥ 320px with a grid near 130. Don't: give it meaning — it is a picture, so a label or caption says what it shows; keep `aria-hidden` when the text beside it already does.
 
 ### Press — `sl-fx-press`
-**You acted on this.** Pressing the control lights it from within: the light rises from its own lower body. Press controls within 48px catch that light on the edge that faces it, the way a lit key lights the keys beside it. On release both fade on their own clocks, and the control squashes like every control while held, returning on the spring token `--sl-motion-spring`. Enter and Space press exactly like a click. Tier 1 (`mount()`); without it a press is the component's own `:active` and the spring squash. Substrate: **A** App/Page.
+**You acted on this.** Pressing the control lights it from within: the light rises from its own lower body. Press controls within 48px catch that light on the edge that faces it, the way a lit key lights the keys beside it. On release both fade on their own clocks, and the control moves like every control while held (a text button sinks to 97%, anything else squashes), returning on the spring token `--sl-motion-spring`. Enter and Space press exactly like a click. Tier 1 (`mount()`); without it a press is the component's own `:active` and its spring return. Substrate: **A** App/Page.
 ```html
 <div style="display:flex; gap:0.6rem">
   <button class="sl-btn sl-btn--primary sl-fx-press">Run probe</button>

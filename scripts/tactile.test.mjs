@@ -18,15 +18,45 @@ function rules(css) {
 }
 const R = rules(components);
 const SQUASH = "scale(1.02, 0.968)";
-const PRESSABLE = ["sl-btn", "sl-icon-btn", "sl-chip", "sl-segmented__item", "sl-pagination__item"];
+// 0.36 (Lumen): a text button sinks to 97% instead of squashing; the other
+// pressable controls keep the squash.
+// 0.36 (Lumen): a text button sinks to 97%, read off the press knob
+// --slfx-pane-swell (1.03 by default; 1 stands it down, as a button group
+// binds it), so the one binding holds every press path still.
+const SINK_BTN = "scale(calc(1 - (var(--slfx-pane-swell, 1.03) - 1)))";
+/** The scale SINK_BTN resolves to at a given knob value. */
+const sinkAt = (swell) => {
+  const e = SINK_BTN.replace("var(--slfx-pane-swell, 1.03)", String(swell)).match(/^scale\(calc\((.*)\)\)$/)[1];
+  return Function(`"use strict"; return (${e});`)();
+};
+const SQUASHERS = ["sl-icon-btn", "sl-chip", "sl-segmented__item", "sl-pagination__item"];
+const PRESSABLE = ["sl-btn", ...SQUASHERS];
 
-test("every pressable control squashes while held, and never when disabled", () => {
+test("every pressable control but the text button squashes while held, and never when disabled", () => {
   const press = R.find((r) => r.body.includes(`transform: ${SQUASH}`) && r.selector.includes(":active"));
   assert.ok(press, `no :active rule squashes with ${SQUASH}`);
-  for (const cls of PRESSABLE) assert.ok(press.selector.includes(`.${cls}`), `${cls} is not in the press rule`);
+  for (const cls of SQUASHERS) assert.ok(press.selector.includes(`.${cls}`), `${cls} is not in the press rule`);
+  assert.doesNotMatch(press.selector, /\.sl-btn\b/, "the text button sinks instead");
   assert.match(press.selector, /:not\(:disabled, \[aria-disabled="true"\]\)/);
   assert.match(press.body, /transition-duration:\s*var\(--sl-motion-fast/);
   assert.match(press.body, /transition-timing-function:\s*var\(--sl-motion-ease/);
+});
+
+test("the button's sink reads the press knob: 97% at its default, none at 1", () => {
+  assert.ok(Math.abs(sinkAt(1.03) - 0.97) < 1e-12, `default ${sinkAt(1.03)}`);
+  assert.equal(sinkAt(1), 1);
+});
+
+test("a text button sinks to 97% while held (Lumen), quickly, on the motion tokens, and never when disabled", () => {
+  const press = R.find((r) => r.selector === `.sl-btn:active:not(:disabled, [aria-disabled="true"])`);
+  assert.ok(press, "no :active rule of the text button's own");
+  assert.equal(press.body.match(/transform:\s*([^;]+)/)?.[1].trim(), SINK_BTN);
+  assert.match(press.body, /transition-duration:\s*var\(--sl-motion-fast, 120ms\)/);
+  assert.match(press.body, /transition-timing-function:\s*var\(--sl-motion-ease, ease\)/);
+  // it is the only rule that moves a button: no other :active rule in
+  // components.css transforms a .sl-btn (the primary's foot is a translate)
+  const others = R.filter((r) => r !== press && /\.sl-btn\b/.test(r.selector) && r.selector.includes(":active") && /(^|;)\s*transform\s*:/.test(r.body));
+  assert.deepEqual(others.map((r) => r.selector), []);
 });
 
 test("every pressable control springs its transform back on the spring token", () => {
@@ -37,10 +67,15 @@ test("every pressable control springs its transform back on the spring token", (
   }
 });
 
-test("the effects layer's press sinks exactly like the base squash", () => {
-  const sink = rules(effects).find((r) => r.selector === ".sl-fx-press:active:not(:disabled, [aria-disabled=\"true\"])");
+test("the effects layer's press moves a control exactly as the base press does", () => {
+  const E = rules(effects);
+  const sink = E.find((r) => r.selector === ".sl-fx-press:active:not(:disabled, [aria-disabled=\"true\"])");
   assert.ok(sink);
   assert.match(sink.body, new RegExp(`transform:\\s*${SQUASH.replace(/[().]/g, "\\$&")}`));
+  // the text button's own, which outranks it: (0,4,0) against (0,3,0)
+  const btn = E.find((r) => r.selector === ".sl-btn.sl-fx-press:active:not(:disabled, [aria-disabled=\"true\"])");
+  assert.ok(btn, "a pressed .sl-btn.sl-fx-press sinks like a bare button");
+  assert.equal(btn.body.match(/transform:\s*([^;]+)/)?.[1].trim(), SINK_BTN);
 });
 
 test("no gummy rule animates: transitions only, so nothing plays on page load", () => {
@@ -50,13 +85,16 @@ test("no gummy rule animates: transitions only, so nothing plays on page load", 
   assert.deepEqual([...components.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]), ["sl-badge-live"]);
 });
 
-const CONTROLS = ":is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item)";
+const CONTROLS = ":is(.sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item)";
 const OFF = ":not(:disabled, [aria-disabled=\"true\"])";
 const K = /--slfx-pane-k:\s*calc\(\s*\(\s*var\(\s*--slfx-pane-swell\s*,\s*1\.03\s*\)\s*-\s*1\s*\)\s*\/\s*0\.03\s*\)/;
 const SQUASH_K = /transform:\s*scale\(\s*calc\(\s*1\s*\+\s*0\.02\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*,\s*calc\(\s*1\s*-\s*0\.032\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*\)/;
+// the text button's sink with the same knob: 0.97 at k = 1, none at k = 0
+const SINK_K = /transform:\s*scale\(\s*calc\(\s*1\s*-\s*0\.03\s*\*\s*var\(\s*--slfx-pane-k\s*\)\s*\)\s*\)/;
 const SINK = /transform:\s*scale\(calc\(1 - \(var\(--slfx-pane-swell, 1\.03\) - 1\) \/ 3\)\)/;
 const FAST = /transition-duration:\s*var\(--sl-motion-fast, 120ms\)/;
 const EASE = /transition-timing-function:\s*var\(--sl-motion-ease, ease\)/;
+const BTN_PANE = `.sl-btn.sl-fx-glass--pane:active${OFF}`;
 
 test("glass control panes press with the kit squash formula, keeping the swell knob", () => {
   const Reffects = rules(effects);
@@ -72,6 +110,18 @@ test("glass control panes press with the kit squash formula, keeping the swell k
   assert.match(paneActive.body, EASE);
 });
 
+test("a glass text button sinks to 97% like a bare one, keeping the swell knob", () => {
+  const btn = rules(effects).find((r) => r.selector === BTN_PANE);
+  assert.ok(btn, "the text button's pane press rule");
+  assert.match(btn.body, K);
+  assert.match(btn.body, SINK_K);
+  assert.match(btn.body, FAST);
+  assert.match(btn.body, EASE);
+  // k = 1 at the default swell: exactly the bare button's 0.97
+  const k = (1.03 - 1) / 0.03;
+  assert.ok(Math.abs(1 - 0.03 * k - 0.97) < 1e-12);
+});
+
 test("every other glass pane sinks uniformly, on tokens, and stands down with the knob", () => {
   const sink = rules(effects).find((r) => r.selector === `.sl-fx-glass--pane:active${OFF}`);
   assert.ok(sink, "plain pane press rule not found");
@@ -79,8 +129,9 @@ test("every other glass pane sinks uniformly, on tokens, and stands down with th
   assert.match(sink.body, FAST);
   assert.match(sink.body, EASE);
   const Reffects = rules(effects);
-  assert.ok(Reffects.indexOf(sink) < Reffects.indexOf(Reffects.find((r) => r.selector === `${CONTROLS}.sl-fx-glass--pane:active${OFF}`)),
-    "the control variant must follow (and outrank) the plain one");
+  for (const sel of [`${CONTROLS}.sl-fx-glass--pane:active${OFF}`, BTN_PANE]) {
+    assert.ok(Reffects.indexOf(sink) < Reffects.indexOf(Reffects.find((r) => r.selector === sel)), `${sel} must follow (and outrank) the plain one`);
+  }
 });
 
 test("glass glow mirrors each pane press variant", () => {
@@ -96,6 +147,13 @@ test("glass glow mirrors each pane press variant", () => {
   assert.match(glowControl.body, SQUASH_K);
   assert.match(glowControl.body, FAST);
   assert.match(glowControl.body, EASE);
+
+  const glowBtn = Reffects.find((r) => r.selector === `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ ${BTN_PANE})`);
+  assert.ok(glowBtn, "text button glow rule not found");
+  assert.match(glowBtn.body, K);
+  assert.match(glowBtn.body, SINK_K);
+  assert.match(glowBtn.body, FAST);
+  assert.match(glowBtn.body, EASE);
 
   const glowPlain = Reffects.find((r) => r.selector === `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active${OFF})`);
   assert.ok(glowPlain, "plain glow rule not found");
@@ -121,10 +179,17 @@ test("the pane and glow press rules do not hide inside no-preference: reduced mo
   for (const needle of [
     `.sl-fx-glass--pane:active${OFF} {`,
     `${CONTROLS}.sl-fx-glass--pane:active${OFF} {`,
+    `${BTN_PANE} {`,
     ".sl-fx-glass--pane {\n",
     ".sl-fx-aurora__glow[data-sl-fx-seated] {\n  transition:",
     `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-fx-glass--pane:active${OFF}) {`,
+    `.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ ${BTN_PANE}) {`,
+    `.sl-btn.sl-fx-press:active${OFF} {`,
   ]) assert.equal(inside(needle), false, `${needle.trim()} sits inside no-preference`);
+  // ...and the base press in components.css sits in no media block at all
+  const base = components.indexOf(`.sl-btn:active${OFF} {`);
+  assert.ok(base > -1);
+  assert.doesNotMatch(components.slice(0, base).split("\n").slice(-3).join("\n"), /@media/);
 });
 
 test("the switch knob is a pill that stretches toward where it will travel, never when disabled", () => {

@@ -343,7 +343,7 @@ test("every labelled accent fill reads the fill set on the control: primary, che
 
 // ── the depth of the neutral controls ───────────────────────────────────────
 
-test("secondary raised, icon button clear in its edge, fields and tracks sunken", () => {
+test("secondary raised, icon button clear in its edge, fields and tracks sunken, boxes on the canvas", () => {
   const ghost = rule(".sl-btn--ghost");
   assert.equal(decl(ghost, "background"), "var(--slc-raised)");
   assert.equal(decl(ghost, "border-color"), "var(--slc-edge-control)");
@@ -354,9 +354,12 @@ test("secondary raised, icon button clear in its edge, fields and tracks sunken"
   assert.equal(decl(icon, "background"), "transparent");
   assert.equal(decl(icon, "border"), "1px solid var(--slc-edge-control)", "the one control edge, icon buttons included");
   assert.equal(decl(rule(".sl-icon-btn:hover:not(:disabled)"), "background"), "var(--slc-surface)");
-  for (const sel of [".sl-field__input", ".sl-check__box, .sl-radio__box", ".sl-switch__track", ".sl-segmented"]) {
+  for (const sel of [".sl-field__input", ".sl-switch__track", ".sl-segmented"]) {
     assert.equal(decl(rule(sel), "background"), "var(--slc-sunken)", sel);
   }
+  // 0.36 (Lumen): the check and radio boxes are wells on the canvas, and on
+  // the band's sunken wash inside an inversion band (lumen-controls.test.mjs)
+  assert.equal(decl(rule(".sl-check__box, .sl-radio__box"), "background"), "var(--slc-canvas)");
   assert.equal(decl(rule(".sl-segmented"), "box-shadow"), "var(--slc-depth-sunk)");
   assert.equal(decl(rule(".sl-segmented"), "border"), "1px solid var(--slc-edge-control)");
   assert.equal(decl(rule(".sl-switch__track"), "--_sl-depth"), "var(--slc-depth-sunk)");

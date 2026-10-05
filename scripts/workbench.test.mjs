@@ -1579,9 +1579,13 @@ test("a Tier B layer's numbers come from the README's recipes, and the dark one 
 const GRID_PROPS = /^(?:padding|margin|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-|$)/;
 const SPACE = Object.fromEntries([...bare(read("tokens.css")).matchAll(/(--sl-space-\d+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
 const GRID_ENV = new Map([...Object.entries(SPACE), ["--sl-tree-level", "1"], ["--sl-radius-pane", "10px"], ["--sl-radius-lg", "14px"]]);
-// before 0.34, off the grid on purpose (design-language L2, its one legacy exception)
+// off the grid on purpose (design-language L2, its two exceptions), each
+// pinned by its value
 const GRID_LEGACY = new Set([
   ".sl-tabs--tile::gap=2px", // 2px between tile tabs, since 0.31
+  // the in-button key's overflow, not spacing: an 18px cap gives 2 x 2px
+  // back to the button's 14px line (16px and 12 in --sm), since 0.31
+  ".sl-btn > .sl-kbd::margin-block=-2px",
 ]);
 const GRID_WORDS = /^(?:auto|0|inherit|initial|unset|-?[\d.]+%)$/;
 /** The off-grid or unreadable spacing declarations among `rules`. A word is a
@@ -1615,6 +1619,20 @@ test("the workbench's spacing sits on the 4px grid", () => {
   assert.deepEqual(gridOff([...RULES(WORKBENCH), ...co]), []);
 });
 
+// 0.36 (K10): the controls Lumen parity moved -- the button, the badge, the
+// tag, the chip, the keycap and the check box -- sit on the grid too. A
+// button group's 1px rule (the hairline technique) and the check input's
+// visually-hidden -1px are not spacing and are not read.
+const K10_CONTROLS = /\.sl-(?:btn|badge|tag|chips?|kbd|check)(?![\w-])|\.sl-(?:btn|badge|tag|chip)--[\w-]+|\.sl-(?:chip|check)__(?:box|label|count)/;
+const k10Rules = () => RULES(COMPONENTS).filter((r) => K10_CONTROLS.test(r.selector) && !/sl-btn-group|__input/.test(r.selector));
+test("the controls 0.36 moved to Lumen's shape sit on the 4px grid", () => {
+  const rules = k10Rules();
+  for (const sel of [".sl-btn", ".sl-btn--sm", ".sl-badge", ".sl-tag", ".sl-chip", ".sl-chips", ".sl-kbd", ".sl-btn > .sl-kbd", ".sl-check, .sl-radio, .sl-switch"]) {
+    assert.ok(rules.some((r) => r.selector === sel), `the sweep reads ${sel}`);
+  }
+  assert.deepEqual(gridOff(rules), []);
+});
+
 test("the grid sweep reads a sum, refuses what it cannot read, and pins its exceptions by value", () => {
   const sweep = (css) => gridOff(RULES(css));
   assert.deepEqual(sweep(".a { inset-inline: calc(100% - 4px) 40%; padding: 0 var(--sl-space-3); }"), [], "on the grid");
@@ -1622,6 +1640,13 @@ test("the grid sweep reads a sum, refuses what it cannot read, and pins its exce
   for (const v of ["min(8px, 1rem)", "clamp(4px, 1vw, 8px)", "var(--nope)"]) assert.match(sweep(`.a { gap: ${v}; }`)[0] ?? "", /cannot be read/, v);
   assert.deepEqual(sweep(".sl-tabs--tile { gap: 2px; }"), [], "the exception at its value");
   assert.equal(sweep(".sl-tabs--tile { gap: 3px; }").length, 1, "an exception that moves is off again");
+  assert.deepEqual(sweep(".sl-btn > .sl-kbd { margin-block: -2px; }"), [], "the in-button key's overflow at its value");
+  assert.equal(sweep(".sl-btn > .sl-kbd { margin-block: -3px; }").length, 1, "and off again if it moves");
+  assert.equal(sweep(".sl-btn > .sl-kbd { margin-inline-end: -2px; }").length, 1, "only on the property it is pinned to");
+  // the values 0.36 rounded, at their old Lumen-ish values, are off the grid
+  for (const d of ["padding: 0.5rem 0.9rem", "gap: 0.4rem", "padding: 0.3125rem 0.6rem", "padding: 0 0.3125rem", "margin-inline-end: -0.3rem"]) {
+    assert.ok(sweep(`.sl-btn { ${d}; }`).length >= 1, d);
+  }
 });
 
 test("the workbench's rows, bars and controls are whole 4px steps tall and wide", () => {
