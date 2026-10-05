@@ -454,9 +454,14 @@
 
 /* Chip — a toggleable filter. A row of them (.sl-chips) is a multi-select:
    each is a <button aria-pressed> and any number may be on (one-of-N is
-   sl-segmented). Off, it is an outlined pill in the muted ink with a hollow
-   dot; on, it takes the tag's accent dress and the dot fills — so "on" reads
-   by colour, fill and glyph, never by colour alone. */
+   sl-segmented). Off, it is outlined in the muted ink with a hollow dot; on,
+   it takes the tag's accent dress and the dot fills — so "on" reads by
+   colour, fill and glyph, never by colour alone.
+   Lumen's shape (0.36): the mono at 12.5px, 500, untracked, at r6, 8px in
+   and 4px above and below (its 9.6 and 4.8 on the 4px grid), on the
+   button's 14px line, so it is 24px tall, the small button's row it sits
+   in (Lumen's 24.1); its dot is a rounded square (r2). It was a 12px pill
+   in the sans, 12px in, 22px tall, with a round dot. */
 .sl-chips {
   display: flex;
   flex-wrap: wrap;
@@ -467,16 +472,19 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
-  /* A control, so sentence case in the sans (0.30); the count stays mono. */
-  font-family: var(--sl-font-sans, system-ui, sans-serif);
-  font-size: var(--sl-text-xs, 0.75rem);
+  /* What a chip names is a reference or a value (a file, a status, a
+     model), so it is set in the mono like a tag (0.36; the sans since 0.30),
+     in sentence case and untracked: it is still a control. */
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: 0.78125rem;
   font-weight: 500;
-  line-height: 1;
+  letter-spacing: 0;
+  line-height: 0.875rem;
   color: var(--slc-text-muted);
   background-color: transparent;
   border: 1px solid var(--slc-edge-control);
-  border-radius: var(--sl-radius-pill, 9999px);
-  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+  border-radius: var(--sl-radius-sm, 6px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
   cursor: pointer;
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -487,7 +495,7 @@
 .sl-chip::before {
   content: "";
   width: 6px; height: 6px;
-  border-radius: 50%;
+  border-radius: 2px;
   box-shadow: inset 0 0 0 1px currentColor;
   flex: none;
 }

@@ -7,10 +7,11 @@ import { dirname, resolve } from "node:path";
 // The type register (design-language L1, rewritten for Lumen in 0.30):
 //   - MICRO labels (structure, never a control) are the only uppercase text:
 //     mono, --sl-text-micro (10.5px), 500, +0.06em, muted.
-//   - Controls, badges, chips, segmented, table heads, callout titles, field
+//   - Controls, badges, segmented, table heads, callout titles, field
 //     labels and breadcrumbs speak in sentence case in the sans, never
 //     tracked open.
-//   - Tags stay mono for the tier marker, sentence case, +0.02em.
+//   - Tags stay mono for the tier marker, sentence case, +0.02em; chips
+//     join them in the mono since 0.36 (Lumen), sentence case, untracked.
 //   - Headings and display are Geist 600 with negative tracking, tighter as
 //     they grow; Fraunces (--sl-font-brand) is the wordmark and monogram only.
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -57,7 +58,7 @@ const em = (v) => (v === undefined ? 0 : v === "0" ? 0 : parseFloat(v));
 const MICRO = [".sl-eyebrow", ".sl-nav__group", ".sl-stat__label", ".sl-section__idx", ".sl-figure__caption", ".sl-rule--labeled", ".sl-palette__group"];
 // The status bar (0.33) is read, not shouted: the Lumen target's 12px
 // sentence case, its data values as written (a branch is case-sensitive).
-const SENTENCE = [".sl-btn", ".sl-chip", ".sl-badge", ".sl-segmented__item", ".sl-table thead th", ".sl-callout__title", ".sl-field__label", ".sl-breadcrumb", ".sl-statusbar"];
+const SENTENCE = [".sl-btn", ".sl-badge", ".sl-segmented__item", ".sl-table thead th", ".sl-callout__title", ".sl-field__label", ".sl-breadcrumb", ".sl-statusbar"];
 const HEADINGS = [".sl-card__title", ".sl-dialog__title", ".sl-empty__title"];
 
 test("the reader keeps the cascade: a later rule for the same selector wins, an @media rule does not", () => {
@@ -102,6 +103,13 @@ test("uppercase is the micro register's alone (and the brand lockup's)", () => {
   for (const r of RULES.filter((r) => /text-transform:\s*uppercase/.test(r.body))) {
     for (const s of r.selectors) assert.ok(allowed.has(s), `${s} sets uppercase outside the micro register`);
   }
+});
+
+test(".sl-chip is a control set in the mono (0.36, Lumen): sentence case, untracked", () => {
+  const b = decls(".sl-chip");
+  assert.match(prop(b, "font-family") ?? "", /^var\(--sl-font-mono,/);
+  assert.notEqual(prop(b, "text-transform"), "uppercase");
+  assert.equal(em(prop(b, "letter-spacing")), 0);
 });
 
 test(".sl-tag is the mono tier marker in sentence case, +0.02em", () => {

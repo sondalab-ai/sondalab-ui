@@ -157,3 +157,23 @@ test("a tag is Lumen's: mono 11.5/500 at r6 (it was a 12px pill), 4px by 8px, 22
     assert.equal(s.height, 22, "the badge's row (Lumen's 19.9), as in 0.35");
   }
 });
+
+test("a chip is Lumen's composer chip: mono 12.5/500 at r6 (it was a 12px sans pill), 4px by 8px, 24px tall, a rounded-square dot", () => {
+  for (const pressed of ["false", "true"]) {
+    const c = el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": pressed }, parent: el({ classes: ["sl-chips"], parent: at() }) });
+    const s = shape(KIT_RULES, c);
+    assert.equal(s.font, 12.5, "Lumen's 12.5");
+    assert.match(value(KIT_RULES, c, "font-family"), /^var\(--sl-font-mono/);
+    assert.equal(value(KIT_RULES, c, "font-weight"), "500");
+    assert.equal(value(KIT_RULES, c, "letter-spacing"), "0");
+    assert.equal(s.radius, 6);
+    assert.deepEqual(s.padding, [4, 8, 4, 8]);
+    assert.equal(s.height, 24, `pressed=${pressed}: the small button's row (Lumen's 24.1)`);
+    assert.equal(s.height, box(KIT_RULES, button("primary", true)).height, "a chip and a small button share a row");
+    const dot = el({ pseudo: "before", parent: c });
+    assert.equal(value(KIT_RULES, dot, "border-radius"), "2px", "Lumen's r2 dot");
+  }
+  // the one control edge, unchanged
+  const off = el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": "false" }, parent: at() });
+  assert.equal(value(KIT_RULES, off, "border"), "1px solid var(--slc-edge-control)");
+});
