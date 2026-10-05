@@ -1123,7 +1123,8 @@
 /* RESTING SHARE, owner 2026-09-30 ("glass buttons are too pale when not
    hovered"): 72% of the fill with the page under the rest read as the brand
    colour muddied, not as the brand colour in glass. Where the label is the
-   dark pole — the fill is light, oklch L > 0.61: every dark-theme accent and
+   dark pole — the fill is light, oklch L > 0.59 (--_sl-pole-l, tokens.css;
+   0.61 until 0.32.1): every dark-theme accent and
    the light theme's orange — the share is 90%, which only RAISES the dark
    label's contrast (amber on ink 5.2 -> 7.7:1, spexr 4.0 -> 5.8:1). A darker
    fill (spexr's and local-agents' light accents) keeps 72%, where Ruling 8

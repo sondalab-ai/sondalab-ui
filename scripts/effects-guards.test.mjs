@@ -1064,7 +1064,7 @@ test("the glass primary's label has no text-shadow", () => {
 // composite of the RESTING accent, so it never flips mid-hover.
 // 0.32.1: the composite is written once (--_slfx-pane) and read by the
 // label, its keycap and the shade under a white label; the threshold is the
-// kit's one (--_sl-pole-l, components.css), so the shade can never fall
+// kit's one (--_sl-pole-l, tokens.css), so the shade can never fall
 // under a dark label, and the shade is declared only where the pane is (not
 // in high contrast, not in an opt-out region).
 test("the glass primary rests at 90%, fades its fill, and picks its label from the composite", () => {
@@ -1083,9 +1083,11 @@ test("the glass primary rests at 90%, fades its fill, and picks its label from t
   assert.match(effects, /color:\s*oklch\(from var\(--_slfx-pane\) clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 0\.985\) 0 h\)/);
   assert.match(effects, /--slfx-cap:\s*oklch\(from var\(--_slfx-pane\) calc\(l \+ 0\.085 \* clamp\(-1, \(l - var\(--_sl-pole-l\)\) \* 1000, 1\)\) c h\)/);
   assert.doesNotMatch(effects, /\b0\.59\b|0\.61\b/, "no threshold of its own: it reads components.css's");
-  const comp = readFileSync(resolve(KIT, "components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  assert.equal((comp.match(/--_sl-pole-l\s*:/g) ?? []).length, 1, "the threshold is declared once");
-  assert.match(comp, /--_sl-pole-l:\s*0\.59;/);
+  // declared once, in the generated tokens.css, and nowhere else in the kit
+  const kit = ["tokens.css", "components.css", "effects.css", "glass.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"]
+    .map((f) => readFileSync(resolve(KIT, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "")).join("\n");
+  assert.equal((kit.match(/--_sl-pole-l\s*:/g) ?? []).length, 1, "the threshold is declared once");
+  assert.match(readFileSync(resolve(KIT, "tokens.css"), "utf8"), /--_sl-pole-l:\s*0\.59;/);
 });
 
 // 0.32.1: an opt-out region keeps the shipped control. mount() builds the

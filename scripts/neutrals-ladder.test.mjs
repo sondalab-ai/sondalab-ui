@@ -153,7 +153,7 @@ for (const [id, p] of Object.entries(shipped.products)) {
     test(`${id} ${theme}: the one control edge clears 3:1 with margin on canvas and surface`, () => {
       const env = new Map();
       for (const f of ["tokens.css", `themes/${theme}.css`]) {
-        for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+        for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
       }
       for (const [role, v] of Object.entries(n)) env.set(`--sl-${role}`, v);
       // :root only: the step count reads the surface, never the theme
@@ -178,7 +178,7 @@ for (const [id, p] of Object.entries(shipped.products)) {
     test(`${id} light ${fill}: the primary's edge finds it on the product's canvas (3.3:1)`, () => {
       const env = new Map();
       for (const f of ["tokens.css", "themes/light.css"]) {
-        for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+        for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
       }
       for (const [role, v] of Object.entries(p.light)) env.set(`--sl-${role}`, v);
       for (const [k, v] of declarations(read("components.css"), [":root", ':root[data-sl-theme="light"]'])) env.set(k, v);

@@ -181,8 +181,9 @@ for (const [product, p] of PRODUCTS) {
 {
   const light = readFileSync(resolve(KIT, "themes/light.css"), "utf8");
   const COMPONENTS = readFileSync(resolve(KIT, "components.css"), "utf8");
-  const POLE_L = Number(COMPONENTS.match(/--_sl-pole-l:\s*([0-9.]+);/)?.[1]);
-  const POLE_DARK = Number(COMPONENTS.match(/--_sl-pole-dark:\s*([0-9.]+);/)?.[1]);
+  const TOKENS = readFileSync(resolve(KIT, "tokens.css"), "utf8");
+  const POLE_L = Number(TOKENS.match(/--_sl-pole-l:\s*([0-9.]+);/)?.[1]);
+  const POLE_DARK = Number(TOKENS.match(/--_sl-pole-dark:\s*([0-9.]+);/)?.[1]);
   const lmax = Number(light.match(/--sl-accent-text-lmax:\s*([0-9.]+)/)[1]);
   const onAccent = light.match(/--sl-text-on-accent:\s*([^;]+);/)[1];
   const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8"));
@@ -207,7 +208,7 @@ for (const [product, p] of PRODUCTS) {
     assert.equal(t["--sl-accent-default"], "#FF9F1C");
     // one label rule: the theme's and every labelled fill's read the kit's macro
     assert.equal(onAccent, "oklch(from var(--sl-accent-default) var(--_sl-on))");
-    assert.match(COMPONENTS, /--_sl-on:\s*clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 1\) 0 h;/);
+    assert.match(TOKENS, /--_sl-on:\s*clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 1\) 0 h;/);
     assert.equal(POLE_DARK, 0.16);
     assert.match(COMPONENTS, /--_sl-on-accent-fill:\s*oklch\(from var\(--slc-accent-fill\) var\(--_sl-on\)\);/);
     for (const s of ["success", "warning", "danger", "info"]) assert.match(COMPONENTS, new RegExp(`--slc-on-${s}:\\s*oklch\\(from var\\(--slc-${s}\\)\\s*var\\(--_sl-on\\)\\);`), s);

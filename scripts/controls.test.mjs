@@ -18,7 +18,7 @@ const css = bare(raw);
 const effects = bare(read("effects.css"));
 const tokenEnv = (src) => {
   const env = new Map();
-  for (const m of bare(src).matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  for (const m of bare(src).matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   return env;
 };
 const SHARED = tokenEnv(read("tokens.css"));

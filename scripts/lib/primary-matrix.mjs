@@ -16,7 +16,7 @@
      site subtree  sondalab-site's product page: the default page, and a
                    section that re-binds the accent and sets the fill
                    (registered fill, else the accent) as --slc-accent-fill
-                   (sondalab-site f2c55e9, src/pages/products/[slug].astro,
+                   (sondalab-site c0252bc, src/pages/products/[slug].astro,
                    verbatim, single quotes included).
      tier B        a value-pinned page with no data-sl-theme, mapping only
                    the accent, its label, its registered fill, the status
@@ -91,21 +91,24 @@ function sheets(consumer) {
   return out;
 }
 
-// sondalab-site f2c55e9, src/pages/products/[slug].astro, the product rule.
+// sondalab-site c0252bc, src/pages/products/[slug].astro, the product rule.
+// The site always sets --slc-accent-fill there, so the primary takes the
+// kit's own steps and ignores the per-theme --slc-accent-hover it also maps.
 export const SITE = `
   [data-product] {
     --sl-accent-default: var(--acc-dark);
     --slc-accent: var(--acc-dark);
     --slc-accent-fill: var(--acc-fill-dark);
+    --slc-accent-hover: color-mix(in srgb, var(--slc-accent) 80%, white);
     --slc-accent-subtle: color-mix(in srgb, var(--slc-accent) 12%, transparent);
     --slc-accent-text: oklch(from var(--slc-accent) min(l, var(--sl-accent-text-lmax, 1)) c h);
-    --slc-edge-pressed: oklch(from color-mix(in srgb, var(--slc-accent) 12%, var(--slc-canvas)) calc(l - var(--slc-shade-step)) c h);
     --slc-focus: var(--slc-accent-text);
   }
   :root[data-sl-theme='light'] [data-product] {
     --sl-accent-default: var(--acc-light);
     --slc-accent: var(--acc-light);
     --slc-accent-fill: var(--acc-fill-light);
+    --slc-accent-hover: color-mix(in srgb, var(--slc-accent) 89%, black);
   }`;
 
 /** The light layer's numbers, read where the kit sets them, for a Tier B page. */

@@ -71,7 +71,7 @@ const components = read("../packages/ui-kit/components.css");
 const kitEnv = (theme, fill) => {
   const env = new Map();
   for (const f of ["../packages/ui-kit/tokens.css", `../packages/ui-kit/themes/${theme}.css`]) {
-    for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+    for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   }
   for (const [k, v] of declarations(components, [":root", ...(theme === "light" ? [':root[data-sl-theme="light"]'] : [])])) env.set(k, v);
   env.set("--sl-accent-default", theme === "light" ? "#5b6cff" : "#8b96ff");

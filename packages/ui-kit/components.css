@@ -23,14 +23,14 @@
    field, callout, checkbox, switch) inherits the fix automatically. */
 
 :root {
-  /* THE LABEL ON A FILL AND ITS HOVER AND PRESS (0.32.1), written once.
-     Every labelled fill reads these: the theme's label and accent steps
-     (themes/*.css), the accent-fill set, the status labels, the danger
-     tone, the in-button key and the glass primary (effects.css). They are
+  /* THE LABEL ON A FILL AND ITS HOVER AND PRESS (0.32.1) are written once,
+     in tokens.css (:root, generated from sondalab.tokens.json `label`), so
+     the theme files that read them need nothing else loaded. They are
      MACROS: channel expressions a relative colour substitutes, so `l`, `c`
      and `h` are the channels of the colour they are used in --
-     oklch(from <fill> var(--_sl-on)). A theme file that reads them needs
-     this file loaded, as every surface that paints a fill already does.
+     oklch(from <fill> var(--_sl-on)). This file reads them for the
+     accent-fill set, the status labels, the danger tone, the role-var
+     fallbacks and the in-button key; effects.css for the glass primary.
        --_sl-pole-l    where a label turns from white to the dark pole, on
                        its fill's oklch lightness: 0.59, where white and the
                        dark pole read about equal for the registered hues
@@ -47,8 +47,8 @@
                        unless its label is the dark pole and would read
                        under --_sl-hold on the fill pressed toward black;
                        then it steps toward white instead. The direction is
-                       decided once per fill, on the press, so hover and
-                       press always move the same way.
+                       decided once per fill, on the press (--_sl-lighter),
+                       so hover and press always move the same way.
        --_sl-hold      5.4:1. A pressed fill must leave its label 4.5:1 on
                        a glass pane too, and a pane over a dark page shows a
                        tenth of that page through the fill, which costs up
@@ -58,22 +58,13 @@
                        toward white; amber, daos, introspect's mint, the
                        dark danger and every white label step toward black.
        --_sl-lum       the fill's WCAG luminance, from its own oklch
-                       channels (OKLab to linear sRGB, weighted). Pressed
-                       toward black the fill is dimmed in linear light by
-                       ((l - 0.1) / l)^3, so that is its luminance there.
+                       channels. Pressed toward black the fill is dimmed in
+                       linear light by ((l - 0.1) / l)^3.
      The step runs along the line to the pole it moves toward, so it never
      leaves sRGB and the colour a test reads is the colour a browser
-     paints: darkening keeps chroma in proportion to lightness (a dim in
-     linear light), lightening eases it by (1 - step / (1 - l))^1.5, the
-     least that keeps every sRGB colour in gamut. */
-  --_sl-pole-l: 0.59;
-  --_sl-pole-dark: 0.16;
-  --_sl-hold: 5.4;
-  --_sl-on: clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 1) 0 h;
-  --_sl-lum: calc(-0.04077454096 * pow(l + 0.3963377774 * c * cos(h * 0.017453292519943295) + 0.2158037573 * c * sin(h * 0.017453292519943295), 3) + 1.112492185 * pow(l - 0.1055613458 * c * cos(h * 0.017453292519943295) - 0.0638541728 * c * sin(h * 0.017453292519943295), 3) - 0.07171764402 * pow(l - 0.0894841775 * c * cos(h * 0.017453292519943295) - 1.2914855480 * c * sin(h * 0.017453292519943295), 3));
-  --_sl-lighter: calc(clamp(0, (l - var(--_sl-pole-l)) * 1000, 1) * clamp(0, (var(--_sl-hold) - (var(--_sl-lum) * pow((l - 0.1) / l, 3) + 0.05) / (pow(var(--_sl-pole-dark), 3) + 0.05)) * 1000, 1));
-  --_sl-step-hover: clamp(0, l + 0.05 * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - 0.05 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - 0.05 / max(l, 0.001)))) h;
-  --_sl-step-press: clamp(0, l + 0.1 * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - 0.1 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - 0.1 / max(l, 0.001)))) h;
+     paints: darkening keeps chroma in proportion to lightness, lightening
+     eases it by (1 - step / (1 - l))^1.5, the least that keeps every sRGB
+     colour in gamut. */
   /* accent */
   --slc-accent:        var(--sl-accent-default, #9A5300);
   /* Steps derive from --slc-accent so a bare --sl-accent-default override

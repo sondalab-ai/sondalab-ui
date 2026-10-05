@@ -125,12 +125,12 @@ test("pow() evaluates, and a custom property holding channel expressions is a ma
 });
 
 // 0.32.1: the step rule reads a fill's WCAG luminance from its own oklch
-// channels (--_sl-lum, components.css), with cos() and sin() of its hue in
+// channels (--_sl-lum, tokens.css), with cos() and sin() of its hue in
 // radians; the evaluator must agree with the colour's real luminance.
 test("cos() and sin() evaluate in radians, and the kit's luminance macro is the fill's WCAG luminance", () => {
   assert.ok(Math.abs(evaluate("oklch(calc(cos(0) * 0.5) 0 0)", new Map()).lin[0] - 0.125) < 1e-12);
   assert.ok(Math.abs(evaluate("oklch(calc(sin(3.141592653589793 / 2) * 0.5) 0 0)", new Map()).lin[1] - 0.125) < 1e-12);
-  const macro = readFileSync(new URL("../packages/ui-kit/components.css", import.meta.url), "utf8").match(/--_sl-lum:\s*([^;]+);/)[1];
+  const macro = readFileSync(new URL("../packages/ui-kit/tokens.css", import.meta.url), "utf8").match(/--_sl-lum:\s*([^;]+);/)[1];
   const env = new Map([["--_sl-lum", macro]]);
   for (const hex of ["#FF9F1C", "#4c58e9", "#0e9c84", "#2ee6c0", "#58a6ff", "#fe8263"]) {
     const c = evaluate(hex, env);

@@ -15,7 +15,7 @@ const raw = read("components.css");
 const css = raw.replace(/\/\*[\s\S]*?\*\//g, "");
 const tokenEnv = (src) => {
   const env = new Map();
-  for (const m of src.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  for (const m of src.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   return env;
 };
 const SHARED = tokenEnv(read("tokens.css"));
