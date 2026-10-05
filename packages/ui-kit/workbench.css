@@ -25,10 +25,9 @@
    with a ground of its own), the palette's seam (0.34, a line that glows),
    the terminal block's exit mark and the toast's tick (components.css).
    Glass, press and glitch are therefore unsupported on a pane, a palette,
-   a terminal block and a toast; the aurora is not. One mark is an ::after:
-   an activity item's count badge (0.34, text from attr(), which only a
-   pseudo-element draws), so an activity item with a count cannot wear the
-   aurora. The title bar takes no pseudo-element.
+   a terminal block and a toast; the aurora is not. Nothing takes ::after.
+   The title bar and the activity bar's count badge (a child element) take
+   no pseudo-element at all.
 
    The inversion band: of these only .sl-term-block is supported inside an
    .sl-invert band, set straight on it (a real-content block, L3). The rest
@@ -391,15 +390,16 @@
   background-color: var(--slc-surface);
 }
 .sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) > svg { color: var(--slc-accent-text); }
-/* The count badge (0.34): a count on the item's data-count, in the mono on
+/* The count badge (0.34): a child of the item, never a pseudo-element (the
+   item is an effect host, and the aurora owns its ::after), in the mono on
    the accent fill that carries a label (--slc-accent-fill where the product
    sets one, the accent where it does not), its label picked on that fill as
    the primary's is, ringed in the canvas so it reads apart from the glyph.
-   It is the item's ::after, so an item with a count cannot wear the aurora.
-   The item still says the count in its name (aria-label="Source control, 3
-   changes"): the badge is not read. */
-.sl-activitybar__item[data-count]::after {
-  content: attr(data-count);
+   The item says the count in its name (aria-label="Source control, 3
+   changes"), so the badge is aria-hidden.
+     <button class="sl-activitybar__item" aria-label="Source control, 3 changes">
+       <svg …/><span class="sl-activitybar__badge" aria-hidden="true">3</span></button> */
+.sl-activitybar__badge {
   position: absolute;
   inset-block-start: 4px;
   inset-inline-end: 3px;
@@ -811,7 +811,7 @@
   .sl-palette { background-color: Canvas !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
   .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; animation: none !important; }
-  .sl-activitybar__item[data-count]::after { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; }
+  .sl-activitybar__badge { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; }
   /* Selection that was only a fill and a shadow is the system's selection;
      the seam goes with the shorthand, and its parts take the selection's
      text colour. Opting out also stops the forced outline colour: the shared

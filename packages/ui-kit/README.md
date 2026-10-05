@@ -46,7 +46,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 - **`--slc-depth-cast` (new role).** Lumen's overlay cast for an overlay with no border: the float, plus the ring folded in (the overlay's own fill in shade), lit along its top. High contrast draws the ring in the theme's line. Forced colours turn it off, and the palette and the toast then get a drawn outline. The effects kill switches now restore it on a toast and a palette, where they restored `--slc-depth-float`.
 - **Activity bar.** The bar is 52px wide, items are 6px apart and the first starts 4px from the top. Each item is 38×38 at r9 (it was 36×36 at r8).
   - **The current view** is a flat tile on the surface rung (it was the tile rung) and keeps its seam.
-  - **`data-count` on an item** draws a count badge on its corner: the mono at 9px, on the accent fill that carries a label, with its label picked on that fill, ringed in the canvas, at least 20×14px. It is the item's `::after`, so an item with a count cannot wear the aurora. Put the count in the item's name too ("Source control, 3 changes").
+  - **A count badge** (new), `<span class="sl-activitybar__badge" aria-hidden="true">3</span>` inside the item, sits on its corner: the mono at 9px, on the accent fill that carries a label, with its label picked on that fill, ringed in the canvas, at least 20×14px. It is a child, never a pseudo-element: the item is an effect host, and the aurora owns its `::after`. Put the count in the item's name too ("Source control, 3 changes").
 - **Status bar.**
   - The bar is 30px (it was 28), 4px in at the start and 8 at the end.
   - Each item is a 22px pill at r6 (it was 20px, square), and brings the surface rung up under the pointer. An item may be a `<button>` or a link: it then takes the shared ring.
@@ -71,7 +71,7 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
   - The mark is 26px on a 16% wash (it was 24px on 12%).
   - The dismiss is the icon button's own 32px at r8 (it was 24px at r6).
   - `.sl-toast__timer` (new) on an `.sl-progress` draws a 2px bar of the tone along the bottom.
-- **Paint layers.** Four marks are a `::before`: the lit pane's seam, the palette's seam, the toast's tick and the terminal block's exit mark. One mark is an `::after`: the activity item's count badge. The title bar takes no pseudo-element.
+- **Paint layers.** Four marks are a `::before`: the lit pane's seam, the palette's seam, the toast's tick and the terminal block's exit mark, so glass, press and glitch are unsupported on those four hosts (the palette joins them in 0.34). Nothing takes `::after`. The title bar's dots and the activity item's count badge are children or background layers, so they take no pseudo-element.
 
 **Migration.** Class names are unchanged. Re-check any rule of yours that sets the sizes above. If you relied on status separators or tree guides, add `--separators` or `--guides`. If you wrote a `--slc-depth-float` restore for a toast or a palette, change it to `--slc-depth-cast`.
 

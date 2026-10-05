@@ -74,7 +74,7 @@
   const activity = (on = "files") => `
     <nav class="ide-activity sl-activitybar" aria-label="Views">
       ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control, 3 changes", I.git, "3"], ["agent", "Agents, 2 running", I.agent, "2"], ["beaker", "Tests", I.beaker]]
-        .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
+        .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}${n ? `<span class="sl-activitybar__badge" aria-hidden="true">${n}</span>` : ""}</button>`).join("")}
       <span class="ide-activity__spacer"></span>
       <button class="ide-activity__btn sl-activitybar__item" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
     </nav>`;
@@ -503,7 +503,7 @@
       ["Pane label", ".pane__label"], ["Session meta", '.sl-list__row[aria-selected="false"] .sl-list__meta'], ["Session meta, selected", '.sl-list__row[aria-selected="true"] .sl-list__meta'],
       ["Status bar", ".ide-status__item"], ["Terminal output", ".ide-block__out"], ["Terminal time", ".ide-block__meta time"], ["Terminal dim", ".ide-block__out .t-dim"], ["Breadcrumb", ".ide-crumbs span"],
       ["Palette item", '.ide-pal__row[aria-selected="false"] .ide-pal__t'], ["Palette meta", '.ide-pal__row[aria-selected="false"] .ide-pal__m'], ["Palette selected", '.ide-pal__row[aria-selected="true"] .ide-pal__t'],
-      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
+      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"], ["Count badge", '[data-dir="kit"] .sl-activitybar__badge'],
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
       ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 0", '.ide-block[data-exit="0"] .ide-block__exit'], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit'], ["Terminal command", ".ide-block__cmd"], ["Palette match", '.ide-pal__row[aria-selected="false"] .ide-pal__t mark']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],
@@ -603,7 +603,8 @@
       out.text.push([name, ratio(c, g), parseFloat(ks.fontSize)]);
     });
     // labels a direction draws as generated content on a filled ground
-    for (const [name, sel, pe] of [["Switch state glyph", ".sl-switch__input:checked + .sl-switch__track", "::before"], ["Count badge", ".ide-activity__btn[data-count]", "::after"]]) {
+    // the kit's count badge is a child (0.34), read with the text rows; the target draws its own as ::after
+    for (const [name, sel, pe] of [["Switch state glyph", ".sl-switch__input:checked + .sl-switch__track", "::before"], ["Count badge", '[data-dir="lumen"] .ide-activity__btn[data-count]', "::after"]]) {
       const el = pick(sel); if (!el) continue;
       const a = getComputedStyle(el, pe); if (!a.content || a.content === "none" || a.content === '""' || a.display === "none") continue;
       const fillEl = pe === "::before" && name.startsWith("Switch") ? getComputedStyle(el).backgroundColor : a.backgroundColor;

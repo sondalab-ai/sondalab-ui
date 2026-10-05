@@ -66,16 +66,19 @@ svg { flex: none; }
    Lumen's status bar, toast tick and dismiss and tree guides, so their
    stand-downs are gone. The palette's field stays: the target's own field
    well (a canvas well at (0,2,0), later than the kit's palette field) would
-   otherwise land on it. The target's quirks are kept so it renders as it
-   did: its count badge's content box, its toast timer's full width and 1px
-   drop below the edge, its palette foot's square corners and its tick's
-   rounded ends (both the kit's before 0.34). */
+   otherwise land on it. The kit's count badge is a child (0.34), which the
+   target never knew: it stands down, and the stage's own ::after badge,
+   which the target restyles, stays for the target alone. The target's
+   quirks are kept so it renders as it did: its toast timer's full width
+   and 1px drop below the edge, its palette foot's square corners and its
+   tick's rounded ends (both the kit's before 0.34). */
 [data-dir="lumen"] .ide-main.sl-pane::before { content: none; }
 [data-dir="lumen"] .sl-tree__row[aria-expanded] > .sl-tree__twisty::before { content: none; }
 [data-dir="lumen"] .sl-titlebar__dot { display: none; }
 [data-dir="lumen"] .sl-term-block::before { width: auto; border-radius: 0; }
 [data-dir="lumen"] .ide-pal__in > .ide-pal__input.sl-field__input { background: transparent; border-color: transparent; box-shadow: none; }
-[data-dir="lumen"] .ide-activity__btn[data-count]::after { box-sizing: content-box; }
+[data-dir="lumen"] .sl-activitybar__badge { display: none; }
+[data-dir="lumen"] .ide-activity__btn[data-count]::after { content: attr(data-count); position: absolute; top: 3px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--slc-accent-fill, var(--slc-accent)); color: var(--slc-on-accent-fill); font: 600 9px/15px var(--sl-font-mono); text-align: center; }
 [data-dir="lumen"] .ide-toast__timer { width: 100%; inset-inline: 14px; inset-block-end: -1px; }
 [data-dir="lumen"] .ide-pal__foot { border-radius: 0; }
 [data-dir="lumen"] .ide-toast::before { border-radius: 0 0 2px 2px; }
@@ -95,7 +98,7 @@ svg { flex: none; }
 .ide-avatar { --sl-avatar-size: 26px; font: 600 10px/1 var(--sl-font-mono); color: var(--slc-text-secondary); }
 [data-count] { position: relative; }
 
-/* the activity bar is the kit's (.sl-activitybar, 0.34): Lumen's 52px column, the current view a flat tile on the surface with the seam, a count the kit's badge (data-count) */
+/* the activity bar is the kit's (.sl-activitybar, 0.34): Lumen's 52px column, the current view a flat tile on the surface with the seam, a count the kit's badge (a child; data-count stays for the target) */
 .ide-activity__spacer { flex: 1; }
 
 .ide-side { width: 264px; flex: none; display: flex; flex-direction: column; overflow: hidden; }

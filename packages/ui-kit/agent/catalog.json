@@ -852,7 +852,8 @@
       "interactive": true,
       "classes": [
         "sl-activitybar",
-        "sl-activitybar__item"
+        "sl-activitybar__item",
+        "sl-activitybar__badge"
       ],
       "roleVars": [
         "--slc-text-muted",

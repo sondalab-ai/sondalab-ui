@@ -815,12 +815,9 @@ test("forced colours: a toast keeps a drawn edge, its cast being gone", () => {
 
 // ── pseudo-elements: ::before is the component's, ::after the aurora's ───────
 
-test("pseudo-elements: a tile's seam is a background layer; the lit pane's and the palette's seams, the toast's tick and the exit mark are a ::before; only the count badge takes ::after", () => {
+test("pseudo-elements: a tile's seam is a background layer; the lit pane's and the palette's seams, the toast's tick and the exit mark are a ::before; nothing takes ::after", () => {
   const sels = [...WB, ...CO.filter((r) => /\.sl-toast/.test(r.selector))].map((r) => r.selector);
-  // the one ::after is the activity item's count badge (0.34): an item with
-  // a count cannot wear the aurora (the catalog says so); every other host
-  // keeps ::after free for it
-  assert.deepEqual([...new Set(sels.filter((s) => /::after/.test(s)))], [".sl-activitybar__item[data-count]::after"], "::after stays free for the aurora");
+  assert.deepEqual(sels.filter((s) => /::after/.test(s)), [], "::after stays free for the aurora");
   const before = sels.filter((s) => /::before/.test(s) && !/sl-tree__twisty/.test(s)).map((s) => s.replace(/^.*?(\.sl-[\w-]+)[^,]*$/, "$1"));
   assert.deepEqual([...new Set(before)].sort(), [".sl-palette", ".sl-pane", ".sl-term-block", ".sl-toast"], "the four marks, and nothing else");
   // the lit pane's seam is a pseudo-element (it paints over the pane's children), and the palette's since 0.34 (Lumen's line with its glow)
@@ -942,18 +939,16 @@ test("the activity bar is Lumen's: 52 wide, 38px items at r9, 6px apart, 4px fro
   assert.equal(px(i.get("height").value, env), 38);
   assert.equal(px(i.get("border-radius").value, env), 9);
   assert.equal(i.get("position").value, "relative", "the count badge's containing block");
+  assert.equal(cascaded(RULES_A, el({ pseudo: "after", parent: el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "data-count": "3" }, parent: bar }) })).get("content"), undefined, "a data-count draws nothing: the badge is a child");
 });
 
-test("a count badge: data-count on the item, mono 9px on the accent fill, ringed in the canvas", () => {
+test("a count badge: a child of the item, mono 9px on the accent fill, ringed in the canvas", () => {
   const at = mount(dark);
   const bar = el({ tag: "nav", classes: ["sl-activitybar"], parent: at });
-  const plain = el({ tag: "button", classes: ["sl-activitybar__item"], parent: bar });
-  assert.equal(cascaded(RULES_A, el({ pseudo: "after", parent: plain })).get("content"), undefined, "no count, no badge");
-  const counted = el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "data-count": "3" }, parent: bar });
-  const badge = el({ pseudo: "after", parent: counted });
+  const counted = el({ tag: "button", classes: ["sl-activitybar__item"], parent: bar });
+  const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], attrs: { "aria-hidden": "true" }, parent: counted });
   const won = cascaded(RULES_A, badge);
   const env = customs(RULES_A, badge);
-  assert.equal(won.get("content").value, "attr(data-count)");
   assert.equal(won.get("position").value, "absolute");
   assert.equal(px(won.get("inset-block-start").value, env), 4);
   assert.equal(px(won.get("inset-inline-end").value, env), 3, "mirrored right to left");
@@ -970,16 +965,31 @@ test("a count badge: data-count on the item, mono 9px on the accent fill, ringed
   assert.equal(won.get("color").value, "oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-on))");
 });
 
+// The item is an effect host (effects.css restores its depth and halo), and
+// the aurora owns its ::after: a badge drawn there lost its count to the
+// aurora's opacity and mask. A child keeps both.
+test("a count badge survives the aurora on its item: neither takes the other's paint", () => {
+  const FX = parse([...TIER_A, read("effects.css")]);
+  const at = mount(dark);
+  const item = el({ tag: "button", classes: ["sl-activitybar__item", "sl-fx-aurora"], attrs: { "aria-current": "true" }, parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: at }) });
+  const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], parent: item });
+  const b = cascaded(FX, badge);
+  for (const prop of ["opacity", "mask", "mask-image", "-webkit-mask", "visibility", "display", "content"]) {
+    assert.ok(!b.has(prop) || !/^(0|none|hidden)$/.test(b.get(prop).value) || prop === "content", `${prop}: ${b.get(prop)?.value}`);
+  }
+  assert.equal(b.get("background-color").value, "var(--slc-accent-fill, var(--slc-accent))", "the badge keeps its fill");
+  // and nothing in the workbench writes into the item's ::after, the aurora's
+  const after = cascaded(RULES_A, el({ pseudo: "after", parent: item }));
+  assert.equal(after.get("content"), undefined, "the item's ::after is left to the aurora");
+});
+
 test("a count badge's label reads at 4.5:1 on its fill, every product, theme and tier", () => {
   const low = [];
   for (const ctx of CONTEXTS.filter((c) => !c.band)) {
     const at = mount(ctx);
-    const item = el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "data-count": "3" }, parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: at }) });
-    const badge = el({ pseudo: "after", parent: item });
-    const won = cascaded(ctx.rules, badge);
-    const fill = over(value(ctx.rules, badge, won.get("background-color").value, BLACK), groundOf(ctx.rules, item));
-    const ink = value(ctx.rules, badge, won.get("color").value, BLACK);
-    const r = ratio(over(ink, fill), fill);
+    const item = el({ tag: "button", classes: ["sl-activitybar__item"], parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: at }) });
+    const badge = el({ tag: "span", classes: ["sl-activitybar__badge"], parent: item });
+    const r = textContrast(ctx.rules, badge);
     if (!(r >= 4.5)) low.push(`${ctx.name} ${r.toFixed(2)}`);
   }
   assert.deepEqual(low, []);
