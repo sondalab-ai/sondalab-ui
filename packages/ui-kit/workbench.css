@@ -171,23 +171,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sl-space-1, 0.25rem);
-  padding-block: var(--sl-space-2, 0.5rem);
+  box-sizing: border-box;
+  width: 52px;
+  gap: 6px;
+  padding-block: 4px var(--sl-space-2, 0.5rem);
   background-color: transparent;
 }
 .sl-activitybar__item {
   appearance: none;
+  position: relative;
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 38px;
+  height: 38px;
   padding: 0;
   font: inherit;
   color: var(--slc-text-muted);
   background-color: transparent;
   border: 0;
-  border-radius: var(--sl-radius-md, 8px);
+  border-radius: 9px;
   cursor: pointer;
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -198,9 +201,33 @@
 .sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) {
   --_sl-depth: var(--slc-depth-flat);
   color: var(--slc-text);
-  background-color: var(--slc-tile);
+  background-color: var(--slc-surface);
 }
 .sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) > svg { color: var(--slc-accent-text); }
+/* The count badge (0.34): a count on the item's data-count, in the mono on
+   the accent fill that carries a label (--slc-accent-fill where the product
+   sets one, the accent where it does not), its label picked on that fill as
+   the primary's is, ringed in the canvas so it reads apart from the glyph.
+   It is the item's ::after, so an item with a count cannot wear the aurora.
+   The item still says the count in its name (aria-label="Source control, 3
+   changes"): the badge is not read. */
+.sl-activitybar__item[data-count]::after {
+  content: attr(data-count);
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 3px;
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 14px;
+  padding: 0 3px;
+  font: 600 9px/14px var(--sl-font-mono, ui-monospace, monospace);
+  text-align: center;
+  color: oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-on));
+  background-color: var(--slc-accent-fill, var(--slc-accent));
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--slc-canvas);
+  pointer-events: none;
+}
 
 /* ══ TREE ════════════════════════════════════════════════════════════════════
    A file tree: rows on the 4px grid (24px), each indented by its level, with
@@ -532,6 +559,7 @@
   .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
   .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; }
+  .sl-activitybar__item[data-count]::after { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; }
   /* Selection that was only a fill and a shadow is the system's selection;
      the seam goes with the shorthand, and its parts take the selection's
      text colour. Opting out also stops the forced outline colour: the shared

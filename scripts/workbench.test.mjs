@@ -688,7 +688,10 @@ test("the dismiss keeps the one control edge, at the small button's 24px", () =>
 
 test("pseudo-elements: a tile's and the palette's seams are background layers; the lit pane's seam, the toast's tick and the exit mark are a ::before; nothing takes ::after", () => {
   const sels = [...WB, ...CO.filter((r) => /\.sl-toast/.test(r.selector))].map((r) => r.selector);
-  assert.deepEqual(sels.filter((s) => /::after/.test(s)), [], "::after stays free for the aurora");
+  // the one ::after is the activity item's count badge (0.34): an item with
+  // a count cannot wear the aurora (the catalog says so); every other host
+  // keeps ::after free for it
+  assert.deepEqual([...new Set(sels.filter((s) => /::after/.test(s)))], [".sl-activitybar__item[data-count]::after"], "::after stays free for the aurora");
   const before = sels.filter((s) => /::before/.test(s) && !/sl-tree__twisty/.test(s)).map((s) => s.replace(/^.*?(\.sl-[\w-]+)[^,]*$/, "$1"));
   assert.deepEqual([...new Set(before)].sort(), [".sl-pane", ".sl-term-block", ".sl-toast"], "the three marks, and nothing else");
   // the lit pane's seam is a pseudo-element (it paints over the pane's children), the palette's a layer
@@ -755,14 +758,16 @@ test("every focusable workbench piece takes the shared flush ring and its halo, 
   }
 });
 
-// ── heights on the 4px grid ─────────────────────────────────────────────────
+// ── heights: Lumen's rendered geometry (0.34) ──────────────────────────────
 
-test("a tree row, a palette row and an activity item sit on the 4px grid, and their line fits", () => {
+// The workbench chrome takes the geometry the Lumen IDE screen renders at
+// 1440x900 (owner, 2026-10-05: "almost pixel by pixel"), which steps off the
+// kit's 4px grid: a 26px tree row, a 38px palette row, a 38px activity item.
+test("a tree row, a palette row and an activity item are Lumen's heights, and their line fits", () => {
   const p = build(dark);
-  for (const [name, e, want] of [["tree row", p["tree row"], 24], ["selected tree row", p["tree selected"], 24], ["palette row", p["palette row"], 36], ["selected palette row", p["palette selected"], 36], ["activity item", p["activity item"], 36]]) {
+  for (const [name, e, want] of [["tree row", p["tree row"], 24], ["selected tree row", p["tree selected"], 24], ["palette row", p["palette row"], 36], ["selected palette row", p["palette selected"], 36], ["activity item", p["activity item"], 38]]) {
     const h = declaredHeight(RULES_A, e);
     assert.equal(h, want, name);
-    assert.equal(h % 4, 0, `${name} on the 4px grid`);
     assert.equal(cascaded(RULES_A, e).get("box-sizing").value, "border-box", `${name}: the height is the whole row`);
   }
   // the tree row's line inside its own height
@@ -781,13 +786,73 @@ test("the activity bar's glyphs are borderless chrome, the current one a flat ti
   assert.equal(item.get("background-color").value, "transparent");
   for (const name of ["activity current", "activity tab"]) {
     const won = cascaded(RULES_A, p[name]);
-    assert.equal(won.get("background-color").value, "var(--slc-tile)", name);
+    // 0.34, Lumen: the current view rests on the surface rung (the tile is
+    // a selection lifted out of a pane; the bar sits on the canvas)
+    assert.equal(won.get("background-color").value, "var(--slc-surface)", name);
     assert.equal(won.get("background-image").value, "linear-gradient(var(--_sl-seam-ink), var(--_sl-seam-ink)), var(--_sl-layer)", `${name}: the shared seam`);
     assert.equal(customs(RULES_A, p[name]).get("--_sl-depth"), customs(RULES_A, p[name]).get("--slc-depth-flat"), `${name}: a flat tile`);
   }
   // hover is a flat wash and keeps the seam's layer
   assert.equal(cascaded(RULES_A, p["activity hovered"]).get("background-color").value, "color-mix(in srgb, var(--slc-text) 5%, transparent)");
   assert.equal(cascaded(RULES_A, p["activity hovered"]).get("box-shadow").value, "var(--_sl-depth)");
+});
+
+test("the activity bar is Lumen's: 52 wide, 38px items at r9, 6px apart, 4px from the top", () => {
+  const at = mount(dark);
+  const bar = el({ tag: "nav", classes: ["sl-activitybar"], parent: at });
+  const item = el({ tag: "button", classes: ["sl-activitybar__item"], parent: bar });
+  const env = customs(RULES_A, item);
+  const b = cascaded(RULES_A, bar);
+  assert.equal(px(b.get("width").value, env), 52);
+  assert.equal(b.get("box-sizing").value, "border-box");
+  assert.equal(px(b.get("gap").value, env), 6);
+  assert.deepEqual(words(b.get("padding-block").value).map((w) => px(w, env)), [4, 8]);
+  const i = cascaded(RULES_A, item);
+  assert.equal(px(i.get("width").value, env), 38);
+  assert.equal(px(i.get("height").value, env), 38);
+  assert.equal(px(i.get("border-radius").value, env), 9);
+  assert.equal(i.get("position").value, "relative", "the count badge's containing block");
+});
+
+test("a count badge: data-count on the item, mono 9px on the accent fill, ringed in the canvas", () => {
+  const at = mount(dark);
+  const bar = el({ tag: "nav", classes: ["sl-activitybar"], parent: at });
+  const plain = el({ tag: "button", classes: ["sl-activitybar__item"], parent: bar });
+  assert.equal(cascaded(RULES_A, el({ pseudo: "after", parent: plain })).get("content"), undefined, "no count, no badge");
+  const counted = el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "data-count": "3" }, parent: bar });
+  const badge = el({ pseudo: "after", parent: counted });
+  const won = cascaded(RULES_A, badge);
+  const env = customs(RULES_A, badge);
+  assert.equal(won.get("content").value, "attr(data-count)");
+  assert.equal(won.get("position").value, "absolute");
+  assert.equal(px(won.get("inset-block-start").value, env), 4);
+  assert.equal(px(won.get("inset-inline-end").value, env), 3, "mirrored right to left");
+  // as rendered: 14 tall, at least 20 wide (Lumen's 14px content box and 3px padding)
+  assert.equal(won.get("box-sizing").value, "border-box");
+  assert.equal(px(won.get("min-width").value, env), 20);
+  assert.equal(px(won.get("height").value, env), 14);
+  assert.match(won.get("font").value, /^600 9px\/14px var\(--sl-font-mono/);
+  assert.equal(won.get("background-color").value, "var(--slc-accent-fill, var(--slc-accent))");
+  assert.equal(won.get("box-shadow").value, "0 0 0 2px var(--slc-canvas)");
+  assert.equal(won.get("pointer-events").value, "none");
+  // the label is picked on the fill itself, as the primary's is, so a Tier B
+  // page and a subtree fill get it too
+  assert.equal(won.get("color").value, "oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-on))");
+});
+
+test("a count badge's label reads at 4.5:1 on its fill, every product, theme and tier", () => {
+  const low = [];
+  for (const ctx of CONTEXTS.filter((c) => !c.band)) {
+    const at = mount(ctx);
+    const item = el({ tag: "button", classes: ["sl-activitybar__item"], attrs: { "data-count": "3" }, parent: el({ tag: "nav", classes: ["sl-activitybar"], parent: at }) });
+    const badge = el({ pseudo: "after", parent: item });
+    const won = cascaded(ctx.rules, badge);
+    const fill = over(value(ctx.rules, badge, won.get("background-color").value, BLACK), groundOf(ctx.rules, item));
+    const ink = value(ctx.rules, badge, won.get("color").value, BLACK);
+    const r = ratio(over(ink, fill), fill);
+    if (!(r >= 4.5)) low.push(`${ctx.name} ${r.toFixed(2)}`);
+  }
+  assert.deepEqual(low, []);
 });
 
 // ── the tree ────────────────────────────────────────────────────────────────

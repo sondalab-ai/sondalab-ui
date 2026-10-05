@@ -695,9 +695,12 @@ test("the workbench's selections and surfaces are the kit's depth recipes", () =
   ]) {
     assert.equal(depthOf(wb(sel)), `var(--slc-depth-${depth})`, sel);
   }
-  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])', '.sl-palette__row[aria-selected="true"]']) {
+  for (const sel of ['.sl-tree__row[aria-selected="true"]', '.sl-palette__row[aria-selected="true"]']) {
     assert.match(wb(sel), /background-color:\s*var\(--slc-tile\)/, sel);
   }
+  // the current view rests on the surface rung, as Lumen renders it (0.34):
+  // the bar sits on the canvas, and its flat tile is the rung above it
+  assert.match(wb('.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"])'), /background-color:\s*var\(--slc-surface\)/);
   assert.match(decl(wb(".sl-pane[data-lit]"), "box-shadow"), /^var\(--slc-depth-island\), /, "the lit pane is an island and its glow");
   // every host of a recipe carries no border, so the lit line sits flush under the ring
   for (const sel of [".sl-pane", ".sl-term-block", ".sl-tree__row", ".sl-activitybar__item"]) assert.equal(decl(wb(sel), "border"), "0", sel);
