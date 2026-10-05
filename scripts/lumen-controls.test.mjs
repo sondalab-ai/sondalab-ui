@@ -142,3 +142,18 @@ test("a badge is Lumen's shape: r6 (it was a pill), 4px by 8px on the grid (its 
   const b = el({ tag: "span", classes: ["sl-badge"], parent: at() });
   assert.match(value(KIT_RULES, b, "font-family"), /^var\(--sl-font-sans/, "status words in the sans");
 });
+
+test("a tag is Lumen's: mono 11.5/500 at r6 (it was a 12px pill), 4px by 8px, 22px tall on a 12px line", () => {
+  for (const mod of ["", "sl-tag--plain"]) {
+    const t = el({ tag: "span", classes: ["sl-tag", ...(mod ? [mod] : [])], parent: at() });
+    const s = shape(KIT_RULES, t);
+    assert.equal(s.font, 11.5, `${mod}: Lumen's 11.5`);
+    assert.equal(value(KIT_RULES, t, "font-weight"), "500");
+    assert.match(value(KIT_RULES, t, "font-family"), /^var\(--sl-font-mono/, "an identifier, in the mono");
+    assert.equal(value(KIT_RULES, t, "letter-spacing"), "0.02em");
+    assert.equal(s.radius, 6);
+    assert.deepEqual(s.padding, [4, 8, 4, 8]);
+    assert.equal(s.line, 12, "a whole-pixel line under 11.5px type");
+    assert.equal(s.height, 22, "the badge's row (Lumen's 19.9), as in 0.35");
+  }
+});

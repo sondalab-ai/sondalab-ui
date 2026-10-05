@@ -422,22 +422,25 @@
   color: var(--slc-text-muted);
 }
 
-/* Tag — accent-tinted pill with a dot glyph. Category / tier marker. Mono, as
-   an identifier is, but in sentence case and barely tracked (0.30). */
+/* Tag — accent-tinted mark with a dot glyph. Category / tier marker. Mono, as
+   an identifier is, but in sentence case and barely tracked (0.30).
+   Lumen's shape (0.36): 11.5px at r6, 8px in and 4px above and below (its
+   8 and 3.2 on the 4px grid), on a 12px line so it stays 22px, the badge's
+   row (Lumen's 19.9). It was a 12px pill 12px in. */
 .sl-tag {
   display: inline-flex;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
   font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
+  font-size: 0.71875rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  line-height: 1;
+  line-height: 0.75rem;
   color: var(--slc-accent-text);
   background: var(--slc-accent-subtle);
   border: 1px solid var(--slc-accent-subtle);
-  border-radius: var(--sl-radius-pill, 9999px);
-  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+  border-radius: var(--sl-radius-sm, 6px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
 }
 .sl-tag::before {
   content: "";
