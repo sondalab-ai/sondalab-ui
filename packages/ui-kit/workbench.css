@@ -79,13 +79,16 @@
 
 /* ══ STATUS BAR ══════════════════════════════════════════════════════════════
    The workbench's meta line, on the canvas, as Lumen draws it: facts in the
-   sans at the small step, sentence case, the muted ink; a value read as
+   sans at the small step, sentence case, the muted ink, each a 22px pill
+   that brings the surface rung up under the pointer (0.34); a value read as
    data -- a branch, a model, a count -- in the mono at the primary ink, as
-   written (a branch is case-sensitive); a hairline between groups of facts,
-   and a dot of the accent for a state that is live ("2 agents running" --
-   the words carry the state, the dot is only its mark). Its height is the
-   bar's own, not its content's, so an item with an icon or a dot cannot
-   move it; a fact that does not fit ends in an ellipsis.
+   written (a branch is case-sensitive); and a dot of the accent for a state
+   that is live ("2 agents running" -- the words carry the state, the dot is
+   only its mark), which breathes where motion is wanted. Hairlines between
+   groups of facts are off, as Lumen draws none: .sl-statusbar--separators
+   turns them on. Its height is the bar's own (30px, Lumen's status row), not
+   its content's, so an item with an icon or a dot cannot move it; a fact
+   that does not fit ends in an ellipsis.
      <footer class="sl-statusbar" aria-label="Status">
        <span class="sl-statusbar__item"><span class="sl-statusbar__value">main</span> ↑2</span>
        <span class="sl-statusbar__sep" aria-hidden="true"></span>
@@ -95,14 +98,15 @@
      </footer>
    Never role="status" on the bar: every fact in it would be read out each
    time the caret moves. A fact that must be heard when it changes gets a
-   role="status" of its own. Items are facts, not controls: a bar item that
-   opens something is a plain .sl-btn.sl-btn--sm beside them. */
+   role="status" of its own. An item that opens something is a <button> (or
+   a link) with the same class: it takes the shared flush ring and halo, and
+   the button's own chrome is reset. */
 .sl-statusbar {
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  height: 1.75rem;
-  padding-inline: var(--sl-space-2, 0.5rem);
+  height: 30px;
+  padding-inline: 4px var(--sl-space-2, 0.5rem);
   /* Across, a long bar clips; up and down a focus halo on a small button in
      it may still show. The height above is what holds the bar steady. */
   overflow-x: clip;
@@ -117,16 +121,28 @@
    ellipsis where the bar runs out (the text of a flex box is an anonymous
    item, which never does). */
 .sl-statusbar__item {
+  appearance: none;
   display: block;
   flex: 0 1 auto;
   min-width: 0;
   box-sizing: border-box;
-  height: 1.25rem;
+  height: 22px;
+  margin: 0;
+  padding-block: 0;
   padding-inline: var(--sl-space-2, 0.5rem);
-  line-height: 1.25rem;
+  font: inherit;
+  line-height: 22px;
+  color: inherit;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sl-radius-sm, 6px);
   overflow: hidden;
   text-overflow: ellipsis;
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
+.sl-statusbar__item:hover { color: var(--slc-text); background-color: var(--slc-surface); }
 .sl-statusbar__item > svg { vertical-align: middle; margin-inline-end: var(--sl-space-1, 0.25rem); }
 .sl-statusbar__value {
   font-family: var(--sl-font-mono, ui-monospace, monospace);
@@ -134,13 +150,20 @@
   color: var(--slc-text);
 }
 /* A border, not a fill: forced colours keep a border and repaint a fill as
-   the canvas. */
+   the canvas. Off unless the bar asks (0.34). */
 .sl-statusbar__sep {
+  display: none;
   flex: none;
   height: 0.75rem;
   margin-inline: var(--sl-space-1, 0.25rem);
   border-inline-start: 1px solid var(--slc-border);
 }
+.sl-statusbar--separators .sl-statusbar__sep { display: block; }
+/* The dot is the accent as text, a thin mark: on paper the accent itself is
+   a fill (the default's amber reads 1.6:1 on the canvas). It breathes, a
+   ring of itself that swells and fades every 2.4s on the arrival curve
+   (Lumen's); reduced motion stills it, and forced colours, where it opts
+   out to paint in the system's ink, stop it too. */
 .sl-statusbar__dot {
   display: inline-block;
   vertical-align: middle;
@@ -149,6 +172,13 @@
   margin-inline-end: var(--sl-space-1, 0.25rem);
   border-radius: 50%;
   background-color: var(--slc-accent-text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sl-statusbar__dot { animation: sl-statusbar-breathe calc(var(--sl-motion-fast, 120ms) * 20) var(--sl-motion-enter, ease) infinite; }
+}
+@keyframes sl-statusbar-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--slc-accent-text) 45%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--slc-accent-text) 0%, transparent); }
 }
 .sl-statusbar__spacer { flex: 1; }
 
@@ -558,7 +588,7 @@
   .sl-pane[data-lit] { outline: 2px solid Highlight !important; outline-offset: -2px; }
   .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
-  .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; }
+  .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; animation: none !important; }
   .sl-activitybar__item[data-count]::after { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; box-shadow: none !important; }
   /* Selection that was only a fill and a shadow is the system's selection;
      the seam goes with the shorthand, and its parts take the selection's

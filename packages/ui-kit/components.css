@@ -347,7 +347,7 @@
 :where(.sl-btn, .sl-link, .sl-field__input, .sl-tabs__tab, .sl-check__box, .sl-radio__box,
   .sl-switch__track, .sl-segmented__item, .sl-breadcrumb__item, .sl-icon-btn,
   .sl-pagination__item, .sl-chip, .sl-nav__item, .sl-list__row, .sl-disclosure,
-  .sl-resizer, .sl-slider, [data-sl-tooltip], .sl-activitybar__item, .sl-tree__row) {
+  .sl-resizer, .sl-slider, [data-sl-tooltip], .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item) {
   --_sl-depth: 0 0 transparent;
   --_sl-halo: 0 0 0 calc(var(--sl-focus-ring-offset, 0px) + var(--sl-focus-ring-width, 2px) + var(--sl-focus-glow-width, 5px)) color-mix(in srgb, var(--slc-focus) calc(22% * min(1, var(--slc-glow) * 1000)), transparent);
 }
@@ -357,7 +357,7 @@
    would outrank the focus rule and drop the halo. */
 :is(.sl-btn, .sl-icon-btn, .sl-field__input, .sl-check__box, .sl-radio__box, .sl-switch__track,
   .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab,
-  .sl-activitybar__item, .sl-tree__row) {
+  .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item) {
   box-shadow: var(--_sl-depth);
 }
 
@@ -381,7 +381,8 @@
 .sl-resizer:focus-visible,
 [data-sl-tooltip]:focus-visible,
 .sl-activitybar__item:focus-visible,
-.sl-tree__row:focus-visible {
+.sl-tree__row:focus-visible,
+.sl-statusbar__item:focus-visible {
   outline: var(--sl-focus-ring-width, 2px) solid var(--slc-focus);
   outline-offset: var(--sl-focus-ring-offset, 0px);
   /* Flush ring, and the border joins it: any other colour between the ring
@@ -2835,7 +2836,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   :where(.sl-btn, .sl-link, .sl-field__input, .sl-tabs__tab, .sl-check__box, .sl-radio__box,
     .sl-switch__track, .sl-segmented__item, .sl-breadcrumb__item, .sl-icon-btn,
     .sl-pagination__item, .sl-chip, .sl-nav__item, .sl-list__row, .sl-disclosure,
-    .sl-resizer, .sl-slider, [data-sl-tooltip], .sl-activitybar__item, .sl-tree__row) { --_sl-halo: 0 0 transparent; }
+    .sl-resizer, .sl-slider, [data-sl-tooltip], .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item) { --_sl-halo: 0 0 transparent; }
   /* The checked boxes and the switch opt out of forced colours: their foot
      in the fill's shade would paint a page colour under Highlight. */
   :is(.sl-check__input:is(:checked, :indeterminate) + .sl-check__box,

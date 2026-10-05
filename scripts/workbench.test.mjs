@@ -568,8 +568,7 @@ test("the status bar keeps its own height: the items, a dot and a separator fit 
   for (const ctx of [dark, hc]) {
     const p = build(ctx);
     const bar = declaredHeight(ctx.rules, p.bar);
-    assert.equal(bar, 28, "28px, the kit's 4px grid");
-    assert.equal(bar % 4, 0);
+    assert.equal(bar, 30, "30px, Lumen's status row (0.34; 28 before)");
     // the declared height holds it; it clips only across, so a small button's halo in it still shows
     assert.equal(cascaded(ctx.rules, p.bar).get("overflow-x").value, "clip");
     assert.equal(cascaded(ctx.rules, p.bar).get("overflow"), undefined, "no clip up and down");
@@ -600,6 +599,65 @@ test("the status bar speaks as Lumen draws it: sentence case in the sans, data i
   for (const [prop, v] of [["display", "block"], ["overflow", "hidden"], ["text-overflow", "ellipsis"], ["min-width", "0"], ["flex", "0 1 auto"]]) assert.equal(item.get(prop)?.value, v, prop);
   // a separator is a border, which forced colours keep; a fill they repaint
   assert.equal(cascaded(RULES_A, p.sep).get("border-inline-start").value, "1px solid var(--slc-border)");
+});
+
+test("status items are Lumen's 22px pills: r6, a surface under the pointer, the bar 4px in at the start", () => {
+  const ctxs = [dark, CONTEXTS.find((c) => c.name === "light default")];
+  for (const ctx of ctxs) {
+    const p = build(ctx);
+    const env = customs(ctx.rules, p["status item"]);
+    const bar = cascaded(ctx.rules, p.bar);
+    assert.deepEqual(words(bar.get("padding-inline").value).map((w) => px(w, env)), [4, 8], "Lumen's 0 8 0 4");
+    const item = cascaded(ctx.rules, p["status item"]);
+    assert.equal(declaredHeight(ctx.rules, p["status item"]), 22);
+    assert.equal(px(item.get("line-height").value, env), 22, "one line, centred in the pill");
+    assert.equal(px(item.get("border-radius").value, env), 6);
+    assert.equal(px(item.get("padding-inline").value, env), 8);
+    // hovered: the surface rung under it, the primary ink on it, at 4.5:1
+    const hovered = el({ tag: "span", classes: ["sl-statusbar__item"], states: ["hover"], parent: p.bar });
+    const h = cascaded(ctx.rules, hovered);
+    assert.equal(h.get("background-color").value, "var(--slc-surface)");
+    assert.equal(h.get("color").value, "var(--slc-text)");
+    assert.ok(textContrast(ctx.rules, hovered) >= 4.5, `${ctx.name} hovered item ${textContrast(ctx.rules, hovered).toFixed(2)}`);
+    assert.match(item.get("transition").value, /^color var\(--sl-motion-fast/);
+  }
+});
+
+test("status separators are off unless the bar asks for them", () => {
+  const at = mount(dark);
+  const plain = el({ tag: "footer", classes: ["sl-statusbar"], parent: at });
+  assert.equal(cascaded(RULES_A, el({ tag: "span", classes: ["sl-statusbar__sep"], parent: plain })).get("display").value, "none", "Lumen draws none");
+  const ruled = el({ tag: "footer", classes: ["sl-statusbar", "sl-statusbar--separators"], parent: at });
+  const sep = el({ tag: "span", classes: ["sl-statusbar__sep"], parent: ruled });
+  assert.equal(cascaded(RULES_A, sep).get("display").value, "block");
+  assert.equal(cascaded(RULES_A, sep).get("border-inline-start").value, "1px solid var(--slc-border)", "still a border, which forced colours keep");
+});
+
+test("the live dot breathes on the motion tokens, only where motion is wanted, never under forced colours", () => {
+  const css = bare(read("workbench.css"));
+  const dot = (flags) => cascaded(parseSheet(read("workbench.css"), flags), el({ classes: ["sl-statusbar__dot"], parent: el({ tag: "body", parent: el({ tag: "html" }) }) }));
+  const on = dot({});
+  assert.match(on.get("animation").value, /^sl-statusbar-breathe calc\(var\(--sl-motion-fast, 120ms\) \* 20\) var\(--sl-motion-enter, ease\) infinite$/, "2.4s, the arrival curve, as Lumen breathes it");
+  assert.equal(dot({ reducedMotion: true }).get("animation"), undefined, "reduced motion: still");
+  assert.equal(dot({ forcedColors: true }).get("animation").value, "none", "forced colours: the dot opts out, so a page-colour ring would paint");
+  const frames = css.match(/@keyframes sl-statusbar-breathe \{([\s\S]*?\})\s*\}/)?.[1] ?? "";
+  assert.match(frames, /0%, 100% \{ box-shadow: 0 0 0 0 color-mix\(in srgb, var\(--slc-accent-text\) 45%, transparent\); \}/);
+  assert.match(frames, /50% \{ box-shadow: 0 0 0 4px color-mix\(in srgb, var\(--slc-accent-text\) 0%, transparent\); \}/);
+  // the dot's own fill stays the accent as text: on paper the amber accent
+  // itself reads 1.6:1, too faint for a state's mark
+  assert.equal(on.get("background-color").value, "var(--slc-accent-text)");
+});
+
+test("a status item that is a button takes the shared flush ring and its halo", () => {
+  for (const ctx of [dark, hc]) {
+    const at = mount(ctx);
+    const item = el({ tag: "button", classes: ["sl-statusbar__item"], states: ["focus-visible"], parent: el({ tag: "footer", classes: ["sl-statusbar"], parent: at }) });
+    const won = cascaded(ctx.rules, item);
+    assert.equal(won.get("outline").value, "var(--sl-focus-ring-width, 2px) solid var(--slc-focus)");
+    assert.equal(won.get("box-shadow").value, "var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent)");
+    const rest = cascaded(ctx.rules, el({ tag: "button", classes: ["sl-statusbar__item"], parent: at }));
+    for (const [prop, v] of [["appearance", "none"], ["border", "0"], ["font", "inherit"], ["color", "inherit"]]) assert.equal(rest.get(prop)?.value, v, `${ctx.name} ${prop}`);
+  }
 });
 
 // ── the toast ──────────────────────────────────────────────────────────────
