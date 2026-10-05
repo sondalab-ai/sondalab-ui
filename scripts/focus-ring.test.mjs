@@ -210,7 +210,7 @@ test("forced colours: the slider keeps its value, its thumb and its focus ring",
 // On a selected row the ground is the accent wash; the muted ink fell to
 // 3.77-4.16:1 there on dark.
 test("a selected row lifts its muted meta to the secondary ink", () => {
-  assert.match(css, /\.sl-list__row:is\(\[aria-selected="true"\], \[aria-current\]\) \.sl-list__meta,\s*\.sl-nav__item\[aria-current\] \.sl-nav__count \{ color: var\(--slc-text-secondary\); \}/);
+  assert.match(css, /\.sl-list__row:is\(\[aria-selected="true"\], \[aria-current\]:not\(\[aria-current="false"\]\)\) \.sl-list__meta,\s*\.sl-nav__item\[aria-current\]:not\(\[aria-current="false"\]\) \.sl-nav__count \{ color: var\(--slc-text-secondary\); \}/);
 });
 
 test("a button group wears the one control edge, outline and inner rules alike", () => {
@@ -298,8 +298,8 @@ test("a hovered pagination item is a flat wash; the current one a tile", () => {
   const hover = css.match(/\n\.sl-pagination__item:hover \{([^}]*)\}/)?.[1] ?? "";
   assert.match(hover, /background:\s*color-mix\(in srgb, var\(--slc-text\) 5%, transparent\)/);
   assert.doesNotMatch(hover, /border|box-shadow/, "hover never lifts");
-  const current = css.match(/\n\.sl-pagination__item\[aria-current\] \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(current, /background:\s*var\(--slc-tile\)/);
+  const current = css.match(/\n\.sl-pagination__item\[aria-current\]:not\(\[aria-current="false"\]\) \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(current, /background-color:\s*var\(--slc-tile\)/, "a longhand, so the seam's layer composes");
   assert.match(current, /--_sl-depth:\s*var\(--slc-depth-tile\)/);
 });
 

@@ -56,13 +56,31 @@ svg { flex: none; }
 .lab-num { text-align: right !important; }
 /* the target draws its own in-button keycap from data-key (::after); the kit's child cap stands down there */
 [data-dir="lumen"] .sl-btn[data-key] > .sl-kbd { display: none; }
+/* The target draws its own workbench from the .ide-* hooks. Where a kit
+   primitive paints a layer the target never resets, the kit stands down
+   under the overlay, so the overlay shows the target and nothing of the kit:
+   the lit pane's seam on the editor (the target lights its tab strip), the
+   status bar's micro register and hairlines, the toast tick's width, the
+   tree's guides and twisty, the palette's well, the exit mark's width. */
+[data-dir="lumen"] .ide-main.sl-pane::before { content: none; }
+[data-dir="lumen"] .sl-statusbar { height: auto; line-height: inherit; }
+[data-dir="lumen"] .sl-statusbar__item { line-height: 22px; }
+[data-dir="lumen"] .sl-statusbar__sep { display: none; }
+[data-dir="lumen"] .sl-toast::before { width: auto; }
+[data-dir="lumen"] .sl-toast__dismiss { width: 2rem; height: 2rem; }
+[data-dir="lumen"] .sl-tree__row { background-image: none; }
+[data-dir="lumen"] .sl-tree__twisty::before { content: none; }
+[data-dir="lumen"] .ide-pal__in > .ide-pal__input.sl-field__input { background: transparent; border-color: transparent; box-shadow: none; }
+[data-dir="lumen"] .sl-term-block::before { width: auto; border-radius: 0; }
 
 /* ── app shell ─────────────────────────────────────────────────────────── */
-.app { position: relative; width: 1440px; height: 900px; display: grid; grid-template-rows: 40px minmax(0, 1fr) 26px; overflow: hidden; background: var(--slc-canvas); }
-.app__body { display: flex; min-height: 0; }
-.pane { background: var(--slc-surface); }
+/* The frame is the canvas and the panes are the kit's islands on it
+   (workbench.css, 0.33): a gap between them, no border between them. The
+   status row is the kit's status bar's own height. */
+.app { position: relative; width: 1440px; height: 900px; display: grid; grid-template-rows: 40px minmax(0, 1fr) 1.75rem; overflow: hidden; background: var(--slc-canvas); }
+.app__body { display: flex; gap: var(--sl-space-2); padding-inline-end: var(--sl-space-2); min-height: 0; }
 
-.ide-title { display: grid; grid-template-columns: 1fr minmax(0, 32rem) 1fr; align-items: center; gap: 1rem; padding: 0 0.75rem; border-bottom: 1px solid var(--slc-edge-ground); background: var(--slc-canvas); }
+.ide-title { display: grid; grid-template-columns: 1fr minmax(0, 32rem) 1fr; align-items: center; gap: 1rem; padding: 0 0.75rem; }
 .ide-title__l, .ide-title__r { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 .ide-title__r { justify-content: flex-end; gap: 0.5rem; }
 .ide-dots { display: inline-flex; gap: 6px; } .ide-dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb, var(--slc-text) 18%, transparent); }
@@ -76,17 +94,14 @@ svg { flex: none; }
 .ide-avatar { --sl-avatar-size: 26px; font: 600 10px/1 var(--sl-font-mono); color: var(--slc-text-secondary); }
 [data-count] { position: relative; }
 
-.ide-activity { width: 48px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; background: var(--slc-canvas); border-right: 1px solid var(--slc-edge-ground); }
-.ide-activity__btn { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--sl-radius-md); background: transparent; color: var(--slc-text-muted); cursor: pointer; }
-.ide-activity__btn:hover { color: var(--slc-text); background: color-mix(in srgb, var(--slc-text) 6%, transparent); }
-/* the current view is a flat tile on the frame (0.31): one rung up from the canvas, ringed and lit, its icon in the accent */
-.ide-activity__btn[aria-current] { color: var(--slc-text); background: var(--slc-surface); box-shadow: var(--slc-depth-flat); }
-.ide-activity__btn[aria-current] svg { color: var(--slc-accent-text); }
+/* the activity bar is the kit's (.sl-activitybar, 0.33): borderless glyphs on the canvas, the current view a flat tile with the seam */
+.ide-activity { width: 48px; flex: none; }
+.ide-activity__btn { position: relative; }
 /* a count is a labelled accent fill: the kit's accent-fill role (0.32) */
 .ide-activity__btn[data-count]::after { content: attr(data-count); position: absolute; top: 3px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--slc-accent-fill, var(--slc-accent)); color: var(--slc-on-accent-fill); font: 600 9px/15px var(--sl-font-mono); text-align: center; }
 .ide-activity__spacer { flex: 1; }
 
-.ide-side { width: 264px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--slc-edge-surface); overflow: hidden; }
+.ide-side { width: 264px; flex: none; display: flex; flex-direction: column; overflow: hidden; }
 .pane__head { display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 0.5rem 0 0.9rem; }
 /* 0.30 register: a pane's name and its meta are micro labels (structure); its tabs and chips are controls, so sentence case in the sans */
 .pane__label { font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slc-text-muted); }
@@ -94,23 +109,17 @@ svg { flex: none; }
 .ide-ghost.sl-icon-btn { width: 26px; height: 26px; background: transparent; border-color: transparent; color: var(--slc-text-muted); }
 .ide-ghost.sl-icon-btn:hover { color: var(--slc-text); background: color-mix(in srgb, var(--slc-text) 7%, transparent); }
 .pane__sub { padding: 0.6rem 0.9rem 0.3rem; font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slc-text-muted); }
-.ide-tree { list-style: none; margin: 0; padding: 0 0.4rem; }
-/* borderless, so the selected tile's lit line sits flush under its ring (0.31) */
-.ide-tree__row { display: flex; align-items: center; gap: 0.35rem; height: 26px; padding-left: calc(0.35rem + var(--d) * 14px); padding-right: 0.5rem; border-radius: var(--sl-radius-sm); font-size: 13px; color: var(--slc-text); cursor: pointer; border: 0; }
-.ide-tree__row:hover { background: color-mix(in srgb, var(--slc-text) 5%, transparent); }
-.ide-tree__row.is-sel { background: var(--slc-tile); box-shadow: var(--slc-depth-tile); }
-.ide-tree__row.is-sel .ide-tree__ic { color: var(--slc-accent-text); }
-.ide-tree__tw { width: 12px; display: grid; place-items: center; color: var(--slc-text-muted); }
-.ide-tree__ic { display: grid; color: var(--slc-text-muted); }
-.ide-tree__name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the tree is the kit's (.sl-tree, 0.33): rows, guides, twisty and the tile; the svg chevrons are the target's, the kit draws its own */
+.ide-tree { padding: 0 0.4rem; }
+[data-dir="kit"] .ide-tree__tw > svg { display: none; }
 .ide-tree__git { font-family: var(--sl-font-mono); font-size: 10px; color: var(--slc-warning-text, var(--slc-warning)); }
 .ide-tree__git[data-git="U"] { color: var(--slc-success-text, var(--slc-success)); }
 .ide-sessions { padding: 0 0.4rem; }
 .ide-sessions .sl-list__row { display: flex; flex-direction: column; justify-content: center; min-height: 32px; padding-block: 0.3rem; }
 
-.ide-main { flex: 1; min-width: 0; display: grid; grid-template-rows: 36px 28px minmax(0, 1fr) 214px; background: var(--slc-raised); }
-/* the editor's strip is the kit's tile tabs (.sl-tabs--tile, 0.31): the tile, the dot and the icon's accent are the kit's */
-.ide-tabs { display: flex; background: var(--slc-surface); padding: 0 0.4rem; }
+.ide-main { flex: 1; min-width: 0; display: grid; grid-template-rows: 36px 28px minmax(0, 1fr) 214px; overflow: hidden; }
+/* the editor's strip is the kit's tile tabs (.sl-tabs--tile, 0.31): the tile, the dot and the icon's accent are the kit's; it sits in the lit pane's own light */
+.ide-tabs { display: flex; padding: 0 0.4rem; }
 .ide-tab { font-size: 13px; position: relative; }
 .ide-tab svg { color: var(--slc-text-muted); }
 .ide-tabs__sp { flex: 1; }
@@ -138,13 +147,9 @@ svg { flex: none; }
 .ide-ptab__n { font-size: 10px; padding: 0 5px; border-radius: 8px; background: color-mix(in srgb, var(--slc-text) 10%, transparent); }
 .ide-panel__sp { flex: 1; }
 .ide-term { overflow: hidden; padding: 0.25rem 0.75rem 0.5rem; display: grid; gap: 0.5rem; align-content: start; font-family: var(--lab-code); font-size: 12.5px; }
-.ide-block { border: 1px solid var(--slc-edge-surface); border-radius: var(--sl-radius-md); overflow: hidden; }
-.ide-block__head { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0.6rem; background: color-mix(in srgb, var(--slc-text) 4%, transparent); }
-.ide-block__cmd b { color: var(--slc-accent-text); font-weight: 500; }
-.ide-block__meta { display: flex; gap: 0.75rem; color: var(--slc-text-muted); font-size: 11.5px; }
-.ide-block[data-exit="1"] .ide-block__exit { color: var(--slc-danger-text, var(--slc-danger)); }
-.ide-block[data-exit="0"] .ide-block__exit { color: var(--slc-success-text, var(--slc-success)); }
-.ide-block__out { margin: 0; padding: 0.4rem 0.6rem 0.5rem; font: inherit; line-height: 1.55; white-space: pre-wrap; color: var(--slc-text-secondary); }
+/* each command is the kit's terminal block (.sl-term-block, 0.33): an island with its exit mark; the
+   panel is a fixed height, so a block gives up the lines that do not fit rather than pushing the next one out */
+.ide-block { overflow: hidden; }
 .t-ok { color: var(--slc-success-text, var(--slc-success)); } .t-err { color: var(--slc-danger-text, var(--slc-danger)); font-weight: 600; } .t-warn { color: var(--slc-warning-text, var(--slc-warning)); font-weight: 600; } .t-dim { color: var(--slc-text-muted); }
 .ide-block__out b { color: var(--slc-text); font-weight: 600; }
 .ide-prompt { color: var(--slc-text-secondary); display: flex; align-items: center; gap: 0.4rem; }
@@ -153,7 +158,7 @@ svg { flex: none; }
 .ide-prompt__sym { color: var(--slc-accent-text); }
 .ide-caret { width: 8px; height: 16px; background: var(--slc-text); }
 
-.ide-agent { width: 344px; flex: none; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; border-left: 1px solid var(--slc-edge-surface); background: var(--slc-surface); }
+.ide-agent { width: 344px; flex: none; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
 .ide-agent__head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--slc-edge-surface); }
 .ide-agent__eb { margin: 0 0 0.2rem; font-size: 10.5px; }
 .ide-agent__title { margin: 0; font-family: var(--sl-font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.015em; }
@@ -176,29 +181,18 @@ svg { flex: none; }
 .ide-composer__bar { display: flex; align-items: center; gap: 0.4rem; }
 .ide-composer__sp { flex: 1; }
 
-.ide-status { display: flex; justify-content: space-between; align-items: center; padding: 0 0.5rem; background: var(--slc-canvas); border-top: 1px solid var(--slc-edge-ground); font-size: 11.5px; color: var(--slc-text-secondary); }
-.ide-status__grp { display: flex; align-items: center; height: 100%; }
-.ide-status__item { display: inline-flex; align-items: center; gap: 0.35rem; height: 100%; padding: 0 0.55rem; white-space: nowrap; }
+/* the status bar is the kit's (.sl-statusbar, 0.33): only the facts' own marks are the stage's */
 .ide-status__item b { font-weight: 500; }
-.ide-status__diag { gap: 0.6rem; } .ide-status__diag > span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.ide-status__diag > span { display: inline-flex; align-items: center; gap: 0.25rem; vertical-align: middle; } .ide-status__diag > span + span { margin-inline-start: 0.6rem; }
 .ide-warn { color: var(--slc-warning-text, var(--slc-warning)); }
-.ide-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--slc-accent-text); }
 
 /* overlays */
 /* quick-open style: anchored under the title bar, no scrim, so the IDE stays readable behind it */
 .ide-scrim { position: absolute; left: 312px; right: 344px; top: 110px; height: 0; display: grid; justify-items: center; align-items: start; }
-.ide-pal { width: 560px; background: var(--slc-raised); border: 1px solid var(--slc-edge-raised); border-radius: var(--sl-radius-lg); box-shadow: var(--slc-depth-float); overflow: hidden; }
-.ide-pal__in { display: flex; align-items: center; gap: 0.6rem; padding: 0 0.9rem; height: 48px; border-bottom: 1px solid var(--slc-edge-raised); color: var(--slc-text-muted); }
-.ide-pal__input { flex: 1; height: 32px; border: 1px solid transparent; border-radius: var(--sl-radius-sm); background: transparent; color: var(--slc-text); font: inherit; font-size: 15px; padding: 0 0.3rem; }
+/* the palette is the kit's (.sl-palette, 0.33): the float, the seam, the sunken input, the tile rows */
+.ide-pal { width: 560px; }
+.ide-pal__in > svg { color: var(--slc-text-muted); }
 .ide-pal__scope { font-family: var(--sl-font-sans); font-size: 12px; font-weight: 500; padding: 0.2rem 0.45rem; border-radius: 4px; background: color-mix(in srgb, var(--slc-text) 8%, transparent); color: var(--slc-text-secondary); }
-.ide-pal__list { padding: 0.4rem; }
-.ide-pal__grp { padding: 0.55rem 0.6rem 0.3rem; font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slc-text-muted); }
-.ide-pal__row { display: flex; align-items: center; gap: 0.65rem; height: 34px; padding: 0 0.6rem; border-radius: var(--sl-radius-md); color: var(--slc-text-muted); cursor: pointer; }
-.ide-pal__t { flex: 1; color: var(--slc-text); font-size: 13.5px; }
-.ide-pal__t b { font-weight: 600; color: var(--slc-accent-text); }
-.ide-pal__m { font-size: 12px; color: var(--slc-text-muted); }
-.ide-pal__row[aria-selected="true"] { background: var(--slc-tile); box-shadow: var(--slc-depth-tile); }
-.ide-pal__row[aria-selected="true"] svg { color: var(--slc-accent-text); }
 .ide-diffcard { margin: 0; border: 1px solid var(--slc-edge-surface); border-radius: var(--sl-radius-md); overflow: hidden; font-family: var(--lab-code); font-size: 11.5px; }
 .ide-diffcard figcaption { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.6rem; background: color-mix(in srgb, var(--slc-text) 4%, transparent); color: var(--slc-text-secondary); }
 .ide-diffcard figcaption span:first-child { display: inline-flex; gap: 0.35rem; align-items: center; }
@@ -206,24 +200,22 @@ svg { flex: none; }
 .ide-diffcard pre span { display: block; padding: 0 0.6rem; }
 .d-add { color: var(--slc-success-text, var(--slc-success)); background: color-mix(in srgb, var(--slc-success) 10%, transparent); }
 .d-del { color: var(--slc-danger-text, var(--slc-danger)); background: color-mix(in srgb, var(--slc-danger) 10%, transparent); }
-.ide-pal__foot { display: flex; gap: 1rem; align-items: center; padding: 0.5rem 0.9rem; border-top: 1px solid var(--slc-edge-raised); font-size: 11.5px; color: var(--slc-text-muted); }
 .ide-pal__foot > span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .ide-pal__sp { flex: 1; }
 
+/* the toast is the kit's (.sl-toast in .sl-toast-stack, 0.33), placed in the frame instead of the viewport;
+   a second toast waits behind it, and its timer runs along the flat of its bottom edge */
 .ide-toasts { position: absolute; right: 360px; bottom: 44px; width: 360px; }
-.ide-toast { position: relative; display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 0.75rem; padding: 0.75rem 0.75rem 0.85rem 1rem; background: var(--slc-raised); border: 1px solid var(--slc-edge-raised); border-radius: var(--sl-radius-md); box-shadow: var(--slc-depth-float); overflow: hidden; }
 .ide-toast--back { position: absolute; inset: 0; transform: translateY(-10px) scale(0.95); opacity: 0.6; z-index: -1; }
-.ide-toast__mark { color: var(--slc-success-text, var(--slc-success)); display: grid; }
-.ide-toast__title { font-size: 13.5px; font-weight: 600; }
-.ide-toast__body { font-size: 12px; color: var(--slc-text-secondary); }
-.ide-toast__timer { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 0; }
+.ide-toast--back::before { content: none; }
+.ide-toast__timer { position: absolute; inset-inline: var(--sl-radius-lg); bottom: -1px; height: 2px; border-radius: 0; }
 
 /* ── settings ──────────────────────────────────────────────────────────── */
-.set-nav { width: 240px; flex: none; padding: 0.75rem 0.5rem; border-right: 1px solid var(--slc-edge-surface); }
+.set-nav { width: 240px; flex: none; padding: 0.75rem 0.5rem; }
 .set-search { position: relative; margin: 0 0.4rem 0.5rem; }
 .set-search .sl-field__input { width: 100%; padding-right: 2rem; }
 .set-search__k { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); }
-.set-main { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--slc-raised); }
+.set-main { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
 .set-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; padding: 2rem 3rem 1.5rem; border-bottom: 1px solid var(--slc-edge-raised); }
 .set-head .sl-eyebrow, .dat-head .sl-eyebrow { margin-bottom: 0.4rem; }
 .set-title { margin: 0; font-family: var(--sl-font-display); font-weight: 600; font-size: 30px; letter-spacing: -0.02em; line-height: 1.1; }
@@ -241,7 +233,7 @@ svg { flex: none; }
 .set-bar__sp { flex: 1; }
 
 /* ── data ──────────────────────────────────────────────────────────────── */
-.dat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--slc-raised); overflow: hidden; }
+.dat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .dat-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; padding: 1.75rem 2.5rem 1.25rem; }
 .dat-count { font-family: var(--sl-font-mono); font-size: 14px; color: var(--slc-text-muted); font-weight: 400; letter-spacing: 0; vertical-align: middle; margin-left: 0.4rem; }
 .dat-stats { display: flex; gap: 2.5rem; }

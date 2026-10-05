@@ -214,3 +214,38 @@ test("the stage's count badge reads the accent-fill role, and its danger buttons
   assert.match(js, /class="sl-btn sl-btn--sm sl-btn--danger lab-danger-ghost"/);
   assert.match(js, /\["Danger label", "\.set-row \.sl-btn--danger"\]/);
 });
+
+// 0.33: the IDE screen's workbench is the kit's (workbench.css and the toast
+// in components.css), so the report measures the primitives, not stand-ins;
+// the .ide-* hooks stay beside them because the Lumen target draws from them.
+test("the stage loads workbench.css and builds its workbench from the kit's primitives", () => {
+  const stage = read("showcase/screens-stage.html");
+  const at = (href) => stage.indexOf(`href="../packages/ui-kit/${href}"`);
+  assert.ok(at("workbench.css") > at("components.css") && at("workbench.css") < stage.indexOf('href="screens.css"'), "after components.css, before the stage's own sheet");
+  const js = read("showcase/screens.js");
+  for (const [hook, kit] of [["ide-side pane", "sl-pane"], ["ide-main pane pane--focus", "sl-pane\" data-lit"], ["ide-status", "sl-statusbar"], ["ide-activity", "sl-activitybar"], ["ide-activity__btn", "sl-activitybar__item"],
+    ["ide-tree", "sl-tree"], ["ide-tree__row", "sl-tree__row"], ["ide-pal", "sl-palette"], ["ide-pal__row", "sl-palette__row"], ["ide-pal__input", "sl-field__input sl-palette__input"],
+    ["ide-block", "sl-term-block"], ["ide-toasts", "sl-toast-stack"], ["ide-toast", "sl-toast sl-toast--success"]]) {
+    assert.ok(js.includes(`class="${hook} ${kit}`), `${hook} wears ${kit}`);
+  }
+  assert.doesNotMatch(js, /<footer class="ide-status[^"]*"[^>]*role="status"/, "the status bar is never a live region as a whole");
+  for (const row of ['["Palette input", ".ide-pal__input"]', '["Toast title", ".ide-toast__title"]', '["Exit 0", ', '["Exit 1", ']) assert.ok(js.includes(row), `the report reads ${row}`);
+});
+
+// 0.33: the report reads the seam that marks each selected or current tile
+// (kit view), through a probe that resolves its ink, and counts an unread
+// cue as a failure: the canvas keeps its last colour on a string it cannot
+// parse, which would read a light tile against black as a pass.
+test("the report measures a state cue on every selected or current tile, and an unread one fails", () => {
+  const js = read("showcase/screens.js");
+  for (const sel of ['.ide-tree__row.is-sel', '.ide-sessions .sl-list__row[aria-selected="true"]', '.ide-tab[aria-selected="true"]', '.ide-pal__row[aria-selected="true"]', '.ide-activity__btn[aria-current]', '.sl-nav__item[aria-current]', '.sl-segmented__item[aria-selected="true"]', '.sl-pagination__item[aria-current]']) {
+    assert.ok(js.includes(sel.replace(/^\.set-sec |^\.dat-tools /, "")), `the report reads ${sel}`);
+  }
+  assert.match(js, /cx\.fillStyle = "rgb\(1, 2, 3\)"; cx\.fillStyle = str;/, "an opaque sentinel before the parse");
+  assert.match(js, /r === 1 && g === 2 && b === 3 && a === 255 \? null/, "the sentinel unread is null");
+  assert.match(js, /probe\.style\.color = "var\(--_sl-seam-ink\)"/, "the ink resolved where the seam paints it");
+  assert.match(js, /if \(!ink\) return null;/, "an ink that cannot be read reports null");
+  assert.match(js, /if \(!\/gradient\\\(\/\.test\(getComputedStyle\(el\)\.backgroundImage\)\) return null;/, "a tile with no seam reports null");
+  const html = read("showcase/screens.html");
+  assert.match(html, /\(m\.cue \|\| \[\]\)\.forEach\(function \(r\) \{ checks\+\+; if \(r\[1\] == null \|\| r\[1\] < 3\) fails\+\+; \}\);/, "null or under 3:1 fails");
+});

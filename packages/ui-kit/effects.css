@@ -36,7 +36,11 @@
 
    ── Paint layers ────────────────────────────────────────────────────────────
    ::after is the edge (glass at rest, the aurora's arc when lit). ::before is
-   the pane's body (glass --pane), and free on everything else. The aurora's
+   the pane's body (glass --pane), the press's light and glitch's ghost; the
+   aurora leaves it free. A selected tile's seam is a layer of the host's
+   background (components.css, THE SEAM), so an effect keeps its own; a lit
+   pane, a toast and a terminal block draw a mark on ::before, so glass,
+   press and glitch are unsupported on those three. The aurora's
    bloom is a CHILD, not a pseudo-element, because CSS
    applies a filter before a mask: a ring masked on one box can only be
    blurred by a box around it. effects.js injects the child at mount(); it
@@ -211,8 +215,8 @@
    marker -- in high contrast its accent ring. The tile is the component's,
    not the effect's, so it comes back here (in high contrast as that ring),
    outranking the kill on specificity, both !important. */
-:root[data-sl-theme="high-contrast"] :is(.sl-pagination__item[aria-current], .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current])):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pagination__item[aria-current], .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current], .sl-list__row:is([aria-selected="true"], [aria-current])):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-pagination__item[aria-current]:not([aria-current="false"]), .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current]:not([aria-current="false"]), .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pagination__item[aria-current]:not([aria-current="false"]), .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current]:not([aria-current="false"]), .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
   box-shadow: var(--slc-depth-tile) !important;
 }
 :root[data-sl-theme="high-contrast"] :is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
@@ -228,13 +232,28 @@
    paints them, outranking the kill, both !important. The halo is still off
    in high contrast and under forced colours: it is drawn at --slc-glow's
    strength, which is 0 there. */
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
   box-shadow: var(--_sl-depth, 0 0 transparent) !important;
 }
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
   box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent) !important;
+}
+/* ...nor a surface's own recipe (0.33): an island (a workbench pane, a
+   terminal block) and an overlay that floats (a toast, a palette) draw their
+   ring and cast in box-shadow, and keep ::after free for the aurora. Under
+   the kill they keep the recipe -- in high contrast that is the island's
+   drawn ring, the edge that finds the pane on black. A lit pane's glow is
+   the one thing that stays off in an opt-out region; its seam is ::before,
+   which the aurora does not take. */
+:root[data-sl-theme="high-contrast"] :is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-island) !important;
+}
+:root[data-sl-theme="high-contrast"] :is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+  box-shadow: var(--slc-depth-float) !important;
 }
 
 /* The goo's drift is the one thing this family animates, and it animates the

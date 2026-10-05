@@ -125,3 +125,31 @@ test("component motion reads the motion tokens, never a literal duration", () =>
     .map((m) => m[0]);
   assert.deepEqual(literal, []);
 });
+
+// workbench.css (0.33) is held to the same three rules: it reads colour only
+// through role-vars, every neutral role it paints with is one the band
+// re-derives, and its motion reads the motion tokens. It adds no role of its
+// own, so it re-derives nothing itself.
+const workbench = read("packages/ui-kit/workbench.css");
+const wbBare = workbench.replace(/\/\*[\s\S]*?\*\//g, "");
+
+test("workbench.css reads no theme colour token", () => {
+  const found = [...new Set([...wbBare.matchAll(/--sl-[a-z0-9-]+/g)].map((m) => m[0]))].filter((n) => themeTokens.has(n));
+  assert.deepEqual(found, []);
+});
+
+test("workbench.css declares no role of its own, and the band re-derives every neutral role it paints with", () => {
+  assert.doesNotMatch(wbBare, /(?:^|[;{\s])--slc-[a-z0-9-]+\s*:/, "a new role would need a band, high-contrast and Tier B story of its own");
+  const band = outside.match(/\.sl-invert > \*\s*\{[^}]*\}/)[0];
+  const remapped = new Set([...band.matchAll(/^\s*(--slc-[a-z0-9-]+)\s*:/gm)].map((m) => m[1]));
+  const read = new Set([...wbBare.matchAll(/var\(\s*(--slc-[a-z0-9-]+)/g)].map((m) => m[1]));
+  const missing = [...read].filter((n) => !CHROMATIC.test(n) && !BAND_INDEPENDENT.has(n) && !remapped.has(n)).sort();
+  assert.ok(remapped.has("--slc-seam"), "the seam is re-derived in the band");
+  assert.deepEqual(missing, []);
+});
+
+test("workbench motion reads the motion tokens, never a literal duration", () => {
+  const flat = wbBare.replace(/var\([^()]*\)/g, "var()");
+  assert.deepEqual([...flat.matchAll(/(?:transition|animation)[^;{}]*?\b\d*\.?\d+m?s\b/g)].map((m) => m[0]), []);
+  assert.doesNotMatch(wbBare, /@keyframes|animation\s*:/, "the workbench animates nothing: no page-load choreography");
+});

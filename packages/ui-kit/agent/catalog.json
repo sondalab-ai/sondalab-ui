@@ -210,7 +210,8 @@
         "--slc-text-muted",
         "--slc-border",
         "--slc-tile",
-        "--slc-depth-flat"
+        "--slc-depth-flat",
+        "--slc-seam"
       ]
     },
     {
@@ -256,6 +257,37 @@
         "--slc-text",
         "--slc-text-secondary",
         "--slc-depth-float"
+      ]
+    },
+    {
+      "id": "toast",
+      "kind": "primitive",
+      "classes": [
+        "sl-toast-stack",
+        "sl-toast-stack__live",
+        "sl-toast",
+        "sl-toast--info",
+        "sl-toast--success",
+        "sl-toast--warning",
+        "sl-toast--danger",
+        "sl-toast__mark",
+        "sl-toast__content",
+        "sl-toast__title",
+        "sl-toast__body",
+        "sl-toast__dismiss"
+      ],
+      "roleVars": [
+        "--slc-raised",
+        "--slc-edge-raised",
+        "--slc-depth-float",
+        "--slc-text",
+        "--slc-text-secondary",
+        "--slc-text-muted",
+        "--slc-glow",
+        "--slc-info",
+        "--slc-success",
+        "--slc-warning",
+        "--slc-danger"
       ]
     },
     {
@@ -551,7 +583,8 @@
         "--slc-depth-tile",
         "--slc-text-muted",
         "--slc-text",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -622,7 +655,8 @@
         "--slc-text",
         "--slc-tile",
         "--slc-depth-tile",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -699,7 +733,8 @@
         "--slc-accent-text",
         "--slc-tile",
         "--slc-depth-tile",
-        "--slc-focus"
+        "--slc-focus",
+        "--slc-seam"
       ]
     },
     {
@@ -738,6 +773,134 @@
         "--slc-border-subtle",
         "--slc-accent",
         "--slc-focus"
+      ]
+    },
+    {
+      "id": "pane",
+      "kind": "workbench",
+      "classes": [
+        "sl-pane"
+      ],
+      "roleVars": [
+        "--slc-surface",
+        "--slc-raised",
+        "--slc-depth-island",
+        "--slc-seam",
+        "--slc-glow"
+      ]
+    },
+    {
+      "id": "statusbar",
+      "kind": "workbench",
+      "classes": [
+        "sl-statusbar",
+        "sl-statusbar__item",
+        "sl-statusbar__value",
+        "sl-statusbar__sep",
+        "sl-statusbar__dot",
+        "sl-statusbar__spacer"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-border",
+        "--slc-accent-text"
+      ]
+    },
+    {
+      "id": "activitybar",
+      "kind": "workbench",
+      "interactive": true,
+      "classes": [
+        "sl-activitybar",
+        "sl-activitybar__item"
+      ],
+      "roleVars": [
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-tile",
+        "--slc-depth-flat",
+        "--slc-seam",
+        "--slc-accent-text",
+        "--slc-focus"
+      ]
+    },
+    {
+      "id": "tree",
+      "kind": "workbench",
+      "interactive": true,
+      "classes": [
+        "sl-tree",
+        "sl-tree__row",
+        "sl-tree__twisty",
+        "sl-tree__label"
+      ],
+      "roleVars": [
+        "--slc-text-secondary",
+        "--slc-text",
+        "--slc-text-muted",
+        "--slc-accent-text",
+        "--slc-tile",
+        "--slc-depth-tile",
+        "--slc-depth-flat",
+        "--slc-border-subtle",
+        "--slc-focus",
+        "--slc-seam"
+      ]
+    },
+    {
+      "id": "palette",
+      "kind": "workbench",
+      "classes": [
+        "sl-palette",
+        "sl-palette__head",
+        "sl-palette__input",
+        "sl-palette__list",
+        "sl-palette__group",
+        "sl-palette__row",
+        "sl-palette__label",
+        "sl-palette__meta",
+        "sl-palette__keys",
+        "sl-palette__foot"
+      ],
+      "roleVars": [
+        "--slc-raised",
+        "--slc-edge-raised",
+        "--slc-depth-float",
+        "--slc-depth-tile",
+        "--slc-tile",
+        "--slc-seam",
+        "--slc-glow",
+        "--slc-text",
+        "--slc-text-muted",
+        "--slc-accent-text",
+        "--slc-sunken",
+        "--slc-focus",
+        "--slc-text-secondary"
+      ]
+    },
+    {
+      "id": "term-block",
+      "kind": "workbench",
+      "classes": [
+        "sl-term-block",
+        "sl-term-block__head",
+        "sl-term-block__cmd",
+        "sl-term-block__prompt",
+        "sl-term-block__meta",
+        "sl-term-block__exit",
+        "sl-term-block__out"
+      ],
+      "roleVars": [
+        "--slc-raised",
+        "--slc-sunken",
+        "--slc-depth-island",
+        "--slc-text",
+        "--slc-text-secondary",
+        "--slc-text-muted",
+        "--slc-accent-text",
+        "--slc-success",
+        "--slc-danger"
       ]
     },
     {

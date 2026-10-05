@@ -68,28 +68,30 @@
       </div>
     </header>`;
   const activity = (on = "files") => `
-    <nav class="ide-activity" aria-label="Views">
+    <nav class="ide-activity sl-activitybar" aria-label="Views">
       ${[["files", "Explorer", I.files], ["search", "Search", I.search18], ["git", "Source control", I.git, "3"], ["agent", "Agents", I.agent, "2"], ["beaker", "Tests", I.beaker]]
-        .map(([k, l, ic, n]) => `<button class="ide-activity__btn" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
+        .map(([k, l, ic, n]) => `<button class="ide-activity__btn sl-activitybar__item" aria-label="${l}" ${k === on ? 'aria-current="true"' : ""} ${n ? `data-count="${n}"` : ""}>${ic}</button>`).join("")}
       <span class="ide-activity__spacer"></span>
-      <button class="ide-activity__btn" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
+      <button class="ide-activity__btn sl-activitybar__item" aria-label="Settings" ${on === "gear" ? 'aria-current="true"' : ""}>${I.gear}</button>
     </nav>`;
+  // the frame's meta line is the kit's status bar (workbench.css, 0.33): facts
+  // in the micro register on the canvas, never role="status" on the whole bar
   const status = (extra = "") => `
-    <footer class="ide-status" role="status">
-      <div class="ide-status__grp">
-        <span class="ide-status__item ide-status__branch">${I.branch}main<b data-count="2">↑2</b></span>
-        <span class="ide-status__item">${I.sync}synced</span>
-        <span class="ide-status__item ide-status__diag"><span class="ide-err">${I.err}<b>0</b></span><span class="ide-warn">${I.warn}<b>2</b></span></span>
-        <span class="ide-status__item ide-status__agents"><i class="ide-pulse" aria-hidden="true"></i>2 agents · 212 tools</span>
-      </div>
-      <div class="ide-status__grp">
-        ${extra}
-        <span class="ide-status__item">Ln 42, Col 18</span>
-        <span class="ide-status__item">UTF-8</span>
-        <span class="ide-status__item">LF</span>
-        <span class="ide-status__item">TypeScript</span>
-        <span class="ide-status__item ide-status__model">${I.sparkle}Opus · <b>1.2k</b> tok/s</span>
-      </div>
+    <footer class="ide-status sl-statusbar" aria-label="Status">
+      <span class="ide-status__item sl-statusbar__item ide-status__branch">${I.branch}<b class="sl-statusbar__value">main</b> <b data-count="2">↑2</b></span>
+      <span class="ide-status__item sl-statusbar__item">${I.sync}synced</span>
+      <span class="sl-statusbar__sep" aria-hidden="true"></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__diag"><span class="ide-err">${I.err}<b>0</b></span><span class="ide-warn">${I.warn}<b>2</b></span></span>
+      <span class="sl-statusbar__sep" aria-hidden="true"></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__agents"><i class="ide-pulse sl-statusbar__dot" aria-hidden="true"></i>2 agents · 212 tools</span>
+      <span class="sl-statusbar__spacer"></span>
+      ${extra}
+      <span class="ide-status__item sl-statusbar__item">Ln 42, Col 18</span>
+      <span class="ide-status__item sl-statusbar__item">UTF-8</span>
+      <span class="ide-status__item sl-statusbar__item">LF</span>
+      <span class="ide-status__item sl-statusbar__item">TypeScript</span>
+      <span class="sl-statusbar__sep" aria-hidden="true"></span>
+      <span class="ide-status__item sl-statusbar__item ide-status__model">${I.sparkle}Opus · <b class="sl-statusbar__value">1.2k</b> tok/s</span>
     </footer>`;
 
   /* ── IDE ────────────────────────────────────────────────────────────────── */
@@ -98,11 +100,21 @@
       [0, "dir", "src", true], [1, "dir", "probe", true], [2, "file", "resolve.ts", false, "M", "sel"], [2, "file", "cache.ts"], [2, "file", "evidence.ts", false, "U"],
       [2, "file", "resolve.test.ts"], [1, "dir", "audit", false], [1, "dir", "tokens", false], [0, "dir", "tests", false], [0, "file", "package.json"], [0, "file", "README.md"], [0, "file", "sondalab.tokens.json", false, "M"],
     ];
-    return `<ul class="ide-tree" role="tree" aria-label="Files">${rows.map(([d, t, n, open, git, sel]) => `
-      <li class="ide-tree__row${sel ? " is-sel" : ""}" role="treeitem" ${sel ? 'aria-selected="true"' : 'aria-selected="false"'} ${t === "dir" ? `aria-expanded="${open}"` : ""} style="--d:${d}">
-        <span class="ide-tree__tw">${t === "dir" ? (open ? I.chevD : I.chevR) : ""}</span>
-        <span class="ide-tree__ic ide-tree__ic--${t}">${t === "dir" ? I.folder : I.file}</span>
-        <span class="ide-tree__name">${n}</span>
+    // the kit's tree (workbench.css, 0.33): the indent reads aria-level; the
+    // svg chevrons are the target's (the kit draws its own twisty), the icon
+    // a direct child of the row
+    // a flat list carries its own hierarchy: each row's set is the run of rows at its level under the same parent
+    const place = rows.map(([d], i) => {
+      let from = i; while (from > 0 && rows[from - 1][0] >= d) from--;
+      let to = i; while (to < rows.length - 1 && rows[to + 1][0] >= d) to++;
+      const set = rows.slice(from, to + 1).map((r, k) => [r[0], from + k]).filter(([rd]) => rd === d).map(([, k]) => k);
+      return [set.length, set.indexOf(i) + 1];
+    });
+    return `<ul class="ide-tree sl-tree" role="tree" aria-label="Files">${rows.map(([d, t, n, open, git, sel], i) => `
+      <li class="ide-tree__row sl-tree__row${sel ? " is-sel" : ""}" role="treeitem" aria-level="${d + 1}" aria-setsize="${place[i][0]}" aria-posinset="${place[i][1]}" ${sel ? 'aria-selected="true" tabindex="0"' : 'aria-selected="false" tabindex="-1"'} ${t === "dir" ? `aria-expanded="${open}"` : ""}>
+        <span class="ide-tree__tw sl-tree__twisty" aria-hidden="true">${t === "dir" ? (open ? I.chevD : I.chevR) : ""}</span>
+        ${(t === "dir" ? I.folder : I.file).replace("<svg ", `<svg class="ide-tree__ic ide-tree__ic--${t}" `)}
+        <span class="ide-tree__name sl-tree__label">${n}</span>
         ${git ? `<span class="ide-tree__git" data-git="${git}">${git}</span>` : ""}
       </li>`).join("")}</ul>`;
   };
@@ -138,16 +150,16 @@
         <button class="sl-icon-btn ide-ghost" aria-label="Close panel">${I.close}</button>
       </div>
       <div class="ide-term">
-        <article class="ide-block" data-exit="0">
-          <header class="ide-block__head"><span class="ide-block__cmd"><b>$</b> pnpm test probe</span><span class="ide-block__meta"><time>14:02:11</time><span>2.4 s</span><span class="ide-block__exit">exit 0</span></span></header>
-          <pre class="ide-block__out"><span class="t-ok">✓</span> resolve › returns the cached answer <span class="t-dim">(3 ms)</span>
+        <article class="ide-block sl-term-block" data-exit="0">
+          <header class="ide-block__head sl-term-block__head"><span class="ide-block__cmd sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm test probe</span><span class="ide-block__meta sl-term-block__meta"><time>14:02:11</time><span>2.4 s</span><span class="ide-block__exit sl-term-block__exit">exit 0</span></span></header>
+          <pre class="ide-block__out sl-term-block__out"><span class="t-ok">✓</span> resolve › returns the cached answer <span class="t-dim">(3 ms)</span>
 <span class="t-ok">✓</span> resolve › re-runs a stale probe and keeps evidence <span class="t-dim">(41 ms)</span>
 <span class="t-ok">✓</span> cache › write is awaited before return <span class="t-dim">(2 ms)</span>
 <b>Tests</b>  <span class="t-ok">14 passed</span>, 14 total</pre>
         </article>
-        <article class="ide-block" data-exit="1" aria-current="true">
-          <header class="ide-block__head"><span class="ide-block__cmd"><b>$</b> pnpm sl-audit</span><span class="ide-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="ide-block__exit">exit 1</span></span></header>
-          <pre class="ide-block__out"><span class="t-err">R</span>  components.css:412  raw colour literal outside the role vars
+        <article class="ide-block sl-term-block" data-exit="1" aria-current="true">
+          <header class="ide-block__head sl-term-block__head"><span class="ide-block__cmd sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm sl-audit</span><span class="ide-block__meta sl-term-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="ide-block__exit sl-term-block__exit">exit 1</span></span></header>
+          <pre class="ide-block__out sl-term-block__out"><span class="t-err">R</span>  components.css:412  raw colour literal outside the role vars
 <span class="t-warn">A</span>  resolve.ts:46  floating promise in a hot path
 <b>1 finding blocks the build.</b> <span class="t-dim">Run with --fix to rewrite literals.</span></pre>
         </article>
@@ -155,7 +167,7 @@
       </div>
     </section>`;
   const agent = () => `
-    <aside class="ide-agent" aria-label="Agent">
+    <aside class="ide-agent sl-pane" aria-label="Agent">
       <header class="ide-agent__head">
         <div><p class="sl-eyebrow ide-agent__eb">Agent · q-8f2a</p><h2 class="ide-agent__title">Refactor the audit</h2></div>
         <span class="sl-tag ide-agent__model">Opus</span>
@@ -193,38 +205,47 @@
         </div>
       </form>
     </aside>`;
+  // the kit's palette (workbench.css, 0.33): a sunken field that keeps the
+  // focus and points at the active option; the options are not focusable
+  const PK = (...keys) => `<span class="ide-keys sl-palette__keys">${keys.map((k) => `<kbd class="sl-kbd">${k}</kbd>`).join("")}</span>`;
   const palette = () => `
     <div class="ide-scrim" aria-hidden="false">
-      <div class="ide-pal" role="dialog" aria-label="Command palette">
-        <div class="ide-pal__in">${I.search18}<input class="ide-pal__input" value="run probe" aria-label="Command"><span class="ide-pal__scope">Commands</span></div>
-        <div class="ide-pal__list" role="listbox">
-          <p class="ide-pal__grp">Commands</p>
-          <div class="ide-pal__row" role="option" aria-selected="true">${I.play}<span class="ide-pal__t"><b>Run</b> probe q-8f2a</span><span class="ide-pal__m">resolve.ts</span>${K("⌘", "⏎")}</div>
-          <div class="ide-pal__row" role="option" aria-selected="false">${I.sync}<span class="ide-pal__t">Re-<b>run</b> cached <b>probe</b>s</span><span class="ide-pal__m">212 cached</span>${K("⇧", "⌘", "R")}</div>
-          <div class="ide-pal__row" role="option" aria-selected="false">${I.doc}<span class="ide-pal__t">Open <b>probe</b> evidence</span><span class="ide-pal__m">14 tool calls</span>${K("⌘", "E")}</div>
-          <p class="ide-pal__grp">Files</p>
-          <div class="ide-pal__row" role="option" aria-selected="false">${I.file}<span class="ide-pal__t"><b>probe</b>/resolve.test.ts</span><span class="ide-pal__m">src/probe</span></div>
+      <div class="ide-pal sl-palette" role="dialog" aria-label="Command palette">
+        <div class="ide-pal__in sl-palette__head">${I.search18}<input class="ide-pal__input sl-field__input sl-palette__input" value="run probe" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command"><span class="ide-pal__scope">Commands</span></div>
+        <div class="ide-pal__list sl-palette__list" id="pal-list" role="listbox" aria-label="Results" tabindex="-1">
+          <div role="group" aria-labelledby="pal-g1">
+            <p class="ide-pal__grp sl-palette__group" id="pal-g1" role="presentation">Commands</p>
+            <div class="ide-pal__row sl-palette__row" id="pal-1" role="option" aria-selected="true">${I.play}<span class="ide-pal__t sl-palette__label"><mark>Run</mark> probe q-8f2a</span><span class="ide-pal__m sl-palette__meta">resolve.ts</span>${PK("⌘", "⏎")}</div>
+            <div class="ide-pal__row sl-palette__row" id="pal-2" role="option" aria-selected="false">${I.sync}<span class="ide-pal__t sl-palette__label">Re-<mark>run</mark> cached <mark>probe</mark>s</span><span class="ide-pal__m sl-palette__meta">212 cached</span>${PK("⇧", "⌘", "R")}</div>
+            <div class="ide-pal__row sl-palette__row" id="pal-3" role="option" aria-selected="false">${I.doc}<span class="ide-pal__t sl-palette__label">Open <mark>probe</mark> evidence</span><span class="ide-pal__m sl-palette__meta">14 tool calls</span>${PK("⌘", "E")}</div>
+          </div>
+          <div role="group" aria-labelledby="pal-g2">
+            <p class="ide-pal__grp sl-palette__group" id="pal-g2" role="presentation">Files</p>
+            <div class="ide-pal__row sl-palette__row" id="pal-4" role="option" aria-selected="false">${I.file}<span class="ide-pal__t sl-palette__label"><mark>probe</mark>/resolve.test.ts</span><span class="ide-pal__m sl-palette__meta">src/probe</span></div>
+          </div>
         </div>
-        <footer class="ide-pal__foot"><span>${K("↑", "↓")} navigate</span><span>${K("⏎")} run</span><span>${K("⇥")} scope</span><span class="ide-pal__sp"></span><span>${K("esc")} close</span></footer>
+        <footer class="ide-pal__foot sl-palette__foot"><span>${K("↑", "↓")} navigate</span><span>${K("⏎")} run</span><span>${K("⇥")} scope</span><span class="ide-pal__sp"></span><span>${K("esc")} close</span></footer>
       </div>
     </div>`;
+  // the kit's toast stack (components.css, 0.33): two live regions side by side, the toasts role-less
   const toast = () => `
-    <div class="ide-toasts" aria-live="polite">
-      <div class="ide-toast ide-toast--back" aria-hidden="true"></div>
-      <div class="ide-toast" role="status" data-tone="success">
-        <span class="ide-toast__mark">${I.check}</span>
-        <div class="ide-toast__text"><p class="ide-toast__title">Probe saved</p><p class="ide-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
+    <div class="ide-toasts sl-toast-stack">
+      <div class="sl-toast-stack__live" aria-live="polite"><div class="ide-toast ide-toast--back sl-toast" aria-hidden="true"></div>
+      <div class="ide-toast sl-toast sl-toast--success" data-tone="success">
+        <span class="ide-toast__mark sl-toast__mark" aria-hidden="true">${I.check}</span>
+        <div class="ide-toast__text sl-toast__content"><p class="ide-toast__title sl-toast__title">Probe saved</p><p class="ide-toast__body sl-toast__body">q-8f2a re-runs in 14 days · 212 answers kept</p></div>
         <button class="sl-btn sl-btn--sm ide-toast__undo lab-focus" data-key="⌘Z">Undo</button>
-        <button class="sl-icon-btn ide-toast__x" aria-label="Dismiss">${I.close}</button>
+        <button class="sl-icon-btn sl-toast__dismiss ide-toast__x" aria-label="Dismiss">${I.close}</button>
         <div class="sl-progress ide-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
-      </div>
+      </div></div>
+      <div class="sl-toast-stack__live" role="alert"></div>
     </div>`;
   const ide = () => `
     <div class="app ide" data-fig="fig. 01 — the workbench">
       ${titlebar("probe-engine <span>/</span> src <span>/</span> probe")}
       <div class="app__body">
         ${activity("files")}
-        <aside class="ide-side pane" aria-label="Explorer">
+        <aside class="ide-side pane sl-pane" aria-label="Explorer">
           <header class="pane__head"><span class="pane__label">Explorer</span><span class="pane__tools"><button class="sl-icon-btn ide-ghost" aria-label="New file">${I.plus}</button><button class="sl-icon-btn ide-ghost" aria-label="More">${I.more}</button></span></header>
           <p class="pane__sub">probe-engine</p>
           ${tree()}
@@ -235,7 +256,7 @@
             <button class="sl-list__row lab-hover" role="option" aria-selected="false"><span>Edge in shade</span><span class="sl-list__meta">done · 3h · 58 tools</span></button>
           </div>
         </aside>
-        <main class="ide-main pane pane--focus" aria-label="Editor">
+        <main class="ide-main pane pane--focus sl-pane" data-lit aria-label="Editor">
           <div class="ide-tabs sl-tabs__list sl-tabs--tile" role="tablist">
             <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="true" data-dirty="true">${I.file}<span>resolve.ts</span><i class="ide-tab__dot sl-tabs__dot" aria-hidden="true"></i><span class="sr">, unsaved</span></button>
             <button class="ide-tab sl-tabs__tab" role="tab" aria-selected="false">${I.file}<span>cache.ts</span></button>
@@ -261,7 +282,7 @@
       ${titlebar("Settings <span>/</span> Workspace", false)}
       <div class="app__body">
         ${activity("gear")}
-        <aside class="set-nav pane" aria-label="Settings sections">
+        <aside class="set-nav pane sl-pane" aria-label="Settings sections">
           <div class="sl-field set-search"><input class="sl-field__input" placeholder="Search settings" aria-label="Search settings"><kbd class="sl-kbd set-search__k">/</kbd></div>
           <nav class="sl-nav">
             <p class="sl-nav__group">Workspace</p>
@@ -275,7 +296,7 @@
             <a class="sl-nav__item" href="#">Billing</a>
           </nav>
         </aside>
-        <main class="set-main pane pane--focus" aria-label="General settings">
+        <main class="set-main pane pane--focus sl-pane" data-lit aria-label="General settings">
           <header class="set-head">
             <div><p class="sl-eyebrow">Workspace · probe-engine</p><h1 class="set-title">General</h1><p class="set-lede">How this workspace caches evidence, runs agents and reports to the audit.</p></div>
             <div class="sl-segmented" role="tablist" aria-label="Scope"><button class="sl-segmented__item" role="tab" aria-selected="true">Workspace</button><button class="sl-segmented__item" role="tab" aria-selected="false">User</button></div>
@@ -341,7 +362,7 @@
       ${titlebar("probe-engine <span>/</span> Probes")}
       <div class="app__body">
         ${activity("beaker")}
-        <main class="dat-main pane pane--focus" aria-label="Probes">
+        <main class="dat-main pane pane--focus sl-pane" data-lit aria-label="Probes">
           <header class="dat-head">
             <div><p class="sl-eyebrow">Workspace · probe-engine</p><h1 class="set-title">Probes <span class="dat-count" data-count="1284">1,284</span></h1></div>
             <div class="dat-stats">
@@ -451,7 +472,7 @@
     if (!t) return;
     if (t.matches("a")) e.preventDefault();
     if (t.matches('[role="tab"], [role="option"]')) {
-      t.parentElement.querySelectorAll('[role="tab"],[role="option"]').forEach((b) => b.setAttribute("aria-selected", b === t ? "true" : "false"));
+      (t.closest('[role="listbox"], [role="tablist"]') || t.parentElement).querySelectorAll('[role="tab"],[role="option"]').forEach((b) => b.setAttribute("aria-selected", b === t ? "true" : "false"));
     } else if (t.matches('[role="treeitem"]')) {
       stage.querySelectorAll('[role="treeitem"]').forEach((b) => { b.setAttribute("aria-selected", b === t ? "true" : "false"); b.classList.toggle("is-sel", b === t); });
     } else if (t.hasAttribute("aria-pressed")) {
@@ -460,6 +481,8 @@
   });
   // the static focus mirror leaves the moment a real one arrives
   stage.addEventListener("focusin", () => stage.querySelectorAll(".lab-focus").forEach((n) => n.classList.remove("lab-focus")), { once: true });
+  // focus=tree puts the real focus in the explorer's tree, so a capture shows its focused seam
+  if (new URLSearchParams(location.search).get("focus") === "tree") stage.querySelector('.sl-tree__row[tabindex="0"]')?.focus();
 
   /* ── measurement ────────────────────────────────────────────────────────── */
   // the maths is screens-contrast.js (unit-tested); this part reads the DOM
@@ -476,9 +499,9 @@
       ["Pane label", ".pane__label"], ["Session meta", '.sl-list__row[aria-selected="false"] .sl-list__meta'], ["Session meta, selected", '.sl-list__row[aria-selected="true"] .sl-list__meta'],
       ["Status bar", ".ide-status__item"], ["Terminal output", ".ide-block__out"], ["Terminal time", ".ide-block__meta time"], ["Terminal dim", ".ide-block__out .t-dim"], ["Breadcrumb", ".ide-crumbs span"],
       ["Palette item", '.ide-pal__row[aria-selected="false"] .ide-pal__t'], ["Palette meta", '.ide-pal__row[aria-selected="false"] .ide-pal__m'], ["Palette selected", '.ide-pal__row[aria-selected="true"] .ide-pal__t'],
-      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
+      ["Palette group", ".ide-pal__grp"], ["Kbd chip", ".ide-pal__row .sl-kbd"], ["Kbd in title", ".ide-cmd .sl-kbd"], ["Toast title", ".ide-toast__title"], ["Toast body", ".ide-toast__body"], ["Tool meta", ".ide-tool__m"], ["Primary label", ".ide-composer .sl-btn--primary"], ["Agent eyebrow", ".ide-agent__eb"],
       ["Syntax keyword", ".ide-code .tk-k"], ["Syntax string", ".ide-code .tk-s"], ["Syntax function", ".ide-code .tk-f"], ["Syntax number", ".ide-code .tk-n"], ["Syntax type", ".ide-code .tk-t"],
-      ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit']],
+      ["Diff added", ".ide-diffcard .d-add"], ["Diff removed", ".ide-diffcard .d-del"], ["Exit 0", '.ide-block[data-exit="0"] .ide-block__exit'], ["Exit 1", '.ide-block[data-exit="1"] .ide-block__exit'], ["Terminal command", ".ide-block__cmd"], ["Palette match", '.ide-pal__row[aria-selected="false"] .ide-pal__t mark']],
     settings: [["Lede", ".set-lede"], ["Field label", ".sl-field__label"], ["Hint", ".sl-field__hint"], ["Error", ".sl-field__error"], ["Nav item", '.sl-nav__item:not([aria-current])'], ["Nav current", ".sl-nav__item[aria-current]"],
       ["Nav group", ".sl-nav__group"], ["Primary label", '.set-bar .sl-btn--primary:not([disabled])'], ["Danger label", ".set-row .sl-btn--danger"], ["Secondary label", ".set-row .sl-btn--ghost"], ["Ghost label", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"],
       ["Segmented off", '.set-sec .sl-segmented__item[aria-selected="false"]'], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Status bar", ".ide-status__item"]],
@@ -489,7 +512,7 @@
     hero: [["Headline", ".web-h1 .web-line"], ["Headline highlight", ".web-h1 em"], ["Lede", ".web-lede"], ["Nav link", ".web-links a:not([aria-current])"], ["Tag", ".web-hero .sl-tag"], ["Primary label", ".web-cta__p"], ["Card label", ".web-card__l"], ["Install", ".web-install code"], ["Eyebrow", ".web-sec .sl-eyebrow"]],
   };
   const EDGE = {
-    ide: [["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
+    ide: [["Palette input", ".ide-pal__input"], ["Composer", ".ide-composer"], ["Checkbox", ".ide-plan .sl-check__input:not(:checked) + .sl-check__box"], ["Icon button", ".ide-title__r .sl-icon-btn"], ["Command bar", ".ide-cmd"], ["Secondary (Plan)", ".ide-composer .sl-btn--ghost"]],
     settings: [["Field", "#s-name"], ["Select", "#s-br"], ["Checkbox", ".set-sec .sl-check__input:not(:checked) + .sl-check__box"], ["Radio", ".sl-radio__input:not(:checked) + .sl-radio__box"], ["Switch off", ".sl-switch__input:not(:checked):not(:disabled) + .sl-switch__track"],
       ["Segmented", ".set-sec .sl-segmented"], ["Secondary", ".set-row .sl-btn--ghost"], ["Ghost (info: text button, no edge by design)", ".set-bar .sl-btn:not(.sl-btn--ghost):not(.sl-btn--primary)"]],
     data: [["Filter field", ".dat-search .sl-field__input"], ["Chip off", '.sl-chip[aria-pressed="false"]'], ["Segmented", ".dat-tools .sl-segmented"], ["Row checkbox", ".sl-table tbody tr:not([aria-selected]) .sl-check__box"],
@@ -502,6 +525,30 @@
   // ships .sl-btn--danger); they are the target's hooks, so they are sampled.
   const FORCED = ".lab-focus, .lab-hover";
   const pick = (sel) => [...stage.querySelectorAll(sel)].find((e) => !e.closest(FORCED)) || null;
+  // The state cue of a selected or current tile (ui-kit 0.33, THE SEAM): the
+  // seam's ink, resolved by a probe that paints it as its colour (currentColor
+  // is then the tile's, as in the seam's own gradient), against the tile's
+  // ground. Kit view only: the target draws none. A seam that is absent or a
+  // colour the canvas cannot read reports null, which counts as a failure.
+  const CUE = {
+    ide: [["Tree selection (unfocused)", ".ide-tree__row.is-sel"], ["Session selected", '.ide-sessions .sl-list__row[aria-selected="true"]'], ["Tile tab", '.ide-tab[aria-selected="true"]'],
+      ["Palette active row", '.ide-pal__row[aria-selected="true"]'], ["Current view", ".ide-activity__btn[aria-current]"]],
+    settings: [["Nav current", ".sl-nav__item[aria-current]"], ["Segmented on", '.set-sec .sl-segmented__item[aria-selected="true"]'], ["Scope segment", '.set-head .sl-segmented__item[aria-selected="true"]'], ["Current view", ".ide-activity__btn[aria-current]"]],
+    data: [["View segment", '.dat-tools .sl-segmented__item[aria-selected="true"]'], ["Current page", ".sl-pagination__item[aria-current]"], ["Current view", ".ide-activity__btn[aria-current]"]],
+  };
+  // the canvas keeps its last fillStyle when it cannot parse a string: an opaque sentinel unmasks that
+  const parseInk = (str) => { cx.clearRect(0, 0, 1, 1); cx.fillStyle = "rgb(1, 2, 3)"; cx.fillStyle = str; cx.fillRect(0, 0, 1, 1); const [r, g, b, a] = cx.getImageData(0, 0, 1, 1).data; return r === 1 && g === 2 && b === 3 && a === 255 ? null : [r, g, b, a / 255]; };
+  function cueContrast(el) {
+    if (!/gradient\(/.test(getComputedStyle(el).backgroundImage)) return null;
+    const probe = document.createElement("span");
+    probe.style.color = "var(--_sl-seam-ink)";
+    el.append(probe);
+    const ink = parseInk(getComputedStyle(probe).color);
+    probe.remove();
+    if (!ink) return null;
+    const g = groundOf(el);
+    return ratio(over(ink, g), g);
+  }
   // keycaps measured per screen: the first few carry every variant (primary, ghost, small)
   const MAX_KEYCAPS = 4;
   const SIDES = ["Top", "Right", "Bottom", "Left"];
@@ -528,7 +575,8 @@
     // entrance animations hold text at opacity 0 in a background tab (timers and
     // frames are frozen there): settle every finite one before reading colours
     document.getAnimations().forEach((a) => { try { if (a.effect && a.effect.getComputedTiming().endTime !== Infinity) a.finish(); } catch (e) {} });
-    const out = { text: [], edge: [], heights: {} };
+    const out = { text: [], edge: [], cue: [], heights: {} };
+    if (H.getAttribute("data-dir") === "kit") for (const [name, sel] of CUE[screen] || []) { const el = pick(sel); out.cue.push([name, el ? cueContrast(el) : null]); }
     for (const [name, sel] of TEXT[screen] || []) {
       const el = pick(sel); if (!el) { out.text.push([name, null]); continue; }
       const g = groundOf(el), cs = getComputedStyle(el), c = rgba(cs.color); c[3] *= opac(el);

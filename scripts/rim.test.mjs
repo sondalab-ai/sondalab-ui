@@ -20,7 +20,7 @@ const css = strip("components.css");
 const rule = (sel) => css.match(new RegExp(`(?:^|\\n)${sel.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
 
 test("no kit stylesheet paints a spectrum rim any more", () => {
-  for (const f of ["components.css", "effects.css", "glass.css", "compositions.css"]) {
+  for (const f of ["components.css", "workbench.css", "effects.css", "glass.css", "compositions.css"]) {
     assert.doesNotMatch(strip(f), /--slc-rim/, `${f} still names the rim`);
   }
 });
@@ -163,4 +163,13 @@ test("light: a field's edge is the one control edge, 3:1 on the canvas and the s
     const r = ratio(edge, evaluate(`var(${g})`, env));
     assert.ok(r >= 3, `${g} ${r.toFixed(2)}:1`);
   }
+});
+
+// The workbench (0.33) is lit by the accent alone: the lit pane's seam and
+// its glow, the current activity item's seam, the status bar's live dot.
+// No spectrum, no second hue, anywhere in the file.
+test("workbench.css reads no spectrum and no colour but the kit's roles", () => {
+  const wb = strip("workbench.css");
+  assert.doesNotMatch(wb, /--sl-spectrum-|--slc-(haze|spectral)/);
+  assert.doesNotMatch(wb.replace(/(?:Canvas|CanvasText|Highlight|HighlightText|GrayText)\b/g, ""), /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(\s*[\d.]/i, "a colour literal");
 });

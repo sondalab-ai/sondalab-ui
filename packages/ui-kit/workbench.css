@@ -1,0 +1,543 @@
+/* @sondalab/ui-kit — workbench.css
+   Hand-authored (NOT generated). Opt-in: the chrome of a workbench (an IDE,
+   a console) on top of components.css, which it needs -- it reads the
+   kit's role-vars, its depth recipes and its shared focus rule, and adds no
+   role of its own. Import it after components.css (and before effects.css):
+     @import "@sondalab/ui-kit/components.css";
+     @import "@sondalab/ui-kit/workbench.css";
+
+   Lumen (owner, 2026-10-02): panes are islands of light on a darker frame
+   (the canvas), and the pane that holds the focus is lit. The frame's own
+   chrome -- the status bar, the activity bar -- sits on the canvas and
+   paints no ground of its own.
+
+   Paint layers: glass, press and glitch own an effect host's ::before, the
+   aurora its ::after. A selected tile's seam (components.css, THE SEAM)
+   and the palette's are layers of their host's background, so an effect
+   keeps its own; a `background` shorthand of yours on such a host wipes
+   the seam (set background-color). Three marks are a ::before instead: the
+   lit pane's seam, which must paint over the pane's children (a header, a
+   tab strip with a ground of its own), the terminal block's exit mark and
+   the toast's tick (components.css). Glass, press and glitch are therefore
+   unsupported on a pane, a terminal block and a toast; the aurora is not.
+
+   The inversion band: of these only .sl-term-block is supported inside an
+   .sl-invert band, set straight on it (a real-content block, L3). The rest
+   is the chrome of a workbench, which lives on the workbench's frame. */
+
+/* ══ PANE ════════════════════════════════════════════════════════════════════
+   An island: the surface rung on the canvas, the island recipe (a lit top
+   hairline and the quieter ring), the pane radius. A host that wears a
+   recipe carries no border of its own, so the lit line sits flush under the
+   ring (L6).
+   [data-lit] is the pane that holds the focus, set by the consumer where the
+   focus is (it stays lit while a palette or a menu has the focus over it).
+   It is the lighter rung, a seam of the accent as a line of light runs along
+   its top edge, and the seam's light falls round the pane as strong as
+   --slc-glow says (none in high contrast or under forced colours). The seam
+   fades in from the leading edge and out before the far one, mirrored right
+   to left: lit from one side, the way Lumen draws it. One lit pane per
+   workbench. Lit and focused are two things: the pane stays lit while a
+   palette holds the focus over it, and a tree in it then reads unfocused. */
+.sl-pane {
+  position: relative;
+  background-color: var(--slc-surface);
+  border: 0;
+  border-radius: var(--sl-radius-pane, 10px);
+  box-shadow: var(--slc-depth-island);
+}
+.sl-pane[data-lit] {
+  background-color: var(--slc-raised);
+  box-shadow: var(--slc-depth-island), 0 0 24px -6px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 40%), transparent);
+}
+/* A pseudo-element above the pane's children, not a layer of its background:
+   a pane's header or tab strip usually paints a ground of its own across
+   the top edge, which would cover a layer. z-index 1 lifts it over a child
+   that is positioned too; the pane makes no stacking context, so an overlay
+   with a z-index of its own (--sl-z-*) still paints over it. */
+.sl-pane[data-lit]::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--sl-space-3, 0.75rem);
+  z-index: 1;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--slc-seam) calc(var(--slc-glow) * 110%), transparent);
+  pointer-events: none;
+}
+:where(.sl-pane, .sl-palette):dir(rtl) { --_sl-seam-dir: 270deg; }
+
+/* ══ STATUS BAR ══════════════════════════════════════════════════════════════
+   The workbench's meta line, on the canvas, as Lumen draws it: facts in the
+   sans at the small step, sentence case, the muted ink; a value read as
+   data -- a branch, a model, a count -- in the mono at the primary ink, as
+   written (a branch is case-sensitive); a hairline between groups of facts,
+   and a dot of the accent for a state that is live ("2 agents running" --
+   the words carry the state, the dot is only its mark). Its height is the
+   bar's own, not its content's, so an item with an icon or a dot cannot
+   move it; a fact that does not fit ends in an ellipsis.
+     <footer class="sl-statusbar" aria-label="Status">
+       <span class="sl-statusbar__item"><span class="sl-statusbar__value">main</span> ↑2</span>
+       <span class="sl-statusbar__sep" aria-hidden="true"></span>
+       <span class="sl-statusbar__item"><span class="sl-statusbar__dot" aria-hidden="true"></span>2 agents running</span>
+       <span class="sl-statusbar__spacer"></span>
+       <span class="sl-statusbar__item">Ln 42, Col 18</span>
+     </footer>
+   Never role="status" on the bar: every fact in it would be read out each
+   time the caret moves. A fact that must be heard when it changes gets a
+   role="status" of its own. Items are facts, not controls: a bar item that
+   opens something is a plain .sl-btn.sl-btn--sm beside them. */
+.sl-statusbar {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 1.75rem;
+  padding-inline: var(--sl-space-2, 0.5rem);
+  /* Across, a long bar clips; up and down a focus halo on a small button in
+     it may still show. The height above is what holds the bar steady. */
+  overflow-x: clip;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-xs, 0.75rem);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--slc-text-muted);
+  background-color: transparent;
+}
+/* A block, not a flex box: its text is then its own line, which ends in an
+   ellipsis where the bar runs out (the text of a flex box is an anonymous
+   item, which never does). */
+.sl-statusbar__item {
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 1.25rem;
+  padding-inline: var(--sl-space-2, 0.5rem);
+  line-height: 1.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sl-statusbar__item > svg { vertical-align: middle; margin-inline-end: var(--sl-space-1, 0.25rem); }
+.sl-statusbar__value {
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-weight: 500;
+  color: var(--slc-text);
+}
+/* A border, not a fill: forced colours keep a border and repaint a fill as
+   the canvas. */
+.sl-statusbar__sep {
+  flex: none;
+  height: 0.75rem;
+  margin-inline: var(--sl-space-1, 0.25rem);
+  border-inline-start: 1px solid var(--slc-border);
+}
+.sl-statusbar__dot {
+  display: inline-block;
+  vertical-align: middle;
+  width: 6px;
+  height: 6px;
+  margin-inline-end: var(--sl-space-1, 0.25rem);
+  border-radius: 50%;
+  background-color: var(--slc-accent-text);
+}
+.sl-statusbar__spacer { flex: 1; }
+
+/* ══ ACTIVITY BAR ════════════════════════════════════════════════════════════
+   The column of views on the frame, on the canvas. Its items are chrome
+   glyphs, and BORDERLESS: the owner-approved exception to the one control
+   edge, with the tab's close glyph (L3) -- a glyph in a strip of glyphs would
+   put an edge beside every edge. A glyph is found by its ink (the muted ink,
+   >= 4.5:1 on the canvas, so >= 3:1 as a graphical object); hover is a flat
+   wash. The current view is a flat tile -- a tile that does not leave its
+   row -- with the kit's seam on its leading edge (components.css, THE
+   SEAM), its glyph in the accent. The state is aria-current (a link, a view) or aria-selected (a
+   role="tab", as an IDE's activity bar often is); the button carries the
+   view's name in aria-label. Focus is the shared flush ring and halo.
+     <nav class="sl-activitybar" aria-label="Views">
+       <button class="sl-activitybar__item" aria-label="Explorer" aria-current="true"><svg …/></button>
+       <button class="sl-activitybar__item" aria-label="Search"><svg …/></button>
+     </nav> */
+.sl-activitybar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sl-space-1, 0.25rem);
+  padding-block: var(--sl-space-2, 0.5rem);
+  background-color: transparent;
+}
+.sl-activitybar__item {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  font: inherit;
+  color: var(--slc-text-muted);
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sl-radius-md, 8px);
+  cursor: pointer;
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-activitybar__item:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) {
+  --_sl-depth: var(--slc-depth-flat);
+  color: var(--slc-text);
+  background-color: var(--slc-tile);
+}
+.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]) > svg { color: var(--slc-accent-text); }
+
+/* ══ TREE ════════════════════════════════════════════════════════════════════
+   A file tree: rows on the 4px grid (24px), each indented by its level, with
+   a hairline guide under every ancestor's twisty, a twisty that turns with
+   aria-expanded, and selection as a tile (the K4 recipe) with the kit's
+   seam (components.css, THE SEAM). Focused and unfocused selection differ:
+   while the tree holds the focus the selected row is the raised tile, cast
+   and all, its seam and its icon in the accent; while the focus is
+   elsewhere it is a flat tile (lit and ringed, no cast), its seam in the
+   muted ink and its icon too. Rows are a flat list of treeitems with one tab
+   stop (a roving tabindex); a flat list carries its own hierarchy, so each
+   row says its level, its set size and its place in the set:
+     <ul class="sl-tree" role="tree" aria-label="Files">
+       <li class="sl-tree__row" role="treeitem" aria-level="1" aria-setsize="1" aria-posinset="1" aria-expanded="true" aria-selected="false" tabindex="-1">
+         <span class="sl-tree__twisty" aria-hidden="true"></span><svg …/><span class="sl-tree__label">src</span></li>
+       <li class="sl-tree__row" role="treeitem" aria-level="2" aria-setsize="1" aria-posinset="1" aria-selected="true" tabindex="0">
+         <span class="sl-tree__twisty" aria-hidden="true"></span><svg …/><span class="sl-tree__label">resolve.ts</span></li>
+     </ul>
+   The indent reads aria-level up to 8, and a deeper row holds at 8; a
+   deeper tree that wants its full indent writes the level again as
+   --sl-tree-level (inline), because CSS cannot read a number out of an
+   attribute. A leaf keeps its (empty) twisty so its name lines up with its
+   siblings'. The guides are a layer of the row's background, handed to the
+   seam as --_sl-layer so a selected row keeps both; forced colours, which
+   drop images, lose them. */
+.sl-tree {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+:where(.sl-tree__row[aria-level]) { --sl-tree-level: 8; }
+:where(.sl-tree__row[aria-level="1"]) { --sl-tree-level: 1; }
+:where(.sl-tree__row[aria-level="2"]) { --sl-tree-level: 2; }
+:where(.sl-tree__row[aria-level="3"]) { --sl-tree-level: 3; }
+:where(.sl-tree__row[aria-level="4"]) { --sl-tree-level: 4; }
+:where(.sl-tree__row[aria-level="5"]) { --sl-tree-level: 5; }
+:where(.sl-tree__row[aria-level="6"]) { --sl-tree-level: 6; }
+:where(.sl-tree__row[aria-level="7"]) { --sl-tree-level: 7; }
+:where(.sl-tree__row[aria-level="8"]) { --sl-tree-level: 8; }
+.sl-tree__row {
+  --_sl-layer: repeating-linear-gradient(90deg, var(--slc-border-subtle) 0 1px, transparent 1px 1rem);
+  --_sl-layer-size: calc((var(--sl-tree-level, 1) - 1) * 1rem) 100%;
+  --_sl-layer-position: calc(var(--sl-space-1, 0.25rem) + 0.5rem) 0;
+  --_sl-layer-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-1, 0.25rem);
+  box-sizing: border-box;
+  height: 1.5rem;
+  padding-block: 0;
+  padding-inline: calc(var(--sl-space-1, 0.25rem) + (var(--sl-tree-level, 1) - 1) * 1rem) var(--sl-space-2, 0.5rem);
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: 1.25rem;
+  white-space: nowrap;
+  color: var(--slc-text-secondary);
+  background-color: transparent;
+  background-image: var(--_sl-layer);
+  background-repeat: var(--_sl-layer-repeat);
+  background-position: var(--_sl-layer-position);
+  background-size: var(--_sl-layer-size);
+  border: 0;
+  border-radius: var(--sl-radius-sm, 6px);
+  cursor: pointer;
+  transition:
+    color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-tree__row:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+.sl-tree__row > svg { flex: none; color: var(--slc-text-muted); }
+.sl-tree__row[aria-selected="true"] {
+  --_sl-depth: var(--slc-depth-flat);
+  color: var(--slc-text);
+  background-color: var(--slc-tile);
+}
+.sl-tree:focus-within .sl-tree__row[aria-selected="true"] { --_sl-depth: var(--slc-depth-tile); }
+.sl-tree:focus-within .sl-tree__row[aria-selected="true"] > svg { color: var(--slc-accent-text); }
+.sl-tree__twisty {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  color: var(--slc-text-muted);
+}
+/* The chevron is drawn from two borders, as the disclosure's is: it points
+   at the children, right while they are hidden, down while they show. */
+.sl-tree__row[aria-expanded] > .sl-tree__twisty::before {
+  content: "";
+  width: 0.35rem;
+  height: 0.35rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  /* Two independent properties, so it turns as a rotation, not through a
+     matrix between two transform lists. */
+  translate: -1px 0;
+  rotate: -45deg;
+  transition:
+    rotate var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    translate var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+.sl-tree__row[aria-expanded="true"] > .sl-tree__twisty::before { translate: 0 -1px; rotate: 45deg; }
+.sl-tree__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ══ PALETTE ═════════════════════════════════════════════════════════════════
+   The command palette: an overlay that floats (the raised rung, its own
+   border in shade as the ring, the float recipe), a seam of the accent just
+   inside its top edge (it holds the focus), a sunken input -- the kit's
+   field -- and a list of results in which the active one is a raised tile
+   with the kit's seam, in the accent, since the palette always holds the
+   focus. It never animates: it appears, and the active row moves without a
+   transition, because a palette is driven at typing speed. The input keeps
+   the focus and points at the active option; the options are not focusable,
+   and the list takes no tab stop of its own (a scroller without focusable
+   children is one, in Chromium 130 and later).
+     <div class="sl-palette" role="dialog" aria-label="Command palette">
+       <div class="sl-palette__head">
+         <input class="sl-field__input sl-palette__input" role="combobox" aria-expanded="true"
+                aria-autocomplete="list" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command">
+       </div>
+       <div class="sl-palette__list" id="pal-list" role="listbox" aria-label="Results" tabindex="-1">
+         <div role="group" aria-labelledby="pal-g1">
+           <div class="sl-palette__group" id="pal-g1" role="presentation">Commands</div>
+           <div class="sl-palette__row" id="pal-1" role="option" aria-selected="true">
+             <svg …/><span class="sl-palette__label"><mark>Run</mark> probe</span>
+             <span class="sl-palette__meta">resolve.ts</span>
+             <span class="sl-palette__keys"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">⏎</kbd></span>
+           </div>
+         </div>
+       </div>
+       <div class="sl-palette__foot">…</div>
+     </div>
+   A match is a <mark>, anywhere in the palette: the primary ink, heavier,
+   underlined in the accent -- never the accent as the only signal. */
+.sl-palette {
+  position: relative;
+  box-sizing: border-box;
+  width: min(36rem, 100%);
+  padding: 0;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text);
+  background-color: var(--slc-raised);
+  /* The lit pane's seam, one pixel deep, flush under the top border: a layer
+     of the background, which starts inside the border. */
+  background-image: linear-gradient(var(--_sl-seam-dir, 90deg), transparent, var(--slc-seam) 18%, var(--slc-seam) 45%, transparent 92%);
+  background-repeat: no-repeat;
+  background-size: calc(100% - 2 * var(--sl-space-4, 1rem)) 1px;
+  background-position: var(--sl-space-4, 1rem) 0;
+  border: 1px solid var(--slc-edge-raised);
+  border-radius: var(--sl-radius-lg, 14px);
+  box-shadow: var(--slc-depth-float);
+}
+.sl-palette__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  padding: var(--sl-space-2, 0.5rem);
+  border-bottom: 1px solid var(--slc-edge-raised);
+}
+/* The field's own colour transitions would fade its ring in as the palette
+   appears: the palette never animates, its field included. Two classes, so
+   it outranks the field whatever order the sheets load in. */
+.sl-field__input.sl-palette__input { flex: 1; min-width: 0; transition: none; }
+.sl-palette__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--sl-space-2, 0.5rem);
+  list-style: none;
+}
+.sl-palette__group {
+  margin: 0;
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-3, 0.75rem) var(--sl-space-1, 0.25rem);
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-micro, 0.65625rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slc-text-muted);
+}
+.sl-palette__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-3, 0.75rem);
+  box-sizing: border-box;
+  height: 2.25rem;
+  padding: 0 var(--sl-space-3, 0.75rem);
+  color: var(--slc-text);
+  border-radius: var(--sl-radius-md, 8px);
+  cursor: pointer;
+}
+.sl-palette__row > svg { flex: none; color: var(--slc-text-muted); }
+.sl-palette__row:hover { background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+.sl-palette__row[aria-selected="true"] { background-color: var(--slc-tile); box-shadow: var(--slc-depth-tile); }
+.sl-palette__row[aria-selected="true"] .sl-palette__meta { color: var(--slc-text-secondary); }
+.sl-palette__row[aria-selected="true"] > svg { color: var(--slc-accent-text); }
+.sl-palette__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sl-palette mark {
+  color: inherit;
+  background-color: transparent;
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-color: var(--slc-accent-text);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.sl-palette__meta {
+  flex: none;
+  font-size: var(--sl-text-xs, 0.75rem);
+  color: var(--slc-text-muted);
+}
+.sl-palette__keys { flex: none; display: inline-flex; gap: 3px; }
+.sl-palette__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-4, 1rem);
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-4, 1rem);
+  border-top: 1px solid var(--slc-edge-raised);
+  font-size: var(--sl-text-xs, 0.75rem);
+  color: var(--slc-text-muted);
+}
+
+/* ══ TERMINAL BLOCK ══════════════════════════════════════════════════════════
+   One command and its output, as a small island in a pane: the raised rung,
+   the island recipe, set in the product's coding mono where it has one
+   (--sl-font-code: a terminal is product content, L1) and the kit's mono
+   otherwise. In a lit pane, which is the raised rung too, it steps down to
+   the sunken rung, so its fill still bounds it. Its exit status is a mark on
+   the top edge (::before, the callout's tick) and the exit text beside the
+   time, in the same ink:
+     data-exit="0"          success
+     data-exit="cancelled"  neutral: a stop the user asked for (130, 143)
+     data-exit="<code>"     any other code: the danger
+     data-exit=""           no mark (an exit not known)
+     no data-exit           still running: no mark
+   The exit text is what says it; the mark only finds it.
+     <article class="sl-term-block" data-exit="1">
+       <header class="sl-term-block__head">
+         <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm sl-audit</span>
+         <span class="sl-term-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="sl-term-block__exit">exit 1</span></span>
+       </header>
+       <pre class="sl-term-block__out">R  components.css:412  raw colour literal</pre>
+     </article> */
+.sl-term-block {
+  position: relative;
+  font-family: var(--sl-font-code, var(--sl-font-mono, ui-monospace, monospace));
+  font-size: var(--sl-text-xs, 0.75rem);
+  line-height: var(--sl-line-normal, 1.5);
+  color: var(--slc-text);
+  background-color: var(--slc-raised);
+  border: 0;
+  border-radius: var(--sl-radius-md, 8px);
+  box-shadow: var(--slc-depth-island);
+}
+/* A real-content block may sit in an inversion band (L3), on the ink
+   surface itself: there its wash goes, as the danger tone's does. The band
+   floors its accent and status inks for the bare band; on a 12% wash of the
+   band's ground a light theme's success ink read 4.37:1 and spexr's prompt
+   3.80. The island's ring still draws the block. */
+.sl-invert .sl-term-block { background-color: transparent; }
+.sl-pane[data-lit] .sl-term-block { background-color: var(--slc-sunken); }
+.sl-term-block[data-exit] { --_sl-exit: var(--slc-danger-text, var(--slc-danger)); }
+.sl-term-block[data-exit="0"] { --_sl-exit: var(--slc-success-text, var(--slc-success)); }
+.sl-term-block[data-exit="cancelled"] { --_sl-exit: var(--slc-text-muted); }
+.sl-term-block[data-exit]:not([data-exit=""])::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--sl-space-3, 0.75rem);
+  width: 2.75rem;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background-color: var(--_sl-exit);
+  pointer-events: none;
+}
+.sl-term-block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sl-space-4, 1rem);
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-3, 0.75rem) var(--sl-space-1, 0.25rem);
+}
+.sl-term-block__cmd {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.sl-term-block__prompt { color: var(--slc-accent-text); }
+.sl-term-block__meta {
+  flex: none;
+  display: flex;
+  gap: var(--sl-space-3, 0.75rem);
+  color: var(--slc-text-muted);
+}
+/* A block still running has no exit, and its exit text (if any) keeps the
+   meta's ink. The inks are set on the pieces, never on the block, so none is
+   a fraction of another: inside an inversion band a muted ink is a fraction
+   of its parent's colour. */
+.sl-term-block__exit { font-weight: 600; }
+.sl-term-block[data-exit]:not([data-exit=""], [data-exit="cancelled"]) .sl-term-block__exit { color: var(--_sl-exit); }
+.sl-term-block__out {
+  margin: 0;
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem) var(--sl-space-2, 0.5rem);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--slc-text-secondary);
+}
+
+/* ══ FORCED COLOURS ══════════════════════════════════════════════════════════
+   The user's palette replaces every colour, drops every shadow and every
+   gradient: a pane's and a terminal block's ring went with the island
+   recipe, so each gets a drawn edge back (an outline, inside its box, so
+   nothing moves), the lit pane a heavier one in Highlight and its seam in
+   Highlight too, the exit mark and the live dot are drawn in system colours,
+   and a selection is the system's. */
+@media (forced-colors: active) {
+  :is(.sl-pane, .sl-term-block) { outline: 1px solid CanvasText !important; outline-offset: -1px; }
+  .sl-pane[data-lit] { outline: 2px solid Highlight !important; outline-offset: -2px; }
+  .sl-pane[data-lit]::before { forced-color-adjust: none; background: Highlight !important; box-shadow: none !important; }
+  .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
+  .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; }
+  /* Selection that was only a fill and a shadow is the system's selection;
+     the seam goes with the shorthand, and its parts take the selection's
+     text colour. Opting out also stops the forced outline colour: the shared
+     focus rule hands it back (components.css). */
+  :is(.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]), .sl-tree__row[aria-selected="true"], .sl-palette__row[aria-selected="true"]) {
+    forced-color-adjust: none;
+    background: Highlight !important;
+    color: HighlightText !important;
+  }
+  :is(.sl-activitybar__item:is([aria-current]:not([aria-current="false"]), [aria-selected="true"]), .sl-tree__row[aria-selected="true"], .sl-palette__row[aria-selected="true"])
+    :is(svg, .sl-tree__twisty, .sl-palette__meta) { color: HighlightText !important; }
+  /* Opting out is inherited: a keycap in the selected result takes the
+     user's palette back (its drawn edge is components.css's), and a match's
+     underline the selection's text colour. */
+  .sl-palette__row[aria-selected="true"] .sl-kbd { forced-color-adjust: auto; }
+  .sl-palette__row[aria-selected="true"] mark { text-decoration-color: HighlightText !important; }
+}

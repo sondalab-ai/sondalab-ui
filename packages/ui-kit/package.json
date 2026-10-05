@@ -1,6 +1,6 @@
 {
   "name": "@sondalab/ui-kit",
-  "version": "0.32.1",
+  "version": "0.33.0",
   "description": "Sondalab design tokens as CSS custom properties + the agentic core: component catalog, compliance audit (sl-audit), and author/migrate/adopt workflows.",
   "keywords": [
     "design-system",
@@ -30,6 +30,7 @@
   "exports": {
     "./tokens.css": "./tokens.css",
     "./components.css": "./components.css",
+    "./workbench.css": "./workbench.css",
     "./compositions.css": "./compositions.css",
     "./glass.css": "./glass.css",
     "./effects.css": "./effects.css",
@@ -65,6 +66,7 @@
   "files": [
     "tokens.css",
     "components.css",
+    "workbench.css",
     "compositions.css",
     "glass.css",
     "effects.css",

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { evaluate, scope, within, toHex } from "./lib/css-color.mjs";
-import { parseSheet, el, cascaded, customs, matches, specificity, longhand } from "./lib/cascade.mjs";
+import { parseSheet, el, cascaded, customs, matches, specificity, longhand, declaredHeight } from "./lib/cascade.mjs";
 
 // The test evaluator and cascade themselves. The kit's contrast and cascade
 // tests are only as true as these: a flat map of declarations once let a role
@@ -139,4 +139,44 @@ test("cos() and sin() evaluate in radians, and the kit's luminance macro is the 
     const viaMacro = evaluate(`oklch(from ${hex} calc(var(--_sl-lum)) 0 0)`, env);
     assert.ok(Math.abs(Math.cbrt(viaMacro.lin[1]) - Y) < 1e-6, hex);
   }
+});
+
+// Gaps that used to fail silently (a test fixture that leaned on one passed
+// for the wrong reason): every attribute operator now matches as CSS says,
+// in either quote, and any other form throws instead of matching.
+test("the cascade reads every attribute operator, and throws on a form it does not know", () => {
+  const e = el({ attrs: { "data-x": "foo-bar baz", lang: "en-GB" }, parent: el({ tag: "html" }) });
+  for (const [sel, want] of [['[data-x^="foo"]', true], ['[data-x^="baz"]', false], ['[data-x$="baz"]', true], ['[data-x$="foo"]', false],
+    ['[data-x~="baz"]', true], ['[data-x~="bar"]', false], ["[lang|=en]", true], ['[lang|="GB"]', false], ['[data-x*="o-b"]', true],
+    ["[data-x='foo-bar baz']", true], ["[data-x='foo']", false], ['[data-x="foo"]', false], ["[data-x]", true], ["[data-y]", false],
+    // CSS: an empty or a whitespace-carrying ~= operand never matches
+    ['[data-x~=""]', false], ['[data-x~="foo-bar baz"]', false]]) {
+    assert.equal(matches(sel, e), want, sel);
+  }
+  // a value with a leading space splits into an empty word, which ~="" must still not match
+  assert.equal(matches('[data-y~=""]', el({ attrs: { "data-y": " lead" }, parent: el({ tag: "html" }) })), false, '~="" never matches');
+  assert.throws(() => matches('[data-x!="y"]', e), /cannot read the attribute selector/);
+  assert.throws(() => matches('[data-x="y" i]', e), /cannot read the attribute selector/);
+});
+
+test("a pseudo-element matches its own ::name on its origin, and inherits from it", () => {
+  const origin = el({ classes: ["a"], parent: el({ tag: "html" }) });
+  const before = el({ pseudo: "before", parent: origin });
+  assert.ok(matches(".a::before", before));
+  assert.ok(matches(":is(.b, .a)::before", before));
+  assert.ok(!matches(".a::after", before));
+  assert.ok(!matches(".a", before), "the origin's own rules are not the pseudo-element's");
+  assert.ok(!matches(".a::before", origin), "nor are the pseudo-element's the origin's");
+  const rules = parseSheet(".a { --c: #ff0000; color: #00ff00; } .a::before { --d: var(--c); }");
+  assert.equal(customs(rules, before).get("--d"), "#ff0000");
+  assert.equal(cascaded(rules, before).get("color"), undefined, "color is inherited, not declared");
+  assert.throws(() => el({ pseudo: "before" }), /originating element/);
+});
+
+test("declaredHeight reads an explicit height, border-box as is and content-box with its padding and border", () => {
+  const html = el({ tag: "html" });
+  const rules = parseSheet(".a { height: 1.5rem; box-sizing: border-box; padding: 4px; } .b { height: 1rem; padding: 2px 0; border: 1px solid; } .c { padding: 4px; }");
+  assert.equal(declaredHeight(rules, el({ classes: ["a"], parent: html })), 24);
+  assert.equal(declaredHeight(rules, el({ classes: ["b"], parent: html })), 22);
+  assert.equal(declaredHeight(rules, el({ classes: ["c"], parent: html })), null);
 });
