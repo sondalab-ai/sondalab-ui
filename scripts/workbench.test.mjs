@@ -823,14 +823,15 @@ test("every focusable workbench piece takes the shared flush ring and its halo, 
 // kit's 4px grid: a 26px tree row, a 38px palette row, a 38px activity item.
 test("a tree row, a palette row and an activity item are Lumen's heights, and their line fits", () => {
   const p = build(dark);
-  for (const [name, e, want] of [["tree row", p["tree row"], 24], ["selected tree row", p["tree selected"], 24], ["palette row", p["palette row"], 36], ["selected palette row", p["palette selected"], 36], ["activity item", p["activity item"], 38]]) {
+  for (const [name, e, want] of [["tree row", p["tree row"], 26], ["selected tree row", p["tree selected"], 26], ["palette row", p["palette row"], 36], ["selected palette row", p["palette selected"], 36], ["activity item", p["activity item"], 38]]) {
     const h = declaredHeight(RULES_A, e);
     assert.equal(h, want, name);
     assert.equal(cascaded(RULES_A, e).get("box-sizing").value, "border-box", `${name}: the height is the whole row`);
   }
   // the tree row's line inside its own height
   const row = box(RULES_A, p["tree row"]);
-  assert.ok(row.line <= 24, `tree line ${row.line}`);
+  assert.ok(row.line <= 26, `tree line ${row.line}`);
+  assert.equal(px(cascaded(RULES_A, p["tree row"]).get("font-size").value, row.env), 13, "Lumen's 13px rows");
   // the palette input is the kit's field: 32px
   assert.equal(box(RULES_A, p["palette input"]).height, 32);
 });
@@ -930,7 +931,8 @@ test("tree selection: a raised tile while the tree has the focus, a flat tile wh
 
 test("tree rows indent by aria-level, a guide under each ancestor's twisty, and the twisty turns with aria-expanded", () => {
   const at = mount(dark);
-  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: at });
+  // the guides are opt-in since 0.34 (Lumen draws none)
+  const tree = el({ tag: "ul", classes: ["sl-tree", "sl-tree--guides"], parent: at });
   const row = (level, attrs = {}) => el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": String(level), ...attrs }, parent: tree });
   for (const level of [1, 2, 4, 8]) {
     const r = row(level);
@@ -967,6 +969,40 @@ test("tree rows indent by aria-level, a guide under each ancestor's twisty, and 
   assert.equal(cascaded(RULES_A, collapsed).get("transform"), undefined, "no transform list to interpolate through a matrix");
   assert.match(cascaded(RULES_A, collapsed).get("transition").value, /^rotate var\(--sl-motion-fast/);
   assert.equal(cascaded(RULES_A, leaf).get("content"), undefined, "a leaf draws no chevron");
+});
+
+test("a tree draws no guides unless it asks for them, and a selected row then carries the seam alone", () => {
+  const at = mount(dark);
+  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: at });
+  const row = el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": "3" }, parent: tree });
+  assert.equal(customs(RULES_A, row).get("--_sl-layer"), "none", "no guides by default, as Lumen draws the tree");
+  const sel = el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": "3", "aria-selected": "true" }, parent: tree });
+  const layers = splitTop(substitute(cascaded(RULES_A, sel).get("background-image").value, customs(RULES_A, sel)));
+  assert.equal(layers.length, 2);
+  assert.equal(layers[1], "none", "the seam over no guide layer");
+});
+
+test("the twisty is a 16px box holding a chevron the size of Lumen's 12px glyph", () => {
+  const at = mount(dark);
+  const tree = el({ tag: "ul", classes: ["sl-tree"], parent: at });
+  const twisty = (expanded) => el({ tag: "span", classes: ["sl-tree__twisty"], parent: el({ tag: "li", classes: ["sl-tree__row"], attrs: { role: "treeitem", "aria-level": "1", "aria-expanded": expanded }, parent: tree }) });
+  const box = twisty("false");
+  const env = customs(RULES_A, box);
+  const t = cascaded(RULES_A, box);
+  assert.equal(px(t.get("width").value, env), 16);
+  assert.equal(px(t.get("height").value, env), 16);
+  // Lumen's chevron: the path m6 4 4 4-4 4 in a 16-unit box at 12px, so 6px
+  // tall and 3px deep. Two borders of a square of side 6/sqrt(2), turned
+  // 45deg, draw it; the tip sits s/sqrt(2) from the square's centre and the
+  // open side on it, so it is shifted back by half that to sit centred.
+  const closed = cascaded(RULES_A, el({ pseudo: "before", parent: box }));
+  const side = px(closed.get("width").value, env);
+  assert.equal(px(closed.get("height").value, env), side);
+  assert.ok(Math.abs(side * Math.SQRT2 - 6) < 0.02, `6px tall: ${side * Math.SQRT2}`);
+  assert.equal(closed.get("border-right").value, "1.25px solid currentColor", "the 12px glyph's 1.05px stroke, rounded to what a border paints");
+  assert.equal(closed.get("translate").value, "-1.5px 0", "centred: back by half its 3px depth");
+  const open = cascaded(RULES_A, el({ pseudo: "before", parent: twisty("true") }));
+  assert.equal(open.get("translate").value, "0 -1.5px");
 });
 
 // ── the palette ─────────────────────────────────────────────────────────────

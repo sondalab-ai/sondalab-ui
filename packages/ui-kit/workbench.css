@@ -260,9 +260,9 @@
 }
 
 /* ══ TREE ════════════════════════════════════════════════════════════════════
-   A file tree: rows on the 4px grid (24px), each indented by its level, with
-   a hairline guide under every ancestor's twisty, a twisty that turns with
-   aria-expanded, and selection as a tile (the K4 recipe) with the kit's
+   A file tree, as Lumen draws it (0.34): 26px rows at 13px, each indented by
+   its level, a twisty that turns with aria-expanded, and selection as a
+   tile (the K4 recipe) with the kit's
    seam (components.css, THE SEAM). Focused and unfocused selection differ:
    while the tree holds the focus the selected row is the raised tile, cast
    and all, its seam and its icon in the accent; while the focus is
@@ -280,9 +280,10 @@
    deeper tree that wants its full indent writes the level again as
    --sl-tree-level (inline), because CSS cannot read a number out of an
    attribute. A leaf keeps its (empty) twisty so its name lines up with its
-   siblings'. The guides are a layer of the row's background, handed to the
-   seam as --_sl-layer so a selected row keeps both; forced colours, which
-   drop images, lose them. */
+   siblings'. Hairline guides under every ancestor's twisty are opt-in,
+   .sl-tree--guides on the tree (Lumen draws none; on before 0.34): a layer
+   of the row's background, handed to the seam as --_sl-layer so a selected
+   row keeps both; forced colours, which drop images, lose them. */
 .sl-tree {
   display: flex;
   flex-direction: column;
@@ -299,20 +300,22 @@
 :where(.sl-tree__row[aria-level="6"]) { --sl-tree-level: 6; }
 :where(.sl-tree__row[aria-level="7"]) { --sl-tree-level: 7; }
 :where(.sl-tree__row[aria-level="8"]) { --sl-tree-level: 8; }
-.sl-tree__row {
+.sl-tree--guides .sl-tree__row {
   --_sl-layer: repeating-linear-gradient(90deg, var(--slc-border-subtle) 0 1px, transparent 1px 1rem);
   --_sl-layer-size: calc((var(--sl-tree-level, 1) - 1) * 1rem) 100%;
   --_sl-layer-position: calc(var(--sl-space-1, 0.25rem) + 0.5rem) 0;
   --_sl-layer-repeat: no-repeat;
+}
+.sl-tree__row {
   display: flex;
   align-items: center;
   gap: var(--sl-space-1, 0.25rem);
   box-sizing: border-box;
-  height: 1.5rem;
+  height: 26px;
   padding-block: 0;
   padding-inline: calc(var(--sl-space-1, 0.25rem) + (var(--sl-tree-level, 1) - 1) * 1rem) var(--sl-space-2, 0.5rem);
   font-family: var(--sl-font-sans, system-ui, sans-serif);
-  font-size: var(--sl-text-sm, 0.875rem);
+  font-size: 0.8125rem;
   line-height: 1.25rem;
   white-space: nowrap;
   color: var(--slc-text-secondary);
@@ -347,22 +350,28 @@
   color: var(--slc-text-muted);
 }
 /* The chevron is drawn from two borders, as the disclosure's is: it points
-   at the children, right while they are hidden, down while they show. */
+   at the children, right while they are hidden, down while they show. It is
+   the size of Lumen's 12px chevron glyph (6px tall, 3px deep, a 1.05px
+   stroke, here the 1.25px a border paints at one or two device pixels) and
+   CSS, not the glyph: it needs no markup and no icon, and it turns between
+   the two states where two glyphs could only swap. Two borders of a square
+   of side 6/sqrt(2) turned 45deg; the tip sits half its depth past the
+   square's centre, so it is shifted back by that much. */
 .sl-tree__row[aria-expanded] > .sl-tree__twisty::before {
   content: "";
-  width: 0.35rem;
-  height: 0.35rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
+  width: 4.25px;
+  height: 4.25px;
+  border-right: 1.25px solid currentColor;
+  border-bottom: 1.25px solid currentColor;
   /* Two independent properties, so it turns as a rotation, not through a
      matrix between two transform lists. */
-  translate: -1px 0;
+  translate: -1.5px 0;
   rotate: -45deg;
   transition:
     rotate var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     translate var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-.sl-tree__row[aria-expanded="true"] > .sl-tree__twisty::before { translate: 0 -1px; rotate: 45deg; }
+.sl-tree__row[aria-expanded="true"] > .sl-tree__twisty::before { translate: 0 -1.5px; rotate: 45deg; }
 .sl-tree__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* ══ PALETTE ═════════════════════════════════════════════════════════════════
