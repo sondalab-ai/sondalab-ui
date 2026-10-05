@@ -121,3 +121,24 @@ test("a small glass button keeps r7: glass.css's host radius reads the knob the 
   const big = el({ tag: "button", classes: ["sl-btn", "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"], parent: at() });
   assert.equal(px(value(rules, big, "border-radius"), customs(rules, big)), 8);
 });
+
+// ── badge, tag, chip: r6, 8px in, on the grid, whole-pixel rows ───────────────
+
+/** The rendered shape of an inline mark: [height, radius px, padding t/r/b/l]. */
+function shape(rules, e) {
+  const b = box(rules, e);
+  const env = customs(rules, e);
+  return { height: b.height, radius: px(value(rules, e, "border-radius"), env), padding: [b.padding.top, b.padding.right, b.padding.bottom, b.padding.left], font: b.fontSize, line: b.line };
+}
+
+test("a badge is Lumen's shape: r6 (it was a pill), 4px by 8px on the grid (its 3.2 by 8 and 7.2), 22px tall as before", () => {
+  for (const tone of ["", "sl-badge--success", "sl-badge--warning", "sl-badge--danger", "sl-badge--info", "sl-badge--live"]) {
+    const s = shape(KIT_RULES, el({ tag: "span", classes: ["sl-badge", ...(tone ? [tone] : [])], parent: at() }));
+    assert.equal(s.radius, 6, tone);
+    assert.deepEqual(s.padding, [4, 8, 4, 8], tone);
+    assert.equal(s.height, 22, `${tone}: a whole-pixel row, the 0.35 height (Lumen's 20.4)`);
+    assert.equal(s.font, 12, "Lumen's 12px");
+  }
+  const b = el({ tag: "span", classes: ["sl-badge"], parent: at() });
+  assert.match(value(KIT_RULES, b, "font-family"), /^var\(--sl-font-sans/, "status words in the sans");
+});

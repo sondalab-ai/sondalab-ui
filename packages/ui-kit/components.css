@@ -800,7 +800,10 @@
   margin: 0;
 }
 
-/* Badge — status pill. Semantic colour is independent of the accent hue. */
+/* Badge — status mark. Semantic colour is independent of the accent hue.
+   Lumen's shape (0.36): r6, 8px in (its 8 and 7.2 on the 4px grid), 4px
+   above and below (its 3.2), so it stays 22px (12 + 2 x 4 + 2; Lumen's
+   20.4). It was a pill 12px in. */
 .sl-badge {
   display: inline-flex;
   align-items: center;
@@ -813,8 +816,8 @@
   color: var(--slc-text-secondary);
   background: color-mix(in srgb, var(--slc-text) 7%, transparent);
   border: 1px solid transparent;
-  border-radius: var(--sl-radius-pill, 9999px);
-  padding: var(--sl-space-1, 0.25rem) var(--sl-space-3, 0.75rem);
+  border-radius: var(--sl-radius-sm, 6px);
+  padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
 }
 .sl-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 /* --live: the thing this badge labels is working right now (re-scope R3). The
