@@ -399,14 +399,18 @@ test("a key inside a button keeps the 32px and 24px rows", () => {
   const key = rule(".sl-btn > .sl-kbd"), smKey = rule(".sl-btn--sm > .sl-kbd");
   const margin = px(decl(key, "margin-block"));
   assert.ok(margin < 0, "the cap gives back its height");
-  // the label's font size, read from the rule and resolved through its token
-  const size = (body) => px(substitute(decl(body, "font-size"), SHARED));
-  for (const [name, fontSize, padBlock, keyH, rowH] of [
-    ["button", size(btn), px(decl(btn, "padding").split(" ")[0]), px(decl(key, "height")), 32],
-    ["small button", size(sm), px(decl(sm, "padding").split(" ")[0]), px(decl(smKey, "height")), 24],
-  ]) {
-    assert.equal(decl(btn, "line-height"), "1", "the label's line is its font size");
-    const content = Math.max(fontSize, keyH + 2 * margin);
+  // 0.36: the label's line is a fixed 14px, whatever its type size (Lumen's
+  // 13.5 and 12.5), and the small button inherits it; the padding is read
+  // from the rule and resolved through its token
+  const len = (v) => px(substitute(v, SHARED).trim());
+  assert.equal(decl(sm, "line-height"), undefined, "the small button keeps the button's line");
+  const line = len(decl(btn, "line-height"));
+  assert.equal(line, 14, "a 14px line");
+  for (const [name, body, keyH, rowH] of [["button", btn, px(decl(key, "height")), 32], ["small button", sm, px(decl(smKey, "height")), 24]]) {
+    const padBlock = len(decl(body, "padding").match(/^(var\([^)]*\)\)?|\S+)/)[1]);
+    assert.ok(len(decl(body, "font-size")) <= line, `${name}: the type fits its line`);
+    const content = Math.max(line, keyH + 2 * margin);
+    assert.equal(content, line, `${name}: the cap gives back all it adds`);
     assert.equal(content + 2 * padBlock + 2, rowH, `${name}: ${content} + 2 x ${padBlock} + 2`);
   }
   assert.equal(decl(key, "height"), "18px");

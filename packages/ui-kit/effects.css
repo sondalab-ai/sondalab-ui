@@ -983,8 +983,10 @@
 /* injectGlass() stamps .sl-glass on the host so glass.css's anatomy applies,
    and glass.css:76 declares border-radius: var(--slg-radius, var(--sl-radius-md))
    there — which overwrites a component's own radius unless this knob is bound.
-   .sl-icon-btn--round is 50%, not --sl-radius-md, so it needs the rebind. */
+   .sl-icon-btn--round is 50%, not --sl-radius-md, so it needs the rebind,
+   and so does the small button, r7 since 0.36 (Lumen's). */
 .sl-icon-btn--round.sl-fx-glass { --slg-radius: 50%; }
+.sl-btn--sm.sl-fx-glass { --slg-radius: 7px; }
 
 /* A filled brand button is the one surface whose own content constrains how
    translucent it may be: thinning the fill on paper moves the accent toward
@@ -1416,6 +1418,10 @@
   /* Going down is quick and plain; the spring is for the way back. */
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
+}
+/* A text button sinks to 97% instead (0.36, components.css's TACTILE block). */
+.sl-btn.sl-fx-press:active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(0.97);
 }
 
 /* The press light, on ::before at z-index -1: above the host's own fill (the
@@ -2451,8 +2457,9 @@
    lift that is seen without the row around it moving.
 
    GUMMY PRESS (owner 2026-09-30). A control pane squashes like every control
-   (2% wider, 3.2% shorter) and springs back on --sl-motion-spring; any other
-   pane sinks uniformly. The stand-down knob reaches both. These rules sit
+   (2% wider, 3.2% shorter) and springs back on --sl-motion-spring, a text
+   button sinks to 97% (Lumen, 0.36), and any other pane sinks uniformly by a
+   third of the swell. The stand-down knob reaches all three. These rules sit
    outside the no-preference block on purpose: their durations are motion
    tokens, so reduced motion zeroes them, and the kit's always-on squash is
    stood down with the rest. */
@@ -2492,14 +2499,22 @@
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
-/* A control pane (glass button, icon button, chip, segmented or pagination item)
+/* A control pane (glass icon button, chip, segmented or pagination item)
    squashes like every control (owner 2026-09-30,
    docs/specs/2026-09-30-gummy-controls-design.md): 2% wider, 3.2% shorter,
    springing back on --sl-motion-spring. --slfx-pane-swell scales it (k = 0 at 1,
    no press). Outranks the uniform sink above by specificity. */
-:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item).sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"]) {
+:is(.sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item).sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"]) {
   --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
   transform: scale(calc(1 + 0.02 * var(--slfx-pane-k)), calc(1 - 0.032 * var(--slfx-pane-k)));
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+/* A glass text button sinks to 97% like a bare one (Lumen, 0.36), with the
+   same knob: k = 1 at the default swell, 0 at --slfx-pane-swell: 1. */
+.sl-btn.sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"]) {
+  --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
+  transform: scale(calc(1 - 0.03 * var(--slfx-pane-k)));
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
@@ -2534,9 +2549,16 @@
   transition-timing-function: var(--sl-motion-ease, ease);
 }
 /* Mirror the control pane's squash, with the same stand-down knob. */
-.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ :is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item).sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"])) {
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ :is(.sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item).sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"])) {
   --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
   transform: scale(calc(1 + 0.02 * var(--slfx-pane-k)), calc(1 - 0.032 * var(--slfx-pane-k)));
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+/* ...and the text button's sink. */
+.sl-fx-aurora__glow[data-sl-fx-seated]:has(+ .sl-btn.sl-fx-glass--pane:active:not(:disabled, [aria-disabled="true"])) {
+  --slfx-pane-k: calc((var(--slfx-pane-swell, 1.03) - 1) / 0.03);
+  transform: scale(calc(1 - 0.03 * var(--slfx-pane-k)));
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }

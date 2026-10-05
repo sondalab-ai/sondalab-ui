@@ -224,12 +224,16 @@ test("a button group wears the one control edge, outline and inner rules alike",
 // border each side); the small button to 24.
 test("controls in a row share the 32px height", () => {
   const remPx = (v) => parseFloat(v) * (v.endsWith("rem") ? 16 : 1);
-  const pad = (body) => remPx(body.match(/padding:\s*([0-9.]+rem)/)[1]);
+  const pad = (body) => remPx(body.match(/padding:\s*(?:var\(--sl-space-\d+,\s*)?([0-9.]+rem)/)[1]);
+  // 0.36: the button's line is a fixed 14px (0.875rem) whatever its type
+  // size, and the small button keeps it
   const btn = css.match(/\n\.sl-btn \{([^}]*)\}/)[1];
-  assert.match(btn, /line-height:\s*1;/);
-  assert.equal(14 + 2 * pad(btn) + 2, 32, "button");
+  const line = remPx(btn.match(/line-height:\s*([0-9.]+rem);/)[1]);
+  assert.equal(line, 14);
+  assert.equal(line + 2 * pad(btn) + 2, 32, "button");
   const sm = css.match(/\.sl-btn--sm \{([^}]*)\}/)[1];
-  assert.equal(12 + 2 * pad(sm) + 2, 24, "small button");
+  assert.doesNotMatch(sm, /line-height/);
+  assert.equal(line + 2 * pad(sm) + 2, 24, "small button");
   const field = css.match(/\n\.sl-field__input \{([^}]*)\}/)[1];
   const lh = remPx(field.match(/line-height:\s*([0-9.]+rem)/)[1]);
   assert.equal(lh + 2 * pad(field) + 2, 32, "field and select");

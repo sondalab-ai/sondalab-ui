@@ -624,16 +624,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  /* Lumen's 8px between an icon, the label and a key (0.36; it was 6.4). */
+  gap: var(--sl-space-2, 0.5rem);
   font-family: var(--sl-font-sans, system-ui, sans-serif);
-  font-size: var(--sl-text-sm, 0.875rem);
+  /* Lumen's 13.5px (0.36; it was 14). */
+  font-size: 0.84375rem;
   font-weight: 500;
-  line-height: 1;
-  /* Quiet precision: compact enough for an IDE toolbar, still a 32px target --
-     exactly 32 (14px line + 2 x 8px + 2px border). It measured 33.6 at the
-     old 0.55rem, beside a 32px icon button and a 36.6px field: one row, three
-     heights. Fields, selects and the segmented control now land on 32 too. */
-  padding: 0.5rem 0.9rem;
+  /* A 14px line whatever the type size, so the row is set by the line, the
+     padding and the edge alone: exactly 32 (14 + 2 x 8 + 2), and 24 for the
+     small button (14 + 2 x 4 + 2), at Lumen's 13.5 and 12.5 and at a
+     product's own size. It was `1`, the type size, which put 13.5px type on
+     a 31.5px row. It measured 33.6 at the old 0.55rem, beside a 32px icon
+     button and a 36.6px field: one row, three heights. Fields, selects and
+     the segmented control land on 32 too. */
+  line-height: 0.875rem;
+  /* 12px in: Lumen's 13.6 on the 4px grid (0.36; it was 14.4). */
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-3, 0.75rem);
   /* --md since 0.11: the glass family's pane needs a rounded slab, and --md
      is already one on a 32px-tall control (8px since 0.31, Lumen; 10 before). */
   border-radius: var(--sl-radius-md, 8px);
@@ -688,7 +694,7 @@
    consumer stripping a button to text with `background: transparent;
    border: 0` strips the foot with the fill. The lit top line went with the
    owner's Lumen default (2026-10-02). Pressed, the foot moves to the top
-   and the key sinks by it (`translate`, so the squash keeps `transform`).
+   and the key sinks by it (`translate`, so the press keeps `transform`).
    Under keyboard focus the foot takes the ring's colour, as the border does.
    A built glass pane stands it down (--_sl-foot: 0, effects.css). */
 .sl-btn--primary {
@@ -735,8 +741,10 @@
   border-color: var(--slc-edge-control);
 }
 .sl-btn--ghost:hover:not(:disabled)  { background: var(--slc-tile); border-color: var(--slc-edge-control-hover); }
-/* 24px: 12px line + 2 x 5px + 2px border (was 25.2). */
-.sl-btn--sm { font-size: var(--sl-text-xs, 0.75rem); padding: 0.3125rem 0.6rem; }
+/* 24px: the 14px line + 2 x 4px + 2px border (was 12 + 2 x 5 + 2). Lumen's
+   12.5px type, 8px in (its 9.6 on the 4px grid) and r7, off the radius
+   scale, which is shape, not spacing (0.36; it was 12px, 9.6 in and r8). */
+.sl-btn--sm { font-size: 0.78125rem; padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem); border-radius: 7px; }
 
 /* Toggle state — an on/off button is a plain or ghost button, or an icon
    button, carrying aria-pressed. The CSS reads the attribute, so the
@@ -971,8 +979,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-btn > .sl-kbd {
   min-width: 18px;
   height: 18px;
+  /* 18 - 2 x 2 = the button's 14px line; 16 - 2 x 2 fits it in --sm. Not
+     spacing but the cap's overflow, so the grid sweep pins it by value. */
   margin-block: -2px;
-  margin-inline-end: -0.3rem;
+  /* 4px into the end padding: Lumen's 4.8 on the 4px grid (0.36). */
+  margin-inline-end: calc(var(--sl-space-1, 0.25rem) * -1);
   padding: 0 0.25rem;
   border-radius: 4px;
   font-size: var(--sl-text-micro, 0.65625rem);
@@ -2652,9 +2663,18 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    overshoot IS the bump. Going down is quick and plain; the spring is for
    the way back. Transitions only, never a keyframe, so nothing
    plays when a page loads with a box already checked, and the motion tokens
-   are zeroed under reduced motion, which stops all of it. */
-:is(.sl-btn, .sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled, [aria-disabled="true"]) {
+   are zeroed under reduced motion, which stops all of it.
+   A text button sinks instead (Lumen, 0.36): held, it shrinks to 97% about
+   its centre, keeping its shape, and springs back the same way. It is an
+   answer to the finger, not an entrance, so nothing of it plays on a page
+   load. The primary's foot still moves to its top (translate, above). */
+:is(.sl-icon-btn, .sl-chip, .sl-segmented__item, .sl-pagination__item):active:not(:disabled, [aria-disabled="true"]) {
   transform: scale(1.02, 0.968);
+  transition-duration: var(--sl-motion-fast, 120ms);
+  transition-timing-function: var(--sl-motion-ease, ease);
+}
+.sl-btn:active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(0.97);
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }

@@ -535,17 +535,20 @@ test("a seated glow swells with the pane it hangs in", () => {
   // it not at all: the pane grew under the pointer and its curtains stayed the
   // size they were, which reads as the light sliding out from under the glass.
   const OFF = ':not\\(:disabled, \\[aria-disabled="true"\\]\\)';
-  const CONTROLS = "\\:is\\(\\.sl-btn, \\.sl-icon-btn, \\.sl-chip, \\.sl-segmented__item, \\.sl-pagination__item\\)";
+  const CONTROLS = "\\:is\\(\\.sl-icon-btn, \\.sl-chip, \\.sl-segmented__item, \\.sl-pagination__item\\)";
   const scaleAt = (re) => {
     const at = css.search(re);
     assert.ok(at > -1, `no rule for ${re}`);
     return /transform:\s*([^;]+)/.exec(blockAt(css, at))?.[1]?.trim();
   };
-  // Two variants: a control pane squashes, every other pane sinks uniformly.
-  // The glow mirrors each, and each value must be defined (a missing one would
-  // make undefined === undefined pass).
+  // Three variants: a control pane squashes, a text button sinks to 97%
+  // (0.36), every other pane sinks uniformly. The glow mirrors each, and each
+  // value must be defined (a missing one would make undefined === undefined
+  // pass).
   const variants = {
-    plain: [new RegExp(`(?<!\\))\\.sl-fx-glass--pane:active${OFF}[^{]*\\{`),
+    button: [new RegExp(`\\.sl-btn\\.sl-fx-glass--pane:active${OFF}[^{]*\\{`),
+             new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-btn\\.sl-fx-glass--pane:active${OFF}`)],
+    plain: [new RegExp(`(?<![\\w)])\\.sl-fx-glass--pane:active${OFF}[^{]*\\{`),
             new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ \\.sl-fx-glass--pane:active${OFF}`)],
     control: [new RegExp(`${CONTROLS}\\.sl-fx-glass--pane:active${OFF}[^{]*\\{`),
               new RegExp(`\\.sl-fx-aurora__glow\\[data-sl-fx-seated\\]:has\\(\\+ ${CONTROLS}\\.sl-fx-glass--pane:active${OFF}`)],
@@ -557,10 +560,11 @@ test("a seated glow swells with the pane it hangs in", () => {
     assert.ok(glowVal, `${name}: glow must have a transform`);
     assert.equal(glowVal, paneVal, `${name}: the light must swell exactly as its pane does`);
   }
-  assert.notEqual(scaleAt(variants.plain[0]), scaleAt(variants.control[0]), "the two variants must differ");
+  const scales = Object.values(variants).map(([paneRe]) => scaleAt(paneRe));
+  assert.equal(new Set(scales).size, scales.length, "the three variants must differ");
 
   // …and on the same curves. A glow easing differently from the pane it hangs
-  // in is the same defect one step smaller. Both now use the kit-wide spring.
+  // in is the same defect one step smaller. All now use the kit-wide spring.
   const glowRest = blockAt(css, css.search(/\.sl-fx-aurora__glow\[data-sl-fx-seated\]\s*\{\s*\n?\s*transition:/));
   assert.match(glowRest, /--sl-motion-spring/,
     "the way out is the kit-wide spring");
