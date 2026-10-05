@@ -70,9 +70,13 @@
    unread"): forced colours drop the dot with every image.
    The bar is the window's drag region (-webkit-app-region for Electron,
    app-region for a web app's window-controls overlay), and everything in it
-   that takes the pointer is not: a button, a link, a field, a tab stop. A
-   product that draws the system's window buttons (macOS traffic lights)
-   gives the bar the room they take as its own padding-inline-start. */
+   that takes the pointer is not: a button, a link, a field, a summary, a
+   label, an editable, a tab stop. The region is hit-tested as a rectangle,
+   so a popup from elsewhere in the page that overlaps the bar (a menu, a
+   palette dropped from it) is eaten by it unless the popup is no-drag
+   itself. A product that draws the system's window buttons (macOS traffic
+   lights) gives the bar the room they take as its own
+   padding-inline-start. */
 .sl-titlebar {
   display: grid;
   grid-template-columns: 1fr minmax(0, 32rem) 1fr;
@@ -88,7 +92,7 @@
   -webkit-app-region: drag;
   app-region: drag;
 }
-.sl-titlebar :is(button, a, input, select, textarea, [role="button"], [tabindex]) {
+.sl-titlebar :is(button, a, input, select, textarea, summary, label, [contenteditable]:not([contenteditable="false"]), [role="button"], [tabindex]) {
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -167,7 +171,9 @@
   white-space: nowrap;
 }
 .sl-titlebar__keys { flex: none; display: inline-flex; gap: var(--sl-space-1, 0.25rem); }
-.sl-icon-btn.sl-titlebar__btn { background-color: var(--slc-surface); }
+/* At rest on the surface; a pressed toggle (aria-pressed, the right panel's)
+   keeps the kit's pressed tint and edge, which says its state. */
+.sl-icon-btn.sl-titlebar__btn:not([aria-pressed="true"]) { background-color: var(--slc-surface); }
 /* Lumen's 6px dot, 5px in from the corner, ringed 2px in the surface so it
    reads apart from the glyph. The labelled fill where a product sets one,
    the accent as a mark (its text reading, >= 3:1) where it does not.

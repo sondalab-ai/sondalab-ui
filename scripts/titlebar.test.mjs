@@ -146,7 +146,9 @@ test("the title bar drags the window, and nothing in it that takes the pointer d
   assert.equal(won.get("-webkit-app-region").value, "drag", "Electron");
   assert.equal(won.get("app-region").value, "drag", "a web app's window-controls overlay");
   for (const [name, e] of [["command field", p.cmd], ["icon button", p.btn], ["menu", p.menu],
-    ["link", el({ tag: "a", parent: p.l })], ["input", el({ tag: "input", parent: p.r })], ["a tab stop", el({ attrs: { tabindex: "0" }, parent: p.r })], ["a role=button", el({ attrs: { role: "button" }, parent: p.r })]]) {
+    ["link", el({ tag: "a", parent: p.l })], ["input", el({ tag: "input", parent: p.r })], ["a tab stop", el({ attrs: { tabindex: "0" }, parent: p.r })], ["a role=button", el({ attrs: { role: "button" }, parent: p.r })],
+    ["select", el({ tag: "select", parent: p.r })], ["textarea", el({ tag: "textarea", parent: p.r })], ["summary", el({ tag: "summary", parent: el({ tag: "details", parent: p.r }) })],
+    ["label", el({ tag: "label", parent: p.r })], ["contenteditable", el({ attrs: { contenteditable: "true" }, parent: p.r })]]) {
     const w = cascaded(RULES_A, e);
     assert.equal(w.get("-webkit-app-region")?.value, "no-drag", name);
     assert.equal(w.get("app-region")?.value, "no-drag", name);
@@ -312,5 +314,20 @@ test("a section's accent reaches the title bar's dots and the activity bar's bad
     assert.equal(bellDot, asText, `${ctx.name}: the bell's dot, the section's accent as a mark`);
     assert.notEqual(bellDot, root, `${ctx.name}: not the root's`);
     assert.equal(toHex(value(rules, badge, cascaded(rules, badge).get("background-color").value, BLACK)), "#1d63d8", `${ctx.name}: the badge`);
+  }
+});
+
+// A toggle in the cluster (the right panel's) says its state with the kit's
+// pressed tint and edge; resting on the surface must not cover it.
+test("a pressed title-bar toggle keeps the kit's pressed tint", () => {
+  for (const ctx of [dark, CONTEXTS.find((c) => c.name === "light spexr"), hc]) {
+    const p = build(ctx);
+    const pressed = el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn"], attrs: { "aria-pressed": "true" }, parent: p.r });
+    const won = cascaded(ctx.rules, pressed);
+    assert.equal(won.get("background-color").value, "var(--slc-accent-subtle)", `${ctx.name}: pressed`);
+    // high contrast draws every icon button's edge in its own line (components.css)
+    assert.equal(won.get("border-color").value, ctx === hc ? "var(--slc-border)" : "var(--slc-edge-pressed)", `${ctx.name}: its edge`);
+    const off = el({ tag: "button", classes: ["sl-icon-btn", "sl-titlebar__btn"], attrs: { "aria-pressed": "false" }, parent: p.r });
+    assert.equal(cascaded(ctx.rules, off).get("background-color").value, "var(--slc-surface)", `${ctx.name}: off, on the surface`);
   }
 });
