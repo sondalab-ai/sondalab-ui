@@ -23,13 +23,56 @@
    field, callout, checkbox, switch) inherits the fix automatically. */
 
 :root {
+  /* THE LABEL ON A FILL AND ITS HOVER AND PRESS (0.32.1) are written once,
+     in tokens.css (:root, generated from sondalab.tokens.json `label`), so
+     the theme files that read them need nothing else loaded. They are
+     MACROS: channel expressions a relative colour substitutes, so `l`, `c`
+     and `h` are the channels of the colour they are used in --
+     oklch(from <fill> var(--_sl-on)). This file reads them for the
+     accent-fill set, the status labels, the danger tone, the role-var
+     fallbacks and the in-button key; effects.css for the glass primary.
+       --_sl-pole-l    where a label turns from white to the dark pole, on
+                       its fill's oklch lightness: 0.59, where white and the
+                       dark pole read about equal for the registered hues
+                       (0.61 until 0.32.1, which was tuned for a 0.22 pole
+                       and left spexr's #5b6cff, L 0.6015, white at 4.17:1
+                       where the dark pole reads 4.65).
+       --_sl-pole-dark the dark pole, oklch L 0.16 (0.22 on the light
+                       theme until 0.32.1).
+       --_sl-on        the label: white below the threshold, the dark pole
+                       above it.
+       --_sl-step-hover / --_sl-step-press  the danger tone's step, size
+                       included: 0.05 and 0.10 of oklch lightness. A fill
+                       steps TOWARD BLACK, the way a key reads pressed,
+                       unless its label is the dark pole and would read
+                       under --_sl-hold on the fill pressed toward black;
+                       then it steps toward white instead. The direction is
+                       decided once per fill, on the press (--_sl-lighter),
+                       so hover and press always move the same way.
+       --_sl-hold      5.4:1. A pressed fill must leave its label 4.5:1 on
+                       a glass pane too, and a pane over a dark page shows a
+                       tenth of that page through the fill, which costs up
+                       to about 0.9:1 under a dark label: 4.5 + 0.9.
+                       Introspect's teal on paper (3.15:1 pressed toward
+                       black on 0.32.0) and local-agents' blue on ink step
+                       toward white; amber, daos, introspect's mint, the
+                       dark danger and every white label step toward black.
+       --_sl-lum       the fill's WCAG luminance, from its own oklch
+                       channels. Pressed toward black the fill is dimmed in
+                       linear light by ((l - 0.1) / l)^3.
+     The step runs along the line to the pole it moves toward, so it never
+     leaves sRGB and the colour a test reads is the colour a browser
+     paints: darkening keeps chroma in proportion to lightness, lightening
+     eases it by (1 - step / (1 - l))^1.5, the least that keeps every sRGB
+     colour in gamut. */
   /* accent */
   --slc-accent:        var(--sl-accent-default, #9A5300);
   /* Steps derive from --slc-accent so a bare --sl-accent-default override
      (or a Tier-B product that maps only --slc-accent) re-derives the whole
-     family — no amber leak. The theme layer still wins when it sets the step. */
-  --slc-accent-hover:  var(--sl-accent-hover,   color-mix(in srgb, var(--slc-accent) 89%, black));
-  --slc-accent-active: var(--sl-accent-active,  color-mix(in srgb, var(--slc-accent) 76%, black));
+     family — no amber leak. The theme layer still wins when it sets the step.
+     Unset, the step is the kit's own (above). */
+  --slc-accent-hover:  var(--sl-accent-hover,   oklch(from var(--slc-accent) var(--_sl-step-hover)));
+  --slc-accent-active: var(--sl-accent-active,  oklch(from var(--slc-accent) var(--_sl-step-press)));
   --slc-accent-subtle: var(--sl-accent-subtle,  color-mix(in srgb, var(--slc-accent) 12%, transparent));
   /* The accent as TEXT or a thin line. On the light theme the accent is a fill
      (the bright spectrum orange for the default), too light to read as text;
@@ -94,9 +137,9 @@
      above) follow from it. The private values reference it with no
      fallback, so they are invalid until it is set and each public role
      falls back to the accent's step. Set, the label is the pole that
-     contrasts with the fill and the states are the light theme's mixes on
-     every theme (the registry's spexr fill note). High contrast owns its
-     accent and resets it (below).
+     contrasts with the fill and the states are the kit's steps (above),
+     on every theme. High contrast owns its accent and resets
+     it (below).
      These public roles compute HERE, on :root, so they follow a fill set on
      the root only: they are for a fill a product draws itself (a count
      badge). The kit's own filled controls compute the same derivations on
@@ -105,9 +148,9 @@
   --slc-on-accent-fill:     var(--_sl-on-accent-fill, var(--slc-on-accent));
   --slc-accent-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
   --slc-accent-fill-active: var(--_sl-accent-fill-active, var(--slc-accent-active));
-  --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, black);
-  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, black);
+  --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) var(--_sl-on));
+  --_sl-accent-fill-hover:  oklch(from var(--slc-accent-fill) var(--_sl-step-hover));
+  --_sl-accent-fill-active: oklch(from var(--slc-accent-fill) var(--_sl-step-press));
   /* surfaces + text */
   --slc-canvas:        var(--sl-bg-canvas,         #eae6e2);
   --slc-surface:       var(--sl-bg-surface,        #fcfaf9);
@@ -139,13 +182,13 @@
   --slc-danger:  var(--sl-status-danger,  #a72b05);
   --slc-info:    var(--sl-status-info,    #3853af);
   /* A label ON a solid status fill: the pole that contrasts with that fill,
-     picked by its own lightness (the light theme's --sl-text-on-accent rule),
+     picked by its own lightness (the kit's one label rule, --_sl-on above),
      so a solid danger button reads on both themes. --slc-on-accent is the
      accent's partner only -- on a red fill it can be dark on dark. */
-  --slc-on-success: oklch(from var(--slc-success) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --slc-on-warning: oklch(from var(--slc-warning) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --slc-on-danger:  oklch(from var(--slc-danger)  clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --slc-on-info:    oklch(from var(--slc-info)    clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
+  --slc-on-success: oklch(from var(--slc-success) var(--_sl-on));
+  --slc-on-warning: oklch(from var(--slc-warning) var(--_sl-on));
+  --slc-on-danger:  oklch(from var(--slc-danger)  var(--_sl-on));
+  --slc-on-info:    oklch(from var(--slc-info)    var(--_sl-on));
   /* casts — black, at the alpha each theme's ground needs (0.31; they were
      cast in a cool ink, rgba(28,29,34), until then) */
   --slc-shadow-sm:    var(--sl-shadow-sm, 0 1px 2px rgba(0,0,0,0.09), 0 4px 10px -4px rgba(0,0,0,0.15));
@@ -572,11 +615,12 @@
    --slc-edge-accent is re-declared here for the same reason. The private
    derivations reference --slc-accent-fill with no fallback, so they are
    invalid until it is set, and each fallback is the element's own role.
-   The danger tone swaps the set (below); glass reads it (effects.css). */
+   Hover and press are the kit's steps (the :root block above). The danger tone swaps the set (below); glass reads it
+   (effects.css). */
 :where(.sl-btn--primary, .sl-check__box, .sl-radio__box, .sl-switch__track) {
-  --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) clamp(0.16, (0.61 - l) * 1000, 1) 0 h);
-  --_sl-accent-fill-hover:  color-mix(in srgb, var(--slc-accent-fill) 89%, black);
-  --_sl-accent-fill-active: color-mix(in srgb, var(--slc-accent-fill) 76%, black);
+  --_sl-on-accent-fill:     oklch(from var(--slc-accent-fill) var(--_sl-on));
+  --_sl-accent-fill-hover:  oklch(from var(--slc-accent-fill) var(--_sl-step-hover));
+  --_sl-accent-fill-active: oklch(from var(--slc-accent-fill) var(--_sl-step-press));
   --slc-edge-accent: oklch(from var(--slc-accent-fill, var(--slc-accent)) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
   --_sl-fill:        var(--slc-accent-fill, var(--slc-accent));
   --_sl-fill-hover:  var(--_sl-accent-fill-hover, var(--slc-accent-hover));
@@ -615,6 +659,19 @@
   background-color: var(--_sl-fill-active);
   background-position: 0 0;
   translate: 0 var(--_sl-foot);
+}
+/* The edge and the foot are the STATE's fill in shade (0.32.1), not the
+   resting one's: an edge is its own fill one step less bright, and a state
+   that steps toward the resting edge (a white label's fill darkening) put
+   the foot within ΔE 2.5 of the fill it stands under. The same derivation as
+   --slc-edge-accent, capped on paper the same way, so a pale pressed fill
+   keeps an edge that finds it on the page (>= 3:1). High contrast keeps its
+   drawn edge in every state. */
+.sl-btn--primary:where(:root:not([data-sl-theme="high-contrast"]) *):hover:not(:disabled) {
+  --_sl-fill-edge: oklch(from var(--_sl-fill-hover) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
+}
+.sl-btn--primary:where(:root:not([data-sl-theme="high-contrast"]) *):active:not(:disabled) {
+  --_sl-fill-edge: oklch(from var(--_sl-fill-active) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
 }
 .sl-btn--primary:focus-visible { --_sl-foot-color: var(--slc-focus); }
 /* THE SECONDARY KEY (Lumen, 0.32): the raised rung in the one control edge,
@@ -874,7 +931,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--slc-text) 16%, transparent);
 }
 .sl-btn--primary > .sl-kbd {
-  background: oklch(from var(--_sl-fill, var(--slc-accent)) calc(l + 0.085 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
+  background: oklch(from var(--_sl-fill, var(--slc-accent)) calc(l + 0.085 * clamp(-1, (l - var(--_sl-pole-l)) * 1000, 1)) c h);
   box-shadow: inset 0 -1px 0 var(--_sl-fill-edge, var(--slc-edge-accent));
 }
 .sl-btn--sm > .sl-kbd {
@@ -1779,10 +1836,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
      filled  .sl-btn--primary.sl-btn--danger swaps the primary's fill set for
              the danger: the danger fill on its foot, its own contrast-picked
              label (--slc-on-danger), its edge the fill in shade. Hover and
-             press step AWAY from the label (darker under white, lighter
-             under the dark pole), so the label never reads weaker than at
-             rest; mixing toward black, as the accent does, took a dark
-             label under 4.5:1 on dark.
+             press are the kit's one step (--_sl-step-hover / -press, :root,
+             0.32.1), which the accent shares: toward black, unless its dark
+             label would read under 5.4:1 pressed. Both themes' dangers hold
+             that, so both darken (on ink it stepped lighter until 0.32.1,
+             and out of sRGB); its label reads 5.46:1 pressed on ink.
      neutral .sl-btn--danger (plain or ghost) and .sl-icon-btn--danger take
              the danger ink on a 12% wash of itself, the danger badge's
              recipe, and a danger edge, so a lone destructive button never
@@ -1803,8 +1861,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 .sl-btn--primary.sl-btn--danger {
   --_sl-fill:        var(--slc-danger);
-  --_sl-fill-hover:  oklch(from var(--slc-danger) calc(l + 0.05 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
-  --_sl-fill-active: oklch(from var(--slc-danger) calc(l + 0.1 * clamp(-1, (l - 0.61) * 1000, 1)) c h);
+  --_sl-fill-hover:  oklch(from var(--slc-danger) var(--_sl-step-hover));
+  --_sl-fill-active: oklch(from var(--slc-danger) var(--_sl-step-press));
   --_sl-on-fill:     var(--slc-on-danger);
   --_sl-fill-edge:   oklch(from var(--slc-danger) calc(l - var(--slc-shade-step)) c h);
 }

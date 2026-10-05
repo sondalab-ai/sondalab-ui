@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { declarations, evaluate, fromSrgb, toHex, toSrgb, within } from "./lib/css-color.mjs";
+import { declarations, evaluate, fromSrgb, toHex, toOklch, toSrgb, within } from "./lib/css-color.mjs";
 
 // Lumen controls (ui-kit 0.32): the primary's foot, the focus halo composed
 // with each control's depth, the danger tone and the accent-fill role,
@@ -18,7 +18,7 @@ const css = bare(raw);
 const effects = bare(read("effects.css"));
 const tokenEnv = (src) => {
   const env = new Map();
-  for (const m of bare(src).matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  for (const m of bare(src).matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   return env;
 };
 const SHARED = tokenEnv(read("tokens.css"));
@@ -277,19 +277,20 @@ test("high contrast resets a product's accent fill: the theme owns its accent", 
   assert.equal(toHex(evaluate("var(--slc-accent-fill, var(--slc-accent))", env)), "#ffff00");
 });
 
-// At rest for every product. Hovered and pressed where a product registers a
-// fill, whose steps the role derives: unset, they are the theme's own accent
-// steps, which this slice keeps exactly (introspect's light hover and press
-// read 4.09 / 3.15 under its dark label, as they did before 0.32: a theme
-// step, recorded in the slice's report, not changed here).
+// At rest, hovered and pressed for every product: with a registered fill the
+// role derives the steps, unset they are the theme's own accent steps. Both
+// step the way the kit's 5.4 rule picks since 0.32.1 (introspect's light hover and press
+// read 4.09 / 3.15 under its dark label until then, the theme stepping toward
+// black). primary-label.test.mjs measures the same through the cascade, in
+// every wiring and context.
 for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
   const fill = REGISTRY[product].fill?.[theme];
-  test(`${theme} ${product}${fill ? ` (fill ${fill})` : ""}: every labelled accent fill reads at 4.5:1${fill ? ", at rest, hovered and pressed" : " at rest"}`, () => {
+  test(`${theme} ${product}${fill ? ` (fill ${fill})` : ""}: every labelled accent fill reads at 4.5:1, at rest, hovered and pressed`, () => {
     const env = rootEnv(theme, product);
     if (fill) env.set("--slc-accent-fill", fill);
     const low = [];
     const label = evaluate("var(--slc-on-accent-fill)", env);
-    const states = ["var(--slc-accent-fill, var(--slc-accent))", ...(fill ? ["var(--slc-accent-fill-hover)", "var(--slc-accent-fill-active)"] : [])];
+    const states = ["var(--slc-accent-fill, var(--slc-accent))", "var(--slc-accent-fill-hover)", "var(--slc-accent-fill-active)"];
     for (const p of states) {
       const r = ratio(label, evaluate(p, env));
       if (r < 4.5) low.push(`${p} ${r.toFixed(2)}`);
@@ -302,12 +303,21 @@ for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
   });
 }
 
-test("spexr's registered fill is what lifts its light label over 4.5:1 (4.17 on the bare accent)", () => {
+// spexr registered its fill so its label could be WHITE: white on the bare
+// #5b6cff reads 4.17:1. Since 0.32.1 the bare accent takes the dark pole
+// instead (4.65:1, the better pole past the 0.59 threshold), so a spexr page
+// without its fill still reads; the fill keeps the white label the owner
+// chose (5.41:1).
+test("spexr's registered fill keeps its light label white over 4.5:1; its bare accent takes the better, dark pole", () => {
   const env = rootEnv("light", "spexr");
-  const bare = ratio(evaluate("var(--slc-on-accent-fill)", env), evaluate("var(--slc-accent)", env));
-  assert.ok(bare < 4.5, `the bare accent already reads ${bare.toFixed(2)}`);
+  const label = evaluate("var(--slc-on-accent-fill)", env), accent = evaluate("var(--slc-accent)", env);
+  assert.ok(toOklch(label)[0] < 0.5, "the bare accent's label is the dark pole");
+  assert.ok(ratio(label, accent) > ratio(evaluate("white", env), accent), "and it is the better pole there");
+  assert.ok(ratio(label, accent) >= 4.5, ratio(label, accent).toFixed(2));
   env.set("--slc-accent-fill", REGISTRY.spexr.fill.light);
-  assert.ok(ratio(evaluate("var(--slc-on-accent-fill)", env), evaluate("var(--slc-accent-fill)", env)) >= 4.5);
+  const white = evaluate("var(--slc-on-accent-fill)", env);
+  assert.equal(toHex(white), "#ffffff");
+  assert.ok(ratio(white, evaluate("var(--slc-accent-fill)", env)) >= 4.5);
 });
 
 test("every labelled accent fill reads the fill set on the control: primary, checked check, radio and switch", () => {

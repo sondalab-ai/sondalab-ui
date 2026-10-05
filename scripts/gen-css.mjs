@@ -19,24 +19,62 @@ function block(selector, entries) {
 /** An accent step is a literal colour string or a hue-relative derivation
  * recipe, so that overriding only --sl-accent-default re-derives the family
  * (the one-var contract). Two recipe shapes:
- *   { mix: [ratio, anchor] }        -> color-mix() (Baseline)
- *   { oklch: [L, C, H], fallback }  -> relative color (tighter floor); the
- *                                      fallback literal is emitted first so a
- *                                      browser without relative-color syntax
- *                                      keeps the hand-tuned value.
- * Returns an array of [name, value] declarations (usually one, two when a
- * relative-color step carries a fallback). */
+ *   { step: "hover" | "press" } -> the kit's own step, oklch(from
+ *                                  var(--sl-accent-default)
+ *                                  var(--_sl-step-<name>)): toward black
+ *                                  unless the dark label would read under
+ *                                  5.4:1 pressed, then toward white; one
+ *                                  macro in components.css :root, shared
+ *                                  with the accent fill, the danger tone
+ *                                  and the role-var fallbacks (0.32.1).
+ *   { mix: [ratio, anchor] }    -> color-mix() toward a colour keyword
+ *                                  (high contrast's literal pair).
+ * Returns [name, value] declarations. */
 function accentDecls(name, v) {
+  if (v && typeof v === "object" && typeof v.step === "string") {
+    if (!["hover", "press"].includes(v.step)) throw new Error(`${name}: unknown step ${v.step}`);
+    return [[name, `oklch(from var(--sl-accent-default) var(--_sl-step-${v.step}))`]];
+  }
   if (v && typeof v === "object" && Array.isArray(v.mix)) {
     const [ratio, anchor] = v.mix;
     return [[name, `color-mix(in srgb, var(--sl-accent-default) ${ratio}%, ${anchor})`]];
   }
-  if (v && typeof v === "object" && Array.isArray(v.oklch)) {
-    const [L, C, H] = v.oklch;
-    const derived = `oklch(from var(--sl-accent-default) ${L} ${C} ${H})`;
-    return v.fallback ? [[name, v.fallback], [name, derived]] : [[name, derived]];
-  }
+  if (v && typeof v === "object") throw new Error(`${name}: unknown accent recipe ${JSON.stringify(v)}`);
   return [[name, v]];
+}
+
+/** The label on a fill and its hover and press step, as private macros
+ * (--_sl-*) for tokens.css :root, built from the `label` block's numbers.
+ * Channel expressions, not colours: a relative colour substitutes them, so
+ * `l`, `c` and `h` bind to the colour they are used in. --_sl-lum is the
+ * fill's WCAG luminance from its own oklch channels (OKLab to linear sRGB,
+ * weighted by the luminance coefficients), so the step rule can ask what a
+ * dark label would read on the fill pressed toward black. */
+function labelMacros(label) {
+  const { "pole-l": poleL, "pole-dark": poleDark, hold, step } = label;
+  for (const [k, v] of Object.entries({ poleL, poleDark, hold, hover: step?.hover, press: step?.press })) {
+    if (typeof v !== "number") throw new Error(`label.${k} must be a number`);
+  }
+  // OKLab -> LMS' (Ottosson), cubed, then linear sRGB weighted to luminance.
+  const M = [[4.0767416621, -3.3077115913, 0.2309699292], [-1.2684380046, 2.6097574011, -0.3413193965], [-0.0041960863, -0.7034186147, 1.7076147010]];
+  const W = [0.2126, 0.7152, 0.0722];
+  const y = [0, 1, 2].map((j) => W.reduce((sum, w, i) => sum + w * M[i][j], 0));
+  const LMS = [[0.3963377774, 0.2158037573], [-0.1055613458, -0.0638541728], [-0.0894841775, -1.2914855480]];
+  const rad = "0.017453292519943295";
+  const arm = ([ka, kb]) => `pow(l ${ka < 0 ? "-" : "+"} ${Math.abs(ka)} * c * cos(h * ${rad}) ${kb < 0 ? "-" : "+"} ${Math.abs(kb)} * c * sin(h * ${rad}), 3)`;
+  const lum = "calc(" + LMS.map((k, i) => `${i ? (y[i] < 0 ? " - " : " + ") : (y[i] < 0 ? "-" : "")}${Math.abs(y[i]).toPrecision(10)} * ${arm(k)}`).join("") + ")";
+  const stepOf = (d) => `clamp(0, l + ${d} * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - ${d} / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - ${d} / max(l, 0.001)))) h`;
+  return [
+    ["--_sl-pole-l", String(poleL)],
+    ["--_sl-pole-dark", String(poleDark)],
+    ["--_sl-hold", String(hold)],
+    ["--_sl-on", "clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 1) 0 h"],
+    ["--_sl-lum", lum],
+    // the fill pressed toward black is dimmed in linear light by ((l - press) / l)^3
+    ["--_sl-lighter", `calc(clamp(0, (l - var(--_sl-pole-l)) * 1000, 1) * clamp(0, (var(--_sl-hold) - (var(--_sl-lum) * pow((l - ${step.press}) / l, 3) + 0.05) / (pow(var(--_sl-pole-dark), 3) + 0.05)) * 1000, 1))`],
+    ["--_sl-step-hover", stepOf(step.hover)],
+    ["--_sl-step-press", stepOf(step.press)],
+  ];
 }
 
 /** --sl-spectrum-N / --sl-spectrum-ink-N: the theme's own values, or an
@@ -64,7 +102,7 @@ function main() {
   }
 
   // tokens.css — shared role tokens + reduced-motion
-  const shared = [...flattenShared(t.shared)];
+  const shared = [...flattenShared(t.shared), ...labelMacros(t.label)];
   let tokensCss = HEADER + block(":root", shared);
   tokensCss += `\n@media (prefers-reduced-motion: reduce) {\n  :root {\n` +
     `    --sl-motion-fast: 0ms;\n    --sl-motion-mid: 0ms;\n    --sl-motion-slow: 0ms;\n  }\n}\n`;

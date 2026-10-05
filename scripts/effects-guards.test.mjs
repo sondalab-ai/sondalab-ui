@@ -881,7 +881,7 @@ test("a glass host keeps its own fill until the layers exist", () => {
   const glass = clears.filter((sel) => sel.includes(".sl-fx-glass"));
   assert.ok(glass.length > 0, "the translucency rule is still there");
   for (const sel of glass) assert.match(sel, /:where\(\.sl-glass\)/, `${sel} must wait for the layers`);
-  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*oklch\(from color-mix/)?.[0] ?? "";
+  const label = fx.match(/\.sl-btn--primary\.sl-fx-glass--pane[^{]*\{\s*color:\s*oklch\(from var\(--_slfx-pane\)/)?.[0] ?? "";
   assert.match(label, /:where\(\.sl-glass\)/, "the composite-picked label only on a built pane");
   assert.match(label, /:not\(\[data-sl-theme="high-contrast"\]\)/, "and never under high contrast");
   assert.match(label, /data-sl-fx="off"/, "nor in an opt-out region");
@@ -1062,15 +1062,47 @@ test("the glass primary's label has no text-shadow", () => {
 // Owner, 2026-10-01: one 90% share for every fill, through a registered colour
 // so hover and press fade; the label is the pole that contrasts with the
 // composite of the RESTING accent, so it never flips mid-hover.
+// 0.32.1: the composite is written once (--_slfx-pane) and read by the
+// label, its keycap and the shade under a white label; the threshold is the
+// kit's one (--_sl-pole-l, tokens.css), so the shade can never fall
+// under a dark label, and the shade is declared only where the pane is (not
+// in high contrast, not in an opt-out region).
 test("the glass primary rests at 90%, fades its fill, and picks its label from the composite", () => {
   const r = RULES.find((r) => r.selector.trim() === ".sl-btn--primary.sl-fx-glass" && /--slg-accent\s*:/.test(r.body));
   assert.ok(r, "the glass primary binds --slg-accent");
-  assert.match(r.body, /--slfx-accent-t:\s*oklch\(from var\(--slfx-fill\) l c h \/ 0\.9\)/);
+  assert.match(r.body, /--_slfx-pane:\s*color-mix\(in oklab, var\(--_sl-fill, var\(--slc-accent\)\) 90%, var\(--slc-canvas\)\);/, "the resting fill is the primary's own fill set (components.css, 0.32)");
+  assert.match(r.body, /--slfx-accent-t:\s*color-mix\(in srgb, var\(--slfx-fill\) 90%, var\(--_slfx-shade, transparent\)\);/);
+  assert.doesNotMatch(r.body, /--_slfx-shade\s*:/, "the shade is not declared on the ungated rule");
+  const shade = RULES.find((r) => /--_slfx-shade\s*:/.test(r.body));
+  assert.equal(shade.selector, '.sl-btn--primary.sl-fx-glass:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *))');
+  assert.match(shade.body, /--_slfx-shade:\s*oklch\(from var\(--_slfx-pane\) 0 0 0 \/ calc\(clamp\(0, \(l - 0\.54\) \* 10, 1\) \* clamp\(0, \(var\(--_sl-pole-l\) - l\) \* 1000, 1\)\)\);/);
   assert.match(r.body, /--slg-accent:\s*var\(--slfx-accent-t\)/);
   assert.match(r.body, /--slg-accent-a:\s*100%/);
   assert.match(effects, /@property\s+--slfx-accent-t\s*\{[^}]*syntax:\s*"<color>"/);
-  // the resting fill is the primary's own fill set (components.css, 0.32)
-  assert.match(effects, /color:\s*oklch\(from color-mix\(in oklab, var\(--_sl-fill, var\(--slc-accent\)\) 90%, var\(--slc-canvas\)\) clamp\(0\.16, \(0\.59 - l\) \* 1000, 0\.985\) 0 h\)/);
+  // the label and the keycap read the same pane and the kit's threshold
+  assert.match(effects, /color:\s*oklch\(from var\(--_slfx-pane\) clamp\(var\(--_sl-pole-dark\), \(var\(--_sl-pole-l\) - l\) \* 1000, 0\.985\) 0 h\)/);
+  assert.match(effects, /--slfx-cap:\s*oklch\(from var\(--_slfx-pane\) calc\(l \+ 0\.085 \* clamp\(-1, \(l - var\(--_sl-pole-l\)\) \* 1000, 1\)\) c h\)/);
+  assert.doesNotMatch(effects, /\b0\.59\b|0\.61\b/, "no threshold of its own: it reads components.css's");
+  // declared once, in the generated tokens.css, and nowhere else in the kit
+  const kit = ["tokens.css", "components.css", "effects.css", "glass.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"]
+    .map((f) => readFileSync(resolve(KIT, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "")).join("\n");
+  assert.equal((kit.match(/--_sl-pole-l\s*:/g) ?? []).length, 1, "the threshold is declared once");
+  assert.match(readFileSync(resolve(KIT, "tokens.css"), "utf8"), /--_sl-pole-l:\s*0\.59;/);
+});
+
+// 0.32.1: an opt-out region keeps the shipped control. mount() builds the
+// glass layers on every glass host, so the region hides them, as forced
+// colours does, and the host keeps its own fill; on a built pane the
+// primary's states paint no opaque fill under the tint.
+test("an opt-out region hides the glass layers and keeps the host's fill; a built pane stays a pane in every state", () => {
+  const kill = RULES.find((r) => /display:\s*none !important/.test(r.body) && r.selector.includes('.sl-fx-glitch::after'));
+  assert.ok(kill.selector.includes(':is([data-sl-fx="off"], [data-sl-fx="off"] *) :is(.sl-glass__backdrop, .sl-glass__tint, .sl-glass__specular, .sl-glass__shine)'), "the layers are hidden in an opt-out region");
+  const glass = effects.slice(effects.indexOf("@supports (backdrop-filter: blur(1px))"));
+  for (const m of glass.matchAll(/([^{}]+)\{\s*background-color:\s*transparent;/g)) {
+    if (!m[1].includes(".sl-fx-glass")) continue;
+    assert.match(m[1], /:where\(:not\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\)/, `${m[1].trim()} clears the host in an opt-out region`);
+  }
+  assert.match(glass, /\.sl-btn--primary\.sl-fx-glass:where\(\.sl-glass\):where\(:not\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\):is\(:hover, :active\):not\(:disabled\) \{ background-color: transparent; \}/);
 });
 
 // Regression, 2026-10-01: .sl-fx-glass--pane and .sl-fx-press reset `transition`

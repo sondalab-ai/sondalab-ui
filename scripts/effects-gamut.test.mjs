@@ -22,7 +22,7 @@ const effects = read("effects.css");
 
 const themeTokens = (css) => {
   const env = new Map();
-  for (const m of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+  for (const m of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   return env;
 };
 const THEMES = { light: themeTokens(read("themes/light.css")), dark: themeTokens(read("themes/dark.css")) };

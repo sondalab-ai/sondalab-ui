@@ -55,6 +55,14 @@
   --sl-viz-5: #14bcbc;
   --sl-viz-6: #68eeba;
   --sl-viz-7: #b28fef;
+  --_sl-pole-l: 0.59;
+  --_sl-pole-dark: 0.16;
+  --_sl-hold: 5.4;
+  --_sl-on: clamp(var(--_sl-pole-dark), (var(--_sl-pole-l) - l) * 1000, 1) 0 h;
+  --_sl-lum: calc(-0.04077454096 * pow(l + 0.3963377774 * c * cos(h * 0.017453292519943295) + 0.2158037573 * c * sin(h * 0.017453292519943295), 3) + 1.112492185 * pow(l - 0.1055613458 * c * cos(h * 0.017453292519943295) - 0.0638541728 * c * sin(h * 0.017453292519943295), 3) - 0.07171764402 * pow(l - 0.0894841775 * c * cos(h * 0.017453292519943295) - 1.291485548 * c * sin(h * 0.017453292519943295), 3));
+  --_sl-lighter: calc(clamp(0, (l - var(--_sl-pole-l)) * 1000, 1) * clamp(0, (var(--_sl-hold) - (var(--_sl-lum) * pow((l - 0.1) / l, 3) + 0.05) / (pow(var(--_sl-pole-dark), 3) + 0.05)) * 1000, 1));
+  --_sl-step-hover: clamp(0, l + 0.05 * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - 0.05 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - 0.05 / max(l, 0.001)))) h;
+  --_sl-step-press: clamp(0, l + 0.1 * (2 * var(--_sl-lighter) - 1), 1) calc(c * (var(--_sl-lighter) * pow(max(0, 1 - 0.1 / max(1 - l, 0.001)), 1.5) + (1 - var(--_sl-lighter)) * max(0, 1 - 0.1 / max(l, 0.001)))) h;
 }
 
 @media (prefers-reduced-motion: reduce) {

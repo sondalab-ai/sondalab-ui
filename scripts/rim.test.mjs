@@ -89,7 +89,7 @@ const ratio = (a, b) => { const [hi, lo] = [Y(a), Y(b)].sort((p, q) => q - p); r
 const lightEnv = () => {
   const env = new Map();
   for (const f of ["tokens.css", "themes/light.css"]) {
-    for (const m of strip(f).matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+    for (const m of strip(f).matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   }
   for (const [k, v] of declarations(raw("components.css"), [":root", ':root[data-sl-theme="light"]'])) env.set(k, v);
   return env;
@@ -97,7 +97,7 @@ const lightEnv = () => {
 const darkEnv = () => {
   const env = new Map();
   for (const f of ["tokens.css", "themes/dark.css"]) {
-    for (const m of strip(f).matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+    for (const m of strip(f).matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   }
   for (const [k, v] of declarations(raw("components.css"), [":root"])) env.set(k, v);
   return env;

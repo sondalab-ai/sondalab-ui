@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { evaluate, toHex } from "./lib/css-color.mjs";
+import { parseSheet, el, customs } from "./lib/cascade.mjs";
 
 // The light theme owns the spectrum. Every other theme resets it to `initial`
 // (the guaranteed-invalid value), so a consumer's var() fallback — today's
@@ -13,8 +15,12 @@ import { dirname, resolve } from "node:path";
 // same commit. Baselines: 0.20.1, plus dark muted text #7C8D95 (0.21.1, AA),
 // plus the dark neutral ladder baked from the amber hue (0.29.0, Lumen), plus
 // the black casts and the new inset cast (0.31.0, Lumen depth; high contrast
-// reuses dark's); high contrast took its values for the three new neutral
-// roles and its resets in 0.29.0, and is otherwise unchanged since 0.20.1.
+// reuses dark's), plus the accent's hover and press as the kit's step
+// (0.32.1, the components.css macros: 0.05 / 0.10 of oklch lightness toward
+// black, or toward white where the dark label would read under 5.4:1); high
+// contrast took its values for the three
+// new neutral roles and its resets in 0.29.0, and is otherwise unchanged
+// since 0.20.1.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(HERE, p), "utf8");
 const SPECTRUM = [...Array(6).keys()].map((i) => `--sl-spectrum-${i}`)
@@ -55,4 +61,33 @@ test("high-contrast declares or resets every --sl-* that light or dark declares"
 test("high contrast gives the new neutral roles real values, not resets", () => {
   const css = read("../packages/ui-kit/themes/high-contrast.css");
   for (const n of ["--sl-bg-tile", "--sl-bg-sunken", "--sl-border-lit"]) assert.match(decl(css, n) ?? "", /^#[0-9a-f]{6}$/i, n);
+});
+
+// 0.32.1: the theme files read the kit's label and step macros (--_sl-on,
+// --_sl-step-hover / -press). Those are generated into tokens.css, so a page
+// that loads only tokens.css and the themes -- a CDN link, a preload page, a
+// webview -- still resolves the accent's hover, press and label.
+test("every custom property a theme file reads is declared in tokens.css or in that theme", () => {
+  const declared = (css) => new Set([...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+  const tokens = declared(read("../packages/ui-kit/tokens.css"));
+  for (const id of ["light", "dark", "high-contrast", "products"]) {
+    const css = read(`../packages/ui-kit/themes/${id}.css`);
+    const own = declared(css);
+    const missing = [...new Set([...css.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]))].filter((n) => !tokens.has(n) && !own.has(n));
+    assert.deepEqual(missing, [], `themes/${id}.css reads ${missing.join(", ")} from outside tokens.css and itself`);
+  }
+});
+
+test("with only tokens.css and the themes loaded, the accent's hover, press and label resolve on both themes, as with the full kit", () => {
+  const sheets = (files) => { let order = 0; return files.flatMap((f) => { const r = parseSheet(read(`../packages/ui-kit/${f}`), {}, order); order += r.length + 1; return r; }); };
+  const alone = sheets(["tokens.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"]);
+  const kit = sheets(["tokens.css", "components.css", "themes/light.css", "themes/dark.css", "themes/high-contrast.css"]);
+  for (const theme of ["light", "dark"]) {
+    const html = el({ tag: "html", attrs: { "data-sl-theme": theme } });
+    const [a, k] = [customs(alone, html), customs(kit, html)];
+    for (const n of ["--sl-accent-hover", "--sl-accent-active", "--sl-text-on-accent"]) {
+      assert.ok(a.has(n), `${theme} ${n} is invalid without components.css`);
+      assert.equal(toHex(evaluate(`var(${n})`, a)), toHex(evaluate(`var(${n})`, k)), `${theme} ${n}`);
+    }
+  }
 });

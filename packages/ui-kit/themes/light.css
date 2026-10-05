@@ -13,15 +13,15 @@
   --sl-text-primary: #201c18;
   --sl-text-secondary: #47413c;
   --sl-text-muted: #605953;
-  --sl-text-on-accent: oklch(from var(--sl-accent-default) clamp(0.22, (0.61 - l) * 1000, 1) 0 h);
+  --sl-text-on-accent: oklch(from var(--sl-accent-default) var(--_sl-on));
   --sl-status-success: #4a6205;
   --sl-status-warning: #795305;
   --sl-status-danger: #a72b05;
   --sl-status-info: #3853af;
   --sl-accent-default: #FF9F1C;
   --sl-accent-text-lmax: 0.46;
-  --sl-accent-hover: color-mix(in srgb, var(--sl-accent-default) 89%, black);
-  --sl-accent-active: color-mix(in srgb, var(--sl-accent-default) 76%, black);
+  --sl-accent-hover: oklch(from var(--sl-accent-default) var(--_sl-step-hover));
+  --sl-accent-active: oklch(from var(--sl-accent-default) var(--_sl-step-press));
   --sl-accent-subtle: color-mix(in srgb, var(--sl-accent-default) 12%, transparent);
   --sl-accent-depth: #14606C;
   --sl-focus-ring: oklch(from var(--sl-accent-default) min(l, var(--sl-accent-text-lmax)) c h);

@@ -61,7 +61,7 @@ for (const theme of ["light", "dark", "high-contrast"]) {
 // more"): ONE registered fill on both themes, set since ui-kit 0.32 as the
 // kit's one role, --slc-accent-fill, on the root -- never a re-binding of
 // --slc-accent on the primary. The kit derives the label, the hover and the
-// press from it (the light theme's mixes, on both themes), and they hold
+// press from it (the kit's one step, toward black under its white label, on both themes), and they hold
 // 4.5:1 on all three.
 const Yl = (c) => 0.2126 * c.lin[0] + 0.7152 * c.lin[1] + 0.0722 * c.lin[2];
 const contrast = (a, b) => { const [hi, lo] = [Yl(a), Yl(b)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
@@ -71,7 +71,7 @@ const components = read("../packages/ui-kit/components.css");
 const kitEnv = (theme, fill) => {
   const env = new Map();
   for (const f of ["../packages/ui-kit/tokens.css", `../packages/ui-kit/themes/${theme}.css`]) {
-    for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
+    for (const m of read(f).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--_?sl-[\w-]+)\s*:\s*([^;]+);/g)) env.set(m[1], m[2].trim());
   }
   for (const [k, v] of declarations(components, [":root", ...(theme === "light" ? [':root[data-sl-theme="light"]'] : [])])) env.set(k, v);
   env.set("--sl-accent-default", theme === "light" ? "#5b6cff" : "#8b96ff");

@@ -5,13 +5,19 @@
    focus rule, a role re-bound on a subtree -- and not one rule read alone.
 
    Covered: flat style rules inside @media / @supports blocks (conditions
-   evaluated from flags), compound selectors of type, class, attribute,
-   :root, the state pseudo-classes, :not / :is / :where (:has never
-   matches), descendant and child combinators (sibling combinators match a
-   declared previous sibling only), specificity, !important, source order,
-   and custom-property inheritance through scope() in css-color.mjs.
+   evaluated from flags), compound selectors of type, class, attribute
+   (every operator, the value quoted either way or bare), :root, the state
+   pseudo-classes, :not / :is / :where (:has never matches), descendant and
+   child combinators (sibling combinators match a declared previous sibling
+   only), specificity, !important, source order (within a rule too: a
+   repeated property takes its last declaration), custom-property
+   inheritance through scope() in css-color.mjs, and a colour longhand
+   against its shorthand (longhand(), which throws on a shorthand it cannot
+   read). box() resolves the padding and border shorthands only.
    Not covered: pseudo-elements (a part naming one never matches an
-   element), @layer, shadow DOM, and anything a layout engine decides. */
+   element), inherited font-size (box() reads the element's own or 16px),
+   @layer, shadow DOM, and anything a layout engine decides. An attribute
+   selector it cannot read throws rather than match. */
 import { scope, substitute } from "./css-color.mjs";
 
 const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -135,6 +141,22 @@ function compounds(sel) {
   return out;
 }
 
+/** An attribute selector's operator applied to the element's value `v`
+ *  (Selectors 4 §6): exact, whitespace-list member, exact or dash-prefixed,
+ *  prefix, suffix, substring. An empty operand never matches the last four,
+ *  as in a browser. */
+function attrOp(op, v, want) {
+  switch (op) {
+    case "=": return v === want;
+    case "~=": return want !== "" && !/\s/.test(want) && v.split(/\s+/).includes(want);
+    case "|=": return v === want || v.startsWith(`${want}-`);
+    case "^=": return want !== "" && v.startsWith(want);
+    case "$=": return want !== "" && v.endsWith(want);
+    case "*=": return want !== "" && v.includes(want);
+    default: throw new Error(`unknown attribute operator ${op}`);
+  }
+}
+
 /** Does one compound selector match the element? */
 function matchCompound(c, e) {
   if (/::/.test(c)) return false;
@@ -147,12 +169,12 @@ function matchCompound(c, e) {
     if (ch === ".") { i++; if (!e.classes.has(word())) return false; continue; }
     if (ch === "[") {
       const end = c.indexOf("]", i);
-      const m = c.slice(i + 1, end).match(/^([\w-]+)(?:([*^$~|]?=)"?([^"]*)"?)?$/);
+      const text = c.slice(i + 1, end).trim();
+      const m = text.match(/^([\w-]+)(?:\s*([*^$~|]?=)\s*(?:"([^"]*)"|'([^']*)'|([\w-]+)))?$/);
       i = end + 1;
-      if (!m || !e.attrs.has(m[1])) return false;
-      const v = e.attrs.get(m[1]);
-      if (m[2] === "=" && v !== m[3]) return false;
-      if (m[2] === "*=" && !v.includes(m[3])) return false;
+      if (!m) throw new Error(`cannot read the attribute selector [${text}]`);
+      if (!e.attrs.has(m[1])) return false;
+      if (m[2] && !attrOp(m[2], e.attrs.get(m[1]), m[3] ?? m[4] ?? m[5])) return false;
       continue;
     }
     if (ch === ":") {
@@ -194,20 +216,43 @@ export function matches(sel, e) {
 const cmpSpec = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
 
 /** Every declaration that reaches the element, winners first per property:
- *  Map prop -> { value, important, spec, order }. Custom properties too. */
+ *  Map prop -> { value, important, spec, order, at }. Custom properties too.
+ *  `at` is the declaration's place in its rule, so a property a rule repeats
+ *  (a fallback literal before its relative colour) takes the later one. */
 export function cascaded(rules, e) {
   const won = new Map();
   for (const r of rules) {
     let best = null;
     for (const p of r.parts) if (matches(p, e)) { const s = specificity(p); if (!best || cmpSpec(s, best) > 0) best = s; }
     if (!best) continue;
-    for (const [prop, value, important] of r.decls) {
+    r.decls.forEach(([prop, value, important], at) => {
       const cur = won.get(prop);
-      const beats = !cur || (important !== cur.important ? important : (cmpSpec(best, cur.spec) || r.order - cur.order) > 0);
-      if (beats) won.set(prop, { value, important, spec: best, order: r.order });
-    }
+      const beats = !cur || (important !== cur.important ? important : (cmpSpec(best, cur.spec) || r.order - cur.order || at - cur.at) > 0);
+      if (beats) won.set(prop, { value, important, spec: best, order: r.order, at });
+    });
   }
   return won;
+}
+
+/** The winning declaration of a colour longhand (`background-color`,
+ *  `border-color`) between it and its shorthand, by weight and then order.
+ *  A shorthand counts only when its whole value is one colour (a var(), a
+ *  keyword, a colour function): anything else -- an image, a layer list, a
+ *  width or a style beside the colour -- throws rather than guess. */
+export function longhand(won, prop) {
+  const SHORT = { "background-color": "background", "border-color": "border" };
+  const short = SHORT[prop];
+  if (!short) throw new Error(`no shorthand known for ${prop}`);
+  const rank = (d) => [d.important ? 1 : 0, ...d.spec, d.order, d.at];
+  const later = (a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] > y[i]; return false; };
+  const l = won.get(prop), s = won.get(short);
+  if (!s || (l && later(l, s))) return l;
+  const v = s.value.trim();
+  const colour = /^(?:var\([^]*\)|#[0-9a-f]{3,8}|[a-z-]+|(?:rgba?|hsla?|oklch|oklab|color|color-mix)\([^]*\))$/i;
+  if (!colour.test(v) || tokensOf(v).length !== 1 || /\burl\(|gradient\(/.test(v) || /^(?:none|solid|dashed|dotted|inherit|initial|unset)$/i.test(v)) {
+    throw new Error(`cannot read a colour off the ${short} shorthand "${v}"`);
+  }
+  return s;
 }
 
 /** The computed custom properties of an element (inherited down its parents). */
