@@ -345,15 +345,18 @@ test("the check and radio edge finds the box at 3:1 on canvas, surface, raised a
 // control's edge is the band's strong line, 38% of the band's ink
 // (.sl-invert > * { --slc-edge-control: var(--slc-border-strong) }), and that
 // reads under 3:1 there -- 2.52 against the dark theme's light band, 2.86
-// against a box's own wash on the light theme's dark band. 0.36 changes
+// against a box's own wash on the light theme's dark band, and in the high
+// contrast band 2.68 against its ground and 2.45 against the wash. 0.36 changes
 // neither the box's edge nor its well in the band, so this fence holds the
 // box to the band's one control edge, to a wash (never a solid of the band's
 // ink) and to its 0.35 figures; raising the band's control edge is a change
 // to every control in a band, left to the owner.
 test("in a band a check or radio box is a wash in the band's one control edge, no weaker than on 0.35 (a known kit-wide gap under 3:1)", () => {
-  const FLOOR = { light: { ground: 3.0, wash: 2.85 }, dark: { ground: 2.5, wash: 2.3 } };
+  const FLOOR = { light: { ground: 3.0, wash: 2.85 }, dark: { ground: 2.5, wash: 2.3 }, "high-contrast": { ground: 2.65, wash: 2.4 } };
   const out = [];
-  for (const kind of ["check", "radio"]) for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+  // high contrast has no per-product neutrals: one row, under no product
+  const CASES = [...PRODUCTS.flatMap((p) => ["light", "dark"].map((t) => [p, t])), [null, "high-contrast"]];
+  for (const kind of ["check", "radio"]) for (const [product, theme] of CASES) {
     const b = choiceBox(kind, theme, { product, band: true });
     const child = b.parent.parent;
     assert.equal(value(KIT_RULES, b, "border"), "1px solid var(--slc-edge-control)", "the one control edge");
@@ -364,11 +367,11 @@ test("in a band a check or radio box is a wash in the band's one control edge, n
     const sunken = value(KIT_RULES, child, "--slc-sunken");
     assert.match(sunken, /currentColor 4%, transparent/);
     const wash = evaluate(sunken.replace(/currentColor/g, ink), env);
-    assert.ok(wash.alpha < 0.1, `${kind} ${theme} ${product}: a wash over the band's ground, never a solid of its ink ${ink}`);
+    assert.ok(wash.alpha < 0.1, `${kind} ${theme}${product ? ` ${product}` : ""}: a wash over the band's ground, never a solid of its ink ${ink}`);
     const edge = over(evaluate(value(KIT_RULES, child, "--slc-border-strong").replace(/currentColor/g, ink), env), ground);
     for (const [g, colour] of [["ground", ground], ["wash", over(wash, ground)]]) {
       const r = ratio(edge, colour);
-      if (r < FLOOR[theme][g]) out.push(`${kind} ${theme} ${product} band: edge on the ${g} ${r.toFixed(2)} < ${FLOOR[theme][g]}`);
+      if (r < FLOOR[theme][g]) out.push(`${kind} ${theme}${product ? ` ${product}` : ""} band: edge on the ${g} ${r.toFixed(2)} < ${FLOOR[theme][g]}`);
     }
   }
   assert.deepEqual(out, []);
