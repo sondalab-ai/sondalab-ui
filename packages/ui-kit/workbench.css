@@ -25,6 +25,154 @@
    .sl-invert band, set straight on it (a real-content block, L3). The rest
    is the chrome of a workbench, which lives on the workbench's frame. */
 
+/* ══ TITLE BAR ═══════════════════════════════════════════════════════════════
+   The workbench's top frame (0.34), on the canvas as Lumen draws it: a 44px
+   grid of three tracks -- the left and right share what the centre leaves,
+   the centre holds up to 32rem (512px) -- with the product's mark and a
+   crumb on the left, the command field in the centre, a cluster of icon
+   buttons on the right.
+     <header class="sl-titlebar">
+       <div class="sl-titlebar__l">
+         <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__menu" aria-label="Menu">…</button>
+         <span class="sl-titlebar__mark">spexr<span class="sl-titlebar__dot" aria-hidden="true"></span></span>
+         <span class="sl-titlebar__crumb">probe-engine<span class="sl-titlebar__sep" aria-hidden="true">/</span>src</span>
+       </div>
+       <button class="sl-titlebar__cmd" type="button" aria-keyshortcuts="Meta+P">
+         <svg …/><span class="sl-titlebar__cmd-text">Search files, run a command</span>
+         <span class="sl-titlebar__keys" aria-hidden="true"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">P</kbd></span>
+       </button>
+       <div class="sl-titlebar__r">
+         <button class="sl-icon-btn sl-titlebar__btn" aria-label="Toggle the right panel">…</button>
+         <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__btn--dot" aria-label="Notifications, 3 unread">…</button>
+       </div>
+     </header>
+   __menu is the slot for a compact menu button (an app whose menus are not
+   the system's: Windows, Linux); leave it out where the system draws them.
+   __mark is the product's mark in the display face, 700 at 15px, tracked
+   -0.04em, with a dot of the accent (a child, not a pseudo-element: an
+   effect may own those); it is not the Sondalab wordmark, which is the
+   brand face's (L3). __cmd opens the command palette: the one control
+   edge on the surface rung, lit along its top, the raised rung under the
+   pointer, the shared flush ring and halo on focus; its __keys are the
+   product's real shortcut, in keycaps, hidden from its name (the button
+   says them in aria-keyshortcuts). A title-bar icon button (__btn on an
+   .sl-icon-btn) rests on the surface rung in its own edge; --dot draws an
+   unread dot on its corner, a layer of its background, so its pseudo-
+   elements stay an effect's. The button's name carries the state ("3
+   unread"): forced colours drop the dot with every image.
+   The bar is the window's drag region (-webkit-app-region for Electron,
+   app-region for a web app's window-controls overlay), and everything in it
+   that takes the pointer is not: a button, a link, a field, a tab stop. A
+   product that draws the system's window buttons (macOS traffic lights)
+   gives the bar the room they take as its own padding-inline-start. */
+.sl-titlebar {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 32rem) 1fr;
+  align-items: center;
+  gap: var(--sl-space-4, 1rem);
+  box-sizing: border-box;
+  height: 44px;
+  padding-inline: 0.9rem 0.6rem;
+  font-family: var(--sl-font-sans, system-ui, sans-serif);
+  font-size: var(--sl-text-sm, 0.875rem);
+  color: var(--slc-text);
+  background-color: transparent;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.sl-titlebar :is(button, a, input, select, textarea, [role="button"], [tabindex]) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+.sl-titlebar__l,
+.sl-titlebar__r {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-3, 0.75rem);
+  min-width: 0;
+}
+.sl-titlebar__r { justify-content: flex-end; gap: var(--sl-space-2, 0.5rem); }
+.sl-titlebar__menu { flex: none; }
+.sl-titlebar__mark {
+  flex: none;
+  font-family: var(--sl-font-display, system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: var(--slc-text);
+}
+/* The dot sits on the line 1px up, as Lumen sets it: font-independent. */
+.sl-titlebar__dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-inline-start: 2px;
+  vertical-align: 1px;
+  border-radius: 50%;
+  background-color: var(--slc-accent);
+}
+.sl-titlebar__crumb {
+  min-width: 0;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--slc-text-secondary);
+}
+.sl-titlebar__sep { margin-inline: 0.15rem; color: var(--slc-text-muted); }
+.sl-titlebar__cmd {
+  --_sl-depth: inset 0 1px 0 var(--slc-lit);
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sl-space-2, 0.5rem);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 0.65rem 0.4rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1;
+  color: var(--slc-text-muted);
+  background-color: var(--slc-surface);
+  border: 1px solid var(--slc-edge-control);
+  border-radius: var(--sl-radius-md, 8px);
+  cursor: pointer;
+  transition:
+    background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
+    box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+/* Not while focused: the hover edge would sit inside the ring, a band. */
+.sl-titlebar__cmd:hover { background-color: var(--slc-raised); }
+.sl-titlebar__cmd:hover:not(:focus-visible) { border-color: var(--slc-edge-control-hover); }
+.sl-titlebar__cmd > svg { flex: none; }
+.sl-titlebar__cmd-text {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sl-titlebar__keys { flex: none; display: inline-flex; gap: 3px; }
+.sl-icon-btn.sl-titlebar__btn { background-color: var(--slc-surface); }
+/* Lumen's 6px dot, 5px in from the corner, ringed 2px in the surface so it
+   reads apart from the glyph. The labelled fill where a product sets one,
+   the accent as a mark (its text reading, >= 3:1) where it does not.
+   Declared at hover's weight too: the icon button's hover resets the
+   background shorthand. */
+.sl-icon-btn.sl-titlebar__btn--dot,
+.sl-icon-btn.sl-titlebar__btn--dot:hover:not(:disabled) {
+  --_sl-titlebar-dot: var(--slc-accent-fill, var(--slc-accent-text));
+  background-image: radial-gradient(circle at calc(100% - 8px) 8px, var(--_sl-titlebar-dot) 2.75px, var(--slc-surface) 3.25px 4.75px, transparent 5.25px);
+  background-repeat: no-repeat;
+}
+
 /* ══ PANE ════════════════════════════════════════════════════════════════════
    An island: the surface rung on the canvas, the island recipe (a lit top
    hairline and the quieter ring), the pane radius. A host that wears a
