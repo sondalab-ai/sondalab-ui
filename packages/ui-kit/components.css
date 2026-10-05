@@ -2029,8 +2029,12 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    group's ground showed across every face (0.36.0: its members' text 4.08:1
    on the light theme's band, its rules 1.13 against the faces). There the
    group paints no ground, and each member after the first draws the rule in
-   1px gap before it as its depth (to its left, to its right in a
-   right-to-left group), which the focus rule keeps under the halo. */
+   the 1px gap before it as its depth (to its left, to its right in a
+   right-to-left group), which the focus rule keeps under the halo. Right to
+   left is read off :dir(), so a group reversed only by the `direction`
+   property, with no `dir` attribute, draws its rules on the wrong side. A
+   glass member owns its box-shadow and draws no rule (a known gap: only its
+   soft inner line separates it, about 2:1). */
 .sl-invert .sl-btn-group { background: transparent; }
 .sl-invert .sl-btn-group > .sl-btn + .sl-btn { --_sl-depth: -1px 0 0 var(--slc-edge-control); }
 .sl-invert .sl-btn-group > .sl-btn + .sl-btn:dir(rtl) { --_sl-depth: 1px 0 0 var(--slc-edge-control); }

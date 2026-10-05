@@ -439,10 +439,12 @@ test("in a band every control's edge reads 3:1 against the band and against its 
     }
   }
   assert.deepEqual(out, []);
-  // the least that clears 3:1, not more: the tightest control on each band
-  // sits under 3.5 (0.36.1, computed: 3.13 light, 3.07 dark, 3.36 high
-  // contrast; Chrome paints 3.10, 3.05, 3.34), so a band's edge is no
-  // heavier than the page's own (3.5-4.2 on its canvas)
+  // the least that clears 3:1, not more -- IN THIS MODEL ONLY (the edge over
+  // the bare band): the tightest control on each band computes under 3.5
+  // (0.36.1: 3.13 light, 3.07 dark, 3.36 high contrast). Chrome draws the
+  // border over the control's own fill and reads higher (3.4:1 or more in
+  // its pixels at DPR 4), so this ceiling is not a rendered figure; a
+  // deliberate raise moves it.
   for (const [k, v] of Object.entries(lows)) assert.ok(v < 3.5, `${k}: the band's tightest edge ${v.toFixed(2)}`);
 });
 
@@ -532,4 +534,42 @@ test("in a band a button group's faces are its members' own, its rules the contr
   // right to left the gap is on the member's other side (the test cascade
   // does not read :dir(), so the rule is read off the sheet)
   assert.match(read("components.css"), /\.sl-invert \.sl-btn-group > \.sl-btn \+ \.sl-btn:dir\(rtl\) \{ --_sl-depth: 1px 0 0 var\(--slc-edge-control\); \}/);
+});
+
+// KNOWN GAP (0.36.1): glass owns its host's box-shadow, so a glass member of
+// a band group does not paint the rule its depth carries; between two glass
+// members only their soft inner lines (the control edge at half strength)
+// and the band's ground in the 1px gap say where one ends. Measured 1.98:1
+// against the band and 1.69 against a face on the light theme's dark band,
+// 1.84 and 1.59 on the dark theme's light band (it was 1.13 against the faces
+// on 0.36.0, when the group's ground showed through them). High contrast's
+// kill switch gives the depth back, so there the rule paints. This fence holds
+// the figures where they are until the gap is closed.
+test("in a band a group of glass members keeps only its soft inner lines (a known gap, no weaker than on 0.36.1)", () => {
+  const FLOOR = { light: { ground: 1.95, face: 1.65 }, dark: { ground: 1.8, face: 1.55 } };
+  const GLASS = ["sl-btn", "sl-btn--ghost", "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"];
+  const out = [];
+  for (const [band, rules, child] of bands()) {
+    if (band.startsWith("Tier B")) continue; // the Tier B cascade here loads no effects.css
+    const group = BAND_CONTROLS["button group"](child);
+    const first = el({ tag: "button", classes: GLASS, parent: group });
+    const second = el({ tag: "button", classes: GLASS, parent: group, prev: first });
+    const ground = over(paint(rules, group, fillOf(rules, group)), groundOf(rules, child));
+    const face = over(paint(rules, second, fillOf(rules, second)), ground);
+    const shadow = cascaded(rules, second).get("box-shadow").value;
+    if (band === "high contrast") {
+      assert.match(shadow, /^var\(--_sl-depth/, "high contrast: the kill switch gives the depth back");
+      const rule = over(paint(rules, second, value(rules, second, "--_sl-depth").match(/^-1px 0 0 (.+)$/)[1]), ground);
+      if (ratio(rule, face) < 3) out.push(`${band}: rule on a glass member ${ratio(rule, face).toFixed(2)}`);
+      continue;
+    }
+    assert.doesNotMatch(shadow, /--_sl-depth/, `${band}: glass owns the shadow, so the rule does not paint (the gap)`);
+    const soft = over(paint(rules, second, "var(--slfx-control-edge-soft)"), ground);
+    const floor = FLOOR[band.split(" ")[0]];
+    for (const [g, colour] of [["ground", ground], ["face", face]]) {
+      const r = ratio(soft, colour);
+      if (r < floor[g]) out.push(`${band}: soft line on the ${g} ${r.toFixed(2)} < ${floor[g]}`);
+    }
+  }
+  assert.deepEqual(out, []);
 });
