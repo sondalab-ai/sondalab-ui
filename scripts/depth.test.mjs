@@ -487,11 +487,12 @@ test("tile tabs: no rule under the strip, no underline, a flat tile, the dot and
   // the shared focus ring covers the tab, and the outline follows its 6px
   const ring = RULES.find((r) => /outline: var\(--sl-focus-ring-width/.test(r.body));
   assert.ok(ring.selector.includes(".sl-tabs__tab:focus-visible"));
-  // Lumen's tab (0.34): r7, 13px at 500, 11.2px in, and hover lifts the ink
-  // to the secondary, not the primary (the active tab keeps the primary)
+  // Lumen's tab (0.34): r7, 13px at 500, 12px in (Lumen's 11.2 on the 4px
+  // grid), and hover lifts the ink to the secondary, not the primary (the
+  // active tab keeps the primary)
   assert.equal(decl(tab, "border-radius"), "7px");
   assert.equal(decl(tab, "font-size"), "0.8125rem");
-  assert.equal(decl(tab, "padding"), "0 0.7rem");
+  assert.equal(decl(tab, "padding"), "0 var(--sl-space-3, 0.75rem)");
   assert.equal(decl(rule(".sl-tabs__tab"), "font-weight"), "500");
   assert.match(rule(".sl-tabs--tile .sl-tabs__tab:hover"), /(?:^|;)\s*color:\s*var\(--slc-text-secondary\)/);
   assert.equal(decl(rule(".sl-tabs--tile .sl-tabs__item"), "border-radius"), "7px", "the wrapper is the same tile");

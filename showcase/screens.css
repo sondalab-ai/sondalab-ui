@@ -71,7 +71,11 @@ svg { flex: none; }
    which the target restyles, stays for the target alone. The target's
    quirks are kept so it renders as it did: its toast timer's full width
    and 1px drop below the edge, its palette foot's square corners and its
-   tick's rounded ends (both the kit's before 0.34). */
+   tick's rounded ends (both the kit's before 0.34). And since the kit keeps
+   its 4px grid where the target does not (owner, 2026-10-05), the target's
+   off-grid values the kit's would otherwise replace are restated here: the
+   status row's height and line, the command field's padding, the crumb's
+   separators. */
 [data-dir="lumen"] .ide-main.sl-pane::before { content: none; }
 [data-dir="lumen"] .sl-tree__row[aria-expanded] > .sl-tree__twisty::before { content: none; }
 [data-dir="lumen"] .sl-titlebar__dot { display: none; }
@@ -82,14 +86,18 @@ svg { flex: none; }
 [data-dir="lumen"] .ide-toast__timer { width: 100%; inset-inline: 14px; inset-block-end: -1px; }
 [data-dir="lumen"] .ide-pal__foot { border-radius: 0; }
 [data-dir="lumen"] .ide-toast::before { border-radius: 0 0 2px 2px; }
+[data-dir="lumen"] .sl-statusbar { height: auto; line-height: inherit; }
+[data-dir="lumen"] .sl-statusbar__item { line-height: 22px; }
+[data-dir="lumen"] .ide-cmd { padding: 0 0.4rem 0 0.65rem; }
+[data-dir="lumen"] .ide-title__crumb .sl-titlebar__sep { margin-inline: 0.15rem; }
 
 /* ── app shell ─────────────────────────────────────────────────────────── */
 /* The frame is the canvas and the panes are the kit's islands on it
-   (workbench.css): a 6px gap between them, as Lumen draws it, no border
-   between them. The title and status rows are the kit's title bar's and
-   status bar's own heights (0.34: 44 and 30). */
+   (workbench.css): an 8px gap between them (Lumen's 6 on the 4px grid), no
+   border between them. The title and status rows are the kit's title bar's
+   and status bar's own heights (0.34: 44 and 28). */
 .app { position: relative; width: 1440px; height: 900px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; background: var(--slc-canvas); }
-.app__body { display: flex; gap: 6px; padding-inline-end: 6px; min-height: 0; }
+.app__body { display: flex; gap: var(--sl-space-2); padding-inline-end: var(--sl-space-2); min-height: 0; }
 
 /* the title bar is the kit's (.sl-titlebar, 0.34); the traffic lights are the stage's, as a mac product's are the system's */
 .ide-dots { display: inline-flex; gap: 6px; } .ide-dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb, var(--slc-text) 18%, transparent); }
@@ -110,7 +118,7 @@ svg { flex: none; }
 .ide-ghost.sl-icon-btn:hover { color: var(--slc-text); background: color-mix(in srgb, var(--slc-text) 7%, transparent); }
 .pane__sub { padding: 0.6rem 0.9rem 0.3rem; font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slc-text-muted); }
 /* the tree is the kit's (.sl-tree, 0.33): rows, guides, twisty and the tile; the svg chevrons are the target's, the kit draws its own */
-.ide-tree { padding: 0 0.45rem; }
+.ide-tree { padding: 0 var(--sl-space-2); }
 [data-dir="kit"] .ide-tree__tw > svg { display: none; }
 .ide-tree__git { font-family: var(--sl-font-mono); font-size: 10px; color: var(--slc-warning-text, var(--slc-warning)); }
 .ide-tree__git[data-git="U"] { color: var(--slc-success-text, var(--slc-success)); }
@@ -118,12 +126,12 @@ svg { flex: none; }
 .ide-sessions .sl-list__row { display: flex; flex-direction: column; justify-content: center; min-height: 32px; padding-block: 0.3rem; }
 
 /* The editor is the lit pane (the kit's seam along its top) and the panel
-   an island 6px below it, inside one grid, as a product whose layout keeps
+   an island 8px below it, inside one grid, as a product whose layout keeps
    the two apart: the pane's own ground and shadow stand down, its parts
    carry the raised rung, and the lit pane's light is the kit's roles (0.34)
    -- the wash on the tab strip, the tint on the breadcrumbs, the drop under
    the code, in the gap. */
-.ide-main { flex: 1; min-width: 0; display: grid; grid-template-rows: 38px 30px minmax(0, 1fr) 210px; overflow: hidden; }
+.ide-main { flex: 1; min-width: 0; display: grid; grid-template-rows: 36px 28px minmax(0, 1fr) 212px; overflow: hidden; }
 .ide-main.sl-pane[data-lit] { background-color: transparent; box-shadow: none; }
 .ide-main > :is(.ide-tabs, .ide-crumbs, .ide-code) { background-color: var(--slc-raised); }
 .ide-main > .ide-tabs { border-radius: var(--sl-radius-pane) var(--sl-radius-pane) 0 0; }
@@ -131,7 +139,7 @@ svg { flex: none; }
 .ide-main[data-lit] > .ide-tabs { background-image: var(--slc-lit-wash); }
 .ide-main[data-lit] > .ide-crumbs { background-image: var(--slc-lit-tint); }
 .ide-main[data-lit] > .ide-code { box-shadow: var(--slc-lit-drop); }
-/* the editor's strip is the kit's tile tabs (.sl-tabs--tile, 0.34: r7, 13px): the tile, the dot and the icon's accent are the kit's */
+/* the editor's strip is the kit's tile tabs (.sl-tabs--tile, 0.34: r7, 13px, 12px in): the tile, the dot and the icon's accent are the kit's */
 .ide-tabs { display: flex; padding: 0 0.4rem; }
 .ide-tab { position: relative; }
 .ide-tab svg { color: var(--slc-text-muted); }
@@ -153,7 +161,7 @@ svg { flex: none; }
 .ide-squiggle { text-decoration: underline wavy var(--slc-warning-text, var(--slc-warning)); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .ide-diag { margin-left: 1.5rem; padding: 0 0.5rem; font-family: var(--sl-font-sans); font-size: 12px; color: var(--slc-warning-text, var(--slc-warning)); background: color-mix(in srgb, var(--slc-warning) 12%, transparent); border-radius: var(--sl-radius-sm); }
 
-.ide-panel { display: grid; grid-template-rows: 34px minmax(0, 1fr); margin-top: 6px; border-radius: var(--sl-radius-pane); background: var(--slc-surface); box-shadow: var(--slc-depth-island); min-height: 0; }
+.ide-panel { display: grid; grid-template-rows: 36px minmax(0, 1fr); margin-top: var(--sl-space-2); border-radius: var(--sl-radius-pane); background: var(--slc-surface); box-shadow: var(--slc-depth-island); min-height: 0; }
 .ide-panel__tabs { display: flex; align-items: center; gap: 0.25rem; padding: 0 0.5rem 0 0.75rem; }
 .ide-ptab { height: 26px; border: 0; border-radius: var(--sl-radius-sm); background: transparent; color: var(--slc-text-muted); font-family: var(--sl-font-sans); font-size: 12px; font-weight: 500; padding: 0 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; }
 .ide-ptab[aria-selected="true"] { color: var(--slc-text); background: var(--slc-tile); box-shadow: var(--slc-depth-flat); }
@@ -202,8 +210,8 @@ svg { flex: none; }
 
 /* overlays */
 /* quick-open style: anchored under the title bar, no scrim, so the IDE stays readable behind it */
-.ide-scrim { position: absolute; left: 316px; right: 358px; top: 118px; height: 0; display: grid; justify-items: center; align-items: start; }
-/* the palette is the kit's (.sl-palette, 0.34): Lumen's 580px, the cast, the seam, the borderless field, the 38px tile rows */
+.ide-scrim { position: absolute; left: 316px; right: 360px; top: 116px; height: 0; display: grid; justify-items: center; align-items: start; }
+/* the palette is the kit's (.sl-palette, 0.34): Lumen's 580px, the cast, the seam, the field with no fill, the 36px tile rows */
 .ide-pal__in > svg { color: var(--slc-text-muted); }
 .ide-pal__scope { font-family: var(--sl-font-sans); font-size: 12px; font-weight: 500; padding: 0.2rem 0.45rem; border-radius: var(--sl-radius-sm); background: color-mix(in srgb, var(--slc-text) 8%, transparent); color: var(--slc-text-secondary); }
 .ide-diffcard { margin: 0; border: 1px solid var(--slc-edge-surface); border-radius: var(--sl-radius-md); overflow: hidden; font-family: var(--lab-code); font-size: 11.5px; }
@@ -218,7 +226,7 @@ svg { flex: none; }
 
 /* the toast is the kit's (.sl-toast in .sl-toast-stack, 0.34, with its .sl-toast__timer), placed in the frame instead of the viewport;
    a second toast waits behind it, and its timer runs along the flat of its bottom edge */
-.ide-toasts { position: absolute; right: 372px; bottom: 48px; width: 360px; }
+.ide-toasts { position: absolute; right: 376px; bottom: 48px; width: 360px; }
 .ide-toast--back { position: absolute; inset: 0; transform: translateY(-10px) scale(0.95); opacity: 0.6; z-index: -1; }
 .ide-toast--back::before { content: none; }
 

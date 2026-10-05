@@ -121,7 +121,7 @@ function build(ctx, { states = {} } = {}) {
 
 // ── the frame ──────────────────────────────────────────────────────────────
 
-test("the title bar is Lumen's: a 44px grid of three tracks on the canvas, the centre 32rem", () => {
+test("the title bar is Lumen's, on the 4px grid: a 44px grid of three tracks on the canvas, the centre 32rem", () => {
   const p = build(dark);
   const env = customs(RULES_A, p.bar);
   const won = cascaded(RULES_A, p.bar);
@@ -131,7 +131,7 @@ test("the title bar is Lumen's: a 44px grid of three tracks on the canvas, the c
   assert.equal(won.get("box-sizing").value, "border-box");
   assert.equal(won.get("align-items").value, "center");
   assert.equal(px(won.get("gap").value, env), 16);
-  assert.deepEqual(words(won.get("padding-inline").value).map((w) => px(w, env)), [14.4, 9.6]);
+  assert.deepEqual(words(won.get("padding-inline").value).map((w) => px(w, env)), [16, 8], "Lumen's 14.4 / 9.6 on the grid");
   assert.equal(won.get("background-color").value, "transparent", "it sits on the canvas, as the status bar does");
   assert.equal(px(cascaded(RULES_A, p.l).get("gap").value, env), 12);
   const r = cascaded(RULES_A, p.r);
@@ -165,7 +165,7 @@ test("the mark is Geist 700 at 15px, tracked -0.04em, with a 5px dot of the acce
   assert.equal(mark.get("letter-spacing").value, "-0.04em");
   assert.equal(mark.get("color").value, "var(--slc-text)");
   const dot = cascaded(RULES_A, p.dot);
-  for (const [prop, want] of [["width", 5], ["height", 5], ["margin-inline-start", 2], ["vertical-align", 1]]) assert.equal(px(dot.get(prop).value, env), want, prop);
+  for (const [prop, want] of [["width", 5], ["height", 5], ["margin-inline-start", 4], ["vertical-align", 1]]) assert.equal(px(dot.get(prop).value, env), want, prop);
   assert.equal(dot.get("display").value, "inline-block");
   assert.equal(dot.get("border-radius").value, "50%");
   assert.equal(dot.get("background-color").value, "var(--slc-accent)", "the accent itself, as the wordmark's dot is");
@@ -175,7 +175,7 @@ test("the mark is Geist 700 at 15px, tracked -0.04em, with a 5px dot of the acce
   for (const [prop, v] of [["white-space", "nowrap"], ["overflow", "hidden"], ["text-overflow", "ellipsis"], ["min-width", "0"]]) assert.equal(crumb.get(prop)?.value, v, prop);
   const sep = cascaded(RULES_A, p.sep);
   assert.equal(sep.get("color").value, "var(--slc-text-muted)");
-  assert.equal(px(sep.get("margin-inline").value, env), 2.4);
+  assert.equal(px(sep.get("margin-inline").value, env), 4, "Lumen's 2.4 on the grid");
 });
 
 test("no part of the title bar takes a pseudo-element: an effect may own any of them", () => {
@@ -187,11 +187,11 @@ test("no part of the title bar takes a pseudo-element: an effect may own any of 
 
 // ── the command field ──────────────────────────────────────────────────────
 
-test("the command field is Lumen's: 30px, r8, the one control edge, the surface lit along its top", () => {
+test("the command field is the kit's one control height, 32px (Lumen's 30), r8, the one control edge, the surface lit along its top", () => {
   const p = build(dark);
   const env = customs(RULES_A, p.cmd);
   const won = cascaded(RULES_A, p.cmd);
-  assert.equal(declaredHeight(RULES_A, p.cmd), 30);
+  assert.equal(declaredHeight(RULES_A, p.cmd), 32, "the icon buttons beside it are 32: one control height (L2)");
   assert.equal(won.get("box-sizing").value, "border-box");
   assert.equal(px(won.get("border-radius").value, env), 8);
   assert.equal(won.get("border").value, "1px solid var(--slc-edge-control)");
@@ -200,11 +200,11 @@ test("the command field is Lumen's: 30px, r8, the one control edge, the surface 
   assert.equal(won.get("color").value, "var(--slc-text-muted)");
   assert.equal(px(won.get("font-size").value, env), 13);
   assert.equal(px(won.get("gap").value, env), 8);
-  assert.deepEqual(words(won.get("padding-inline").value).map((w) => px(w, env)), [10.4, 6.4]);
+  assert.deepEqual(words(won.get("padding-inline").value).map((w) => px(w, env)), [12, 8], "Lumen's 10.4 / 6.4 on the grid");
   assert.equal(won.get("width").value, "100%", "it fills the centre track");
   for (const [prop, v] of [["appearance", "none"], ["font", "inherit"], ["margin", "0"]]) assert.equal(won.get(prop)?.value, v, prop);
   assert.match(won.get("transition").value, /^background-color var\(--sl-motion-fast/);
-  assert.equal(px(cascaded(RULES_A, p.keys).get("gap").value, env), 3);
+  assert.equal(px(cascaded(RULES_A, p.keys).get("gap").value, env), 4);
   const text = cascaded(RULES_A, p["cmd text"]);
   for (const [prop, v] of [["flex", "1"], ["min-width", "0"], ["text-align", "start"], ["overflow", "hidden"], ["text-overflow", "ellipsis"], ["white-space", "nowrap"]]) assert.equal(text.get(prop)?.value, v, prop);
 });

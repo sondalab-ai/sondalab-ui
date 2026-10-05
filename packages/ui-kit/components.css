@@ -1456,8 +1456,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   display: flex;
   align-items: center;
   gap: var(--sl-space-3, 0.75rem);
-  padding-block: 0.8rem 0.9rem;
-  padding-inline: var(--sl-space-4, 1rem) 0.8rem;
+  padding-block: var(--sl-space-3, 0.75rem) var(--sl-space-4, 1rem);
+  padding-inline: var(--sl-space-4, 1rem) var(--sl-space-3, 0.75rem);
   font-family: var(--sl-font-sans, system-ui, sans-serif);
   font-size: var(--sl-text-sm, 0.875rem);
   line-height: var(--sl-line-normal, 1.5);
@@ -1478,7 +1478,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   content: "";
   position: absolute;
   inset-block-start: 0;
-  inset-inline: 14px 50%;
+  inset-inline: var(--sl-space-4, 1rem) 50%;
   height: 1px;
   background-image: linear-gradient(var(--_sl-seam-dir, 90deg), var(--_sl-tone), transparent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--_sl-tone) calc(50% * min(1, var(--slc-glow) * 1000)), transparent);
@@ -1495,8 +1495,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   flex: none;
   display: grid;
   place-items: center;
-  width: 1.625rem;
-  height: 1.625rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   color: var(--_sl-tone);
   background-color: color-mix(in srgb, currentColor 16%, transparent);
@@ -1526,7 +1526,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    bottom edge, between the corners. */
 .sl-progress.sl-toast__timer {
   position: absolute;
-  inset-inline: 14px;
+  inset-inline: var(--sl-space-4, 1rem);
   inset-block-end: 0;
   width: auto;
   height: 2px;
@@ -1594,7 +1594,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   margin: 0;
   /* Lumen's tab (0.34): 13px, 11.2px in, r7 -- off the kit's radius and
      spacing scales, as the workbench chrome it lives in is (L2). */
-  padding: 0 0.7rem;
+  padding: 0 var(--sl-space-3, 0.75rem);
   font-size: 0.8125rem;
   border: 0;
   border-radius: 7px;
