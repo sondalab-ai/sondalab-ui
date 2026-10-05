@@ -1568,16 +1568,21 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   gap: var(--sl-space-2, 0.5rem);
   height: 1.75rem;
   margin: 0;
-  padding: 0 var(--sl-space-3, 0.75rem);
+  /* Lumen's tab (0.34): 13px, 11.2px in, r7 -- off the kit's radius and
+     spacing scales, as the workbench chrome it lives in is (L2). */
+  padding: 0 0.7rem;
+  font-size: 0.8125rem;
   border: 0;
-  border-radius: var(--sl-radius-sm, 6px);
+  border-radius: 7px;
   color: var(--slc-text-muted);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
-.sl-tabs--tile .sl-tabs__tab:hover { color: var(--slc-text); background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
+/* Hover lifts the ink one step, to the secondary; the active tab keeps the
+   primary, so the two never read alike. */
+.sl-tabs--tile .sl-tabs__tab:hover { color: var(--slc-text-secondary); background-color: color-mix(in srgb, var(--slc-text) 5%, transparent); }
 .sl-tabs--tile .sl-tabs__tab[aria-selected="true"] {
   --_sl-depth: var(--slc-depth-flat);
   color: var(--slc-text);
@@ -1619,7 +1624,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   gap: var(--sl-space-1, 0.25rem);
   height: 1.75rem;
   padding-inline-end: var(--sl-space-2, 0.5rem);
-  border-radius: var(--sl-radius-sm, 6px);
+  border-radius: 7px;
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     box-shadow var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);

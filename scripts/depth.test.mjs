@@ -487,7 +487,18 @@ test("tile tabs: no rule under the strip, no underline, a flat tile, the dot and
   // the shared focus ring covers the tab, and the outline follows its 6px
   const ring = RULES.find((r) => /outline: var\(--sl-focus-ring-width/.test(r.body));
   assert.ok(ring.selector.includes(".sl-tabs__tab:focus-visible"));
-  assert.equal(decl(tab, "border-radius"), "var(--sl-radius-sm, 6px)");
+  // Lumen's tab (0.34): r7, 13px at 500, 11.2px in, and hover lifts the ink
+  // to the secondary, not the primary (the active tab keeps the primary)
+  assert.equal(decl(tab, "border-radius"), "7px");
+  assert.equal(decl(tab, "font-size"), "0.8125rem");
+  assert.equal(decl(tab, "padding"), "0 0.7rem");
+  assert.equal(decl(rule(".sl-tabs__tab"), "font-weight"), "500");
+  assert.match(rule(".sl-tabs--tile .sl-tabs__tab:hover"), /(?:^|;)\s*color:\s*var\(--slc-text-secondary\)/);
+  assert.equal(decl(rule(".sl-tabs--tile .sl-tabs__item"), "border-radius"), "7px", "the wrapper is the same tile");
+  // the focus rule rounds square hosts to 6px; the tile tab keeps its own 7,
+  // because its rule comes later at the same weight
+  const at = (sel) => css.indexOf(`${sel} {`);
+  assert.ok(at(".sl-tabs--tile .sl-tabs__tab") > css.indexOf(".sl-tabs__tab:focus-visible,\n.sl-breadcrumb__item:focus-visible"), "the tile tab's radius outranks the soft ring's");
 });
 
 // ── the keycap in a glass primary ──────────────────────────────────────────
