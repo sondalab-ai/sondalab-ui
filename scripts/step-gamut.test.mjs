@@ -66,8 +66,9 @@ test("the hover and press step stays inside sRGB for every colour, lightened or 
 
 // The accent fill's edge inside an inversion band (ui-kit 0.36.2): the fill
 // held to the mid-tones, oklch L 0.55-0.59, its chroma in proportion toward
-// black and eased toward white as the step above eases it. Read off the
-// band's own block in components.css, at the kit's shade step.
+// black and eased toward white by the square of what is left of the way (a
+// plain calc(), where the step above takes a 1.5 power through pow()). Read
+// off the band's own block in components.css, at the kit's shade step.
 test("the band's fill edge stays inside sRGB for every colour, at oklch L 0.55-0.59", () => {
   const css = readFileSync(resolve(HERE, "../packages/ui-kit/components.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const band = css.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];

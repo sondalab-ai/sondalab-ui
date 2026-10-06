@@ -133,7 +133,10 @@
      fill that finds it: the wash in shade, its edge until 0.36.1, read
      1.01-1.36:1 on the page and 1.04-1.41 in a band. Its state is the seam
      (THE SEAM, below) or, on a chip, the filled dot. High contrast keeps
-     the accent here (below). */
+     the accent here (below). NO MARGIN: against its own wash (12% of the
+     accent over the canvas) it reads 3.003:1 for local-agents on paper, so
+     a deeper wash, a darker light canvas or a weaker control edge tips it
+     under 3:1 (lumen-controls.test.mjs holds it). */
   --slc-edge-pressed:  var(--slc-edge-control);
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* THE ACCENT AS A FILL THAT CARRIES A LABEL (0.32): the primary, a checked
@@ -1927,13 +1930,16 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
      does, held to the mid-tones: the fill one shade step down, floored at
      oklch L 0.55 and capped at 0.59 (paper's own cap), which reads 3:1
      against a dark band and a light one alike -- no theme branch, so a
-     Tier B band gets it too. Its chroma follows its lightness (in
-     proportion toward black, eased toward white as the hover step does), so
-     it stays in sRGB. A MACRO, like the label's: channels a relative colour
+     Tier B band gets it too. Its chroma follows its lightness, so it stays
+     in sRGB: in proportion toward black, and toward white eased by the
+     square of what is left of the way. The hover step eases by its 1.5
+     power, which is less; a square is plain calc(), so this edge needs no
+     pow() (Chrome 120) and holds at the relative-colour floor. A MACRO,
+     like the label's: channels a relative colour
      substitutes, oklch(from <fill> var(--_sl-band-edge)). The kit's filled
      controls draw it in every state (the fill set in a band, below); the
      public role is re-derived for a fill a product draws itself. */
-  --_sl-band-edge: min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) calc(c * min(min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) / l, pow(max(0, 1 - (min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) - l) / max(1 - l, 0.001)), 1.5))) h;
+  --_sl-band-edge: min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) calc(c * min(min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) / l, max(0, 1 - (min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) - l) / max(1 - l, 0.001)) * max(0, 1 - (min(max(calc(l - var(--slc-shade-step)), 0.55), 0.59) - l) / max(1 - l, 0.001)))) h;
   --slc-edge-accent:   oklch(from var(--slc-accent-fill, var(--slc-accent)) var(--_sl-band-edge));
 }
 

@@ -944,8 +944,9 @@
    Where the layers are hidden (an opt-out region, forced colours) the host's
    own seam is the one that shows. Not in an inversion band: there the tint is
    the page's canvas over the band, a mid-grey on which neither the seam
-   (1.7-3.1:1 drawn here, 2.5-4.2 under the tint) nor the pressed label
-   (1.4-2.7, as on 0.36.1) reaches its floor -- a known gap of glass in a
+   nor the pressed label (1.4-2.7, as on 0.36.1) reaches its floor on the
+   light theme's band: the seam reads 2.3-2.6 under the tint there (3.2-3.5
+   on the dark theme's), and 1.7-3.1 drawn here. A known gap of glass in a
    band, so keep a band's toggles bare. */
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary):not(.sl-invert *) > .sl-glass__specular,
 .sl-icon-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-invert *) > .sl-glass__specular {

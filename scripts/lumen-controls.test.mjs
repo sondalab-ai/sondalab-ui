@@ -774,6 +774,9 @@ test("in a band a checked check box, radio or switch is found by its edge at 3:1
       const offFace = over(paint(ctx.rules, off, fillOf(ctx.rules, off)), ground);
       const mark = over(paint(ctx.rules, on, "var(--_sl-on-fill)"), fill);
       if (ratio(edge, ground) < 3) out.push(`${where}: edge on the band ${ratio(edge, ground).toFixed(2)}`);
+      // and against the unchecked box's own face beside it (its sunken wash, or
+      // the track's): 3.02 on the dark theme's light band (introspect), thin
+      if (ratio(edge, offFace) < 3) out.push(`${where}: edge against the unchecked face ${ratio(edge, offFace).toFixed(2)}`);
       if (ratio(mark, fill) < 3) out.push(`${where}: mark on the fill ${ratio(mark, fill).toFixed(2)}`);
       // checked against unchecked: on the light theme's dark band the fill
       // says it (a dark tick on amber is near the band's dark well there); on
@@ -793,6 +796,8 @@ test("the band's fill edge is written on the fill, held to the mid-tones with no
   const macro = band.match(/--_sl-band-edge:\s*([^;]+);/)?.[1] ?? "";
   assert.match(macro, /^min\(max\(calc\(l - var\(--slc-shade-step\)\), 0\.55\), 0\.59\) /, "the fill one shade step down, floored at 0.55, capped at 0.59");
   assert.doesNotMatch(macro, /currentColor|data-sl-theme|--sl-accent-band-text-lmax/i);
+  // plain calc(): pow() is Chrome 120, a version above the relative-colour floor (Chrome 119)
+  assert.doesNotMatch(macro, /\bpow\(|\bsqrt\(/, "no pow() or sqrt() in the band's edge");
   assert.match(band, /--slc-edge-accent:\s*oklch\(from var\(--slc-accent-fill, var\(--slc-accent\)\) var\(--_sl-band-edge\)\);/, "the public role, re-derived for the band");
   assert.match(read("components.css"), /\.sl-invert :is\(\.sl-btn--primary, \.sl-check__box, \.sl-radio__box, \.sl-switch__track\),\n\.sl-invert \.sl-btn--primary:is\(:hover, :active\):not\(:disabled\) \{\n  --_sl-fill-edge: oklch\(from var\(--_sl-fill\) var\(--_sl-band-edge\)\);\n\}/);
 });

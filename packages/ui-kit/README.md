@@ -26,11 +26,11 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
-**0.36.2 — state indicators and boundaries read 3:1.** Three gaps predate this patch and fell under the owner's 3:1 rule for boundaries and state indicators (text stays at 4.5:1). A pressed toggle lost its edge. A primary in an inversion band had no edge. A checked check box, radio or switch in a band had none either. No token, role or class is added, renamed or removed, so palette-py is unchanged. One role changes value: `--slc-edge-pressed`. The changes are in `components.css`, plus two rules in `workbench.css` (the title bar's dot) and one in `effects.css` (the seam on glass). Figures are from Chrome 154, every registered product, Tier A and Tier B.
+**0.36.2 — state indicators and boundaries read 3:1.** Three gaps predate this patch and fell under the owner's 3:1 rule for boundaries and state indicators (text stays at 4.5:1). A pressed toggle lost its edge. A primary in an inversion band had no edge. A checked check box, radio or switch in a band had none either. No token, role or class is added, renamed or removed, so palette-py is unchanged. Two roles change value. `--slc-edge-pressed` changes everywhere. `--slc-edge-accent` changes only inside `.sl-invert > *`, where the band re-derives it; its page value is unchanged, so a product that declares it at its root (sondalab.eu's product page, spexr's overrides) keeps its own. The changes are in `components.css`, plus two rules in `workbench.css` (the title bar's dot) and one in `effects.css` (the seam on glass). Figures are from Chrome 154, every registered product, Tier A and Tier B.
 
 - **A pressed toggle keeps the one control edge.** This covers a plain, secondary or icon button with `aria-pressed="true"`, a chip that is on, and a title-bar toggle. Their edge was `--slc-edge-pressed`, the 12% wash in shade: 1.01–1.36:1 on the page and 1.04–1.41 in a band, so pressing a toggle lost its boundary.
   - `--slc-edge-pressed` is now `--slc-edge-control`, the band's own in a band. High contrast keeps the accent.
-  - It reads ≥ 3.51:1 on the page and ≥ 3.98 in a band. Against the toggle's own wash it reads ≥ 3.00 on the page (local-agents, on paper) and ≥ 3.87 in a band.
+  - It reads ≥ 3.51:1 on the page and ≥ 3.98 in a band. Against the toggle's own wash it reads ≥ 3.87 in a band and ≥ 3.00 on the page. That page figure is local-agents on paper, at 3.003, with no margin: any change to the wash (12% of the accent) or to the light canvas tips it under. `scripts/lumen-controls.test.mjs` holds it.
   - Hovered, a pressed plain or secondary button steps to the hover edge, as every control does. The deeper 20% wash had taken the rest edge to 2.70:1 against it. It now reads ≥ 4.86. High contrast keeps its one edge (≥ 4.39 in its band).
 - **"On" is a mark the toggle at rest does not draw.** Against the toggle at rest, the wash and the accent ink read only 1.0–2.6:1, and the accent edge would have read at the neutral edge's lightness. So:
   - **A pressed button carries the seam,** the chosen segment's: a 2px line of the accent (`--slc-seam`), 40% wide, 3px above the bottom edge. On a small button it sits 1px above, which keeps it clear of the descenders.
@@ -43,20 +43,22 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
   - Chroma follows lightness, so the edge stays in sRGB for every colour.
   - The fill and the label are unchanged.
   - The public `--slc-edge-accent` is re-derived the same way in a band.
+  - It is plain `calc()`. Toward white the chroma eases by a square, not by the 1.5 power the hover step takes through `pow()`, so the edge holds at the relative-colour floor (Chrome 119); `pow()` is Chrome 120.
 
   | Band, edge against the band, tightest product | 0.36.1 | 0.36.2 |
   |---|---|---|
   | Dark theme's light band (introspect's mint) | 1.71 | 3.28 |
   | High contrast's white band | 1.07 | 4.03 |
-  | Light theme's dark band, hovered and pressed (local-agents) | 1.92 / 1.58 | 3.51 (spexr, every state) |
-  | Light theme's dark band, danger primary pressed | 1.29 | 3.49 |
+  | Light theme's dark band, hovered and pressed (local-agents) | 1.92 / 1.58 | 3.49 (spexr, every state) |
+  | Light theme's dark band, danger primary pressed | 1.29 | 3.52 |
 - **A checked box in a band now reads 3:1 against the band and against the unchecked box.** The edge is the boundary; the state is the fill or the mark, whichever contrasts with the unchecked box. This is the light page's own standard: an amber check reads 1.65:1 on paper and is found by its edge and its tick.
-  - High contrast's band: the yellow fill still reads 1.07:1 on white. The edge reads 4.03 (it was 1.07), and the black tick, dot or knob reads 19.3:1 where the unchecked box is.
-  - The dark theme's light band: the edge reads ≥ 3.28 (introspect; it was 1.71). A light fill's dark tick reads ≥ 15.2:1 against the unchecked box; spexr's deep fill reads 4.17 by itself.
-  - The light theme's dark band: the edge reads ≥ 3.51 (it was 2.37, local-agents). A light fill reads ≥ 4.81 against the unchecked box; a dark fill's white tick ≥ 16.6.
-- **Known gap: glass in a band.** A glass pane in an inversion band is tinted with the page's canvas. On the light theme's dark band that makes a mid-grey face.
+  - Each band below gives two figures for the checked box's edge: against the band's ground, and against the unchecked box's own face beside it (its sunken wash, or the off track's).
+  - High contrast's band: the yellow fill still reads 1.07:1 on white. The edge reads 4.03 against the band (it was 1.07) and 3.70 against the unchecked face. The black tick, dot or knob reads 19.3:1 where the unchecked box is.
+  - The dark theme's light band: the edge reads ≥ 3.28 against the band (introspect; it was 1.71) and ≥ 3.01 against the unchecked face (introspect, thin; a test holds it). A light fill's dark tick reads ≥ 15.2:1 against the unchecked box; spexr's deep fill reads 4.17 by itself.
+  - The light theme's dark band: the edge reads ≥ 3.49 against the band (spexr; it was 2.37, local-agents) and ≥ 3.21 against the unchecked face. A light fill reads ≥ 4.81 against the unchecked box; a dark fill's white tick ≥ 16.6.
+- **Known gap: glass in a band.** A glass pane in an inversion band is tinted with the page's canvas, which makes a mid-grey face.
   - On that face, a pressed glass toggle's label already read 1.4–2.7:1 on 0.36.1, and an unpressed one 4.05 (spexr).
-  - The seam there stays the host's, under the tint: 2.5–4.2:1, varying by a few tenths between renders.
+  - The seam there stays the host's, under the tint. On the light theme's band it is under 3:1 for every product, against the tint face with the glass built (`mount()`): spexr 2.27, local-agents 2.41, introspect 2.45, default 2.55. On the dark theme's band it reads 3.17–3.46.
   - Keep a band's toggles bare, as the catalog already asks of a band's button group.
 - **Not changed:** on the dark page, spexr's pressed primary still reads 2.44:1 (fill) and 1.76 (edge) against the canvas. This was a known limit in 0.32.1 and is outside these three gaps.
 - **What each product sees at its next kit upgrade.** Of the four, only introspect and spexr have a control this patch changes, and none puts a primary or a check in an `sl-invert` band.
