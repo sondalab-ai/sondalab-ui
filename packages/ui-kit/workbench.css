@@ -174,17 +174,23 @@
 }
 .sl-titlebar__keys { flex: none; display: inline-flex; gap: var(--sl-space-1, 0.25rem); }
 /* At rest on the surface; a pressed toggle (aria-pressed, the right panel's)
-   keeps the kit's pressed tint and edge, which says its state. */
+   keeps the kit's pressed tint, edge and seam, and the seam says its state
+   (components.css, 0.36.2). */
 .sl-icon-btn.sl-titlebar__btn:not([aria-pressed="true"]) { background-color: var(--slc-surface); }
 /* Lumen's 6px dot, 5px in from the corner, ringed 2px in the surface so it
    reads apart from the glyph. The labelled fill where a product sets one,
    the accent as a mark (its text reading, >= 3:1) where it does not.
-   Declared at hover's weight too: the icon button's hover resets the
-   background shorthand. */
-.sl-icon-btn.sl-titlebar__btn--dot,
-.sl-icon-btn.sl-titlebar__btn--dot:hover:not(:disabled) {
+   It is the button's --_sl-layer (0.36.2), so a pressed one draws it under
+   its seam (components.css); unpressed it is the whole image, declared at
+   hover's weight too: the icon button's hover resets the background
+   shorthand. */
+.sl-icon-btn.sl-titlebar__btn--dot {
   --_sl-titlebar-dot: var(--slc-accent-fill, var(--slc-accent-text));
-  background-image: radial-gradient(circle at calc(100% - 8px) 8px, var(--_sl-titlebar-dot) 2.75px, var(--slc-surface) 3.25px 4.75px, transparent 5.25px);
+  --_sl-layer: radial-gradient(circle at calc(100% - 8px) 8px, var(--_sl-titlebar-dot) 2.75px, var(--slc-surface) 3.25px 4.75px, transparent 5.25px);
+}
+.sl-icon-btn.sl-titlebar__btn--dot:not([aria-pressed="true"]),
+.sl-icon-btn.sl-titlebar__btn--dot:not([aria-pressed="true"]):hover:not(:disabled) {
+  background-image: var(--_sl-layer);
   background-repeat: no-repeat;
 }
 

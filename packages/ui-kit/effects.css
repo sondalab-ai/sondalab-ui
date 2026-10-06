@@ -936,6 +936,22 @@
    background, so the pressed wash is rebound as the pane's fill instead. */
 .sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary),
 .sl-icon-btn.sl-fx-glass[aria-pressed="true"] { --slfx-fill: var(--slc-accent-subtle); }
+/* ...and its seam (components.css, 0.36.2). The pane's layers paint over the
+   host's own background, where the seam is, and the tint veiled it to
+   2.4-2.9:1 on paper and on the light theme's dark band. The specular layer
+   paints nothing of its own and sits above the tint and below the label, so
+   on a built pane it draws the seam again, at the host's own size and place.
+   Where the layers are hidden (an opt-out region, forced colours) the host's
+   own seam is the one that shows. Not in an inversion band: there the tint is
+   the page's canvas over the band, a mid-grey on which neither the seam
+   nor the pressed label (1.4-2.7, as on 0.36.1) reaches its floor on the
+   light theme's band: the seam reads 2.3-2.6 under the tint there (3.2-3.5
+   on the dark theme's), and 1.7-3.1 drawn here. A known gap of glass in a
+   band, so keep a band's toggles bare. */
+.sl-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-btn--primary):not(.sl-invert *) > .sl-glass__specular,
+.sl-icon-btn.sl-fx-glass[aria-pressed="true"]:not(.sl-invert *) > .sl-glass__specular {
+  background: linear-gradient(var(--slc-seam), var(--slc-seam)) no-repeat var(--_sl-toggle-seam-position, 50% calc(100% - 3px)) / var(--_sl-toggle-seam-size, 40% 2px);
+}
 .sl-badge.sl-fx-glass { --slfx-fill: color-mix(in srgb, var(--slc-text) 7%, transparent); }
 .sl-badge--success.sl-fx-glass,
 .sl-badge--warning.sl-fx-glass,
