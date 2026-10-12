@@ -2037,7 +2037,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-breadcrumb__item[aria-current]:not([aria-current="false"]) { color: var(--slc-text); }
-.sl-breadcrumb__sep { color: var(--slc-text-muted); opacity: 0.6; }
+.sl-breadcrumb__sep { color: var(--slc-text-muted); }
 
 /* The hairline technique again: a 1px gap over the line colour is the rule
    between buttons, so no button carries a border on the joining edge and
@@ -2361,7 +2361,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   text-transform: uppercase;
   color: var(--slc-text);
 }
-.sl-lockup__dot { color: var(--slc-accent); }
+.sl-lockup__dot { color: var(--slc-accent-text); }
 
 /* Three corrections, all for the small end of the scale (design-language L3):
    the mark is sized to the INSCRIBED CROP CIRCLE (~60% of the canvas wide),
