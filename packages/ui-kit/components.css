@@ -886,6 +886,9 @@
    part of the input's name, read once as the name and again as its
    description. Neither rule here depends on which element is which. */
 .sl-field { display: flex; flex-direction: column; gap: var(--sl-space-2, 0.5rem); }
+/* Opt-in stack: consecutive fields in a form read as separate, not as one
+   block whose hint runs into the next label. */
+.sl-field-stack { display: flex; flex-direction: column; gap: var(--sl-space-4, 1rem); }
 /* A field's name, read with the control: sentence case in the sans, in the
    secondary ink (0.30; it was a mono uppercase micro label). */
 .sl-field__label {
@@ -1658,9 +1661,14 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   align-items: center;
   gap: 2px;
   border-bottom: 0;
+  /* Editor tabs never wrap to a second row: they scroll instead. */
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .sl-tabs--tile .sl-tabs__tab {
   display: inline-flex;
+  flex: none;
+  white-space: nowrap;
   align-items: center;
   gap: var(--sl-space-2, 0.5rem);
   height: 1.75rem;
