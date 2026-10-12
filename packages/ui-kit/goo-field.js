@@ -118,6 +118,10 @@ function setAttr(el, name, value) {
 function stampIndex(el, i) {
   const v = String(i);
   if (el.style.getPropertyValue("--slfx-i") !== v) el.style.setProperty("--slfx-i", v);
+  // Neighbours swing against each other. Parity of the collection index, not
+  // :nth-child — wrapped members would all land in one bucket (see above).
+  const dir = i % 2 ? "reverse" : "normal";
+  if (el.style.getPropertyValue("--slfx-dir") !== dir) el.style.setProperty("--slfx-dir", dir);
 }
 
 /** Read a length binding off the container, in CSS pixels.
@@ -577,7 +581,7 @@ export function gooField(container) {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       container.classList.remove("is-goo-live");
-      for (const el of collect()) el.style.removeProperty("--slfx-i");
+      for (const el of collect()) { el.style.removeProperty("--slfx-i"); el.style.removeProperty("--slfx-dir"); }
       unweld();
       svg.remove();
     },

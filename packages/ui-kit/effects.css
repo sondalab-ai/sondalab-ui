@@ -2398,8 +2398,9 @@
     animation-delay: calc(var(--slfx-i, 0) * -2.9s);
   }
   /* Neighbours swing against each other, so the neck between a pair pulses
-     (thins, parts, re-forms) instead of the pair sliding together. */
-  .sl-fx-goo--drift .sl-fx-goo__member:nth-child(even) { animation-direction: reverse; }
+     (thins, parts, re-forms) instead of the pair sliding together. goo-field.js
+     stamps --slfx-dir from the member's index in the field. */
+  .sl-fx-goo--drift .sl-fx-goo__member { animation-direction: var(--slfx-dir, normal); }
 }
 
 @keyframes slfx-goo-drift {
