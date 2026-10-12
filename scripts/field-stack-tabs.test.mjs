@@ -23,3 +23,29 @@ test("the tile tab list scrolls and its tabs never wrap or shrink", () => {
   assert.match(tab, /flex:\s*none/);
   assert.match(tab, /white-space:\s*nowrap/);
 });
+
+// ui-kit 0.36.5
+import { readFileSync as _read } from "node:fs";
+const text = (f) => _read(resolve(KIT, f), "utf8");
+
+test("the goo drift's direction comes from the stamped index, never :nth-child", () => {
+  assert.doesNotMatch(text("effects.css"), /sl-fx-goo__member:nth-child/);
+  assert.match(text("effects.css"), /animation-direction:\s*var\(--slfx-dir,\s*normal\)/);
+  const js = text("goo-field.js");
+  assert.match(js, /setProperty\("--slfx-dir"/);
+  assert.match(js, /removeProperty\("--slfx-dir"\)/, "and it is cleaned up with --slfx-i");
+});
+
+test("the scrolling tile strip keeps block room so its rings are not clipped", () => {
+  const b = body(".sl-tabs--tile");
+  assert.match(b, /padding-block:\s*4px/);
+  assert.match(b, /margin-block:\s*-4px/);
+});
+
+test("the catalog's goo example colours members by class, not inline background", () => {
+  const md = text("agent/catalog.md");
+  const at = md.indexOf("sl-fx-goo--drift");
+  assert.ok(at > 0);
+  const snippet = md.slice(at, md.indexOf("```", at));
+  assert.doesNotMatch(snippet, /sl-fx-goo__member"[^>]*style="[^"]*background/);
+});

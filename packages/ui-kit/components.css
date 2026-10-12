@@ -1661,9 +1661,12 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   align-items: center;
   gap: 2px;
   border-bottom: 0;
-  /* Editor tabs never wrap to a second row: they scroll instead. */
+  /* Editor tabs never wrap to a second row: they scroll instead. Scrolling on
+     x makes y clip too, so the strip carries its own block room for the focus
+     ring and the active tile's ring, and gives it back in the margin. */
   overflow-x: auto;
-  scrollbar-width: none;
+  padding-block: 4px;
+  margin-block: -4px;
 }
 .sl-tabs--tile .sl-tabs__tab {
   display: inline-flex;
