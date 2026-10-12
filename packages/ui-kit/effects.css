@@ -182,7 +182,7 @@
      out near 14px thins to a neck and parts again. Half the weld means the
      gap between two members swings by a full weld over a cycle. Any larger and
      members start reading as loose rather than as suspended. */
-  --slfx-goo-drift: 6px;
+  --slfx-goo-drift: 7px;
 }
 
 /* ══ KILL SWITCHES ═══════════════════════════════════════════════════════════
@@ -2394,16 +2394,19 @@
    the loop; see `drifts` there. */
 @media (prefers-reduced-motion: no-preference) {
   .sl-fx-goo--drift .sl-fx-goo__member {
-    animation: slfx-goo-drift calc(17s + var(--slfx-i, 0) * 2.3s) ease-in-out infinite;
-    animation-delay: calc(var(--slfx-i, 0) * -6.1s);
+    animation: slfx-goo-drift calc(7s + var(--slfx-i, 0) * 1.7s) ease-in-out infinite;
+    animation-delay: calc(var(--slfx-i, 0) * -2.9s);
   }
+  /* Neighbours swing against each other, so the neck between a pair pulses
+     (thins, parts, re-forms) instead of the pair sliding together. */
+  .sl-fx-goo--drift .sl-fx-goo__member:nth-child(even) { animation-direction: reverse; }
 }
 
 @keyframes slfx-goo-drift {
   0%   { translate: 0 0; }
-  25%  { translate: var(--slfx-goo-drift) calc(var(--slfx-goo-drift) * -0.55); }
-  50%  { translate: calc(var(--slfx-goo-drift) * 0.2) calc(var(--slfx-goo-drift) * -1); }
-  75%  { translate: calc(var(--slfx-goo-drift) * -0.8) calc(var(--slfx-goo-drift) * -0.4); }
+  20%  { translate: var(--slfx-goo-drift) calc(var(--slfx-goo-drift) * -0.6); }
+  45%  { translate: calc(var(--slfx-goo-drift) * 0.3) calc(var(--slfx-goo-drift) * -1); }
+  70%  { translate: calc(var(--slfx-goo-drift) * -1) calc(var(--slfx-goo-drift) * -0.3); }
   100% { translate: 0 0; }
 }
 

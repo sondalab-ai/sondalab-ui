@@ -113,6 +113,7 @@ With a hint or an error line, the host is a `<div>` and the label names the inpu
   <p class="sl-field__error" id="accent-error">Six hex digits, e.g. a registry value.</p>
 </div>
 ```
+Do: wrap consecutive fields in `sl-field-stack` (a column with `--sl-space-4` between fields).
 Don't: put `sl-field__hint` or `sl-field__error` inside a wrapping `<label class="sl-field">`. Everything inside a label becomes the input's accessible name, so the line is read as part of the name and then again as its description.
 
 Consumes: `--slc-sunken`, `--slc-depth-sunk`, `--slc-edge-control`, `--slc-edge-control-hover`, `--slc-text`, `--slc-text-muted`, `--slc-danger`, `--slc-focus`. The input is a well (0.32): the sunken rung and the sunk inset cast inside the one control edge; focused (on any focus, a pointer's included), the border takes the ring's colour and the halo rings it. Do: keep the shared focus ring. `sl-field__control` is the wrapper an effect binds to — see Glass and Aurora below; without an effect the field needs no wrapper.
@@ -751,11 +752,11 @@ A container takes no swell at all — one yielding under the pointer reads as a 
 Consumes: nothing of its own — the skin is painted in the host's computed background and border colours. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle. Don't: put `--drop` on a text button — the owner rejected the gooey there; use `sl-fx-glass--pane`.
 
 ### Goo — `sl-fx-goo` + `sl-fx-goo__member`
-These are one substance. A container carries `sl-fx-goo` and owns one injected silhouette layer; every `sl-fx-goo__member` inside it contributes its own rounded box, and members within `--slfx-goo-weld` of one another grow a soft neck between them. Static at rest — it answers the layout, not the pointer, so it marks a *set* (a tag row, a gallery of cards or pictures, a cluster of draggable chips) and never a state. Driven by `mount()`; without it the members simply render unmerged, which is the correct Tier 0. The content is never filtered: the members ride crisp on top of the layer. Substrate: **A** App/Page.
+These are one substance. A container carries `sl-fx-goo` and owns one injected silhouette layer; every `sl-fx-goo__member` inside it contributes its own rounded box, and members within `--slfx-goo-weld` of one another grow a soft neck between them. Laid out and welded at rest — it answers the layout, not the pointer, so it marks a *set* (a tag row, a gallery of cards or pictures, a cluster of draggable chips) and never a state. Add `sl-fx-goo--drift` and members wander around where they were laid out (7px, each with its own period, neighbours in opposition), so a pair's neck thins, parts and re-forms; it is refused under reduced motion, which gets the static weld. Driven by `mount()`; without it the members simply render unmerged, which is the correct Tier 0. The content is never filtered: the members ride crisp on top of the layer. Substrate: **A** App/Page.
 ```html
-<div class="sl-fx-goo" style="display:flex; gap:.5rem">
-  <div class="sl-card sl-fx-goo__member">daos</div>
-  <div class="sl-card sl-fx-goo__member">introspect</div>
+<div class="sl-fx-goo sl-fx-goo--drift" style="display:flex; gap:.75rem; padding:2.5rem; --slfx-goo-weld: 20px">
+  <div class="sl-card sl-fx-goo__member" style="background: color-mix(in srgb, var(--slc-accent) 40%, var(--slc-surface))">daos</div>
+  <div class="sl-card sl-fx-goo__member" style="margin-top:1.25rem; background: color-mix(in srgb, var(--slc-info) 40%, var(--slc-surface))">introspect</div>
 </div>
 ```
 Bind `--slfx-goo-weld` (default `14px`) — the largest gap between two **members, as laid out**, that still welds, measured **edge to edge between facing sides**, so a grid's diagonals stand further apart than its `gap` and stay open. `--slfx-goo-reach` (default `3px`) is the rim the substance shows past a member with no neighbour, and a floor rather than a target. `--slfx-goo-soft` (default `5px`) caps the blur: dilation and blur both close a gap, but dilation preserves the outline while blur melts it, so raise `soft` for a more liquid neck and lower it for a crisper one. `--slfx-goo-fill` is the substance every member stands on.
