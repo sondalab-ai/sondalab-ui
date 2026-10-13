@@ -1120,40 +1120,99 @@ test("glass panes and press hosts keep the colour transitions", () => {
   }
 });
 
-// Owner, 2026-10-01: a control's colour change travels (INK). Tier 1 only, and
-// the plain fade is what stands wherever the layer is not injected.
-test("ink: the wash travels on a registered reach, only under no-preference, never in high contrast or opt-out", () => {
-  assert.match(effects, /@property\s+--slfx-ink-r\s*\{[^}]*syntax:\s*"<percentage>"/);
-  assert.match(effects, /@property\s+--slfx-ink-a\s*\{[^}]*syntax:\s*"<angle>"/);
+// Owner, 2026-10-13: ink is a pool of light under the pointer (the lab's
+// "viscous light"), replacing the 0.26–0.36.5 ring that swept in and out.
+// Tier 1 only, and the plain fade is what stands wherever the layer is not
+// injected.
+test("ink: the pool grows on a registered length, only under no-preference, never in high contrast or opt-out", () => {
+  assert.match(effects, /@property\s+--slfx-ink-r\s*\{[^}]*syntax:\s*"<length>"/);
   const motion = effects.slice(effects.indexOf("@media (prefers-reduced-motion: no-preference) {\n  .sl-fx-ink::before"));
   assert.ok(motion.length > 0, "the ink's motion sits inside the no-preference query");
-  assert.match(motion, /--slfx-ink-r:\s*230%/);
+  assert.match(motion, /--slfx-ink-r:\s*var\(--slfx-ink-size, 60px\)/);
   assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \.sl-fx-ink,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\) > \.sl-fx-ink\s*\{\s*display:\s*none;/);
-  assert.match(effects, /\.sl-fx-ink::before\s*\{[^}]*filter:\s*url\(#sl-fx-ink-noise\)/);
+});
+
+// Owner, 2026-10-13: the iridescent band (hues ±110°) went with the ring.
+// The 2026-10-02 ruling dropped rainbow from the kit's defaults and had missed
+// ink; the pool is the control's own hue and nothing else.
+test("ink: one pool, no iridescence, no ring", () => {
+  assert.doesNotMatch(effects, /\.sl-fx-ink::after/, "ink paints no second layer");
+  assert.doesNotMatch(effects, /--slfx-ink-a\b/, "ink has no turning angle");
+  const pool = effects.match(/\n\.sl-fx-ink::before \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(pool, /radial-gradient\(circle max\(var\(--slfx-ink-r\), 1px\) at var\(--slfx-ink-x, 50%\) var\(--slfx-ink-y, 50%\),\s*oklch/, "the pool is full at its centre, not a ring");
+  assert.doesNotMatch(pool, /calc\(h [-+]/, "the pool never turns the hue");
 });
 
 // Regression, 2026-10-01: 0.26.0's ink held each control at rest and painted
 // its own accent tint, so spexr's red danger hover came out indigo. Ink owns no
 // colour: no rule keyed on the ink layer may set a host's fill, border or
-// label, and the front is transparent on both sides of its band.
-test("ink owns no colour: it never sets a host's paint, and its front is a band", () => {
+// label, and the pool paints nothing until it is live.
+test("ink owns no colour: it never sets a host's paint, and paints nothing at rest", () => {
   for (const m of effects.matchAll(/([^{}]*\.sl-fx-ink[^{}]*)\{([^}]*)\}/g)) {
     if (!/:has\(> \.sl-fx-ink\)/.test(m[1])) continue;
     assert.doesNotMatch(m[2], /(^|[;\s])(background|background-color|border-color|color|--slfx-fill|--slc-[\w-]+)\s*:/, `${m[1].trim()} paints the host`);
   }
   assert.doesNotMatch(effects, /--slfx-ink-to\b/, "ink has no target colour of its own");
-  const front = effects.match(/\.sl-fx-ink::before\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(front, /transparent calc\(var\(--slfx-ink-r\) - 40%\)[\s\S]*transparent var\(--slfx-ink-r\)/, "the front is transparent on both sides");
+  const pool = effects.match(/\n\.sl-fx-ink::before \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(pool, /opacity:\s*0;/, "at rest the pool paints nothing");
+  const live = effects.match(/\.sl-fx-ink\[data-sl-ink-live\]::before \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(live, /opacity:\s*1;/);
+  assert.match(live, /filter:\s*var\(--slfx-ink-noise, url\(#sl-fx-ink-noise-0\)\)/, "the moving noise is applied only while live");
   assert.match(effectsJs, /function inkTint\(host\)/, "the tint is read off the control");
 });
 
-test("ink: effects.js injects the layer and the noise filter, Tier 1 only, and tracks the crossing", () => {
+// Owner, 2026-10-13: on the light theme's primary the pool was barely visible
+// -- painted in the fill's own colour, it vanished into it. The reading is
+// picked from the ground the pool lies on, never from the theme.
+test("ink: the pool's reading follows its ground, not the theme", () => {
+  const from = effects.indexOf("@property --slfx-ink-r");
+  const ink = effects.slice(from, effects.indexOf(':root[data-sl-theme="high-contrast"] .sl-fx-ink,', from));
+  assert.ok(from > 0 && ink.length > 0, "the ink block is found");
+  assert.doesNotMatch(ink, /data-sl-theme/, "no theme branch in ink");
+  const pool = ink.match(/\n\.sl-fx-ink::before \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(pool, /mix-blend-mode:\s*screen/, "on a fill or a dark ground the pool is a lighter light");
+  const light = ink.match(/\.sl-fx-ink\[data-sl-ink-ground="light"\]::before \{([^}]*)\}/)?.[1] ?? "";
+  assert.match(light, /mix-blend-mode:\s*normal/, "on a light neutral ground the hue is painted");
+  const stops = [...light.matchAll(/oklch\(from var\(--slfx-ink-c\) ([^/]*)\//g)].map((m) => m[1]);
+  assert.equal(stops.length, 3, `the light-ground pool has three stops, found ${stops.length}`);
+  for (const s of stops) assert.match(s, /calc\(c \* 1\.\d+ \+ \.0\d+\) h $/, `light-ground chroma is lifted: ${s}`);
+  assert.match(effectsJs, /ink\.setAttribute\("data-sl-ink-ground", fill \? "fill" : inkGround\(host\)\)/);
+  assert.match(effectsJs, /function inkGround\(host\)/);
+});
+
+test("ink: effects.js injects the layer and the noise fields, Tier 1 only, and trails the pointer", () => {
   assert.match(effectsJs, /const INK_HOSTS = "\.sl-btn, \.sl-icon-btn";/);
   assert.match(effectsJs, /const INK_FILTER = "sl-fx-ink-noise";/);
+  assert.match(effectsJs, /const INK_SEEDS = \[\d+, \d+, \d+, \d+\];/, "four noise fields, so neighbours wobble apart");
   const guard = effectsJs.indexOf("if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;");
   assert.ok(effectsJs.indexOf("injectInks(root);") > guard, "ink is injected after the reduced-motion guard");
   assert.match(effectsJs, /addEventListener\("pointerover", onInkCross/);
   assert.match(effectsJs, /addEventListener\("pointerout", onInkCross/);
+  assert.match(effectsJs, /addEventListener\("pointermove", onInkMove/);
+  assert.match(effectsJs, /if \(ev\.pointerType === "touch"\) return;/, "touch raises no pool");
+  assert.match(effectsJs, /if \(host\.matches\(':disabled, \[aria-disabled="true"\]'\)\) return;/, "a disabled control raises no pool");
+});
+
+// Regression, 2026-10-13 (review): the trailing loop forgot a pool once it had
+// caught up with the exit point, so a pointer back within INK_DRAIN_MS built a
+// fresh pool, cleared a timer it never had, and the old timer then switched
+// the new pool off under the pointer. Only the drain timer forgets a pool, so
+// a re-entry always finds it and cancels the real timer.
+test("ink: re-entering a draining pool keeps it live", () => {
+  const step = effectsJs.slice(effectsJs.indexOf("function inkStep()"), effectsJs.indexOf("function inkTrail()"));
+  assert.doesNotMatch(step, /inkPools\.delete/, "the trailing loop never forgets a pool");
+  const cross = effectsJs.slice(effectsJs.indexOf("function onInkCross(ev)"), effectsJs.indexOf("function onInkMove(ev)"));
+  assert.match(cross, /setTimeout\(\(\) => \{\s*if \(p\.on\) return;\s*inkPools\.delete\(ink\);\s*ink\.removeAttribute\("data-sl-ink-live"\);\s*\}, INK_DRAIN_MS\)/);
+  assert.match(cross, /let p = inkPools\.get\(ink\);/);
+  assert.match(cross, /clearTimeout\(p\.drain\);/);
+});
+
+// Owner, 2026-10-01: on paper a neutral control's ink was grey. A neutral
+// glows in the accent: effects.js passes only a chromatic colour.
+test("ink: a neutral control glows in the accent, never grey", () => {
+  assert.match(effects, /--slfx-ink-c:\s*var\(--slfx-ink-tint, var\(--slc-accent\)\);/);
+  assert.match(effectsJs, /import \{ isChromatic, toSrgb \} from "\.\/colour\.js";/);
+  assert.match(effectsJs, /paints\(v\) && isChromatic\(v\)/);
 });
 
 // Regression, 2026-10-01: .sl-glass set the label at 0-1-0, tying and beating
@@ -1165,26 +1224,6 @@ test("glass sets its label colour at zero specificity", () => {
   assert.doesNotMatch(glass.replace(/\/\*[\s\S]*?\*\//g, ""), /(^|\n)\.sl-glass\s*\{[^}]*\bcolor:/, "no 0-1-0 colour on .sl-glass");
 });
 
-// Owner, 2026-10-01: on paper a neutral control's ink front was grey. A
-// neutral shimmers in the accent, and the front never drops below a vibrant
-// lightness.
-test("ink: a neutral control shimmers in the accent, never grey", () => {
-  assert.match(effects, /--slfx-ink-c:\s*var\(--slfx-ink-tint, var\(--slc-accent\)\);/);
-  assert.match(effectsJs, /import \{ isChromatic \} from "\.\/colour\.js";/);
-  assert.match(effectsJs, /paints\(v\) && isChromatic\(v\)/);
-  // Anchored on the STANDALONE rules -- the selector alone between the last
-  // rule's brace and its own: the shared `.sl-fx-ink::before,\n.sl-fx-ink::after {`
-  // rule carries no stop, and a match on it iterated nothing, so this passed
-  // with every floor removed.
-  const body = (sel) => effects.match(new RegExp(`\\}\\s*${sel.replace(/[.:]/g, "\\$&")} \\{([^}]*)\\}`))?.[1] ?? "";
-  const stops = (sel) => [...body(sel).matchAll(/oklch\(from var\(--slfx-ink-c\) (\S+)/g)].map((m) => m[1]);
-  const iri = stops(".sl-fx-ink::after");
-  assert.equal(iri.length, 5, `the iridescence has five stops, found ${iri.length}`);
-  for (const l of iri) assert.match(l, /^max\(/, `iridescence lightness has a floor: ${l}`);
-  const front = stops(".sl-fx-ink::before");
-  assert.equal(front.length, 1, `the front has one coloured stop, found ${front.length}`);
-  assert.match(front[0], /^max\(/, `the front's lightness has a floor: ${front[0]}`);
-});
 
 // Forced colours (the user's palette) repaint the state of a pressed or
 // checked control in Highlight (components.css), and every injected layer
