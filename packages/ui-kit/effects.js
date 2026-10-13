@@ -14,9 +14,10 @@
    enforces the absence of literals. */
 
 import { cornerPx, roundedRectPath, GOO_CONTRAST, GOO_INTERCEPT } from "./geom.js";
-// A neutral (grey wash, ink label) has no hue to shimmer with: the ink front
-// then keeps the CSS fallback, the accent. The notation read lives in colour.js.
-import { isChromatic } from "./colour.js";
+// A neutral (grey wash, ink label) has no hue to glow with: the ink pool then
+// keeps the CSS fallback, the accent. The notation read lives in colour.js, and
+// so does the paint-and-read that tells a light ground from a dark one.
+import { isChromatic, toSrgb } from "./colour.js";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const CAP_MS = 1500;                      // hard ceiling on any single burst
@@ -1180,28 +1181,42 @@ function pruneDetached() {
   }
 }
 
-/* ── ink: a colour change travels ────────────────────────────────────────────
-   effects.css paints a travelling front and its iridescence on one injected
-   span per control; this file gives it the span, the noise its front is torn
-   by, the point the pointer crossed the edge, and the colour arriving there.
-   Ink owns no colour: the control's own hover applies as declared, and the
-   front only sweeps over it. Tier 1 only: without the span the plain fade
-   stands. */
+/* ── ink: light pools under the pointer ──────────────────────────────────────
+   effects.css paints a pool of light on one injected span per control; this
+   file gives it the span, the four moving noise fields its rim is torn by, the
+   trailing pointer, the pool's size, the control's colour and the ground the
+   pool lies on. Ink owns no colour: the control's own hover applies as
+   declared, and the pool is only light over it. Tier 1 only: without the span
+   the plain fade stands. */
 const INK_HOSTS = ".sl-btn, .sl-icon-btn";
 const INK_FILTER = "sl-fx-ink-noise";
 const SVG_NS = "http://www.w3.org/2000/svg";
-/** The layer reaches 30% past the host on every side (effects.css, inset: -30%). */
-const INK_BLEED = 30;
+/** Noise fields, dealt round-robin, so neighbouring pools wobble apart. */
+const INK_SEEDS = [3, 11, 23, 41];
+/** The share of the gap to the pointer the pool closes each frame: the lag
+ *  that reads as viscosity. */
+const INK_FOLLOW = 0.09;
+/** How long the pool drains after the pointer leaves (effects.css's
+ *  --sl-motion-ink-out fallback); the noise stays on until it has. */
+const INK_DRAIN_MS = 520;
+/** The pool's radius: 0.55 of the control's longer side, held to 26–72px so an
+ *  icon button gets a drop and a wide button a pool, never a flood. */
+const INK_SIZE = { share: 0.55, min: 26, max: 72 };
+/** A ground at or above this relative luminance is light (oklch L ≈ 0.56). */
+const INK_LIGHT_Y = 0.18;
 
-/** Give a control its ink layer, once. Prepended after the glass layers are in,
- *  so among the z-index -1 layers it paints first: above the tint, below the
- *  glass's shine and specular.
+let inkDealt = 0;
+
+/** Give a control its ink layer, once, with its noise field. Prepended after
+ *  the glass layers are in, so among the z-index -1 layers it paints first:
+ *  above the tint, below the glass's shine and specular.
  *  @param {Element} el a button or icon button */
 function injectInk(el) {
   if (el.querySelector(":scope > .sl-fx-ink")) return;
   const layer = document.createElement("span");
   layer.className = "sl-fx-ink";
   layer.setAttribute("aria-hidden", "true");
+  layer.style.setProperty("--slfx-ink-noise", `url(#${INK_FILTER}-${inkDealt++ % INK_SEEDS.length})`);
   el.prepend(layer);
 }
 
@@ -1210,80 +1225,177 @@ function injectInks(root) {
   for (const el of root.querySelectorAll(INK_HOSTS)) injectInk(el);
 }
 
-/** The one noise filter every ink front is torn by, added to the document once.
- *  Low-frequency fractal noise displacing the wash by up to 70px, so its edge
- *  arrives unevenly, the way ink spreads in water. */
+/** The noise fields every pool's rim is torn by, added to the document once.
+ *  Each displaces the pool by up to 14px and slowly breathes its frequency,
+ *  so the rim keeps moving like a liquid's edge; each seed tears differently.
+ *  Applied only while a pool is up (effects.css, data-sl-ink-live). */
 function ensureInkFilter() {
-  if (document.getElementById(INK_FILTER)) return;
+  if (document.getElementById(`${INK_FILTER}-0`)) return;
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("width", "0");
   svg.setAttribute("height", "0");
   svg.setAttribute("aria-hidden", "true");
   svg.style.position = "absolute";
-  const filter = document.createElementNS(SVG_NS, "filter");
-  filter.id = INK_FILTER;
-  for (const [k, v] of [["x", "-20%"], ["y", "-20%"], ["width", "140%"], ["height", "140%"]]) filter.setAttribute(k, v);
-  const noise = document.createElementNS(SVG_NS, "feTurbulence");
-  for (const [k, v] of [["type", "fractalNoise"], ["baseFrequency", "0.02"], ["numOctaves", "3"], ["seed", "7"], ["result", "n"]]) noise.setAttribute(k, v);
-  const shift = document.createElementNS(SVG_NS, "feDisplacementMap");
-  for (const [k, v] of [["in", "SourceGraphic"], ["in2", "n"], ["scale", "70"], ["xChannelSelector", "R"], ["yChannelSelector", "G"]]) shift.setAttribute(k, v);
-  filter.append(noise, shift);
-  svg.append(filter);
+  INK_SEEDS.forEach((seed, i) => {
+    const filter = document.createElementNS(SVG_NS, "filter");
+    filter.id = `${INK_FILTER}-${i}`;
+    for (const [k, v] of [["x", "-30%"], ["y", "-30%"], ["width", "160%"], ["height", "160%"]]) filter.setAttribute(k, v);
+    const noise = document.createElementNS(SVG_NS, "feTurbulence");
+    for (const [k, v] of [["type", "fractalNoise"], ["baseFrequency", "0.035"], ["numOctaves", "2"], ["seed", String(seed)], ["result", "n"]]) noise.setAttribute(k, v);
+    const breathe = document.createElementNS(SVG_NS, "animate");
+    for (const [k, v] of [["attributeName", "baseFrequency"], ["dur", `${5 + i}s`], ["values", "0.03;0.045;0.03"], ["repeatCount", "indefinite"]]) breathe.setAttribute(k, v);
+    noise.append(breathe);
+    const shift = document.createElementNS(SVG_NS, "feDisplacementMap");
+    for (const [k, v] of [["in", "SourceGraphic"], ["in2", "n"], ["scale", "14"], ["xChannelSelector", "R"], ["yChannelSelector", "G"]]) shift.setAttribute(k, v);
+    filter.append(noise, shift);
+    svg.append(filter);
+  });
   document.body.append(svg);
 }
 
-/** Whether a computed colour paints anything: not `transparent`, not alpha 0.
+/** A computed colour's alpha, 0–1: 0 for `transparent`, 1 when it has none.
  *  Computed colours come back in several notations, so the alpha is read as
  *  whatever follows a "/", or as the fourth comma-separated argument.
  *  @param {string} v a computed colour */
+function alphaOf(v) {
+  if (!v || v === "transparent") return 0;
+  const a = v.match(/\/\s*([\d.]+%?)\s*\)$/)?.[1] ?? v.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/)?.[1];
+  if (a === undefined) return 1;
+  return a.endsWith("%") ? parseFloat(a) / 100 : parseFloat(a);
+}
+
+/** Whether a computed colour paints anything: not `transparent`, not alpha 0.
+ *  @param {string} v a computed colour */
 function paints(v) {
-  if (!v || v === "transparent") return false;
-  const alpha = v.match(/\/\s*([\d.]+%?)\s*\)$/)?.[1] ?? v.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/)?.[1];
-  return alpha === undefined || parseFloat(alpha) > 0;
+  return alphaOf(v) > 0;
 }
 
 /** The colour arriving on a control at the moment the pointer crosses it: the
  *  end of its own running background (or glass fill) transition when there is
  *  one, else its current fill, else its ink -- the first that has a hue. Ink
- *  tints its front with this so a red control shimmers red; a neutral one
- *  returns null and shimmers in the accent.
+ *  tints its pool with this so a red control glows red; a neutral one has
+ *  none and glows in the accent. `fill` says the colour is an opaque fill the
+ *  pool lies on, rather than a wash or the label.
  *  @param {Element} host the button or icon button
- *  @returns {string|null} a CSS colour, or null to keep the CSS fallback */
+ *  @returns {{ tint: string|null, fill: boolean }} */
 function inkTint(host) {
+  const found = (v, fill) => ({ tint: v, fill: fill && alphaOf(v) >= 0.5 });
   for (const a of host.getAnimations()) {
     const prop = a.transitionProperty;
     if (prop !== "background-color" && prop !== "--slfx-accent-t") continue;
     const frames = a.effect?.getKeyframes?.() ?? [];
     const to = frames[frames.length - 1];
     const v = to?.backgroundColor ?? to?.["--slfx-accent-t"];
-    if (paints(v) && isChromatic(v)) return v;
+    if (paints(v) && isChromatic(v)) return found(v, true);
   }
   const cs = getComputedStyle(host);
-  for (const v of [cs.getPropertyValue("--slfx-accent-t").trim(), cs.backgroundColor, cs.color]) {
-    if (paints(v) && isChromatic(v)) return v;
+  for (const v of [cs.getPropertyValue("--slfx-accent-t").trim(), cs.backgroundColor]) {
+    if (paints(v) && isChromatic(v)) return found(v, true);
   }
-  return null;
+  if (paints(cs.color) && isChromatic(cs.color)) return found(cs.color, false);
+  return { tint: null, fill: false };
 }
 
-/** Where the pointer crossed a control's edge, written in the ink layer's own
- *  box (which bleeds INK_BLEED% past the host) so the wash grows from there on
- *  the way in and shrinks toward it on the way out. Moves inside the control
- *  are ignored: only a crossing of its edge counts.
+/** Whether the first opaque ground under a control is light: its own fill if
+ *  it has one, else the nearest ancestor's. Nothing opaque up the tree is the
+ *  page's canvas, which is light unless a theme painted it.
+ *  @param {Element} host the button or icon button
+ *  @returns {"light"|"dark"} */
+function inkGround(host) {
+  for (let el = host; el; el = el.parentElement) {
+    const bg = getComputedStyle(el).backgroundColor;
+    if (alphaOf(bg) < 0.5) continue;
+    const [r, g, b] = toSrgb(document, bg).map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b >= INK_LIGHT_Y ? "light" : "dark";
+  }
+  return "light";
+}
+
+/** Live pools, by ink layer: where each is (x, y), where the pointer is
+ *  (tx, ty), whether the pointer is still on it, and its drain timer. */
+const inkPools = new Map();
+let inkFrame = 0;
+
+/** One frame of trailing: every pool closes INK_FOLLOW of its gap to the
+ *  pointer. The loop sleeps once every pool has caught up; a pool is only
+ *  forgotten by its drain timer, so a pointer that comes back finds it. */
+function inkStep() {
+  inkFrame = 0;
+  let moving = false;
+  for (const [ink, p] of inkPools) {
+    if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) < 0.5) continue;
+    p.x += (p.tx - p.x) * INK_FOLLOW;
+    p.y += (p.ty - p.y) * INK_FOLLOW;
+    ink.style.setProperty("--slfx-ink-x", `${p.x.toFixed(1)}px`);
+    ink.style.setProperty("--slfx-ink-y", `${p.y.toFixed(1)}px`);
+    moving = true;
+  }
+  if (moving) inkFrame = requestAnimationFrame(inkStep);
+}
+
+function inkTrail() {
+  if (!inkFrame) inkFrame = requestAnimationFrame(inkStep);
+}
+
+/** A pointer crossing a control's edge. On the way in, the pool is placed at
+ *  the crossing, sized to the control, tinted and read against its ground, and
+ *  goes live; on the way out it trails to where the pointer left and drains
+ *  there. Moves inside the control are onInkMove's. Touch has no hover to
+ *  answer, so it raises no pool.
  *  @param {PointerEvent} ev a delegated pointerover or pointerout */
 function onInkCross(ev) {
+  if (ev.pointerType === "touch") return;
   const host = ev.target instanceof Element ? ev.target.closest(INK_HOSTS) : null;
   if (!host || (ev.relatedTarget instanceof Node && host.contains(ev.relatedTarget))) return;
   const ink = host.querySelector(":scope > .sl-fx-ink");
   const r = host.getBoundingClientRect();
   if (!ink || !r.width || !r.height) return;
-  const span = 100 + 2 * INK_BLEED;
-  const x = ((ev.clientX - r.left) / r.width) * 100 + INK_BLEED;
-  const y = ((ev.clientY - r.top) / r.height) * 100 + INK_BLEED;
-  ink.style.setProperty("--px", `${(x / span) * 100}%`);
-  ink.style.setProperty("--py", `${(y / span) * 100}%`);
-  const tint = inkTint(host);
+  const x = ev.clientX - r.left;
+  const y = ev.clientY - r.top;
+  let p = inkPools.get(ink);
+  if (ev.type === "pointerout") {
+    if (!p) return;
+    Object.assign(p, { tx: x, ty: y, on: false });
+    p.drain = setTimeout(() => {
+      if (p.on) return;
+      inkPools.delete(ink);
+      ink.removeAttribute("data-sl-ink-live");
+    }, INK_DRAIN_MS);
+    inkTrail();
+    return;
+  }
+  if (host.matches(':disabled, [aria-disabled="true"]')) return;
+  const { tint, fill } = inkTint(host);
   if (tint) ink.style.setProperty("--slfx-ink-tint", tint);
   else ink.style.removeProperty("--slfx-ink-tint");
+  ink.setAttribute("data-sl-ink-ground", fill ? "fill" : inkGround(host));
+  const size = Math.min(INK_SIZE.max, Math.max(INK_SIZE.min, Math.max(r.width, r.height) * INK_SIZE.share));
+  ink.style.setProperty("--slfx-ink-size", `${Math.round(size)}px`);
+  if (!p) {
+    p = { x, y };
+    ink.style.setProperty("--slfx-ink-x", `${x.toFixed(1)}px`);
+    ink.style.setProperty("--slfx-ink-y", `${y.toFixed(1)}px`);
+    inkPools.set(ink, p);
+  }
+  clearTimeout(p.drain);
+  Object.assign(p, { tx: x, ty: y, on: true });
+  ink.setAttribute("data-sl-ink-live", "");
+  inkTrail();
+}
+
+/** The pointer moving inside a control with a live pool: the pool's target
+ *  follows it, and the trailing loop wakes if it had caught up.
+ *  @param {PointerEvent} ev a delegated pointermove */
+function onInkMove(ev) {
+  if (!inkPools.size || !(ev.target instanceof Element)) return;
+  const host = ev.target.closest(INK_HOSTS);
+  const ink = host?.querySelector(":scope > .sl-fx-ink");
+  const p = ink && inkPools.get(ink);
+  if (!p || !p.on) return;
+  const r = host.getBoundingClientRect();
+  p.tx = ev.clientX - r.left;
+  p.ty = ev.clientY - r.top;
+  inkTrail();
 }
 
 function injectGlassLayers(root) {
@@ -1486,6 +1598,7 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   window.addEventListener("resize", onSpecLayout, { passive: true });
   root.addEventListener("pointerover", onInkCross, { passive: true });
   root.addEventListener("pointerout", onInkCross, { passive: true });
+  root.addEventListener("pointermove", onInkMove, { passive: true });
   root.addEventListener("pointerdown", onPressDown, { passive: true });
   window.addEventListener("pointerup", pressEnd, { passive: true });
   window.addEventListener("pointercancel", pressEnd, { passive: true });

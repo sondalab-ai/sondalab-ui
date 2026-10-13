@@ -2777,27 +2777,37 @@
    takes its container's width, square. Zero specificity: any author width wins. */
 :where([data-sl-halftone]) { display: block; width: 100%; aspect-ratio: 1; }
 
-/* ══ INK — a colour change travels ══════════════════════════════════════════
-   Owner, 2026-10-01: a control's hover colour does not just cross-fade in
-   place: a soft front of light, torn by noise and carrying a brief band of
-   iridescence, sweeps across it from where the pointer came in, and back
-   toward where it left. Not a family with a meaning of its own (L6): it is how
-   the kit's colour changes move, like the gummy press is how presses move (L4).
+/* ══ INK — light pools under the pointer ════════════════════════════════════
+   Owner, 2026-10-13: the ink of 0.26–0.36.5 (a bright ring with an iridescent
+   band, sweeping in on enter and back out on leave) read as flashy, worst
+   along a toolbar, where every crossing fired a sweep out of one control and
+   into the next. Chosen from a lab of six (option E, "viscous light"): a pool
+   of light sits under the pointer and trails it with a lag, like a viscous
+   liquid; its rim wobbles on a slowly moving noise; it fills on enter and
+   drains where the pointer left. Not a family with a meaning of its own (L6):
+   it is how the kit's buttons answer the pointer, like the gummy press is how
+   presses move (L4).
 
    INK OWNS NO COLOUR (owner, 2026-10-01, after 0.26.0 painted its own accent
    tint over spexr's red danger hover). The control's own hover colour applies
-   exactly as declared, on its own transition; ink only animates over it. Once
-   the front has passed, nothing of ink is left on screen, so a settled hover
-   is pixel-identical with ink on or off -- the invariant every variant keeps,
-   a product's own included.
+   exactly as declared; the pool is light over it, in the control's own hue,
+   and never sets the host's paint. Once the pointer has left and the pool has
+   drained, nothing of ink is left on screen.
+
+   Two readings, picked by effects.js from what the pool lies on, never by
+   theme: on a fill or a dark ground, a lighter pool of the same hue, screened
+   (a pool in the fill's own colour vanished on the light theme's primary); on
+   a light neutral ground (data-sl-ink-ground="light"), the hue itself with
+   more chroma, painted -- light on light takes its contrast from saturation.
 
    Tier 1 only. mount() injects one <span class="sl-fx-ink"> into each button
-   and icon button; ::before is the front, ::after its iridescence. effects.js
-   writes --px/--py (the pointer's crossing, in the layer's own box) and
-   --slfx-ink-tint (the colour arriving at the crossing, read off the control),
-   and owns the noise filter #sl-fx-ink-noise. */
-@property --slfx-ink-r { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
-@property --slfx-ink-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+   and icon button; ::before is the pool. effects.js writes --slfx-ink-x/-y
+   (the trailing pointer, in px), --slfx-ink-size (the pool's radius),
+   --slfx-ink-tint (the control's colour, when it has a hue) and
+   --slfx-ink-noise (one of four noise fields, so neighbours wobble apart), and
+   sets data-sl-ink-live while a pool is up: the noise moves, so its filter is
+   applied only then. */
+@property --slfx-ink-r { syntax: "<length>"; inherits: false; initial-value: 0px; }
 
 :is(.sl-btn, .sl-icon-btn):has(> .sl-fx-ink) {
   position: relative;
@@ -2813,67 +2823,49 @@
   overflow: hidden;
   border-radius: inherit;
   pointer-events: none;
-  /* The control's own colour, as effects.js read it at the crossing; until it
-     has, the control's ink. */
-  /* A neutral control (grey fill, ink text) has no hue to shimmer with, and on
-     paper its ink is near-black: the front came out grey (owner, 2026-10-01:
-     "it should be vibrant"). effects.js passes only a chromatic colour; with
-     none, the front is the accent's. */
+  /* The control's own colour, as effects.js read it at the crossing. A neutral
+     control (grey fill, ink text) has no hue to give, and its pool came out
+     grey (owner, 2026-10-01: "it should be vibrant"): effects.js passes only a
+     chromatic colour; with none, the pool is the accent's. */
   --slfx-ink-c: var(--slfx-ink-tint, var(--slc-accent));
 }
-.sl-fx-ink::before,
-.sl-fx-ink::after {
+/* The pool: full at the centre, thinner through the body, a brighter rim just
+   inside its edge -- a drop of light rather than a glow. At rest its radius is
+   0 and it paints nothing. */
+.sl-fx-ink::before {
   content: "";
   position: absolute;
-  inset: -30%;
+  inset: 0;
   pointer-events: none;
-}
-/* The front: a ring of the arriving colour lifted toward light, transparent on
-   both sides, so it is a band that travels and never a fill that stays. At
-   rest (0%) and settled (230%, past the farthest corner) it paints nothing. */
-.sl-fx-ink::before {
-  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%),
-    transparent calc(var(--slfx-ink-r) - 40%),
-    oklch(from var(--slfx-ink-c) max(calc(l + .14), .78) c h / .55) calc(var(--slfx-ink-r) - 14%),
-    transparent var(--slfx-ink-r));
+  background: radial-gradient(circle max(var(--slfx-ink-r), 1px) at var(--slfx-ink-x, 50%) var(--slfx-ink-y, 50%),
+    oklch(from var(--slfx-ink-c) min(calc(l + .22), .9) max(c, .1) h / .6) 0,
+    oklch(from var(--slfx-ink-c) min(calc(l + .16), .86) max(c, .1) h / .36) 55%,
+    oklch(from var(--slfx-ink-c) min(calc(l + .26), .94) max(c, .12) h / .7) 86%,
+    transparent 100%);
+  opacity: 0;
   mix-blend-mode: screen;
-  filter: url(#sl-fx-ink-noise) blur(5px);
 }
-/* The iridescence: hues ±110° from the control's own colour, in the same ring,
-   turning 90° while it travels -- one shimmer, gone once the front has passed. */
-.sl-fx-ink::after {
-  background: conic-gradient(from var(--slfx-ink-a) at var(--px, 50%) var(--py, 50%),
-    oklch(from var(--slfx-ink-c) max(calc(l + .1), .7) max(c, .12) calc(h - 110)),
-    oklch(from var(--slfx-ink-c) max(calc(l + .14), .74) max(c * .8, .1) calc(h - 40)),
-    oklch(from var(--slfx-ink-c) max(calc(l + .12), .72) max(c, .12) calc(h + 40)),
-    oklch(from var(--slfx-ink-c) max(calc(l + .1), .7) max(c * .9, .11) calc(h + 110)),
-    oklch(from var(--slfx-ink-c) max(calc(l + .1), .7) max(c, .12) calc(h - 110)));
-  mask: radial-gradient(circle at var(--px, 50%) var(--py, 50%),
-    transparent calc(var(--slfx-ink-r) - 44%),
-    black calc(var(--slfx-ink-r) - 26%),
-    black calc(var(--slfx-ink-r) - 14%),
-    transparent var(--slfx-ink-r));
-  opacity: .55;
-  mix-blend-mode: screen;
-  filter: url(#sl-fx-ink-noise) blur(6px);
+.sl-fx-ink[data-sl-ink-ground="light"]::before {
+  background: radial-gradient(circle max(var(--slfx-ink-r), 1px) at var(--slfx-ink-x, 50%) var(--slfx-ink-y, 50%),
+    oklch(from var(--slfx-ink-c) min(l, .7) calc(c * 1.25 + .04) h / .28) 0,
+    oklch(from var(--slfx-ink-c) min(l, .7) calc(c * 1.25 + .04) h / .17) 55%,
+    oklch(from var(--slfx-ink-c) min(l, .66) calc(c * 1.4 + .06) h / .45) 86%,
+    transparent 100%);
+  mix-blend-mode: normal;
 }
-[data-sl-theme="light"] .sl-fx-ink::before { mix-blend-mode: normal; }
-[data-sl-theme="light"] .sl-fx-ink::after { mix-blend-mode: normal; opacity: .4; }
+/* Live: painted, and torn by its noise field. */
+.sl-fx-ink[data-sl-ink-live]::before {
+  opacity: 1;
+  filter: var(--slfx-ink-noise, url(#sl-fx-ink-noise-0)) blur(1.5px);
+}
 
 @media (prefers-reduced-motion: no-preference) {
-  .sl-fx-ink::before,
-  .sl-fx-ink::after {
-    transition:
-      --slfx-ink-r var(--sl-motion-ink-out, 700ms) cubic-bezier(.4, 0, .2, 1),
-      --slfx-ink-a var(--sl-motion-ink-out, 700ms) var(--sl-motion-ease, ease);
+  .sl-fx-ink::before {
+    transition: --slfx-ink-r var(--sl-motion-ink-out, 520ms) cubic-bezier(.4, 0, .6, 1);
   }
-  :is(.sl-btn, .sl-icon-btn):hover:not(:disabled, [aria-disabled="true"]) > .sl-fx-ink::before,
-  :is(.sl-btn, .sl-icon-btn):hover:not(:disabled, [aria-disabled="true"]) > .sl-fx-ink::after {
-    --slfx-ink-r: 230%;
-    --slfx-ink-a: 90deg;
-    transition:
-      --slfx-ink-r var(--sl-motion-ink-in, 1100ms) cubic-bezier(.22, .7, .25, 1),
-      --slfx-ink-a var(--sl-motion-ink-in, 1100ms) var(--sl-motion-ease, ease);
+  :is(.sl-btn, .sl-icon-btn):hover:not(:disabled, [aria-disabled="true"]) > .sl-fx-ink::before {
+    --slfx-ink-r: var(--slfx-ink-size, 60px);
+    transition: --slfx-ink-r var(--sl-motion-ink-in, 480ms) cubic-bezier(.25, .8, .3, 1);
   }
 }
 
