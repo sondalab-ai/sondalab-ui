@@ -3,6 +3,9 @@ slug: 2026-09-28-halftone-dots-design
 title: Halftone dots — the site's dot scenes as a kit primitive
 status: draft
 createdAt: 2026-09-28
+workflowStep: ship
+forcedSteps: [specify, context, clarify, plan, implement, validate, ship]
+updatedAt: 2026-10-15
 ---
 > **What this file is:** the design contract for moving sondalab-site's dot scenes (a picture resampled into a grid of round dots whose size follows the light) into `@sondalab/ui-kit`, as one engine shared by a live web runtime and a browser export page for marketing assets.
 > **Audience:** the owner (approves the design), engineers and agents working a slice, reviewers.
