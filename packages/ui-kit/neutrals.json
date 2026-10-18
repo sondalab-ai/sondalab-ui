@@ -287,6 +287,65 @@
         "code-builtin": "#e5bf6d"
       }
     },
+    "roboemot": {
+      "accent": {
+        "light": "#f726b4",
+        "dark": "#ff48c4"
+      },
+      "hue": {
+        "light": 345.73,
+        "dark": 343.85
+      },
+      "light": {
+        "bg-canvas": "#ebe5e8",
+        "bg-surface": "#fcfafb",
+        "bg-surface-raised": "#ffffff",
+        "bg-tile": "#ffffff",
+        "bg-sunken": "#f9f6f7",
+        "text-primary": "#1a1417",
+        "text-secondary": "#474044",
+        "text-muted": "#61585c",
+        "code-fg": "#2a2527",
+        "code-comment": "#696165",
+        "border-subtle": "rgba(26,20,23,0.08)",
+        "border-default": "rgba(26,20,23,0.14)",
+        "border-strong": "rgba(26,20,23,0.28)",
+        "bg-overlay": "rgba(26,20,23,0.4)",
+        "border-lit": "rgba(255,255,255,0.9)",
+        "code-null": "#696165",
+        "code-keyword": "#5847b7",
+        "code-string": "#316a23",
+        "code-number": "#b13e06",
+        "code-boolean": "#b13e06",
+        "code-function": "#006191",
+        "code-tag": "#5847b7",
+        "code-builtin": "#865900"
+      },
+      "dark": {
+        "bg-canvas": "#0a0709",
+        "bg-surface": "#131012",
+        "bg-surface-raised": "#1c181a",
+        "bg-tile": "#262124",
+        "bg-sunken": "#0e0b0d",
+        "text-primary": "#eeeaec",
+        "text-secondary": "#beb9bc",
+        "text-muted": "#a0999d",
+        "code-fg": "#e2dcdf",
+        "code-comment": "#9e959a",
+        "border-subtle": "rgba(238,234,236,0.065)",
+        "border-default": "rgba(238,234,236,0.11)",
+        "border-strong": "rgba(238,234,236,0.28)",
+        "border-lit": "rgba(255,255,255,0.07)",
+        "code-null": "#9e959a",
+        "code-keyword": "#a9b0fd",
+        "code-string": "#9ccf7f",
+        "code-number": "#fd9976",
+        "code-boolean": "#fd9976",
+        "code-function": "#75caf2",
+        "code-tag": "#a9b0fd",
+        "code-builtin": "#e5bf6d"
+      }
+    },
     "local-agents": {
       "accent": {
         "light": "#1d63d8",
