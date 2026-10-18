@@ -6,7 +6,8 @@
     "daos": "Page",
     "default": "Page",
     "smartctx": "Term",
-    "local-agents": "App"
+    "local-agents": "App",
+    "roboemot": "App"
   },
   "tiers": {
     "$note": "Theme-selector tier per product (design-language.md §Decision 1). Authoritative machine source for the audit's tier-consistency check. Term products have no tier (no theme selector).",
@@ -14,7 +15,8 @@
     "introspect": "B",
     "daos": "A",
     "default": "A",
-    "local-agents": "B"
+    "local-agents": "B",
+    "roboemot": "A"
   },
   "rules": {
     "theme-selector":     { "IDE": "R",   "App": "R", "Page": "R", "Term": "N/A" },
