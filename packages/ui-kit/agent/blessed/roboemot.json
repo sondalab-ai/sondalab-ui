@@ -1,0 +1,5 @@
+{
+  "$note": "Authorized deviations for roboemot (Tier A, App). roboemot's operator page is a small static page served by the robot on the LAN. Its accent is registered in accent-registry.json; nothing is blessed yet.",
+  "substrate": "App",
+  "deviations": []
+}

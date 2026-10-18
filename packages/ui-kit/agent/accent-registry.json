@@ -19,6 +19,7 @@
       "fill": { "light": "#4c58e9", "dark": "#4c58e9" }
     },
     "introspect": { "light": "#0e9c84", "dark": "#2ee6c0" },
+    "roboemot": { "light": "#f726b4", "dark": "#ff48c4" },
     "local-agents": {
       "light": "#1d63d8",
       "dark": "#58a6ff",
