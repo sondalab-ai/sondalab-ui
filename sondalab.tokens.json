@@ -95,5 +95,19 @@
     "err":    { "ansi": "red",           "true": "#f87171" },
     "dim":    { "ansi": "bright_black",  "true": "#6E8088" },
     "accent": { "ansi": "cyan",          "true": "#35A0B4" }
+  },
+  "tui": {
+    "glyphs": {
+      "done":      { "unicode": "✓", "ascii": "+", "role": "ok" },
+      "fixed":     { "unicode": "✓", "ascii": "+", "role": "ok" },
+      "failed":    { "unicode": "✗", "ascii": "x", "role": "err" },
+      "warn":      { "unicode": "!", "ascii": "!", "role": "warn" },
+      "active":    { "unicode": "●", "ascii": "*", "role": "prompt" },
+      "pending":   { "unicode": "○", "ascii": ".", "role": "dim" },
+      "skipped":   { "unicode": "↷", "ascii": "-", "role": "dim" },
+      "question":  { "unicode": "?", "ascii": "?", "role": "prompt" },
+      "separator": { "unicode": "·", "ascii": "|", "role": "dim" }
+    },
+    "layout": { "indent": 2, "labelWidth": 28, "blankBeforeSummary": 1 }
   }
 }

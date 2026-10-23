@@ -22,6 +22,12 @@ function main() {
     return `    "${role}": (${code}, (${r}, ${g}, ${b})),`;
   }).join("\n");
 
+  const glyphs = Object.entries(t.tui.glyphs).map(([name, g]) => {
+    if (!Object.hasOwn(t.terminal, g.role)) throw new Error(`tui glyph ${name}: unknown role ${g.role}`);
+    return `    ${JSON.stringify(name)}: (${JSON.stringify(g.unicode)}, ${JSON.stringify(g.ascii)}, ${JSON.stringify(g.role)}),`;
+  }).join("\n");
+  const layout = Object.entries(t.tui.layout).map(([k, v]) => `    ${JSON.stringify(k)}: ${v},`).join("\n");
+
   const py = `# GENERATED from sondalab.tokens.json — do not edit.
 """Sondalab terminal palette: semantic roles, named-ANSI floor + truecolor opt-in."""
 import os
@@ -29,6 +35,16 @@ import os
 # role -> (named_ansi_sgr_code, (r, g, b))
 ROLES = {
 ${roles}
+}
+
+# name -> (unicode, ascii, role); ascii is used on a non-UTF-8 locale or TERM=dumb
+GLYPHS = {
+${glyphs}
+}
+
+# layout integers: indent, labelWidth, blankBeforeSummary
+LAYOUT = {
+${layout}
 }
 
 
