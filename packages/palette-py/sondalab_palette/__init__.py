@@ -12,6 +12,26 @@ ROLES = {
     "accent": (36, (53, 160, 180)),
 }
 
+# name -> (unicode, ascii, role); ascii is used on a non-UTF-8 locale or TERM=dumb
+GLYPHS = {
+    "done": ("✓", "+", "ok"),
+    "fixed": ("✓", "+", "ok"),
+    "failed": ("✗", "x", "err"),
+    "warn": ("!", "!", "warn"),
+    "active": ("●", "*", "prompt"),
+    "pending": ("○", ".", "dim"),
+    "skipped": ("↷", "-", "dim"),
+    "question": ("?", "?", "prompt"),
+    "separator": ("·", "|", "dim"),
+}
+
+# layout integers: indent, labelWidth, blankBeforeSummary
+LAYOUT = {
+    "indent": 2,
+    "labelWidth": 28,
+    "blankBeforeSummary": 1,
+}
+
 
 def _no_color() -> bool:
     return bool(os.environ.get("NO_COLOR"))
