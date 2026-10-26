@@ -110,7 +110,7 @@ HEADER = {
     "markAccent": ("aaa...", "aaa...", "......"),
     "compact": "●■",
     "compactAccent": "a.",
-    "accentRole": "accent",
+    "accentRole": "prompt",
     "gap": 2,
 }
 

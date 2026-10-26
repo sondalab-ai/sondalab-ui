@@ -491,7 +491,7 @@ def test_header_paints_accent_slash_and_dim():
     assert lines[1].startswith(accent + "▀█▀\x1b[0m ▀▀  cld 0.9.0")
     assert "sonda" + prompt + "/\x1b[0m" + "lab" in lines[0]
     assert lines[2].endswith(dim + DESC + "\x1b[0m")
-    assert out.count(accent) == 2
+    assert out.count(accent) == 2 + (accent == prompt)
 
 
 def test_header_compact_paints_accent_and_dim():
@@ -523,9 +523,17 @@ def test_header_cuts_a_long_description_at_the_cap_never_wraps():
     assert lines[2].endswith("x")
 
 
-def test_header_reads_the_cap_when_the_width_is_unknown():
+def test_header_reads_the_cap_when_the_width_is_unknown(monkeypatch):
+    def no_size(*_):
+        raise OSError
+
+    monkeypatch.setattr(t.os, "get_terminal_size", no_size)
     env = {k: v for k, v in TTY.items() if k != "COLUMNS"}
-    assert _plain(_header(env, isatty=True)).count("\n") == 3
+    room = p.LAYOUT["maxWidth"] - len(p.HEADER["mark"][0]) - p.HEADER["gap"]
+    out = _plain(t.header("cld", "0.9.0", "z" * room, env=env, isatty=True))
+    assert out.count("\n") == 3
+    assert len(out.split("\n")[2]) == p.LAYOUT["maxWidth"]
+    assert _plain(t.header("cld", "0.9.0", "z" * room, env={**env, "COLUMNS": "99"}, isatty=True)).count("\n") == 1
 
 
 @pytest.mark.parametrize("cols,lines", [("36", 3), ("35", 1)])

@@ -137,7 +137,7 @@ Each glyph has a Unicode form, an ASCII form and the colour role it is painted w
 
 ### Header
 
-An interactive launch (a TUI screen, a prompt loop, an installer, a bare launch, `--help`) opens with the header: the mark on the left, then `sonda/lab` with the slash in `prompt`, the name and version, and the description in `dim`. The mark is `header.mark`: 3 lines, 6 columns, `header.gap` 2 columns from the text. Its circle is the one accent shape, painted `accent` (`header.accentRole`); the square and the bar stay in the default ink.
+An interactive launch (a TUI screen, a prompt loop, an installer, a bare launch, `--help`) opens with the header: the mark on the left, then `sonda/lab` with the slash in `prompt`, the name and version, and the description in `dim`. The mark is `header.mark`: 3 lines, 6 columns, `header.gap` 2 columns from the text. Its circle is the one accent shape, painted `prompt` (`header.accentRole`), the accent as text like the slash; the square and the bar stay in the default ink.
 
 ```
 ▄█▄ ▄▄  sonda/lab
@@ -145,7 +145,7 @@ An interactive launch (a TUI screen, a prompt loop, an installer, a bare launch,
 ▄▄▄▄▄▄  Manage Claude Code loadouts.
 ```
 
-A one-shot subcommand that prints a result and exits opens with the compact header instead: the 2-column mark `header.compact`, its circle in `accent`, a space, `sonda/lab <name>` in `dim`, then one blank line before the result.
+A one-shot subcommand that prints a result and exits opens with the compact header instead: the 2-column mark `header.compact`, its circle in `prompt`, a space, `sonda/lab <name>` in `dim`, then one blank line before the result.
 
 ```
 ●■ sonda/lab cld
