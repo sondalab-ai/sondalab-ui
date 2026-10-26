@@ -1109,6 +1109,26 @@ A word or phrase of a display heading painted in the spectrum ink (Prism). **Opt
 ```
 Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-contrast and forced colours. Do: display sizes only (`sl-anchor`, `h1`, `h2`). Don't: body text — the ink clears 3:1, not 4.5.
 
+### Art — `sl-eyebrow--mark` · `sl-rule--shapes` · `sl-rule--weave` · `sl-art-corner` · `sl-art-field` · `sl-empty--void` · `sl-empty--shapes`
+Bauhaus shapes (quarter disc, square, triangle, bar) drawn on the 3px dither cell and shaded through the kit's Bayer matrix, so they share the dither hover's grid (0.41). **Opt-in only**: the kit never adds one. Each piece is a generated mask (`scripts/gen-art.mjs`, the `--sl-art-*` properties) painted on a pseudo-element from the ink and the accent text at a share: static, `pointer-events: none`, decorative. It follows the theme and `sl-invert`; it paints nothing in high contrast and forced colours. Substrate: **A** Page/App/IDE.
+```html
+<div class="sl-eyebrow sl-eyebrow--mark">§ 02 — Signals</div>
+<hr class="sl-rule sl-rule--shapes">
+<hr class="sl-rule sl-rule--weave">
+<article class="sl-card sl-art-corner"> … </article>
+<section class="sl-art-field"> … </section>
+<div class="sl-empty sl-empty--shapes">
+  <p class="sl-empty__title">Nothing here yet</p>
+  <p class="sl-empty__body">Start a run and its traces land in this panel.</p>
+</div>
+```
+- `sl-eyebrow--mark`: the glyph before the eyebrow text (`::before`). The eyebrow's text moves right by 27px; the content it heads does not move.
+- `sl-rule--shapes`: a 288px strip of shapes that fades along the rule, starting in the accent. `sl-rule--weave`: a 2/2 twill strip, 24px high, across the whole rule. Both draw into the rule's margin and keep its 1px box. Not with `sl-rule--labeled`.
+- `sl-art-corner`: nested quarter discs fading into the top-right corner (`::after`, 102px). `sl-art-field`: a truchet field of quarter arcs behind the content (`::before`), the faintest tone. Both make the host `position: relative` at zero specificity, so a host's own position wins.
+- `sl-empty--void`: a Molnár field of strokes around the message, with an erased zone at the box's start in three steps by the box's width (S below 300px, M from 300px, L from 420px), each as wide as the boxes it serves, so the message's lines stay clear of strokes. It makes the box a size container (`container-type: inline-size`): give it a width where it is a shrink-to-fit item. The strokes show where the box is taller than its message (a blank pane). `sl-empty--shapes`: a 120 × 72px composition above the title. Use one of the two on a box, not both: the composition pushes the message below the void.
+
+Consumes: `--slc-text`, `--slc-accent-text`. Each share is the most that keeps secondary text at 4.5:1 on a solid cell of the piece on the canvas and the surface, both themes, every registered product. Do: one or two pieces per screen, where there is room. Don't: put a piece where a number or a label must be found at a glance, or change its tone in a product (the contrast test holds the kit's shares, not yours).
+
 ## Rules of use (all components)
 
 - **Bind role-vars, never literals.** A component's colour comes from a `--slc-*`/`--sl-*` var. A raw hex fails `sl-audit`.

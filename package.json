@@ -9,6 +9,7 @@
     "gen:css": "node scripts/gen-css.mjs",
     "gen:py": "node scripts/gen-py.mjs",
     "gen:agent-docs": "node scripts/gen-agent-docs.mjs",
+    "gen:art": "node scripts/gen-art.mjs",
     "test": "node --test scripts/*.test.mjs",
     "audit": "node packages/ui-kit/agent/sl-audit.mjs"
   }
