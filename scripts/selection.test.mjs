@@ -103,13 +103,12 @@ test("scrollbars: thin, a control-edge thumb, no track, off on high contrast, ze
   assert.equal(declared(':where(:root:not([data-sl-theme="high-contrast"]) > body)', "scrollbar-color"), "auto");
 });
 
-// The thumb resolves on :root and inherits as a computed colour, so inside a
-// band it is still the page's. Owner amendment, 2026-10-26: the thumb is the
+// The thumb resolves on :root and inherits as a computed colour. The
+// viewport scrollbar is the page's. Owner amendment, 2026-10-26: the thumb is the
 // translucent hairline like every control's rest edge (1.5-2.2:1 over the
-// grounds, below WCAG 1.4.11's 3:1, accepted by the owner). KNOWN GAP, not
-// asserted: in an inversion band the ground is the page's own ink, so the
-// thumb (that ink at 21-30%) vanishes there, and a scrollbar's hover cannot
-// be styled, so there is no strong edge to bring back under the pointer.
+// grounds, below WCAG 1.4.11's 3:1, accepted by the owner). The thumb is the page's viewport scrollbar, drawn in the gutter against the
+// page ground, never inside an inversion band; a scrollbar's hover cannot be
+// styled, so it has no strong edge to bring back.
 for (const theme of ["light", "dark"]) {
   test(`${theme}: the scrollbar thumb is the hairline, 1.5-2.2:1 over the canvas, surface and raised ground`, () => {
     const env = rootEnv(theme);

@@ -291,6 +291,11 @@ test("every text in the title bar reads at 4.5:1, its marks and boundaries at 3:
       const hedge = value(ctx.rules, hov, cascaded(ctx.rules, hov).get("border-color").value, colorOf(ctx.rules, hov));
       const hr = ratio(over(hedge, ground), ground);
       if (!(hr >= 3)) low.push(`${ctx.name} ${name} hovered edge ${hr.toFixed(2)}`);
+      // and against the hover fill the edge also bounds (the other side of the line)
+      const hfill = over(value(ctx.rules, hov, cascaded(ctx.rules, hov).get("background-color").value, colorOf(ctx.rules, hov)), ground);
+      const hf = ratio(over(hedge, hfill), hfill);
+      if (process.env.TB_REPORT) console.log(ctx.name, name, "ground", hr.toFixed(2), "fill", hf.toFixed(2));
+      if (!(hf >= 3)) low.push(`${ctx.name} ${name} hovered edge on its hover fill ${hf.toFixed(2)}`);
     }
     // the bell's dot, a state's mark: against the button's own fill
     const dot = value(ctx.rules, p.bell, "var(--_sl-titlebar-dot)", BLACK);
