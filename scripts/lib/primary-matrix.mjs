@@ -188,7 +188,7 @@ function gradientStops(value, env) {
 
 /** One wiring's rules, built once per product. */
 const ruleCache = new Map();
-function rulesFor(wiring, id) {
+export function rulesFor(wiring, id) {
   const key = `${wiring}/${id}`;
   if (!ruleCache.has(key)) ruleCache.set(key, { ...WIRINGS[wiring](id), rules: sheets(WIRINGS[wiring](id).css) });
   return ruleCache.get(key);
