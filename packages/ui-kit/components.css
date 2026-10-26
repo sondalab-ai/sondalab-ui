@@ -1147,15 +1147,14 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-radio__box {
   position: relative;
   flex: none;
-  /* 18px of padding box, 6 whole 3px cells (it was 1rem = 16px: not a whole
-     number of cells; the outer box is 20px beside the 18px it was, owner
-     2026-10-26, pixel direction D). The tick, the dash and the dot below are
-     drawn on that lattice. */
-  /* content-box, said out loud: the 18px is the padding box the cells live in,
-     whatever reset the page carries (a border-box reset would leave 16). */
+  /* 16px of padding box, 18px outer, as it was before pixel direction D. The
+     tick, the dash and the dot below are 6 x 6 cells of 2px (12px) centred in
+     it, 2px in on every side (S11, owner 2026-10-26: S10's 18px box was a tad
+     large). content-box, said out loud: the 16px is the padding box the cells
+     live in, whatever reset the page carries (border-box would leave 14). */
   box-sizing: content-box;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background: var(--slc-canvas);
   border: 1px solid var(--slc-edge-hairline);
   transition:
@@ -1187,7 +1186,8 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 
 /* THE PIXEL MARKS (owner, 2026-10-26, pixel direction D). The tick, the
-   dash and the dot are crisp 3px cells on the box's 6 x 6 lattice, drawn here
+   dash and the dot are crisp 2px cells (dither-core.js CONTROL_CELL_PX) on a 6 x 6
+   lattice centred in the box, a 2px margin all round, drawn here
    with no script: the pseudo-element is the first cell and a box-shadow sprite
    is the rest, in the fill's label colour, so a role var rebinds them. Which
    cells is dither-core.js's TICK_CELLS, DASH_CELLS and DOT_FRAMES, and
@@ -1200,39 +1200,39 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-check__box::after {
   content: "";
   position: absolute;
-  left: 0;
+  left: 2px;
   top: 6px;
-  width: 3px;
-  height: 3px;
+  width: 2px;
+  height: 2px;
   background: var(--_sl-on-fill);
   box-shadow:
-    3px 3px 0 var(--_sl-on-fill),
-    6px 6px 0 var(--_sl-on-fill),
-    9px 3px 0 var(--_sl-on-fill),
-    12px 0 0 var(--_sl-on-fill),
-    15px -3px 0 var(--_sl-on-fill);
+    2px 2px 0 var(--_sl-on-fill),
+    4px 4px 0 var(--_sl-on-fill),
+    6px 2px 0 var(--_sl-on-fill),
+    8px 0 0 var(--_sl-on-fill),
+    10px -2px 0 var(--_sl-on-fill);
   opacity: 0;
 }
 .sl-radio__box::after {
   content: "";
   position: absolute;
   left: 6px;
-  top: 3px;
-  width: 3px;
-  height: 3px;
+  top: 4px;
+  width: 2px;
+  height: 2px;
   background: var(--_sl-on-fill);
   box-shadow:
-    3px 0 0 var(--_sl-on-fill),
-    -3px 3px 0 var(--_sl-on-fill),
-    0 3px 0 var(--_sl-on-fill),
-    3px 3px 0 var(--_sl-on-fill),
-    6px 3px 0 var(--_sl-on-fill),
-    -3px 6px 0 var(--_sl-on-fill),
+    2px 0 0 var(--_sl-on-fill),
+    -2px 2px 0 var(--_sl-on-fill),
+    0 2px 0 var(--_sl-on-fill),
+    2px 2px 0 var(--_sl-on-fill),
+    4px 2px 0 var(--_sl-on-fill),
+    -2px 4px 0 var(--_sl-on-fill),
+    0 4px 0 var(--_sl-on-fill),
+    2px 4px 0 var(--_sl-on-fill),
+    4px 4px 0 var(--_sl-on-fill),
     0 6px 0 var(--_sl-on-fill),
-    3px 6px 0 var(--_sl-on-fill),
-    6px 6px 0 var(--_sl-on-fill),
-    0 9px 0 var(--_sl-on-fill),
-    3px 9px 0 var(--_sl-on-fill);
+    2px 6px 0 var(--_sl-on-fill);
   opacity: 0;
 }
 .sl-check__input:checked + .sl-check__box::after,
@@ -1251,10 +1251,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-color: var(--_sl-fill-edge);
 }
 .sl-check__input:indeterminate + .sl-check__box::after {
-  left: 3px;
+  left: 4px;
   top: 6px;
-  width: 12px;
-  height: 6px;
+  width: 8px;
+  height: 4px;
   box-shadow: none;
   opacity: 1;
 }

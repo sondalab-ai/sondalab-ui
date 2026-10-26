@@ -28,8 +28,15 @@ export function wipeFrame(grid: Grid, origin: Origin, t: number, spread?: number
 /** The signal-strip ramp, row-major, 1 where on. `level` 0..1 is how much of the strip is filled. Default 1. */
 export function rampFrame(grid: Grid, level?: number): Uint8Array;
 
-/** A check or radio box holds this many cells per side (18px). */
+/** The check and radio marks are this many cells per side. */
 export const CHECK_CELLS: 6;
+
+/** Cells of margin round the marks inside the box, and the box's cells per side. */
+export const CHECK_INSET: 1;
+export const CHECK_BOX_CELLS: 8;
+
+/** The check and radio cell, in CSS px (the switch keeps CELL_PX). */
+export const CONTROL_CELL_PX: 2;
 
 /** The tick's cells as [column, row], in plotting order. */
 export const TICK_CELLS: readonly (readonly [number, number])[];
