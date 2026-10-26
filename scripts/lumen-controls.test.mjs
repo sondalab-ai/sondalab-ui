@@ -431,7 +431,13 @@ test("in a band every control's edge reads 3:1 against the band and against its 
     for (const [name, make] of Object.entries(BAND_CONTROLS)) {
       const e = make(child);
       assert.equal(paint(rules, e, borderOf(rules, e)).alpha < 1, true, `${band} ${name}: a share of the band's ink, never a solid`);
-      const { onGround, onFace } = bandEdge(rules, child, e);
+      // owner exception, 2026-10-26: a text button RESTS on a hairline (held
+      // by "a text button's rest edge..." below), so its 3:1 edge here is the
+      // control edge it shows on hover and in high contrast
+      const hairline = name === "secondary" && band !== "high contrast";
+      const { onGround, onFace } = hairline
+        ? (() => { const g = groundOf(rules, child), c = over(paint(rules, e, "var(--slc-edge-control)"), g), f = over(paint(rules, e, fillOf(rules, e)), g); return { onGround: ratio(c, g), onFace: ratio(c, f) }; })()
+        : bandEdge(rules, child, e);
       const key = band.replace(/^Tier B /, "").split(" ")[0];
       lows[key] = Math.min(lows[key] ?? 99, onGround, onFace);
       if (onGround < 3) out.push(`${band} ${name}: edge on the band ${onGround.toFixed(2)}`);
@@ -461,7 +467,7 @@ test("the band's control edge is its ink at a share, never currentColor, so a co
   }
   for (const [name, rules, child] of bands()) {
     const box = paint(rules, BAND_CONTROLS.check(child), "var(--slc-edge-control)");
-    for (const c of ["chip", "icon button", "secondary"]) {
+    for (const c of ["chip", "icon button"]) {
       const e = BAND_CONTROLS[c](child);
       assert.equal(toHex(paint(rules, e, borderOf(rules, e))), toHex(box), `${name} ${c}`);
       assert.ok(Math.abs(paint(rules, e, borderOf(rules, e)).alpha - box.alpha) < 1e-9, `${name} ${c}: alpha`);
@@ -572,6 +578,61 @@ test("in a band a group of glass members keeps only its soft inner lines (a know
     }
   }
   assert.deepEqual(out, []);
+});
+
+// ── a text button's rest edge: the translucent hairline (owner, 2026-10-26) ───
+
+/** The page's grounds under a text button, and the same in a band (its wash over the band's ground). */
+test("a text button's rest edge is a translucent hairline: 1.5-2.2:1 on canvas, surface and the raised fill, every product, light and dark, and in a band; hover is 3:1; icon buttons and fields stay 3:1", () => {
+  const out = [];
+  const range = (name, r) => { if (r < 1.5 || r > 2.2) out.push(`${name} ${r.toFixed(3)}`); };
+  const floor = (name, r) => { if (r < 3) out.push(`${name} ${r.toFixed(2)} < 3`); };
+  const seen = { light: { min: 99, max: 0 }, dark: { min: 99, max: 0 }, "band light": { min: 99, max: 0 }, "band dark": { min: 99, max: 0 }, hover: 99 };
+  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    // on the page: the edge over each ground it can sit on (and, as drawn, over the raised fill against the canvas and the surface)
+    const body = at(theme, { product });
+    const btn = button("secondary", false, body);
+    const env = customs(KIT_RULES, btn);
+    const edge = paint(KIT_RULES, btn, borderOf(KIT_RULES, btn));
+    assert.ok(edge.alpha < 1, `${theme} ${product}: never a solid`);
+    const G = Object.fromEntries(["canvas", "surface", "raised"].map((g) => [g, evaluate(`var(--slc-${g})`, env)]));
+    const rs = [...Object.entries(G).map(([g, c]) => [g, ratio(over(edge, c), c)]),
+      ...["canvas", "surface"].map((g) => [`${g} (drawn over the raised fill)`, ratio(over(edge, G.raised), G[g])])];
+    for (const [g, r] of rs) { range(`${theme} ${product} on ${g}`, r); seen[theme].min = Math.min(seen[theme].min, r); seen[theme].max = Math.max(seen[theme].max, r); }
+    // hover: the 3:1 control edge, on the grounds and on the hover tile
+    const hov = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], states: ["hover"], parent: body });
+    const he = paint(KIT_RULES, hov, borderOf(KIT_RULES, hov));
+    for (const [g, c] of [...Object.entries(G), ["tile", evaluate("var(--slc-tile)", env)]]) { const r = ratio(he, c); floor(`${theme} ${product} hover on ${g}`, r); seen.hover = Math.min(seen.hover, r); }
+    // icon buttons and fields keep the one control edge
+    for (const [name, e] of [["icon button", el({ tag: "button", classes: ["sl-icon-btn"], parent: body })], ["round icon button", el({ tag: "button", classes: ["sl-icon-btn", "sl-icon-btn--round"], parent: body })],
+      ["field", el({ tag: "input", classes: ["sl-field__input"], parent: el({ classes: ["sl-field"], parent: body }) })]]) {
+      const c = paint(KIT_RULES, e, borderOf(KIT_RULES, e));
+      for (const g of ["canvas", "surface"]) floor(`${theme} ${product} ${name} on ${g}`, ratio(c, G[g]));
+    }
+  }
+  for (const [band, rules, child] of bands()) {
+    if (band === "high contrast") continue;
+    const e = BAND_CONTROLS.secondary(child);
+    const edge = paint(rules, e, borderOf(rules, e));
+    assert.ok(edge.alpha < 1, `${band}: never a solid`);
+    const ground = groundOf(rules, child);
+    const wash = (g) => over(paint(rules, e, `var(--slc-${g})`, colourOf(rules, child)), ground);
+    for (const [g, c] of [["band", ground], ["surface", wash("surface")], ["raised", wash("raised")]]) {
+      const r = ratio(over(edge, c), c);
+      range(`${band} on ${g}`, r); const k = "band " + band.replace(/^Tier B /, "").split(" ")[0]; seen[k].min = Math.min(seen[k].min, r); seen[k].max = Math.max(seen[k].max, r);
+    }
+  }
+  if (process.env.EDGE_BUTTON_REPORT) console.log(JSON.stringify(seen));
+  assert.deepEqual(out, []);
+});
+
+test("high contrast keeps the strong edge on a text button, on the page and in a band", () => {
+  for (const band of [false, true]) {
+    const e = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], parent: at("high-contrast", { band }) });
+    const env = customs(KIT_RULES, e);
+    assert.equal(toHex(evaluate("var(--slc-edge-button)", env)), toHex(evaluate("var(--slc-edge-control)", env)), `band ${band}: the role is the control edge`);
+    assert.equal(toHex(paint(KIT_RULES, e, borderOf(KIT_RULES, e))), toHex(evaluate("var(--slc-edge-control)", env)), `band ${band}: the drawn border`);
+  }
 });
 
 // ── state indicators and boundaries at 3:1 (0.36.2) ──────────────────────────

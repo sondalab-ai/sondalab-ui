@@ -63,6 +63,7 @@
         "--slc-on-accent-fill",
         "--slc-accent-subtle",
         "--slc-edge-accent",
+        "--slc-edge-button",
         "--slc-edge-control",
         "--slc-edge-control-hover",
         "--slc-edge-pressed",

@@ -346,7 +346,7 @@ test("every labelled accent fill reads the fill set on the control: primary, che
 test("secondary raised, icon button clear in its edge, fields and tracks sunken, boxes on the canvas", () => {
   const ghost = rule(".sl-btn--ghost");
   assert.equal(decl(ghost, "background"), "var(--slc-raised)");
-  assert.equal(decl(ghost, "border-color"), "var(--slc-edge-control)");
+  assert.equal(decl(ghost, "border-color"), "var(--slc-edge-button)", "owner exception 2026-10-26: a text button rests on the translucent hairline");
   assert.equal(decl(ghost, "--_sl-depth"), "inset 0 1px 0 var(--slc-lit), var(--slc-shadow-sm)");
   assert.equal(decl(rule(".sl-btn--ghost:hover:not(:disabled)"), "background"), "var(--slc-tile)");
   assert.equal(decl(rule(".sl-btn--ghost:hover:not(:disabled)"), "border-color"), "var(--slc-edge-control-hover)");

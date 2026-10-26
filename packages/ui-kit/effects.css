@@ -893,6 +893,16 @@
      past it (owner, 2026-10-01: "no gaps between borders in any case"). */
   --slfx-control-edge-soft: color-mix(in oklab, var(--slfx-control-edge) 50%, transparent);
 }
+/* A text button's rest edge is the translucent hairline (components.css,
+   --slc-edge-button, owner 2026-10-26), so a glass one is as subtle as a plain
+   one; hover brings the 3:1 edge back. Icon buttons keep the control edge. The
+   danger, pressed and focus rules below outrank these. */
+.sl-btn:not(.sl-btn--primary).sl-fx-glass { --slfx-control-edge: var(--slc-edge-button); }
+/* A group's cells draw no border: the soft inner line is what separates
+   them, so it stays on the control edge (a hairline there would erase the
+   rule between two glass members). */
+.sl-btn-group > .sl-btn:not(.sl-btn--primary).sl-fx-glass { --slfx-control-edge: var(--slc-edge-control); }
+.sl-btn:not(.sl-btn--primary).sl-fx-glass:hover:not(:disabled, :focus-visible) { --slfx-control-edge: var(--slc-edge-control-hover); }
 .sl-btn--primary.sl-fx-glass { --slfx-control-edge: var(--_sl-fill-edge, var(--slc-edge-accent)); }
 /* A danger tone keeps its danger edge on glass (components.css, 0.32);
    hovered, the host fills with the danger, so the edge is that fill in

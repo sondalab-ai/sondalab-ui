@@ -138,6 +138,16 @@
      a deeper wash, a darker light canvas or a weaker control edge tips it
      under 3:1 (lumen-controls.test.mjs holds it). */
   --slc-edge-pressed:  var(--slc-edge-control);
+  /* A TEXT BUTTON'S REST EDGE (owner exception, 2026-10-26): a translucent
+     hairline, the ink at a share (21% when the ink is light, 30% when it is
+     dark, read off its lightness: no theme branch), so the ground and a glass
+     pane show through it. 1.5-2.2:1 on the canvas, the surface and the raised fill the secondary
+     paints, on every product (scripts/lumen-controls.test.mjs holds it). The
+     label identifies the control (WCAG 1.4.11); hover restores the 3:1 control
+     edge. Icon buttons and every other control keep --slc-edge-control. The
+     ink is --slc-text, read on :root: a band re-derives this role from its own
+     ink, and high contrast aliases it to the strong edge. */
+  --slc-edge-button:   oklch(from var(--slc-text) l c h / calc(0.21 + 0.09 * clamp(0, (0.5 - l) * 1000, 1)));
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* THE ACCENT AS A FILL THAT CARRIES A LABEL (0.32): the primary, a checked
      check, radio or switch, a count badge. --slc-accent-fill is UNSET by
@@ -769,7 +779,7 @@
   --_sl-depth: inset 0 1px 0 var(--slc-lit), var(--slc-shadow-sm);
   background: var(--slc-raised);
   color: var(--slc-text);
-  border-color: var(--slc-edge-control);
+  border-color: var(--slc-edge-button);
 }
 .sl-btn--ghost:hover:not(:disabled)  { background: var(--slc-tile); border-color: var(--slc-edge-control-hover); }
 /* 24px: the 14px line + 2 x 4px + 2px border (was 12 + 2 x 5 + 2). Lumen's
@@ -1933,6 +1943,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   /* A pressed toggle keeps the band's control edge, as on the page (0.36.2;
      35% of the accent until then, 1.04-1.41:1 on the band). */
   --slc-edge-pressed:  var(--slc-edge-control);
+  /* A text button's rest edge in a band: the band's ink at a share, the same
+     intent as on the page (a hairline, 1.5-2.2:1), read off the ink's own
+     lightness so there is no theme branch. */
+  --slc-edge-button:   oklch(from var(--slc-canvas) l c h / calc(0.21 + 0.09 * clamp(0, (0.5 - l) * 1000, 1)));
   /* THE ACCENT FILL'S EDGE IN A BAND (0.36.2). The fill itself cannot find
      a primary or a checked box here: on the dark and high-contrast themes'
      light bands a bright fill reads 1.07-2.4:1 (high contrast's yellow,
@@ -2927,6 +2941,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-edge-raised:  var(--slc-border);
   --slc-edge-wash:    var(--slc-border);
   --slc-edge-control: var(--slc-border);
+  --slc-edge-button:  var(--slc-edge-control);
   /* Hover too: left on :root's derivation it is a mid grey, WEAKER than the
      drawn border at rest, so a hovered field lost its edge. */
   --slc-edge-control-hover: var(--slc-border-strong);
@@ -2983,6 +2998,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-lit-wash: none;
   --slc-lit-tint: none;
   --slc-lit-drop: 0 0 transparent;
+  --slc-edge-button: var(--slc-edge-control);
 }
 /* The in-button key draws its own base line instead of the key depth, so it
    is ringed here, in its label's colour: white on a neutral button, black on
