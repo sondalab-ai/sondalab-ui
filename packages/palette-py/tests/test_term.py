@@ -1,4 +1,6 @@
 import random
+import re
+import unicodedata
 
 import pytest
 
@@ -140,7 +142,7 @@ def test_switch_on_unknown_purpose_raises(name):
 
 
 def test_helpers_are_public():
-    for name in ("accessible", "reduced_motion", "switch_on"):
+    for name in ("accessible", "reduced_motion", "switch_on", "header"):
         assert name in t.__all__
 
 
@@ -384,7 +386,7 @@ def test_decode_is_deterministic_and_ends_on_value():
     assert len(a) == 4 and a[-1] == "sha 9c41e0b"
 
 
-ENV_HELPERS = [t.switch_on, t.accessible, t.reduced_motion, t.motion_enabled, t.ascii_mode, t.color_mode]
+ENV_HELPERS = [t.switch_on, t.accessible, t.reduced_motion, t.motion_enabled, t.ascii_mode, t.color_mode, t.header]
 
 
 @pytest.mark.parametrize("fn", ENV_HELPERS, ids=lambda f: f.__name__)
@@ -404,3 +406,163 @@ def test_env_none_reads_the_live_environment(monkeypatch):
     monkeypatch.delenv("SONDALAB_ACCESSIBLE")
     monkeypatch.delenv("ACCESSIBLE", raising=False)
     assert t.accessible() is False
+
+
+# --- header ---------------------------------------------------------------
+
+SGR = re.compile(r"\x1b\[[0-9;]*m")
+TTY = {"LANG": "en_US.UTF-8", "TERM": "xterm-256color", "COLUMNS": "120"}
+DESC = "Manage Claude Code loadouts."
+
+
+def _plain(s):
+    return SGR.sub("", s)
+
+
+def _header(env=None, isatty=True, **kw):
+    return t.header("cld", "0.9.0", DESC, env=TTY if env is None else env, isatty=isatty, **kw)
+
+
+def test_header_is_public():
+    assert "header" in t.__all__
+
+
+def test_header_machine_prints_nothing():
+    assert _header(machine=True) == ""
+    assert _header(machine=True, compact=True) == ""
+
+
+@pytest.mark.parametrize(
+    "env,isatty",
+    [
+        (TTY, False),
+        ({**TTY, "TERM": "dumb"}, True),
+        ({**TTY, "SONDALAB_ACCESSIBLE": "1"}, True),
+        ({**TTY, "ACCESSIBLE": ""}, True),
+        ({**TTY, "SONDALAB_ASCII": "1"}, True),
+        ({**TTY, "LANG": "C"}, True),
+        ({**TTY, "COLUMNS": "12"}, True),
+    ],
+)
+@pytest.mark.parametrize("compact", [False, True])
+def test_header_falls_back_to_the_lockup(env, isatty, compact):
+    out = _header(env, isatty, compact=compact)
+    assert _plain(out) == "sonda/lab cld 0.9.0\n"
+
+
+def test_header_full_is_three_lines_mark_then_text():
+    out = _plain(_header({**TTY, "NO_COLOR": "1"}))
+    assert out == (
+        "▄█▄ ▄▄  sonda/lab\n"
+        "▀█▀ ▀▀  cld 0.9.0\n"
+        "▄▄▄▄▄▄  Manage Claude Code loadouts.\n"
+    )
+
+
+def test_header_compact_is_one_line_then_a_blank_line():
+    assert _plain(_header({**TTY, "NO_COLOR": "1"}, compact=True)) == "●■ sonda/lab cld\n\n"
+
+
+def test_header_mark_is_at_most_six_columns_with_one_accent_shape():
+    mark = p.HEADER["mark"]
+    assert len(mark) == 3
+    assert all(len(row) == len(mark[0]) <= 6 for row in mark)
+    accent = [(r, c) for r, row in enumerate(p.HEADER["markAccent"]) for c, ch in enumerate(row) if ch == "a"]
+    assert accent, "no accent cell"
+    # one shape: the accent cells form a single 4-connected region
+    seen, todo = set(), [accent[0]]
+    while todo:
+        r, c = todo.pop()
+        if (r, c) in seen or (r, c) not in accent:
+            continue
+        seen.add((r, c))
+        todo += [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+    assert seen == set(accent)
+    assert len(p.HEADER["compact"]) == 2 and p.HEADER["compactAccent"].count("a") == 1
+
+
+def test_header_paints_accent_slash_and_dim():
+    out = _header()
+    accent = "\x1b[%dm" % p.ROLES[p.HEADER["accentRole"]][0]
+    prompt = "\x1b[%dm" % p.ROLES["prompt"][0]
+    dim = "\x1b[%dm" % p.ROLES["dim"][0]
+    lines = out.split("\n")
+    assert lines[0].startswith(accent + "▄█▄\x1b[0m ▄▄  sonda")
+    assert lines[1].startswith(accent + "▀█▀\x1b[0m ▀▀  cld 0.9.0")
+    assert "sonda" + prompt + "/\x1b[0m" + "lab" in lines[0]
+    assert lines[2].endswith(dim + DESC + "\x1b[0m")
+    assert out.count(accent) == 2
+
+
+def test_header_compact_paints_accent_and_dim():
+    out = _header(compact=True)
+    accent = "\x1b[%dm" % p.ROLES[p.HEADER["accentRole"]][0]
+    dim = "\x1b[%dm" % p.ROLES["dim"][0]
+    assert out == accent + "●\x1b[0m■ " + dim + "sonda/lab cld\x1b[0m\n\n"
+
+
+@pytest.mark.parametrize("compact", [False, True])
+def test_header_no_color_keeps_the_shapes(compact):
+    painted = _header(compact=compact)
+    plain = _header({**TTY, "NO_COLOR": "1"}, compact=compact)
+    assert SGR.search(painted) and not SGR.search(plain)
+    assert plain == _plain(painted)
+
+
+def test_header_lockup_paints_the_slash_when_colour_is_forced():
+    out = _header({**TTY, "FORCE_COLOR": "1"}, isatty=False)
+    assert out == "sonda\x1b[%dm/\x1b[0mlab cld 0.9.0\n" % p.ROLES["prompt"][0]
+
+
+def test_header_cuts_a_long_description_at_the_cap_never_wraps():
+    long = "x" * 300
+    out = _plain(t.header("cld", "0.9.0", long, env={**TTY, "COLUMNS": "200"}, isatty=True))
+    lines = out.rstrip("\n").split("\n")
+    assert len(lines) == 3
+    assert len(lines[2]) == p.LAYOUT["maxWidth"]
+    assert lines[2].endswith("x")
+
+
+def test_header_reads_the_cap_when_the_width_is_unknown():
+    env = {k: v for k, v in TTY.items() if k != "COLUMNS"}
+    assert _plain(_header(env, isatty=True)).count("\n") == 3
+
+
+@pytest.mark.parametrize("cols,lines", [("36", 3), ("35", 1)])
+def test_header_needs_mark_gap_and_longest_line(cols, lines):
+    # mark 6 + gap 2 + "Manage Claude Code loadouts." (28) = 36
+    assert _plain(_header({**TTY, "COLUMNS": cols})).count("\n") == lines
+
+
+def test_header_in_40_columns_is_whole_or_the_lockup():
+    env = {**TTY, "COLUMNS": "40"}
+    assert _plain(_header(env)).count("\n") == 3
+    wide = t.header("cld", "0.9.0", "Manage Claude Code loadouts and profiles.", env=env, isatty=True)
+    assert _plain(wide) == "sonda/lab cld 0.9.0\n"
+
+
+@pytest.mark.parametrize("cols,lines", [("16", 2), ("15", 1)])
+def test_header_compact_needs_mark_space_and_text(cols, lines):
+    # mark 2 + space 1 + "sonda/lab cld" (13) = 16
+    assert _plain(_header({**TTY, "COLUMNS": cols}, compact=True)).count("\n") == lines
+
+
+@pytest.mark.parametrize("compact", [False, True])
+@pytest.mark.parametrize("desc", [DESC, "y" * 400, ""], ids=["short", "long", "empty"])
+def test_header_lines_fit_the_cap_and_every_glyph_is_one_column(compact, desc):
+    for env in (TTY, {**TTY, "COLUMNS": "40"}, {**TTY, "LANG": "C"}):
+        for isatty in (True, False):
+            out = _plain(t.header("smartctx" * 20, "0.14.2", desc, compact=compact, env=env, isatty=isatty))
+            for line in out.split("\n"):
+                assert len(line) <= p.LAYOUT["maxWidth"]
+                for ch in line:
+                    assert unicodedata.east_asian_width(ch) not in ("W", "F"), ch
+                    assert not unicodedata.combining(ch) and unicodedata.category(ch) not in ("Cc", "Cf", "Mn", "Me"), ch
+
+
+def test_header_help_prints_no_environment_value(monkeypatch):
+    import pydoc
+
+    monkeypatch.setenv("SL_TEST_SECRET", "do-not-print-7e4a")
+    leaked = "do-not-print-7e4a" in pydoc.render_doc(t.header)
+    assert not leaked
