@@ -363,7 +363,7 @@
 
 /* Forced colours (the user's own palette, components.css): every layer the
    kill switches hide is hidden here too, plus the material's own layers and
-   ink. Each paints page colours -- a tint, a sheen, an arc, a shimmer -- and
+   the dither fill. Each paints page colours -- a tint, a sheen, an arc, a shimmer -- and
    on a pressed or checked control they sit over the Highlight that
    components.css paints the state in, so the state read as the page's accent
    or vanished. Same list as the paint layers above, without the theme prefix;
@@ -382,7 +382,7 @@
   .sl-fx-goo__field,
   .sl-fx-glitch::before,
   .sl-fx-glitch::after,
-  .sl-fx-ink,
+  .sl-fx-dither,
   .sl-glass__backdrop,
   .sl-glass__tint,
   .sl-glass__specular,
@@ -395,6 +395,8 @@
      some tests locate by first occurrence. */
   :is(.sl-fx-glitch__text) { opacity: 1 !important; }
   :is(.sl-fx-glitch__shard) { opacity: 0 !important; }
+  /* The fill is gone, so the label stays the control's own. */
+  :is(.sl-btn, .sl-icon-btn).is-dithered { animation: none !important; }
 }
 
 /* A halftone is a picture made of spacing and size: high contrast shows none. */
@@ -2777,98 +2779,84 @@
    takes its container's width, square. Zero specificity: any author width wins. */
 :where([data-sl-halftone]) { display: block; width: 100%; aspect-ratio: 1; }
 
-/* ══ INK — light pools under the pointer ════════════════════════════════════
-   Owner, 2026-10-13: the ink of 0.26–0.36.5 (a bright ring with an iridescent
-   band, sweeping in on enter and back out on leave) read as flashy, worst
-   along a toolbar, where every crossing fired a sweep out of one control and
-   into the next. Chosen from a lab of six (option E, "viscous light"): a pool
-   of light sits under the pointer and trails it with a lag, like a viscous
-   liquid; its rim wobbles on a slowly moving noise; it fills on enter and
-   drains where the pointer left. Not a family with a meaning of its own (L6):
-   it is how the kit's buttons answer the pointer, like the gummy press is how
-   presses move (L4).
+/* ══ DITHER — the hover is an ordered-dither wipe ═══════════════════════════
+   Owner, 2026-10-26, pixel direction D. A button or icon button answers the
+   pointer with a fill that grows through an 8x8 Bayer threshold from where the
+   pointer crossed the edge and drains toward where it left. It replaces ink
+   (0.26-0.36.6: a ring, then a pool of light), which is gone. Like the press
+   it is how the kit's controls answer the pointer, not a family with a meaning
+   of its own (L4, L6).
 
-   INK OWNS NO COLOUR (owner, 2026-10-01, after 0.26.0 painted its own accent
-   tint over spexr's red danger hover). The control's own hover colour applies
-   exactly as declared; the pool is light over it, in the control's own hue,
-   and never sets the host's paint. Once the pointer has left and the pool has
-   drained, nothing of ink is left on screen.
+   Tier 1 only. effects.js builds ONE <span class="sl-fx-dither"> holding a
+   <canvas> on the first pointer entry into a control (never at mount()) and
+   draws the fill as 3px cells on it. This file owns what the layer is and
+   where it lies; the colour is two custom properties bound per variant:
+     --slfx-dither-fill   the cells: the inverse neutral on a primary, the
+                          accent on every other control (the danger on a
+                          danger tone).
+     --slfx-dither-on     the label while the fill is under it: the kit's one
+                          label rule (--_sl-on, tokens.css) read off the fill.
+   effects.js reads --slfx-dither-fill through the layer's own `color` when a
+   wipe starts, so a product's or a theme's rebinding is followed.
 
-   Two readings, picked by effects.js from what the pool lies on, never by
-   theme: on a fill or a dark ground, a lighter pool of the same hue, screened
-   (a pool in the fill's own colour vanished on the light theme's primary); on
-   a light neutral ground (data-sl-ink-ground="light"), the hue itself with
-   more chroma, painted -- light on light takes its contrast from saturation.
+   WHERE IT LIES. Under the glass: z-index -3, after .sl-glass__backdrop in
+   DOM order, so the frost blurs the page and the fill is over it; the glass
+   tint (-2), shine and specular (-1), the live light, the press light, the
+   ::after ring (+1) and the label paint over the fill. On a control with no
+   glass it lies on the host's own background. The span rounds with the host
+   (border-radius: inherit, overflow: hidden) and holds fill cells only: it
+   never draws an outline or a rim, the control's own border and ring stay its
+   edge, and a round icon button keeps a smooth circle. No blend, opacity or
+   filter is ever set on it: either would make the host a backdrop root or
+   throttle the glass beneath it.
 
-   Tier 1 only. mount() injects one <span class="sl-fx-ink"> into each button
-   and icon button; ::before is the pool. effects.js writes --slfx-ink-x/-y
-   (the trailing pointer, in px), --slfx-ink-size (the pool's radius),
-   --slfx-ink-tint (the control's colour, when it has a hue) and
-   --slfx-ink-noise (one of four noise fields, so neighbours wobble apart), and
-   sets data-sl-ink-live while a pool is up: the noise moves, so its filter is
-   applied only then. */
-@property --slfx-ink-r { syntax: "<length>"; inherits: false; initial-value: 0px; }
+   THE LABEL flips when the wipe has covered half the control (.is-dithered,
+   toggled by effects.js). It is a zero-length animation rather than a plain
+   colour: a transition on `color` would fade the flip, and an animation holds
+   the value without changing the one the transition watches. */
+:where(.sl-btn, .sl-icon-btn) {
+  --slfx-dither-fill: var(--slc-accent-fill, var(--slc-accent));
+  --slfx-dither-on: oklch(from var(--slfx-dither-fill) var(--_sl-on));
+}
+:where(.sl-btn--primary) { --slfx-dither-fill: var(--slc-text); }
+:where(.sl-btn--danger:not(.sl-btn--primary), .sl-icon-btn--danger) { --slfx-dither-fill: var(--slc-danger); }
 
-:is(.sl-btn, .sl-icon-btn):has(> .sl-fx-ink) {
+/* The layer's stacking context: a negative z-index needs a host that is its
+   own, or the fill would drop behind the host's background and the page's.
+   Zero weight, so a product's own position or isolation wins. */
+:where(:root[data-sl-fx="on"]) :where(.sl-btn, .sl-icon-btn) {
   position: relative;
   isolation: isolate;
 }
 
-.sl-fx-ink {
+.sl-fx-dither {
   position: absolute;
   inset: 0;
-  /* Above the glass tint (-2), below its shine and specular (-1, later in DOM
-     order) and below the label, which is inline content. */
-  z-index: -1;
-  overflow: hidden;
+  z-index: -3;
   border-radius: inherit;
+  overflow: hidden;
   pointer-events: none;
-  /* The control's own colour, as effects.js read it at the crossing. A neutral
-     control (grey fill, ink text) has no hue to give, and its pool came out
-     grey (owner, 2026-10-01: "it should be vibrant"): effects.js passes only a
-     chromatic colour; with none, the pool is the accent's. */
-  --slfx-ink-c: var(--slfx-ink-tint, var(--slc-accent));
+  color: var(--slfx-dither-fill);
 }
-/* The pool: full at the centre, thinner through the body, a brighter rim just
-   inside its edge -- a drop of light rather than a glow. At rest its radius is
-   0 and it paints nothing. */
-.sl-fx-ink::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle max(var(--slfx-ink-r), 1px) at var(--slfx-ink-x, 50%) var(--slfx-ink-y, 50%),
-    oklch(from var(--slfx-ink-c) min(calc(l + .22), .9) max(c, .1) h / .6) 0,
-    oklch(from var(--slfx-ink-c) min(calc(l + .16), .86) max(c, .1) h / .36) 55%,
-    oklch(from var(--slfx-ink-c) min(calc(l + .26), .94) max(c, .12) h / .7) 86%,
-    transparent 100%);
-  opacity: 0;
-  mix-blend-mode: screen;
-}
-.sl-fx-ink[data-sl-ink-ground="light"]::before {
-  background: radial-gradient(circle max(var(--slfx-ink-r), 1px) at var(--slfx-ink-x, 50%) var(--slfx-ink-y, 50%),
-    oklch(from var(--slfx-ink-c) min(l, .7) calc(c * 1.25 + .04) h / .28) 0,
-    oklch(from var(--slfx-ink-c) min(l, .7) calc(c * 1.25 + .04) h / .17) 55%,
-    oklch(from var(--slfx-ink-c) min(l, .66) calc(c * 1.4 + .06) h / .45) 86%,
-    transparent 100%);
-  mix-blend-mode: normal;
-}
-/* Live: painted, and torn by its noise field. */
-.sl-fx-ink[data-sl-ink-live]::before {
-  opacity: 1;
-  filter: var(--slfx-ink-noise, url(#sl-fx-ink-noise-0)) blur(1.5px);
+.sl-fx-dither > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
+@keyframes slfx-dither-on { to { color: var(--slfx-dither-on); } }
+/* Longhands, because this is not a loop: the guards that read `animation:` for
+   a running loop (reduced motion, data-sl-fx-still) have nothing to hold. */
 @media (prefers-reduced-motion: no-preference) {
-  .sl-fx-ink::before {
-    transition: --slfx-ink-r var(--sl-motion-ink-out, 520ms) cubic-bezier(.4, 0, .6, 1);
-  }
-  :is(.sl-btn, .sl-icon-btn):hover:not(:disabled, [aria-disabled="true"]) > .sl-fx-ink::before {
-    --slfx-ink-r: var(--slfx-ink-size, 60px);
-    transition: --slfx-ink-r var(--sl-motion-ink-in, 480ms) cubic-bezier(.25, .8, .3, 1);
+  :is(.sl-btn, .sl-icon-btn).is-dithered {
+    animation-name: slfx-dither-on;
+    animation-duration: 0s;
+    animation-fill-mode: both;
   }
 }
 
 /* Never where the effects layer is refused. */
-:root[data-sl-theme="high-contrast"] .sl-fx-ink,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *) > .sl-fx-ink { display: none; }
+:root[data-sl-theme="high-contrast"] .sl-fx-dither,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) > .sl-fx-dither { display: none; }
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn).is-dithered,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn).is-dithered { animation: none; }

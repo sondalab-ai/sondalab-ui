@@ -1120,99 +1120,137 @@ test("glass panes and press hosts keep the colour transitions", () => {
   }
 });
 
-// Owner, 2026-10-13: ink is a pool of light under the pointer (the lab's
-// "viscous light"), replacing the 0.26–0.36.5 ring that swept in and out.
-// Tier 1 only, and the plain fade is what stands wherever the layer is not
-// injected.
-test("ink: the pool grows on a registered length, only under no-preference, never in high contrast or opt-out", () => {
-  assert.match(effects, /@property\s+--slfx-ink-r\s*\{[^}]*syntax:\s*"<length>"/);
-  const motion = effects.slice(effects.indexOf("@media (prefers-reduced-motion: no-preference) {\n  .sl-fx-ink::before"));
-  assert.ok(motion.length > 0, "the ink's motion sits inside the no-preference query");
-  assert.match(motion, /--slfx-ink-r:\s*var\(--slfx-ink-size, 60px\)/);
-  assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \.sl-fx-ink,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\) > \.sl-fx-ink\s*\{\s*display:\s*none;/);
+// Owner, 2026-10-26, pixel direction D: the hover on every button and icon
+// button is a Bayer dither wipe, replacing ink (0.26-0.36.6). Tier 1 only; the
+// control's declared CSS hover is what stands wherever the layer is not built.
+const DITHER = effects.slice(effects.indexOf(".sl-fx-dither {"));
+const ditherRule = (sel) => RULES.find((r) => r.selector === sel)?.body ?? "";
+
+test("dither: ink is gone from both files", () => {
+  assert.doesNotMatch(effects, /sl-fx-ink|slfx-ink|data-sl-ink|motion-ink/, "effects.css names no ink");
+  assert.doesNotMatch(effectsJs, /sl-fx-ink|slfx-ink|data-sl-ink|injectInk|onInk|INK_/, "effects.js names no ink");
 });
 
-// Owner, 2026-10-13: the iridescent band (hues ±110°) went with the ring.
-// The 2026-10-02 ruling dropped rainbow from the kit's defaults and had missed
-// ink; the pool is the control's own hue and nothing else.
-test("ink: one pool, no iridescence, no ring", () => {
-  assert.doesNotMatch(effects, /\.sl-fx-ink::after/, "ink paints no second layer");
-  assert.doesNotMatch(effects, /--slfx-ink-a\b/, "ink has no turning angle");
-  const pool = effects.match(/\n\.sl-fx-ink::before \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(pool, /radial-gradient\(circle max\(var\(--slfx-ink-r\), 1px\) at var\(--slfx-ink-x, 50%\) var\(--slfx-ink-y, 50%\),\s*oklch/, "the pool is full at its centre, not a ring");
-  assert.doesNotMatch(pool, /calc\(h [-+]/, "the pool never turns the hue");
+test("dither: the layer is under the glass, rounded with its host, clipped, and inert", () => {
+  const layer = ditherRule(".sl-fx-dither");
+  assert.ok(layer, "the .sl-fx-dither rule is found");
+  assert.match(layer, /z-index:\s*-3;/, "below the glass tint (-2), shine and specular (-1)");
+  assert.match(layer, /position:\s*absolute;/);
+  assert.match(layer, /inset:\s*0;/);
+  assert.match(layer, /border-radius:\s*inherit;/, "the radius is the host's, never written here");
+  assert.match(layer, /overflow:\s*hidden;/);
+  assert.match(layer, /pointer-events:\s*none;/);
+  assert.doesNotMatch(layer, /(?:^|[;\s])(?:width|height|min-width|max-width|radius)\s*:/, "no widths or radii");
+  assert.match(ditherRule(".sl-fx-dither > canvas"), /width:\s*100%;[^}]*height:\s*100%;/, "the canvas fills the layer");
 });
 
-// Regression, 2026-10-01: 0.26.0's ink held each control at rest and painted
-// its own accent tint, so spexr's red danger hover came out indigo. Ink owns no
-// colour: no rule keyed on the ink layer may set a host's fill, border or
-// label, and the pool paints nothing until it is live.
-test("ink owns no colour: it never sets a host's paint, and paints nothing at rest", () => {
-  for (const m of effects.matchAll(/([^{}]*\.sl-fx-ink[^{}]*)\{([^}]*)\}/g)) {
-    if (!/:has\(> \.sl-fx-ink\)/.test(m[1])) continue;
-    assert.doesNotMatch(m[2], /(^|[;\s])(background|background-color|border-color|color|--slfx-fill|--slc-[\w-]+)\s*:/, `${m[1].trim()} paints the host`);
-  }
-  assert.doesNotMatch(effects, /--slfx-ink-to\b/, "ink has no target colour of its own");
-  const pool = effects.match(/\n\.sl-fx-ink::before \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(pool, /opacity:\s*0;/, "at rest the pool paints nothing");
-  const live = effects.match(/\.sl-fx-ink\[data-sl-ink-live\]::before \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(live, /opacity:\s*1;/);
-  assert.match(live, /filter:\s*var\(--slfx-ink-noise, url\(#sl-fx-ink-noise-0\)\)/, "the moving noise is applied only while live");
-  assert.match(effectsJs, /function inkTint\(host\)/, "the tint is read off the control");
+test("dither: it paints fill cells only: no outline, rim, blend, opacity or filter", () => {
+  const painted = DITHER.slice(0, DITHER.indexOf("@keyframes"));
+  assert.doesNotMatch(painted, /mix-blend-mode|opacity\s*:|filter\s*:|backdrop-filter|outline|box-shadow|border(?!-radius)|image-rendering/, "nothing on the layer or its canvas but position, clip and a colour");
+  const draw = jsFnBody("drawDither");
+  assert.doesNotMatch(draw, /stroke|strokeRect|arc\(|ellipse|roundRect|clip\(|globalCompositeOperation|filter|shadow|createRadialGradient|createLinearGradient/, "the canvas draws rects and nothing else");
+  assert.match(draw, /ctx\.rect\(/);
+  assert.match(draw, /ctx\.fill\(\)/);
 });
 
-// Owner, 2026-10-13: on the light theme's primary the pool was barely visible
-// -- painted in the fill's own colour, it vanished into it. The reading is
-// picked from the ground the pool lies on, never from the theme.
-test("ink: the pool's reading follows its ground, not the theme", () => {
-  const from = effects.indexOf("@property --slfx-ink-r");
-  const ink = effects.slice(from, effects.indexOf(':root[data-sl-theme="high-contrast"] .sl-fx-ink,', from));
-  assert.ok(from > 0 && ink.length > 0, "the ink block is found");
-  assert.doesNotMatch(ink, /data-sl-theme/, "no theme branch in ink");
-  const pool = ink.match(/\n\.sl-fx-ink::before \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(pool, /mix-blend-mode:\s*screen/, "on a fill or a dark ground the pool is a lighter light");
-  const light = ink.match(/\.sl-fx-ink\[data-sl-ink-ground="light"\]::before \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(light, /mix-blend-mode:\s*normal/, "on a light neutral ground the hue is painted");
-  const stops = [...light.matchAll(/oklch\(from var\(--slfx-ink-c\) ([^/]*)\//g)].map((m) => m[1]);
-  assert.equal(stops.length, 3, `the light-ground pool has three stops, found ${stops.length}`);
-  for (const s of stops) assert.match(s, /calc\(c \* 1\.\d+ \+ \.0\d+\) h $/, `light-ground chroma is lifted: ${s}`);
-  assert.match(effectsJs, /ink\.setAttribute\("data-sl-ink-ground", fill \? "fill" : inkGround\(host\)\)/);
-  assert.match(effectsJs, /function inkGround\(host\)/);
-});
-
-test("ink: effects.js injects the layer and the noise fields, Tier 1 only, and trails the pointer", () => {
-  assert.match(effectsJs, /const INK_HOSTS = "\.sl-btn, \.sl-icon-btn";/);
-  assert.match(effectsJs, /const INK_FILTER = "sl-fx-ink-noise";/);
-  assert.match(effectsJs, /const INK_SEEDS = \[\d+, \d+, \d+, \d+\];/, "four noise fields, so neighbours wobble apart");
+test("dither: it is built lazily, after the backdrop, and mount() builds no canvas", () => {
+  const ensure = jsFnBody("ensureDither");
+  assert.match(ensure, /createElement\("canvas"\)/, "the canvas is made here");
+  assert.match(ensure, /\.sl-glass__backdrop/);
+  assert.match(ensure, /backdrop\.after\(layer\)/, "after the backdrop in DOM order");
+  assert.match(ensure, /else host\.prepend\(layer\)/, "first child where there is no glass");
+  assert.equal((effectsJs.match(/createElement\("canvas"\)/g) ?? []).length, 1, "one canvas is made in effects.js, and in ensureDither");
+  assert.equal((effectsJs.match(/ensureDither\(/g) ?? []).length, 2, "ensureDither is defined once and called once");
+  assert.match(jsFnBody("onDitherCross"), /entering \? ensureDither\(host\)/, "called from the pointer entry only");
+  assert.doesNotMatch(jsFnBody("mount"), /ensureDither|createElement\("canvas"\)|DITHER_CLASS/, "mount() creates nothing");
+  assert.match(effectsJs, /addEventListener\("pointerover", onDitherCross/);
+  assert.match(effectsJs, /addEventListener\("pointerout", onDitherCross/);
   const guard = effectsJs.indexOf("if (window.matchMedia(REDUCE).matches && !ignoreReducedMotion) return false;");
-  assert.ok(effectsJs.indexOf("injectInks(root);") > guard, "ink is injected after the reduced-motion guard");
-  assert.match(effectsJs, /addEventListener\("pointerover", onInkCross/);
-  assert.match(effectsJs, /addEventListener\("pointerout", onInkCross/);
-  assert.match(effectsJs, /addEventListener\("pointermove", onInkMove/);
-  assert.match(effectsJs, /if \(ev\.pointerType === "touch"\) return;/, "touch raises no pool");
-  assert.match(effectsJs, /if \(host\.matches\(':disabled, \[aria-disabled="true"\]'\)\) return;/, "a disabled control raises no pool");
+  assert.ok(effectsJs.indexOf('addEventListener("pointerover", onDitherCross') > guard, "armed after the reduced-motion guard");
 });
 
-// Regression, 2026-10-13 (review): the trailing loop forgot a pool once it had
-// caught up with the exit point, so a pointer back within INK_DRAIN_MS built a
-// fresh pool, cleared a timer it never had, and the old timer then switched
-// the new pool off under the pointer. Only the drain timer forgets a pool, so
-// a re-entry always finds it and cancels the real timer.
-test("ink: re-entering a draining pool keeps it live", () => {
-  const step = effectsJs.slice(effectsJs.indexOf("function inkStep()"), effectsJs.indexOf("function inkTrail()"));
-  assert.doesNotMatch(step, /inkPools\.delete/, "the trailing loop never forgets a pool");
-  const cross = effectsJs.slice(effectsJs.indexOf("function onInkCross(ev)"), effectsJs.indexOf("function onInkMove(ev)"));
-  assert.match(cross, /setTimeout\(\(\) => \{\s*if \(p\.on\) return;\s*inkPools\.delete\(ink\);\s*ink\.removeAttribute\("data-sl-ink-live"\);\s*\}, INK_DRAIN_MS\)/);
-  assert.match(cross, /let p = inkPools\.get\(ink\);/);
-  assert.match(cross, /clearTimeout\(p\.drain\);/);
+test("dither: touch, a disabled control, reduced motion and an opt-out region raise no wipe", () => {
+  const cross = jsFnBody("onDitherCross");
+  assert.match(cross, /ev\.pointerType === "touch"/);
+  assert.match(cross, /suppressed\(\) \|\| window\.matchMedia\(REDUCE\)\.matches/, "not even under the motion derogation");
+  assert.match(cross, /host\.matches\(':disabled, \[aria-disabled="true"\]'\)/);
+  assert.match(cross, /host\.closest\('\[data-sl-fx="off"\]'\)/);
 });
 
-// Owner, 2026-10-01: on paper a neutral control's ink was grey. A neutral
-// glows in the accent: effects.js passes only a chromatic colour.
-test("ink: a neutral control glows in the accent, never grey", () => {
-  assert.match(effects, /--slfx-ink-c:\s*var\(--slfx-ink-tint, var\(--slc-accent\)\);/);
-  assert.match(effectsJs, /import \{ isChromatic, toSrgb \} from "\.\/colour\.js";/);
-  assert.match(effectsJs, /paints\(v\) && isChromatic\(v\)/);
+test("dither: one shared rAF loop that sleeps when nothing moves", () => {
+  assert.equal((jsFnBody("ditherStep").match(/requestAnimationFrame\(/g) ?? []).length, 1);
+  assert.match(jsFnBody("ditherStep"), /if \(dithering\.size\) ditherFrame = requestAnimationFrame\(ditherStep\)/, "re-arms only while a wipe is moving");
+  assert.match(jsFnBody("ditherStep"), /dithering\.delete\(d\)/, "a wipe leaves the loop at either end");
+  assert.match(jsFnBody("ditherWake"), /if \(ditherFrame\) return;/, "one frame at a time");
+  assert.equal((effectsJs.match(/requestAnimationFrame\(ditherStep\)/g) ?? []).length, 2, "only the loop's two call sites");
+});
+
+test("dither: cells are CELL_PX, drawn at a device ratio capped at 2, from dither-core", () => {
+  assert.match(effectsJs, /import \{ CELL_PX, wipeFrame \} from "\.\/dither-core\.js";/, "imported, not copied");
+  assert.doesNotMatch(effectsJs, /const (?:BAYER|CELL_PX)\b|function wipeFrame|function bayerAt/, "no second copy of the maths");
+  assert.match(effectsJs, /const DITHER_DPR_CAP = 2;/);
+  assert.match(jsFnBody("sizeDither"), /Math\.min\(DITHER_DPR_CAP, window\.devicePixelRatio/);
+  const draw = jsFnBody("drawDither");
+  assert.match(draw, /wipeFrame\(grid, d\.origin, t\)/);
+  assert.match(draw, /CELL_PX \* dpr/, "cells are drawn at device resolution");
+  assert.doesNotMatch(effects, /image-rendering/, "no upscaling by the browser");
+  assert.match(jsFnBody("sizeDither"), /d\.canvas\.width = /);
+  assert.match(jsFnBody("sizeDither"), /if \(w === d\.w && h === d\.h && dpr === d\.dpr\) return;/, "resized only when something changed");
+});
+
+test("dither: the origin is where the pointer crossed, and a re-entry reverses from the current progress", () => {
+  const cross = jsFnBody("onDitherCross");
+  assert.match(cross, /d\.origin = \{ x: \(ev\.clientX - r\.left\) \/ CELL_PX, y: \(ev\.clientY - r\.top\) \/ CELL_PX \}/);
+  assert.match(cross, /d\.dir = entering \? 1 : -1;/, "one-way per enter and per leave");
+  assert.doesNotMatch(cross, /d\.p = /, "progress is never reset: it reverses from where it is");
+  assert.match(jsFnBody("ditherStep"), /d\.dir > 0 \? d\.msIn : d\.msOut/);
+});
+
+test("dither: motion comes from the --sl-motion-dither tokens, not literals", () => {
+  const cross = jsFnBody("onDitherCross");
+  assert.match(cross, /motionMs\(cs, "--sl-motion-dither-in"/);
+  assert.match(cross, /motionMs\(cs, "--sl-motion-dither-out"/);
+  assert.doesNotMatch(effects, /--sl-motion-dither|slfx-dither-r/, "effects.css transitions nothing for the wipe: JS runs it");
+  const tokens = readFileSync(resolve(HERE, "../sondalab.tokens.json"), "utf8");
+  assert.match(tokens, /"dither-in":\s*"260ms"/);
+  assert.match(tokens, /"dither-out":\s*"320ms"/);
+  const css = readFileSync(resolve(KIT, "tokens.css"), "utf8");
+  assert.match(css, /--sl-motion-dither-in:\s*260ms;/);
+  assert.match(css, /--sl-motion-dither-out:\s*320ms;/);
+});
+
+test("dither: the fill and the label are role-vars bound per variant, and JS reads the fill off the layer", () => {
+  const base = ditherRule(":where(.sl-btn, .sl-icon-btn)");
+  assert.match(base, /--slfx-dither-fill:\s*var\(--slc-accent-fill, var\(--slc-accent\)\);/, "accent on a secondary, a ghost and an icon button");
+  assert.match(base, /--slfx-dither-on:\s*oklch\(from var\(--slfx-dither-fill\) var\(--_sl-on\)\);/, "the label is the kit's own pole read off the fill");
+  assert.match(ditherRule(":where(.sl-btn--primary)"), /--slfx-dither-fill:\s*var\(--slc-text\);/, "the inverse neutral on a primary");
+  assert.match(ditherRule(":where(.sl-btn--danger:not(.sl-btn--primary), .sl-icon-btn--danger)"), /--slfx-dither-fill:\s*var\(--slc-danger\);/);
+  assert.match(ditherRule(".sl-fx-dither"), /color:\s*var\(--slfx-dither-fill\);/, "the layer carries the fill as its colour, and JS reads it");
+  assert.match(jsFnBody("onDitherCross"), /d\.fill = getComputedStyle\(d\.layer\)\.color;/, "read when a wipe starts");
+  assert.doesNotMatch(DITHER, /currentcolor/i, "a custom property cannot hold currentColor for another element");
+});
+
+test("dither: the label flips through .is-dithered, by an animation so no transition fades it", () => {
+  assert.match(effects, /@keyframes slfx-dither-on \{ to \{ color: var\(--slfx-dither-on\); \} \}/);
+  const flip = RULES.find((r) => r.selector === ":is(.sl-btn, .sl-icon-btn).is-dithered" && /animation-name/.test(r.body))?.body ?? "";
+  assert.match(flip, /animation-name:\s*slfx-dither-on;[^}]*animation-duration:\s*0s;[^}]*animation-fill-mode:\s*both;/);
+  assert.doesNotMatch(flip, /(?:^|;)\s*(?:color|transition)\s*:/, "the colour is held by the animation, not set: setting it would start a transition");
+  assert.ok(effects.indexOf("slfx-dither-on;") > effects.lastIndexOf("@media (prefers-reduced-motion: no-preference)", effects.indexOf("slfx-dither-on;")), "inside the no-preference guard");
+  assert.match(effectsJs, /const DITHER_FLIP = 0\.5;/);
+  assert.match(jsFnBody("drawDither"), /d\.host\.classList\.toggle\("is-dithered", flipped\)/);
+});
+
+test("dither: its host is its own stacking context at zero weight, and the layer is cleaned up with the host", () => {
+  const host = ditherRule(':where(:root[data-sl-fx="on"]) :where(.sl-btn, .sl-icon-btn)');
+  assert.match(host, /position:\s*relative;/);
+  assert.match(host, /isolation:\s*isolate;/);
+  assert.match(jsFnBody("pruneDetached"), /pruneDithers\(\);/);
+  assert.match(jsFnBody("pruneDithers"), /if \(host\.isConnected\) continue;[\s\S]*dithering\.delete\(d\);[\s\S]*dithers\.delete\(host\);/);
+});
+
+test("dither: high contrast and an opt-out region hide the layer and keep the label", () => {
+  assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \.sl-fx-dither,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\) > \.sl-fx-dither\s*\{\s*display:\s*none;/);
+  assert.match(effects, /:root\[data-sl-theme="high-contrast"\] :is\(\.sl-btn, \.sl-icon-btn\)\.is-dithered,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\):is\(\.sl-btn, \.sl-icon-btn\)\.is-dithered \{ animation: none; \}/, "no fill, so no flip");
 });
 
 // Regression, 2026-10-01: .sl-glass set the label at 0-1-0, tying and beating
@@ -1229,9 +1267,9 @@ test("glass sets its label colour at zero specificity", () => {
 // checked control in Highlight (components.css), and every injected layer
 // painted page colours over it. The forced-colours list is the high-contrast
 // kill switch's paint layers without the theme prefix, plus the material's
-// own layers and ink -- derived here so the two cannot drift (review,
+// own layers and the dither fill -- derived here so the two cannot drift (review,
 // 2026-10-01).
-test("forced colours hide every layer the kill switch hides, plus glass and ink", () => {
+test("forced colours hide every layer the kill switch hides, plus glass and the dither fill", () => {
   const from = effects.indexOf(':root[data-sl-theme="high-contrast"] .sl-fx-glass::before,');
   const paint = effects.slice(from, effects.indexOf("{", from));
   const hc = [...paint.matchAll(/:root\[data-sl-theme="high-contrast"\] (\.sl-[a-z_-]+(?:::(?:before|after))?),/g)].map((m) => m[1]);
@@ -1241,11 +1279,12 @@ test("forced colours hide every layer the kill switch hides, plus glass and ink"
   const rule = effects.slice(at).match(/\{\s*([^{}]*)\{\s*display: none !important;\s*\}/);
   assert.ok(rule, "the forced-colours block hides its layers with display: none !important");
   const listed = new Set(rule[1].split(",").map((x) => x.trim()));
-  const want = [...hc, ".sl-glass__backdrop", ".sl-glass__tint", ".sl-glass__specular", ".sl-glass__shine", ".sl-fx-ink"];
+  const want = [...hc, ".sl-glass__backdrop", ".sl-glass__tint", ".sl-glass__specular", ".sl-glass__shine", ".sl-fx-dither"];
   assert.deepEqual(want.filter((s) => !listed.has(s)), [], "missing from the forced-colours list");
   const block = effects.slice(at);
   assert.match(block, /:is\(\.sl-fx-glitch__shard\) \{ opacity: 0 !important; \}/, "the shatter's bands go");
   assert.match(block, /:is\(\.sl-fx-glitch__text\) \{ opacity: 1 !important; \}/, "and the label comes back");
+  assert.match(block, /:is\(\.sl-btn, \.sl-icon-btn\)\.is-dithered \{ animation: none !important; \}/, "the dither's label flip goes with its fill");
 });
 
 // The workbench's surfaces (0.33) draw their recipe in box-shadow and keep

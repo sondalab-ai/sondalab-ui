@@ -14,10 +14,8 @@
    enforces the absence of literals. */
 
 import { cornerPx, roundedRectPath, GOO_CONTRAST, GOO_INTERCEPT } from "./geom.js";
-// A neutral (grey wash, ink label) has no hue to glow with: the ink pool then
-// keeps the CSS fallback, the accent. The notation read lives in colour.js, and
-// so does the paint-and-read that tells a light ground from a dark one.
-import { isChromatic, toSrgb } from "./colour.js";
+// The 8x8 Bayer wipe and the cell size are the kit's pure dither maths.
+import { CELL_PX, wipeFrame } from "./dither-core.js";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const CAP_MS = 1500;                      // hard ceiling on any single burst
@@ -1173,6 +1171,7 @@ function pruneDetached() {
     glow.remove();
     glowWatches.delete(el);
   }
+  pruneDithers();
   for (const el of nearHosts) if (!el.isConnected) { nearObserver?.unobserve(el); nearHosts.delete(el); }
   for (const el of specHosts) {
     if (el.isConnected) continue;
@@ -1181,221 +1180,185 @@ function pruneDetached() {
   }
 }
 
-/* ── ink: light pools under the pointer ──────────────────────────────────────
-   effects.css paints a pool of light on one injected span per control; this
-   file gives it the span, the four moving noise fields its rim is torn by, the
-   trailing pointer, the pool's size, the control's colour and the ground the
-   pool lies on. Ink owns no colour: the control's own hover applies as
-   declared, and the pool is only light over it. Tier 1 only: without the span
-   the plain fade stands. */
-const INK_HOSTS = ".sl-btn, .sl-icon-btn";
-const INK_FILTER = "sl-fx-ink-noise";
-const SVG_NS = "http://www.w3.org/2000/svg";
-/** Noise fields, dealt round-robin, so neighbouring pools wobble apart. */
-const INK_SEEDS = [3, 11, 23, 41];
-/** The share of the gap to the pointer the pool closes each frame: the lag
- *  that reads as viscosity. */
-const INK_FOLLOW = 0.09;
-/** How long the pool drains after the pointer leaves (effects.css's
- *  --sl-motion-ink-out fallback); the noise stays on until it has. */
-const INK_DRAIN_MS = 520;
-/** The pool's radius: 0.55 of the control's longer side, held to 26–72px so an
- *  icon button gets a drop and a wide button a pool, never a flood. */
-const INK_SIZE = { share: 0.55, min: 26, max: 72 };
-/** A ground at or above this relative luminance is light (oklch L ≈ 0.56). */
-const INK_LIGHT_Y = 0.18;
+/* ── dither: the hover is an ordered-dither wipe ─────────────────────────────
+   A button or icon button answers the pointer with a fill that grows through
+   an 8x8 Bayer threshold from the point the pointer crossed the edge, and
+   drains toward the point it left (dither-core.js owns the maths). The fill is
+   drawn as CELL_PX squares on a canvas inside one injected span that sits under
+   the glass, at z-index -3: the glass tint, shine, live light, the press light,
+   the ring and the label all paint over it. The span rounds with its host and
+   clips; the canvas draws fill cells only, never an outline, so the control's
+   own border stays the edge and a round button keeps a smooth circle.
+   The layer is built lazily, on the first pointer entry into a host, and one
+   shared rAF loop runs only while a wipe is moving. Colour is never held here:
+   the fill is --slfx-dither-fill, read through the layer's own `color`, and the
+   label flips through .is-dithered (effects.css) once the wipe is half done.
+   Tier 1 only: under reduced motion mount() never arms this, and the control's
+   declared CSS hover is what stands. */
+const DITHER_HOSTS = ".sl-btn, .sl-icon-btn";
+const DITHER_CLASS = "sl-fx-dither";
+/** The label flips once this much of the wipe has covered the control. */
+const DITHER_FLIP = 0.5;
+/** Device pixels per CSS pixel are capped here, as live-light.js does. */
+const DITHER_DPR_CAP = 2;
+/** Fallback durations, in ms, when the motion tokens do not resolve. */
+const DITHER_MS = { in: 260, out: 320 };
 
-let inkDealt = 0;
+/** Controls with a layer, and the wipes in flight: host -> its state. */
+const dithers = new Map();
+const dithering = new Set();
+let ditherFrame = 0;
+let ditherLast = 0;
 
-/** Give a control its ink layer, once, with its noise field. Prepended after
- *  the glass layers are in, so among the z-index -1 layers it paints first:
- *  above the tint, below the glass's shine and specular.
- *  @param {Element} el a button or icon button */
-function injectInk(el) {
-  if (el.querySelector(":scope > .sl-fx-ink")) return;
+/** A motion token's duration in ms, or the fallback when it is not a time.
+ *  @param {CSSStyleDeclaration} cs the host's computed style
+ *  @param {string} name the custom property
+ *  @param {number} fallback ms */
+function motionMs(cs, name, fallback) {
+  const v = cs.getPropertyValue(name).trim();
+  const n = parseFloat(v);
+  if (!Number.isFinite(n)) return fallback;
+  return v.endsWith("ms") ? n : v.endsWith("s") ? n * 1000 : fallback;
+}
+
+/** The ease a wipe's progress runs through: fast first, long tail, both ways.
+ *  @param {number} p linear progress 0..1 */
+const ditherEase = (p) => 1 - (1 - p) ** 3;
+
+/** Build a control's layer, once: the span and its canvas, after the glass
+ *  backdrop when there is one so the fill is over the frost and under the tint.
+ *  @param {Element} host a button or icon button
+ *  @returns {object} the control's dither state */
+function ensureDither(host) {
+  let d = dithers.get(host);
+  if (d) return d;
   const layer = document.createElement("span");
-  layer.className = "sl-fx-ink";
+  layer.className = DITHER_CLASS;
   layer.setAttribute("aria-hidden", "true");
-  layer.style.setProperty("--slfx-ink-noise", `url(#${INK_FILTER}-${inkDealt++ % INK_SEEDS.length})`);
-  el.prepend(layer);
+  const canvas = document.createElement("canvas");
+  layer.append(canvas);
+  const backdrop = host.querySelector(":scope > .sl-glass__backdrop");
+  if (backdrop) backdrop.after(layer);
+  else host.prepend(layer);
+  d = { host, layer, canvas, ctx: canvas.getContext("2d"), p: 0, dir: 0, origin: { x: 0, y: 0 }, grid: { cols: 0, rows: 0 }, fill: "", msIn: DITHER_MS.in, msOut: DITHER_MS.out, flipped: false, w: 0, h: 0, dpr: 1 };
+  dithers.set(host, d);
+  return d;
 }
 
-function injectInks(root) {
-  if (root instanceof Element && root.matches(INK_HOSTS)) injectInk(root);
-  for (const el of root.querySelectorAll(INK_HOSTS)) injectInk(el);
+/** Size the canvas to the host's padding box at the capped device ratio, and
+ *  the grid to whole cells. Assigning width clears the canvas, so it only
+ *  happens when something changed.
+ *  @param {object} d a control's dither state */
+function sizeDither(d) {
+  const w = d.host.clientWidth;
+  const h = d.host.clientHeight;
+  const dpr = Math.min(DITHER_DPR_CAP, window.devicePixelRatio || 1);
+  if (w === d.w && h === d.h && dpr === d.dpr) return;
+  Object.assign(d, { w, h, dpr });
+  d.canvas.width = Math.max(1, Math.round(w * dpr));
+  d.canvas.height = Math.max(1, Math.round(h * dpr));
+  d.grid = { cols: Math.ceil(w / CELL_PX), rows: Math.ceil(h / CELL_PX) };
 }
 
-/** The noise fields every pool's rim is torn by, added to the document once.
- *  Each displaces the pool by up to 14px and slowly breathes its frequency,
- *  so the rim keeps moving like a liquid's edge; each seed tears differently.
- *  Applied only while a pool is up (effects.css, data-sl-ink-live). */
-function ensureInkFilter() {
-  if (document.getElementById(`${INK_FILTER}-0`)) return;
-  const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("width", "0");
-  svg.setAttribute("height", "0");
-  svg.setAttribute("aria-hidden", "true");
-  svg.style.position = "absolute";
-  INK_SEEDS.forEach((seed, i) => {
-    const filter = document.createElementNS(SVG_NS, "filter");
-    filter.id = `${INK_FILTER}-${i}`;
-    for (const [k, v] of [["x", "-30%"], ["y", "-30%"], ["width", "160%"], ["height", "160%"]]) filter.setAttribute(k, v);
-    const noise = document.createElementNS(SVG_NS, "feTurbulence");
-    for (const [k, v] of [["type", "fractalNoise"], ["baseFrequency", "0.035"], ["numOctaves", "2"], ["seed", String(seed)], ["result", "n"]]) noise.setAttribute(k, v);
-    const breathe = document.createElementNS(SVG_NS, "animate");
-    for (const [k, v] of [["attributeName", "baseFrequency"], ["dur", `${5 + i}s`], ["values", "0.03;0.045;0.03"], ["repeatCount", "indefinite"]]) breathe.setAttribute(k, v);
-    noise.append(breathe);
-    const shift = document.createElementNS(SVG_NS, "feDisplacementMap");
-    for (const [k, v] of [["in", "SourceGraphic"], ["in2", "n"], ["scale", "14"], ["xChannelSelector", "R"], ["yChannelSelector", "G"]]) shift.setAttribute(k, v);
-    filter.append(noise, shift);
-    svg.append(filter);
-  });
-  document.body.append(svg);
-}
-
-/** A computed colour's alpha, 0–1: 0 for `transparent`, 1 when it has none.
- *  Computed colours come back in several notations, so the alpha is read as
- *  whatever follows a "/", or as the fourth comma-separated argument.
- *  @param {string} v a computed colour */
-function alphaOf(v) {
-  if (!v || v === "transparent") return 0;
-  const a = v.match(/\/\s*([\d.]+%?)\s*\)$/)?.[1] ?? v.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/)?.[1];
-  if (a === undefined) return 1;
-  return a.endsWith("%") ? parseFloat(a) / 100 : parseFloat(a);
-}
-
-/** Whether a computed colour paints anything: not `transparent`, not alpha 0.
- *  @param {string} v a computed colour */
-function paints(v) {
-  return alphaOf(v) > 0;
-}
-
-/** The colour arriving on a control at the moment the pointer crosses it: the
- *  end of its own running background (or glass fill) transition when there is
- *  one, else its current fill, else its ink -- the first that has a hue. Ink
- *  tints its pool with this so a red control glows red; a neutral one has
- *  none and glows in the accent. `fill` says the colour is an opaque fill the
- *  pool lies on, rather than a wash or the label.
- *  @param {Element} host the button or icon button
- *  @returns {{ tint: string|null, fill: boolean }} */
-function inkTint(host) {
-  const found = (v, fill) => ({ tint: v, fill: fill && alphaOf(v) >= 0.5 });
-  for (const a of host.getAnimations()) {
-    const prop = a.transitionProperty;
-    if (prop !== "background-color" && prop !== "--slfx-accent-t") continue;
-    const frames = a.effect?.getKeyframes?.() ?? [];
-    const to = frames[frames.length - 1];
-    const v = to?.backgroundColor ?? to?.["--slfx-accent-t"];
-    if (paints(v) && isChromatic(v)) return found(v, true);
+/** Paint the wipe at its current progress: the covered cells as rects at
+ *  device resolution, in the fill read when the wipe began. Toggles the label
+ *  flip when the covered share crosses DITHER_FLIP.
+ *  @param {object} d a control's dither state */
+function drawDither(d) {
+  const { ctx, canvas, grid, dpr } = d;
+  const t = ditherEase(d.p);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (t >= 1) {
+    ctx.fillStyle = d.fill;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else if (t > 0) {
+    const covered = wipeFrame(grid, d.origin, t);
+    const cell = CELL_PX * dpr;
+    ctx.fillStyle = d.fill;
+    ctx.beginPath();
+    for (let j = 0; j < grid.rows; j++) {
+      for (let i = 0; i < grid.cols; i++) {
+        if (!covered[j * grid.cols + i]) continue;
+        const x = Math.round(i * cell);
+        const y = Math.round(j * cell);
+        ctx.rect(x, y, Math.round((i + 1) * cell) - x, Math.round((j + 1) * cell) - y);
+      }
+    }
+    ctx.fill();
   }
-  const cs = getComputedStyle(host);
-  for (const v of [cs.getPropertyValue("--slfx-accent-t").trim(), cs.backgroundColor]) {
-    if (paints(v) && isChromatic(v)) return found(v, true);
+  const flipped = t >= DITHER_FLIP;
+  if (flipped !== d.flipped) {
+    d.flipped = flipped;
+    d.host.classList.toggle("is-dithered", flipped);
   }
-  if (paints(cs.color) && isChromatic(cs.color)) return found(cs.color, false);
-  return { tint: null, fill: false };
 }
 
-/** Whether the first opaque ground under a control is light: its own fill if
- *  it has one, else the nearest ancestor's. Nothing opaque up the tree is the
- *  page's canvas, which is light unless a theme painted it.
- *  @param {Element} host the button or icon button
- *  @returns {"light"|"dark"} */
-function inkGround(host) {
-  for (let el = host; el; el = el.parentElement) {
-    const bg = getComputedStyle(el).backgroundColor;
-    if (alphaOf(bg) < 0.5) continue;
-    const [r, g, b] = toSrgb(document, bg).map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b >= INK_LIGHT_Y ? "light" : "dark";
+/** One frame of every moving wipe. A wipe leaves the loop at either end (full,
+ *  or drained and cleared); the loop sleeps once none is left.
+ *  @param {number} now the frame's timestamp */
+function ditherStep(now) {
+  ditherFrame = 0;
+  const dt = Math.min(64, now - ditherLast);
+  ditherLast = now;
+  for (const d of dithering) {
+    d.p = Math.min(1, Math.max(0, d.p + (d.dir * dt) / (d.dir > 0 ? d.msIn : d.msOut)));
+    drawDither(d);
+    if (d.p === (d.dir > 0 ? 1 : 0)) {
+      dithering.delete(d);
+      d.dir = 0;
+    }
   }
-  return "light";
+  if (dithering.size) ditherFrame = requestAnimationFrame(ditherStep);
 }
 
-/** Live pools, by ink layer: where each is (x, y), where the pointer is
- *  (tx, ty), whether the pointer is still on it, and its drain timer. */
-const inkPools = new Map();
-let inkFrame = 0;
-
-/** One frame of trailing: every pool closes INK_FOLLOW of its gap to the
- *  pointer. The loop sleeps once every pool has caught up; a pool is only
- *  forgotten by its drain timer, so a pointer that comes back finds it. */
-function inkStep() {
-  inkFrame = 0;
-  let moving = false;
-  for (const [ink, p] of inkPools) {
-    if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) < 0.5) continue;
-    p.x += (p.tx - p.x) * INK_FOLLOW;
-    p.y += (p.ty - p.y) * INK_FOLLOW;
-    ink.style.setProperty("--slfx-ink-x", `${p.x.toFixed(1)}px`);
-    ink.style.setProperty("--slfx-ink-y", `${p.y.toFixed(1)}px`);
-    moving = true;
-  }
-  if (moving) inkFrame = requestAnimationFrame(inkStep);
+function ditherWake() {
+  if (ditherFrame) return;
+  ditherLast = performance.now();
+  ditherFrame = requestAnimationFrame(ditherStep);
 }
 
-function inkTrail() {
-  if (!inkFrame) inkFrame = requestAnimationFrame(inkStep);
-}
-
-/** A pointer crossing a control's edge. On the way in, the pool is placed at
- *  the crossing, sized to the control, tinted and read against its ground, and
- *  goes live; on the way out it trails to where the pointer left and drains
- *  there. Moves inside the control are onInkMove's. Touch has no hover to
- *  answer, so it raises no pool.
+/** A pointer crossing a control's edge. In: the layer is built if need be, the
+ *  fill and durations are read, the wipe's origin is the crossing, and it runs
+ *  forward from wherever the last one stopped. Out: the origin moves to where
+ *  the pointer left and the wipe runs back. Touch has no hover to answer, and
+ *  reduced motion and high contrast get the control's declared hover alone.
  *  @param {PointerEvent} ev a delegated pointerover or pointerout */
-function onInkCross(ev) {
+function onDitherCross(ev) {
   if (ev.pointerType === "touch") return;
-  const host = ev.target instanceof Element ? ev.target.closest(INK_HOSTS) : null;
+  // Not even under the motion derogation (mount's ignoreReducedMotion): that
+  // lets the glitch and the halftone move, and the wipe is neither.
+  if (suppressed() || window.matchMedia(REDUCE).matches) return;
+  const host = ev.target instanceof Element ? ev.target.closest(DITHER_HOSTS) : null;
   if (!host || (ev.relatedTarget instanceof Node && host.contains(ev.relatedTarget))) return;
-  const ink = host.querySelector(":scope > .sl-fx-ink");
+  const entering = ev.type === "pointerover";
+  if (entering && host.matches(':disabled, [aria-disabled="true"]')) return;
+  if (host.closest('[data-sl-fx="off"]')) return;
+  const d = entering ? ensureDither(host) : dithers.get(host);
+  if (!d) return;
   const r = host.getBoundingClientRect();
-  if (!ink || !r.width || !r.height) return;
-  const x = ev.clientX - r.left;
-  const y = ev.clientY - r.top;
-  let p = inkPools.get(ink);
-  if (ev.type === "pointerout") {
-    if (!p) return;
-    Object.assign(p, { tx: x, ty: y, on: false });
-    p.drain = setTimeout(() => {
-      if (p.on) return;
-      inkPools.delete(ink);
-      ink.removeAttribute("data-sl-ink-live");
-    }, INK_DRAIN_MS);
-    inkTrail();
-    return;
+  if (!r.width || !r.height) return;
+  sizeDither(d);
+  d.origin = { x: (ev.clientX - r.left) / CELL_PX, y: (ev.clientY - r.top) / CELL_PX };
+  if (entering) {
+    const cs = getComputedStyle(host);
+    d.msIn = motionMs(cs, "--sl-motion-dither-in", DITHER_MS.in);
+    d.msOut = motionMs(cs, "--sl-motion-dither-out", DITHER_MS.out);
+    d.fill = getComputedStyle(d.layer).color;
   }
-  if (host.matches(':disabled, [aria-disabled="true"]')) return;
-  const { tint, fill } = inkTint(host);
-  if (tint) ink.style.setProperty("--slfx-ink-tint", tint);
-  else ink.style.removeProperty("--slfx-ink-tint");
-  ink.setAttribute("data-sl-ink-ground", fill ? "fill" : inkGround(host));
-  const size = Math.min(INK_SIZE.max, Math.max(INK_SIZE.min, Math.max(r.width, r.height) * INK_SIZE.share));
-  ink.style.setProperty("--slfx-ink-size", `${Math.round(size)}px`);
-  if (!p) {
-    p = { x, y };
-    ink.style.setProperty("--slfx-ink-x", `${x.toFixed(1)}px`);
-    ink.style.setProperty("--slfx-ink-y", `${y.toFixed(1)}px`);
-    inkPools.set(ink, p);
-  }
-  clearTimeout(p.drain);
-  Object.assign(p, { tx: x, ty: y, on: true });
-  ink.setAttribute("data-sl-ink-live", "");
-  inkTrail();
+  d.dir = entering ? 1 : -1;
+  dithering.add(d);
+  ditherWake();
 }
 
-/** The pointer moving inside a control with a live pool: the pool's target
- *  follows it, and the trailing loop wakes if it had caught up.
- *  @param {PointerEvent} ev a delegated pointermove */
-function onInkMove(ev) {
-  if (!inkPools.size || !(ev.target instanceof Element)) return;
-  const host = ev.target.closest(INK_HOSTS);
-  const ink = host?.querySelector(":scope > .sl-fx-ink");
-  const p = ink && inkPools.get(ink);
-  if (!p || !p.on) return;
-  const r = host.getBoundingClientRect();
-  p.tx = ev.clientX - r.left;
-  p.ty = ev.clientY - r.top;
-  inkTrail();
+/** Release what a control that left the document held: its state and its place
+ *  in the loop. The layer goes with the host.
+ *  @returns {void} */
+function pruneDithers() {
+  for (const [host, d] of dithers) {
+    if (host.isConnected) continue;
+    dithering.delete(d);
+    dithers.delete(host);
+  }
 }
 
 function injectGlassLayers(root) {
@@ -1569,8 +1532,6 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   // start on the same frame, so the two stay in phase. Elements that arrive
   // later get theirs as they arrive.
   injectGlows(root);
-  ensureInkFilter();
-  injectInks(root);
   watchNear(root);
   collectSpecHosts(root);
   armLiveLight(root);
@@ -1580,7 +1541,6 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) {
       injectGlows(n);
-      injectInks(n);
       watchNear(n);
       collectSpecHosts(n);
     }
@@ -1596,9 +1556,8 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   window.addEventListener("pointerout", onSpecOut, { passive: true });
   window.addEventListener("scroll", onSpecLayout, { capture: true, passive: true });
   window.addEventListener("resize", onSpecLayout, { passive: true });
-  root.addEventListener("pointerover", onInkCross, { passive: true });
-  root.addEventListener("pointerout", onInkCross, { passive: true });
-  root.addEventListener("pointermove", onInkMove, { passive: true });
+  root.addEventListener("pointerover", onDitherCross, { passive: true });
+  root.addEventListener("pointerout", onDitherCross, { passive: true });
   root.addEventListener("pointerdown", onPressDown, { passive: true });
   window.addEventListener("pointerup", pressEnd, { passive: true });
   window.addEventListener("pointercancel", pressEnd, { passive: true });
