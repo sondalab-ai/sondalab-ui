@@ -125,7 +125,8 @@
      and buttons have darker ones -- they should all be consistent"). Every
      neutral control -- field, select, checkbox, radio, switch, secondary,
      ghost and icon buttons, chip, segmented -- is outlined in
-     --slc-edge-control; a filled one (the primary, a checked box) keeps its
+     --slc-edge-control on hover (at rest, since the owner's 2026-10-26
+     amendment, in the translucent --slc-edge-hairline below); a filled one (the primary, a checked box) keeps its
      fill in shade, because the fill is what finds it. Hover is two steps
      further. */
   --slc-edge-control-hover: oklch(from var(--slc-surface) calc(l + var(--slc-shade-step) * (var(--slc-edge-control-steps) + 0.5 * clamp(0, (l - 0.5) * 1000, 1) + 2) * clamp(-1, (0.5 - l) * 1000, 1)) c h);
@@ -138,16 +139,17 @@
      a deeper wash, a darker light canvas or a weaker control edge tips it
      under 3:1 (lumen-controls.test.mjs holds it). */
   --slc-edge-pressed:  var(--slc-edge-control);
-  /* A TEXT BUTTON'S REST EDGE (owner exception, 2026-10-26): a translucent
+  /* EVERY CONTROL'S REST EDGE (owner amendment, 2026-10-26): a translucent
      hairline, the ink at a share (21% when the ink is light, 30% when it is
      dark, read off its lightness: no theme branch), so the ground and a glass
      pane show through it. 1.5-2.2:1 on the canvas, the surface and the raised fill the secondary
      paints, on every product (scripts/lumen-controls.test.mjs holds it). The
      label identifies the control (WCAG 1.4.11); hover restores the 3:1 control
-     edge. Icon buttons and every other control keep --slc-edge-control. The
+     edge. Every neutral control rests on it (owner amendment, 2026-10-26),
+     and the switch knob and the pressed state keep --slc-edge-control. The
      ink is --slc-text, read on :root: a band re-derives this role from its own
      ink, and high contrast aliases it to the strong edge. */
-  --slc-edge-button:   oklch(from var(--slc-text) l c h / calc(0.21 + 0.09 * clamp(0, (0.5 - l) * 1000, 1)));
+  --slc-edge-hairline:   oklch(from var(--slc-text) l c h / calc(0.21 + 0.09 * clamp(0, (0.5 - l) * 1000, 1)));
   --slc-on-accent:     var(--sl-text-on-accent, #FFFFFF);
   /* THE ACCENT AS A FILL THAT CARRIES A LABEL (0.32): the primary, a checked
      check, radio or switch, a count badge. --slc-accent-fill is UNSET by
@@ -339,8 +341,8 @@
 :where(.sl-btn--primary)::selection,
 :where(.sl-btn--primary) ::selection { color: var(--_sl-on-fill, var(--slc-on-accent)); }
 
-/* Scrollbars: thin, a neutral thumb in the one control edge (>= 3.4:1 on
-   every ground of the light and dark themes), no track -- on the PAGE's own
+/* Scrollbars: thin, a neutral thumb on the hairline (1.5-2.2:1; was the control
+   edge, >= 3.4:1, until the owner's 2026-10-26 amendment), no track -- on the PAGE's own
    scrollbar only. The viewport takes scrollbar-color from the root element;
    <body> hands `auto` back to everything inside it by inheritance. Without
    that reset the value would inherit into every scroller, and Chromium 121+
@@ -351,7 +353,7 @@
    Zero specificity, so any product value wins. High contrast keeps the
    system's scrollbars, and forced colours resets this by itself. */
 :where(:root:not([data-sl-theme="high-contrast"])) {
-  scrollbar-color: var(--slc-edge-control) transparent;
+  scrollbar-color: var(--slc-edge-hairline) transparent;
   scrollbar-width: thin;
 }
 :where(:root:not([data-sl-theme="high-contrast"]) > body) { scrollbar-color: auto; }
@@ -512,7 +514,7 @@
   line-height: 0.875rem;
   color: var(--slc-text-muted);
   background-color: transparent;
-  border: 1px solid var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-hairline);
   border-radius: var(--sl-radius-sm, 6px);
   padding: var(--sl-space-1, 0.25rem) var(--sl-space-2, 0.5rem);
   cursor: pointer;
@@ -771,7 +773,7 @@
   --_sl-fill-edge: oklch(from var(--_sl-fill-active) min(calc(l - var(--slc-shade-step)), var(--slc-edge-accent-lmax, 1)) c h);
 }
 .sl-btn--primary:focus-visible { --_sl-foot-color: var(--slc-focus); }
-/* THE SECONDARY KEY (Lumen, 0.32): the raised rung in the one control edge,
+/* THE SECONDARY KEY (Lumen, 0.32): the raised rung on the hairline,
    lit along its top inside the edge and standing on a short cast -- the
    tile's recipe without its ring, since the edge is the ring. Hover lifts
    it to the tile rung with the edge's hover step. */
@@ -779,7 +781,7 @@
   --_sl-depth: inset 0 1px 0 var(--slc-lit), var(--slc-shadow-sm);
   background: var(--slc-raised);
   color: var(--slc-text);
-  border-color: var(--slc-edge-button);
+  border-color: var(--slc-edge-hairline);
 }
 .sl-btn--ghost:hover:not(:disabled)  { background: var(--slc-tile); border-color: var(--slc-edge-control-hover); }
 /* 24px: the 14px line + 2 x 4px + 2px border (was 12 + 2 x 5 + 2). Lumen's
@@ -908,7 +910,7 @@
   color: var(--slc-text-secondary);
 }
 /* A field is SUNKEN (Lumen, 0.32): a well on the sunken rung, its inset cast
-   the sunk recipe, inside the one control edge (it was a 4% wash of the ink
+   the sunk recipe, inside the hairline (it was a 4% wash of the ink
    over the raised rung). Glass owns the well on a glass field (effects.css). */
 .sl-field__input {
   --_sl-depth: var(--slc-depth-sunk);
@@ -918,7 +920,7 @@
   background: var(--slc-sunken);
   /* The control edge, not the raised hairline: a field's fill is 1.01-1.26:1
      on the canvas, so its border is what finds it (>= 3:1, WCAG 1.4.11). */
-  border: 1px solid var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-hairline);
   border-radius: var(--sl-radius-md, 8px);
   /* 32px, the button's height: a 20px line + 2 x 5px + 2px border. The line
      is explicit because an <input> and a <select> resolve "normal" apart
@@ -1148,7 +1150,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 1rem;
   height: 1rem;
   background: var(--slc-canvas);
-  border: 1px solid var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-hairline);
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
     border-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1163,6 +1165,11 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
    (0,2,0) it is below every checked rule (0,3,0), which still fills it. */
 .sl-check__box { border-radius: 5px; }
 .sl-radio__box { border-radius: 50%; }
+/* Hover restores the 3:1 control edge (the label is the target too). Not
+   when checked or mixed (the fill's edge stays), disabled, or focused (the
+   ring's border stays). */
+:is(.sl-check, .sl-radio):hover .sl-check__input:not(:checked, :indeterminate, :disabled, :focus-visible) + .sl-check__box,
+:is(.sl-check, .sl-radio):hover .sl-radio__input:not(:checked, :disabled, :focus-visible) + .sl-radio__box { border-color: var(--slc-edge-control-hover); }
 .sl-invert :is(.sl-check__box, .sl-radio__box) { background: var(--slc-sunken); }
 
 .sl-check__input:checked + .sl-check__box,
@@ -1245,9 +1252,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 2.1rem;
   height: 1.25rem;
   background: var(--slc-sunken);
-  /* The control edge: the off track's fill is about 1:1 on the canvas, so
-     the border is what finds it (owner, 2026-10-01). */
-  border: 1px solid var(--slc-edge-control);
+  /* The rest edge is the hairline (owner, 2026-10-26); the knob, drawn in
+     the control edge below, is what states "off" at 3:1. */
+  border: 1px solid var(--slc-edge-hairline);
   border-radius: 999px;
   transition:
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -1262,8 +1269,9 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   width: 0.85rem;
   height: 0.85rem;
   border-radius: 999px;
-  /* Off, the knob is the control edge's colour: the raised ground it was read
-     1.17:1 on the track on ink. On, it takes the fill's label (below). */
+  /* Off, the knob is the control edge's colour, not the hairline: it is the
+     switch's state mark, held at 3:1 (the raised ground it was read 1.17:1
+     on the track on ink). On, it takes the fill's label (below). */
   background: var(--slc-edge-control);
   transform: translateY(-50%);
   /* The knob travels on the spring (--sl-motion-spring): one small overshoot
@@ -1273,6 +1281,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
     width var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
 }
+.sl-switch:hover .sl-switch__input:not(:checked, :disabled, :focus-visible) + .sl-switch__track { border-color: var(--slc-edge-control-hover); }
 .sl-switch__input:checked + .sl-switch__track {
   --_sl-depth: inset 0 -1.5px 0 var(--_sl-fill-edge), 0 0 12px -2px color-mix(in srgb, var(--_sl-fill) calc(var(--slc-glow) * 120%), transparent);
   background: var(--_sl-fill);
@@ -1946,7 +1955,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   /* A text button's rest edge in a band: the band's ink at a share, the same
      intent as on the page (a hairline, 1.5-2.2:1), read off the ink's own
      lightness so there is no theme branch. */
-  --slc-edge-button:   oklch(from var(--slc-canvas) l c h / calc(0.21 + 0.09 * clamp(0, (0.5 - l) * 1000, 1)));
+  --slc-edge-hairline:   oklch(from var(--slc-canvas) l c h / calc(0.21 + 0.09 * clamp(0, (0.5 - l) * 1000, 1)));
   /* THE ACCENT FILL'S EDGE IN A BAND (0.36.2). The fill itself cannot find
      a primary or a checked box here: on the dark and high-contrast themes'
      light bands a bright fill reads 1.07-2.4:1 (high contrast's yellow,
@@ -2075,10 +2084,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   width: fit-content;
   gap: 1px;
   /* The group is one control, so it wears the one control edge (owner,
-     2026-10-01) -- outline and the rules between its buttons alike. On the
-     neutral line it was 1.4:1 on paper beside a lone ghost at 3.5. */
-  background: var(--slc-edge-control);
-  border: 1px solid var(--slc-edge-control);
+     2026-10-01) -- outline and the rules between its buttons alike -- and
+     since 2026-10-26 that edge is the rest hairline; hover restores the 3:1
+     edge on both (below). */
+  background: var(--slc-edge-hairline);
+  border: 1px solid var(--slc-edge-hairline);
+  /* The ground is the rule between cells, so it stops at the padding box:
+     under the border it would stack two translucent hairlines into a
+     stronger outline than the rule. */
+  background-clip: padding-box;
   border-radius: var(--sl-radius-md, 8px);
   overflow: hidden;
   /* Its members never move under the finger (0.36): a member that sinks to
@@ -2106,12 +2120,18 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    property, with no `dir` attribute, draws its rules on the wrong side. A
    glass member owns its box-shadow and draws no rule (a known gap: only its
    soft inner line separates it, about 2:1). */
+.sl-btn-group:hover {
+  background-color: var(--slc-edge-control-hover);
+  border-color: var(--slc-edge-control-hover);
+}
 .sl-invert .sl-btn-group { background: transparent; }
-.sl-invert .sl-btn-group > .sl-btn + .sl-btn { --_sl-depth: -1px 0 0 var(--slc-edge-control); }
-.sl-invert .sl-btn-group > .sl-btn + .sl-btn:dir(rtl) { --_sl-depth: 1px 0 0 var(--slc-edge-control); }
+.sl-invert .sl-btn-group > .sl-btn + .sl-btn { --_sl-depth: -1px 0 0 var(--slc-edge-hairline); }
+.sl-invert .sl-btn-group > .sl-btn + .sl-btn:dir(rtl) { --_sl-depth: 1px 0 0 var(--slc-edge-hairline); }
+.sl-invert .sl-btn-group:hover > .sl-btn + .sl-btn { --_sl-depth: -1px 0 0 var(--slc-edge-control-hover); }
+.sl-invert .sl-btn-group:hover > .sl-btn + .sl-btn:dir(rtl) { --_sl-depth: 1px 0 0 var(--slc-edge-control-hover); }
 
 /* The track is sunk (Lumen, 0.32): the sunken rung and the sunk recipe
-   inside the one control edge (it was a 6% wash of the ink), so the chosen
+   inside the hairline (it was a 6% wash of the ink), so the chosen
    segment, a raised tile, stands out of a well. The track is not
    focusable, so it paints its well directly. */
 .sl-segmented {
@@ -2120,10 +2140,11 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   gap: 1px;
   padding: 2px;
   background: var(--slc-sunken);
-  border: 1px solid var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-hairline);
   border-radius: var(--sl-radius-md, 8px);
   box-shadow: var(--slc-depth-sunk);
 }
+.sl-segmented:hover { border-color: var(--slc-edge-control-hover); }
 .sl-segmented__item {
   appearance: none;
   border: none;
@@ -2171,14 +2192,14 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   height: 2rem;
   padding: 0;
   cursor: pointer;
-  /* Transparent at rest, in the one control edge (owner's ruling: every
+  /* Transparent at rest, on the hairline (owner's ruling: every
      neutral control, icon buttons included), the glyph in the secondary
      ink; hover brings the surface rung up under it (Lumen, 0.32; it was a
      6% wash of the ink). Only a chrome glyph inside a workbench primitive
      may drop the edge (0.33). */
   color: var(--slc-text-secondary);
   background: transparent;
-  border: 1px solid var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-hairline);
   border-radius: var(--sl-radius-md, 8px);
   transition:
     color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease),
@@ -2941,7 +2962,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-edge-raised:  var(--slc-border);
   --slc-edge-wash:    var(--slc-border);
   --slc-edge-control: var(--slc-border);
-  --slc-edge-button:  var(--slc-edge-control);
+  --slc-edge-hairline:  var(--slc-edge-control);
   /* Hover too: left on :root's derivation it is a mid grey, WEAKER than the
      drawn border at rest, so a hovered field lost its edge. */
   --slc-edge-control-hover: var(--slc-border-strong);
@@ -2998,7 +3019,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   --slc-lit-wash: none;
   --slc-lit-tint: none;
   --slc-lit-drop: 0 0 transparent;
-  --slc-edge-button: var(--slc-edge-control);
+  --slc-edge-hairline: var(--slc-edge-control);
 }
 /* The in-button key draws its own base line instead of the key depth, so it
    is ringed here, in its label's colour: white on a neutral button, black on

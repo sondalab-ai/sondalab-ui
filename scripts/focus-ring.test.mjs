@@ -106,30 +106,36 @@ test("a form control's edge steps toward contrast, not always into shade", () =>
   assert.match(css, new RegExp(`--slc-edge-control-hover:\\s*oklch\\(from var\\(--slc-surface\\) calc\\(l \\+ var\\(--slc-shade-step\\) \\* ${STEPS} \\+ 2\\) ${SIGN}`));
   assert.equal(css.match(/--slc-edge-control-steps\s*:/g).length, 1, "declared once, on :root, never per theme");
   const box = css.match(/\.sl-check__box,\s*\.sl-radio__box\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(box, /border:\s*1px solid var\(--slc-edge-control\)/);
+  assert.match(box, /border:\s*1px solid var\(--slc-edge-hairline\)/, "the box rests on the hairline (owner, 2026-10-26)");
   const track = css.match(/\.sl-switch__track\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(track, /border:\s*1px solid var\(--slc-edge-control\)/, "the switch track is found by its edge");
+  assert.match(track, /border:\s*1px solid var\(--slc-edge-hairline\)/, "the switch track rests on the hairline");
   const knob = css.match(/\.sl-switch__track::after\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(knob, /background:\s*var\(--slc-edge-control\)/, "the off knob reads on its track");
+  assert.match(knob, /background:\s*var\(--slc-edge-control\)/, "the off knob is the state mark: it stays on the strong edge");
   const field = css.match(/\.sl-field__input\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(field, /border:\s*1px solid var\(--slc-edge-control\)/, "a field is found by its edge");
+  assert.match(field, /border:\s*1px solid var\(--slc-edge-hairline\)/, "a field rests on the hairline");
 });
 
 // Owner, 2026-10-01: fields were outlined in the bright control edge and
-// buttons in a darker one -- "they should all be consistent". Every neutral
-// control takes --slc-edge-control, glass included.
-test("every neutral control is outlined in the one control edge", () => {
+// buttons in a darker one -- "they should all be consistent". Owner
+// amendment, 2026-10-26: every neutral control RESTS on the translucent
+// hairline (--slc-edge-hairline), glass included, and takes the 3:1
+// --slc-edge-control-hover under the pointer.
+test("every neutral control rests on the hairline and takes the control edge on hover", () => {
   const rule = (sel) => css.match(new RegExp(`(?:^|\\n)${sel.replace(/[.[\]()]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
   for (const sel of [".sl-chip", ".sl-segmented", ".sl-icon-btn"]) {
-    assert.match(rule(sel), /border:\s*1px solid var\(--slc-edge-control\)/, sel);
+    assert.match(rule(sel), /border:\s*1px solid var\(--slc-edge-hairline\)/, sel);
   }
-  // Owner exception, 2026-10-26: a TEXT button rests on the translucent
-  // hairline (--slc-edge-button); hover and every other control keep 3:1.
-  assert.match(css, /\.sl-btn--ghost \{[^}]*border-color:\s*var\(--slc-edge-button\)/, ".sl-btn--ghost");
+  assert.match(css, /\.sl-chip:hover:not\(:disabled\) \{[^}]*border-color:\s*var\(--slc-edge-control-hover\)/, "chip hover");
+  assert.match(css, /\.sl-segmented:hover \{\s*border-color:\s*var\(--slc-edge-control-hover\)/, "segmented hover");
+  assert.match(css, /\.sl-icon-btn:hover:not\(:disabled\) \{[^}]*border-color:\s*var\(--slc-edge-control-hover\)/, "icon button hover");
+  assert.match(css, /\.sl-switch:hover \.sl-switch__input:not\(:checked, :disabled, :focus-visible\) \+ \.sl-switch__track \{ border-color:\s*var\(--slc-edge-control-hover\)/, "switch hover");
+  assert.match(css, /\.sl-radio__input:not\(:checked, :disabled, :focus-visible\) \+ \.sl-radio__box \{ border-color:\s*var\(--slc-edge-control-hover\)/, "check and radio hover");
+  // A text button, too.
+  assert.match(css, /\.sl-btn--ghost \{[^}]*border-color:\s*var\(--slc-edge-hairline\)/, ".sl-btn--ghost");
   assert.match(css, /\.sl-btn--ghost:hover:not\(:disabled\)\s*\{[^}]*border-color:\s*var\(--slc-edge-control-hover\)/, ".sl-btn--ghost hover");
   const effects = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8");
-  assert.match(effects, /\.sl-icon-btn\.sl-fx-glass \{\s*--slfx-control-edge:\s*var\(--slc-edge-control\);/, "glass icon buttons");
-  assert.match(effects, /\.sl-btn:not\(\.sl-btn--primary\)\.sl-fx-glass \{ --slfx-control-edge: var\(--slc-edge-button\); \}/, "glass text buttons");
+  assert.match(effects, /\.sl-icon-btn\.sl-fx-glass \{\s*--slfx-control-edge:\s*var\(--slc-edge-hairline\);/, "glass icon buttons");
+  assert.match(effects, /\.sl-btn:not\(\.sl-btn--primary\)\.sl-fx-glass \{ --slfx-control-edge: var\(--slc-edge-hairline\); \}/, "glass text buttons");
   assert.match(effects, /\.sl-btn:not\(\.sl-btn--primary\)\.sl-fx-glass:hover:not\(:disabled, :focus-visible\) \{ --slfx-control-edge: var\(--slc-edge-control-hover\); \}/, "glass text buttons, hovered");
 });
 
@@ -218,10 +224,11 @@ test("a selected row lifts its muted meta to the secondary ink", () => {
   assert.match(css, /\.sl-list__row:is\(\[aria-selected="true"\], \[aria-current\]:not\(\[aria-current="false"\]\)\) \.sl-list__meta,\s*\.sl-nav__item\[aria-current\]:not\(\[aria-current="false"\]\) \.sl-nav__count \{ color: var\(--slc-text-secondary\); \}/);
 });
 
-test("a button group wears the one control edge, outline and inner rules alike", () => {
+test("a button group wears the one hairline, outline and inner rules alike, and the control edge on hover", () => {
   const rule = css.match(/\.sl-btn-group \{([^}]*)\}/)?.[1] ?? "";
-  assert.match(rule, /background:\s*var\(--slc-edge-control\)/);
-  assert.match(rule, /border:\s*1px solid var\(--slc-edge-control\)/);
+  assert.match(rule, /background:\s*var\(--slc-edge-hairline\)/);
+  assert.match(rule, /border:\s*1px solid var\(--slc-edge-hairline\)/);
+  assert.match(css, /\.sl-btn-group:hover \{\s*background-color:\s*var\(--slc-edge-control-hover\);\s*border-color:\s*var\(--slc-edge-control-hover\);/);
 });
 
 // One row, one height: button, field, select, segmented and icon button were
@@ -255,7 +262,7 @@ test("high contrast remaps the hovered control edge with the resting one", () =>
   const hc = css.match(/:root\[data-sl-theme="high-contrast"\] \{([^}]*)\}/)?.[1] ?? "";
   assert.match(hc, /--slc-edge-control:\s*var\(--slc-border\);/);
   assert.match(hc, /--slc-edge-control-hover:\s*var\(--slc-border-strong\);/);
-  assert.match(hc, /--slc-edge-button:\s*var\(--slc-edge-control\);/, "a text button keeps the strong edge in high contrast");
+  assert.match(hc, /--slc-edge-hairline:\s*var\(--slc-edge-control\);/, "a text button keeps the strong edge in high contrast");
 });
 
 // Inside a wrapping <label> every descendant is part of the input's accessible
