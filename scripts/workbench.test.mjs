@@ -193,6 +193,7 @@ function splitTop(t) {
 
 /** Each primitive mounted where it lives, as the mock tree a consumer's
  *  markup makes. Returns { name: element } for the pieces read below. */
+const TERM_ROLES = ["prompt", "ok", "warn", "err", "dim", "accent"];
 const EXITS = [["running", {}], ["exit 0", { "data-exit": "0" }], ["exit 1", { "data-exit": "1" }], ["exit 127", { "data-exit": "127" }], ["cancelled", { "data-exit": "cancelled" }], ["unknown", { "data-exit": "" }]];
 const BUILD = {
   pane(at) {
@@ -267,6 +268,20 @@ const BUILD = {
           [`term ${k} command`]: cmd, [`term ${k} prompt`]: el({ tag: "span", classes: ["sl-term-block__prompt"], parent: cmd }),
           [`term ${k} meta`]: meta, [`term ${k} exit`]: el({ tag: "span", classes: ["sl-term-block__exit"], parent: meta }),
           [`term ${k} output`]: el({ tag: "pre", classes: ["sl-term-block__out"], parent: block }),
+        });
+        // The terminal roles (0.40), read inside the output of one block per
+        // place: the six role spans, the inverse title, and a selected row
+        // with its seam, its plain cells and a glyph in it.
+        if (exit !== "running") continue;
+        const output = out[`term ${k} output`];
+        for (const role of TERM_ROLES) out[`term role ${role}${where}`] = el({ tag: "span", classes: [`sl-term-block__${role}`], parent: output });
+        out[`term inverse${where}`] = el({ tag: "span", classes: ["sl-term-block__inverse"], parent: output });
+        const sel = el({ tag: "span", classes: ["sl-term-block__sel"], parent: output });
+        Object.assign(out, {
+          [`term sel cells${where}`]: el({ tag: "span", parent: sel }),
+          [`term sel seam${where}`]: el({ tag: "span", classes: ["sl-term-block__prompt"], parent: sel }),
+          [`term sel glyph${where}`]: el({ tag: "span", classes: ["sl-term-block__ok"], parent: sel }),
+          [`term spinner${where}`]: el({ tag: "span", classes: ["sl-term-block__spin"], attrs: { "aria-hidden": "true" }, parent: output }),
         });
       }
     }
@@ -348,6 +363,16 @@ const READINGS = [
     [`term ${x}${w} output`, 4.5, "text"],
     ...(x === "running" || x === "unknown" ? [] : [[`term ${x}${w} mark`, 3, "mark"]]),
   ])),
+  // Every terminal role is text, dim included: 4.5:1 on the block's own fill
+  // (raised, sunken in a lit pane, the band's ground in a band).
+  ...["", " in the lit pane"].flatMap((w) => [
+    ...TERM_ROLES.map((r) => [`term role ${r}${w}`, 4.5, "text"]),
+    [`term inverse${w}`, 4.5, "text"],
+    [`term sel cells${w}`, 4.5, "text"],
+    [`term sel seam${w}`, 4.5, "text"],
+    [`term sel glyph${w}`, 4.5, "text"],
+    [`term spinner${w}`, 4.5, "text"],
+  ]),
   ...["neutral", "info", "success", "warning", "danger"].flatMap((t) => [
     [`toast ${t} title`, 4.5, "text"],
     [`toast ${t} body`, 4.5, "text"],
@@ -380,6 +405,30 @@ for (const ctx of CONTEXTS) {
     assert.deepEqual(low, []);
   });
 }
+
+test("terminal dim in a band is the band's muted share of the band's ink", () => {
+  const band = COMPONENTS.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
+  const share = band.match(/--slc-text-muted:\s*color-mix\(in srgb, currentColor (\d+)%, transparent\)/)[1];
+  assert.equal(decl(rule(WB, ".sl-invert .sl-term-block__dim"), "color"), `color-mix(in srgb, var(--slc-text) ${share}%, transparent)`);
+});
+
+// The terminal roles' floor over every context, reported as a diagnostic so a
+// release note quotes measured figures (node --test prints it).
+test("terminal roles: the lowest reading of each over every context", (t) => {
+  const pieces = [...TERM_ROLES.map((r) => `term role ${r}`), "term inverse", "term sel cells", "term sel seam", "term sel glyph"];
+  const low = Object.fromEntries(pieces.map((p) => [p, [Infinity, ""]]));
+  for (const ctx of CONTEXTS) {
+    const built = build(ctx);
+    for (const p of pieces) for (const w of ["", " in the lit pane"]) {
+      const r = textContrast(ctx.rules, built[`${p}${w}`]);
+      if (r < low[p][0]) low[p] = [r, `${ctx.name}${w}`];
+    }
+  }
+  for (const [p, [r, where]] of Object.entries(low)) {
+    t.diagnostic(`${p}: ${r.toFixed(2)} (${where})`);
+    assert.ok(r >= 4.5, `${p} ${r.toFixed(2)} in ${where}`);
+  }
+});
 
 // ── the reader itself ───────────────────────────────────────────────────────
 
@@ -834,7 +883,10 @@ test("pseudo-elements: a tile's seam is a background layer; the lit pane's and t
   const sels = [...WB, ...CO.filter((r) => /\.sl-toast/.test(r.selector))].map((r) => r.selector);
   assert.deepEqual(sels.filter((s) => /::after/.test(s)), [], "::after stays free for the aurora");
   const before = sels.filter((s) => /::before/.test(s) && !/sl-tree__twisty/.test(s)).map((s) => s.replace(/^.*?(\.sl-[\w-]+)[^,]*$/, "$1"));
-  assert.deepEqual([...new Set(before)].sort(), [".sl-palette", ".sl-pane", ".sl-term-block", ".sl-toast"], "the four marks, and nothing else");
+  assert.deepEqual([...new Set(before)].sort(), [".sl-palette", ".sl-pane", ".sl-term-block", ".sl-term-block__spin", ".sl-toast"], "the four marks and the spinner's frame, and nothing else");
+  // the spinner's frame is the ::before of its own cell, a span in the
+  // output, never of an effect host
+  assert.deepEqual(sels.filter((s) => /__spin::before/.test(s)), [".sl-term-block__spin::before", ".sl-term-block__spin::before"]);
   // the lit pane's seam is a pseudo-element (it paints over the pane's children), and the palette's since 0.34 (Lumen's line with its glow)
   assert.match(rule(WB, ".sl-pane[data-lit]::before"), /background-image:\s*linear-gradient\(var\(--_sl-seam-dir, 90deg\), transparent, var\(--slc-seam\) 18%/);
   assert.doesNotMatch(rule(WB, ".sl-pane[data-lit]"), /background-image/);

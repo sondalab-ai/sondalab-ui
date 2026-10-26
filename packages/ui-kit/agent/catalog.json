@@ -966,6 +966,32 @@
       ]
     },
     {
+      "id": "term-output",
+      "kind": "workbench",
+      "classes": [
+        "sl-term-block__ok",
+        "sl-term-block__warn",
+        "sl-term-block__err",
+        "sl-term-block__dim",
+        "sl-term-block__accent",
+        "sl-term-block__inverse",
+        "sl-term-block__sel",
+        "sl-term-block__spin",
+        "sl-term-block--screen"
+      ],
+      "roleVars": [
+        "--slc-accent-text",
+        "--slc-success",
+        "--slc-warning",
+        "--slc-danger",
+        "--slc-info",
+        "--slc-text-muted",
+        "--slc-text",
+        "--slc-raised",
+        "--slc-sunken"
+      ]
+    },
+    {
       "id": "wordmark",
       "kind": "signature",
       "classes": [

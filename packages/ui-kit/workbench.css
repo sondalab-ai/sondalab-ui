@@ -813,6 +813,80 @@ a.sl-statusbar__item { text-decoration: none; }
   color: var(--slc-text-secondary);
 }
 
+/* ── Terminal roles (0.40, the Term spec) ──────────────────────────────────
+   Spans inside __out paint the six terminal roles (docs/tui-patterns.md)
+   from the kit's theme-aware roles, never from the `terminal` truecolor
+   values, which are tuned for a dark terminal and fail on paper:
+     __prompt  prompt   the accent as text (the header's prompt, reused)
+     __ok      ok       success        __warn  warn   warning
+     __err     err      danger         __dim   dim    muted text
+     __accent  accent   info (the depth hue is a theme token, not a role)
+   A status reads its band ink in an inversion band (-text, declared only
+   there), as the badge does. Every role holds 4.5:1 on the block's fill,
+   raised, sunken in a lit pane and the band's own ground
+   (workbench.test.mjs). */
+.sl-term-block__ok     { color: var(--slc-success-text, var(--slc-success)); }
+.sl-term-block__warn   { color: var(--slc-warning-text, var(--slc-warning)); }
+.sl-term-block__err    { color: var(--slc-danger-text, var(--slc-danger)); }
+.sl-term-block__dim    { color: var(--slc-text-muted); }
+.sl-term-block__accent { color: var(--slc-info-text, var(--slc-info)); }
+/* In a band the muted ink is a share of currentColor, which inside __out is
+   already the secondary ink: 60% of 78% read 3.27:1. Dim takes the band's
+   muted share of the band's own ink instead (60%, .sl-invert > * in
+   components.css; workbench.test.mjs holds the two equal). */
+.sl-invert .sl-term-block__dim { color: color-mix(in srgb, var(--slc-text) 60%, transparent); }
+/* The focused pane's title in inverse video (D6, the inversion band in one
+   run of cells): the primary ink as the ground, the block's own fill as the
+   ink. The fill is read off the block, so it is the sunken rung in a lit
+   pane and, in a band, the band's ground, captured on the band itself
+   before its children re-derive --slc-text (no cycle). */
+.sl-term-block { --_sl-term-ground: var(--slc-raised); }
+.sl-pane[data-lit] .sl-term-block { --_sl-term-ground: var(--slc-sunken); }
+.sl-invert { --_sl-term-band: var(--slc-text); }
+.sl-invert .sl-term-block { --_sl-term-ground: var(--_sl-term-band); }
+.sl-term-block__inverse {
+  color: var(--_sl-term-ground);
+  background-color: var(--slc-text);
+}
+/* The selected row: a 6% wash of the ink (the kit's hover wash) behind the
+   row's cells, and the seam `▌` in the row's first cell as a __prompt span.
+   With no colour the seam alone marks the row. */
+.sl-term-block__sel { background-color: color-mix(in srgb, var(--slc-text) 6%, transparent); }
+/* A full-screen view keeps its geometry: no wrap, it scrolls sideways, and
+   the tight line lets a box's vertical strokes meet from row to row (at the
+   normal 1.5 each `│` stood alone, with a gap between rows). */
+.sl-term-block--screen .sl-term-block__out {
+  line-height: var(--sl-line-tight, 1.2);
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+/* The spinner, CSS only: one cell that fills and drains through the dither
+   burst ` ░▒▓█▓▒░` (tui spinner.frames), 100ms a frame (spinner.intervalMs),
+   in prompt. Still (reduced motion, or no CSS animation) it shows the full
+   frame `█`. The duration is the tui token's, frames x interval, not an L4
+   motion step, so it does not scale with --sl-motion-*. */
+.sl-term-block__spin {
+  display: inline-block;
+  width: 1ch;
+  color: var(--slc-accent-text);
+}
+.sl-term-block__spin::before { content: "█"; white-space: pre; }
+@media (prefers-reduced-motion: no-preference) {
+  .sl-term-block__spin::before { animation: sl-term-spin 800ms step-end infinite; }
+}
+@keyframes sl-term-spin {
+  0%    { content: " "; }
+  12.5% { content: "░"; }
+  25%   { content: "▒"; }
+  37.5% { content: "▓"; }
+  50%   { content: "█"; }
+  62.5% { content: "▓"; }
+  75%   { content: "▒"; }
+  87.5% { content: "░"; }
+  100%  { content: " "; }
+}
+
 /* ══ HIGH CONTRAST ═══════════════════════════════════════════════════════════
    Nothing shows through an overlay: the palette is its opaque rung, unblurred. */
 :root[data-sl-theme="high-contrast"] .sl-palette {
@@ -839,6 +913,11 @@ a.sl-statusbar__item { text-decoration: none; }
   /* Opaque: the user's canvas, nothing blurred through it. */
   .sl-palette { background-color: Canvas !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .sl-term-block[data-exit]:not([data-exit=""])::before { forced-color-adjust: none; background: CanvasText !important; }
+  /* The inverse title in the user's pair, swapped; the row tint is the
+     system's selection, and the seam inside it takes its text colour. */
+  .sl-term-block__inverse { forced-color-adjust: none; background: CanvasText !important; color: Canvas !important; }
+  .sl-term-block__sel { forced-color-adjust: none; background: Highlight !important; color: HighlightText !important; }
+  .sl-term-block__sel * { color: HighlightText !important; }
   .sl-statusbar__dot { forced-color-adjust: none; background: CanvasText !important; animation: none !important; }
   /* A badge in the selection's colours, ringed in their text colour: on a
      current item, which is Highlight itself, the ring keeps its shape. */
