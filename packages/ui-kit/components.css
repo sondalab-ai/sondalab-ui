@@ -2371,7 +2371,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 
 .sl-lockup {
   font-family: var(--sl-font-pixel, var(--sl-font-mono, ui-monospace, monospace));
-  font-size: var(--sl-text-px-2, 25px);
+  font-size: var(--sl-text-px-1, 12.5px);
   font-weight: 400;
   letter-spacing: 0;
   color: var(--slc-text);

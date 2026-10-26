@@ -117,7 +117,7 @@ test("the pixel accent: stat value, lockup and .sl-px use --sl-font-pixel, untra
     assert.notEqual(prop(b, "text-transform"), "uppercase", sel);
   }
   assert.match(prop(decls(".sl-stat__value"), "font-size") ?? "", /^var\(--sl-text-px-4,/);
-  assert.match(prop(decls(".sl-lockup"), "font-size") ?? "", /^var\(--sl-text-px-2,/);
+  assert.match(prop(decls(".sl-lockup"), "font-size") ?? "", /^var\(--sl-text-px-1,/);
   assert.match(prop(decls(".sl-lockup__sep"), "color") ?? "", /accent/);
 });
 

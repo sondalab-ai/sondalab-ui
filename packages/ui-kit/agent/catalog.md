@@ -593,7 +593,7 @@ The official logo. The brand is typographic; there is no pictorial mark. `sondal
 Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-wordmark.svg` — where this class and that file disagree, the file is right. Do: let it inherit its size from context; it is type, so it scales with `font-size`. Don't: re-letter it, re-space it, or set the period in the text colour — the accent period is the mark.
 
 ### Compact lockup — `sl-lockup` (`__sep` · `__dot`)
-The wordmark where the wordmark is too wide: headers, tight chrome. `sonda/lab` lowercase in Geist Pixel Square at `--sl-text-px-2` (25px), untracked, the `/` in the accent. Substrate: **R** IDE/App/Page.
+The wordmark where the wordmark is too wide: headers, tight chrome. `sonda/lab` lowercase in Geist Pixel Square at `--sl-text-px-1` (12.5px, 1px cells; a hero lockup may step up to `--sl-text-px-2`), untracked, the `/` in the accent. Substrate: **R** IDE/App/Page.
 ```html
 <span class="sl-lockup">sonda<span class="sl-lockup__sep">/</span>lab</span>
 ```
