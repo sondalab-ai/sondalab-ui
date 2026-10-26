@@ -75,6 +75,75 @@ def test_sondalab_vars_need_1():
     assert t.motion_enabled({"SONDALAB_ACCESSIBLE": ""}, isatty=True) is True
 
 
+# --- accessible, reduced_motion, switch_on --------------------------------
+
+@pytest.mark.parametrize(
+    "env,expected",
+    [
+        ({}, False),
+        ({"SONDALAB_ACCESSIBLE": "1"}, True),
+        ({"SONDALAB_ACCESSIBLE": "0"}, False),
+        ({"SONDALAB_ACCESSIBLE": ""}, False),
+        ({"SONDALAB_ACCESSIBLE": "true"}, False),
+        ({"ACCESSIBLE": "1"}, True),
+        ({"ACCESSIBLE": ""}, True),
+        ({"ACCESSIBLE": "0"}, True),
+        ({"SONDALAB_ACCESSIBLE": "0", "ACCESSIBLE": ""}, True),
+    ],
+)
+def test_accessible(env, expected):
+    assert t.accessible(env) is expected
+
+
+@pytest.mark.parametrize(
+    "env,expected",
+    [
+        ({}, False),
+        ({"SONDALAB_REDUCED_MOTION": "1"}, True),
+        ({"SONDALAB_REDUCED_MOTION": "0"}, False),
+        ({"SONDALAB_ACCESSIBLE": "1"}, True),
+        ({"SONDALAB_ACCESSIBLE": "0"}, False),
+        ({"ACCESSIBLE": ""}, True),
+        ({"CI": "true"}, False),
+        ({"TERM": "dumb"}, False),
+    ],
+)
+def test_reduced_motion(env, expected):
+    assert t.reduced_motion(env) is expected
+
+
+def test_reduced_motion_does_not_imply_accessible():
+    assert t.accessible({"SONDALAB_REDUCED_MOTION": "1"}) is False
+
+
+@pytest.mark.parametrize(
+    "name,env,expected",
+    [
+        ("ci", {"CI": ""}, True),
+        ("ci", {"CI": "false"}, True),
+        ("ci", {}, False),
+        ("ascii", {"SONDALAB_ASCII": "1"}, True),
+        ("ascii", {"SONDALAB_ASCII": "yes"}, False),
+        ("reducedMotion", {"SONDALAB_REDUCED_MOTION": "1"}, True),
+        ("reducedMotion", {"SONDALAB_ACCESSIBLE": "1"}, False),
+        ("accessible", {"ACCESSIBLE": ""}, True),
+    ],
+)
+def test_switch_on(name, env, expected):
+    assert t.switch_on(name, env) is expected
+
+
+@pytest.mark.parametrize("name", ["bogus", "noColor", "forceColor", "term", "colorTerm"])
+def test_switch_on_unknown_purpose_raises(name):
+    with pytest.raises(KeyError):
+        t.switch_on(name, {})
+
+
+def test_helpers_are_public():
+    for name in ("accessible", "reduced_motion", "switch_on"):
+        assert name in t.__all__
+
+
 # --- ascii_mode ----------------------------------------------------------
 
 @pytest.mark.parametrize("enc", ["UTF-8", "utf8", "utf_8", "utf-8-sig"])

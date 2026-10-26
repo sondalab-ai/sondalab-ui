@@ -14,6 +14,9 @@ from typing import Mapping, Optional, Sequence
 from . import DECODE, ENV, GLYPHS, LAYOUT, PROGRESS, RAMP, SPINNER
 
 __all__ = [
+    "accessible",
+    "reduced_motion",
+    "switch_on",
     "motion_enabled",
     "ascii_mode",
     "color_mode",
@@ -52,6 +55,40 @@ def _on(env: Mapping[str, str], names: Sequence[str]) -> bool:
     return False
 
 
+def switch_on(name: str, env: Mapping[str, str] = os.environ) -> bool:
+    """True when any variable of the ENV switch purpose `name` is on.
+
+    `name` is an ENV key whose variables are switches: "reducedMotion",
+    "accessible", "ci" or "ascii". SONDALAB_* variables count only when they
+    equal "1"; CI and ACCESSIBLE count whenever set, even empty. Any other
+    name, including a non-switch ENV key such as "noColor", raises KeyError.
+    """
+    names = ENV[name]
+    if any(var not in _SWITCH for var in names):
+        raise KeyError(f"{name!r} is not a switch purpose")
+    return _on(env, names)
+
+
+def accessible(env: Mapping[str, str] = os.environ) -> bool:
+    """Whether accessible mode is on, per the spec's Accessible mode section.
+
+    On for SONDALAB_ACCESSIBLE=1, or ACCESSIBLE set to any value (even
+    empty). It means plain prompts, no redraw and states written as words;
+    it implies reduced_motion().
+    """
+    return switch_on("accessible", env)
+
+
+def reduced_motion(env: Mapping[str, str] = os.environ) -> bool:
+    """Whether the user asked for reduced motion.
+
+    On for SONDALAB_REDUCED_MOTION=1, or when accessible() is on. It reads
+    only the user's request: motion_enabled() also turns motion off for a
+    non-TTY stream, CI and TERM=dumb.
+    """
+    return switch_on("reducedMotion", env) or accessible(env)
+
+
 def _forced(env: Mapping[str, str]) -> bool:
     """FORCE_COLOR per force-color.org: set, and neither empty nor "0"."""
     return any(env.get(name, "") not in ("", "0") for name in ENV["forceColor"])
@@ -73,7 +110,7 @@ def motion_enabled(env: Mapping[str, str] = os.environ, isatty: Optional[bool] =
         isatty = sys.stderr.isatty()
     if not isatty or _term_dumb(env):
         return False
-    return not (_on(env, ENV["ci"]) or _on(env, ENV["reducedMotion"]) or _on(env, ENV["accessible"]))
+    return not (switch_on("ci", env) or reduced_motion(env))
 
 
 def ascii_mode(
@@ -90,7 +127,7 @@ def ascii_mode(
     """
     if override is not None:
         return override
-    if _term_dumb(env) or _on(env, ENV["ascii"]):
+    if _term_dumb(env) or switch_on("ascii", env):
         return True
     if encoding is None:
         encoding = _locale_charset(env)
