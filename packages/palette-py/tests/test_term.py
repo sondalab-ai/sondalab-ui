@@ -59,6 +59,17 @@ def test_motion_off(env, isatty):
     assert t.motion_enabled(env, isatty=isatty) is False
 
 
+def test_unknown_switch_variable_raises():
+    with pytest.raises(KeyError):
+        t._on({"NEW_VAR": "1"}, ("NEW_VAR",))
+
+
+def test_every_switch_in_env_has_a_rule():
+    for key in ("reducedMotion", "accessible", "ci", "ascii"):
+        for name in p.ENV[key]:
+            assert name in t._SWITCH
+
+
 def test_sondalab_vars_need_1():
     assert t.motion_enabled({"SONDALAB_REDUCED_MOTION": "0"}, isatty=True) is True
     assert t.motion_enabled({"SONDALAB_ACCESSIBLE": ""}, isatty=True) is True
@@ -66,7 +77,7 @@ def test_sondalab_vars_need_1():
 
 # --- ascii_mode ----------------------------------------------------------
 
-@pytest.mark.parametrize("enc", ["UTF-8", "utf8", "utf_8"])
+@pytest.mark.parametrize("enc", ["UTF-8", "utf8", "utf_8", "utf-8-sig"])
 def test_ascii_off_on_utf8(enc):
     assert t.ascii_mode({}, enc) is False
 
@@ -83,6 +94,23 @@ def test_ascii_off_on_utf8(enc):
 )
 def test_ascii_on(env, enc):
     assert t.ascii_mode(env, enc) is True
+
+
+@pytest.mark.parametrize(
+    "env,expected",
+    [
+        ({"LANG": "en_US.UTF-8"}, False),
+        ({"LC_CTYPE": "UTF-8"}, False),
+        ({"LANG": "de_DE.utf8@euro"}, False),
+        ({"LC_ALL": "C", "LANG": "en_US.UTF-8"}, True),
+        ({"LC_ALL": "", "LC_CTYPE": "en_US.UTF-8", "LANG": "C"}, False),
+        ({"LANG": "en_US.ISO8859-1"}, True),
+        ({"LANG": "C"}, True),
+        ({}, True),
+    ],
+)
+def test_ascii_reads_locale_from_env(env, expected):
+    assert t.ascii_mode(env) is expected
 
 
 def test_ascii_override_wins():
@@ -105,13 +133,18 @@ TC = {"COLORTERM": "truecolor"}
         # 2. NO_COLOR (non-empty) beats FORCE_COLOR and a TTY
         ({"NO_COLOR": "1", "FORCE_COLOR": "1"}, True, None, "none"),
         ({"NO_COLOR": ""}, True, None, "ansi16"),
-        # 3. FORCE_COLOR beats non-TTY and TERM=dumb
+        # 3. FORCE_COLOR beats non-TTY and TERM=dumb, unless empty or "0"
         ({"FORCE_COLOR": "1"}, False, None, "ansi16"),
+        ({"FORCE_COLOR": "true"}, False, None, "ansi16"),
+        ({"FORCE_COLOR": ""}, False, None, "none"),
+        ({"FORCE_COLOR": "0"}, False, None, "none"),
+        ({"FORCE_COLOR": "0"}, True, None, "ansi16"),
         ({"FORCE_COLOR": "1", "TERM": "dumb"}, False, None, "ansi16"),
         # 4. TTY detection and TERM=dumb
         ({}, True, None, "ansi16"),
         ({}, False, None, "none"),
         ({"TERM": "dumb"}, True, None, "none"),
+        ({"TERM": "dumb", "NO_COLOR": ""}, True, None, "none"),
     ],
 )
 def test_color_precedence(env, isatty, flag, expected):
@@ -163,7 +196,7 @@ def test_error_and_success_examples():
 def test_long_label_is_cut_not_wrapped():
     label = "Resolve every probe in the workspace cache"
     line = t.step_line("done", label, "ok")
-    assert line == "  ✓ " + label[:28] + "ok"
+    assert line == "  ✓ " + label[:27] + " ok"
     assert "\n" not in t.step_line("done", label)
     assert t.step_line("done", label) == "  ✓ " + label[:28]
 
@@ -174,9 +207,22 @@ def test_step_line_ascii():
     assert t.step_line(t.spinner_frame(2), "Resolving", ascii=True) == "  : Resolving"
 
 
-def test_step_line_unknown_glyph():
+def test_label_of_exactly_label_width_keeps_a_gap():
+    label = "Check every workspace probes"
+    assert len(label) == 28
+    assert t.step_line("done", label, "ok") == "  ✓ Check every workspace probe ok"
+    assert t.step_line("done", label) == "  ✓ " + label
+
+
+@pytest.mark.parametrize("glyph", ["nope", "x", "#x", "▚"])
+def test_step_line_unknown_glyph(glyph):
     with pytest.raises(ValueError):
-        t.step_line("nope", "x")
+        t.step_line(glyph, "x")
+
+
+@pytest.mark.parametrize("frame", sorted(set(p.SPINNER["frames"] + p.SPINNER["ascii"])))
+def test_step_line_accepts_every_spinner_frame(frame):
+    assert t.step_line(frame, "Resolving").startswith("  ")
 
 
 # --- progress_bar --------------------------------------------------------
@@ -194,6 +240,18 @@ def test_progress_edge_cut_at_end():
 
 def test_progress_rounds_half_up():
     assert t.progress_bar(1, 8).endswith(" 13%")  # 12.5%
+
+
+def test_progress_shows_100_only_when_full():
+    assert t.progress_bar(999, 1000).endswith("  99%")
+    assert t.progress_bar(127, 128).endswith("  99%")
+    assert t.progress_bar(1000, 1000).endswith(" 100%")
+
+
+@pytest.mark.parametrize("total", [0, -1])
+def test_progress_rejects_non_positive_total(total):
+    with pytest.raises(ValueError):
+        t.progress_bar(0, total)
 
 
 def test_progress_clamps():
@@ -235,6 +293,19 @@ def test_decode_ascii_pool_has_no_glyphs():
         assert all(33 <= ord(c) <= 126 for c in frame)
     with pytest.raises(AssertionError):
         t.decode_frames("ab", Scripted("▓"), ascii=True)
+
+
+def test_decode_empty_value():
+    assert t.decode_frames("", Scripted([])) == ["", "", "", ""]
+
+
+def test_decode_non_ascii_value():
+    value = "héllo wörld"
+    frames = t.decode_frames(value, random.Random(3))
+    assert frames[-1] == value
+    for f in frames:
+        assert len(f) == len(value) and f[5] == " "
+    assert frames[0][:2] == "hé"
 
 
 def test_decode_is_deterministic_and_ends_on_value():

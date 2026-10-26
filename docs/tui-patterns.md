@@ -110,7 +110,7 @@ The four frames are drawn on one line; they are stacked here to show them.
 
 ```
 sonda/lab smartctx 0.14.2
-ui-kit 0.39.0 · palette 0.5.0 · darwin arm64
+ui-kit 0.39.0 · palette 0.6.0 · darwin arm64
 ```
 
 ## Patterns (line output)
@@ -146,7 +146,7 @@ One line per step: the indent, the glyph, the label padded to `labelWidth`, then
   ✗ Verify remote               origin unreachable
 ```
 
-The label is padded with spaces to `labelWidth`; a longer label is cut, never wrapped. The detail is one short phrase and takes the rest of the line. The glyph is painted with its role; the label and detail stay in the default ink, and a detail that explains a skipped or pending step may use `dim`.
+The label is padded with spaces to `labelWidth`; a longer label is cut, never wrapped. When a detail follows, the label is cut at `labelWidth` − 1 columns, so at least one space always separates it from the detail; a line with no detail cuts at `labelWidth`. The detail is one short phrase and takes the rest of the line. The glyph is painted with its role; the label and detail stay in the default ink, and a detail that explains a skipped or pending step may use `dim`.
 
 A line under a step (an error's why and fix, a next step, a progress bar) is a continuation line: it starts in the label column, `indent` + 2 columns from the left.
 
@@ -214,7 +214,7 @@ A determinate step draws a bar on the continuation line under its running step l
 ```
 
 - **Bar:** 24 cells (`progress.cells`) in `prompt` (`progress.role`). The filled cells are `█`, ⌊done / total × 24⌋ of them. The leading edge, right after the filled cells, dithers through `▓▒░` (the ramp, darkest first), cut where the bar ends. The remaining cells are spaces.
-- **After the bar:** two spaces, the count `done/total` with `done` right-aligned to the width of `total`, two spaces, then the percentage right-aligned to 4 columns (`progress.percentWidth`) in `dim`.
+- **After the bar:** two spaces, the count `done/total` with `done` right-aligned to the width of `total`, two spaces, then the percentage right-aligned to 4 columns (`progress.percentWidth`) in `dim`. The percentage rounds half up and is capped at 99% until `done` equals `total`, so 100% only ever shows beside a full bar. A `total` of 0 or less is a caller error: a step with nothing to count draws no bar.
 - **Ends:** at 0% the bar is the edge alone (`▓▒░`), so a step that has started but counted nothing still shows it is alive; at 100% it is 24 `█`. When the step ends, the bar line is cleared and the step line persists.
 - **Redraw:** at most `motion.maxFps`, and only when a cell or the count changes.
 - **ASCII:** each cell is mapped through `ramp.ascii`. `▓` and `█` both become `#`, so the filled run and the edge differ only at `:` and `.`; that is accepted.
@@ -314,7 +314,7 @@ q-0d9e   ✗ err    5m
 | `SONDALAB_ACCESSIBLE` | `accessible` | `1` turns accessible mode on. |
 | `ACCESSIBLE` | `accessible` | Set, the same as `SONDALAB_ACCESSIBLE=1` (Charm's name). |
 | `NO_COLOR` | `noColor` | Set and non-empty, no colour. |
-| `FORCE_COLOR` | `forceColor` | Set, colour even without a TTY. |
+| `FORCE_COLOR` | `forceColor` | Set to anything but an empty string or `0`, colour even without a TTY (force-color.org). |
 | `CI` | `ci` | Set, motion off. |
 | `TERM` | `term` | `dumb`: no colour, no motion, ASCII glyphs. |
 | `COLORTERM` | `colorTerm` | `truecolor` or `24bit` allows truecolor. |
@@ -326,7 +326,7 @@ Colour is decided in this order; the first rule that applies wins:
 
 1. the `--color` or `--no-color` flag;
 2. `NO_COLOR`;
-3. `FORCE_COLOR`;
+3. `FORCE_COLOR`; set to an empty string or `0`, it does not apply;
 4. TTY detection on the stream being written, and `TERM=dumb`.
 
 The roles are painted as ANSI 16 by default (`terminal.*.ansi`), so the user's terminal theme controls contrast. The truecolor values (`terminal.*.true`) are used only when `COLORTERM` is `truecolor` or `24bit` **and** the program opts in.

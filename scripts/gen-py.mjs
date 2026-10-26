@@ -31,7 +31,7 @@ function table(obj, path, row = (v, k) => py(v, `${path}.${k}`)) {
 // name -> (unicode, ascii), the GLYPHS shape without the role.
 function pairs(obj, path) {
   return table(obj, path, (v, k) => {
-    if (typeof v.unicode !== "string" || typeof v.ascii !== "string") throw new Error(`gen-py: ${path}.${k} needs unicode and ascii`);
+    if (!v || typeof v.unicode !== "string" || typeof v.ascii !== "string") throw new Error(`gen-py: ${path}.${k} needs unicode and ascii`);
     return `(${JSON.stringify(v.unicode)}, ${JSON.stringify(v.ascii)})`;
   });
 }
@@ -55,7 +55,7 @@ function main() {
     if (!Object.hasOwn(t.terminal, t.tui[part].role)) throw new Error(`tui ${part}: unknown role ${t.tui[part].role}`);
   }
 
-  const py = `# GENERATED from sondalab.tokens.json — do not edit.
+  const source = `# GENERATED from sondalab.tokens.json — do not edit.
 """Sondalab terminal palette: semantic roles, named-ANSI floor + truecolor opt-in."""
 import os
 
@@ -129,6 +129,7 @@ def supports_truecolor() -> bool:
 
 
 def paint(text: str, role: str, *, err: bool = False) -> str:
+    """Wrap text in role's SGR; NO_COLOR and COLORTERM only. Spec callers: term.color_mode."""
     if _no_color() or role not in ROLES:
         return text
     code, (r, g, b) = ROLES[role]
@@ -136,7 +137,7 @@ def paint(text: str, role: str, *, err: bool = False) -> str:
     return f"\\033[{sgr}m{text}\\033[0m"
 `;
   mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, py);
+  writeFileSync(OUT, source);
   console.log("gen-py: wrote sondalab_palette/__init__.py");
 }
 

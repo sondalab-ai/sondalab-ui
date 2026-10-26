@@ -7,7 +7,6 @@ terminal, starts a thread or sleeps: the caller owns redraw and timing
 from __future__ import annotations
 
 import codecs
-import locale
 import os
 import sys
 from typing import Mapping, Optional, Sequence
@@ -26,20 +25,36 @@ __all__ = [
 
 _TRUECOLOR = ("truecolor", "24bit")
 
+# How each switch variable in ENV reads, per docs/tui-patterns.md, Robustness >
+# Environment: "one" is on only when it equals "1" (SONDALAB_*), "set" is on
+# whenever it is present, whatever its value (CI, ACCESSIBLE). A variable added
+# to ENV must get its own entry here: _on() raises on a name it does not know.
+_SWITCH = {
+    "SONDALAB_REDUCED_MOTION": "one",
+    "SONDALAB_ACCESSIBLE": "one",
+    "SONDALAB_ASCII": "one",
+    "CI": "set",
+    "ACCESSIBLE": "set",
+}
+
 
 def _on(env: Mapping[str, str], names: Sequence[str]) -> bool:
-    """True when any of the variables is on, per the spec's Environment table.
+    """True when any of the switch variables `names` is on.
 
-    A SONDALAB_* variable is on only when it is "1"; any other name
-    (CI, ACCESSIBLE) is on when it is set at all, whatever its value.
+    Each name reads by its _SWITCH rule ("one": equals "1"; "set": present).
+    A name missing from _SWITCH raises KeyError, so a new ENV variable never
+    inherits a rule silently.
     """
     for name in names:
-        if name.startswith("SONDALAB_"):
-            if env.get(name) == "1":
-                return True
-        elif name in env:
+        rule = _SWITCH[name]
+        if (env.get(name) == "1") if rule == "one" else (name in env):
             return True
     return False
+
+
+def _forced(env: Mapping[str, str]) -> bool:
+    """FORCE_COLOR per force-color.org: set, and neither empty nor "0"."""
+    return any(env.get(name, "") not in ("", "0") for name in ENV["forceColor"])
 
 
 def _term_dumb(env: Mapping[str, str]) -> bool:
@@ -70,17 +85,34 @@ def ascii_mode(
 
     True on a non-UTF-8 encoding, TERM=dumb or SONDALAB_ASCII=1. `override`
     is the caller's --ascii flag (True forces ASCII, False forces Unicode).
-    `encoding` None reads locale.getpreferredencoding(False).
+    `encoding` None reads the charset of the first set of LC_ALL, LC_CTYPE,
+    LANG in `env` ("en_US.UTF-8" gives UTF-8); none set, or no charset, is ASCII.
     """
     if override is not None:
         return override
     if _term_dumb(env) or _on(env, ENV["ascii"]):
         return True
-    enc = encoding or locale.getpreferredencoding(False)
+    if encoding is None:
+        encoding = _locale_charset(env)
     try:
-        return codecs.lookup(enc).name != "utf-8"
+        return codecs.lookup(encoding).name not in ("utf-8", "utf-8-sig")
     except LookupError:
         return True
+
+
+def _locale_charset(env: Mapping[str, str]) -> str:
+    """The charset of the effective POSIX locale in `env`, or "" if it has none.
+
+    The first non-empty of LC_ALL, LC_CTYPE, LANG wins; its charset sits
+    between "." and an optional "@modifier" ("de_DE.UTF-8@euro" gives "UTF-8").
+    A value with no "." is read whole, as macOS sets LC_CTYPE=UTF-8.
+    """
+    for name in ("LC_ALL", "LC_CTYPE", "LANG"):
+        value = env.get(name)
+        if value:
+            lang, dot, charset = value.partition(".")
+            return (charset if dot else lang).partition("@")[0]
+    return ""
 
 
 def color_mode(
@@ -92,7 +124,8 @@ def color_mode(
     """Return 'none', 'ansi16' or 'truecolor'; the first rule that applies wins.
 
     Order: `flag` (True for --color, False for --no-color), then NO_COLOR set
-    and non-empty, then FORCE_COLOR set, then `isatty` and TERM != dumb.
+    and non-empty, then FORCE_COLOR set and not "" or "0", then `isatty`
+    and TERM != dumb.
     Colour is 'truecolor' only when `truecolor` is True (the program opts in)
     and COLORTERM is truecolor or 24bit. `isatty` None reads sys.stdout.isatty().
     """
@@ -100,7 +133,7 @@ def color_mode(
         on = flag
     elif any(env.get(name) for name in ENV["noColor"]):
         on = False
-    elif any(name in env for name in ENV["forceColor"]):
+    elif _forced(env):
         on = True
     else:
         if isatty is None:
@@ -135,19 +168,22 @@ def progress_bar(done: int, total: int, ascii: bool = False) -> str:
 
     The bar is PROGRESS["cells"] wide: floor(done/total*cells) full cells, then
     the ramp darkest first as the leading edge, cut at the bar's end. `done`
-    is clamped to [0, total]; total 0 reads as complete. The percent rounds
-    half up. The bar is PROGRESS["role"], the percent `dim`; colour is the caller's.
+    is clamped to [0, total]; total <= 0 raises ValueError. The percent rounds
+    half up and stays at 99 until done == total. The bar is PROGRESS["role"],
+    the percent `dim`; colour is the caller's.
     """
+    if total <= 0:
+        raise ValueError(f"total must be positive, got {total}")
     cells = PROGRESS["cells"]
-    total = max(total, 0)
     done = min(max(done, 0), total)
-    num, den = (done, total) if total else (1, 1)
-    full = num * cells // den
+    full = done * cells // total
     edge = "".join(reversed(RAMP["unicode"][:-1]))
     bar = (RAMP["unicode"][-1] * full + edge)[:cells].ljust(cells)
     if ascii:
         bar = _to_ascii(bar)
-    pct = (200 * num + den) // (2 * den)
+    pct = (200 * done + total) // (2 * total)
+    if done < total:
+        pct = min(pct, 99)
     width = len(str(total))
     count = f"{done:>{width}}/{total}"
     percent = f"{pct}%".rjust(PROGRESS["percentWidth"])
@@ -180,9 +216,10 @@ def decode_frames(value: str, rng, ascii: bool = False) -> list:
 def step_line(glyph_name: str, label: str, detail: str = "", ascii: bool = False) -> str:
     """One step-list line: indent, glyph, label padded to labelWidth, detail.
 
-    `glyph_name` is a GLYPHS key, or a one-character spinner frame. A label
-    longer than LAYOUT["labelWidth"] is cut there, never wrapped; with no
-    detail the line has no trailing padding. In ASCII, `…` becomes `...`.
+    `glyph_name` is a GLYPHS key, or a spinner frame (SPINNER frames/ascii).
+    With a detail the label is cut at labelWidth - 1, so a space always
+    separates them; without one it is cut at labelWidth, with no trailing
+    padding. Never wrapped. In ASCII, `…` becomes `...`.
     Uncoloured: paint the glyph with GLYPHS[name][2] (done/fixed ok, failed
     err, warn warn, active/question prompt, pending/skipped/separator dim;
     a spinner frame prompt), label and detail in the default ink.
@@ -190,15 +227,14 @@ def step_line(glyph_name: str, label: str, detail: str = "", ascii: bool = False
     if glyph_name in GLYPHS:
         uni, asc, _role = GLYPHS[glyph_name]
         glyph = asc if ascii else uni
-    elif len(glyph_name) == 1:
+    elif glyph_name in SPINNER["frames"] + SPINNER["ascii"]:
         glyph = _to_ascii(glyph_name) if ascii else glyph_name
     else:
         raise ValueError(f"unknown glyph {glyph_name!r}")
     if ascii:
         label = label.replace("…", "...")
     width = LAYOUT["labelWidth"]
-    label = label[:width]
     head = " " * LAYOUT["indent"] + glyph + " "
     if not detail:
-        return head + label
-    return head + label.ljust(width) + detail
+        return head + label[:width]
+    return head + label[: width - 1].ljust(width) + detail

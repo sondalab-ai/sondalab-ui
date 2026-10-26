@@ -16,7 +16,7 @@ Roles: `prompt`, `ok`, `warn`, `err`, `dim`, `accent`.
 
 ## Term tokens and the reference helper (0.6.0)
 
-The Term spec's numbers are constants, so a CLI never re-derives them: `GLYPHS`, `LAYOUT` (now with `maxWidth`), `RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS` and `ENV`.
+The Term spec's numbers are constants, so a CLI never re-derives them: `GLYPHS`, `LAYOUT`, `RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS` and `ENV`.
 
 `sondalab_palette.term` builds the spec's strings and reads its environment rules. It writes nothing and keeps no time: redraw and timing are the caller's (`SPINNER["intervalMs"]`, `DECODE["frameMs"]`, `MOTION["maxFps"]`).
 
@@ -42,6 +42,6 @@ The helper returns uncoloured text; paint the glyph with its `GLYPHS` role.
 
 ### Changelog
 
-- **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`; `LAYOUT.maxWidth`) and the `term` reference helper.
+- **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`) and the `term` reference helper.
 
 Generated from the canonical `sondalab.tokens.json` — do not hand-edit `sondalab_palette/__init__.py`.
