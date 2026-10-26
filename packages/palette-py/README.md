@@ -38,6 +38,8 @@ term.decode_frames("sha 9c41e0b", random.Random(), ascii=ascii)  # 4 frames, las
 
 The helper returns uncoloured text; paint the glyph with its `GLYPHS` role.
 
+`paint()` predates the Term spec and does not consult `color_mode`: it ignores the flag, `FORCE_COLOR` and TTY detection, and upgrades to truecolor whenever `COLORTERM` allows it. A caller that follows the spec's colour precedence builds the SGR itself from `ROLES`, based on the mode.
+
 ### Changelog
 
 - **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`; `LAYOUT.maxWidth`) and the `term` reference helper.

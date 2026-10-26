@@ -43,6 +43,7 @@ def _on(env: Mapping[str, str], names: Sequence[str]) -> bool:
 
 
 def _term_dumb(env: Mapping[str, str]) -> bool:
+    """True when TERM is `dumb`: no colour, no motion, ASCII glyphs."""
     return any(env.get(name) == "dumb" for name in ENV["term"])
 
 
@@ -124,6 +125,7 @@ def spinner_frame(i: int, ascii: bool = False) -> str:
 
 
 def _to_ascii(cells: str) -> str:
+    """Map each ramp cell to its RAMP["ascii"] form; other characters pass."""
     table = dict(zip(RAMP["unicode"], RAMP["ascii"]))
     return "".join(table.get(c, c) for c in cells)
 
