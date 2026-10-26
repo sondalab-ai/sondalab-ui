@@ -1,31 +1,19 @@
 ---
 name: the-pane-drivers-pointer-vars-are-inline-and-inherit
-description: The pane driver writes --slfx-px/--slfx-py/--slfx-ptr/--slfx-lit as inline styles on the .sl-fx-glass--pane host, so they inherit; a pointer-reactive child needs CSS reading them, not new JS.
+description: The glass host's pointer vars are inline styles, so they inherit; they are now --slfx-spec-a / --slfx-spec-i (and --slfx-press / --slfx-spill / --slfx-spill-a on a press). --slfx-px/py/ptr/lit are no longer written.
 metadata:
   type: project
 ---
 
-The pane driver sets its four pointer variables with `style.setProperty` on the
-pane host itself — `--slfx-px` / `--slfx-py` on pointer move
-(`packages/ui-kit/effects.js:446`), `--slfx-ptr` for the bearing, and
-`--slfx-lit` from the easing loop (`packages/ui-kit/effects.js:510`). Inline
-custom properties inherit, so **every descendant of the pane can read them** with
-no extra JavaScript: a child that wants to answer the pointer only needs CSS.
+**Corrected 2026-10-26.** The original note named `--slfx-px`, `--slfx-py`, `--slfx-ptr` and `--slfx-lit`. The 2026-09-24 re-scope retired the pointer glint and the pane driver that wrote them; `effects.js` sets none of the four now (only comments in `effects.css` still mention them). The principle survived, the names did not.
 
-`.sl-fx-glass--pane` also declares the resting values in `effects.css:693`
-(`--slfx-px: 50%`, `--slfx-py: 50%`, `--slfx-lit: 0`), which is the fallback for
-a document where Tier 1 was never armed — a child reading them then gets a
-centred, unlit state rather than an invalid value. Write CSS that is correct at
-`--slfx-lit: 0` and it degrades on its own.
+What `effects.js` writes now, all with `style.setProperty` on the host:
 
-`setPaneLive()` removes all four when the pointer leaves
-(`packages/ui-kit/effects.js:414`) and strips an empty `style=""` afterwards, so
-nothing is left on the element; exactly one pane is live at a time.
+- `--slfx-spec-a` (the light's bearing, a conic angle) and `--slfx-spec-i` (how lit the edge is, 0 to 1) on a `.sl-fx-glass` host (`stepSpec` in `packages/ui-kit/effects.js`). `releaseSpec()` removes both and strips an empty `style=""`. Resting values are declared in `effects.css` (`--slfx-spec-a: 0deg; --slfx-spec-i: 0`).
+- `--slfx-press`, `--slfx-spill` and `--slfx-spill-a` on a pressed control (the press light).
 
-**Why:** the obvious move when a child needs to follow the pointer is a second
-listener, which then has to be kept in step with the kit's easing. The values are
-already there and already eased.
+Inline custom properties inherit, so **a descendant can read them with CSS alone**; it needs no listener. Write CSS that is correct at `--slfx-spec-i: 0`.
 
-**How to apply:** read the vars, multiply by `--slfx-lit`, and let the kit own
-the loop. See [[tier-2-needs-mountgpu-and-a-declared-backdrop]] for what Tier 1
-does not give you.
+**Why:** a second listener has to be kept in step with the kit's easing; the values are already there and already eased. Writes are guarded (an unchanged string is not written) because each write restyles the host's subtree.
+
+**How to apply:** `grep -n 'setProperty("--slfx' packages/ui-kit/effects.js` for the current list before relying on a name here. The dither hover keeps no pointer var: it draws on a canvas.

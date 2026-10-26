@@ -23,3 +23,5 @@ pre-existing; it is written up in spec Decision 2b for the owner rather than
 changed, because it alters shipped glass behaviour. Do not "fix" it silently.
 
 Related: [[the-goo-filters-alpha-slope-erases-anything-below-half]].
+
+**2026-10-26:** Tier 2 itself is retired (`mountGpu()` always resolves false) and the liquid, which the goo was written against, was removed in 0.39. The goo and the lens guard are unchanged.

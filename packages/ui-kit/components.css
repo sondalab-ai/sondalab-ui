@@ -2371,8 +2371,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
    must render as packages/ui-kit/assets/sondalab-*.svg does; where they
    disagree, the asset is right and the CSS is the defect. Since 0.30 the
    lockup was Geist Mono 300 tracked 0.2em; since 0.39 (pixel D) it is the
-   lowercase Geist Pixel Square wordmark, untracked, at a whole-cell size. The
-   asset (scripts/gen-logo.py) still draws the 0.30 lockup until it follows. */
+   lowercase Geist Pixel Square wordmark, untracked, at a whole-cell size, and
+   the asset (scripts/gen-logo.py) draws the same one. */
 .sl-wordmark {
   /* The brand face, not the display role: since 0.30 display is Geist and
      Fraunces is the wordmark's and the monogram's alone. */
