@@ -1082,6 +1082,23 @@
         "--slc-accent-text",
         "--slc-text-muted"
       ]
+    },
+    {
+      "id": "art",
+      "kind": "signature",
+      "classes": [
+        "sl-eyebrow--mark",
+        "sl-rule--shapes",
+        "sl-rule--weave",
+        "sl-art-corner",
+        "sl-art-field",
+        "sl-empty--void",
+        "sl-empty--shapes"
+      ],
+      "roleVars": [
+        "--slc-text",
+        "--slc-accent-text"
+      ]
     }
   ]
 }

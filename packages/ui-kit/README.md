@@ -404,6 +404,8 @@ Identity & media: `.sl-wordmark` (`__dot`), `.sl-lockup` (`__sep` / `__dot`; Gei
 
 Patterns (page-level composition, shipped classes since 0.10.0): `.sl-wrap`, `.sl-prose`, `.sl-header`, `.sl-invert`, `.sl-hgrid`, `.sl-section` (`__head` / `__idx`), `.sl-anchor`.
 
+Art (opt-in Bauhaus shapes on the 3px dither cell, since 0.41): `.sl-eyebrow--mark`, `.sl-rule--shapes`, `.sl-rule--weave`, `.sl-art-corner`, `.sl-art-field`, `.sl-empty--void`, `.sl-empty--shapes`. Each is a generated mask painted from `--slc-text` and `--slc-accent-text`; static, decorative, and nothing under high contrast or forced colours.
+
 App structure: `.sl-nav` (`__group` / `__item` / `__count`; current item via `aria-current`), `.sl-list` (`__row` / `__meta`, `--dense`; selection via `aria-selected` or `aria-current`), `.sl-disclosure` (`aria-expanded`), `.sl-kv` (a `<dl>`), `.sl-resizer` (`--horizontal`; `role="separator"`, the drag is the consumer's).
 
 Complex (composed shells — no behaviour JS; the consumer wires interaction): `.sl-callout` (`--success`/`--warning`/`--danger`/`--info`), `.sl-table` (`--numeric`; wrap in an `overflow-x:auto` container), `.sl-dialog` (visual shell for the native `<dialog>` — drive with `.showModal()`/`.close()`), `.sl-tabs` (`__list`/`__tab` — supply your own ARIA + panel switching), `.sl-tooltip` (CSS-only via `data-sl-tooltip`), `.sl-toast-stack` (`__live`) / `.sl-toast` (0.33; `__timer` 0.34; the consumer adds, times and removes toasts).
