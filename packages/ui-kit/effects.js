@@ -1,7 +1,7 @@
 /* @sondalab/ui-kit — effects.js
    Hand-authored Tier 1 driver for effects.css: the press light and its spill,
    the glass's specular edge, the
-   liquid's silhouette, the glitch's timing and the aurora's one-per-document
+   glitch's timing and the aurora's one-per-document
    grant.
    Contract: docs/specs/2026-09-08-effects-layer-design.md
 
@@ -13,7 +13,6 @@
    getComputedStyle and re-read on theme change. scripts/effects-js.test.mjs
    enforces the absence of literals. */
 
-import { cornerPx, roundedRectPath, GOO_CONTRAST, GOO_INTERCEPT } from "./geom.js";
 // The 8x8 Bayer wipe and the cell size are the kit's pure dither maths.
 import { CELL_PX, wipeFrame } from "./dither-core.js";
 
@@ -43,321 +42,9 @@ let armed = false;
 let burstBudget = 1;
 let burstsRunning = 0;
 
-/* ── liquid: the silhouette goes gooey ──────────────────────────────────────
-   The reference (libraries.dev/gooey, liquid-gooey) never filters the UI: a
-   SILHOUETTE layer below the content carries the goo — one plain shape per
-   item, run through blur + alpha-contrast so touching pieces merge with a
-   rounded neck — and "your real DOM rides crisp on top". Its Metal entry does
-   the same by default (metal-fx v2 `applyTo: "ring"`: the bend is a vector
-   outline; "button content and glow stay rigid"). The displacement filter
-   this replaced was a lens: it refracted the glyphs and re-rasterised the
-   element, which is the text distortion and the pixelated edge the owner saw.
-
-   So the liquid here is a shape, not a filter over pixels. effects.js keeps
-   ONE hidden <svg class="sl-fx-liquid__skin"> and, while the pointer shapes
-   an element, parents it into that element at z-index -2: above the host's
-   own background and border (a negative z-index child paints over both, and
-   under the content — the aurora's bloom already relies on this), below the
-   text. The skin draws the host's silhouette — its rounded box, with the
-   radii read from its own computed style — plus a DROP: a circle whose
-   centre sits just inside the outline at the point nearest the pointer, so
-   it protrudes by a few pixels. Box and drop go through the goo filter
-   (Gaussian blur, then an alpha slope of 18 about 0.5 — the reference's own
-   pair), which welds the drop to the box with a soft neck; the crisp box is
-   drawn again unfiltered on top of that, so the goo can only ADD the swell
-   and never rounds a corner the component declared. A second filter turns
-   the merged alpha into paint: a flood of the host's own background inside
-   it, and a band one border-width wide in the host's own border colour along
-   its outline, so the ring bends with the swell. Both colours are the host's
-   computed values, re-read every frame — hover and active states are the
-   host's, and the skin follows them. Meanwhile the host's own border is
-   hidden by a transparent border-image (effects.css), never by border-color:
-   the computed border colour stays the truth for the skin to read.
-
-   Nothing inside the element is ever filtered, the host's border-radius is
-   never written, and the skin is removed the moment the spring settles. */
-
-const NS = "http://www.w3.org/2000/svg";
-/** What the pointer may shape. The gooey belongs to a ROUND silhouette:
- *  welded onto the long side of a text button the drop reads as a blister on
- *  a box, and the owner said so. The gate is an explicit modifier written in
- *  the markup — `--drop` for a round icon-only button (the full swell),
- *  and nothing else — never a measured radius: a
- *  geometric heuristic misfires the moment a component re-parametrises its
- *  own --sl-radius-*, and not breaking under that is a promise this layer
- *  has made twice. A bare .sl-fx-liquid is inert at this tier. */
-const LIQUID_HOSTS = ".sl-fx-liquid.sl-fx-liquid--drop";
-/** The goo: blur sigma and alpha slope. liquid-gooey's defaults are 6 and
- *  18; the sigma is smaller here because the swell is a few pixels and its
- *  neck has to stay in proportion — "molto leggero". The slope itself is
- *  geom.js's: one house goo, shared with the field family, whose weld
- *  arithmetic is derived from the same pair. */
-const GOO_BLUR = 4;
-/** The chrome's smooth-union radius (effects-shader.js, `smin`) that matches
- *  this goo's neck; passed to the GPU tier so the two silhouettes agree. */
-let skin = null;
-let skinParts = null;
-
-function buildSkin() {
-  if (skin) return;
-  skin = document.createElementNS(NS, "svg");
-  skin.setAttribute("class", "sl-fx-liquid__skin");
-  skin.setAttribute("aria-hidden", "true");
-  // sRGB on both filters: under the default linearRGB the alpha slope would
-  // be applied to a gamma-decoded alpha, moving the goo's edge.
-  const srgb = 'color-interpolation-filters="sRGB"';
-  // Shapes are drawn in currentColor — only their ALPHA is used: the second
-  // filter floods the merged silhouette with the host's own colours.
-  skin.innerHTML = `
-    <defs>
-      <filter id="slfx-goo" filterUnits="userSpaceOnUse" ${srgb}>
-        <feGaussianBlur in="SourceGraphic" stdDeviation="${GOO_BLUR}" />
-        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${GOO_CONTRAST} ${GOO_INTERCEPT}" />
-      </filter>
-      <filter id="slfx-skin" filterUnits="userSpaceOnUse" ${srgb}>
-        <feMorphology in="SourceAlpha" operator="erode" radius="1" result="inner" />
-        <feComposite in="SourceAlpha" in2="inner" operator="out" result="band" />
-        <feFlood result="fill-colour" />
-        <feComposite in="fill-colour" in2="SourceAlpha" operator="in" result="fill" />
-        <feFlood result="ring-colour" />
-        <feComposite in="ring-colour" in2="band" operator="in" result="ring" />
-        <feMerge><feMergeNode in="fill" /><feMergeNode in="ring" /></feMerge>
-      </filter>
-    </defs>
-    <g filter="url(#slfx-skin)">
-      <g filter="url(#slfx-goo)"><path fill="currentColor" /><circle fill="currentColor" r="0" /></g>
-      <path fill="currentColor" />
-    </g>`;
-  const floods = skin.querySelectorAll("feFlood");
-  const paths = skin.querySelectorAll("path");
-  skinParts = {
-    filters: skin.querySelectorAll("filter"),
-    erode: skin.querySelector("feMorphology"),
-    fill: floods[0],
-    ring: floods[1],
-    gooBox: paths[0],
-    box: paths[1],
-    drop: skin.querySelector("circle"),
-  };
-}
-
-/** The point on the rounded box's outline nearest to p (p inside the box),
- *  with the outward normal there and the distance to it. On a corner arc the
- *  normal points away from the arc's centre; on a side it is the axis. */
-function nearestEdge(px, py, { w, h, radii }) {
-  const [tl, tr, br, bl] = radii;
-  // Each corner: its arc centre, radius, and which way is "outside" it.
-  const corners = [
-    [tl, tl, tl, -1, -1], [w - tr, tr, tr, 1, -1], [w - br, h - br, br, 1, 1], [bl, h - bl, bl, -1, 1],
-  ];
-  for (const [cx, cy, r, sx, sy] of corners) {
-    if (r <= 0) continue;
-    const inX = sx < 0 ? px < cx : px > cx;
-    const inY = sy < 0 ? py < cy : py > cy;
-    if (inX && inY) {
-      const dx = px - cx, dy = py - cy;
-      const len = Math.hypot(dx, dy) || 1e-6;
-      return { qx: cx + (dx / len) * r, qy: cy + (dy / len) * r, nx: dx / len, ny: dy / len, d: r - len };
-    }
-  }
-  const sides = [
-    { d: px, nx: -1, ny: 0, qx: 0, qy: py },
-    { d: w - px, nx: 1, ny: 0, qx: w, qy: py },
-    { d: py, nx: 0, ny: -1, qx: px, qy: 0 },
-    { d: h - py, nx: 0, ny: 1, qx: px, qy: h },
-  ];
-  return sides.reduce((a, b) => (b.d < a.d ? b : a));
-}
-
-/* Critically underdamped: the swell overshoots and settles rather than easing
-   to a stop. Stiffness and damping are tuned so a flick reads as elastic and
-   a slow drag as viscous — the same spring, different input. */
-const LIQUID_K = 170;
-const LIQUID_DAMP = 14;
-const LIQUID_SETTLE_EPS = 0.002;
-/** The drop's radius from the element's own size, clamped so a keycap still
- *  swells visibly and a card does not grow a blister; how far it protrudes
- *  at full amplitude, as a share of that radius (≈3px on a 40px button);
- *  how far from an edge the pointer is felt, as a multiple of the radius —
- *  a Gaussian, so a card's edge answers the pointer approaching it and is
- *  still across the middle.
- *
- *  The owner called the swell "quasi inesistente" on round buttons. The cause
- *  was not the amplitude but cornerPx: --sl-radius-pill is 9999px, and without
- *  the clamp the drop was placed thousands of pixels away. With the outline
- *  correct, 0.24 was still slight and 0.5 read as a blob rather than a button
- *  giving; 0.34 gives 4.8px on a 2.5rem button — the shape yields, and stays a
- *  shape. Checked in Chrome at all three. */
-const DROP_K = 0.35;
-const DROP_MIN = 10;
-const DROP_MAX = 16;
-const BULGE_K = 0.34;
-const REACH_K = 1.5;
-
-let amp = 0, ampV = 0, target = 0;
-let lagX = 0, lagY = 0;              // CSS px, within the live element's own box
-let pointerX = 0, pointerY = 0;
-let liquidLiveEl = null;
-let liquidBox = null;                // { w, h, radii, border, drop, bulge, reach }
-let liquidDrop = { x: 0, y: 0, r: 0 };
-let liquidRafId = 0;
-let liquidPrevT = 0;
-
-
-function setLiquidLive(el) {
-  if (liquidLiveEl === el) return;
-  if (liquidLiveEl) {
-    liquidLiveEl.classList.remove("is-liquid-live");
-    skin?.remove();
-  }
-  liquidLiveEl = el;
-  liquidBox = null;
-  liquidDrop = { x: 0, y: 0, r: 0 };
-  if (!el) return;
-  buildSkin();
-  const rect = el.getBoundingClientRect();
-  const cs = getComputedStyle(el);
-  const w = rect.width, h = rect.height;
-  const radii = [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomRightRadius, cs.borderBottomLeftRadius]
-    .map((raw) => cornerPx(raw, w, h));
-  const border = Math.max(parseFloat(cs.borderTopWidth) || 0, 0);
-  const drop = Math.max(DROP_MIN, Math.min(DROP_MAX, Math.min(w, h) * DROP_K));
-  const bulge = drop * BULGE_K;
-  liquidBox = { w, h, radii, border, drop, bulge, reach: drop * REACH_K };
-
-  const d = roundedRectPath(w, h, radii);
-  skinParts.gooBox.setAttribute("d", d);
-  skinParts.box.setAttribute("d", d);
-  skinParts.erode.setAttribute("radius", String(border));
-  // Both filter regions: the box plus room for the drop and the blur's tail.
-  const pad = Math.ceil(GOO_BLUR * 3 + drop + border + 2);
-  for (const f of skinParts.filters) {
-    f.setAttribute("x", String(-pad));
-    f.setAttribute("y", String(-pad));
-    f.setAttribute("width", String(Math.ceil(w) + 2 * pad));
-    f.setAttribute("height", String(Math.ceil(h) + 2 * pad));
-  }
-  // The skin's box is the host's BORDER box: an absolutely positioned child
-  // resolves inset: 0 against the padding box, so it steps out by the
-  // border's width (effects.css reads --slfx-bw).
-  skin.style.setProperty("--slfx-bw", `${border}px`);
-  el.appendChild(skin);
-  el.classList.add("is-liquid-live");
-}
-
-function setDrop(name, value) {
-  if (skinParts.drop.getAttribute(name) !== value) skinParts.drop.setAttribute(name, value);
-}
-
-/** Rebuild the silhouette for this frame: the drop at the outline point
- *  nearest the lagged pointer, protruding by the spring's amplitude scaled
- *  by how near the pointer is to that edge; the floods in the host's own
- *  colours as they are right now. */
-function paintSkin() {
-  const el = liquidLiveEl;
-  const b = liquidBox;
-  if (!el || !b || !skinParts) return;
-  const px = Math.max(0, Math.min(b.w, lagX));
-  const py = Math.max(0, Math.min(b.h, lagY));
-  const e = nearestEdge(px, py, b);
-  const near = Math.exp(-0.5 * (Math.max(e.d, 0) / b.reach) ** 2);
-  const out = amp * b.bulge * near;
-  // Below a quarter pixel the drop is entirely inside the box and adds
-  // nothing; report radius 0 so the chrome does not weld an invisible circle.
-  const visible = out > 0.25;
-  liquidDrop = {
-    x: e.qx + e.nx * (out - b.drop),
-    y: e.qy + e.ny * (out - b.drop),
-    r: visible ? b.drop : 0,
-  };
-  // Only what changed: an attribute written inside a filter dirties it and
-  // re-rasterises the goo even when the value is the same.
-  setDrop("cx", liquidDrop.x.toFixed(2));
-  setDrop("cy", liquidDrop.y.toFixed(2));
-  setDrop("r", visible ? b.drop.toFixed(2) : "0");
-
-  const cs = getComputedStyle(el);
-  if (skinParts.fill.style.floodColor !== cs.backgroundColor) skinParts.fill.style.floodColor = cs.backgroundColor;
-  if (skinParts.ring.style.floodColor !== cs.borderTopColor) skinParts.ring.style.floodColor = cs.borderTopColor;
-}
-
-function integrateLiquid(now) {
-  // A live host taken out of the document fires no pointerleave, so nothing
-  // would ever clear `target` and the loop would run forever for nothing.
-  // Same guard burst() carries, for the same reason: a timer or a loop
-  // mutating something nothing can see.
-  if (liquidLiveEl && !liquidLiveEl.isConnected) target = 0;
-  const dt = Math.min((now - liquidPrevT) / 1000 || 0, 1 / 30);
-  liquidPrevT = now;
-  const a = LIQUID_K * (target - amp) - LIQUID_DAMP * ampV;
-  ampV += a * dt;
-  amp += ampV * dt;
-  // The drop chases the pointer with its own lag, so it arrives after the
-  // cursor rather than under it — that trail IS the mass.
-  lagX += (pointerX - lagX) * Math.min(dt * 11, 1);
-  lagY += (pointerY - lagY) * Math.min(dt * 11, 1);
-
-  paintSkin();
-
-  const settled = target === 0 && Math.abs(amp) < LIQUID_SETTLE_EPS && Math.abs(ampV) < LIQUID_SETTLE_EPS;
-  if (settled) {
-    liquidRafId = 0;
-    amp = 0; ampV = 0;
-    setLiquidLive(null);
-    return; // idle page costs nothing: the loop does not reschedule itself
-  }
-  // At rest under a still pointer: nothing moves and no colour is in flight,
-  // so the frame would repaint the same drop. The next pointermove, or a
-  // transition starting on the host (a press), wakes it.
-  const resting = target === 1 && Math.abs(amp - 1) < LIQUID_SETTLE_EPS && Math.abs(ampV) < LIQUID_SETTLE_EPS
-    && Math.abs(pointerX - lagX) < 0.05 && Math.abs(pointerY - lagY) < 0.05
-    && !liquidLiveEl?.getAnimations().length;
-  if (resting) {
-    liquidRafId = 0;
-    return;
-  }
-  liquidRafId = requestAnimationFrame(integrateLiquid);
-}
-
-function ensureLiquidLoop() {
-  if (liquidRafId) return;
-  liquidPrevT = performance.now();
-  liquidRafId = requestAnimationFrame(integrateLiquid);
-}
-
 function onPointerMove(ev) {
   if (!(ev.target instanceof Element)) return;
   onSpecPointer(ev);
-  const el = ev.target.closest(LIQUID_HOSTS);
-  if (!el || el.closest('[data-sl-fx="off"]')) return;
-  const r = el.getBoundingClientRect();
-  pointerX = ev.clientX - r.left;
-  pointerY = ev.clientY - r.top;
-  if (liquidLiveEl !== el) {
-    // A fresh target starts its lag from its own entry point, not the
-    // previous element's leftover coordinates.
-    lagX = pointerX;
-    lagY = pointerY;
-    setLiquidLive(el);
-  }
-  target = 1;
-  ensureLiquidLoop();
-}
-
-/** A resting drop follows its host's colours again once they start to move. */
-function onLiquidTransition(ev) {
-  if (liquidLiveEl && ev.target === liquidLiveEl) ensureLiquidLoop();
-}
-
-function onPointerLeave(ev) {
-  if (!(ev.target instanceof Element)) return;
-  const el = ev.target.closest(LIQUID_HOSTS);
-  // pointerleave does not bubble, but the listener is on the root in the
-  // capture phase, so it also fires for every CHILD the pointer leaves — an
-  // icon inside the button. Only the host's own leave releases the host.
-  if (!el || el !== liquidLiveEl || ev.target !== el) return;
-  target = 0;
-  ensureLiquidLoop(); // keep the loop running so the overshoot plays out
 }
 
 /* ── glass: the specular edge ─────────────────────────────────────────────────
@@ -1490,7 +1177,7 @@ function suppressed() {
 /* ── public API ──────────────────────────────────────────────────────────────*/
 
 /**
- * Arm Tier 1: pointer-driven liquid, finite glitch bursts, animated aurora.
+ * Arm Tier 1: pointer-driven specular light, finite glitch bursts, animated aurora.
  * Refuses under reduced motion and under high contrast — Tier 0 is the default
  * state and stays correct on its own.
  *
@@ -1587,8 +1274,6 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
 
   // One delegated listener for the whole subtree, not one per element.
   root.addEventListener("pointermove", onPointerMove, { passive: true });
-  root.addEventListener("pointerleave", onPointerLeave, { capture: true, passive: true });
-  root.addEventListener("transitionrun", onLiquidTransition, { passive: true });
   window.addEventListener("pointerout", onSpecOut, { passive: true });
   window.addEventListener("scroll", onSpecLayout, { capture: true, passive: true });
   window.addEventListener("resize", onSpecLayout, { passive: true });

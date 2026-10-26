@@ -16,14 +16,6 @@ const lens = read("glass-lens.js");
 const effectsCss = strip(read("effects.css"));
 const glassCss = strip(read("glass.css"));
 
-test("the liquid drop rests under a still pointer and writes only changed attributes", () => {
-  const loop = effectsJs.slice(effectsJs.indexOf("function integrateLiquid("), effectsJs.indexOf("function ensureLiquidLoop("));
-  assert.match(loop, /const resting = target === 1/, "a drop at rest stops the loop");
-  assert.match(loop, /getAnimations\(\)\.length/, "unless a colour is still in flight");
-  assert.match(effectsJs, /addEventListener\("transitionrun", onLiquidTransition/, "and a new transition wakes it");
-  assert.match(effectsJs, /if \(skinParts\.drop\.getAttribute\(name\) !== value\)/, "a filter attribute is written only when it changes");
-});
-
 test("a goo field lands a release only for a press it saw", () => {
   const up = goo.slice(goo.indexOf("const onUp = () => {"), goo.indexOf("const onBlur"));
   assert.match(up, /if \(!held\) return;/);

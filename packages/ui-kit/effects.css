@@ -5,9 +5,9 @@
    ── What this layer is ──────────────────────────────────────────────────────
    Families, each carrying one meaning (spec §Decision 1; the re-scope in
    docs/specs/2027-improve-aesthetics.md adds press):
-     glitch  — something re-resolved      liquid — you are recognised
-     aurora  — attention lives here       glass  — this is a physical surface
-     press   — you acted on this          goo    — these belong to one another
+     glitch  — something re-resolved      glass  — this is a physical surface
+     aurora  — attention lives here       goo    — these belong to one another
+     press   — you acted on this
    An effect that means nothing is switched off. Classes are ADDITIVE: they
    compose onto components.css classes and never replace them.
 
@@ -24,13 +24,6 @@
            Gaussian-blurred, on a child effects.js injects at mount()
            (.sl-fx-aurora__glow). CSS-drawn at every tier; the bloom needs
            Tier 1 only because the child has to exist. No GPU aurora.
-   liquid  the silhouette goes gooey: effects.js parents one shared <svg>
-           (.sl-fx-liquid__skin) into the host while the pointer shapes it —
-           the host's own box plus a drop at the pointer, welded by a goo
-           filter (blur + alpha contrast) and painted in the host's own fill
-           and border colours. Content is never filtered. No pseudo-element.
-           Gated behind a modifier in the markup: --drop (a round icon-only
-           button); a bare .sl-fx-liquid, and any container, is inert.
    glitch  a child <span>, never the host, so the host's two paint layers stay
            free for the edge.
 
@@ -167,7 +160,7 @@
      a blurred corner is rounded by roughly sigma). Spending the whole weld on
      sigma put it at 10-16px against a 12px corner and the shapes read as
      melted. So sigma is capped here and dilation absorbs the remainder; raise
-     it for a softer, more liquid neck, lower it for a crisper one. */
+     it for a softer, gooier neck, lower it for a crisper one. */
   --slfx-goo-reach: 3px;
   --slfx-goo-weld: 14px;
   --slfx-goo-soft: 5px;
@@ -190,16 +183,16 @@
    families so a reader meets the exits before the entrances. */
 
 /* 1 & 2 — high contrast and the subtree opt-out neutralise the HOST as well as
-   its paint layers: the glitch animates its host and its shards, the liquid
-   hides its host's border under a transparent border-image while its skin
-   holds the edge, and the glass paints an inset highlight on the host.
+   its paint layers: the glitch animates its host and its shards, a welded goo
+   member hides its border under a transparent border-image while the
+   substance holds the edge, and the glass paints an inset highlight on the host.
    `!important` is load-bearing: effects.js writes inline styles, which beat a
    plain rule. The opt-out matches the element carrying the attribute AND its
    subtree, compounded with the family classes so an unscoped
    `box-shadow: none !important` never strips elevation or focus rings off
    ordinary components.css elements inside the region. */
-:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-liquid, .sl-fx-liquid__skin, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
+:root[data-sl-theme="high-contrast"] :is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-fx-glass, .sl-fx-glass__lit, .sl-fx-press, .sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-goo, .sl-fx-goo__field, .sl-fx-glitch, .sl-fx-glitch__text, .sl-fx-glitch__shards, .sl-fx-glitch__shard) {
   animation: none !important;
   box-shadow: none !important;
   text-shadow: none !important;
@@ -217,12 +210,12 @@
    marker -- in high contrast its accent ring. The tile is the component's,
    not the effect's, so it comes back here (in high contrast as that ring),
    outranking the kill on specificity, both !important. */
-:root[data-sl-theme="high-contrast"] :is(.sl-pagination__item[aria-current]:not([aria-current="false"]), .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current]:not([aria-current="false"]), .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pagination__item[aria-current]:not([aria-current="false"]), .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current]:not([aria-current="false"]), .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-pagination__item[aria-current]:not([aria-current="false"]), .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current]:not([aria-current="false"]), .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pagination__item[aria-current]:not([aria-current="false"]), .sl-segmented__item:is([aria-selected="true"], [aria-pressed="true"]), .sl-nav__item[aria-current]:not([aria-current="false"]), .sl-list__row:is([aria-selected="true"], [aria-current]:not([aria-current="false"]))):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch) {
   box-shadow: var(--slc-depth-tile) !important;
 }
-:root[data-sl-theme="high-contrast"] :is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-tabs--tile .sl-tabs__tab[aria-selected="true"]):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch) {
   box-shadow: var(--slc-depth-flat) !important;
 }
 /* ...nor a control's own depth and focus halo (components.css, 0.32): a
@@ -234,12 +227,12 @@
    paints them, outranking the kill, both !important. The halo is still off
    in high contrast and under forced colours: it is drawn at --slc-glow's
    strength, which is 0 there. */
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-check__box, .sl-radio__box, .sl-switch__track, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch) {
   box-shadow: var(--_sl-depth, 0 0 transparent) !important;
 }
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch):focus-visible {
+:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch):focus-visible,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn, .sl-segmented__item, .sl-pagination__item, .sl-nav__item, .sl-list__row, .sl-tabs__tab, .sl-activitybar__item, .sl-tree__row, .sl-statusbar__item, .sl-titlebar__cmd):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch):focus-visible {
   box-shadow: var(--_sl-depth, 0 0 transparent), var(--_sl-halo, 0 0 transparent) !important;
 }
 /* ...nor a surface's own recipe (0.33): an island (a workbench pane, a
@@ -252,13 +245,13 @@
    mark (the lit pane's seam, the terminal block's exit mark, the toast's
    tick, the palette's seam since 0.34) is its ::before, which glass, press
    and glitch need. */
-:root[data-sl-theme="high-contrast"] :is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-pane, .sl-term-block):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch) {
   box-shadow: var(--slc-depth-island) !important;
 }
 /* A toast and a palette keep no border (0.34): their ring is their cast's. */
-:root[data-sl-theme="high-contrast"] :is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch),
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-liquid, .sl-fx-glitch) {
+:root[data-sl-theme="high-contrast"] :is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch),
+:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-toast, .sl-palette):is(.sl-fx-glass, .sl-fx-press, .sl-fx-aurora, .sl-fx-glitch) {
   box-shadow: var(--slc-depth-cast) !important;
 }
 
@@ -334,7 +327,6 @@
 :root[data-sl-theme="high-contrast"] .sl-fx-live__canvas,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lens,
 :root[data-sl-theme="high-contrast"] .sl-fx-glass__lit,
-:root[data-sl-theme="high-contrast"] .sl-fx-liquid__skin,
 :root[data-sl-theme="high-contrast"] .sl-fx-goo__field,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::before,
 :root[data-sl-theme="high-contrast"] .sl-fx-glitch::after,
@@ -349,7 +341,6 @@
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-live__canvas,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lens,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glass__lit,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-liquid__skin,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-goo__field,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::before,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-glitch::after,
@@ -378,7 +369,6 @@
   .sl-fx-live__canvas,
   .sl-fx-glass__lens,
   .sl-fx-glass__lit,
-  .sl-fx-liquid__skin,
   .sl-fx-goo__field,
   .sl-fx-glitch::before,
   .sl-fx-glitch::after,
@@ -1379,15 +1369,6 @@
    any more; the two kill-switch rules below are left because they are harmless
    and a consumer may still have one in an old build. */
 
-/* While a glass element is liquid under Tier 1, its edge is the liquid's own
-   outline (the skin's band, in the host's border colour): the static conic
-   hairline would stay rigid on the box while the silhouette swells past it,
-   and a crisp ring around a deforming shape reads as broken. It fades over
-   the slow beat and returns when the surface re-solidifies. Under Tier 2 the
-   chrome follows the silhouette instead (effects-shader.js, edgeAt). Same
-   placement rule as the stand-down above: a lit aurora still wins. */
-[data-sl-fx="on"] .sl-fx-glass.sl-fx-liquid.is-liquid-live::after { opacity: 0; }
-
 /* ══ PRESS — you acted on this ═══════════════════════════════════════════════
    Re-scope R2 (docs/specs/2027-improve-aesthetics.md), owner's pick A,
    2026-09-25; cards press-light and spring-tokens. Pressing a control lights
@@ -2122,40 +2103,6 @@
   background-position: -60% 0;
 }
 
-/* ══ LIQUID — you are recognised ═════════════════════════════════════════════
-   The SILHOUETTE deforms; the content never does. While the pointer shapes an
-   element, effects.js parents one shared <svg class="sl-fx-liquid__skin">
-   into it: the host's own rounded box plus a drop at the pointer, welded by a
-   goo filter (blur, then alpha contrast — libraries.dev/gooey's own chain)
-   and painted in the host's computed background and border colours, with the
-   band following the merged outline. It sits at z-index -2: above the host's
-   own background and border (a negative z-index child paints over both), and
-   below its content, which is never filtered. Nothing is written to the host
-   but a transparent border-image, which hides the host's own border under the
-   skin's band WITHOUT touching border-color — the skin reads the computed
-   border colour every frame, so hover and active states stay the host's.
-   The radius is never rewritten: the skin traces the radii the component
-   declared, so a component stays free to re-parametrise its own --sl-radius-*.
-   One element deforms at a time; the skin leaves when the spring settles.
-   The GPU chrome welds the same drop onto the same box (effects-shader.js). */
-.sl-fx-liquid { position: relative; isolation: isolate; }
-.sl-fx-liquid__skin {
-  position: absolute;
-  /* The host's BORDER box: an absolutely positioned child resolves inset: 0
-     against the padding box, and the skin has to cover the border it hides.
-     effects.js sets --slfx-bw to the host's border width. */
-  inset: calc(-1 * var(--slfx-bw, 0px));
-  width: calc(100% + 2 * var(--slfx-bw, 0px));
-  height: calc(100% + 2 * var(--slfx-bw, 0px));
-  z-index: -2;
-  overflow: visible;   /* the UA hides an inline svg's overflow; the swell is outside the box */
-  pointer-events: none;
-  user-select: none;
-}
-[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live {
-  border-image: linear-gradient(transparent 0 0) 1;
-}
-
 /* ══ OFF-SCREEN — what nobody can see costs nothing ══════════════════════════
    An effect on an element outside the viewport is work nobody asked for, and
    on a long page most elements are outside it. Two things cost real money:
@@ -2255,12 +2202,11 @@
 :root[data-sl-fx-still] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 0 !important; }
 
 /* ══ GOO — these are one substance ═══════════════════════════════════════════
-   Where the liquid answers the pointer on ONE element, the goo answers the
-   LAYOUT across several: members of a declared container stop reading as
+   The goo answers the LAYOUT across several elements: members of a declared
+   container stop reading as
    separate boxes and start reading as one material, welding where they come
    within --slfx-goo-weld of each other. That is a statement about belonging,
-   not about attention or recognition, and it is the reason this is a family
-   of its own rather than a looser gate on .sl-fx-liquid.
+   not about attention or recognition.
 
    --slfx-goo-weld is measured EDGE TO EDGE between two facing sides. Diagonal
    neighbours in a grid stand further apart than the grid's own `gap`, so a
@@ -2330,9 +2276,8 @@
 
    The border first: without this a merged shape is crossed by the outlines of
    the elements inside it, and three chips dragged together read as three cards
-   stacked on a blob. A transparent border-image, never border-color — the same
-   instrument the liquid uses on its live host, and for the same reason: the
-   computed border colour stays readable, and border-image occupies the
+   stacked on a blob. A transparent border-image, never border-color — the computed
+   border colour stays readable, and border-image occupies the
    border's own box, so nothing moves.
 
    The background is the second half, and without it the first is not enough.
@@ -2358,8 +2303,7 @@
    reaches the element's own border and nothing else, so the pane's ring —
    which lives on ::after and lights on :hover — went on drawing the outline
    the rule above exists to remove, and a hovered button in a welded toolbar
-   kept a visible edge. Same instrument and same reason as the liquid's, three
-   rules down: where a silhouette holds the edge, a rigid ring around it reads
+   kept a visible edge. Where a silhouette holds the edge, a rigid ring around it reads
    as broken. */
 .sl-fx-goo .sl-fx-glass.sl-fx-goo__member.is-goo-welded::after { opacity: 0; }
 
@@ -2369,8 +2313,8 @@
    family does that a static page does not already imply: everything else here
    is a statement about a layout, and this is a statement about a substance.
 
-   `translate`, not `transform`: a member may be a liquid host or a pane, and
-   both put a scale on `transform` under the pointer. The two properties
+   `translate`, not `transform`: a member may be a pane, and
+   it puts a scale on `transform` under the pointer. The two properties
    compose, so the drift never has to know.
 
    Each member gets its own PERIOD as well as its own phase — a shared period
@@ -2462,7 +2406,7 @@
 .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__text { opacity: 0; }
 .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 1; }
 
-/* ══ LIQUID HOVER — the pane has mass ══════════════════════════════════════
+/* ══ PANE SWELL — the pane has mass ═══════════════════════════════════════════
    The owner: a button should swell slightly under the pointer, with a very
    light bounce, and settle back the same way on the way out.
 
