@@ -104,6 +104,7 @@ export function mountSignals(root = document) {
   const changed = new MutationObserver((records) => {
     for (const r of records) {
       if (r.type === "attributes") {
+        if (r.target === html && r.attributeName === "data-sl-theme") continue;
         if (r.target === html || r.attributeName === "data-sl-signal-level") repaintAll();
         else for (const c of strips) if (r.target.contains(c)) paint(c);
         continue;
@@ -113,6 +114,8 @@ export function mountSignals(root = document) {
     }
   });
   changed.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-sl-theme", "class", "data-sl-signal-level"] });
+  // `theme` owns data-sl-theme on <html>; `changed` skips it so a root that
+  // contains <html> (the document) does not repaint twice for one change.
   const theme = new MutationObserver(repaintAll);
   theme.observe(html, { attributes: true, attributeFilter: ["data-sl-theme"] });
 

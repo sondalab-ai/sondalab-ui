@@ -11,7 +11,8 @@ plus a rasterised PNG, because avatar uploads take a bitmap. Rastering needs
 missing the SVG is still written and the PNG step is skipped.
 
 Deps:  pip install fonttools brotli uharfbuzz
-Fonts: fetched at runtime from the google/fonts repo (not committed).
+Fonts: fetched at runtime from the google/fonts repo (not committed), except
+       Geist Pixel Square, which is read from the kit's own vendored woff2.
 Run:   python scripts/gen-logo.py   # writes packages/ui-kit/assets/*.svg|png
 """
 import io
@@ -46,13 +47,18 @@ AVATAR_CIRCLE = 0.80
 
 FONTS = {
     "fraunces.ttf": "https://github.com/google/fonts/raw/main/ofl/fraunces/Fraunces%5BSOFT%2CWONK%2Copsz%2Cwght%5D.ttf",
-    # Pinned to the google/fonts commit the kit's geist-mono-latin.woff2 was cut
-    # from (Geist Mono 1.701), so the lockup and the UI's mono are one cut.
-    "geistmono.ttf": "https://github.com/google/fonts/raw/9e25e2ba265e5298f70f6182dd4e8a3ebf1b9123/ofl/geistmono/GeistMono%5Bwght%5D.ttf",
+}
+
+
+VENDORED = {
+    # The lockup's face (ui-kit 0.39, pixel direction D): the kit's own file.
+    "geist-pixel-square.woff2": os.path.join(OUT, "fonts", "geist-pixel-square-latin.woff2"),
 }
 
 
 def font_path(name):
+    if name in VENDORED:
+        return VENDORED[name]
     os.makedirs(CACHE, exist_ok=True)
     p = os.path.join(CACHE, name)
     if not os.path.exists(p):
@@ -62,7 +68,9 @@ def font_path(name):
 
 def instance(path, axes):
     f = TTFont(path)
-    instantiateVariableFont(f, axes, inplace=True)
+    f.flavor = None  # harfbuzz reads sfnt, not woff2
+    if "fvar" in f:  # a static face (Geist Pixel Square) has no axes to pin
+        instantiateVariableFont(f, axes, inplace=True)
     buf = io.BytesIO()
     f.save(buf)
     return f, buf.getvalue()
@@ -205,10 +213,10 @@ if __name__ == "__main__":
     # Primary wordmark: sondalab. — Fraunces 500, display optical size; dot amber.
     # tracking -0.05em matches the identity board's tight letter-spacing.
     build_svg(font_path("fraunces.ttf"), {"wght": 500, "opsz": 144}, "sondalab.", 8, "sondalab-wordmark.svg", tracking_em=-0.05)
-    # Compact lockup: SONDA·LAB — Geist Mono 300 (ui-kit 0.30; Martian Mono 300
-    # before), tracked 0.2em as the identity board's brandline and L3 set it;
-    # middle dot amber.
-    build_svg(font_path("geistmono.ttf"), {"wght": 300}, "SONDA·LAB", 5, "sondalab-lockup.svg", tracking_em=0.2)
+    # Compact lockup: sonda/lab — Geist Pixel Square (ui-kit 0.39, pixel
+    # direction D; Geist Mono 300 uppercase with a middle dot before, Martian
+    # Mono 300 before 0.30), lowercase, untracked, the `/` in the accent.
+    build_svg(font_path("geist-pixel-square.woff2"), {}, "sonda/lab", 5, "sondalab-lockup.svg", tracking_em=0.0)
     # Social avatar: the `s.` monogram, same Fraunces cut as the wordmark. The
     # dot is optically enlarged — at 32px the natural period is the first thing
     # to disappear, and the dot is the mark — then given back the space that

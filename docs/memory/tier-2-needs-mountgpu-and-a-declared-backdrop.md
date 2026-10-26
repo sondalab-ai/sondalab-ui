@@ -1,9 +1,11 @@
 ---
 name: tier-2-needs-mountgpu-and-a-declared-backdrop
-description: Tier 2 needs BOTH a separate mountGpu() call and an ancestor carrying [data-sl-fx-backdrop] with --slfx-backdrop; mount() arms Tiers 0-1 only, and without the declared texture a pane keeps the shared pointer light and no material at rest.
+description: RETIRED in 0.39.0 (mountGpu() always resolves false; effects-gpu.js and effects-shader.js are gone), kept as history. It used to need BOTH a separate mountGpu() call and an ancestor carrying [data-sl-fx-backdrop] with --slfx-backdrop; mount() arms Tiers 0-1 only, and without the declared texture a pane keeps the shared pointer light and no material at rest.
 metadata:
   type: project
 ---
+
+**Retired (0.39.0, 2026-10-26).** `mountGpu()` always resolves `false` (`packages/ui-kit/effects.js`, "Tier 2 is retired"), `effects-gpu.js` and `effects-shader.js` no longer exist, and a declared `[data-sl-fx-backdrop]` does nothing. Calling it or not changes nothing, so "Tier 2 does nothing" has no cause to look for. What follows is the record of the old behaviour; the line numbers are stale.
 
 `mount()` (`packages/ui-kit/effects.js:989`) arms Tiers 0 and 1. It does **not**
 start the GPU: `mountGpu()` is a second, `async` export

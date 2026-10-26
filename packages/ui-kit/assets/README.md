@@ -9,7 +9,7 @@ bitmap.
 | File | Form | Font (baked) |
 |---|---|---|
 | `sondalab-wordmark.svg` | primary — `sondalab.` | Fraunces, wght 500, opsz 144 |
-| `sondalab-lockup.svg` | compact — `SONDA·LAB` | Geist Mono, wght 300, tracked 0.2em (ui-kit 0.30; Martian Mono before) |
+| `sondalab-lockup.svg` | compact — `sonda/lab` | Geist Pixel Square, untracked, the `/` in the accent (ui-kit 0.39; Geist Mono 300 uppercase before, Martian Mono before 0.30) |
 | `favicon.svg` | the mark — the amber dot alone | — |
 | `app-icon.svg` | the mark on an ink tile (rounded) | — |
 | `sondalab-avatar-ink.svg` / `.png` | monogram — `s.` on the ink tile | Fraunces, wght 500, opsz 144 |
