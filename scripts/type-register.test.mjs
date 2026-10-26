@@ -14,6 +14,9 @@ import { dirname, resolve } from "node:path";
 //     join them in the mono since 0.36 (Lumen), sentence case, untracked.
 //   - Headings and display are Geist 600 with negative tracking, tighter as
 //     they grow; Fraunces (--sl-font-brand) is the wordmark and monogram only.
+//   - Geist Pixel Square (--sl-font-pixel, 0.39, direction D) is the display
+//     accent: the stat value, the lowercase lockup, a .sl-px word; whole-cell
+//     sizes, untracked, one weight.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const KIT = resolve(HERE, "../packages/ui-kit");
 const bare = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -98,11 +101,24 @@ for (const sel of SENTENCE) {
   });
 }
 
-test("uppercase is the micro register's alone (and the brand lockup's)", () => {
-  const allowed = new Set([...MICRO, ".sl-lockup"]);
+test("uppercase is the micro register's alone (the lockup is lowercase pixel since 0.39)", () => {
+  const allowed = new Set(MICRO);
   for (const r of RULES.filter((r) => /text-transform:\s*uppercase/.test(r.body))) {
     for (const s of r.selectors) assert.ok(allowed.has(s), `${s} sets uppercase outside the micro register`);
   }
+});
+
+test("the pixel accent: stat value, lockup and .sl-px use --sl-font-pixel, untracked, one weight, never uppercase", () => {
+  for (const sel of [".sl-stat__value", ".sl-lockup", ".sl-px"]) {
+    const b = decls(sel);
+    assert.match(prop(b, "font-family") ?? "", /^var\(--sl-font-pixel,/, sel);
+    assert.equal(prop(b, "font-weight"), "400", sel);
+    assert.equal(em(prop(b, "letter-spacing")), 0, sel);
+    assert.notEqual(prop(b, "text-transform"), "uppercase", sel);
+  }
+  assert.match(prop(decls(".sl-stat__value"), "font-size") ?? "", /^var\(--sl-text-px-4,/);
+  assert.match(prop(decls(".sl-lockup"), "font-size") ?? "", /^var\(--sl-text-px-2,/);
+  assert.match(prop(decls(".sl-lockup__sep"), "color") ?? "", /accent/);
 });
 
 test(".sl-chip is a control set in the mono (0.36, Lumen): sentence case, untracked", () => {

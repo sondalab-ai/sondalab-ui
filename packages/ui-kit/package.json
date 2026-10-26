@@ -107,11 +107,13 @@
     "assets/fonts/fraunces-latin.woff2",
     "assets/fonts/instrument-sans-latin.woff2",
     "assets/fonts/martian-mono-latin.woff2",
+    "assets/fonts/geist-pixel-square-latin.woff2",
     "assets/fonts/OFL-Geist.txt",
     "assets/fonts/OFL-GeistMono.txt",
     "assets/fonts/OFL-Fraunces.txt",
     "assets/fonts/OFL-InstrumentSans.txt",
     "assets/fonts/OFL-MartianMono.txt",
+    "assets/fonts/OFL-GeistPixelSquare.txt",
     "assets/fonts/README.md"
   ],
   "peerDependencies": {
