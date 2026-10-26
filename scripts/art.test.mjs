@@ -262,6 +262,27 @@ test("the void is centred on the box, strokes on all four sides, the message in 
   for (const d of [/align-items:\s*center/, /justify-content:\s*center/, /text-align:\s*center/]) assert.match(host, d);
 });
 
+test("the showcase applies every piece on flat ground, over the field and in a band", () => {
+  // Applied in a class attribute, not named: the page's captions name classes
+  // in prose. Flat ground alone has hidden defects before, so each ground is
+  // checked on its own.
+  const html = readFileSync(resolve(REPO, "showcase/index.html"), "utf8");
+  const section = html.match(/<section id="art">([\s\S]*?)<\/section>/)?.[1] ?? "";
+  assert.ok(section, "showcase/index.html has no <section id=\"art\">");
+  const grounds = Object.fromEntries(
+    section.split(/(?=<[^<>]*data-art-ground=")/).slice(1)
+      .map((chunk) => [chunk.match(/data-art-ground="([\w-]+)"/)[1], chunk]),
+  );
+  assert.deepEqual(Object.keys(grounds).sort(), ["band", "field", "flat"]);
+  assert.match(grounds.band, /^<[^>]*class="sl-invert\b/, "the band is the shipped .sl-invert");
+  assert.match(grounds.field, /<canvas\b/, "the field ground is a painted canvas");
+  const applied = (chunk) => new Set([...chunk.matchAll(/class="([^"]*)"/g)].flatMap((m) => m[1].split(/\s+/)));
+  for (const [ground, chunk] of Object.entries(grounds)) {
+    const classes = applied(chunk);
+    for (const cls of Object.keys(PIECES)) assert.ok(classes.has(cls), `${ground}: .${cls} is not applied`);
+  }
+});
+
 test("the catalog lists every new class", () => {
   const index = JSON.parse(readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.json"), "utf8"));
   const listed = new Set(index.components.flatMap((c) => c.classes));
