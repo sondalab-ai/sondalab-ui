@@ -362,6 +362,14 @@ Enable `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on the console handle. If that fails
 - `--json` writes machine-readable results for scripts, with no glyphs, colour or motion.
 - Progress, spinners and prompts go to stderr; results go to stdout. A pipe on stdout leaves the spinner on a TTY stderr intact.
 
+### Text for machines and sessions
+
+Text a program writes for an AI session or another program to read back is not human output. Recall bodies, context injected into a model and hook payloads are examples. This spec's terminal rules do not apply to it:
+
+- **Byte-stable in every locale and environment.** The same input gives the same bytes whatever `LANG`, `TERM`, `SONDALAB_ASCII`, `SONDALAB_ACCESSIBLE` or `NO_COLOR` say.
+- **No ASCII fallback, no colour, no width-dependent wrapping.** The reader is not a terminal, so `--ascii`, the colour precedence and `layout.maxWidth` do not reach it.
+- **Existing glyphs stay.** A glyph such text already carries is kept even where the Voice rules would not pick it, for example the `⚠` (U+26A0) that cld puts on anchored-code lines. Changing it changes what the reader matches on.
+
 ## Sources
 
 - [Command Line Interface Guidelines (clig.dev)](https://clig.dev/)

@@ -38,10 +38,21 @@ term.decode_frames("sha 9c41e0b", random.Random(), ascii=ascii)  # 4 frames, las
 
 The helper returns uncoloured text; paint the glyph with its `GLYPHS` role.
 
+The environment rules are public, so a consumer never re-derives them (0.7.0):
+
+```python
+term.accessible()                # SONDALAB_ACCESSIBLE=1, or ACCESSIBLE set (even empty)
+term.reduced_motion()            # SONDALAB_REDUCED_MOTION=1, or accessible()
+term.switch_on("ci")             # any switch purpose in ENV: reducedMotion, accessible, ci, ascii
+```
+
+`switch_on` reads `SONDALAB_*` as on only when it equals `1`, and `CI`/`ACCESSIBLE` as on whenever set; a purpose that is not a switch raises `KeyError`. `motion_enabled` and `ascii_mode` are built on these.
+
 `paint()` predates the Term spec and does not consult `color_mode`: it ignores the flag, `FORCE_COLOR` and TTY detection, and upgrades to truecolor whenever `COLORTERM` allows it. A caller that follows the spec's colour precedence builds the SGR itself from `ROLES`, based on the mode.
 
 ### Changelog
 
+- **0.7.0:** public `term.accessible()`, `term.reduced_motion()` and `term.switch_on(name)`, the spec's environment switch rule; `motion_enabled` and `ascii_mode` now use them.
 - **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`) and the `term` reference helper.
 
 Generated from the canonical `sondalab.tokens.json` — do not hand-edit `sondalab_palette/__init__.py`.
