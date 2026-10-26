@@ -48,3 +48,4 @@ Index of project memory entries. One line per memory, oldest first; the linked f
 - [currentColor in a custom property resolves on the using element](currentcolor-in-a-custom-property-resolves-on-the-using-element.md) — a band role on currentColor dilutes on muted-ink controls; build it on a named role and measure in Chrome
 - [Owner tests only at the end](owner-tests-only-when-development-is-done.md) — converge everything on integration/lumen, no mid-way checks or questions
 - [Solo epics land as one merge](solo-epics-land-as-one-merge.md) — integration branch + per-slice PRs into it, reviewed; one merge to main; no stacking
+- [Geist Pixel cell is 0.08em](geist-pixel-cell-is-0-08em.md) — crisp sizes are multiples of 12.5px; at 24–36px it reads as a smooth sans; await `fonts.load` by name, not `fonts.ready`.
