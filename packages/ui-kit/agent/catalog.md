@@ -595,6 +595,213 @@ One command and its output, as a small island in a pane: the raised rung with th
 ```
 Consumes: `--slc-raised`, `--slc-sunken`, `--slc-depth-island`, `--slc-text`, `--slc-text-secondary`, `--slc-text-muted`, `--slc-accent-text`, `--slc-success`, `--slc-danger`. It may sit straight on an inversion band (a real-content block on the ink surface). There its wash goes and the island's ring still draws it. Under forced colours it gets a `CanvasText` outline inside its box, and its exit mark is drawn in `CanvasText`. Do: write the exit code in the words ("exit 1"), not only in the attribute, and mark a block that is running with `aria-busy="true"`. Do: write `cancelled` for a stop you asked for, and keep the code in the words ("exit 130"). Don't: put glass, press or glitch on it. Its mark is its `::before`, which those three need; `::after` is left free for the aurora.
 
+## Terminal (opt-in, `workbench.css`)
+
+The Term spec (`docs/tui-patterns.md`, 0.40) drawn as real output in terminal blocks: the voice, the glyphs, the motion and the full-screen patterns of a command-line surface. The terminal block (above) holds them, and six role spans inside its `__out` paint the six terminal roles. The glyphs, frames and numbers are the `tui` tokens in `sondalab.tokens.json` (Python: `sondalab_palette`, companion release palette-py 0.6.0); the spec is the grammar, and a block here is one of its examples, painted.
+
+### Roles and glyphs — `sl-term-block__ok` (`__prompt` · `__warn` · `__err` · `__dim` · `__accent`)
+Six spans for the six terminal roles, each a class on a `<span>` inside `sl-term-block__out`. They paint with the kit's theme-aware roles, never with the `terminal` truecolor values: those are tuned for a dark terminal and fail on paper. **prompt** is `__prompt`, the class the header's `$` already wears: the accent as text. **ok** (`__ok`) is the success ink, **warn** (`__warn`) the warning ink, **err** (`__err`) the danger ink, **dim** (`__dim`) the muted ink and **accent** (`__accent`) the info ink: the depth hue is a theme token and not a role, so a Tier B product would not have it. Every role reads at least 4.5:1 on the block's own fill, the raised rung or the sunken rung in a lit pane, for every registered product, light and dark, Tier A and Tier B, in high contrast and in an inversion band, where the status inks take the band's own floor (`workbench.test.mjs`). Dim is text too, so it holds 4.5:1, not 3. Substrate: **A** IDE, **A** App, **A** Page (real content, L3).
+```html
+<article class="sl-term-block" aria-label="Terminal roles and glyphs">
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">prompt</span>  <span class="sl-term-block__ok">ok</span>  <span class="sl-term-block__warn">warn</span>  <span class="sl-term-block__err">err</span>  <span class="sl-term-block__dim">dim</span>  <span class="sl-term-block__accent">accent</span>
+
+  <span class="sl-term-block__ok">✓</span> done       +  ok
+  <span class="sl-term-block__ok">✓</span> fixed      +  ok
+  <span class="sl-term-block__err">✗</span> failed     x  err
+  <span class="sl-term-block__warn">!</span> warn       !  warn
+  <span class="sl-term-block__prompt">●</span> active     *  prompt
+  <span class="sl-term-block__dim">○</span> pending    .  dim
+  <span class="sl-term-block__dim">↷</span> skipped    -  dim
+  <span class="sl-term-block__prompt">?</span> question   ?  prompt
+  <span class="sl-term-block__dim">·</span> separator  |  dim</pre>
+</article>
+```
+Consumes: `--slc-accent-text`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`, `--slc-text-muted`, `--slc-text`, `--slc-raised`, `--slc-sunken`. The glyph column is the `tui` glyph set: each glyph has a Unicode and an ASCII form and the role it is painted with, as the block lists them. Colour only repeats the glyph and the word, so under forced colours, where the spans take the user's ink, and with `NO_COLOR` the output says the same thing. Two more spans serve the full screen: `sl-term-block__inverse`, a run of cells in inverse video (the primary ink as the ground, the block's own fill as the ink: the inversion band in one line, L3), and `sl-term-block__sel`, a selected row (below). Do: paint the glyph, not the label. A step's label and detail stay in the output's ink. Don't: paint a failure with a success glyph, or colour a word that has no glyph or role of its own.
+
+### Step list and summary — `sl-term-block` (`__ok` · `__warn` · `__err` · `__dim`)
+One line per step: two columns of indent, the glyph in its role, the label padded to `labelWidth` (28 columns), then the detail. A running step is a present participle and a finished one past tense, in sentence case with no trailing period. After one blank line the summary gives four counts in a fixed order (ok, fixed, warn, failed), each in its role and joined by the `separator` glyph in dim; a zero count is dim. A success says what changed and the next step, `Next:` in dim on a continuation line.
+```html
+<article class="sl-term-block" data-exit="1">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx doctor</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 1</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__ok">✓</span> Check git repository        clean, on main
+  <span class="sl-term-block__ok">✓</span> Install pre-commit hook     fixed
+  <span class="sl-term-block__warn">!</span> Check signing key           not loaded
+  <span class="sl-term-block__err">✗</span> Verify remote               origin unreachable
+
+Summary  <span class="sl-term-block__ok">1 ok</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__ok">1 fixed</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__warn">1 warn</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__err">1 failed</span></pre>
+</article>
+```
+```html
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx hook install</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__ok">✓</span> Installed hook              .git/hooks/pre-commit
+    <span class="sl-term-block__dim">Next:</span> smartctx doctor --fix</pre>
+</article>
+```
+Consumes the role spans above. Do: keep all four counts, zeros included. Don't: write "Successfully", an exclamation mark or "we": a measured figure replaces an adjective.
+
+### Error block and did you mean — `sl-term-block` (`__err` · `__dim` · `__prompt`)
+An error takes three lines: what failed after the `failed` glyph, why in dim with the exit code or the timeout, and the fix after `Try:` in prompt, a command in the output's ink and an optional docs link with an error code in dim after the `separator`. The fix comes last, so it is the last thing on screen. "Did you mean" is the one two-line error: the suggestion replaces the why and the fix, `Did you mean` and its `?` in prompt. It suggests and never runs.
+```html
+<article class="sl-term-block" data-exit="1">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx sync</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 1</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__err">✗</span> Could not reach origin
+    <span class="sl-term-block__dim">git ls-remote timed out after 10s (exit 128)</span>
+    <span class="sl-term-block__prompt">Try:</span> git remote -v <span class="sl-term-block__dim">·</span> <span class="sl-term-block__dim">sondalab.eu/e/T102</span></pre>
+</article>
+```
+```html
+<article class="sl-term-block" data-exit="2">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx --versoin</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 2</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__err">✗</span> Unknown flag --versoin
+    <span class="sl-term-block__prompt">Did you mean</span> --version<span class="sl-term-block__prompt">?</span></pre>
+</article>
+```
+Consumes the role spans above. Do: write the exit code in the block's head and in the why line. Don't: print a stack trace without `--debug`; an unexpected failure prints the same three lines, its fix `Try: <command> --debug`.
+
+### Confirmation — `sl-term-block` (`__prompt` · `__dim`)
+`? <question> [y/N]`: the `question` glyph in prompt and the choice in dim, the capital letter marking the default, which Enter takes. The default is no for anything outside the working directory. A destructive action asks `[y/N]`, and an irreversible delete asks the user to type the name of what it deletes. A prompt is the one place output addresses the user.
+```html
+<article class="sl-term-block">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx hook install --global</span>
+    <span class="sl-term-block__meta"><span>waiting</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">?</span> Install the hook into ~/.config/git? <span class="sl-term-block__dim">[y/N]</span></pre>
+</article>
+```
+```html
+<article class="sl-term-block">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx probe rm q-8f2a</span>
+    <span class="sl-term-block__meta"><span>waiting</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">?</span> Delete probe q-8f2a? <span class="sl-term-block__dim">[y/N]</span>
+<span class="sl-term-block__prompt">?</span> Type q-8f2a to delete it permanently:</pre>
+</article>
+```
+Consumes the role spans above. Don't: prompt without a TTY on stdin. The program stops with an error naming the flag that skips the question (`--yes`).
+
+### Terminal progress — `sl-term-block` (`__spin` · `__prompt` · `__dim`)
+A determinate step draws a 24-cell bar (`progress.cells`) in prompt on the continuation line under its running step: the filled cells are `█`, and the leading edge dithers through `▓▒░` before the rest of the bar, which is spaces. Then the count, `done` right-aligned to the width of `total`, and the percentage in dim, right-aligned to 4 columns. At 0% the bar is the edge alone, so a step that has started still shows it is alive; at 100% it is 24 `█`. The running step's glyph cell is the spinner (below).
+```html
+<article class="sl-term-block" aria-busy="true">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx resolve</span>
+    <span class="sl-term-block__meta"><span>running</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__spin" aria-hidden="true"></span> Resolving 128 probes…
+    <span class="sl-term-block__prompt">███████████▓▒░</span>             61/128  <span class="sl-term-block__dim"> 48%</span></pre>
+</article>
+```
+```html
+<article class="sl-term-block" aria-label="The progress bar at 0% and at 100%">
+  <pre class="sl-term-block__out">    <span class="sl-term-block__prompt">▓▒░</span>                         0/128  <span class="sl-term-block__dim">  0%</span>
+    <span class="sl-term-block__prompt">████████████████████████</span>  128/128  <span class="sl-term-block__dim">100%</span></pre>
+</article>
+```
+Consumes the role spans above. When the step ends the bar line is cleared and the step line persists. With motion off there is no bar: the final step line carries the count.
+
+### Spinner — `sl-term-block__spin`
+The primary button's dither hover in one cell: the glyph cell fills and drains through the burst ` ░▒▓█▓▒░` (`spinner.frames`), 8 frames at 100ms each (`spinner.intervalMs`), 0.8s a cycle, in prompt. `sl-term-block__spin` draws it with CSS alone, so a page shows it with no script: an empty `<span>` whose `::before` steps through the frames on a `@keyframes` of `content`, one frame per 100ms (`step-end`), only under `prefers-reduced-motion: no-preference`. Otherwise, and under `data-sl-fx-still` (which stops it), the page shows `█`, the full frame. The span is one `1ch` cell wide, so the label grid holds through the space frame. In a terminal the spinner shows only after 300ms (`spinner.delayMs`), always ends in a persisted step line, and with motion off it is the `active` glyph `●` instead, its final line printed below it.
+```html
+<article class="sl-term-block" aria-busy="true">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx resolve</span>
+    <span class="sl-term-block__meta"><span>running</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__spin" aria-hidden="true"></span> Resolving 128 probes…</pre>
+</article>
+```
+```html
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> CI=1 smartctx resolve</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__prompt">●</span> Resolving 128 probes…
+  <span class="sl-term-block__ok">✓</span> Resolved 128 probes         2.1s</pre>
+</article>
+```
+Consumes: `--slc-accent-text`. Do: mark it `aria-hidden="true"` (the label says what is running) and the block `aria-busy="true"`. Don't: leave a spinner on screen when the step ends: it becomes the step's glyph.
+
+### Decode — `sl-term-block` (`__warn` · `__prompt` · `__dim`)
+The glitch in a terminal: something re-resolved. Only the changed token decodes, left to right, over 4 frames of 60ms (`decode.frames`, `decode.frameMs`), 240ms in all, once. Frame n settles the first ⌊n / 4 × length⌋ characters; each unsettled one is drawn from `░▒▓█▚▞` (`decode.glyphs`) plus random printable ASCII, in prompt, and a space stays a space. The four frames are drawn on one line; this filmstrip stacks them, each labelled in dim. No inverse and no blink, so luminance never flashes.
+```html
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx lock --refresh</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__warn">!</span> Value changed               sh<span class="sl-term-block__prompt">▓ ▞#░▒%█▚</span>  <span class="sl-term-block__dim">frame 1 · 60ms</span>
+  <span class="sl-term-block__warn">!</span> Value changed               sha 9<span class="sl-term-block__prompt">▒▚░@▞▓</span>  <span class="sl-term-block__dim">frame 2 · 120ms</span>
+  <span class="sl-term-block__warn">!</span> Value changed               sha 9c41<span class="sl-term-block__prompt">▞%░</span>  <span class="sl-term-block__dim">frame 3 · 180ms</span>
+  <span class="sl-term-block__warn">!</span> Value changed               sha 9c41e0b  <span class="sl-term-block__dim">frame 4 · 240ms, settled</span>
+    <span class="sl-term-block__dim">was sha 3f02a7d · re-resolved after cache miss</span></pre>
+</article>
+```
+Consumes the role spans above. The labels are the filmstrip's, not terminal output. With motion off the final value prints directly.
+
+### Full-screen view — `sl-term-block--screen` (`__inverse` · `__sel` · `__prompt` · `__dim` · `__accent`)
+An alternate-screen view on the same roles and glyphs, with the rounded box set `╭ ╮ ╰ ╯ ─ │`. The focused pane has its border in prompt and its title in inverse video (`sl-term-block__inverse`); the other panes are dim. The selected row is `sl-term-block__sel`, a 6% wash of the ink behind the row's cells, plus the seam `▌` in prompt in its first cell; with no colour the seam alone marks the row. Table headers are dim uppercase, with no vertical rules. One footer of key hints: keys in accent, verbs in dim, joined by the `separator`. `sl-term-block--screen` keeps the geometry: its output does not wrap, scrolls sideways where the block is narrower than the view, and sets the tight line (`--sl-line-tight`) so the box's vertical strokes meet from row to row.
+```html
+<article class="sl-term-block sl-term-block--screen">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx probes</span>
+    <span class="sl-term-block__meta"><span>full screen</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">╭─</span><span class="sl-term-block__inverse"> PROBES </span><span class="sl-term-block__prompt">─────────────────────╮</span><span class="sl-term-block__dim">╭─ DETAIL ────────────╮</span>
+<span class="sl-term-block__prompt">│</span> <span class="sl-term-block__dim">ID       STATE    AGE</span>        <span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span> q-8f2a              <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">│</span><span class="sl-term-block__sel"><span class="sl-term-block__prompt">▌</span>q-8f2a   <span class="sl-term-block__ok">✓</span> ok     2m         </span><span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span> <span class="sl-term-block__dim">resolved in</span>  1.2s   <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">│</span> q-71c0   <span class="sl-term-block__prompt">●</span> live   12s        <span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span> <span class="sl-term-block__dim">cache</span>        hit    <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">│</span> q-0d9e   <span class="sl-term-block__err">✗</span> err    5m         <span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span>                     <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">╰──────────────────────────────╯</span><span class="sl-term-block__dim">╰─────────────────────╯</span>
+<span class="sl-term-block__accent">↑↓</span> <span class="sl-term-block__dim">move</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">enter</span> <span class="sl-term-block__dim">open</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">/</span> <span class="sl-term-block__dim">filter</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">:</span> <span class="sl-term-block__dim">command</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">?</span> <span class="sl-term-block__dim">help</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">q</span> <span class="sl-term-block__dim">back</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">ctrl-c</span> <span class="sl-term-block__dim">quit</span></pre>
+</article>
+```
+Consumes: `--slc-text`, `--slc-raised`, `--slc-sunken`, and the role spans above. The inverse run is the primary ink on the block's own fill, which is the sunken rung in a lit pane and the band's ground in an inversion band. Under forced colours the inverse run is `CanvasText` on `Canvas`, and the selected row is the system's selection, `Highlight` with `HighlightText`, the seam included. Do: wrap the row's cells from the seam to the pane's inner edge in `__sel`, and the title with a space on each side in `__inverse`. Don't: draw a vertical rule between columns.
+
+### Plain and accessible output — `sl-term-block` (`__dim` · `__prompt`)
+Every full-screen view also has `--plain`: the same content as line output, with no alternate screen, no key reader and no redraw. Accessible mode (`SONDALAB_ACCESSIBLE=1`, or `ACCESSIBLE`) implies it, and turns prompts into a numbered list answered by typing, with every state written as a word next to its glyph. `SONDALAB_REDUCED_MOTION=1`, `CI`, `TERM=dumb` and a non-TTY stream turn the motion off; `NO_COLOR` keeps the glyphs and drops the colour, and `SONDALAB_ASCII=1` uses every glyph's ASCII form.
+```html
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx probes --plain</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__dim">ID       STATE    AGE</span>
+q-8f2a   <span class="sl-term-block__ok">✓</span> ok     2m
+q-71c0   <span class="sl-term-block__prompt">●</span> live   12s
+q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
+</article>
+```
+```html
+<article class="sl-term-block">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> SONDALAB_ACCESSIBLE=1 smartctx probes</span>
+    <span class="sl-term-block__meta"><span>waiting</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">?</span> Open which probe? Type a number, then Enter
+  1  q-8f2a  ok
+  2  q-71c0  live
+  3  q-0d9e  err
+<span class="sl-term-block__prompt">&gt;</span> 2</pre>
+</article>
+```
+Consumes the role spans above. Do: send progress, spinners and prompts to stderr and results to stdout, and offer `--json` for scripts.
+
 ## Identity & media
 
 ### Wordmark — `sl-wordmark` (`__dot`)

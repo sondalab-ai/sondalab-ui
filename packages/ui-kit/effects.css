@@ -2190,7 +2190,8 @@
    effect attribute (effects-showcase.test.mjs), so it is paused here: a
    product that loads components.css alone keeps the badge breathing. The
    status bar's live dot (workbench.css, 0.34) is paused here for the same
-   reason.
+   reason. The terminal block's spinner (0.40) is stopped instead, below:
+   paused, it could hold on its blank frame, an empty cell.
 
    The kit's loops run on paint layers, not on the hosts (a drifting goo
    member and a glitch aside), so the hosts themselves are not named here:
@@ -2212,6 +2213,8 @@
   animation: none !important;
 }
 :root[data-sl-fx-still] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__text { opacity: 1 !important; }
+/* The spinner stops, so it shows its still frame, the full cell. */
+:root[data-sl-fx-still] .sl-term-block__spin::before { animation: none !important; }
 :root[data-sl-fx-still] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 0 !important; }
 
 /* ══ GOO — these are one substance ═══════════════════════════════════════════

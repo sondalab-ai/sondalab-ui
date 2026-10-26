@@ -148,14 +148,39 @@ test("workbench.css declares no role of its own, and the band re-derives every n
   assert.deepEqual(missing, []);
 });
 
+// The terminal spinner (0.40) is the one literal: its period is the tui
+// token's (spinner.frames x spinner.intervalMs), a terminal's frame clock,
+// not an L4 motion step, and its keyframes are the token's frames in order.
+const TUI_SPINNER = JSON.parse(read("sondalab.tokens.json")).tui.spinner;
+const SPIN = `sl-term-spin ${TUI_SPINNER.frames.length * TUI_SPINNER.intervalMs}ms step-end infinite`;
+
 test("workbench motion reads the motion tokens, never a literal duration", () => {
-  const flat = wbBare.replace(/var\([^()]*\)/g, "var()");
+  const flat = wbBare.replace(/var\([^()]*\)/g, "var()").replace(`animation: ${SPIN}`, "");
   assert.deepEqual([...flat.matchAll(/(?:transition|animation)[^;{}]*?\b\d*\.?\d+m?s\b/g)].map((m) => m[0]), []);
-  // One animation, an ambient state, never page-load choreography: the live
-  // dot breathes (0.34), on a motion token, only where motion is wanted
-  assert.deepEqual([...wbBare.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]), ["sl-statusbar-breathe"]);
+  // Two animations, ambient states, never page-load choreography: the live
+  // dot breathes (0.34), on a motion token, and a running terminal step
+  // spins (0.40), each only where motion is wanted
+  assert.deepEqual([...wbBare.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]), ["sl-statusbar-breathe", "sl-term-spin"]);
   const anims = [...wbBare.matchAll(/animation\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
-  assert.deepEqual(anims.filter((a) => !/^none( !important)?$/.test(a)), ["sl-statusbar-breathe calc(var(--sl-motion-fast, 120ms) * 20) var(--sl-motion-enter, ease) infinite"]);
-  const gate = wbBare.indexOf("@media (prefers-reduced-motion: no-preference)");
-  assert.ok(gate > -1 && wbBare.indexOf("animation: sl-statusbar-breathe") > gate, "inside the no-preference gate");
+  assert.deepEqual(anims.filter((a) => !/^none( !important)?$/.test(a)), ["sl-statusbar-breathe calc(var(--sl-motion-fast, 120ms) * 20) var(--sl-motion-enter, ease) infinite", SPIN]);
+  for (const name of ["sl-statusbar-breathe", "sl-term-spin"]) {
+    const at = wbBare.indexOf(`animation: ${name}`);
+    const gate = wbBare.lastIndexOf("@media (prefers-reduced-motion: no-preference)", at);
+    assert.ok(gate > -1 && !wbBare.slice(gate, at).includes("\n}\n"), `${name}: inside the no-preference gate`);
+  }
+});
+
+test("the terminal spinner steps through the tui spinner frames, one per interval, and rests on the full frame", () => {
+  const frames = wbBare.match(/@keyframes sl-term-spin \{([\s\S]*?)\n\}/)[1];
+  const stops = [...frames.matchAll(/([\d.]+)%\s*\{\s*content:\s*"(.)";\s*\}/gu)].map((m) => [Number(m[1]), m[2]]);
+  const n = TUI_SPINNER.frames.length;
+  assert.deepEqual(stops.slice(0, n), TUI_SPINNER.frames.map((f, i) => [(i * 100) / n, f]));
+  assert.deepEqual(stops[n], [100, TUI_SPINNER.frames[0]], "the cycle closes on the first frame");
+  assert.match(wbBare, /\.sl-term-block__spin::before \{ content: "\u2588"; white-space: pre; \}/, "still, the full frame");
+});
+
+test("data-sl-fx-still stops the terminal spinner (its still frame shows), never pauses it on a blank frame", () => {
+  const fx = read("packages/ui-kit/effects.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [...fx.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].includes(".sl-term-block__spin"));
+  assert.deepEqual(rules.map((m) => [m[1].trim(), m[2].trim()]), [[":root[data-sl-fx-still] .sl-term-block__spin::before", "animation: none !important;"]]);
 });

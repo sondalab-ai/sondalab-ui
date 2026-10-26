@@ -163,7 +163,7 @@ A line under a step (an error's why and fix, a next step, a progress bar) is a c
 After `blankBeforeSummary` blank line, one line:
 
 ```
-Summary  3 ok · 1 fixed · 1 warn · 1 failed
+Summary  1 ok · 1 fixed · 1 warn · 1 failed
 ```
 
 `Summary`, two spaces, then four counts in the order ok, fixed, warn, failed, joined by the `separator` glyph (` · `, or ` | ` in ASCII). Each count is painted with its role (`ok`, `ok`, `warn`, `err`); a zero count is painted `dim`. The four counts are always all present.
