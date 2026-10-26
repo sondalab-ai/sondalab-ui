@@ -334,7 +334,7 @@ test("every labelled accent fill reads the fill set on the control: primary, che
     assert.match(decl(rule(sel), "--_sl-depth"), /^inset 0 -1\.5px 0 var\(--_sl-fill-edge\), 0 0 1\dpx -2px color-mix\(in srgb, var\(--_sl-fill\) calc\(var\(--slc-glow\) \* 1[12]0%\), transparent\)$/, sel);
   }
   assert.equal(decl(rule(".sl-switch__input:checked + .sl-switch__track::after"), "background"), "var(--_sl-on-fill)");
-  assert.match(rule(".sl-check__box::after"), /border:\s*solid var\(--_sl-on-fill\)/);
+  assert.equal(decl(rule(".sl-check__box::after"), "background"), "var(--_sl-on-fill)");
   assert.equal(decl(rule(".sl-radio__box::after"), "background"), "var(--_sl-on-fill)");
   // the public roles stay on :root for a fill a product draws itself (a count badge)
   const root = css.match(/:root \{([^}]*)\}/)[1];

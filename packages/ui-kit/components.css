@@ -1147,8 +1147,12 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-radio__box {
   position: relative;
   flex: none;
-  width: 1rem;
-  height: 1rem;
+  /* 15px of padding box, 5 whole 3px cells (it was 1rem = 16px: not a whole
+     number of cells; the outer box is 17px beside the 18px it was, owner
+     2026-10-26, pixel direction D). The tick, the dash and the dot below are
+     drawn on that lattice. */
+  width: 15px;
+  height: 15px;
   background: var(--slc-canvas);
   border: 1px solid var(--slc-edge-hairline);
   transition:
@@ -1179,29 +1183,43 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-color: var(--_sl-fill-edge);
 }
 
-/* The tick is a rotated border corner — no asset, no data URI, nothing to
-   audit. The radio's dot is a filled circle for the same reason. */
+/* THE PIXEL MARKS (owner, 2026-10-26, pixel direction D). The tick, the
+   dash and the dot are crisp 3px cells on the box's 5 x 5 lattice, drawn here
+   with no script: the pseudo-element is the first cell and a box-shadow sprite
+   is the rest, in the fill's label colour, so a role var rebinds them. Which
+   cells is dither-core.js's TICK_CELLS, DASH_CELLS and DOT_FRAMES, and
+   scripts/pixel-controls.test.mjs pins these offsets to those lists: the
+   canvas effects.js plots on the way in ends on this very frame. No cell is a
+   corner one (the canvas layer clips at the box radius, this does not).
+   Tick: (0,2) (1,3) (2,2) (3,1) (4,1). Plus: (2,1) (1,2) (2,2) (3,2) (2,3). */
 .sl-check__box::after {
   content: "";
   position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 0.3rem;
-  height: 0.55rem;
-  border: solid var(--_sl-on-fill);
-  border-width: 0 1.5px 1.5px 0;
-  transform: translateY(-1px) rotate(45deg);
+  left: 0;
+  top: 6px;
+  width: 3px;
+  height: 3px;
+  background: var(--_sl-on-fill);
+  box-shadow:
+    3px 3px 0 var(--_sl-on-fill),
+    6px 0 0 var(--_sl-on-fill),
+    9px -3px 0 var(--_sl-on-fill),
+    12px -3px 0 var(--_sl-on-fill);
   opacity: 0;
 }
 .sl-radio__box::after {
   content: "";
   position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 50%;
+  left: 6px;
+  top: 6px;
+  width: 3px;
+  height: 3px;
   background: var(--_sl-on-fill);
+  box-shadow:
+    0 -3px 0 var(--_sl-on-fill),
+    -3px 0 0 var(--_sl-on-fill),
+    3px 0 0 var(--_sl-on-fill),
+    0 3px 0 var(--_sl-on-fill);
   opacity: 0;
 }
 .sl-check__input:checked + .sl-check__box::after,
@@ -1220,10 +1238,10 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   border-color: var(--_sl-fill-edge);
 }
 .sl-check__input:indeterminate + .sl-check__box::after {
-  width: 0.5rem;
-  height: 0;
-  border-width: 0 0 1.5px 0;
-  transform: none;
+  left: 3px;
+  top: 6px;
+  width: 9px;
+  box-shadow: none;
   opacity: 1;
 }
 
@@ -1238,19 +1256,20 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 
 /* The switch is a sunk track (Lumen, 0.32): the sunken rung and the sunk
-   recipe inside the control edge, 2.1 x 1.25rem with a 0.85rem knob (it was
-   1.9 x 1.05 with 0.75, and a 14% wash of the ink). border-box, so the size
-   is the whole control on a content-box page too, and the knob's travel is
-   exact: 2px in from the left off, 2px in from the right on (33.6 - 2 - 2 -
-   13.6 - 2 = 14px, 0.875rem). On, it is the accent fill on a foot with a
-   soft glow of the fill, like a checked box. */
+   recipe inside the control edge. Pixel direction D (owner, 2026-10-26) puts
+   it on the 3px lattice: 35 x 20px border-box, so a 33 x 18px padding box of
+   11 x 6 cells (it was 2.1 x 1.25rem = 33.6 x 20), a 12px knob (4 cells; it was
+   0.85rem) seated one cell in, and a travel of 15px, 5 cells: 3 + 12 + 15 + 3
+   = 33. border-box, so the size is the whole control on a content-box page
+   too. On, it is the accent fill on a foot with a soft glow of the fill, like
+   a checked box. */
 .sl-switch__track {
   --_sl-depth: var(--slc-depth-sunk);
   position: relative;
   flex: none;
   box-sizing: border-box;
-  width: 2.1rem;
-  height: 1.25rem;
+  width: 35px;
+  height: 20px;
   background: var(--slc-sunken);
   /* The rest edge is the hairline (owner, 2026-10-26); the knob, drawn in
      the control edge below, is what states "off" at 3:1. */
@@ -1265,21 +1284,33 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
   content: "";
   position: absolute;
   top: 50%;
-  left: 2px;
-  width: 0.85rem;
-  height: 0.85rem;
+  left: 3px;
+  width: 12px;
+  height: 12px;
   border-radius: 999px;
   /* Off, the knob is the control edge's colour, not the hairline: it is the
      switch's state mark, held at 3:1 (the raised ground it was read 1.17:1
      on the track on ink). On, it takes the fill's label (below). */
   background: var(--slc-edge-control);
   transform: translateY(-50%);
-  /* The knob travels on the spring (--sl-motion-spring): one small overshoot
-     past its seat, then settled. */
+  /* The knob travels on --sl-motion-mid (zeroed under reduced motion); with
+     motion allowed it steps instead, one cell at a time (below). */
   transition:
-    transform var(--sl-motion-mid, 220ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
+    transform var(--sl-motion-mid, 220ms) var(--sl-motion-ease, ease),
     width var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
     background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+}
+/* The knob travels in 3px steps: steps(5) over --sl-motion-switch, the time
+   effects.js runs the fill by, so the fill's origin follows the knob in. Only
+   where motion is allowed: with a preference to reduce it, the knob is just
+   there, and with no mount() the steps are still the CSS's own. */
+@media (prefers-reduced-motion: no-preference) {
+  .sl-switch__track::after {
+    transition:
+      transform var(--sl-motion-switch, 260ms) steps(5),
+      width var(--sl-motion-slow, 360ms) var(--sl-motion-spring, var(--sl-motion-ease, ease)),
+      background-color var(--sl-motion-fast, 120ms) var(--sl-motion-ease, ease);
+  }
 }
 .sl-switch:hover .sl-switch__input:not(:checked, :disabled, :focus-visible) + .sl-switch__track { border-color: var(--slc-edge-control-hover); }
 .sl-switch__input:checked + .sl-switch__track {
@@ -1289,7 +1320,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 }
 .sl-switch__input:checked + .sl-switch__track::after {
   background: var(--_sl-on-fill);
-  transform: translateY(-50%) translateX(0.875rem);
+  transform: translateY(-50%) translateX(15px);
 }
 /* Focused while checked, the border is the ring's: the checked rules above
    outrank the shared focus rule, and the fill's edge left inside the ring
@@ -1322,6 +1353,41 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-check:has(.sl-check__input:disabled),
 .sl-radio:has(.sl-radio__input:disabled),
 .sl-switch:has(.sl-switch__input:disabled) { opacity: 0.5; cursor: not-allowed; }
+.sl-segmented__item:is(:disabled, [aria-disabled="true"]) { opacity: 0.5; cursor: not-allowed; }
+
+/* DISABLED (owner, 2026-10-26, pixel direction D): the classic Mac grey-out.
+   Every disabled control is covered by a 50% checkerboard of 1px cells through
+   a mask, instead of half opacity: button, icon button, field, chip, segmented
+   item, check, radio and switch (the label goes with its control). The mask is
+   on the control itself, never on a pseudo-element: ::before and ::after belong
+   to the effects layer on a button host. The slider keeps half opacity (its
+   track and thumb are engine pseudo-elements a mask on the host would not
+   reach cleanly). A mask makes its host a backdrop root, so the frost of a
+   disabled glass button goes flat; that is accepted, the control is
+   unavailable. The rules above are the fallback and stay for high contrast and
+   forced colours, which keep their current treatment (half opacity, and
+   GrayText from the engine); no ratio is owed, WCAG exempts a disabled
+   control. */
+@media not (forced-colors: active) {
+  :root:not([data-sl-theme="high-contrast"]) :is(
+    .sl-btn:disabled,
+    .sl-icon-btn:disabled,
+    .sl-field__input:disabled,
+    .sl-chip:disabled,
+    .sl-segmented__item:is(:disabled, [aria-disabled="true"]),
+    .sl-check:has(.sl-check__input:disabled),
+    .sl-radio:has(.sl-radio__input:disabled),
+    .sl-switch:has(.sl-switch__input:disabled)
+  ) {
+    opacity: 1;
+    -webkit-mask-image: repeating-conic-gradient(#000 0 25%, transparent 0 50%);
+    -webkit-mask-size: 2px 2px;
+    -webkit-mask-position: 0 0;
+    mask-image: repeating-conic-gradient(#000 0 25%, transparent 0 50%);
+    mask-size: 2px 2px;
+    mask-position: 0 0;
+  }
+}
 
 /* ══ COMPLEX (composed shells — no behaviour JS) ═════════════════════════════ */
 
@@ -2919,16 +2985,15 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 }
 
 /* The switch knob stretches toward the side it will travel to while held —
-   rightward from off, leftward from on (it sits at 0.875rem and grows by a
-   tenth, 0.085rem, since the 0.32 knob) — then springs across on release,
-   as it always has. */
+   rightward from off, leftward from on (a 12px knob grows by one pixel,
+   to 13) — then steps across on release. */
 .sl-switch:active:not(:has(:disabled)) .sl-switch__track::after {
-  width: 0.935rem;
+  width: 13px;
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
 .sl-switch:active:not(:has(:disabled)) .sl-switch__input:checked + .sl-switch__track::after {
-  transform: translateY(-50%) translateX(0.79rem);
+  transform: translateY(-50%) translateX(14px);
   transition-duration: var(--sl-motion-fast, 120ms);
   transition-timing-function: var(--sl-motion-ease, ease);
 }
@@ -3085,8 +3150,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     background: Highlight !important;
     border-color: Highlight !important;
   }
-  .sl-check__box::after { forced-color-adjust: none; border-color: HighlightText !important; }
-  .sl-radio__box::after { forced-color-adjust: none; background: HighlightText !important; }
+  .sl-check__box::after,
+  .sl-radio__box::after { forced-color-adjust: none; --_sl-on-fill: HighlightText !important; background: HighlightText !important; }
   .sl-switch__track::after { forced-color-adjust: none; background: CanvasText !important; }
   .sl-switch__input:checked + .sl-switch__track::after { background: HighlightText !important; }
   .sl-progress { border: 1px solid CanvasText !important; }

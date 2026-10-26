@@ -87,3 +87,56 @@ function covered(i, j, origin, t, maxD, spread) {
   const dn = maxD > 0 ? Math.hypot(i + 0.5 - origin.x, j + 0.5 - origin.y) / maxD : 0;
   return dn < t * (1 + spread) - bayerAt(i, j) * spread;
 }
+
+/* ── pixel controls (check, radio, switch) ──────────────────────────────────
+   The cells the CSS draws as the final frame and the canvas plots on the way
+   there. components.css places the tick, the dot and the dash with these exact
+   offsets (scripts/pixel-controls.test.mjs pins the two to this one list), and
+   effects.js draws the same cells, so the last canvas frame is the CSS frame. */
+
+/** A check or radio box holds CHECK_CELLS x CHECK_CELLS cells (15px, padding box). */
+export const CHECK_CELLS = 5;
+
+/** The tick, in plotting order, as [column, row]. None sits in a corner cell:
+ *  the layer clips at the box's radius and the CSS pixel does not. */
+export const TICK_CELLS = Object.freeze([[0, 2], [1, 3], [2, 2], [3, 1], [4, 1]].map((c) => Object.freeze(c)));
+
+/** The mixed state's dash, as [column, row]. */
+export const DASH_CELLS = Object.freeze([[1, 2], [2, 2], [3, 2]].map((c) => Object.freeze(c)));
+
+/** The radio dot in two frames: one cell, then a plus (reads round at this size). */
+export const DOT_FRAMES = Object.freeze([
+  Object.freeze([[2, 2]].map((c) => Object.freeze(c))),
+  Object.freeze([[2, 1], [1, 2], [2, 2], [3, 2], [2, 3]].map((c) => Object.freeze(c))),
+]);
+
+/** The switch track's padding box in cells (33 x 18px), the knob's width in
+ *  cells (12px), its inset (3px) and its travel in steps: steps(5) in CSS. */
+export const SWITCH_CELLS = Object.freeze({ cols: 11, rows: 6, knob: 4, inset: 1, steps: 5 });
+
+/** Share of a check's motion that is the fill; the tick is plotted over the rest. */
+export const TICK_START = 0.45;
+
+/**
+ * How many tick cells are plotted at progress `t` (0..1): none until the fill
+ * is TICK_START in, then one more cell per equal slice, all of them at t=1.
+ */
+export function tickCount(t) {
+  const n = Math.ceil(((t - TICK_START) / (1 - TICK_START)) * TICK_CELLS.length);
+  return Math.min(TICK_CELLS.length, Math.max(0, n));
+}
+
+/** Which radio frame shows at progress `t`: 0 none, 1 one cell, 2 the plus. */
+export function dotFrame(t) {
+  return Math.min(2, Math.max(0, Math.round(t * 2)));
+}
+
+/**
+ * The knob's offset in cells after `p` (0..1) of a steps(N) transition, from
+ * `from` to `to` (0 or 1 for off and on): CSS steps(N, jump-end) holds each
+ * value until its slice is done, so the position is floor(p * N) of N.
+ */
+export function knobCells(p, from, to) {
+  const k = Math.floor(Math.min(1, Math.max(0, p)) * SWITCH_CELLS.steps) / SWITCH_CELLS.steps;
+  return (from + (to - from) * k) * SWITCH_CELLS.steps;
+}

@@ -196,23 +196,23 @@ test("the switch knob is a pill that stretches toward where it will travel, neve
   const knob = R.find((r) => r.selector === ".sl-switch__track::after");
   assert.match(knob.body, /border-radius:\s*999px/);
   assert.match(knob.body, /width var\(--sl-motion-slow, 360ms\) var\(--sl-motion-spring/);
-  // 0.32 (Lumen): a 0.85rem knob in a 2.1rem border-box track, seated 2px in
-  // on both sides (0.875rem of travel), grows by a tenth while held -- to
-  // 0.935rem -- and a checked one grows leftward, its right edge still 2px in.
-  assert.match(knob.body, /width:\s*0\.85rem/);
+  // 0.39 (pixel D, owner 2026-10-26): a 12px knob in a 35px border-box track
+  // (33px padding box), seated 3px in on both sides (15px of travel, five 3px
+  // steps), grows by one pixel while held -- to 13px -- and a checked one
+  // grows leftward, its right edge still 3px in.
+  assert.match(knob.body, /width:\s*12px/);
   const track = R.find((r) => r.selector === ".sl-switch__track");
   assert.match(track.body, /box-sizing:\s*border-box/);
-  assert.match(track.body, /width:\s*2\.1rem/);
+  assert.match(track.body, /width:\s*35px/);
   const on = R.find((r) => r.selector === ".sl-switch__input:checked + .sl-switch__track::after");
-  assert.match(on.body, /translateX\(0\.875rem\)/);
-  const px = (rem) => rem * 16;
-  assert.equal(px(2.1) - 2 - 2 - px(0.85) - px(0.875), 2, "on, the knob sits 2px in from the right as it sits 2px in from the left");
-  assert.equal(px(2.1) - 2 - 2 - px(0.935) - px(0.79), 2, "held on, it grows leftward and keeps that 2px");
-  const held = R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*0\.935rem/.test(r.body));
+  assert.match(on.body, /translateX\(15px\)/);
+  assert.equal(35 - 2 - 3 - 12 - 15, 3, "on, the knob sits 3px in from the right as it sits 3px in from the left");
+  assert.equal(35 - 2 - 3 - 13 - 14, 3, "held on, it grows leftward and keeps that 3px");
+  const held = R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*13px/.test(r.body));
   assert.ok(held, "no held-knob rule");
   assert.match(held.selector, /:not\(:has\(:disabled\)\)/);
-  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(0\.79rem\)/.test(r.body));
-  assert.ok(heldOn, "a checked knob must grow leftward (translateX 0.79rem)");
+  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(14px\)/.test(r.body));
+  assert.ok(heldOn, "a checked knob must grow leftward (translateX 14px)");
   assert.match(heldOn.selector, /:not\(:has\(:disabled\)\)/);
   for (const r of [held, heldOn]) {
     assert.match(r.body, FAST, "a held knob goes down on fast");
