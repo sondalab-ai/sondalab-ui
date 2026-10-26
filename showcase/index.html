@@ -9,6 +9,7 @@
   <!-- Tier A: consume the generated token + theme layers directly (relative). -->
   <link rel="stylesheet" href="../packages/ui-kit/tokens.css">
   <link rel="stylesheet" href="../packages/ui-kit/components.css">
+  <link rel="stylesheet" href="../packages/ui-kit/workbench.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/light.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/dark.css">
   <link rel="stylesheet" href="../packages/ui-kit/themes/high-contrast.css">
@@ -236,6 +237,7 @@
     .g-cell > .g-label { font-family: var(--sl-font-mono); font-size: var(--sl-text-micro); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sl-text-muted); }
     .g-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
     .g-demo--col { flex-direction: column; align-items: stretch; }
+    .g-cell--wide { grid-column: 1 / -1; }
     /* Inversion band: re-map the component role-vars to the flipped ground.
        This is exactly the Tier-B .invert recipe — border derived from the
        band's foreground so the hairline survives the strongest neutral. */
@@ -833,6 +835,204 @@
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">05</span><h2>Motion</h2></div>
         <p class="cap">One easing <b>--sl-motion-ease</b>, three speeds. Entrance = staggered rise (the cards in §03 rose in on load). Zeroed under <b>prefers-reduced-motion</b> via the token layer.</p>
+      </div>
+    </section>
+    <section id="terminal">
+      <div class="wrap">
+        <div class="sec-head"><span class="sec-idx">06</span><h2>Terminal</h2></div>
+        <p class="cap">The Term spec (<b>docs/tui-patterns.md</b>) as painted output in <b>.sl-term-block</b>: six role spans paint the terminal roles from the theme's own inks, the spinner runs in CSS alone under <b>prefers-reduced-motion: no-preference</b>, and every block is the catalog's, verbatim.</p>
+        <div class="gallery">
+          <div class="g-cell">
+            <span class="g-label">roles · glyphs</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" aria-label="Terminal roles and glyphs">
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">prompt</span>  <span class="sl-term-block__ok">ok</span>  <span class="sl-term-block__warn">warn</span>  <span class="sl-term-block__err">err</span>  <span class="sl-term-block__dim">dim</span>  <span class="sl-term-block__accent">accent</span>
+
+  <span class="sl-term-block__ok">✓</span> done       +  ok
+  <span class="sl-term-block__ok">✓</span> fixed      +  ok
+  <span class="sl-term-block__err">✗</span> failed     x  err
+  <span class="sl-term-block__warn">!</span> warn       !  warn
+  <span class="sl-term-block__prompt">●</span> active     *  prompt
+  <span class="sl-term-block__dim">○</span> pending    .  dim
+  <span class="sl-term-block__dim">↷</span> skipped    -  dim
+  <span class="sl-term-block__prompt">?</span> question   ?  prompt
+  <span class="sl-term-block__dim">·</span> separator  |  dim</pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">step list · summary · next step</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" data-exit="1">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx doctor</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 1</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__ok">✓</span> Check git repository        clean, on main
+  <span class="sl-term-block__ok">✓</span> Install pre-commit hook     fixed
+  <span class="sl-term-block__warn">!</span> Check signing key           not loaded
+  <span class="sl-term-block__err">✗</span> Verify remote               origin unreachable
+
+Summary  <span class="sl-term-block__ok">1 ok</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__ok">1 fixed</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__warn">1 warn</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__err">1 failed</span></pre>
+</article>
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx hook install</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__ok">✓</span> Installed hook              .git/hooks/pre-commit
+    <span class="sl-term-block__dim">Next:</span> smartctx doctor --fix</pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">error block · did you mean</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" data-exit="1">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx sync</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 1</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__err">✗</span> Could not reach origin
+    <span class="sl-term-block__dim">git ls-remote timed out after 10s (exit 128)</span>
+    <span class="sl-term-block__prompt">Try:</span> git remote -v <span class="sl-term-block__dim">·</span> <span class="sl-term-block__dim">sondalab.eu/e/T102</span></pre>
+</article>
+<article class="sl-term-block" data-exit="2">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx --versoin</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 2</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__err">✗</span> Unknown flag --versoin
+    <span class="sl-term-block__prompt">Did you mean</span> --version<span class="sl-term-block__prompt">?</span></pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">confirmation · destructive</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx hook install --global</span>
+    <span class="sl-term-block__meta"><span>waiting</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">?</span> Install the hook into ~/.config/git? <span class="sl-term-block__dim">[y/N]</span></pre>
+</article>
+<article class="sl-term-block">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx probe rm q-8f2a</span>
+    <span class="sl-term-block__meta"><span>waiting</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">?</span> Delete probe q-8f2a? <span class="sl-term-block__dim">[y/N]</span>
+<span class="sl-term-block__prompt">?</span> Type q-8f2a to delete it permanently:</pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">progress · 24 cells</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" aria-busy="true">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx resolve</span>
+    <span class="sl-term-block__meta"><span>running</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__spin" aria-hidden="true"></span> Resolving 128 probes…
+    <span class="sl-term-block__prompt">███████████▓▒░</span>             61/128  <span class="sl-term-block__dim"> 48%</span></pre>
+</article>
+<article class="sl-term-block" aria-label="The progress bar at 0% and at 100%">
+  <pre class="sl-term-block__out">    <span class="sl-term-block__prompt">▓▒░</span>                         0/128  <span class="sl-term-block__dim">  0%</span>
+    <span class="sl-term-block__prompt">████████████████████████</span>  128/128  <span class="sl-term-block__dim">100%</span></pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell">
+            <span class="g-label">spinner · dither burst · motion off</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" aria-busy="true">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx resolve</span>
+    <span class="sl-term-block__meta"><span>running</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__spin" aria-hidden="true"></span> Resolving 128 probes…</pre>
+</article>
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> CI=1 smartctx resolve</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__prompt">●</span> Resolving 128 probes…
+  <span class="sl-term-block__ok">✓</span> Resolved 128 probes         2.1s</pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell g-cell--wide">
+            <span class="g-label">decode · 4 frames, stacked</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx lock --refresh</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out">  <span class="sl-term-block__warn">!</span> Value changed               sh<span class="sl-term-block__prompt">▓ ▞#░▒%█▚</span>  <span class="sl-term-block__dim">frame 1 · 60ms</span>
+  <span class="sl-term-block__warn">!</span> Value changed               sha 9<span class="sl-term-block__prompt">▒▚░@▞▓</span>  <span class="sl-term-block__dim">frame 2 · 120ms</span>
+  <span class="sl-term-block__warn">!</span> Value changed               sha 9c41<span class="sl-term-block__prompt">▞%░</span>  <span class="sl-term-block__dim">frame 3 · 180ms</span>
+  <span class="sl-term-block__warn">!</span> Value changed               sha 9c41e0b  <span class="sl-term-block__dim">frame 4 · 240ms, settled</span>
+    <span class="sl-term-block__dim">was sha 3f02a7d · re-resolved after cache miss</span></pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell g-cell--wide">
+            <span class="g-label">full screen · focused pane · seam · keys</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block sl-term-block--screen">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx probes</span>
+    <span class="sl-term-block__meta"><span>full screen</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">╭─</span><span class="sl-term-block__inverse"> PROBES </span><span class="sl-term-block__prompt">─────────────────────╮</span><span class="sl-term-block__dim">╭─ DETAIL ────────────╮</span>
+<span class="sl-term-block__prompt">│</span> <span class="sl-term-block__dim">ID       STATE    AGE</span>        <span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span> q-8f2a              <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">│</span><span class="sl-term-block__sel"><span class="sl-term-block__prompt">▌</span>q-8f2a   <span class="sl-term-block__ok">✓</span> ok     2m         </span><span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span> <span class="sl-term-block__dim">resolved in</span>  1.2s   <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">│</span> q-71c0   <span class="sl-term-block__prompt">●</span> live   12s        <span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span> <span class="sl-term-block__dim">cache</span>        hit    <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">│</span> q-0d9e   <span class="sl-term-block__err">✗</span> err    5m         <span class="sl-term-block__prompt">│</span><span class="sl-term-block__dim">│</span>                     <span class="sl-term-block__dim">│</span>
+<span class="sl-term-block__prompt">╰──────────────────────────────╯</span><span class="sl-term-block__dim">╰─────────────────────╯</span>
+<span class="sl-term-block__accent">↑↓</span> <span class="sl-term-block__dim">move</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">enter</span> <span class="sl-term-block__dim">open</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">/</span> <span class="sl-term-block__dim">filter</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">:</span> <span class="sl-term-block__dim">command</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">?</span> <span class="sl-term-block__dim">help</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">q</span> <span class="sl-term-block__dim">back</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__accent">ctrl-c</span> <span class="sl-term-block__dim">quit</span></pre>
+</article>
+            </div>
+          </div>
+
+          <div class="g-cell g-cell--wide">
+            <span class="g-label">--plain · accessible</span>
+            <div class="g-demo g-demo--col">
+<article class="sl-term-block" data-exit="0">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> smartctx probes --plain</span>
+    <span class="sl-term-block__meta"><span class="sl-term-block__exit">exit 0</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__dim">ID       STATE    AGE</span>
+q-8f2a   <span class="sl-term-block__ok">✓</span> ok     2m
+q-71c0   <span class="sl-term-block__prompt">●</span> live   12s
+q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
+</article>
+<article class="sl-term-block">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> SONDALAB_ACCESSIBLE=1 smartctx probes</span>
+    <span class="sl-term-block__meta"><span>waiting</span></span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">?</span> Open which probe? Type a number, then Enter
+  1  q-8f2a  ok
+  2  q-71c0  live
+  3  q-0d9e  err
+<span class="sl-term-block__prompt">&gt;</span> 2</pre>
+</article>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>

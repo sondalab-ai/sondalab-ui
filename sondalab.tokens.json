@@ -112,6 +112,39 @@
       "question":  { "unicode": "?", "ascii": "?", "role": "prompt" },
       "separator": { "unicode": "·", "ascii": "|", "role": "dim" }
     },
-    "layout": { "indent": 2, "labelWidth": 28, "blankBeforeSummary": 1 }
+    "layout": { "indent": 2, "labelWidth": 28, "blankBeforeSummary": 1, "maxWidth": 100 },
+    "ramp": { "unicode": ["░", "▒", "▓", "█"], "ascii": [".", ":", "#", "#"] },
+    "spinner": {
+      "frames": [" ", "░", "▒", "▓", "█", "▓", "▒", "░"],
+      "ascii":  [" ", ".", ":", "#", "#", "#", ":", "."],
+      "intervalMs": 100, "delayMs": 300, "role": "prompt"
+    },
+    "decode": { "glyphs": ["░", "▒", "▓", "█", "▚", "▞"], "randomAscii": [33, 126], "frames": 4, "frameMs": 60 },
+    "progress": { "cells": 24, "role": "prompt", "percentWidth": 4 },
+    "motion": { "maxFps": 10, "firstOutputMs": 100 },
+    "box": {
+      "topLeft":     { "unicode": "╭", "ascii": "+" },
+      "topRight":    { "unicode": "╮", "ascii": "+" },
+      "bottomLeft":  { "unicode": "╰", "ascii": "+" },
+      "bottomRight": { "unicode": "╯", "ascii": "+" },
+      "horizontal":  { "unicode": "─", "ascii": "-" },
+      "vertical":    { "unicode": "│", "ascii": "|" },
+      "seam":        { "unicode": "▌", "ascii": ">" }
+    },
+    "keys": {
+      "up":   { "unicode": "↑", "ascii": "up" },
+      "down": { "unicode": "↓", "ascii": "dn" }
+    },
+    "robustness": { "osc11TimeoutMs": 100, "promptRetries": 3 },
+    "env": {
+      "reducedMotion": ["SONDALAB_REDUCED_MOTION"],
+      "accessible":    ["SONDALAB_ACCESSIBLE", "ACCESSIBLE"],
+      "noColor":       ["NO_COLOR"],
+      "forceColor":    ["FORCE_COLOR"],
+      "ci":            ["CI"],
+      "term":          ["TERM"],
+      "colorTerm":     ["COLORTERM"],
+      "ascii":         ["SONDALAB_ASCII"]
+    }
   }
 }
