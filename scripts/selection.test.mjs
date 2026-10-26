@@ -94,7 +94,7 @@ for (const theme of THEMES) {
 
 test("scrollbars: thin, a control-edge thumb, no track, off on high contrast, zero specificity", () => {
   const sel = ':where(:root:not([data-sl-theme="high-contrast"]))';
-  assert.equal(declared(sel, "scrollbar-color"), "var(--slc-edge-control) transparent");
+  assert.equal(declared(sel, "scrollbar-color"), "var(--slc-edge-hairline) transparent");
   assert.equal(declared(sel, "scrollbar-width"), "thin");
   assert.doesNotMatch(css, /::-webkit-scrollbar/, "the kit leaves WebKit scrollbar pseudo-elements alone");
   // Page scrollbar only: <body> hands `auto` back by inheritance, so products'
@@ -104,13 +104,19 @@ test("scrollbars: thin, a control-edge thumb, no track, off on high contrast, ze
 });
 
 // The thumb resolves on :root and inherits as a computed colour, so inside a
-// band it is still the page's: measured there too. 3:1 is WCAG 1.4.11.
+// band it is still the page's. Owner amendment, 2026-10-26: the thumb is the
+// translucent hairline like every control's rest edge (1.5-2.2:1 over the
+// grounds, below WCAG 1.4.11's 3:1, accepted by the owner). KNOWN GAP, not
+// asserted: in an inversion band the ground is the page's own ink, so the
+// thumb (that ink at 21-30%) vanishes there, and a scrollbar's hover cannot
+// be styled, so there is no strong edge to bring back under the pointer.
 for (const theme of ["light", "dark"]) {
-  test(`${theme}: the scrollbar thumb is found at 3:1 on every ground, the band included`, () => {
+  test(`${theme}: the scrollbar thumb is the hairline, 1.5-2.2:1 over the canvas, surface and raised ground`, () => {
     const env = rootEnv(theme);
     const thumb = evaluate(declared(':where(:root:not([data-sl-theme="high-contrast"]))', "scrollbar-color").split(" ")[0], env);
-    const low = ["canvas", "surface", "raised", "text"].map((g) => [g, ratio(thumb, evaluate(`var(--slc-${g})`, env))])
-      .filter(([, r]) => r < 3).map(([g, r]) => `${g === "text" ? "band" : g} ${r.toFixed(2)}`);
-    assert.deepEqual(low, []);
+    assert.ok(thumb.alpha < 1, "never a solid");
+    const out = ["canvas", "surface", "raised"].map((g) => { const c = evaluate(`var(--slc-${g})`, env); return [g, ratio(over(thumb, c), c)]; })
+      .filter(([, r]) => r < 1.5 || r > 2.2).map(([g, r]) => `${g} ${r.toFixed(2)}`);
+    assert.deepEqual(out, []);
   });
 }

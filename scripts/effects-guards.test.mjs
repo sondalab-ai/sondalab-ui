@@ -156,8 +156,8 @@ test("every glass control carries the two-line edge, with or without mount()", (
   assert.match(rule[2], /--slg-rim-lo:\s*transparent/, "buttons: flat like a field, no __shine rim");
   const input = [...effects.matchAll(/\.sl-field__control:is\(\.sl-fx-glass--field, \.sl-fx-aurora--field\)[^{]*\.sl-field__input(:[^{]*)?\s*\{([^}]*)\}/g)]
     .map((m) => (m[1] ?? "") + m[2]).join("\n");
-  assert.match(input, /inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-control, var\(--slfx-edge-soft\)\) 50%, transparent\)/, "fields: soft line on the input");
-  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-control, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
+  assert.match(input, /inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-hairline, var\(--slfx-edge-soft\)\) 50%, transparent\)/, "fields: soft line on the input");
+  assert.match(input, /:not\(:focus\)\s*border-color:\s*var\(--slc-edge-hairline, var\(--slfx-edge-mid\)\)/, "fields: sharp line, focus keeps the accent");
   assert.match(input, /:focus\s*box-shadow:[^;]*var\(--_sl-halo, 0 0 transparent\)/, "fields: focus keeps the kit's halo (0.32), which this rule outranks");
   assert.match(input, /:focus\s*(?:\/\*[\s\S]*?\*\/\s*)?box-shadow:\s*inset 0 0 0 1px color-mix\(in oklab, var\(--slc-focus\) 50%, transparent\)/, "fields: on focus the soft line follows the ring's border, no band inside the ring");
 });
@@ -182,7 +182,7 @@ test("glass owns a control's depth: the foot and the well stand down, the halo i
     }
   }
   assert.match(effects, /\.sl-field__control\.sl-fx-glass--field:where\([^{]*\.sl-field__input \{\s*--_sl-depth:\s*0 0 transparent;\s*\}/, "a glass field gives up its well");
-  assert.match(effects, /\.sl-field__input \{\s*box-shadow: inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-control, var\(--slfx-edge-soft\)\) 50%, transparent\), var\(--_sl-depth, 0 0 transparent\);/, "an aurora field keeps its well under the soft line");
+  assert.match(effects, /\.sl-field__input \{\s*box-shadow: inset 0 0 0 1px color-mix\(in oklab, var\(--slc-edge-hairline, var\(--slfx-edge-soft\)\) 50%, transparent\), var\(--_sl-depth, 0 0 transparent\);/, "an aurora field keeps its well under the soft line");
 });
 
 // Regression, 2026-10-01: the soft inner line was a SOLID colour half a shade

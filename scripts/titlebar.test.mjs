@@ -196,7 +196,7 @@ test("the command field is the kit's one control height, 32px (Lumen's 30), r8, 
   assert.equal(declaredHeight(RULES_A, p.cmd), 32, "the icon buttons beside it are 32: one control height (L2)");
   assert.equal(won.get("box-sizing").value, "border-box");
   assert.equal(px(won.get("border-radius").value, env), 8);
-  assert.equal(won.get("border").value, "1px solid var(--slc-edge-control)");
+  assert.equal(won.get("border").value, "1px solid var(--slc-edge-hairline)");
   assert.equal(won.get("background-color").value, "var(--slc-surface)");
   assert.equal(env.get("--_sl-depth"), env.get("--slc-lit") ? `inset 0 1px 0 ${env.get("--slc-lit")}` : undefined, "lit along its top, as the depth the kit paints");
   assert.equal(won.get("color").value, "var(--slc-text-muted)");
@@ -236,7 +236,7 @@ test("a title-bar icon button rests on the surface in the one control edge; the 
   const p = build(dark);
   const btn = cascaded(RULES_A, p.btn);
   assert.equal(btn.get("background-color").value, "var(--slc-surface)");
-  assert.equal(btn.get("border").value, "1px solid var(--slc-edge-control)", "the icon button's own edge");
+  assert.equal(btn.get("border").value, "1px solid var(--slc-edge-hairline)", "the icon button's own edge");
   assert.equal(declaredHeight(RULES_A, p.btn), 32);
   for (const states of [[], ["hover"]]) {
     const b = build(dark, { states: { bell: states } });
@@ -283,7 +283,14 @@ test("every text in the title bar reads at 4.5:1, its marks and boundaries at 3:
       const won = cascaded(ctx.rules, e);
       const edge = value(ctx.rules, e, words(won.get("border").value).slice(2).join(" "), colorOf(ctx.rules, e));
       const r = ratio(over(edge, ground), ground);
-      if (!(r >= 3)) low.push(`${ctx.name} ${name} edge ${r.toFixed(2)}`);
+      // owner amendment, 2026-10-26: the rest edge is the translucent hairline,
+      // 1.5-2.2:1 on the canvas (high contrast keeps the strong edge, 3:1)
+      if (ctx.name === "high-contrast" ? !(r >= 3) : !(r >= 1.5 && r <= 2.2)) low.push(`${ctx.name} ${name} edge ${r.toFixed(2)}`);
+      // hover: the strong 3:1 edge
+      const hov = build(ctx, { states: { [name]: ["hover"] } })[name];
+      const hedge = value(ctx.rules, hov, cascaded(ctx.rules, hov).get("border-color").value, colorOf(ctx.rules, hov));
+      const hr = ratio(over(hedge, ground), ground);
+      if (!(hr >= 3)) low.push(`${ctx.name} ${name} hovered edge ${hr.toFixed(2)}`);
     }
     // the bell's dot, a state's mark: against the button's own fill
     const dot = value(ctx.rules, p.bell, "var(--_sl-titlebar-dot)", BLACK);

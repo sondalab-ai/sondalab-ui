@@ -847,15 +847,15 @@
    field keeps it, a glass field gives it up (the next rule), since glass
    owns the depth of what it is on (0.32). */
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-control, var(--slfx-edge-soft)) 50%, transparent), var(--_sl-depth, 0 0 transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--slc-edge-hairline, var(--slfx-edge-soft)) 50%, transparent), var(--_sl-depth, 0 0 transparent);
 }
 .sl-field__control.sl-fx-glass--field:where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input {
   --_sl-depth: 0 0 transparent;
 }
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:not(:focus) {
-  border-color: var(--slc-edge-control, var(--slfx-edge-mid));
+  border-color: var(--slc-edge-hairline, var(--slfx-edge-mid));
 }
-/* The rest line is already the strong border the shipped hover used, so hover
+/* The rest line is the translucent hairline (owner, 2026-10-26); hover
    brightens it toward the glint instead — the same light the arc is made of. */
 .sl-field__control:is(.sl-fx-glass--field, .sl-fx-aurora--field):where(:root:not([data-sl-theme="high-contrast"]) *):where(:not([data-sl-fx="off"], [data-sl-fx="off"] *)) .sl-field__input:hover:not(:disabled, :focus) {
   border-color: var(--slfx-edge-hi);
@@ -886,7 +886,7 @@
 /* The edge in shade each glass control's fill casts (see the control edge above). */
 .sl-btn.sl-fx-glass,
 .sl-icon-btn.sl-fx-glass {
-  --slfx-control-edge: var(--slc-edge-control);
+  --slfx-control-edge: var(--slc-edge-hairline);
   /* The soft inner line: the edge at half strength over whatever fill is
      painted, so it always lands between the edge and the fill. A solid
      half-step lighter line read as a pale gap once the hover fill darkened
@@ -894,15 +894,16 @@
   --slfx-control-edge-soft: color-mix(in oklab, var(--slfx-control-edge) 50%, transparent);
 }
 /* A text button's rest edge is the translucent hairline (components.css,
-   --slc-edge-button, owner 2026-10-26), so a glass one is as subtle as a plain
-   one; hover brings the 3:1 edge back. Icon buttons keep the control edge. The
-   danger, pressed and focus rules below outrank these. */
-.sl-btn:not(.sl-btn--primary).sl-fx-glass { --slfx-control-edge: var(--slc-edge-button); }
+   --slc-edge-hairline, owner 2026-10-26), so a glass one is as subtle as a plain
+   one, an icon button's included; hover brings the 3:1 edge back. The danger,
+   pressed and focus rules below outrank these. */
+.sl-btn:not(.sl-btn--primary).sl-fx-glass { --slfx-control-edge: var(--slc-edge-hairline); }
 /* A group's cells draw no border: the soft inner line is what separates
-   them, so it stays on the control edge (a hairline there would erase the
-   rule between two glass members). */
-.sl-btn-group > .sl-btn:not(.sl-btn--primary).sl-fx-glass { --slfx-control-edge: var(--slc-edge-control); }
+   them, and it is the hairline like the group's own rules (owner,
+   2026-10-26); hover on a cell restores the 3:1 edge, as below. */
+.sl-btn-group > .sl-btn:not(.sl-btn--primary).sl-fx-glass { --slfx-control-edge: var(--slc-edge-hairline); }
 .sl-btn:not(.sl-btn--primary).sl-fx-glass:hover:not(:disabled, :focus-visible) { --slfx-control-edge: var(--slc-edge-control-hover); }
+.sl-icon-btn.sl-fx-glass:hover:not(:disabled, :focus-visible) { --slfx-control-edge: var(--slc-edge-control-hover); }
 .sl-btn--primary.sl-fx-glass { --slfx-control-edge: var(--_sl-fill-edge, var(--slc-edge-accent)); }
 /* A danger tone keeps its danger edge on glass (components.css, 0.32);
    hovered, the host fills with the danger, so the edge is that fill in

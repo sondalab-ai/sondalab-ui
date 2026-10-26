@@ -783,7 +783,7 @@ test("the dismiss keeps the one control edge, at the icon button's 32px", () => 
   const p = build(dark);
   const d = p["toast success dismiss"];
   const won = cascaded(RULES_A, d);
-  assert.equal(won.get("border").value, "1px solid var(--slc-edge-control)", "only the tab's close and the activity bar are borderless chrome");
+  assert.equal(won.get("border").value, "1px solid var(--slc-edge-hairline)", "only the tab's close and the activity bar are borderless chrome");
   assert.equal(declaredHeight(RULES_A, d), 32, "Lumen's 32px (0.34; 24 before)");
   assert.equal(px(won.get("border-radius").value, customs(RULES_A, d)), 8);
 });
@@ -1146,7 +1146,7 @@ test("the palette is Lumen's on the grid: 580 wide, a 52px head, a 16px input wi
   assert.equal(customs(RULES_A, p["palette input"]).get("--_sl-depth"), "0 0 transparent", "no well");
   // the one control edge stays (Lumen draws none): a field is found by its
   // boundary, >= 3:1, which the screens report checks
-  assert.equal(input.get("border").value, "1px solid var(--slc-edge-control)");
+  assert.equal(input.get("border").value, "1px solid var(--slc-edge-hairline)");
   assert.equal(input.get("border-color"), undefined, "nothing hides it at rest");
   const hovered = el({ tag: "input", classes: ["sl-field__input", "sl-palette__input"], states: ["hover"], parent: p["palette head"] });
   assert.equal(cascaded(RULES_A, hovered).get("border-color").value, "var(--slc-edge-control-hover)", "the kit's hover step");
@@ -1718,10 +1718,10 @@ test("the palette is opaque where the user asks for less transparency", () => {
   assert.equal(pal.get("-webkit-backdrop-filter").value, "none");
 });
 
-// The field keeps the one control edge (Lumen draws it borderless, 1.00:1):
-// a field is found by its boundary, >= 3:1 against the palette it sits in,
+// The field keeps an edge (Lumen draws it borderless, 1.00:1), the hairline at rest:
+// 1.5-2.2:1 against the palette it sits in (3:1 on hover),
 // with the canvas or the page's own ink under the palette's 6%.
-test("the palette's field is found by its edge at 3:1, every product, theme and tier", () => {
+test("the palette's field rests on the hairline, 1.5-2.2:1, every product, theme and tier", () => {
   const low = [];
   for (const ctx of CONTEXTS.filter((c) => !c.band)) {
     for (const under of ["", "under-ink"]) {
@@ -1736,7 +1736,9 @@ test("the palette's field is found by its edge at 3:1, every product, theme and 
       const edge = value(rules, input, text, colorOf(rules, input));
       const g = groundOf(rules, input.parent);
       const r = ratio(over(edge, g), g);
-      if (!(r >= 3)) low.push(`${ctx.name}${under ? " over ink" : ""} ${r.toFixed(2)}`);
+      // owner amendment, 2026-10-26: at rest the field is the translucent
+      // hairline, 1.5-2.2:1 on the ground over which it is drawn (high contrast keeps the strong edge)
+      if (ctx.name === "high-contrast" ? !(r >= 3) : !(r >= 1.5 && r <= 2.2)) low.push(`${ctx.name}${under ? " over ink" : ""} ${r.toFixed(2)}`);
     }
   }
   assert.deepEqual(low, []);
