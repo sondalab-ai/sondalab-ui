@@ -12,9 +12,10 @@ against these paths and nothing else.
 | `fraunces-latin.woff2` | Fraunces | `--sl-font-brand` (wordmark, monogram) | `opsz` 9–144, `wght` 100–900 | 1.000 | 66 KB |
 | `instrument-sans-latin.woff2` | Instrument Sans | none — **deprecated** | `wght` 400–700 | 1.000 | 29 KB |
 | `martian-mono-latin.woff2` | Martian Mono | none — **deprecated** | `wght` 100–800 | 1.000 | 23 KB |
+| `geist-pixel-square-latin.woff2` | Geist Pixel Square | `--sl-font-pixel` (display numerals, lockup, `.sl-px`) | none: **static**, one weight, proportional, no `tnum` | 1.000 | 7 KB |
 
-126 KB for the three the tokens name. They are **variable** fonts and the
-**latin subset**: one file per family covers every weight the kit uses. A
+133 KB for the four the tokens name. All but the pixel face are **variable** fonts, and all are the
+**latin subset**: one file per family covers every weight the kit uses (the pixel face has one). A
 surface needing another script fetches it itself. Upright only: the kit sets no
 italic, so none is shipped.
 
@@ -42,10 +43,10 @@ them by hand keeps rendering while it moves to the tokens. They are removed in
 
 ## Sources and licences
 
-All five are licensed under the **SIL Open Font License 1.1** — `OFL-*.txt`
+All six are licensed under the **SIL Open Font License 1.1** — `OFL-*.txt`
 beside them, copied verbatim from `github.com/google/fonts`. The OFL requires
 the licence to travel with the files, which is what those copies are for.
-None of the five licences declares a Reserved Font Name, so a subset (a
+None of the six licences declares a Reserved Font Name, so a subset (a
 Modified Version under the OFL) may keep its family name.
 
 - **Geist** — `google/fonts` `ofl/geist/Geist[wght].ttf` at commit
@@ -56,11 +57,19 @@ Modified Version under the OFL) may keep its family name.
   `9e25e2ba265e5298f70f6182dd4e8a3ebf1b9123` (2026-05-20), font version 1.701;
   upstream `vercel/geist-font` commit `77f0563c03009d6c15c6342183fa53b352255b22`.
   Licence `OFL-GeistMono.txt` (the same text as Geist's).
+- **Geist Pixel Square** — `GeistPixel-Square.woff2` from npm `geist@1.7.2`
+  (`dist/fonts/geist-pixel/`), a static font, version 1.000 (upstream
+  `vercel/geist-font`). Licence `OFL-GeistPixelSquare.txt` is that package's
+  `LICENSE.txt` (Copyright (c) 2023 Vercel, in collaboration with
+  basement.studio). It declares no Reserved Font Name. One pixel cell is
+  0.08em, so it is crisp only at multiples of 12.5px (`--sl-text-px-1…4`).
+  Proportional (at 100px: i 38, W 91, 1 49, 8 65; Geist Mono is 60), and its
+  GSUB has no `tnum`.
 - **Fraunces**, **Instrument Sans**, **Martian Mono** — the Google Fonts latin
   subsets, vendored on 2026-09-11; licences `OFL-Fraunces.txt`,
   `OFL-InstrumentSans.txt`, `OFL-MartianMono.txt`.
 
-The two Geist files were cut with fontTools 4.60.2 (`pyftsubset`, brotli
+The two Geist files and the pixel face were cut with fontTools 4.60.2 (`pyftsubset`, brotli
 1.2.0) to the shared latin range plus the six IDE blocks (pyftsubset keeps only
 the code points a face has), keeping the default layout features plus tabular
 and proportional figures and case-sensitive forms, every name record, and no
@@ -73,7 +82,9 @@ pyftsubset "Geist[wght].ttf" \
   --unicodes="U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD,U+2190-21FF,U+2200-22FF,U+2300-23FF,U+2500-257F,U+2580-259F,U+25A0-25FF" \
   --layout-features+=tnum,pnum,case --name-IDs='*' --no-hinting \
   --flavor=woff2 --output-file=geist-latin.woff2
-# the same for "GeistMono[wght].ttf" -> geist-mono-latin.woff2
+# the same for "GeistMono[wght].ttf" -> geist-mono-latin.woff2, and for
+# GeistPixel-Square.woff2 -> geist-pixel-square-latin.woff2 (its range adds
+# only the IDE glyphs it has: arrows, a few operators, U+25B2, U+25CA)
 ```
 
 `scripts/font-coverage.test.mjs` reads each file's own `cmap` and `fvar` and

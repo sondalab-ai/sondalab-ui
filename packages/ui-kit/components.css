@@ -2330,12 +2330,16 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   flex-direction: column;
   gap: var(--sl-space-1, 0.25rem);
 }
-/* Mono at every size: a display-scale numeral is a structural label (L1). */
+/* Geist Pixel Square at a whole-cell size (L1, owner 2026-10-26). The face is
+   proportional and has no tnum, so a figure that changes in place should keep
+   Geist Mono: set font-family on it to var(--sl-font-mono). The role's chain
+   falls back to Geist Mono while the face loads. */
 .sl-stat__value {
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-3xl, 2.75rem);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  font-family: var(--sl-font-pixel, var(--sl-font-mono, ui-monospace, monospace));
+  font-size: var(--sl-text-px-4, 50px);
+  font-weight: 400;
+  line-height: var(--sl-line-tight, 1.2);
+  letter-spacing: 0;
   color: var(--slc-text);
 }
 .sl-stat__label {
@@ -2352,8 +2356,9 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 /* The brand is typographic — there is no pictorial mark. These three classes
    must render as packages/ui-kit/assets/sondalab-*.svg does; where they
    disagree, the asset is right and the CSS is the defect. Since 0.30 the
-   lockup is Geist Mono 300 tracked 0.2em, in the asset (scripts/gen-logo.py)
-   and here alike. */
+   lockup was Geist Mono 300 tracked 0.2em; since 0.39 (pixel D) it is the
+   lowercase Geist Pixel Square wordmark, untracked, at a whole-cell size. The
+   asset (scripts/gen-logo.py) still draws the 0.30 lockup until it follows. */
 .sl-wordmark {
   /* The brand face, not the display role: since 0.30 display is Geist and
      Fraunces is the wordmark's and the monogram's alone. */
@@ -2365,14 +2370,30 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
 .sl-wordmark__dot { color: var(--slc-accent); }
 
 .sl-lockup {
-  font-family: var(--sl-font-mono, ui-monospace, monospace);
-  font-size: var(--sl-text-xs, 0.75rem);
-  font-weight: 300;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-family: var(--sl-font-pixel, var(--sl-font-mono, ui-monospace, monospace));
+  font-size: var(--sl-text-px-1, 12.5px);
+  font-weight: 400;
+  letter-spacing: 0;
   color: var(--slc-text);
 }
+/* The "/" is a child b or .sl-lockup__sep, in the accent ink; the b is not
+   bold, the face has one weight. */
+.sl-lockup b,
+.sl-lockup__sep {
+  font-weight: 400;
+  color: var(--slc-accent-text);
+}
 .sl-lockup__dot { color: var(--slc-accent-text); }
+
+/* One display word in the pixel face, inside running text or a heading: it
+   inherits the size, so set it on a whole cell (--sl-text-px-*) to keep the
+   cells crisp. Accent ink; never a paragraph. */
+.sl-px {
+  font-family: var(--sl-font-pixel, var(--sl-font-mono, ui-monospace, monospace));
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--slc-accent-text);
+}
 
 /* Three corrections, all for the small end of the scale (design-language L3):
    the mark is sized to the INSCRIBED CROP CIRCLE (~60% of the canvas wide),
