@@ -178,3 +178,9 @@ test("the terminal spinner steps through the tui spinner frames, one per interva
   assert.deepEqual(stops[n], [100, TUI_SPINNER.frames[0]], "the cycle closes on the first frame");
   assert.match(wbBare, /\.sl-term-block__spin::before \{ content: "\u2588"; white-space: pre; \}/, "still, the full frame");
 });
+
+test("data-sl-fx-still stops the terminal spinner (its still frame shows), never pauses it on a blank frame", () => {
+  const fx = read("packages/ui-kit/effects.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [...fx.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].includes(".sl-term-block__spin"));
+  assert.deepEqual(rules.map((m) => [m[1].trim(), m[2].trim()]), [[":root[data-sl-fx-still] .sl-term-block__spin::before", "animation: none !important;"]]);
+});

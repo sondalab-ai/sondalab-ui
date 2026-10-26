@@ -631,7 +631,7 @@ One line per step: two columns of indent, the glyph in its role, the label padde
   <span class="sl-term-block__warn">!</span> Check signing key           not loaded
   <span class="sl-term-block__err">✗</span> Verify remote               origin unreachable
 
-Summary  <span class="sl-term-block__ok">3 ok</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__ok">1 fixed</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__warn">1 warn</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__err">1 failed</span></pre>
+Summary  <span class="sl-term-block__ok">1 ok</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__ok">1 fixed</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__warn">1 warn</span> <span class="sl-term-block__dim">·</span> <span class="sl-term-block__err">1 failed</span></pre>
 </article>
 ```
 ```html
@@ -715,7 +715,7 @@ A determinate step draws a 24-cell bar (`progress.cells`) in prompt on the conti
 Consumes the role spans above. When the step ends the bar line is cleared and the step line persists. With motion off there is no bar: the final step line carries the count.
 
 ### Spinner — `sl-term-block__spin`
-The primary button's dither hover in one cell: the glyph cell fills and drains through the burst ` ░▒▓█▓▒░` (`spinner.frames`), 8 frames at 100ms each (`spinner.intervalMs`), 0.8s a cycle, in prompt. `sl-term-block__spin` draws it with CSS alone, so a page shows it with no script: an empty `<span>` whose `::before` steps through the frames on a `@keyframes` of `content`, one frame per 100ms (`step-end`), only under `prefers-reduced-motion: no-preference`. Otherwise, and under `data-sl-fx-still` (paused), the page shows `█`, the full frame. The span is one `1ch` cell wide, so the label grid holds through the space frame. In a terminal the spinner shows only after 300ms (`spinner.delayMs`), always ends in a persisted step line, and with motion off it is the `active` glyph `●` instead, its final line printed below it.
+The primary button's dither hover in one cell: the glyph cell fills and drains through the burst ` ░▒▓█▓▒░` (`spinner.frames`), 8 frames at 100ms each (`spinner.intervalMs`), 0.8s a cycle, in prompt. `sl-term-block__spin` draws it with CSS alone, so a page shows it with no script: an empty `<span>` whose `::before` steps through the frames on a `@keyframes` of `content`, one frame per 100ms (`step-end`), only under `prefers-reduced-motion: no-preference`. Otherwise, and under `data-sl-fx-still` (which stops it), the page shows `█`, the full frame. The span is one `1ch` cell wide, so the label grid holds through the space frame. In a terminal the spinner shows only after 300ms (`spinner.delayMs`), always ends in a persisted step line, and with motion off it is the `active` glyph `●` instead, its final line printed below it.
 ```html
 <article class="sl-term-block" aria-busy="true">
   <header class="sl-term-block__head">

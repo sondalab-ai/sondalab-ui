@@ -728,7 +728,10 @@ a.sl-statusbar__item { text-decoration: none; }
    One command and its output, as a small island in a pane: the raised rung,
    the island recipe, set in the product's coding mono where it has one
    (--sl-font-code: a terminal is product content, L1) and the kit's mono
-   otherwise. In a lit pane, which is the raised rung too, it steps down to
+   otherwise, then a glyph-safe monospace tail: the kit's mono is a latin
+   subset, so box drawing, blocks and the check marks fall back per glyph,
+   and a mono face keeps them on the cell. In a lit pane, which is the raised
+   rung too, it steps down to
    the sunken rung, so its fill still bounds it. Its exit status is a mark on
    the top edge (::before, the callout's tick) and the exit text beside the
    time, in the same ink:
@@ -747,7 +750,7 @@ a.sl-statusbar__item { text-decoration: none; }
      </article> */
 .sl-term-block {
   position: relative;
-  font-family: var(--sl-font-code, var(--sl-font-mono, ui-monospace, monospace));
+  font-family: var(--sl-font-code, var(--sl-font-mono, ui-monospace)), "SF Mono", Menlo, "DejaVu Sans Mono", Consolas, monospace;
   font-size: var(--sl-text-xs, 0.75rem);
   line-height: var(--sl-line-normal, 1.5);
   color: var(--slc-text);
@@ -860,6 +863,7 @@ a.sl-statusbar__item { text-decoration: none; }
   white-space: pre;
   overflow-wrap: normal;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 /* The spinner, CSS only: one cell that fills and drains through the dither
    burst ` ░▒▓█▓▒░` (tui spinner.frames), 100ms a frame (spinner.intervalMs),

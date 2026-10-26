@@ -1302,7 +1302,7 @@ test("the exit mark: success at 0, the danger at any other code, nothing while r
   }
   assert.equal(ink("term running exit"), ink("term running meta"), "a running block's exit text keeps the meta's ink");
   // the product's coding mono where it sets one, the kit's otherwise
-  assert.equal(cascaded(RULES_A, p["term exit 0"]).get("font-family").value, "var(--sl-font-code, var(--sl-font-mono, ui-monospace, monospace))");
+  assert.equal(cascaded(RULES_A, p["term exit 0"]).get("font-family").value, 'var(--sl-font-code, var(--sl-font-mono, ui-monospace)), "SF Mono", Menlo, "DejaVu Sans Mono", Consolas, monospace');
   assert.equal(cascaded(RULES_A, p["term exit 0"]).get("box-shadow").value, "var(--slc-depth-island)");
 });
 

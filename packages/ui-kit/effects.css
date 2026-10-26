@@ -2189,8 +2189,9 @@
    The live badge's breath is components.css's, but that file may not name an
    effect attribute (effects-showcase.test.mjs), so it is paused here: a
    product that loads components.css alone keeps the badge breathing. The
-   status bar's live dot (workbench.css, 0.34) and the terminal block's
-   spinner (0.40) are paused here for the same reason.
+   status bar's live dot (workbench.css, 0.34) is paused here for the same
+   reason. The terminal block's spinner (0.40) is stopped instead, below:
+   paused, it could hold on its blank frame, an empty cell.
 
    The kit's loops run on paint layers, not on the hosts (a drifting goo
    member and a glitch aside), so the hosts themselves are not named here:
@@ -2199,7 +2200,6 @@
 :root[data-sl-fx-still] .sl-fx-goo--drift .sl-fx-goo__member,
 :root[data-sl-fx-still] .sl-badge--live::before,
 :root[data-sl-fx-still] .sl-statusbar__dot,
-:root[data-sl-fx-still] .sl-term-block__spin::before,
 :root[data-sl-fx-still] :is(.sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-glass)::before,
 :root[data-sl-fx-still] :is(.sl-fx-aurora, .sl-fx-aurora__glow, .sl-fx-glass)::after {
   animation-play-state: paused !important;
@@ -2213,6 +2213,8 @@
   animation: none !important;
 }
 :root[data-sl-fx-still] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__text { opacity: 1 !important; }
+/* The spinner stops, so it shows its still frame, the full cell. */
+:root[data-sl-fx-still] .sl-term-block__spin::before { animation: none !important; }
 :root[data-sl-fx-still] .sl-fx-glitch--shatter.is-glitching .sl-fx-glitch__shard { opacity: 0 !important; }
 
 /* ══ GOO — these are one substance ═══════════════════════════════════════════

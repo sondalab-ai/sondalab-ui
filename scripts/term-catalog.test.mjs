@@ -90,6 +90,23 @@ test("every other block's output is the spec's own example text", () => {
   }
 });
 
+test("every progress line is progress.cells cells, two spaces, the count, two spaces, the percent in percentWidth columns", () => {
+  const { cells, percentWidth } = tui.progress;
+  const indent = tui.layout.indent + 2;
+  const bars = FENCES.flatMap((f) => outText(f).split("\n")).filter((l) => /^ +[█▓▒░]/.test(l) && /\d+\/\d+ +\d+%$/.test(l));
+  assert.ok(bars.length >= 3, `expected the progress lines, found ${bars.length}`);
+  for (const l of bars) {
+    const ch = [...l];
+    assert.equal(ch.slice(0, indent).join(""), " ".repeat(indent), `not on the continuation column: ${l}`);
+    const bar = ch.slice(indent, indent + cells).join("");
+    assert.match(bar, /^█*(▓▒░|▓▒|▓)? *$/u, `not a filled run, an edge and spaces: ${l}`);
+    const [, done, total, pct] = l.match(/(\d+)\/(\d+) +(\d+%)$/);
+    const count = ch.slice(indent + cells).join("");
+    assert.equal(count, `  ${done.padStart(total.length)}/${total}  ${pct.padStart(percentWidth)}`, `count and percent columns: ${l}`);
+    assert.equal(bar.replace(/ +$/, "").replace(/[▓▒░]/g, "").length, Math.floor((done / total) * cells), `filled run: ${l}`);
+  }
+});
+
 test("the spinner is the CSS cell in the spinner and progress blocks, hidden from assistive tech, in a busy block", () => {
   const spin = '<span class="sl-term-block__spin" aria-hidden="true"></span>';
   for (const title of ["Spinner", "Terminal progress"]) {
