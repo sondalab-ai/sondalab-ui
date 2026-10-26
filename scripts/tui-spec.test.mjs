@@ -5,10 +5,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { loadTokens } from "./lib/tokens.mjs";
 
-// The Term spec (ui-kit 0.40, T1): the motion, decode, ramp, box and env
-// tokens in `tui`, the prose in docs/tui-patterns.md that cites them, and the
-// Term column of the compliance matrix. Every number the prose cites is built
-// here from the token, so a token change without a doc change fails.
+// The Term spec (ui-kit 0.40, T1): the `tui` tokens, the prose and examples
+// in docs/tui-patterns.md, and the Term column of the compliance matrix. Each
+// token value the prose cites is rebuilt here from the token, so a token
+// change without a doc change fails; numbers inside examples are not tokens.
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(HERE, "..", p), "utf8");
@@ -20,6 +20,10 @@ const tui = loadTokens().tui;
 // East Asian Width W and F ranges below U+2E80 (Unicode 17, EastAsianWidth.txt).
 // Every code point from U+2E80 up is rejected outright: the CJK, Hangul,
 // fullwidth and emoji planes are W or F, and no tui glyph belongs there.
+// To regenerate: take https://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt,
+// keep the lines whose property is W or F, merge adjacent code points into
+// ranges, and keep the ranges that start below U+2E80. Python's
+// `unicodedata.east_asian_width` gives the same table for its Unicode version.
 const WIDE_BELOW_2E80 = [
   [0x1100, 0x115f], [0x231a, 0x231b], [0x2329, 0x232a], [0x23e9, 0x23ec], [0x23f0, 0x23f0],
   [0x23f3, 0x23f3], [0x25fd, 0x25fe], [0x2614, 0x2615], [0x2630, 0x2637], [0x2648, 0x2653],
@@ -36,6 +40,7 @@ function unicodeGlyphs() {
   const out = [];
   for (const [n, g] of Object.entries(tui.glyphs)) out.push([`glyphs.${n}`, g.unicode]);
   for (const [n, g] of Object.entries(tui.box)) out.push([`box.${n}`, g.unicode]);
+  for (const [n, g] of Object.entries(tui.keys)) out.push([`keys.${n}`, g.unicode]);
   tui.ramp.unicode.forEach((g, i) => out.push([`ramp.unicode[${i}]`, g]));
   tui.spinner.frames.forEach((g, i) => out.push([`spinner.frames[${i}]`, g]));
   tui.decode.glyphs.forEach((g, i) => out.push([`decode.glyphs[${i}]`, g]));
@@ -60,7 +65,9 @@ test("new tui tokens carry the decided values", () => {
   });
   assert.deepEqual(tui.decode, { glyphs: ["░", "▒", "▓", "█", "▚", "▞"], randomAscii: [33, 126], frames: 4, frameMs: 60 });
   assert.deepEqual(tui.ramp, { unicode: ["░", "▒", "▓", "█"], ascii: [".", ":", "#", "#"] });
-  assert.deepEqual(tui.progress, { cells: 24, role: "prompt" });
+  assert.deepEqual(tui.progress, { cells: 24, role: "prompt", percentWidth: 4 });
+  assert.deepEqual(tui.keys, { up: { unicode: "↑", ascii: "up" }, down: { unicode: "↓", ascii: "dn" } });
+  assert.deepEqual(tui.robustness, { osc11TimeoutMs: 100, promptRetries: 3 });
   assert.deepEqual(tui.motion, { maxFps: 10, firstOutputMs: 100 });
   assert.equal(tui.layout.maxWidth, 100);
   assert.deepEqual(
@@ -78,6 +85,7 @@ test("new tui tokens carry the decided values", () => {
     ci: ["CI"],
     term: ["TERM"],
     colorTerm: ["COLORTERM"],
+    ascii: ["SONDALAB_ASCII"],
   });
 });
 
@@ -122,6 +130,12 @@ test("every ascii fallback in tui is one printable ASCII character", () => {
   }
 });
 
+test("key names have a printable ASCII form", () => {
+  for (const [n, g] of Object.entries(tui.keys)) {
+    assert.match(g.ascii, /^[\x21-\x7e]+$/, `keys.${n}: ${JSON.stringify(g.ascii)} is not printable ASCII`);
+  }
+});
+
 test("tui-patterns.md has the six spec sections and Sources, in order", () => {
   const order = ["Voice", "Motion", "Effects", "Patterns (line output)", "Patterns (full screen)", "Robustness", "Sources"];
   const at = order.map((h) => DOC.indexOf(`\n## ${h}\n`));
@@ -143,7 +157,7 @@ test("tui-patterns.md names every env var", () => {
 });
 
 test("tui-patterns.md cites each token value it uses (number drift guard)", () => {
-  const { spinner, decode, ramp, progress, motion, layout, box } = tui;
+  const { spinner, decode, ramp, progress, motion, layout, box, keys, robustness } = tui;
   const cites = [
     `\`${spinner.frames.join("")}\` (\`spinner.frames\`), ${spinner.frames.length} frames`,
     `${spinner.intervalMs}ms per frame (\`spinner.intervalMs\`), ${(spinner.intervalMs * spinner.frames.length) / 1000}s per cycle`,
@@ -157,7 +171,12 @@ test("tui-patterns.md cites each token value it uses (number drift guard)", () =
     `${progress.cells} cells (\`progress.cells\`) in \`${progress.role}\` (\`progress.role\`)`,
     `${motion.maxFps} frames per second (\`motion.maxFps\`)`,
     `${motion.firstOutputMs}ms (\`motion.firstOutputMs\`)`,
-    `\`maxWidth\` ${layout.maxWidth} columns`,
+    `\`indent\` ${layout.indent} columns, \`labelWidth\` ${layout.labelWidth} columns, \`blankBeforeSummary\` ${layout.blankBeforeSummary} line, \`maxWidth\` ${layout.maxWidth} columns`,
+    `right-aligned to ${progress.percentWidth} columns (\`progress.percentWidth\`)`,
+    `${robustness.osc11TimeoutMs}ms timeout (\`robustness.osc11TimeoutMs\`)`,
+    `at most ${robustness.promptRetries} times in all (\`robustness.promptRetries\`)`,
+    `\`${keys.up.unicode}\` and \`${keys.down.unicode}\` (\`keys.up\`, \`keys.down\`)`,
+    `written \`${keys.up.ascii}/${keys.down.ascii}\``,
     `capped at ${layout.maxWidth} columns (\`layout.maxWidth\`)`,
     `\`${box.topLeft.unicode} ${box.topRight.unicode} ${box.bottomLeft.unicode} ${box.bottomRight.unicode}\``,
     `\`${box.horizontal.unicode}\` and \`${box.vertical.unicode}\``,
@@ -185,5 +204,44 @@ test("Term column: L4 motion A, L4 reduced motion R, L6 glitch A, in both the do
     const term = row.split("|").map((c) => c.trim()).filter(Boolean).at(-1);
     assert.equal(term, level, `${label}: Term is ${term}`);
     assert.equal(MATRIX.rules[id].Term, level, `${id}: substrate-matrix.json Term is ${MATRIX.rules[id].Term}`);
+  }
+});
+
+/** The fenced code blocks of tui-patterns.md, each as an array of lines. */
+function fencedBlocks() {
+  return [...DOC.matchAll(/^```\n([\s\S]*?)^```$/gm)].map((m) => m[1].replace(/\n$/, "").split("\n"));
+}
+
+test("every non-ASCII character in a tui-patterns.md example is a tui token", () => {
+  // `…` marks a running label; it is prose punctuation, not a token.
+  const allowed = new Set(["…"]);
+  for (const [, g] of unicodeGlyphs()) allowed.add(g);
+  const blocks = fencedBlocks();
+  assert.ok(blocks.length >= 15, `expected the spec's example blocks, found ${blocks.length}`);
+  for (const lines of blocks) {
+    for (const line of lines) {
+      for (const ch of line) {
+        if (ch.codePointAt(0) <= 0x7e) continue;
+        assert.ok(allowed.has(ch), `example uses ${JSON.stringify(ch)}, which is not a tui token: ${line}`);
+      }
+    }
+  }
+});
+
+test("every progress example draws a bar of exactly progress.cells cells", () => {
+  const { cells, percentWidth } = tui.progress;
+  const indent = tui.layout.indent + 2;
+  const bars = fencedBlocks().flat().filter((l) => /^ +[█▓▒░]/.test(l) && /\d+\/\d+ +\d+%$/.test(l));
+  assert.ok(bars.length >= 3, `expected progress examples, found ${bars.length}`);
+  for (const l of bars) {
+    const chars = [...l];
+    assert.equal(chars.slice(0, indent).join(""), " ".repeat(indent), `bar not on the continuation column: ${l}`);
+    const bar = chars.slice(indent, indent + cells).join("");
+    assert.match(bar, /^█*(▓▒░|▓▒|▓)? *$/u, `bar is not filled run + edge + spaces: ${l}`);
+    assert.equal(chars.slice(indent + cells, indent + cells + 2).join(""), "  ", `no two-space gap after ${cells} cells: ${l}`);
+    const [, done, total, pct] = l.match(/(\d+)\/(\d+) +(\d+%)$/);
+    const full = Math.floor((done / total) * cells);
+    assert.equal(bar.replace(/ +$/, "").replace(/[▓▒░]/g, "").length, full, `filled run is not floor(done/total*cells): ${l}`);
+    assert.equal(l.slice(-percentWidth).trimStart(), pct, `percent field is not ${percentWidth} columns: ${l}`);
   }
 });

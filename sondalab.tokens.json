@@ -120,7 +120,7 @@
       "intervalMs": 100, "delayMs": 300, "role": "prompt"
     },
     "decode": { "glyphs": ["░", "▒", "▓", "█", "▚", "▞"], "randomAscii": [33, 126], "frames": 4, "frameMs": 60 },
-    "progress": { "cells": 24, "role": "prompt" },
+    "progress": { "cells": 24, "role": "prompt", "percentWidth": 4 },
     "motion": { "maxFps": 10, "firstOutputMs": 100 },
     "box": {
       "topLeft":     { "unicode": "╭", "ascii": "+" },
@@ -131,6 +131,11 @@
       "vertical":    { "unicode": "│", "ascii": "|" },
       "seam":        { "unicode": "▌", "ascii": ">" }
     },
+    "keys": {
+      "up":   { "unicode": "↑", "ascii": "up" },
+      "down": { "unicode": "↓", "ascii": "dn" }
+    },
+    "robustness": { "osc11TimeoutMs": 100, "promptRetries": 3 },
     "env": {
       "reducedMotion": ["SONDALAB_REDUCED_MOTION"],
       "accessible":    ["SONDALAB_ACCESSIBLE", "ACCESSIBLE"],
@@ -138,7 +143,8 @@
       "forceColor":    ["FORCE_COLOR"],
       "ci":            ["CI"],
       "term":          ["TERM"],
-      "colorTerm":     ["COLORTERM"]
+      "colorTerm":     ["COLORTERM"],
+      "ascii":         ["SONDALAB_ASCII"]
     }
   }
 }

@@ -69,6 +69,12 @@ Static text replaces the motion. A step that passes `spinner.delayMs` prints its
   ✓ Resolved 128 probes         2.1s
 ```
 
+A step that ends within `spinner.delayMs` prints no running line, only its final line, with motion on or off:
+
+```
+  ✓ Fetched manifest            0.1s
+```
+
 ## Effects
 
 L6 adapted to a terminal. The glitch becomes a decode; glass, aurora and goo have no terminal form. Pixel graphics are for data only.
@@ -78,9 +84,9 @@ L6 adapted to a terminal. The glitch becomes a decode; glass, aurora and goo hav
 The decode carries the glitch's meaning: something re-resolved. A value changed, a destructive action was confirmed, or validation failed. It never runs on idle output or on a banner.
 
 - **Scope:** only the changed token decodes, never a whole line.
-- **Frames:** 4 frames (`decode.frames`) of 60ms each (`decode.frameMs`), 240ms in all, under 300ms. Once, never looping.
+- **Frames:** 4 frames (`decode.frames`) of 60ms each (`decode.frameMs`), 240ms in all, under 300ms. Frames 1 to 3 scramble and frame 4 settles, so the token is visibly scrambled for about 180ms. Once, never looping.
 - **Order:** left to right. Frame *n* settles the first ⌊*n* / 4 × length⌋ characters; frame 4 is the final value.
-- **Glyphs:** each unsettled character is drawn from `░▒▓█▚▞` (`decode.glyphs`) plus random printable ASCII, code points 33 to 126 (`decode.randomAscii`). A space in the value stays a space, so the token keeps its shape. On a non-UTF-8 locale only the ASCII set is used.
+- **Glyphs:** each unsettled character is drawn from `░▒▓█▚▞` (`decode.glyphs`) plus random printable ASCII, code points 33 to 126 (`decode.randomAscii`). A space in the value stays a space, so the token keeps its shape. In ASCII mode ([Rules](#rules)) only the ASCII set is used.
 - **Colour:** the unsettled characters are painted in `prompt`; the settled value takes its own role.
 - **No flash:** the line never inverts or blinks, so luminance does not change between frames and WCAG 2.3.1 (three flashes) is never in play.
 - **Off** in every case where motion is off: the final value prints directly.
@@ -150,7 +156,7 @@ A line under a step (an error's why and fix, a next step, a progress bar) is a c
 ? Install the hook into ~/.config/git? [y/N]
 ```
 
-`? <question> [Y/n]`. The capital letter marks the default, which Enter accepts. The default is no (`[y/N]`) for any action outside the working directory; inside it, the default may be yes (`[Y/n]`). The `?` is the `question` glyph in the `prompt` role. An empty answer takes the default. Any other unrecognised input is never read as a choice: the prompt asks again, at most 3 times in all, and then fails with "no valid answer".
+`? <question> [Y/n]`. The capital letter marks the default, which Enter accepts. The default is no (`[y/N]`) for any action outside the working directory; inside it, the default may be yes (`[Y/n]`). The `?` is the `question` glyph in the `prompt` role. An empty answer takes the default. Any other unrecognised input is never read as a choice: the prompt asks again, at most 3 times in all (`robustness.promptRetries`), and then fails with "no valid answer".
 
 ### Summary
 
@@ -187,6 +193,8 @@ The process exits non-zero. An unexpected failure prints the same three lines; i
 
 The step line names the input that was not recognised. The continuation line offers the nearest valid input, `Did you mean` and the `?` in `prompt`. The program exits non-zero and runs nothing.
 
+This is the one error shape exempt from the three lines: two lines, with the suggestion in place of the why and the `Try:` line.
+
 ### Success with next step
 
 ```
@@ -206,10 +214,10 @@ A determinate step draws a bar on the continuation line under its running step l
 ```
 
 - **Bar:** 24 cells (`progress.cells`) in `prompt` (`progress.role`). The filled cells are `█`, ⌊done / total × 24⌋ of them. The leading edge, right after the filled cells, dithers through `▓▒░` (the ramp, darkest first), cut where the bar ends. The remaining cells are spaces.
-- **After the bar:** two spaces, the count `done/total` with `done` right-aligned to the width of `total`, two spaces, then the percentage right-aligned to 4 columns in `dim`.
-- **Ends:** at 0% the bar is the edge alone (`▓▒░`); at 100% it is 24 `█`. When the step ends, the bar line is cleared and the step line persists.
+- **After the bar:** two spaces, the count `done/total` with `done` right-aligned to the width of `total`, two spaces, then the percentage right-aligned to 4 columns (`progress.percentWidth`) in `dim`.
+- **Ends:** at 0% the bar is the edge alone (`▓▒░`), so a step that has started but counted nothing still shows it is alive; at 100% it is 24 `█`. When the step ends, the bar line is cleared and the step line persists.
 - **Redraw:** at most `motion.maxFps`, and only when a cell or the count changes.
-- **ASCII:** each cell is mapped through `ramp.ascii`.
+- **ASCII:** each cell is mapped through `ramp.ascii`. `▓` and `█` both become `#`, so the filled run and the edge differ only at `:` and `.`; that is accepted.
 - **Motion off:** no bar. The final step line carries the count ("Resolved 128 probes").
 
 ```
@@ -222,7 +230,7 @@ A determinate step draws a bar on the continuation line under its running step l
 - **A failure never uses a success glyph.** `failed` is `✗` in `err`; `✓` is only for `done` and `fixed`. A step that did not do its job is `failed` or `warn`, never `done`.
 - **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag.
 - **`NO_COLOR`: glyphs stay, color goes.** With `NO_COLOR` set the output is the same text with no escape sequences, unless a `--color` flag overrides it ([Colour](#colour)). Meaning is carried by the glyph and the word, never by colour alone.
-- **ASCII fallback.** When the locale is not UTF-8, or `TERM=dumb`, use the `ascii` form of every glyph, including the summary separator. Layout widths are unchanged: every Unicode glyph is one column wide, as is its ASCII form.
+- **ASCII fallback.** When the locale is not UTF-8, `TERM=dumb`, the `--ascii` flag is passed or `SONDALAB_ASCII=1` is set, use the `ascii` form of every glyph, including the summary separator. Layout widths are unchanged: every Unicode glyph is one column wide, as is its ASCII form.
 
 ## Patterns (full screen)
 
@@ -235,7 +243,7 @@ A full-screen view (an alternate-screen program with a key reader) uses the same
 │ q-71c0   ● live   12s        ││ cache        hit    │
 │ q-0d9e   ✗ err    5m         ││                     │
 ╰──────────────────────────────╯╰─────────────────────╯
-↑↓ move · enter open · / filter · : command · ? help · q quit
+↑↓ move · enter open · / filter · : command · ? help · q back · ctrl-c quit
 ```
 
 ### Panes
@@ -266,6 +274,8 @@ One footer line, at the bottom of the screen: keys in `accent`, verbs in `dim`, 
 | `q`, `esc` | back |
 | `ctrl-c` | quit |
 
+The arrows `↑` and `↓` (`keys.up`, `keys.down`) name the movement keys; in ASCII the pair is written `up/dn`.
+
 ### Destructive actions
 
 ```
@@ -285,7 +295,14 @@ No probes · add one with smartctx probe add <url>
 
 ### Plain mode
 
-Every full-screen view also has `--plain`: the same content as line output, with no alternate screen, no key reader and no redraw. Accessible mode implies it.
+Every full-screen view also has `--plain`: the same content as line output, with no alternate screen, no key reader and no redraw. Accessible mode implies it. The probes view above, with `--plain`:
+
+```
+ID       STATE    AGE
+q-8f2a   ✓ ok     2m
+q-71c0   ● live   12s
+q-0d9e   ✗ err    5m
+```
 
 ## Robustness
 
@@ -301,6 +318,7 @@ Every full-screen view also has `--plain`: the same content as line output, with
 | `CI` | `ci` | Set, motion off. |
 | `TERM` | `term` | `dumb`: no colour, no motion, ASCII glyphs. |
 | `COLORTERM` | `colorTerm` | `truecolor` or `24bit` allows truecolor. |
+| `SONDALAB_ASCII` | `ascii` | `1` uses the ASCII form of every glyph, like `--ascii`. |
 
 ### Colour
 
@@ -315,17 +333,25 @@ The roles are painted as ANSI 16 by default (`terminal.*.ansi`), so the user's t
 
 ### Light or dark
 
-To learn the background, query it with OSC 11 (`OSC 11 ; ? ST`) with a 100ms timeout, before any key reader starts. No reply within the timeout means dark.
+To learn the background, query it with OSC 11 (`OSC 11 ; ? ST`) with a 100ms timeout (`robustness.osc11TimeoutMs`), before any key reader starts. No reply within the timeout means dark.
 
 ### Accessible mode
 
 `SONDALAB_ACCESSIBLE=1`, or `ACCESSIBLE` set, turns on accessible mode: plain prompts (a numbered list answered by typing, no arrow-key menu), no redraw, every state written as a word next to its glyph, and full-screen views in `--plain`. It implies reduced motion. `SONDALAB_REDUCED_MOTION=1` alone turns the motion off and changes nothing else.
 
+```
+? Open which probe? Type a number, then Enter
+  1  q-8f2a  ok
+  2  q-71c0  live
+  3  q-0d9e  err
+> 2
+```
+
 ### Width
 
 - Wrap prose at the terminal width, capped at 100 columns (`layout.maxWidth`). When the width is unknown, use the cap.
 - Cut labels at `labelWidth`; never wrap them.
-- **Every glyph in `tui` is one column wide:** one code point, East Asian Width neither W nor F, not an emoji, no combining mark. Several glyphs (`░▒▓█`, the box set, `▌`, `●`, `○`, `·`) are East Asian Width A, ambiguous: the spec assumes the terminal renders ambiguous width as narrow, its default outside CJK locales. Under a CJK ambiguous-wide setting, use the ASCII forms.
+- **Every glyph in `tui` is one column wide:** one code point, East Asian Width neither W nor F, not an emoji, no combining mark. Several glyphs are East Asian Width A, ambiguous: `▒▓█`, `▌`, `●○·`, the box set, `…` and `↑↓`. The spec assumes the terminal renders ambiguous width as narrow, its default outside CJK locales. On a terminal set to render ambiguous width as wide (a CJK setup), `--ascii` or `SONDALAB_ASCII=1` is the override: every glyph takes its ASCII form.
 
 ### Windows
 
