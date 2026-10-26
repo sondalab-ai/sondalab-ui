@@ -14,4 +14,34 @@ print(paint("failed", "err"))       # red floor / soft-red on truecolor
 
 Roles: `prompt`, `ok`, `warn`, `err`, `dim`, `accent`.
 
+## Term tokens and the reference helper (0.6.0)
+
+The Term spec's numbers are constants, so a CLI never re-derives them: `GLYPHS`, `LAYOUT`, `RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS` and `ENV`.
+
+`sondalab_palette.term` builds the spec's strings and reads its environment rules. It writes nothing and keeps no time: redraw and timing are the caller's (`SPINNER["intervalMs"]`, `DECODE["frameMs"]`, `MOTION["maxFps"]`).
+
+```python
+import random, sys
+from sondalab_palette import term
+
+motion = term.motion_enabled()                 # off for non-TTY, CI, TERM=dumb, reduced motion, accessible
+ascii = term.ascii_mode(override=args.ascii or None)
+term.color_mode(flag=args.color, truecolor=True)   # 'none' | 'ansi16' | 'truecolor'
+
+term.step_line("done", "Resolved 128 probes", "2.1s", ascii=ascii)
+# '  ✓ Resolved 128 probes         2.1s'
+term.progress_bar(61, 128, ascii=ascii)
+# '    ███████████▓▒░             61/128   48%'
+term.spinner_frame(i, ascii=ascii)             # the glyph-column frame at tick i
+term.decode_frames("sha 9c41e0b", random.Random(), ascii=ascii)  # 4 frames, last is the value
+```
+
+The helper returns uncoloured text; paint the glyph with its `GLYPHS` role.
+
+`paint()` predates the Term spec and does not consult `color_mode`: it ignores the flag, `FORCE_COLOR` and TTY detection, and upgrades to truecolor whenever `COLORTERM` allows it. A caller that follows the spec's colour precedence builds the SGR itself from `ROLES`, based on the mode.
+
+### Changelog
+
+- **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`) and the `term` reference helper.
+
 Generated from the canonical `sondalab.tokens.json` — do not hand-edit `sondalab_palette/__init__.py`.

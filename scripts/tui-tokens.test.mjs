@@ -40,6 +40,16 @@ test("generated python exposes GLYPHS and LAYOUT", () => {
   assert.ok(PY.includes('"maxWidth": 100'), "maxWidth missing");
 });
 
+test("generated python exposes every tui table", () => {
+  for (const name of ["RAMP", "SPINNER", "DECODE", "PROGRESS", "MOTION", "BOX", "KEYS", "ROBUSTNESS", "ENV"]) {
+    assert.ok(PY.includes(`\n${name} = {\n`), `${name} table missing`);
+  }
+  assert.ok(PY.includes('"frames": (" ", "░", "▒", "▓", "█", "▓", "▒", "░")'), "spinner frames missing");
+  assert.ok(PY.includes('"intervalMs": 100'), "spinner interval missing");
+  assert.ok(PY.includes('"topLeft": ("╭", "+")'), "box corner missing");
+  assert.ok(PY.includes('"reducedMotion": ("SONDALAB_REDUCED_MOTION",)'), "env tuple missing");
+});
+
 test("terminal is unchanged: six roles, same values", () => {
   assert.deepEqual(t.terminal, {
     prompt: { ansi: "bright_yellow", true: "#F5A83C" },

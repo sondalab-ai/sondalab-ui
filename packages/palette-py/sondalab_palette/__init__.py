@@ -33,6 +33,77 @@ LAYOUT = {
     "maxWidth": 100,
 }
 
+# dither ramp, lightest to darkest; ascii[i] is the fallback for unicode[i]
+RAMP = {
+    "unicode": ("░", "▒", "▓", "█"),
+    "ascii": (".", ":", "#", "#"),
+}
+
+# burst spinner: frames (unicode) / ascii, one column wide, painted in role
+SPINNER = {
+    "frames": (" ", "░", "▒", "▓", "█", "▓", "▒", "░"),
+    "ascii": (" ", ".", ":", "#", "#", "#", ":", "."),
+    "intervalMs": 100,
+    "delayMs": 300,
+    "role": "prompt",
+}
+
+# decode effect: glyphs plus printable ASCII in randomAscii (inclusive code points)
+DECODE = {
+    "glyphs": ("░", "▒", "▓", "█", "▚", "▞"),
+    "randomAscii": (33, 126),
+    "frames": 4,
+    "frameMs": 60,
+}
+
+# progress bar: cell count, role, percent column width
+PROGRESS = {
+    "cells": 24,
+    "role": "prompt",
+    "percentWidth": 4,
+}
+
+# redraw cap and first-output budget
+MOTION = {
+    "maxFps": 10,
+    "firstOutputMs": 100,
+}
+
+# name -> (unicode, ascii): rounded light box drawing and the selection seam
+BOX = {
+    "topLeft": ("╭", "+"),
+    "topRight": ("╮", "+"),
+    "bottomLeft": ("╰", "+"),
+    "bottomRight": ("╯", "+"),
+    "horizontal": ("─", "-"),
+    "vertical": ("│", "|"),
+    "seam": ("▌", ">"),
+}
+
+# name -> (unicode, ascii): key names in hints
+KEYS = {
+    "up": ("↑", "up"),
+    "down": ("↓", "dn"),
+}
+
+# OSC 11 timeout and prompt retry cap
+ROBUSTNESS = {
+    "osc11TimeoutMs": 100,
+    "promptRetries": 3,
+}
+
+# setting -> the environment variables that control it
+ENV = {
+    "reducedMotion": ("SONDALAB_REDUCED_MOTION",),
+    "accessible": ("SONDALAB_ACCESSIBLE", "ACCESSIBLE"),
+    "noColor": ("NO_COLOR",),
+    "forceColor": ("FORCE_COLOR",),
+    "ci": ("CI",),
+    "term": ("TERM",),
+    "colorTerm": ("COLORTERM",),
+    "ascii": ("SONDALAB_ASCII",),
+}
+
 
 def _no_color() -> bool:
     return bool(os.environ.get("NO_COLOR"))
@@ -43,6 +114,7 @@ def supports_truecolor() -> bool:
 
 
 def paint(text: str, role: str, *, err: bool = False) -> str:
+    """Wrap text in role's SGR; NO_COLOR and COLORTERM only. Spec callers: term.color_mode."""
     if _no_color() or role not in ROLES:
         return text
     code, (r, g, b) = ROLES[role]

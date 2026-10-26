@@ -48,3 +48,14 @@ jobs:
         # build of the ladder (scripts/neutrals-ladder.test.mjs). It needs no
         # install: node:test and the repo's own files only.
         run: npm test
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Python palette tests
+        # 3.9 is the floor in packages/palette-py/pyproject.toml. setup-python
+        # has no 3.9 build for ubuntu-latest (26.04); uv fetches its own
+        # interpreter, as publish-palette.yml already relies on.
+        run: >
+          uv run --no-project --python 3.9 --with pytest
+          --with-editable packages/palette-py
+          python -m pytest packages/palette-py/tests
