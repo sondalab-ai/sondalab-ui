@@ -42,7 +42,7 @@ GLYPHS = {
 ${glyphs}
 }
 
-# layout integers: indent, labelWidth, blankBeforeSummary
+# layout integers: indent, labelWidth, blankBeforeSummary, maxWidth
 LAYOUT = {
 ${layout}
 }

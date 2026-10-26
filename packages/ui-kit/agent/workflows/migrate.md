@@ -44,7 +44,7 @@ Re-run the audit. R-violations must reach 0 or be blessed. Produce a before/afte
 ### 6 — Effects pass  · GATE
 Colour compliance makes a surface *correct*; the effects layer is what makes it read as Sondalab. A migration that stops at Step 5 produces a compliant, flat screen — which is the common failure of this workflow, not a safe minimum.
 
-Scoped to the substrate's Required column (`design-language.md` L6 rows: glass edge, aurora, goo, glitch, budget — all `N/A` on IDE and Term by default):
+Scoped to the substrate's Required column (`design-language.md` L6 rows: glass edge, aurora, goo, glitch, budget — all `N/A` on IDE by default; on Term only glitch applies, as `A`, in the form of the text decode in the repo's `docs/tui-patterns.md`):
 
 1. **Wire the runtime**, per `catalog.md` § *Turning effects on*. Without `mount()` the classes render Tier 0 with no error, and check 8 raises an R-violation.
 2. **Apply the canonical strings** from `catalog.md` for the components the surface already has. You are not redesigning: the declension is already bound per component.

@@ -25,11 +25,12 @@ GLYPHS = {
     "separator": ("·", "|", "dim"),
 }
 
-# layout integers: indent, labelWidth, blankBeforeSummary
+# layout integers: indent, labelWidth, blankBeforeSummary, maxWidth
 LAYOUT = {
     "indent": 2,
     "labelWidth": 28,
     "blankBeforeSummary": 1,
+    "maxWidth": 100,
 }
 
 

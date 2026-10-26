@@ -27,8 +27,8 @@ test("every ascii form is 7-bit", () => {
   }
 });
 
-test("layout carries the three integers", () => {
-  assert.deepEqual(t.tui.layout, { indent: 2, labelWidth: 28, blankBeforeSummary: 1 });
+test("layout carries the four integers", () => {
+  assert.deepEqual(t.tui.layout, { indent: 2, labelWidth: 28, blankBeforeSummary: 1, maxWidth: 100 });
 });
 
 test("generated python exposes GLYPHS and LAYOUT", () => {
@@ -37,6 +37,7 @@ test("generated python exposes GLYPHS and LAYOUT", () => {
   assert.ok(PY.includes('"failed": ("✗", "x", "err")'), "failed glyph row missing");
   assert.ok(PY.includes("LAYOUT = {"), "LAYOUT table missing");
   assert.ok(PY.includes('"labelWidth": 28'), "labelWidth missing");
+  assert.ok(PY.includes('"maxWidth": 100'), "maxWidth missing");
 });
 
 test("terminal is unchanged: six roles, same values", () => {
