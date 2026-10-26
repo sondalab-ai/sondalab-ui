@@ -395,8 +395,6 @@
      some tests locate by first occurrence. */
   :is(.sl-fx-glitch__text) { opacity: 1 !important; }
   :is(.sl-fx-glitch__shard) { opacity: 0 !important; }
-  /* The fill is gone, so the label stays the control's own. */
-  :is(.sl-btn, .sl-icon-btn).is-dithered { animation: none !important; }
 }
 
 /* A halftone is a picture made of spacing and size: high contrast shows none. */
@@ -2799,11 +2797,13 @@
    effects.js reads --slfx-dither-fill through the layer's own `color` when a
    wipe starts, so a product's or a theme's rebinding is followed.
 
-   WHERE IT LIES. Under the glass: z-index -3, after .sl-glass__backdrop in
-   DOM order, so the frost blurs the page and the fill is over it; the glass
-   tint (-2), shine and specular (-1), the live light, the press light, the
-   ::after ring (+1) and the label paint over the fill. On a control with no
-   glass it lies on the host's own background. The span rounds with the host
+   WHERE IT LIES. Over the glass tint and under the rest of the glass:
+   z-index -2, after .sl-glass__tint in DOM order, so the frost blurs the page,
+   the tint colours it and the fill is over both (owner, 2026-10-26: under the
+   tint a glass primary's 0.9 accent tint hid it almost completely). The shine
+   and specular (-1), the live light, the press light, the ::after ring (+1)
+   and the label paint over the fill. On a control with no glass it lies on
+   the host's own background. The span rounds with the host
    (border-radius: inherit, overflow: hidden) and holds fill cells only: it
    never draws an outline or a rim, the control's own border and ring stay its
    edge, and a round icon button keeps a smooth circle. No blend, opacity or
@@ -2811,9 +2811,15 @@
    throttle the glass beneath it.
 
    THE LABEL flips when the wipe has covered half the control (.is-dithered,
-   toggled by effects.js). It is a zero-length animation rather than a plain
-   colour: a transition on `color` would fade the flip, and an animation holds
-   the value without changing the one the transition watches. */
+   toggled by effects.js): `color` takes --slfx-dither-on and the host's own
+   colour transition (about 120ms) carries it. Only where the layer shows:
+   never in high contrast, an opt-out region, forced colours or reduced
+   motion, where the fill is hidden and the label must stay the control's own.
+
+   THE HOST'S STACKING CONTEXT is declared at zero weight (:where), so a
+   consumer's own unlayered position or isolation wins over it, and a layered
+   one loses to it: a product that pins a button static in a cascade layer
+   gets the kit's relative back. */
 :where(.sl-btn, .sl-icon-btn) {
   --slfx-dither-fill: var(--slc-accent-fill, var(--slc-accent));
   --slfx-dither-on: oklch(from var(--slfx-dither-fill) var(--_sl-on));
@@ -2832,7 +2838,7 @@
 .sl-fx-dither {
   position: absolute;
   inset: 0;
-  z-index: -3;
+  z-index: -2;
   border-radius: inherit;
   overflow: hidden;
   pointer-events: none;
@@ -2844,19 +2850,17 @@
   height: 100%;
 }
 
-@keyframes slfx-dither-on { to { color: var(--slfx-dither-on); } }
-/* Longhands, because this is not a loop: the guards that read `animation:` for
-   a running loop (reduced motion, data-sl-fx-still) have nothing to hold. */
-@media (prefers-reduced-motion: no-preference) {
-  :is(.sl-btn, .sl-icon-btn).is-dithered {
-    animation-name: slfx-dither-on;
-    animation-duration: 0s;
-    animation-fill-mode: both;
+@media (prefers-reduced-motion: no-preference) and (not (forced-colors: active)) {
+  :root:not([data-sl-theme="high-contrast"]) :is(.sl-btn, .sl-icon-btn).is-dithered:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
+    color: var(--slfx-dither-on);
   }
 }
 
 /* Never where the effects layer is refused. */
 :root[data-sl-theme="high-contrast"] .sl-fx-dither,
 :is([data-sl-fx="off"], [data-sl-fx="off"] *) > .sl-fx-dither { display: none; }
-:root[data-sl-theme="high-contrast"] :is(.sl-btn, .sl-icon-btn).is-dithered,
-:is([data-sl-fx="off"], [data-sl-fx="off"] *):is(.sl-btn, .sl-icon-btn).is-dithered { animation: none; }
+/* A wipe already running when reduced motion comes on drains unseen: the layer
+   is hidden, effects.js still clears it. */
+@media (prefers-reduced-motion: reduce) {
+  .sl-fx-dither { display: none; }
+}

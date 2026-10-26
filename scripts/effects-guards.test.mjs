@@ -1131,10 +1131,10 @@ test("dither: ink is gone from both files", () => {
   assert.doesNotMatch(effectsJs, /sl-fx-ink|slfx-ink|data-sl-ink|injectInk|onInk|INK_/, "effects.js names no ink");
 });
 
-test("dither: the layer is under the glass, rounded with its host, clipped, and inert", () => {
+test("dither: the layer is over the glass tint, rounded with its host, clipped, and inert", () => {
   const layer = ditherRule(".sl-fx-dither");
   assert.ok(layer, "the .sl-fx-dither rule is found");
-  assert.match(layer, /z-index:\s*-3;/, "below the glass tint (-2), shine and specular (-1)");
+  assert.match(layer, /z-index:\s*-2;/, "the tint's own step, after it in DOM order; below the shine and specular (-1)");
   assert.match(layer, /position:\s*absolute;/);
   assert.match(layer, /inset:\s*0;/);
   assert.match(layer, /border-radius:\s*inherit;/, "the radius is the host's, never written here");
@@ -1156,8 +1156,8 @@ test("dither: it paints fill cells only: no outline, rim, blend, opacity or filt
 test("dither: it is built lazily, after the backdrop, and mount() builds no canvas", () => {
   const ensure = jsFnBody("ensureDither");
   assert.match(ensure, /createElement\("canvas"\)/, "the canvas is made here");
-  assert.match(ensure, /\.sl-glass__backdrop/);
-  assert.match(ensure, /backdrop\.after\(layer\)/, "after the backdrop in DOM order");
+  assert.match(ensure, /:scope > \.sl-glass__tint"\) \?\? host\.querySelector\(":scope > \.sl-glass__backdrop"\)/, "after the tint, else the backdrop");
+  assert.match(ensure, /under\.after\(layer\)/, "after it in DOM order");
   assert.match(ensure, /else host\.prepend\(layer\)/, "first child where there is no glass");
   assert.equal((effectsJs.match(/createElement\("canvas"\)/g) ?? []).length, 1, "one canvas is made in effects.js, and in ensureDither");
   assert.equal((effectsJs.match(/ensureDither\(/g) ?? []).length, 2, "ensureDither is defined once and called once");
@@ -1169,12 +1169,14 @@ test("dither: it is built lazily, after the backdrop, and mount() builds no canv
   assert.ok(effectsJs.indexOf('addEventListener("pointerover", onDitherCross') > guard, "armed after the reduced-motion guard");
 });
 
-test("dither: touch, a disabled control, reduced motion and an opt-out region raise no wipe", () => {
+test("dither: touch, a disabled control, reduced motion and an opt-out region start no wipe, and a running one always drains", () => {
   const cross = jsFnBody("onDitherCross");
   assert.match(cross, /ev\.pointerType === "touch"/);
-  assert.match(cross, /suppressed\(\) \|\| window\.matchMedia\(REDUCE\)\.matches/, "not even under the motion derogation");
-  assert.match(cross, /host\.matches\(':disabled, \[aria-disabled="true"\]'\)/);
-  assert.match(cross, /host\.closest\('\[data-sl-fx="off"\]'\)/);
+  assert.match(cross, /entering && \(suppressed\(\) \|\| window\.matchMedia\(REDUCE\)\.matches\)/, "only the way in is gated, not even under the motion derogation");
+  assert.match(cross, /entering && host\.matches\(':disabled, \[aria-disabled="true"\]'\)/);
+  assert.match(cross, /entering && host\.closest\('\[data-sl-fx="off"\]'\)/);
+  assert.doesNotMatch(cross.slice(0, cross.indexOf("const entering")), /suppressed|matchMedia/, "nothing gates the way out");
+  assert.match(effects, /@media \(prefers-reduced-motion: reduce\) \{\s*\.sl-fx-dither \{ display: none; \}/, "a wipe running when reduced motion comes on is hidden while it drains");
 });
 
 test("dither: one shared rAF loop that sleeps when nothing moves", () => {
@@ -1226,18 +1228,32 @@ test("dither: the fill and the label are role-vars bound per variant, and JS rea
   assert.match(ditherRule(":where(.sl-btn--primary)"), /--slfx-dither-fill:\s*var\(--slc-text\);/, "the inverse neutral on a primary");
   assert.match(ditherRule(":where(.sl-btn--danger:not(.sl-btn--primary), .sl-icon-btn--danger)"), /--slfx-dither-fill:\s*var\(--slc-danger\);/);
   assert.match(ditherRule(".sl-fx-dither"), /color:\s*var\(--slfx-dither-fill\);/, "the layer carries the fill as its colour, and JS reads it");
-  assert.match(jsFnBody("onDitherCross"), /d\.fill = getComputedStyle\(d\.layer\)\.color;/, "read when a wipe starts");
+  assert.match(jsFnBody("readDitherFill"), /d\.fill = getComputedStyle\(d\.layer\)\.color;/, "read off the layer");
   assert.doesNotMatch(DITHER, /currentcolor/i, "a custom property cannot hold currentColor for another element");
 });
 
-test("dither: the label flips through .is-dithered, by an animation so no transition fades it", () => {
-  assert.match(effects, /@keyframes slfx-dither-on \{ to \{ color: var\(--slfx-dither-on\); \} \}/);
-  const flip = RULES.find((r) => r.selector === ":is(.sl-btn, .sl-icon-btn).is-dithered" && /animation-name/.test(r.body))?.body ?? "";
-  assert.match(flip, /animation-name:\s*slfx-dither-on;[^}]*animation-duration:\s*0s;[^}]*animation-fill-mode:\s*both;/);
-  assert.doesNotMatch(flip, /(?:^|;)\s*(?:color|transition)\s*:/, "the colour is held by the animation, not set: setting it would start a transition");
-  assert.ok(effects.indexOf("slfx-dither-on;") > effects.lastIndexOf("@media (prefers-reduced-motion: no-preference)", effects.indexOf("slfx-dither-on;")), "inside the no-preference guard");
+test("dither: the label flips through .is-dithered, only where the fill shows, and animates nothing of the host's", () => {
+  const flip = RULES.find((r) => /\.is-dithered/.test(r.selector) && /color:/.test(r.body));
+  assert.ok(flip, "the flip rule");
+  assert.match(flip.body, /color:\s*var\(--slfx-dither-on\);/);
+  assert.match(flip.selector, /:root:not\(\[data-sl-theme="high-contrast"\]\)/, "not in high contrast");
+  assert.match(flip.selector, /:not\(:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\)\)/, "not in an opt-out region");
+  const at = effects.indexOf(flip.body.trim());
+  const media = effects.lastIndexOf("@media", at);
+  assert.match(effects.slice(media, effects.indexOf("{", media)), /prefers-reduced-motion: no-preference\) and \(not \(forced-colors: active\)\)/, "not under reduced motion or forced colours");
+  assert.doesNotMatch(effects, /@keyframes slfx-dither|animation-name:\s*slfx-dither/, "no keyframes: an animation-name would replace the host's own animations");
   assert.match(effectsJs, /const DITHER_FLIP = 0\.5;/);
   assert.match(jsFnBody("drawDither"), /d\.host\.classList\.toggle\("is-dithered", flipped\)/);
+});
+
+test("dither: the fill is re-read at every wipe start and on a theme change, and an unparsable one paints nothing", () => {
+  assert.match(jsFnBody("onDitherCross"), /if \(entering\) \{[\s\S]*readDitherFill\(d\);/);
+  assert.match(jsFnBody("watchDitherTheme"), /attributeFilter: \["data-sl-theme"\]/);
+  assert.match(jsFnBody("watchDitherTheme"), /readDitherFill\(d\);\s*drawDither\(d\);/);
+  assert.match(jsFnBody("applyDitherFill"), /fillStyle = "transparent";\s*d\.ctx\.fillStyle = d\.fill;/);
+  assert.match(jsFnBody("drawDither"), /applyDitherFill\(d\);/, "every draw: resizing a canvas resets its fill");
+  assert.match(jsFnBody("ditherStep"), /Math\.max\(0, Math\.min\(64, now - ditherLast\)\)/, "a frame timestamp before the seed never runs a wipe backwards");
+  assert.match(jsFnBody("ditherStep"), /sizeDither\(d\);/, "a resize during a wipe is followed");
 });
 
 test("dither: its host is its own stacking context at zero weight, and the layer is cleaned up with the host", () => {
@@ -1248,9 +1264,8 @@ test("dither: its host is its own stacking context at zero weight, and the layer
   assert.match(jsFnBody("pruneDithers"), /if \(host\.isConnected\) continue;[\s\S]*dithering\.delete\(d\);[\s\S]*dithers\.delete\(host\);/);
 });
 
-test("dither: high contrast and an opt-out region hide the layer and keep the label", () => {
+test("dither: high contrast and an opt-out region hide the layer", () => {
   assert.match(effects, /:root\[data-sl-theme="high-contrast"\] \.sl-fx-dither,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\) > \.sl-fx-dither\s*\{\s*display:\s*none;/);
-  assert.match(effects, /:root\[data-sl-theme="high-contrast"\] :is\(\.sl-btn, \.sl-icon-btn\)\.is-dithered,\s*:is\(\[data-sl-fx="off"\], \[data-sl-fx="off"\] \*\):is\(\.sl-btn, \.sl-icon-btn\)\.is-dithered \{ animation: none; \}/, "no fill, so no flip");
 });
 
 // Regression, 2026-10-01: .sl-glass set the label at 0-1-0, tying and beating
@@ -1284,7 +1299,6 @@ test("forced colours hide every layer the kill switch hides, plus glass and the 
   const block = effects.slice(at);
   assert.match(block, /:is\(\.sl-fx-glitch__shard\) \{ opacity: 0 !important; \}/, "the shatter's bands go");
   assert.match(block, /:is\(\.sl-fx-glitch__text\) \{ opacity: 1 !important; \}/, "and the label comes back");
-  assert.match(block, /:is\(\.sl-btn, \.sl-icon-btn\)\.is-dithered \{ animation: none !important; \}/, "the dither's label flip goes with its fill");
 });
 
 // The workbench's surfaces (0.33) draw their recipe in box-shadow and keep

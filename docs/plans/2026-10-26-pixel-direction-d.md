@@ -24,13 +24,13 @@ The owner tests only at the end. There is no mid-epic checkpoint.
 
 ## How glass and light cope (the owner's focus)
 
-The dither layer is a span plus a canvas, injected into the isolated `.sl-btn` **after `__backdrop`, at z-index −3**. In an isolated stacking context the host background paints first, then children with a negative z-index, in z order and then in DOM order.
+The dither layer is a span plus a canvas, injected into the isolated `.sl-btn` **after `__tint`, at z-index −2** (owner, 2026-10-26: under the tint a glass primary's 0.9 accent tint hid the fill almost completely). In an isolated stacking context the host background paints first, then children with a negative z-index, in z order and then in DOM order.
 
-| Effect | Layer / z | With the fill under the glass (chosen) | Decision |
+| Effect | Layer / z | With the fill over the tint (chosen) | Decision |
 |---|---|---|---|
 | Glass `__backdrop` (blur) | span, −3 | covered by the fill while hovered | accepted: hover means intent, so the frost "fills in" |
 | Lens (`backdrop-filter: url()` on the host) | the host's own backdrop | covered while hovered, because it paints with the host background | accepted. Refraction returns on leave. |
-| Glass `__tint` (gradients) | −2 | **paints over the fill**, so the pixels look behind glass | measure label contrast *through* the tint |
+| Glass `__tint` (gradients) | −2 | **under the fill**: the fill paints over it (same step, later in DOM order) | owner, 2026-10-26; the label is read against the fill itself |
 | Glass `__shine` (inset rim) | −1 | over the fill | no change |
 | Specular arc and aurora arc | `::after`, +1 | over the fill | no change. Both stay smooth 1px hairlines on the smooth radius. |
 | Aurora seated bloom | sibling outside the host | unaffected | no change |

@@ -1184,9 +1184,10 @@ function pruneDetached() {
    A button or icon button answers the pointer with a fill that grows through
    an 8x8 Bayer threshold from the point the pointer crossed the edge, and
    drains toward the point it left (dither-core.js owns the maths). The fill is
-   drawn as CELL_PX squares on a canvas inside one injected span that sits under
-   the glass, at z-index -3: the glass tint, shine, live light, the press light,
-   the ring and the label all paint over it. The span rounds with its host and
+   drawn as CELL_PX squares on a canvas inside one injected span that sits over
+   the glass tint, at z-index -2 after it in DOM order (and over the frost):
+   the glass shine, live light, the press light, the ring and the label all
+   paint over it. The span rounds with its host and
    clips; the canvas draws fill cells only, never an outline, so the control's
    own border stays the edge and a round button keeps a smooth circle.
    The layer is built lazily, on the first pointer entry into a host, and one
@@ -1225,8 +1226,40 @@ function motionMs(cs, name, fallback) {
  *  @param {number} p linear progress 0..1 */
 const ditherEase = (p) => 1 - (1 - p) ** 3;
 
+/** The fill, read off the layer's own colour (--slfx-dither-fill).
+ *  @param {object} d a control's dither state */
+function readDitherFill(d) {
+  d.fill = getComputedStyle(d.layer).color;
+}
+
+/** Set the canvas's fill. Resizing a canvas resets its state, so this runs on
+ *  every draw. A value the canvas cannot parse leaves the transparent keyword
+ *  it was reset to, so nothing paints rather than the previous colour.
+ *  @param {object} d a control's dither state */
+function applyDitherFill(d) {
+  d.ctx.fillStyle = "transparent";
+  d.ctx.fillStyle = d.fill;
+}
+
+let ditherThemeWatch = null;
+
+/** A theme switch re-reads every live fill and repaints it, once, for the page.
+ *  @returns {void} */
+function watchDitherTheme() {
+  if (ditherThemeWatch || typeof MutationObserver !== "function") return;
+  ditherThemeWatch = new MutationObserver(() => {
+    for (const d of dithers.values()) {
+      if (d.p <= 0) continue;
+      readDitherFill(d);
+      drawDither(d);
+    }
+  });
+  ditherThemeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-sl-theme"] });
+}
+
 /** Build a control's layer, once: the span and its canvas, after the glass
- *  backdrop when there is one so the fill is over the frost and under the tint.
+ *  tint (else the backdrop) when there is one, so the fill is over the frost
+ *  and the tint and under the shine.
  *  @param {Element} host a button or icon button
  *  @returns {object} the control's dither state */
 function ensureDither(host) {
@@ -1237,11 +1270,12 @@ function ensureDither(host) {
   layer.setAttribute("aria-hidden", "true");
   const canvas = document.createElement("canvas");
   layer.append(canvas);
-  const backdrop = host.querySelector(":scope > .sl-glass__backdrop");
-  if (backdrop) backdrop.after(layer);
+  const under = host.querySelector(":scope > .sl-glass__tint") ?? host.querySelector(":scope > .sl-glass__backdrop");
+  if (under) under.after(layer);
   else host.prepend(layer);
   d = { host, layer, canvas, ctx: canvas.getContext("2d"), p: 0, dir: 0, origin: { x: 0, y: 0 }, grid: { cols: 0, rows: 0 }, fill: "", msIn: DITHER_MS.in, msOut: DITHER_MS.out, flipped: false, w: 0, h: 0, dpr: 1 };
   dithers.set(host, d);
+  watchDitherTheme();
   return d;
 }
 
@@ -1268,13 +1302,12 @@ function drawDither(d) {
   const { ctx, canvas, grid, dpr } = d;
   const t = ditherEase(d.p);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  applyDitherFill(d);
   if (t >= 1) {
-    ctx.fillStyle = d.fill;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   } else if (t > 0) {
     const covered = wipeFrame(grid, d.origin, t);
     const cell = CELL_PX * dpr;
-    ctx.fillStyle = d.fill;
     ctx.beginPath();
     for (let j = 0; j < grid.rows; j++) {
       for (let i = 0; i < grid.cols; i++) {
@@ -1298,9 +1331,10 @@ function drawDither(d) {
  *  @param {number} now the frame's timestamp */
 function ditherStep(now) {
   ditherFrame = 0;
-  const dt = Math.min(64, now - ditherLast);
+  const dt = Math.max(0, Math.min(64, now - ditherLast));
   ditherLast = now;
   for (const d of dithering) {
+    sizeDither(d);
     d.p = Math.min(1, Math.max(0, d.p + (d.dir * dt) / (d.dir > 0 ? d.msIn : d.msOut)));
     drawDither(d);
     if (d.p === (d.dir > 0 ? 1 : 0)) {
@@ -1321,18 +1355,20 @@ function ditherWake() {
  *  fill and durations are read, the wipe's origin is the crossing, and it runs
  *  forward from wherever the last one stopped. Out: the origin moves to where
  *  the pointer left and the wipe runs back. Touch has no hover to answer, and
- *  reduced motion and high contrast get the control's declared hover alone.
+ *  reduced motion and high contrast start no wipe: the declared hover stands.
  *  @param {PointerEvent} ev a delegated pointerover or pointerout */
 function onDitherCross(ev) {
   if (ev.pointerType === "touch") return;
-  // Not even under the motion derogation (mount's ignoreReducedMotion): that
-  // lets the glitch and the halftone move, and the wipe is neither.
-  if (suppressed() || window.matchMedia(REDUCE).matches) return;
   const host = ev.target instanceof Element ? ev.target.closest(DITHER_HOSTS) : null;
   if (!host || (ev.relatedTarget instanceof Node && host.contains(ev.relatedTarget))) return;
   const entering = ev.type === "pointerover";
+  // Only the way in is gated. A wipe already running always drains, even if
+  // reduced motion came on mid-hover (effects.css hides the layer there). Not
+  // even the motion derogation (mount's ignoreReducedMotion) lets one start:
+  // that lets the glitch and the halftone move, and the wipe is neither.
+  if (entering && (suppressed() || window.matchMedia(REDUCE).matches)) return;
   if (entering && host.matches(':disabled, [aria-disabled="true"]')) return;
-  if (host.closest('[data-sl-fx="off"]')) return;
+  if (entering && host.closest('[data-sl-fx="off"]')) return;
   const d = entering ? ensureDither(host) : dithers.get(host);
   if (!d) return;
   const r = host.getBoundingClientRect();
@@ -1343,7 +1379,7 @@ function onDitherCross(ev) {
     const cs = getComputedStyle(host);
     d.msIn = motionMs(cs, "--sl-motion-dither-in", DITHER_MS.in);
     d.msOut = motionMs(cs, "--sl-motion-dither-out", DITHER_MS.out);
-    d.fill = getComputedStyle(d.layer).color;
+    readDitherFill(d);
   }
   d.dir = entering ? 1 : -1;
   dithering.add(d);
