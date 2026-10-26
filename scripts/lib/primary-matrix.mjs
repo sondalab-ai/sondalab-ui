@@ -188,7 +188,7 @@ function gradientStops(value, env) {
 
 /** One wiring's rules, built once per product. */
 const ruleCache = new Map();
-function rulesFor(wiring, id) {
+export function rulesFor(wiring, id) {
   const key = `${wiring}/${id}`;
   if (!ruleCache.has(key)) ruleCache.set(key, { ...WIRINGS[wiring](id), rules: sheets(WIRINGS[wiring](id).css) });
   return ruleCache.get(key);
@@ -263,7 +263,7 @@ export function marks({ wiring, id, theme, states = [] }) {
   const w = rulesFor(wiring, id);
   const css = read("components.css");
   const values = {
-    check: css.match(/\.sl-check__box::after \{[^}]*border: solid ([^;]+);/)[1],
+    check: css.match(/\.sl-check__box::after \{[^}]*background: ([^;]+);/)[1],
     radio: css.match(/\.sl-radio__box::after \{[^}]*background: ([^;]+);/)[1],
     switch: css.match(/\.sl-switch__input:checked \+ \.sl-switch__track::after \{[^}]*background: ([^;]+);/)[1],
   };

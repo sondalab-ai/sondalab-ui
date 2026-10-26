@@ -16,14 +16,6 @@ const lens = read("glass-lens.js");
 const effectsCss = strip(read("effects.css"));
 const glassCss = strip(read("glass.css"));
 
-test("the liquid drop rests under a still pointer and writes only changed attributes", () => {
-  const loop = effectsJs.slice(effectsJs.indexOf("function integrateLiquid("), effectsJs.indexOf("function ensureLiquidLoop("));
-  assert.match(loop, /const resting = target === 1/, "a drop at rest stops the loop");
-  assert.match(loop, /getAnimations\(\)\.length/, "unless a colour is still in flight");
-  assert.match(effectsJs, /addEventListener\("transitionrun", onLiquidTransition/, "and a new transition wakes it");
-  assert.match(effectsJs, /if \(skinParts\.drop\.getAttribute\(name\) !== value\)/, "a filter attribute is written only when it changes");
-});
-
 test("a goo field lands a release only for a press it saw", () => {
   const up = goo.slice(goo.indexOf("const onUp = () => {"), goo.indexOf("const onBlur"));
   assert.match(up, /if \(!held\) return;/);
@@ -57,4 +49,22 @@ test("the curtains move on compositor properties; their blur is fixed", () => {
   }
   assert.doesNotMatch(effectsCss, /slfx-pillars-breathe|slfx-pillars-drift|--slfx-pillar-x|--slfx-pillar-soft/, "the old single clock is gone");
   assert.match(effectsCss, /filter: blur\(8\.5px\);/);
+});
+
+test("mount() creates no canvas: the dither layer waits for the first pointer entry", () => {
+  const fnBody = (name) => {
+    const at = effectsJs.indexOf(`function ${name}(`);
+    assert.ok(at > -1, `missing function: ${name}`);
+    let depth = 0;
+    let i = effectsJs.indexOf("{", effectsJs.indexOf(")", at));
+    const from = i;
+    do { depth += effectsJs[i] === "{" ? 1 : effectsJs[i] === "}" ? -1 : 0; i++; } while (depth > 0);
+    return effectsJs.slice(from, i);
+  };
+  const mount = fnBody("mount").replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.doesNotMatch(mount, /createElement\("canvas"\)|ensureDither|sl-fx-dither/, "mount() builds nothing for the dither");
+  // The one place a dither canvas is made is ensureDither, and the only caller is the pointer entry.
+  assert.match(fnBody("ensureDither"), /createElement\("canvas"\)/);
+  assert.match(fnBody("onDitherCross"), /entering \? ensureDither\(host\)/);
+  assert.equal((effectsJs.match(/ensureDither\(/g) ?? []).length, 2, "defined once, called once");
 });

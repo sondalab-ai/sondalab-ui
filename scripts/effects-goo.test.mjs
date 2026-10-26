@@ -28,7 +28,7 @@ const css = readFileSync(resolve(KIT, "effects.css"), "utf8").replace(/\/\*[\s\S
 /* ── geometry ─────────────────────────────────────────────────────────────── */
 
 test("cornerPx resolves a radius the way the browser paints it", () => {
-  // Carried over from the liquid's own coverage: --sl-radius-pill is 9999px,
+  // --sl-radius-pill is 9999px,
   // and a shape traced against that literal lands thousands of pixels away.
   assert.equal(cornerPx("9999px", 40, 40), 20, "a pill on a 40px box paints a circle");
   assert.equal(cornerPx("9999px", 200, 40), 20, "and is bounded by the SHORTER side");
@@ -379,7 +379,7 @@ test("weldedMembers uses the same threshold the filter does", () => {
 });
 
 test("a welded member gives up its border, and only by border-image", () => {
-  // The liquid's instrument, for the liquid's reason: border-color must stay
+  // border-color must stay
   // readable — the author's hover states depend on it, and the substance reads
   // its member's computed paint every frame.
   const rule = css.match(/\.sl-fx-goo__member\.is-goo-welded\s*\{([^}]*)\}/);
@@ -455,7 +455,7 @@ test("a welded member that is also glass gives up its hairline", () => {
   // in a welded toolbar kept a visible edge.
   const rule = css.match(/\.sl-fx-goo \.sl-fx-glass\.sl-fx-goo__member\.is-goo-welded::after\s*\{([^}]*)\}/);
   assert.ok(rule, "the welded glass member must stand its ring down");
-  assert.match(rule[1], /opacity:\s*0/, "the same instrument the liquid's live host uses");
+  assert.match(rule[1], /opacity:\s*0/, "the weld hides the ring on ::after");
 });
 
 test("the loop writes no attribute it would not change", () => {
@@ -509,20 +509,18 @@ test("the showcase puts no form control inside a goo field", () => {
   assert.deepEqual(controls.map((m) => m[1].trim()), [], "a control member is inert, so one here would be a silent no-op the page still claims as a demonstration");
 });
 
-test("both families share one goo chain, and the weld constant is derived from it", () => {
-  // The liquid's skin and the field weld silhouettes with the same slope, and
-  // WELD_K is what that slope implies. Keeping the pair in two files let one
-  // be changed without the other, which would leave the weld distance an
-  // author binds meaning something else. This asserts the tie: the slope's
+test("the field takes its goo chain from geom.js, and the weld constant is derived from it", () => {
+  // The field welds silhouettes with a slope, and WELD_K is what that slope
+  // implies. Keeping the pair in two files let one be changed without the
+  // other, which would leave the weld distance an author binds meaning
+  // something else. This asserts the tie: the slope's
   // midpoint must land on alpha 0.5, because 1.3489795 is derived from it.
   assert.equal((0.5 - GOO_INTERCEPT) / GOO_CONTRAST, 0.5, "the slope's midpoint is the level set the weld is measured against");
 
   const effectsJs = readFileSync(resolve(KIT, "effects.js"), "utf8");
-  for (const [file, src] of [["effects.js", effectsJs], ["goo-field.js", js]]) {
-    assert.doesNotMatch(src, /^const GOO_(?:CONTRAST|INTERCEPT)\s*=/m, `${file} must import the chain, not redeclare it`);
-    assert.match(src, /GOO_CONTRAST[\s\S]{0,400}from "\.\/geom\.js"|from "\.\/geom\.js"[\s\S]{0,400}GOO_CONTRAST/,
-      `${file} must take it from geom.js`);
-  }
+  assert.doesNotMatch(js, /^const GOO_(?:CONTRAST|INTERCEPT)\s*=/m, "goo-field.js must import the chain, not redeclare it");
+  assert.match(js, /GOO_CONTRAST[\s\S]{0,400}from "\.\/geom\.js"|from "\.\/geom\.js"[\s\S]{0,400}GOO_CONTRAST/,
+    "goo-field.js must take it from geom.js");
   // …and the geometry with it: one clamp, not two.
   assert.doesNotMatch(effectsJs, /^function cornerPx\(|^function roundedRectPath\(/m,
     "effects.js must not keep its own copy of the radius clamp or the box path");
@@ -598,7 +596,7 @@ test("the drift composes with a transform instead of replacing one", () => {
   assert.ok(frames, "the drift's keyframes must exist");
   assert.match(frames[0], /translate:/, "the drift animates the `translate` property");
   assert.doesNotMatch(frames[0], /transform:/,
-    "a member may be a liquid host or a pane, and both put a scale on `transform` under the pointer");
+    "a member may be a pane, and it puts a scale on `transform` under the pointer");
 });
 
 test("each drifting member gets its own period, not only its own phase", () => {

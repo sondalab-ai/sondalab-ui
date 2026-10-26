@@ -41,7 +41,7 @@ test("components.css reads the spectrum only inside the two opt-in ornaments", (
 
 for (const [host, edge] of [
   [".sl-card", /border:\s*1px solid var\(--slc-edge-surface\)/],
-  [".sl-field__input", /border:\s*1px solid var\(--slc-edge-control\)/],
+  [".sl-field__input", /border:\s*1px solid var\(--slc-edge-hairline\)/],
   // the primary's edge is its fill set's (0.32, declared on the control):
   // --slc-edge-accent unless a tone swaps the set
   [".sl-btn--primary", /border-color:\s*var\(--_sl-fill-edge\)/],
@@ -156,7 +156,7 @@ test("light: a card's edge is its surface in shade, visibly apart from it", () =
   assert.ok(ratio(edge, surface) >= 1.2, `${ratio(edge, surface).toFixed(2)}:1`);
 });
 
-test("light: a field's edge is the one control edge, 3:1 on the canvas and the surface", () => {
+test("light: the control edge (a field's hover edge, the strong one) is 3:1 on the canvas and the surface", () => {
   const env = lightEnv();
   const edge = evaluate("var(--slc-edge-control)", env);
   for (const g of ["--slc-canvas", "--slc-surface"]) {

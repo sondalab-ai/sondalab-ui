@@ -285,7 +285,7 @@ test("effects-runtime: one finding for the whole surface, not one per file", () 
   const out = auditEffectsRuntime([
     { file: "a.html", text: '<b class="sl-fx-glass">a</b>' },
     { file: "b.html", text: '<b class="sl-fx-aurora">b</b>' },
-    { file: "c.html", text: '<b class="sl-fx-liquid">c</b>' },
+    { file: "c.html", text: '<b class="sl-fx-goo">c</b>' },
   ]);
   assert.equal(out.length, 1, "the omission is a property of the surface");
   assert.equal(out[0].file, "a.html");

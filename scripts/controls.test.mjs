@@ -334,7 +334,7 @@ test("every labelled accent fill reads the fill set on the control: primary, che
     assert.match(decl(rule(sel), "--_sl-depth"), /^inset 0 -1\.5px 0 var\(--_sl-fill-edge\), 0 0 1\dpx -2px color-mix\(in srgb, var\(--_sl-fill\) calc\(var\(--slc-glow\) \* 1[12]0%\), transparent\)$/, sel);
   }
   assert.equal(decl(rule(".sl-switch__input:checked + .sl-switch__track::after"), "background"), "var(--_sl-on-fill)");
-  assert.match(rule(".sl-check__box::after"), /border:\s*solid var\(--_sl-on-fill\)/);
+  assert.equal(decl(rule(".sl-check__box::after"), "background"), "var(--_sl-on-fill)");
   assert.equal(decl(rule(".sl-radio__box::after"), "background"), "var(--_sl-on-fill)");
   // the public roles stay on :root for a fill a product draws itself (a count badge)
   const root = css.match(/:root \{([^}]*)\}/)[1];
@@ -346,13 +346,13 @@ test("every labelled accent fill reads the fill set on the control: primary, che
 test("secondary raised, icon button clear in its edge, fields and tracks sunken, boxes on the canvas", () => {
   const ghost = rule(".sl-btn--ghost");
   assert.equal(decl(ghost, "background"), "var(--slc-raised)");
-  assert.equal(decl(ghost, "border-color"), "var(--slc-edge-control)");
+  assert.equal(decl(ghost, "border-color"), "var(--slc-edge-hairline)", "owner exception 2026-10-26: a text button rests on the translucent hairline");
   assert.equal(decl(ghost, "--_sl-depth"), "inset 0 1px 0 var(--slc-lit), var(--slc-shadow-sm)");
   assert.equal(decl(rule(".sl-btn--ghost:hover:not(:disabled)"), "background"), "var(--slc-tile)");
   assert.equal(decl(rule(".sl-btn--ghost:hover:not(:disabled)"), "border-color"), "var(--slc-edge-control-hover)");
   const icon = rule(".sl-icon-btn");
   assert.equal(decl(icon, "background"), "transparent");
-  assert.equal(decl(icon, "border"), "1px solid var(--slc-edge-control)", "the one control edge, icon buttons included");
+  assert.equal(decl(icon, "border"), "1px solid var(--slc-edge-hairline)", "the one control edge, icon buttons included");
   assert.equal(decl(rule(".sl-icon-btn:hover:not(:disabled)"), "background"), "var(--slc-surface)");
   for (const sel of [".sl-field__input", ".sl-switch__track", ".sl-segmented"]) {
     assert.equal(decl(rule(sel), "background"), "var(--slc-sunken)", sel);
@@ -361,7 +361,7 @@ test("secondary raised, icon button clear in its edge, fields and tracks sunken,
   // the band's sunken wash inside an inversion band (lumen-controls.test.mjs)
   assert.equal(decl(rule(".sl-check__box, .sl-radio__box"), "background"), "var(--slc-canvas)");
   assert.equal(decl(rule(".sl-segmented"), "box-shadow"), "var(--slc-depth-sunk)");
-  assert.equal(decl(rule(".sl-segmented"), "border"), "1px solid var(--slc-edge-control)");
+  assert.equal(decl(rule(".sl-segmented"), "border"), "1px solid var(--slc-edge-hairline)");
   assert.equal(decl(rule(".sl-switch__track"), "--_sl-depth"), "var(--slc-depth-sunk)");
   // a hovered border joins the ring under focus (no band inside the ring)
   assert.match(css, /\.sl-btn--ghost:hover:not\(:disabled\):focus-visible,\s*\.sl-icon-btn:hover:not\(:disabled\):focus-visible,/);

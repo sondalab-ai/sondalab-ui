@@ -40,7 +40,6 @@
     "l5-voice":           { "IDE": "R",   "App": "R", "Page": "R", "Term": "R"   },
     "l6-glass":         { "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
     "l6-aurora":        { "IDE": "N/A", "App": "A", "Page": "R", "Term": "N/A" },
-    "l6-liquid":        { "IDE": "N/A", "App": "A", "Page": "A", "Term": "N/A" },
     "l6-glitch":        { "IDE": "N/A", "App": "A", "Page": "A", "Term": "N/A" },
     "l6-effect-budget": { "IDE": "N/A", "App": "R", "Page": "R", "Term": "N/A" }
   }

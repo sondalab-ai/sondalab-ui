@@ -1,6 +1,6 @@
 ---
 name: the-mono-face-carries-the-brand-at-display-scale-too
-description: the mono label was the strongest family signal but was scoped to small structural labels; the owner's ruling extends it to oversized numerals, because mono is the project's tech register. Written into design-language.md L1 on 2026-09-13 — this entry is why.
+description: SUPERSEDED in part on 2026-10-26 — the 2026-09-13 ruling (oversized numerals stay mono, never the face) was amended: display numerals, the lockup and single display words now use Geist Pixel Square (direction D). Body stays Geist, code stays Geist Mono. The reasoning below is the history.
 metadata:
   type: project
 ---
@@ -11,6 +11,8 @@ surface reads as Sondalab primarily through it"**. But it lists eyebrows,
 section indices, meta, wordmark, badges and tags — all at `--sl-text-xs`. It
 says nothing about a numeral set at `--step-numeral`, seven rems tall, used as
 a card's own folio.
+
+**Amended 2026-10-26 (owner, direction D, picked from `lab/pixel-directions.html`):** display numerals, the lockup and single display words are Geist Pixel Square (`--sl-font-pixel`) at the 12.5px-multiple sizes only (`--sl-text-px-1…4`); body and UI text stay Geist, code stays Geist Mono. The face is proportional with no `tnum`, so a figure that changes in place keeps Geist Mono. `docs/design-language.md` L1 and L3 carry the amendment; the text below is the 2026-09-13 reasoning that it replaces.
 
 The owner closed that gap on 2026-09-13: **those stay mono too.** A display
 serif was tried on the method cards' numerals — Fraunces at `opsz` 144, which

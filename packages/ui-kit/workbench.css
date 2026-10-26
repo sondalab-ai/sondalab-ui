@@ -152,7 +152,7 @@
   font-size: 0.8125rem;
   color: var(--slc-text-muted);
   background-color: var(--slc-surface);
-  border: 1px solid var(--slc-edge-control);
+  border: 1px solid var(--slc-edge-hairline);
   border-radius: var(--sl-radius-md, 8px);
   cursor: pointer;
   transition:

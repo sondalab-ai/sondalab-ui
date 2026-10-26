@@ -4,7 +4,7 @@
    scripts/types-drift.test.mjs fails if a module's exports and its declarations
    fall out of step. */
 
-/** Arm Tier 1: pointer-driven liquid, finite glitch bursts, animated aurora.
+/** Arm Tier 1: pointer-driven specular light, finite glitch bursts, animated aurora.
  *  Refuses under high contrast, and under reduced motion unless the caller
  *  takes the derogation. */
 export function mount(

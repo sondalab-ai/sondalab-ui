@@ -228,7 +228,7 @@ test("a chip is Lumen's composer chip: mono 12.5/500 at r6 (it was a 12px sans p
   }
   // the one control edge, unchanged
   const off = el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": "false" }, parent: at() });
-  assert.equal(value(KIT_RULES, off, "border"), "1px solid var(--slc-edge-control)");
+  assert.equal(value(KIT_RULES, off, "border"), "1px solid var(--slc-edge-hairline)");
 });
 
 // ── keycap ───────────────────────────────────────────────────────────────────
@@ -315,13 +315,15 @@ const TIER_B_RULES = (() => {
   return ["tokens.css", "components.css"].map(read).concat(map).flatMap((css) => { const r = parseSheet(css, {}, o); o += r.length + 1; return r; });
 })();
 
-test("the check and radio edge finds the box at 3:1 on canvas, surface, raised and tile, on every product, on Tier B and in high contrast", () => {
+test("the check and radio STRONG edge (the control edge and its hover step; the rest edge in high contrast) is 3:1 on canvas, surface, raised and tile, on every product, on Tier B and in high contrast", () => {
   const out = [];
   const check = (name, env, grounds) => {
-    const edge = evaluate("var(--slc-edge-control)", env);
-    for (const [g, colour] of Object.entries(grounds)) {
-      const r = ratio(edge, colour);
-      if (r < 3) out.push(`${name}: edge on ${g} ${r.toFixed(2)}`);
+    for (const role of ["--slc-edge-control", "--slc-edge-control-hover"]) {
+      const edge = evaluate(`var(${role})`, env);
+      for (const [g, colour] of Object.entries(grounds)) {
+        const r = ratio(edge, colour);
+        if (r < 3) out.push(`${name}: ${role} on ${g} ${r.toFixed(2)}`);
+      }
     }
   };
   const GROUNDS = ["--slc-canvas", "--slc-surface", "--slc-raised", "--slc-tile"];
@@ -424,14 +426,20 @@ function bandEdge(rules, child, e) {
   return { ground, edge, face, onGround: ratio(edge, ground), onFace: ratio(edge, face) };
 }
 
-test("in a band every control's edge reads 3:1 against the band and against its own face, on every product, Tier A and B, and in high contrast", () => {
+test("in a band every control's STRONG edge (its hover edge; its rest edge in high contrast) reads 3:1 against the band and against its own face, on every product, Tier A and B", () => {
   const out = [];
   const lows = {};
   for (const [band, rules, child] of bands()) {
     for (const [name, make] of Object.entries(BAND_CONTROLS)) {
       const e = make(child);
       assert.equal(paint(rules, e, borderOf(rules, e)).alpha < 1, true, `${band} ${name}: a share of the band's ink, never a solid`);
-      const { onGround, onFace } = bandEdge(rules, child, e);
+      // owner amendment, 2026-10-26: every control RESTS on the hairline (held
+      // by "every control's rest edge..." below), so its 3:1 edge here is the
+      // control edge it shows on hover and in high contrast
+      const hairline = band !== "high contrast";
+      const { onGround, onFace } = hairline
+        ? (() => { const g = groundOf(rules, child), c = over(paint(rules, e, "var(--slc-edge-control)"), g), f = over(paint(rules, e, fillOf(rules, e)), g); return { onGround: ratio(c, g), onFace: ratio(c, f) }; })()
+        : bandEdge(rules, child, e);
       const key = band.replace(/^Tier B /, "").split(" ")[0];
       lows[key] = Math.min(lows[key] ?? 99, onGround, onFace);
       if (onGround < 3) out.push(`${band} ${name}: edge on the band ${onGround.toFixed(2)}`);
@@ -454,14 +462,14 @@ test("the band's control edge is its ink at a share, never currentColor, so a co
   // 78%) at 30%. Read through each control's own colour, every control in a
   // band draws the same edge as the check box beside it.
   const band = read("components.css").match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
-  for (const role of ["--slc-edge-control", "--slc-edge-control-hover"]) {
+  for (const role of ["--slc-edge-control", "--slc-edge-control-hover", "--slc-edge-hairline"]) {
     const v = band.match(new RegExp(`${role}:\\s*([^;]+);`))?.[1] ?? "";
     assert.match(v, /var\(--slc-canvas\)/, `${role}: the band's ink`);
     assert.doesNotMatch(v, /currentColor/i, `${role}: not currentColor`);
   }
   for (const [name, rules, child] of bands()) {
-    const box = paint(rules, BAND_CONTROLS.check(child), "var(--slc-edge-control)");
-    for (const c of ["chip", "icon button", "secondary"]) {
+    const box = paint(rules, BAND_CONTROLS.check(child), "var(--slc-edge-hairline)");
+    for (const c of ["chip", "icon button"]) {
       const e = BAND_CONTROLS[c](child);
       assert.equal(toHex(paint(rules, e, borderOf(rules, e))), toHex(box), `${name} ${c}`);
       assert.ok(Math.abs(paint(rules, e, borderOf(rules, e)).alpha - box.alpha) < 1e-9, `${name} ${c}: alpha`);
@@ -505,7 +513,7 @@ test("in a band the switch's knob reads 3:1 on its track, and the box stays a wa
   assert.deepEqual(out, []);
 });
 
-test("in a band a button group's faces are its members' own, its rules the control edge: members' text 4.5:1, rules 3:1", () => {
+test("in a band a button group's faces are its members' own, its rest rules the hairline and its hover rules the control edge: members' text 4.5:1, hovered rules 3:1", () => {
   // The group's ground is its rule colour, which its members' opaque surface
   // hides everywhere but the 1px gaps. In a band the surface is a 7% wash,
   // so on 0.36.0 the rule colour showed across every face (member text 4.08:1
@@ -523,17 +531,25 @@ test("in a band a button group's faces are its members' own, its rules the contr
     assert.ok(m, `${band}: the rule is the member's depth, 1px to its left (${depth})`);
     assert.equal(value(rules, first, "--_sl-depth"), "0 0 transparent", `${band}: the first member draws none`);
     const rule = over(paint(rules, second, m[1]), ground);
+    assert.equal(m[1], "var(--slc-edge-hairline)", `${band}: the rest rule is the hairline`);
+    const hovered = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], parent: el({ classes: ["sl-btn-group"], states: ["hover"], parent: child }) });
+    const hovered2 = el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], parent: hovered.parent, prev: hovered });
+    const hm = value(rules, hovered2, "--_sl-depth").match(/^-1px 0 0 (.+)$/);
+    assert.ok(hm, `${band}: a hovered group draws its rule too`);
+    assert.equal(hm[1], "var(--slc-edge-control-hover)", `${band}: the hover rule is the strong edge`);
+    const hrule = over(paint(rules, hovered2, hm[1]), ground);
     for (const member of [first, second]) {
       const face = over(paint(rules, member, fillOf(rules, member)), ground);
       const text = over(colourOf(rules, member), face);
       if (ratio(text, face) < 4.5) out.push(`${band}: member text ${ratio(text, face).toFixed(2)}`);
-      if (ratio(rule, face) < 3) out.push(`${band}: rule on a member ${ratio(rule, face).toFixed(2)}`);
+      if (band !== "high contrast" && (ratio(rule, face) < 1.4 || ratio(rule, face) > 2.3)) out.push(`${band}: rest rule on a member ${ratio(rule, face).toFixed(2)}`);
+      if (ratio(hrule, face) < 3) out.push(`${band}: hovered rule on a member ${ratio(hrule, face).toFixed(2)}`);
     }
   }
   assert.deepEqual(out, []);
   // right to left the gap is on the member's other side (the test cascade
   // does not read :dir(), so the rule is read off the sheet)
-  assert.match(read("components.css"), /\.sl-invert \.sl-btn-group > \.sl-btn \+ \.sl-btn:dir\(rtl\) \{ --_sl-depth: 1px 0 0 var\(--slc-edge-control\); \}/);
+  assert.match(read("components.css"), /\.sl-invert \.sl-btn-group > \.sl-btn \+ \.sl-btn:dir\(rtl\) \{ --_sl-depth: 1px 0 0 var\(--slc-edge-hairline\); \}/);
 });
 
 // KNOWN GAP (0.36.1): glass owns its host's box-shadow, so a glass member of
@@ -543,10 +559,12 @@ test("in a band a button group's faces are its members' own, its rules the contr
 // against the band and 1.69 against a face on the light theme's dark band,
 // 1.84 and 1.59 on the dark theme's light band (it was 1.13 against the faces
 // on 0.36.0, when the group's ground showed through them). High contrast's
-// kill switch gives the depth back, so there the rule paints. This fence holds
-// the figures where they are until the gap is closed.
-test("in a band a group of glass members keeps only its soft inner lines (a known gap, no weaker than on 0.36.1)", () => {
-  const FLOOR = { light: { ground: 1.95, face: 1.65 }, dark: { ground: 1.8, face: 1.55 } };
+// kill switch gives the depth back, so there the rule paints. Since the owner's
+// 2026-10-26 amendment that inner line is the hairline at half strength, so the
+// figures fell to about 1.29 / 1.10 (light) and 1.39 / 1.20 (dark); this fence
+// holds them there until the gap is closed.
+test("in a band a group of glass members keeps only its soft inner lines, the hairline at half strength (a known gap, weaker by the owner's 2026-10-26 amendment)", () => {
+  const FLOOR = { light: { ground: 1.25, face: 1.08 }, dark: { ground: 1.35, face: 1.15 } };
   const GLASS = ["sl-btn", "sl-btn--ghost", "sl-fx-glass", "sl-fx-glass--pane", "sl-glass"];
   const out = [];
   for (const [band, rules, child] of bands()) {
@@ -572,6 +590,89 @@ test("in a band a group of glass members keeps only its soft inner lines (a know
     }
   }
   assert.deepEqual(out, []);
+});
+
+// ── a text button's rest edge: the translucent hairline (owner, 2026-10-26) ───
+
+/** Every control's rest edge is the hairline; hover is the 3:1 control edge (owner amendment, 2026-10-26). */
+const REST_CONTROLS = {
+  secondary: (p, states = []) => el({ tag: "button", classes: ["sl-btn", "sl-btn--ghost"], states, parent: p }),
+  "icon button": (p, states = []) => el({ tag: "button", classes: ["sl-icon-btn"], states, parent: p }),
+  "round icon button": (p, states = []) => el({ tag: "button", classes: ["sl-icon-btn", "sl-icon-btn--round"], states, parent: p }),
+  chip: (p, states = []) => el({ tag: "button", classes: ["sl-chip"], attrs: { "aria-pressed": "false" }, states, parent: el({ classes: ["sl-chips"], parent: p }) }),
+  field: (p, states = []) => el({ tag: "input", classes: ["sl-field__input"], states, parent: el({ classes: ["sl-field"], parent: p }) }),
+  select: (p, states = []) => el({ tag: "select", classes: ["sl-field__input"], states, parent: el({ tag: "span", classes: ["sl-field__control", "sl-select"], parent: p }) }),
+  segmented: (p, states = []) => el({ classes: ["sl-segmented"], states, parent: p }),
+  "button group": (p, states = []) => el({ classes: ["sl-btn-group"], states, parent: p }),
+  check: (p, states = []) => { const l = el({ tag: "label", classes: ["sl-check"], states, parent: p }); return el({ tag: "span", classes: ["sl-check__box"], parent: l, prev: el({ tag: "input", classes: ["sl-check__input"], parent: l }) }); },
+  radio: (p, states = []) => { const l = el({ tag: "label", classes: ["sl-radio"], states, parent: p }); return el({ tag: "span", classes: ["sl-radio__box"], parent: l, prev: el({ tag: "input", classes: ["sl-radio__input"], parent: l }) }); },
+  switch: (p, states = []) => { const l = el({ tag: "label", classes: ["sl-switch"], states, parent: p }); return el({ tag: "span", classes: ["sl-switch__track"], parent: l, prev: el({ tag: "input", classes: ["sl-switch__input"], parent: l }) }); },
+};
+test("every control's rest edge is a translucent hairline: 1.5-2.2:1 on canvas, surface and raised, every product, light and dark, and in a band; hover is 3:1; the switch knob stays 3:1", () => {
+  const out = [];
+  const range = (name, r) => { if (r < 1.5 || r > 2.2) out.push(`${name} ${r.toFixed(3)}`); };
+  const floor = (name, r) => { if (r < 3) out.push(`${name} ${r.toFixed(2)} < 3`); };
+  const seen = { light: { min: 99, max: 0 }, dark: { min: 99, max: 0 }, "band light": { min: 99, max: 0 }, "band dark": { min: 99, max: 0 }, hover: 99 };
+  for (const product of PRODUCTS) for (const theme of ["light", "dark"]) {
+    const body = at(theme, { product });
+    const env = customs(KIT_RULES, body);
+    const G = Object.fromEntries(["canvas", "surface", "raised"].map((g) => [g, evaluate(`var(--slc-${g})`, env)]));
+    for (const [name, make] of Object.entries(REST_CONTROLS)) {
+      const e = make(body);
+      const edge = paint(KIT_RULES, e, borderOf(KIT_RULES, e));
+      assert.ok(edge.alpha < 1, `${theme} ${product} ${name}: never a solid`);
+      for (const [g, c] of Object.entries(G)) { const r = ratio(over(edge, c), c); range(`${theme} ${product} ${name} on ${g}`, r); seen[theme].min = Math.min(seen[theme].min, r); seen[theme].max = Math.max(seen[theme].max, r); }
+      // hover: the 3:1 control edge, on the grounds
+      const h = make(body, ["hover"]);
+      const he = paint(KIT_RULES, h, borderOf(KIT_RULES, h));
+      assert.equal(borderOf(KIT_RULES, h), "var(--slc-edge-control-hover)", `${theme} ${product} ${name}: hover restores the control edge`);
+      for (const [g, c] of [...Object.entries(G), ["tile", evaluate("var(--slc-tile)", env)]]) { const r = ratio(he, c); floor(`${theme} ${product} ${name} hover on ${g}`, r); seen.hover = Math.min(seen.hover, r); }
+    }
+    // the knob is the switch's state mark, not a border: 3:1 on canvas and surface
+    const knob = el({ pseudo: "after", parent: REST_CONTROLS.switch(body) });
+    assert.equal(value(KIT_RULES, knob, "background"), "var(--slc-edge-control)");
+    for (const g of ["canvas", "surface"]) floor(`${theme} ${product} knob on ${g}`, ratio(paint(KIT_RULES, knob, "var(--slc-edge-control)"), G[g]));
+  }
+  for (const [band, rules, child] of bands()) {
+    if (band === "high contrast") continue;
+    const ground = groundOf(rules, child);
+    for (const [name, make] of Object.entries(REST_CONTROLS)) {
+      const e = make(child);
+      const edge = paint(rules, e, borderOf(rules, e));
+      assert.ok(edge.alpha < 1, `${band} ${name}: never a solid`);
+      const wash = (g) => over(paint(rules, e, `var(--slc-${g})`, colourOf(rules, child)), ground);
+      for (const [g, c] of [["band", ground], ["surface", wash("surface")], ["raised", wash("raised")]]) {
+        const r = ratio(over(edge, c), c);
+        range(`${band} ${name} on ${g}`, r); const k = "band " + band.replace(/^Tier B /, "").split(" ")[0]; seen[k].min = Math.min(seen[k].min, r); seen[k].max = Math.max(seen[k].max, r);
+      }
+    }
+  }
+  if (process.env.EDGE_HAIRLINE_REPORT) console.log(JSON.stringify(seen));
+  assert.deepEqual(out, []);
+});
+
+test("every control's rest edge is the hairline in the sheets; the knob stays on the strong edge", () => {
+  const css = read("components.css"), fx = read("effects.css"), wb = read("workbench.css");
+  const rule = (src, sel) => { const i = src.search(new RegExp(`(^|\\n)${sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\{`)); return i < 0 ? "" : src.slice(i, src.indexOf("\n}", i)); };
+  for (const sel of [".sl-chip", ".sl-field__input", ".sl-segmented", ".sl-icon-btn", ".sl-switch__track"]) assert.match(rule(css, sel), /border:\s*1px solid var\(--slc-edge-hairline\)/, sel);
+  assert.match(css, /\.sl-check__box,\s*\.sl-radio__box \{[^}]*border:\s*1px solid var\(--slc-edge-hairline\)/, "check and radio boxes");
+  assert.match(rule(css, ".sl-btn-group"), /background:\s*var\(--slc-edge-hairline\)/, "the group's rule");
+  assert.match(rule(css, ".sl-btn-group"), /border:\s*1px solid var\(--slc-edge-hairline\)/, "the group's outline");
+  assert.match(rule(css, ".sl-btn-group"), /background-clip:\s*padding-box/, "the ground stops at the border, so two hairlines never stack");
+  assert.match(wb, /\.sl-titlebar__cmd \{[^}]*border:\s*1px solid var\(--slc-edge-hairline\)/, "the title bar's command field");
+  assert.match(fx, /\.sl-btn\.sl-fx-glass,\s*\.sl-icon-btn\.sl-fx-glass \{\s*--slfx-control-edge:\s*var\(--slc-edge-hairline\);/, "glass buttons, icon buttons included");
+  assert.match(fx, /\.sl-btn-group > \.sl-btn:not\(\.sl-btn--primary\)\.sl-fx-glass \{ --slfx-control-edge: var\(--slc-edge-hairline\); \}/, "a glass group's inner line");
+  assert.match(fx, /\.sl-icon-btn\.sl-fx-glass:hover:not\(:disabled, :focus-visible\) \{ --slfx-control-edge: var\(--slc-edge-control-hover\); \}/, "glass icon buttons, hovered");
+  assert.match(css, /\.sl-switch__track::after \{[^}]*background:\s*var\(--slc-edge-control\)/, "the off knob stays on the strong edge");
+});
+
+test("high contrast keeps the strong edge on every control, on the page and in a band", () => {
+  for (const band of [false, true]) for (const [name, make] of Object.entries(REST_CONTROLS)) {
+    const e = make(at("high-contrast", { band }));
+    const env = customs(KIT_RULES, e);
+    assert.equal(toHex(evaluate("var(--slc-edge-hairline)", env)), toHex(evaluate("var(--slc-edge-control)", env)), `${name} band ${band}: the role is the control edge`);
+    assert.equal(toHex(paint(KIT_RULES, e, borderOf(KIT_RULES, e))), toHex(evaluate("var(--slc-edge-control)", env)), `band ${band}: the drawn border`);
+  }
 });
 
 // ── state indicators and boundaries at 3:1 (0.36.2) ──────────────────────────

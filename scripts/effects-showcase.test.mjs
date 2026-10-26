@@ -16,11 +16,11 @@ test("the package exports and ships the effects layer", () => {
   assert.ok(pkg.files.includes("effects.js"));
 });
 
-test("the showcase applies all five families to real elements", () => {
+test("the showcase applies every shipped family to real elements", () => {
   // Assert the class is APPLIED, not merely mentioned. The page's own captions
   // name these classes as documentation text, so a bare substring match passes
   // on a page where every class attribute had been deleted.
-  for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-goo", "sl-fx-glitch"]) {
+  for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-goo", "sl-fx-glitch"]) {
     assert.match(
       html, new RegExp(`class="[^"]*\\b${cls}\\b`),
       `showcase must apply .${cls} to an element, not just name it in prose`,
@@ -84,11 +84,9 @@ test("the showcase reports which tier actually resolved", () => {
   );
 });
 
-test("every text button is a glass pane; only a round icon-only button goes gooey", () => {
-  // The owner's rule, held mechanically on the reference page: the gooey
-  // belongs to round icon-only buttons (--drop, an aria-label because there
-  // is no text), and every other button is made of glass (--pane), whatever
-  // its variant. A bare .sl-fx-liquid on a button is a mistake either way.
+test("every text button is a glass pane", () => {
+  // The owner's rule, held mechanically on the reference page: every text
+  // button is made of glass (--pane), whatever its variant.
   //
   // Match the WHOLE tag first, then pull `class` out of it wherever it sits —
   // the same fix already applied to the ARIA test above. `class="…"` right
@@ -197,20 +195,6 @@ test("every canonical string in the catalog is applied on the showcase", () => {
       `catalog.md promises "${classes.join(" ")}" for ${component}, and no element on ` +
         `showcase/effects.html carries all of it. A canonical string nobody renders is a wish.`,
     );
-  }
-});
-
-test("the drop belongs to a round icon-only button, and nothing else", () => {
-  // sl-fx-liquid--drop is a JavaScript selector gate (LIQUID_HOSTS in
-  // effects.js), not a CSS class, so nothing about the host is checked at
-  // runtime: the markup IS the contract. The gooey belongs to a round
-  // silhouette — on a text button the drop reads as a blister on a box.
-  const tags = [...html.matchAll(/<[a-z][^>]*\bsl-fx-liquid--drop\b[^>]*>/g)].map((m) => m[0]);
-  assert.ok(tags.length >= 1, "the gooey must have somewhere to demonstrate");
-  for (const tag of tags) {
-    assert.match(tag, /\bsl-icon-btn--round\b/, `--drop needs a round silhouette: ${tag}`);
-    assert.match(tag, /aria-label=/, `a --drop host is icon-only and needs an aria-label: ${tag}`);
-    assert.doesNotMatch(tag, /\bsl-fx-glass--pane\b/, `a round button is gooey, not a pane: ${tag}`);
   }
 });
 
