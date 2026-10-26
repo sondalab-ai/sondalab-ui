@@ -123,9 +123,14 @@ test("every neutral control is outlined in the one control edge", () => {
   for (const sel of [".sl-chip", ".sl-segmented", ".sl-icon-btn"]) {
     assert.match(rule(sel), /border:\s*1px solid var\(--slc-edge-control\)/, sel);
   }
-  assert.match(css, /\.sl-btn--ghost \{[^}]*border-color:\s*var\(--slc-edge-control\)/, ".sl-btn--ghost");
+  // Owner exception, 2026-10-26: a TEXT button rests on the translucent
+  // hairline (--slc-edge-button); hover and every other control keep 3:1.
+  assert.match(css, /\.sl-btn--ghost \{[^}]*border-color:\s*var\(--slc-edge-button\)/, ".sl-btn--ghost");
+  assert.match(css, /\.sl-btn--ghost:hover:not\(:disabled\)\s*\{[^}]*border-color:\s*var\(--slc-edge-control-hover\)/, ".sl-btn--ghost hover");
   const effects = readFileSync(resolve(REPO, "packages/ui-kit/effects.css"), "utf8");
-  assert.match(effects, /\.sl-icon-btn\.sl-fx-glass \{\s*--slfx-control-edge:\s*var\(--slc-edge-control\);/, "glass buttons");
+  assert.match(effects, /\.sl-icon-btn\.sl-fx-glass \{\s*--slfx-control-edge:\s*var\(--slc-edge-control\);/, "glass icon buttons");
+  assert.match(effects, /\.sl-btn:not\(\.sl-btn--primary\)\.sl-fx-glass \{ --slfx-control-edge: var\(--slc-edge-button\); \}/, "glass text buttons");
+  assert.match(effects, /\.sl-btn:not\(\.sl-btn--primary\)\.sl-fx-glass:hover:not\(:disabled, :focus-visible\) \{ --slfx-control-edge: var\(--slc-edge-control-hover\); \}/, "glass text buttons, hovered");
 });
 
 // An invalid field (aria-invalid="true") turns its edge, its focus ring and its
@@ -250,6 +255,7 @@ test("high contrast remaps the hovered control edge with the resting one", () =>
   const hc = css.match(/:root\[data-sl-theme="high-contrast"\] \{([^}]*)\}/)?.[1] ?? "";
   assert.match(hc, /--slc-edge-control:\s*var\(--slc-border\);/);
   assert.match(hc, /--slc-edge-control-hover:\s*var\(--slc-border-strong\);/);
+  assert.match(hc, /--slc-edge-button:\s*var\(--slc-edge-control\);/, "a text button keeps the strong edge in high contrast");
 });
 
 // Inside a wrapping <label> every descendant is part of the input's accessible
