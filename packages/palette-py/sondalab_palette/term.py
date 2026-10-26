@@ -55,7 +55,18 @@ def _on(env: Mapping[str, str], names: Sequence[str]) -> bool:
     return False
 
 
-def switch_on(name: str, env: Mapping[str, str] = os.environ) -> bool:
+def _env(env: Optional[Mapping[str, str]]) -> Mapping[str, str]:
+    """The environment to read: `env`, or os.environ when it is None.
+
+    The public helpers default to None and resolve here, at call time. A
+    default of os.environ would be evaluated once and kept in the signature,
+    so help() or inspect.signature() would print every variable, secrets
+    included (0.7.1).
+    """
+    return os.environ if env is None else env
+
+
+def switch_on(name: str, env: Optional[Mapping[str, str]] = None) -> bool:
     """True when any variable of the ENV switch purpose `name` is on.
 
     `name` is an ENV key whose variables are switches: "reducedMotion",
@@ -63,29 +74,32 @@ def switch_on(name: str, env: Mapping[str, str] = os.environ) -> bool:
     equal "1"; CI and ACCESSIBLE count whenever set, even empty. Any other
     name, including a non-switch ENV key such as "noColor", raises KeyError.
     """
+    env = _env(env)
     names = ENV[name]
     if any(var not in _SWITCH for var in names):
         raise KeyError(f"{name!r} is not a switch purpose")
     return _on(env, names)
 
 
-def accessible(env: Mapping[str, str] = os.environ) -> bool:
+def accessible(env: Optional[Mapping[str, str]] = None) -> bool:
     """Whether accessible mode is on, per the spec's Accessible mode section.
 
     On for SONDALAB_ACCESSIBLE=1, or ACCESSIBLE set to any value (even
     empty). It means plain prompts, no redraw and states written as words;
     it implies reduced_motion().
     """
+    env = _env(env)
     return switch_on("accessible", env)
 
 
-def reduced_motion(env: Mapping[str, str] = os.environ) -> bool:
+def reduced_motion(env: Optional[Mapping[str, str]] = None) -> bool:
     """Whether the user asked for reduced motion.
 
     On for SONDALAB_REDUCED_MOTION=1, or when accessible() is on. It reads
     only the user's request: motion_enabled() also turns motion off for a
     non-TTY stream, CI and TERM=dumb.
     """
+    env = _env(env)
     return switch_on("reducedMotion", env) or accessible(env)
 
 
@@ -99,13 +113,14 @@ def _term_dumb(env: Mapping[str, str]) -> bool:
     return any(env.get(name) == "dumb" for name in ENV["term"])
 
 
-def motion_enabled(env: Mapping[str, str] = os.environ, isatty: Optional[bool] = None) -> bool:
+def motion_enabled(env: Optional[Mapping[str, str]] = None, isatty: Optional[bool] = None) -> bool:
     """Whether the spinner, progress bar and decode may run.
 
     Off for a non-TTY stream, CI set, TERM=dumb, SONDALAB_REDUCED_MOTION=1 and
     accessible mode (SONDALAB_ACCESSIBLE=1 or ACCESSIBLE set). `isatty` is the
     TTY state of the stream motion draws on; None reads sys.stderr.isatty().
     """
+    env = _env(env)
     if isatty is None:
         isatty = sys.stderr.isatty()
     if not isatty or _term_dumb(env):
@@ -114,7 +129,7 @@ def motion_enabled(env: Mapping[str, str] = os.environ, isatty: Optional[bool] =
 
 
 def ascii_mode(
-    env: Mapping[str, str] = os.environ,
+    env: Optional[Mapping[str, str]] = None,
     encoding: Optional[str] = None,
     override: Optional[bool] = None,
 ) -> bool:
@@ -125,6 +140,7 @@ def ascii_mode(
     `encoding` None reads the charset of the first set of LC_ALL, LC_CTYPE,
     LANG in `env` ("en_US.UTF-8" gives UTF-8); none set, or no charset, is ASCII.
     """
+    env = _env(env)
     if override is not None:
         return override
     if _term_dumb(env) or switch_on("ascii", env):
@@ -153,7 +169,7 @@ def _locale_charset(env: Mapping[str, str]) -> str:
 
 
 def color_mode(
-    env: Mapping[str, str] = os.environ,
+    env: Optional[Mapping[str, str]] = None,
     isatty: Optional[bool] = None,
     flag: Optional[bool] = None,
     truecolor: bool = False,
@@ -166,6 +182,7 @@ def color_mode(
     Colour is 'truecolor' only when `truecolor` is True (the program opts in)
     and COLORTERM is truecolor or 24bit. `isatty` None reads sys.stdout.isatty().
     """
+    env = _env(env)
     if flag is not None:
         on = flag
     elif any(env.get(name) for name in ENV["noColor"]):

@@ -382,3 +382,25 @@ def test_decode_is_deterministic_and_ends_on_value():
     b = t.decode_frames("sha 9c41e0b", random.Random(1))
     assert a == b
     assert len(a) == 4 and a[-1] == "sha 9c41e0b"
+
+
+ENV_HELPERS = [t.switch_on, t.accessible, t.reduced_motion, t.motion_enabled, t.ascii_mode, t.color_mode]
+
+
+@pytest.mark.parametrize("fn", ENV_HELPERS, ids=lambda f: f.__name__)
+def test_signature_never_holds_the_environment(fn, monkeypatch):
+    # A default of os.environ would be kept in the signature, so help() or
+    # inspect.signature() would print every variable, secrets included.
+    import inspect
+
+    monkeypatch.setenv("SL_TEST_SECRET", "do-not-print-0b1c")
+    assert inspect.signature(fn).parameters["env"].default is None
+    assert "do-not-print-0b1c" not in str(inspect.signature(fn))
+
+
+def test_env_none_reads_the_live_environment(monkeypatch):
+    monkeypatch.setenv("SONDALAB_ACCESSIBLE", "1")
+    assert t.accessible() is True
+    monkeypatch.delenv("SONDALAB_ACCESSIBLE")
+    monkeypatch.delenv("ACCESSIBLE", raising=False)
+    assert t.accessible() is False
