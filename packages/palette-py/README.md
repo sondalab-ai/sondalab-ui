@@ -52,6 +52,7 @@ term.switch_on("ci")             # any switch purpose in ENV: reducedMotion, acc
 
 ### Changelog
 
+- **0.7.1:** every `term` helper defaults to `env=None` and reads `os.environ` at call time. Before, the default was `os.environ` itself, kept in the signature, so `help()` or `inspect.signature()` printed the whole environment, secrets included. No call changes.
 - **0.7.0:** public `term.accessible()`, `term.reduced_motion()` and `term.switch_on(name)`, the spec's environment switch rule; `motion_enabled` and `ascii_mode` now use them.
 - **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`) and the `term` reference helper.
 
