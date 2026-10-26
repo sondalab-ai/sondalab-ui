@@ -1586,6 +1586,13 @@ const GRID_LEGACY = new Set([
   // the in-button key's overflow, not spacing: an 18px cap gives 2 x 2px
   // back to the button's 14px line (16px and 12 in --sm), since 0.31
   ".sl-btn > .sl-kbd::margin-block=-2px",
+  // the pixel tick's first cell: the check box is a 3px lattice (5 x 5
+  // cells), not a 4px one, since 0.39 (pixel direction D)
+  ".sl-check__box::after::top=6px",
+  // the pixel dot's first cell, on the same lattice (the dash, a rule on the
+  // input's sibling, is not swept)
+  ".sl-radio__box::after::left=6px",
+  ".sl-radio__box::after::top=3px",
 ]);
 const GRID_WORDS = /^(?:auto|0|inherit|initial|unset|-?[\d.]+%)$/;
 /** The off-grid or unreadable spacing declarations among `rules`. A word is a

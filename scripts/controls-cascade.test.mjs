@@ -173,7 +173,7 @@ for (const theme of ["light", "dark"]) {
     // control, which inherits the control's computed values
     const c = checked(section);
     const css = read("components.css");
-    const tick = css.match(/\.sl-check__box::after \{[^}]*border: solid ([^;]+);/)[1];
+    const tick = css.match(/\.sl-check__box::after \{[^}]*background: ([^;]+);/)[1];
     const dot = css.match(/\.sl-radio__box::after \{[^}]*background: ([^;]+);/)[1];
     const knob = css.match(/\.sl-switch__input:checked \+ \.sl-switch__track::after \{[^}]*background: ([^;]+);/)[1];
     for (const [name, host, value] of [["tick", c.check, tick], ["dot", c.radio, dot], ["knob", c.switch, knob]]) {

@@ -1669,6 +1669,8 @@
 }
 :root:not([data-sl-theme="high-contrast"]) .sl-fx-aurora--rim[data-sl-fx-live="busy"]:disabled:not(:is([data-sl-fx="off"], [data-sl-fx="off"] *)) {
   opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* The bloom: a thicker copy of the arc, Gaussian-blurred. Two boxes, because
@@ -2731,6 +2733,75 @@
    layout width and grow with every redraw at a device pixel ratio above 1; it
    takes its container's width, square. Zero specificity: any author width wins. */
 :where([data-sl-halftone]) { display: block; width: 100%; aspect-ratio: 1; }
+
+/* ══ PIXEL CONTROLS — the check, radio and switch change on the 3px lattice ══
+   Owner, 2026-10-26, pixel direction D. components.css draws the final frames
+   (the pixel tick and plus, the solid fill, the knob on steps()) with no
+   script. Tier 1 only: effects.js builds ONE <span class="sl-fx-pixel"> holding
+   a <canvas> in the box or track on the first `change` (never at mount()) and
+   shows it (.is-live) for the length of the transition, drawing the way from
+   the old state to the CSS frame; then it hides it and the CSS shows through.
+   The colour is three bound properties, read off the layer by effects.js:
+     background-color        the OFF ground, painted opaque: CSS has already
+                             flipped to the final state when `change` fires
+     color                   the fill cells
+     border-top-color        the mark (tick, dot) on the fill
+   WHERE IT LIES. In a check or radio box it is above the box's own ::after
+   (z-index 1), so the finished CSS tick does not show from frame 0. In a
+   switch track it stays below ::after, so the knob, which CSS moves, stays
+   visible over the fill. It rounds with its host (border-radius: inherit,
+   overflow: hidden) and draws cells only, no outline. No blend, opacity or
+   filter is ever set on it. */
+:where(.sl-check__box, .sl-radio__box) {
+  --slfx-pixel-ground: var(--slc-canvas);
+  --slfx-pixel-fill: var(--_sl-fill);
+  --slfx-pixel-on: var(--_sl-on-fill);
+}
+:where(.sl-invert) :where(.sl-check__box, .sl-radio__box) { --slfx-pixel-ground: var(--slc-sunken); }
+:where(.sl-switch__track) {
+  --slfx-pixel-ground: var(--slc-sunken);
+  --slfx-pixel-fill: var(--_sl-fill);
+  --slfx-pixel-on: var(--_sl-on-fill);
+}
+.sl-fx-pixel {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border: 0 solid;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--slfx-pixel-ground);
+  color: var(--slfx-pixel-fill);
+  border-top-color: var(--slfx-pixel-on);
+}
+.sl-fx-pixel.is-live { display: block; }
+/* While the layer is live JS owns the switch knob: effects.js writes its
+   position, in whole cells, as --slfx-knob-x on the track every frame, from
+   the same count the fill's origin uses, so the two cannot disagree however
+   fast the switch is toggled. !important because the held-knob rules in
+   components.css outrank this selector. The knob's own CSS steps() transition
+   stays the path wherever JS is not armed. */
+.sl-switch__track:has(> .sl-fx-pixel.is-live)::after {
+  transform: translateY(-50%) translateX(var(--slfx-knob-x, 0px)) !important;
+  transition-property: background-color !important;
+}
+:is(.sl-check__box, .sl-radio__box) > .sl-fx-pixel { z-index: 1; }
+.sl-fx-pixel > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Never where the effects layer is refused (and effects.js starts nothing
+   under reduced motion; one already running finishes unseen). */
+:root[data-sl-theme="high-contrast"] .sl-fx-pixel,
+:is([data-sl-fx="off"], [data-sl-fx="off"] *) .sl-fx-pixel { display: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .sl-fx-pixel { display: none !important; }
+}
+@media (forced-colors: active) {
+  .sl-fx-pixel { display: none !important; }
+}
 
 /* ══ DITHER — the hover is an ordered-dither wipe ═══════════════════════════
    Owner, 2026-10-26, pixel direction D. A button or icon button answers the

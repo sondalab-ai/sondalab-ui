@@ -1119,7 +1119,7 @@ test("dither: it is built lazily, after the backdrop, and mount() builds no canv
   assert.match(ensure, /:scope > \.sl-glass__tint"\) \?\? host\.querySelector\(":scope > \.sl-glass__backdrop"\)/, "after the tint, else the backdrop");
   assert.match(ensure, /under\.after\(layer\)/, "after it in DOM order");
   assert.match(ensure, /else host\.prepend\(layer\)/, "first child where there is no glass");
-  assert.equal((effectsJs.match(/createElement\("canvas"\)/g) ?? []).length, 1, "one canvas is made in effects.js, and in ensureDither");
+  assert.equal((effectsJs.match(/createElement\("canvas"\)/g) ?? []).length, 2, "two canvases are made in effects.js: in ensureDither and in ensurePixel (pixel-controls.test.mjs)");
   assert.equal((effectsJs.match(/ensureDither\(/g) ?? []).length, 2, "ensureDither is defined once and called once");
   assert.match(jsFnBody("onDitherCross"), /entering \? ensureDither\(host\)/, "called from the pointer entry only");
   assert.doesNotMatch(jsFnBody("mount"), /ensureDither|createElement\("canvas"\)|DITHER_CLASS/, "mount() creates nothing");
@@ -1148,7 +1148,7 @@ test("dither: one shared rAF loop that sleeps when nothing moves", () => {
 });
 
 test("dither: cells are CELL_PX, drawn at a device ratio capped at 2, from dither-core", () => {
-  assert.match(effectsJs, /import \{ CELL_PX, wipeFrame \} from "\.\/dither-core\.js";/, "imported, not copied");
+  assert.match(effectsJs, /import \{[^}]*\bCELL_PX\b[^}]*\bwipeFrame\b[^}]*\} from "\.\/dither-core\.js";/, "imported, not copied");
   assert.doesNotMatch(effectsJs, /const (?:BAYER|CELL_PX)\b|function wipeFrame|function bayerAt/, "no second copy of the maths");
   assert.match(effectsJs, /const DITHER_DPR_CAP = 2;/);
   assert.match(jsFnBody("sizeDither"), /Math\.min\(DITHER_DPR_CAP, window\.devicePixelRatio/);

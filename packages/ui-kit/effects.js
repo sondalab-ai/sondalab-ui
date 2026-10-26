@@ -14,7 +14,9 @@
    enforces the absence of literals. */
 
 // The 8x8 Bayer wipe and the cell size are the kit's pure dither maths.
-import { CELL_PX, wipeFrame } from "./dither-core.js";
+import {
+  CELL_PX, wipeFrame, CHECK_CELLS, TICK_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
+} from "./dither-core.js";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const CAP_MS = 1500;                      // hard ceiling on any single burst
@@ -859,6 +861,7 @@ function pruneDetached() {
     glowWatches.delete(el);
   }
   pruneDithers();
+  prunePixels();
   for (const el of nearHosts) if (!el.isConnected) { nearObserver?.unobserve(el); nearHosts.delete(el); }
   for (const el of specHosts) {
     if (el.isConnected) continue;
@@ -866,6 +869,257 @@ function pruneDetached() {
     specHosts.delete(el);
   }
 }
+
+/* ── pixel controls: the check, radio and switch change on a 3px lattice ─────
+   components.css draws the final frame of all three with no script: a pixel
+   tick, a pixel plus, a solid fill, a knob on steps(). This section only
+   animates the way there. On a delegated `change` it builds, once and lazily,
+   one clipped layer in the box or track: an opaque span in the control's OFF
+   ground (CSS has already flipped to the final state, so the ground has to be
+   repainted for the fill to be seen growing) holding a canvas that draws the
+   fill cells (wipeFrame from the centre, or from the knob), then the tick cell
+   by cell, or the radio's dot as one cell and then a plus. The cell lists and
+   the timing maths are dither-core.js's, the same lists components.css is
+   pinned to, so the last canvas frame is the CSS frame cell for cell; the
+   layer is then hidden (.is-live off) and CSS shows through.
+   The switch knob is CSS (steps(N) on --sl-motion-switch); the fill's origin
+   follows it by running the same step maths on the same duration.
+   Colours are never held here: the layer's `color` is the fill, its
+   border-top-color the mark, read when a motion starts. Tier 1 only, and one
+   shared rAF loop that sleeps when nothing moves. No outline, no blend, no
+   opacity, no filter. */
+const PIXEL_INPUTS = ".sl-check__input, .sl-radio__input, .sl-switch__input";
+const PIXEL_BOXES = ".sl-check__box, .sl-radio__box, .sl-switch__track";
+const PIXEL_CLASS = "sl-fx-pixel";
+const PIXEL_DPR_CAP = 2;
+/** Fallback durations in ms when the --sl-motion-* tokens do not resolve. */
+const PIXEL_MS = { check: 180, radio: 150, switch: 260 };
+
+const pixels = new Map();
+const pixeling = new Set();
+let pixelFrame = 0;
+let pixelLast = 0;
+
+const pixelEase = (p) => 1 - (1 - p) ** 3;
+
+/** The control a change input paints, or null. The box or track is the
+ *  input's next sibling in every kit control.
+ *  @param {Element} input a check, radio or switch input */
+function pixelHost(input) {
+  const host = input.nextElementSibling;
+  return host && host.matches(PIXEL_BOXES) ? host : null;
+}
+
+/** Build a control's layer once: the span and its canvas.
+ *  @param {Element} host a check box, radio box or switch track
+ *  @param {"check"|"radio"|"switch"} kind which control */
+function ensurePixel(host, kind) {
+  let d = pixels.get(host);
+  if (d) return d;
+  const layer = document.createElement("span");
+  layer.className = PIXEL_CLASS;
+  layer.setAttribute("aria-hidden", "true");
+  const canvas = document.createElement("canvas");
+  layer.append(canvas);
+  host.prepend(layer);
+  const grid = kind === "switch" ? { cols: SWITCH_CELLS.cols, rows: SWITCH_CELLS.rows } : { cols: CHECK_CELLS, rows: CHECK_CELLS };
+  d = { host, kind, layer, canvas, ctx: canvas.getContext("2d"), grid, p: 0, dir: 0, ms: PIXEL_MS[kind], fill: "", on: "", dpr: 0, knob: 0, keep: false, settle: false };
+  pixels.set(host, d);
+  return d;
+}
+
+/** Size the canvas to whole cells at the capped device ratio. Assigning width
+ *  clears it, so only when the ratio changed.
+ *  @param {object} d a control's pixel state */
+function sizePixel(d) {
+  const dpr = Math.min(PIXEL_DPR_CAP, window.devicePixelRatio || 1);
+  if (dpr === d.dpr) return;
+  d.dpr = dpr;
+  d.canvas.width = Math.round(d.grid.cols * CELL_PX * dpr);
+  d.canvas.height = Math.round(d.grid.rows * CELL_PX * dpr);
+}
+
+/** Fill the given cells in the canvas's current fillStyle.
+ *  @param {object} d a control's pixel state
+ *  @param {Iterable<readonly [number, number]>} cells [column, row] pairs */
+function putPixelCells(d, cells) {
+  const cell = CELL_PX * d.dpr;
+  d.ctx.beginPath();
+  for (const [i, j] of cells) {
+    const x = Math.round(i * cell);
+    const y = Math.round(j * cell);
+    d.ctx.rect(x, y, Math.round((i + 1) * cell) - x, Math.round((j + 1) * cell) - y);
+  }
+  d.ctx.fill();
+}
+
+/** The covered cells of a row-major wipe frame as [column, row] pairs.
+ *  @param {Uint8Array} frame wipeFrame output
+ *  @param {number} cols grid width */
+function coveredCells(frame, cols) {
+  const out = [];
+  for (let k = 0; k < frame.length; k++) if (frame[k]) out.push([k % cols, Math.floor(k / cols)]);
+  return out;
+}
+
+/** Paint the control at progress `d.p` (0 = off, 1 = on) over its off ground.
+ *  @param {object} d a control's pixel state */
+function drawPixel(d) {
+  const { ctx, canvas, grid, kind, p, dir } = d;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "transparent";
+  ctx.fillStyle = d.fill;
+  if (kind === "radio") {
+    const f = dotFrame(p);
+    if (f < 1) return;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "transparent";
+    ctx.fillStyle = d.on;
+    putPixelCells(d, DOT_FRAMES[f - 1]);
+    return;
+  }
+  let origin = { x: grid.cols / 2, y: grid.rows / 2 };
+  if (kind === "switch") {
+    // The knob moves one way per direction: a reversal holds it where it is
+    // and then carries it back, never jumping a step.
+    const to = dir >= 0 ? knobCells(p, 0, 1) : knobCells(1 - p, 1, 0);
+    d.knob = dir >= 0 ? Math.max(d.knob, to) : Math.min(d.knob, to);
+    d.host.style.setProperty("--slfx-knob-x", `${d.knob * CELL_PX}px`);
+    origin = { x: SWITCH_CELLS.inset + d.knob + SWITCH_CELLS.knob / 2, y: grid.rows / 2 };
+  }
+  const t = d.keep ? 1 : pixelEase(p);
+  if (t >= 1) ctx.fillRect(0, 0, canvas.width, canvas.height);
+  else if (t > 0) putPixelCells(d, coveredCells(wipeFrame(grid, origin, t), grid.cols));
+  if (kind === "check") {
+    const n = tickCount(p);
+    if (n < 1) return;
+    ctx.fillStyle = "transparent";
+    ctx.fillStyle = d.on;
+    putPixelCells(d, TICK_CELLS.slice(0, n));
+  }
+}
+
+/** One frame of every moving control; each leaves the loop at an end, where
+ *  its layer is hidden so the CSS frame shows.
+ *  @param {number} now the frame's timestamp */
+function pixelStep(now) {
+  pixelFrame = 0;
+  const dt = Math.max(0, Math.min(64, now - pixelLast));
+  pixelLast = now;
+  for (const d of pixeling) {
+    d.p = Math.min(1, Math.max(0, d.p + (d.dir * dt) / d.ms));
+    drawPixel(d);
+    if (d.p !== (d.dir > 0 ? 1 : 0)) d.settle = false;
+    else if (!d.settle) d.settle = true; // the last frame is rendered once before the layer goes: the knob's var must be seen at its seat, or CSS starts a transition from the frame before
+    else {
+      pixeling.delete(d);
+      d.dir = 0;
+      d.keep = false;
+      d.settle = false;
+      d.host.style.removeProperty("--slfx-knob-x");
+      d.layer.classList.remove("is-live");
+    }
+  }
+  if (pixeling.size) pixelFrame = requestAnimationFrame(pixelStep);
+}
+
+/** Start a control moving toward on or off, from wherever it stands: from
+ *  where a live motion has got to, else from the state it was painted in, which
+ *  is the opposite of where it is going unless `mixed` (it was a filled
+ *  indeterminate box: the fill stays, only the mark changes).
+ *  @param {Element} host the box or track
+ *  @param {boolean} on the state it is going to
+ *  @param {boolean} [mixed] it was painted as the filled mixed state */
+function movePixel(host, on, mixed = false) {
+  const kind = host.matches(".sl-check__box") ? "check" : host.matches(".sl-radio__box") ? "radio" : "switch";
+  const d = ensurePixel(host, kind);
+  const cs = getComputedStyle(host);
+  d.ms = motionMs(cs, `--sl-motion-${kind}`, PIXEL_MS[kind]);
+  const ls = getComputedStyle(d.layer);
+  d.fill = ls.color;
+  d.on = ls.borderTopColor;
+  if (!pixeling.has(d)) {
+    d.p = mixed ? TICK_START : on ? 0 : 1;
+    d.keep = mixed && on;
+    d.knob = on ? 0 : SWITCH_CELLS.steps;
+  }
+  sizePixel(d);
+  d.dir = on ? 1 : -1;
+  d.layer.classList.add("is-live");
+  drawPixel(d);
+  pixeling.add(d);
+  if (!pixelFrame) {
+    pixelLast = performance.now();
+    pixelFrame = requestAnimationFrame(pixelStep);
+  }
+}
+
+/** The radios of `input`'s group: the same name in the same form, a formless
+ *  group included (and a radio tied to a form by its form= attribute).
+ *  @param {HTMLInputElement} input a radio
+ *  @returns {HTMLInputElement[]} the group */
+function radioGroup(input) {
+  const pool = input.form ? input.form.elements : document.querySelectorAll(".sl-radio__input");
+  return [...pool].filter((r) => r.type === "radio" && r.name === input.name && r.form === input.form);
+}
+
+/** What was painted just before a user's change: per form (or document) and
+ *  radio name, the checked radio; per input, whether a check was mixed. A
+ *  `change` fires only on the new radio, and by then the old one is already
+ *  unchecked, so the old one has to be written down first. It is written
+ *  again on every pointerdown and keydown, in the capture phase, which both
+ *  come right before the `change` they cause, so a programmatic change or a
+ *  form.reset() in between can never leave it stale. */
+const radioSeen = new WeakMap();
+const wasMixed = new WeakMap();
+
+/** Write down the painted state of the control a pointer or key is about to change.
+ *  @param {Event} ev a capture-phase pointerdown or keydown */
+function seedPixel(ev) {
+  const t = ev.target instanceof Element ? ev.target : null;
+  const input = t?.matches?.(PIXEL_INPUTS) ? t : t?.closest?.(".sl-check, .sl-radio, .sl-switch")?.querySelector(PIXEL_INPUTS);
+  if (!input) return;
+  if (input.matches(".sl-check__input")) wasMixed.set(input, input.indeterminate);
+  if (!input.matches(".sl-radio__input") || !input.name) return;
+  const scope = input.form ?? document;
+  let rec = radioSeen.get(scope);
+  if (!rec) radioSeen.set(scope, (rec = new Map()));
+  rec.set(input.name, radioGroup(input).find((r) => r.checked) ?? null);
+}
+
+/** A delegated change on a check, radio or switch input: animate it, and in a
+ *  radio group animate the one it replaced too, if the record written before
+ *  this change says it was on. Reduced motion, high contrast and an opt-out
+ *  region start nothing; the CSS frame stands.
+ *  @param {Event} ev a delegated change */
+function onPixelChange(ev) {
+  const input = ev.target instanceof Element ? ev.target : null;
+  if (!input || !input.matches(PIXEL_INPUTS) || input.disabled) return;
+  const rec = input.matches(".sl-radio__input") && input.name ? radioSeen.get(input.form ?? document) : null;
+  const prev = rec?.get(input.name);
+  rec?.delete(input.name);
+  const mixed = wasMixed.get(input) === true;
+  wasMixed.delete(input);
+  if (suppressed() || window.matchMedia(REDUCE).matches || input.closest('[data-sl-fx="off"]')) return;
+  const host = pixelHost(input);
+  if (!host) return;
+  movePixel(host, input.checked, mixed);
+  if (prev && prev !== input && prev.isConnected && !prev.checked && prev.form === input.form) {
+    const old = pixelHost(prev);
+    if (old) movePixel(old, false);
+  }
+}
+
+/** Release what a control that left the document held.
+ *  @returns {void} */
+function prunePixels() {
+  for (const [host, d] of pixels) {
+    if (host.isConnected) continue;
+    pixeling.delete(d);
+    pixels.delete(host);
+  }
+}
+/* ── end pixel controls ── */
 
 /* ── dither: the hover is an ordered-dither wipe ─────────────────────────────
    A button or icon button answers the pointer with a fill that grows through
@@ -1277,6 +1531,9 @@ export function mount(root = document, { ignoreReducedMotion = false, bursts = 1
   window.addEventListener("pointerout", onSpecOut, { passive: true });
   window.addEventListener("scroll", onSpecLayout, { capture: true, passive: true });
   window.addEventListener("resize", onSpecLayout, { passive: true });
+  root.addEventListener("change", onPixelChange);
+  root.addEventListener("pointerdown", seedPixel, { capture: true, passive: true });
+  root.addEventListener("keydown", seedPixel, { capture: true, passive: true });
   root.addEventListener("pointerover", onDitherCross, { passive: true });
   root.addEventListener("pointerout", onDitherCross, { passive: true });
   root.addEventListener("pointerdown", onPressDown, { passive: true });
