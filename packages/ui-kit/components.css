@@ -2351,6 +2351,21 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   color: var(--slc-text-muted);
 }
 
+/* ══ SIGNAL STRIP ════════════════════════════════════════════════════════════ */
+
+/* A dithered ramp on a canvas (signal.js, 3px cells), decorative: the markup
+   carries aria-hidden. 12px is four cells. The ink is the element's own
+   `color`, which signal.js reads; the off cells are transparent, so there is
+   no ground here. Without the script the canvas is empty. Under forced
+   colours the script draws nothing and the strip is a solid CanvasText bar. */
+.sl-signal {
+  display: block;
+  width: 100%;
+  height: 12px;
+  color: var(--slc-accent-text);
+}
+.sl-signal--muted { color: var(--slc-text-muted); }
+
 /* ══ IDENTITY & MEDIA ════════════════════════════════════════════════════════ */
 
 /* The brand is typographic — there is no pictorial mark. These three classes
@@ -3039,6 +3054,7 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   .sl-switch__track::after { forced-color-adjust: none; background: CanvasText !important; }
   .sl-switch__input:checked + .sl-switch__track::after { background: HighlightText !important; }
   .sl-progress { border: 1px solid CanvasText !important; }
+  .sl-signal { forced-color-adjust: none; background: CanvasText !important; }
   .sl-progress__bar { forced-color-adjust: none; background: Highlight !important; }
   :is(.sl-segmented__item[aria-selected="true"], .sl-segmented__item[aria-pressed="true"],
       .sl-btn:not(.sl-btn--primary)[aria-pressed="true"], .sl-icon-btn[aria-pressed="true"],
