@@ -365,13 +365,13 @@ A square icon-only control: clear at rest in the one control edge, its glyph in 
     <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.3"/>
   </svg>
 </button>
-<button class="sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop" aria-label="Add a product">
+<button class="sl-icon-btn sl-icon-btn--round" aria-label="Add a product">
   <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
     <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.4"/>
   </svg>
 </button>
 ```
-Consumes: `--slc-edge-control`, `--slc-edge-control-hover`, `--slc-edge-pressed`, `--slc-seam`, `--slc-surface`, `--slc-text-secondary`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-danger`, `--slc-on-danger`, `--slc-focus`. As a toggle it takes `aria-pressed`, painted like the toggle button's, seam included (0.36.2). `--danger` is the button's danger tone (a remove or delete glyph). The edge stays: only a chrome glyph inside a workbench primitive (a tab's close, 0.31; the activity bar, 0.33) may drop it. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette the liquid's `--drop` is allowed on, and the only element in the kit that is; the author still writes `sl-fx-liquid sl-fx-liquid--drop`, because L6 makes the modifier in the markup the contract and forbids anything from measuring a radius to decide. Don't: put `--round` on a text button; the deformation belongs to a round silhouette.
+Consumes: `--slc-edge-control`, `--slc-edge-control-hover`, `--slc-edge-pressed`, `--slc-seam`, `--slc-surface`, `--slc-text-secondary`, `--slc-text`, `--slc-accent`, `--slc-accent-subtle`, `--slc-danger`, `--slc-on-danger`, `--slc-focus`. As a toggle it takes `aria-pressed`, painted like the toggle button's, seam included (0.36.2). `--danger` is the button's danger tone (a remove or delete glyph). The edge stays: only a chrome glyph inside a workbench primitive (a tab's close, 0.31; the activity bar, 0.33) may drop it. Do: give it an `aria-label` — an icon-only control has no accessible name otherwise. `sl-icon-btn--round` is the round silhouette; it takes the Bayer dither hover through its inherited radius. Don't: put `--round` on a text button.
 
 ### Pagination — `sl-pagination` (`__item`)
 Numbered navigation across pages of results. Mono tabular figures (L1). Substrate: **R** App, **A** Page, **N/A** IDE.
@@ -666,7 +666,7 @@ await mountGpu();        // Tier 2 — optional, and only after mount()
 | Tier | Needs | You get | If you skip it |
 |---|---|---|---|
 | **0** | `effects.css` alone | Static aurora arc on focus, no motion; glass carries no light without a pointer | Nothing is broken — Tier 0 is a correct, complete state, not a degraded one |
-| **1** | `mount()` | The glass's specular edge (an arc of light on the border facing the pointer), the liquid's deformation, finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
+| **1** | `mount()` | The glass's specular edge (an arc of light on the border facing the pointer), finite glitch bursts, the aurora's sweep, the goo's weld, the glass lens | The classes render Tier 0 and nothing tells you |
 | **2** | `await mountGpu()` | **Retired 2026-09-24** — resolves `false`; kept so existing calls still work | Nothing: Tier 1 is the whole reading |
 
 Four things that bite, in the order they usually bite:
@@ -684,7 +684,7 @@ Four things that bite, in the order they usually bite:
 | Text button, any variant | `sl-btn sl-btn--primary sl-fx-glass sl-fx-glass--pane sl-fx-press` |
 | Field / select wrapper | `sl-field__control sl-fx-glass sl-fx-glass--field sl-fx-aurora sl-fx-aurora--field` |
 | Selected tab | `sl-tabs__tab sl-fx-aurora sl-fx-aurora--linear` |
-| Round icon button | `sl-icon-btn sl-icon-btn--round sl-fx-liquid sl-fx-liquid--drop` |
+| Round icon button | `sl-icon-btn sl-icon-btn--round` |
 | Oversized anchor | `sl-anchor sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
 | Stat value | `sl-stat__value sl-fx-glass sl-fx-glass--text sl-fx-glass--pane` |
 | Figure frame | `sl-figure__media sl-fx-glass sl-fx-glass--wide` |
@@ -758,15 +758,6 @@ Attention lives here: a 1px arc of light riding the border with its bloom, which
 `--wide` widens the arc to 2px on containers; `--field` lights a field's input border (1px, the sharp line of the control edge); `--linear` sweeps a segment (a tab's or link's underline; add `--top` for an inversion band's rule) instead of a perimeter and has no busy mode; `--rim` is for filled elements. **On a replaced control the `sl-field__control` wrapper is mandatory** — the control itself hosts no pseudo-element, and `:focus-within` on the wrapper is what lights the arc.
 Consumes: `--slc-accent`, `--slc-text`. Do: pair every busy aurora with `aria-busy`, and every determinate one with `role="progressbar"` + `aria-valuenow` — the aurora renders state, it never is the state. Don't: grant more than one ambient `data-sl-fx-live="on"` per document. Don't put an aurora element under an ancestor that clips (`overflow` other than `visible`, `contain: paint`, `clip-path`): the bloom reaches ~22px outside the box, and a glow cut at a container's edge is a defect — wrap the table in the scroll container, not the card beside it.
 
-### Liquid — `sl-fx-liquid` (`--drop`)
-The element's outline gives under the pointer — a small outward swell that follows it with a little lag, springs back and settles when it leaves. It is a skin drawn below the content in the element's own fill and border colours (driven by `mount()`); the text is never filtered and the radius is never rewritten. Non-destructive: the skin exists only while the pointer shapes the element, and nothing is changed afterwards. **The gooey belongs to a round silhouette:** `--drop` goes on a round icon-only button and nowhere else — on a text button the drop reads as a blister on a box, and a text button is a glass pane instead (`sl-fx-glass--pane`). The modifier is the contract, written in the markup; nothing measures a radius to decide. A bare `sl-fx-liquid` is inert. Substrate: **A** App/Page.
-```html
-<button class="sl-btn sl-btn--ghost sl-fx-glass sl-fx-liquid sl-fx-liquid--drop sl-fx-aurora" aria-label="Send" style="width:2.5rem;height:2.5rem;padding:0;border-radius:var(--sl-radius-pill)">…</button>
-<article class="sl-card sl-fx-glass">…</article>
-```
-A container takes no swell at all — one yielding under the pointer reads as a toy; for several elements that should read as one material, use `sl-fx-goo` below.
-Consumes: nothing of its own — the skin is painted in the host's computed background and border colours. Don't: put it on a text input — a field that deforms while being typed into trades legibility for spectacle. Don't: put `--drop` on a text button — the owner rejected the gooey there; use `sl-fx-glass--pane`.
-
 ### Goo — `sl-fx-goo` + `sl-fx-goo__member`
 These are one substance. A container carries `sl-fx-goo` and owns one injected silhouette layer; every `sl-fx-goo__member` inside it contributes its own rounded box, and members within `--slfx-goo-weld` of one another grow a soft neck between them. Laid out and welded at rest — it answers the layout, not the pointer, so it marks a *set* (a tag row, a gallery of cards or pictures, a cluster of draggable chips) and never a state. Add `sl-fx-goo--drift` and members wander around where they were laid out (7px, each with its own period, neighbours in opposition), so a pair's neck thins, parts and re-forms; it is refused under reduced motion, which gets the static weld. Driven by `mount()`; without it the members simply render unmerged, which is the correct Tier 0. The content is never filtered: the members ride crisp on top of the layer. Substrate: **A** App/Page.
 ```html
@@ -775,7 +766,7 @@ These are one substance. A container carries `sl-fx-goo` and owns one injected s
   <div class="sl-callout sl-callout--info sl-fx-goo__member" style="margin-top:1.25rem">introspect</div>
 </div>
 ```
-Bind `--slfx-goo-weld` (default `14px`) — the largest gap between two **members, as laid out**, that still welds, measured **edge to edge between facing sides**, so a grid's diagonals stand further apart than its `gap` and stay open. `--slfx-goo-reach` (default `3px`) is the rim the substance shows past a member with no neighbour, and a floor rather than a target. `--slfx-goo-soft` (default `5px`) caps the blur: dilation and blur both close a gap, but dilation preserves the outline while blur melts it, so raise `soft` for a more liquid neck and lower it for a crisper one. `--slfx-goo-fill` is the substance every member stands on.
+Bind `--slfx-goo-weld` (default `14px`) — the largest gap between two **members, as laid out**, that still welds, measured **edge to edge between facing sides**, so a grid's diagonals stand further apart than its `gap` and stay open. `--slfx-goo-reach` (default `3px`) is the rim the substance shows past a member with no neighbour, and a floor rather than a target. `--slfx-goo-soft` (default `5px`) caps the blur: dilation and blur both close a gap, but dilation preserves the outline while blur melts it, so raise `soft` for a gooier neck and lower it for a crisper one. `--slfx-goo-fill` is the substance every member stands on.
 Consumes: `--slfx-goo-fill` under every member, and each member's own computed `background-color` composited over it at the component's own alpha — so a tinted member stays a tint and a member with no fill is simply the substance. A member that welds to a neighbour gives up its own **border** and its own **background**, and the substance paints it: an outline drawn across a merged mass reads as a card stacked on a blob, and an opaque rectangular box covering a neighbour's substance reads as boxes stepped over one another rather than as drops merging. Handing the paint over moves that colour boundary inside the filter, where the blur softens it. The member keeps its text. One standing alone keeps both. **Never a form control or a link.** `button`, `input`, `select`, `textarea` and `a[href]` are refused a field outright, marked or not: they paint their own chrome through layers this family does not own, so a welded control kept an outline the substance was meant to replace. Use a standard element — and a `div[role="button"][tabindex="0"]` where a member must be operable, which paints nothing of its own. Do: mark members explicitly — membership is a class, never "every child of the container". Members may also **move**: a drag or an arrow-key nudge re-welds, because the field re-measures per frame while a pointer or the focus is inside the container (and not at all otherwise). Place a movable member with insets or `margin`, never with a `transform` — a transform moves the painted element without moving the box `getBoundingClientRect()` reports, and the silhouette stays behind. Do: give the container padding — the substance reaches `--slfx-goo-reach` plus three blur sigmas (~34px at the default weld) past the outermost member, and an ancestor that clips cuts it along a straight line. Don't: expect a neck between members whose own fills are both near the ground's colour — the weld is there, but nothing separates it from the background.
 
 ### Halftone — `data-sl-halftone`

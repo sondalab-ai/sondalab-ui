@@ -45,7 +45,7 @@ L5 ("structure encodes truth") applied to motion: **an effect that means nothing
 | Family | Means | Fires on |
 |---|---|---|
 | **Glitch** | *something re-resolved* | discrete events: value change, destructive confirmation, validation failure, dialog open, identity |
-| **Liquid** | *you are recognised* | pointer proximity; re-solidifies on leave |
+| **Liquid** | *you are recognised* | **Removed in 0.39** (`sl-fx-liquid` is gone; round icon buttons take the dither hover). Was: pointer proximity; re-solidifies on leave. |
 | **Aurora** | *attention lives here* | `:focus-visible`, `:focus-within`, active tab, a running operation, primary call-to-action |
 | **Glass** | *this is a physical surface* | a **state**, not an event: card, field, dialog, keycap edges |
 | **Goo** | *these belong to one another* | a declared **set**: members of one container, welding by layout proximity |

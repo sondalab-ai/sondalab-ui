@@ -57,7 +57,7 @@ These are always yours (the `sl-ds-auditor` subagent covers them by reading `des
 - The house rule: ≥1 unexpected, intentional *composition* decision per screen (spend boldness on layout, keep materials shared).
 
 > **Effects (L6) — entirely judgement.** `sl-audit` can verify that `effects.css` uses no colour literal, that the runtime is wired at all (check 8, above), and `scripts/effects-js.test.mjs` closes the colour hole for the driver. It cannot verify any of what actually matters:
-> - **the right family for the right meaning** — a glitch on a passive container, or a liquid on something that is not interactive, is decoration, and Decision 1 forbids it; a text button is a glass pane (`sl-fx-glass--pane`), never gooey, and `sl-fx-liquid--drop` goes on a round icon-only button alone;
+> - **the right family for the right meaning** — a glitch on a passive container is decoration, and Decision 1 forbids it; a text button is a glass pane (`sl-fx-glass--pane`), never gooey;
 > - **the budget** — more than one ambient `data-sl-fx-live="on"` per document, or four or more families stacked on one component;
 > - **the focus ring** — an aurora that replaced the `outline` instead of sitting inside the border band;
 > - **the ARIA** — a `busy` or determinate aurora without `aria-busy` / `role="progressbar"`, which leaves reduced-motion and high-contrast visitors with no state at all;

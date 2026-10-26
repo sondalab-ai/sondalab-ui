@@ -2179,9 +2179,8 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
   border-color: var(--slc-edge-control-hover);
 }
 .sl-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-/* The round silhouette the liquid's --drop is allowed on. It does NOT apply
-   the effect: L6 makes the modifier written in the markup the contract, and
-   forbids anything from measuring a radius to decide. */
+/* A round icon button. The effects layer's hover follows its
+   inherited radius. */
 .sl-icon-btn--round { border-radius: 50%; }
 
 /* DANGER (0.32) — a tone, not a variant: it composes with the variant it

@@ -80,7 +80,7 @@ test("both kill switches neutralise host-level effects, not only paint layers", 
     const killed = RULES.filter((r) => r.selector.includes(attr) && HOST_EFFECT.test(r.body));
     assert.ok(killed.length > 0, `no rule neutralises a host-level effect under [${attr}]`);
     const covered = killed.map((r) => r.selector).join(" ");
-    for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-liquid", "sl-fx-goo", "sl-fx-glitch"]) {
+    for (const cls of ["sl-fx-glass", "sl-fx-aurora", "sl-fx-goo", "sl-fx-glitch"]) {
       assert.ok(covered.includes(cls), `[${attr}] must neutralise host-level .${cls}, not just its pseudo-elements`);
     }
   }
@@ -536,52 +536,13 @@ test("determinate progress drives arc length, not an animation", () => {
   assert.match(effects, /--slfx-arc:\s*calc\(var\(--slfx-progress\)\s*\*\s*360deg\)/);
 });
 
-test("the liquid never filters the host or its content", () => {
-  // The owner's rule, confirmed twice: the text is never distorted. The
-  // silhouette is a skin effects.js draws BELOW the content (libraries.dev/
-  // gooey: "your real DOM rides crisp on top"), and the goo filter lives on
-  // that skin's own SVG groups — so no CSS rule may put a filter on a liquid
-  // host, on its skin, or on anything scoped under a liquid selector.
-  const filtered = RULES
-    .filter((r) => /\.sl-fx-liquid/.test(r.selector) && /(?:^|;)\s*filter\s*:(?!\s*none\b)/.test(r.body))
-    .map((r) => r.selector);
-  assert.deepEqual(filtered, [], "no rule may filter a liquid host, its skin, or its content");
+test("no CSS rule references an SVG filter", () => {
   assert.doesNotMatch(effects, /url\(#slfx-/, "no CSS rule may reference an SVG filter");
 });
 
-test("the liquid's skin sits below the content and never takes the pointer", () => {
-  const skin = RULES.find((r) => r.selector === ".sl-fx-liquid__skin");
-  assert.ok(skin, "the skin must have its own rule");
-  assert.match(skin.body, /z-index:\s*-\d/, "the skin must paint below the host's content");
-  assert.match(skin.body, /pointer-events:\s*none/, "the skin must not intercept the pointer");
-  assert.match(skin.body, /overflow:\s*visible/, "the swell leaves the box, so the svg must not clip it");
-  for (const attr of ['data-sl-theme="high-contrast"', 'data-sl-fx="off"']) {
-    const killed = RULES.some(
-      (r) => r.selector.includes(attr) && r.selector.includes(".sl-fx-liquid__skin") && /display:\s*none/.test(r.body),
-    );
-    assert.ok(killed, `[${attr}] must hide the skin, the way it hides every other paint layer`);
-  }
-});
-
-test("one element deforms at a time, and its border hides without touching border-color", () => {
-  // The skin is one shared element, so the host-level rule that hides the
-  // host's own border under the skin's band must be scoped to the single
-  // element effects.js marks live, and only once Tier 1 is armed. It hides
-  // the border with a transparent border-image, never with border-color:
-  // the skin reads the computed border colour every frame, so hover and
-  // active states have to stay the host's own.
-  const live = RULES.filter((r) => /is-liquid-live/.test(r.selector) && !/::(before|after)$/.test(r.selector));
-  assert.equal(live.length, 1, "exactly one host-level rule may key on the live element");
-  const [rule] = live;
-  assert.equal(rule.selector, '[data-sl-fx="on"] .sl-fx-liquid.is-liquid-live');
-  assert.match(rule.body, /border-image:/, "the host's border hides under a border-image");
-  assert.doesNotMatch(rule.body, /border-color|border-radius|filter|transform/, "the live rule may only hide the border");
-});
-
 test("no effect rewrites a host's border-radius", () => {
-  // The skin traces the radii the component declared; a component stays free
-  // to re-parametrise its own --sl-radius-* without this layer noticing.
-  // Paint layers inherit the radius; nothing may INVENT one.
+  // A component stays free to re-parametrise its own --sl-radius-* without
+  // this layer noticing. Paint layers inherit the radius; nothing may INVENT one.
   //
   // --slfx-seat-radius is the one exception and it is not a loophole: the
   // aurora's glow moved out of its host on 2026-09-11, so that a lensed pane
@@ -615,12 +576,12 @@ test("the glitch ghosts are real rules on the child span", () => {
 
 test("the glitch never claims the host's paint layers", () => {
   // ::before is the aurora's wash and ::after is the edge ring, so a glitch that
-  // nested an edge or liquid class under itself would be competing for a layer
+  // nested an edge class under itself would be competing for a layer
   // it does not own.
   const nested = RULES
-    .filter((r) => /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora|liquid)/.test(r.selector))
+    .filter((r) => /\.sl-fx-glitch\s+\.sl-fx-(glass|aurora)/.test(r.selector))
     .map((r) => r.selector);
-  assert.deepEqual(nested, [], "the glitch must not nest an edge or liquid class");
+  assert.deepEqual(nested, [], "the glitch must not nest an edge class");
 });
 
 test("no light is ever a disc under the pointer, and both kill switches hide the edge", () => {
@@ -741,8 +702,7 @@ test("injectGlass() reads the host's own radius before it becomes a glass host",
   // A bare check that "--slg-radius" appears somewhere in the function proves
   // nothing: it would still pass with the read deleted, or with the read left
   // in place but moved after classList.add. This asserts the ORDER, the same
-  // way scripts/effects-js.test.mjs pins "the skin must leave the previous
-  // host before it enters the next" — by index inside the function body,
+  // way the other order-sensitive tests here do — by index inside the function body,
   // comments stripped so a sentence describing the order cannot stand in for
   // code that enforces it.
   const body = jsFnBody("injectGlass");

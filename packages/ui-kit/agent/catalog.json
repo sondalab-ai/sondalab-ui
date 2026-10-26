@@ -327,15 +327,6 @@
       ]
     },
     {
-      "id": "fx-liquid",
-      "kind": "effect",
-      "classes": [
-        "sl-fx-liquid",
-        "sl-fx-liquid--drop"
-      ],
-      "roleVars": []
-    },
-    {
       "id": "fx-goo",
       "kind": "effect",
       "classes": [

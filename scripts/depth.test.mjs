@@ -606,7 +606,7 @@ test("specificity(): :where counts nothing, :is takes its strongest argument", (
   assert.deepEqual(specificity(".sl-table tbody tr"), [0, 1, 2]);
 });
 
-const FX_HOSTS = [".sl-fx-glass", ".sl-fx-press", ".sl-fx-aurora", ".sl-fx-liquid", ".sl-fx-glitch"];
+const FX_HOSTS = [".sl-fx-glass", ".sl-fx-press", ".sl-fx-aurora", ".sl-fx-glitch"];
 test("a selected tile that wears an effect keeps its tile through the effects kill, in high contrast and where effects are off", () => {
   const kill = FX_RULES.find((r) => /box-shadow:\s*none !important/.test(r.body) && r.selector.startsWith(':root[data-sl-theme="high-contrast"] :is(.sl-fx-glass'));
   assert.ok(kill, "the kill rule");
