@@ -971,11 +971,22 @@
       "kind": "signature",
       "classes": [
         "sl-lockup",
+        "sl-lockup__sep",
         "sl-lockup__dot"
       ],
       "roleVars": [
         "--slc-text",
-        "--slc-accent"
+        "--slc-accent-text"
+      ]
+    },
+    {
+      "id": "pixel-word",
+      "kind": "signature",
+      "classes": [
+        "sl-px"
+      ],
+      "roleVars": [
+        "--slc-accent-text"
       ]
     },
     {
@@ -1022,6 +1033,18 @@
       "kind": "effect",
       "classes": [],
       "roleVars": []
+    },
+    {
+      "id": "signal",
+      "kind": "primitive",
+      "classes": [
+        "sl-signal",
+        "sl-signal--muted"
+      ],
+      "roleVars": [
+        "--slc-accent-text",
+        "--slc-text-muted"
+      ]
     }
   ]
 }

@@ -302,11 +302,13 @@
     <section>
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">01</span><h2>Type</h2></div>
-        <p class="cap">Display <b>--sl-font-display</b> Geist 600 · Sans <b>--sl-font-sans</b> Geist · Mono <b>--sl-font-mono</b> Geist Mono · Brand <b>--sl-font-brand</b> Fraunces, the wordmark and monogram only</p>
+        <p class="cap">Display <b>--sl-font-display</b> Geist 600 · Sans <b>--sl-font-sans</b> Geist · Mono <b>--sl-font-mono</b> Geist Mono · Brand <b>--sl-font-brand</b> Fraunces, the wordmark and monogram only · Pixel <b>--sl-font-pixel</b> Geist Pixel Square, display numerals, the lockup and one display word, whole-cell sizes only</p>
         <div class="type-row" style="margin-top:1.6rem">
           <div class="line"><span class="specimen" style="font-size:clamp(2.2rem, 1.5rem + 3vw, 3.6rem);letter-spacing:-0.05em;line-height:1">Deterministic</span><span class="cap">display / clamp anchor · tracking -0.05em · set solid</span></div>
           <div class="line"><span class="specimen" style="font-size:var(--sl-text-2xl);letter-spacing:-0.03em">Heading 2xl</span><span class="cap">--sl-text-2xl · weight 600 · tracking -0.03em</span></div>
           <div class="line"><span class="specimen" style="font-size:var(--sl-text-xl)">Heading xl</span><span class="cap">--sl-text-xl</span></div>
+          <div class="line"><span class="specimen" style="font-family:var(--sl-font-pixel);font-size:var(--sl-text-px-4);font-weight:400;line-height:1.2">1,284 <span class="sl-px">shipped</span></span><span class="cap">pixel accent · <b>--sl-text-px-4</b> 50px · 4px cells · proportional, one weight, untracked</span></div>
+          <div class="line"><span class="specimen" style="font-family:var(--sl-font-pixel);font-size:var(--sl-text-px-2);font-weight:400">sonda<span style="color:var(--slc-accent-text)">/</span>lab 0123456789</span><span class="cap"><b>--sl-text-px-2</b> 25px · 2px cells · steps are 12.5px multiples: px-1 12.5 · px-2 25 · px-3 37.5 · px-4 50</span></div>
           <div class="line"><span class="eyebrow">Structural label</span><span class="cap">micro · mono · uppercase · <b>--sl-text-micro</b> 10.5px · tracking 0.06em — structure only; controls speak in sentence case</span></div>
         </div>
         <div class="measure-demo">
@@ -637,6 +639,14 @@
                   <span class="sl-stat__label">R findings</span>
                 </div>
               </div>
+              <div style="display:flex;align-items:flex-end;gap:1.5rem">
+                <div class="sl-stat">
+                  <span class="sl-stat__value">1-bit</span>
+                  <span class="sl-stat__label">Signal</span>
+                </div>
+                <canvas class="sl-signal" data-sl-signal data-sl-signal-level="0.8" aria-hidden="true" style="flex:1;min-width:0"></canvas>
+                <canvas class="sl-signal sl-signal--muted" data-sl-signal aria-hidden="true" style="width:6rem"></canvas>
+              </div>
             </div>
           </div>
 
@@ -644,7 +654,7 @@
             <span class="g-label">wordmark &middot; lockup &middot; monogram</span>
             <div class="g-demo g-demo--col">
               <span class="sl-wordmark" style="font-size:2rem">sondalab<span class="sl-wordmark__dot">.</span></span>
-              <span class="sl-lockup">sonda<span class="sl-lockup__dot">&middot;</span>lab</span>
+              <span class="sl-lockup">sonda<span class="sl-lockup__sep">/</span>lab</span>
               <div style="display:flex;align-items:center;gap:0.8rem">
                 <span class="sl-monogram" role="img" aria-label="Sondalab">s</span>
                 <span class="sl-monogram" role="img" aria-label="Sondalab" style="--sl-monogram-size:2rem">s</span>
@@ -674,7 +684,7 @@
             <div style="height:15rem;overflow:auto;border:1px solid var(--slc-border);border-radius:var(--sl-radius-md)">
               <header class="sl-header">
                 <div class="sl-wrap" style="display:flex;align-items:center;justify-content:space-between;padding-block:0.7rem">
-                  <span class="sl-lockup">sonda<span class="sl-lockup__dot">&middot;</span>lab</span>
+                  <span class="sl-lockup">sonda<span class="sl-lockup__sep">/</span>lab</span>
                   <span class="sl-eyebrow">Scroll me</span>
                 </div>
               </header>
@@ -833,6 +843,10 @@
     </div>
   </footer>
 
+  <script type="module">
+    import { mountSignals } from "../packages/ui-kit/signal.js";
+    mountSignals();
+  </script>
   <script>
     // A mixed box is a DOM property, not markup: there is no indeterminate attribute.
     document.getElementById("demo-mixed").indeterminate = true;

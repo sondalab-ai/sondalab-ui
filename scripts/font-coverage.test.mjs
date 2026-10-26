@@ -40,12 +40,14 @@ function faces() {
 
 const listed = (path) => pkg.files.some((f) => f === path || (f.endsWith("/") && path.startsWith(f)));
 
-test("the token layer names the faces it is meant to (0.30: Geist UI, Fraunces brand)", () => {
+test("the token layer names the faces it is meant to (0.30: Geist UI, Fraunces brand; 0.39: Geist Pixel Square display accent)", () => {
   const t = tokenFaces();
   assert.equal(t.get("--sl-font-sans"), "Geist");
   assert.equal(t.get("--sl-font-display"), "Geist");
   assert.equal(t.get("--sl-font-mono"), "Geist Mono");
   assert.equal(t.get("--sl-font-brand"), "Fraunces");
+  assert.equal(t.get("--sl-font-pixel"), "Geist Pixel Square");
+  assert.equal(t.size, 5, "five font roles: sans, display, mono, brand, pixel");
 });
 
 for (const [token, family] of tokenFaces()) {
@@ -108,6 +110,9 @@ const IDE = parseUnicodeRange("U+2190-21FF, U+2200-22FF, U+2300-23FF, U+2500-257
 const prop = (body, name) => body.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1].trim();
 const fontOf = (file) => readWoff2(readFileSync(resolve(KIT, file)));
 
+/** The one static (non-variable) face: the pixel accent. */
+const STATIC = "Geist Pixel Square";
+
 for (const face of faces()) {
   const file = face.files[0];
   test(`${file} is a WOFF2 file`, () => {
@@ -116,6 +121,13 @@ for (const face of faces()) {
 
   test(`"${face.family}" claims no weight its wght axis cannot draw`, () => {
     const wght = axes(fontOf(file)).find((a) => a.tag === "wght");
+    if (face.family === STATIC) {
+      // Geist Pixel Square is a static face: one weight, no fvar, so the only
+      // weight it may claim is the one it draws.
+      assert.equal(axes(fontOf(file)).length, 0, `${file} is expected to be static`);
+      assert.equal(prop(face.body, "font-weight"), "400");
+      return;
+    }
     assert.ok(wght, `${file} has no wght axis`);
     const [lo, hi = lo] = prop(face.body, "font-weight").split(/\s+/).map(Number);
     assert.ok(lo >= wght.min && hi <= wght.max, `font-weight ${lo} ${hi} outside the axis ${wght.min}–${wght.max}`);
@@ -139,6 +151,12 @@ for (const face of faces()) {
 test("Geist Mono draws the IDE glyphs a terminal and an editor reach for", () => {
   const cmap = codepoints(fontOf("assets/fonts/geist-mono-latin.woff2"));
   for (const ch of "→⇧↵⏎⌫─│┌┐└┘├┤═║█░≠≤≥●▶") assert.ok(cmap.has(ch.codePointAt(0)), `${ch} is not in the file`);
+});
+
+test("Geist Pixel Square has no tnum: it is proportional, so a live figure keeps the mono", () => {
+  const gsub = fontOf("assets/fonts/geist-pixel-square-latin.woff2").tables.get("GSUB");
+  assert.ok(gsub, "the file has a GSUB table");
+  assert.equal(gsub.includes(Buffer.from("tnum", "latin1")), false, "tnum appeared: revisit .sl-stat__value and the L1 amendment");
 });
 
 // Instrument Sans and Martian Mono are deprecated in 0.30 and kept for one

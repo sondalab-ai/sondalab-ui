@@ -6,12 +6,14 @@
       "display": "\"Geist\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
       "sans": "\"Geist\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
       "mono": "\"Geist Mono\", ui-monospace, \"SF Mono\", Menlo, monospace",
-      "brand": "\"Fraunces\", Georgia, serif"
+      "brand": "\"Fraunces\", Georgia, serif",
+      "pixel": "\"Geist Pixel Square\", \"Geist Mono\", ui-monospace, \"SF Mono\", Menlo, monospace"
     },
     "space": { "0": "0", "1": "0.25rem", "2": "0.5rem", "3": "0.75rem", "4": "1rem", "5": "1.5rem", "6": "2rem", "8": "3rem" },
     "$radius-note": "Lumen radii (ui-kit 0.31): md 8px (controls, fields, callouts), lg 14px (cards, dialogs, overlays), pane 10px (an island pane, between the two). sm stays 6px (rows, tiles, small chrome).",
     "radius": { "sm": "6px", "md": "8px", "lg": "14px", "pane": "10px", "pill": "9999px" },
-    "text": { "micro": "0.65625rem", "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem", "3xl": "2.75rem", "display": "clamp(3.5rem, 2rem + 5vw, 6rem)" },
+    "text": { "micro": "0.65625rem", "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.125rem", "xl": "1.5rem", "2xl": "2rem", "3xl": "2.75rem", "display": "clamp(3.5rem, 2rem + 5vw, 6rem)", "px-1": "12.5px", "px-2": "25px", "px-3": "37.5px", "px-4": "50px" },
+    "$pixel-note": "Geist Pixel Square (ui-kit 0.39, direction D, owner 2026-10-26): the display accent for numerals, the lockup and a single display word. The face draws one pixel cell per 0.08em, so --sl-text-px-1..4 are the only crisp sizes: 12.5px is 1px cells, 25px 2px, 37.5px 3px, 50px 4px. It is proportional (Geist Mono is not), static (one weight) and has no tnum, so a figure that changes in place keeps Geist Mono.",
     "line": { "tight": "1.2", "normal": "1.5", "relaxed": "1.6", "loose": "1.7" },
     "z": { "base": "1", "overlay": "50", "modal": "100", "toast": "200" },
     "$motion-ease-note": "Two curves since ui-kit 0.31 (Lumen): --sl-motion-ease, cubic-bezier(0.25, 1, 0.5, 1), for every state change; --sl-motion-enter, cubic-bezier(0.22, 1, 0.36, 1), a longer settle for what arrives (a dialog, a tooltip, a toast). Durations stay --sl-motion-fast|mid|slow, which reduced motion zeroes.",

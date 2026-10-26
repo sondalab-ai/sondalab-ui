@@ -410,7 +410,14 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
   <span class="sl-stat__label">Tests green</span>
 </div>
 ```
-Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, uppercase, `--sl-text-micro`). Do: keep the value in the mono face whatever its size — a display-scale numeral is a structural label and stays mono (L1; owner's ruling, 2026-09-13, after Fraunces at `opsz` 144 was tried and rejected; confirmed 2026-10-02, when Lumen's Geist 600 figures were considered and declined). Don't: set a stat you have not measured.
+Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, uppercase, `--sl-text-micro`). The value is Geist Pixel Square (`--sl-font-pixel`) at `--sl-text-px-4` (50px, 4px cells) since 0.39 (L1; owner amendment, 2026-10-26, direction D, replacing the 2026-09-13 "stays mono" ruling). Do: keep it on a whole-cell size (`--sl-text-px-1…4`, multiples of 12.5px). Do: set `font-family: var(--sl-font-mono)` on a value that changes in place or sits in an aligned column: the pixel face is proportional and has no `tnum`. Don't: track it, upper-case it or embolden it (one weight). Don't: set a stat you have not measured.
+
+### Signal strip — `sl-signal` (`--muted`)
+A decorative dithered ramp on a canvas, empty at the left and solid at the right, in 3px cells (`dither-core.js`). It sits beside a pixel stat numeral and a mono label (`SIGNAL ▒▒▓▓██ 1-BIT`). Needs `mountSignals()` from `@sondalab/ui-kit/signal.js`; without it the canvas is empty. Substrate: **R** App/Page, **A** IDE.
+```html
+<canvas class="sl-signal" data-sl-signal data-sl-signal-level="0.6" aria-hidden="true"></canvas>
+```
+Consumes: `--slc-accent-text`, `--slc-text-muted`. The ink is the canvas's computed `color`: the accent by default, the muted ink with `sl-signal--muted`, or whatever an ancestor sets, so a strip on an inversion band follows the band. The off cells are transparent; the strip never paints a ground. 12px tall (four cells), full width by default. `data-sl-signal-level` (0..1, default 1) is how much of the width the ramp fills. It does not animate, so reduced motion and `data-sl-fx-still` change nothing; under forced colours nothing is drawn and the canvas is a solid `CanvasText` bar. Do: keep it `aria-hidden="true"`, and put the number it stands for in text beside it. Don't: use it as a progress bar or carry a state in it; it is not a meter.
 
 ## App structure
 
@@ -594,12 +601,19 @@ The official logo. The brand is typographic; there is no pictorial mark. `sondal
 ```
 Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-wordmark.svg` — where this class and that file disagree, the file is right. Do: let it inherit its size from context; it is type, so it scales with `font-size`. Don't: re-letter it, re-space it, or set the period in the text colour — the accent period is the mark.
 
-### Compact lockup — `sl-lockup` (`__dot`)
-The wordmark where the wordmark is too wide: headers, tight chrome. `sonda·lab` in the mono face, uppercase, tracked `0.2em`, the middle dot in the accent. Substrate: **R** IDE/App/Page.
+### Compact lockup — `sl-lockup` (`__sep` · `__dot`)
+The wordmark where the wordmark is too wide: headers, tight chrome. `sonda/lab` lowercase in Geist Pixel Square at `--sl-text-px-1` (12.5px, 1px cells; a hero lockup may step up to `--sl-text-px-2`), untracked, the `/` in the accent. Substrate: **R** IDE/App/Page.
 ```html
-<span class="sl-lockup">sonda<span class="sl-lockup__dot">·</span>lab</span>
+<span class="sl-lockup">sonda<span class="sl-lockup__sep">/</span>lab</span>
 ```
-Consumes: `--slc-text`, `--slc-accent`. Source of truth: `packages/ui-kit/assets/sondalab-lockup.svg` — Geist Mono weight 300, tracked `0.2em`, in the asset and the class alike since 0.30. A mark, not a label: its `0.2em` tracking stands outside the micro register. Do: use this one in a `sl-header`. Don't: mix the two marks on one surface.
+Consumes: `--slc-text`, `--slc-accent-text`. The `/` is a child `b` or `.sl-lockup__sep`; `.sl-lockup__dot` keeps the 0.30 middle dot. Since 0.39 (L3; owner amendment, 2026-10-26) it is no longer uppercase or tracked `0.2em`; `packages/ui-kit/assets/sondalab-lockup.svg` still draws the 0.30 lockup until the asset follows, so this class is the lockup's current form. Do: use this one in a `sl-header`; keep it at a whole-cell size. Don't: mix the two marks on one surface.
+
+### Pixel word — `sl-px`
+One display word in the pixel face, inline in a heading or running display text. Substrate: **R** App/Page, **A** IDE.
+```html
+<h2>Measured, not <span class="sl-px">guessed</span></h2>
+```
+Consumes: `--slc-accent-text`. `font-family: var(--sl-font-pixel)`, one weight, `letter-spacing: 0`, accent ink; the size is inherited, so give the word (or its heading) a whole-cell size (`--sl-text-px-1…4`) to keep the cells crisp. Do: use it for a single word. Don't: set a sentence or a paragraph in it; body and UI text stay in Geist and code in Geist Mono (L1).
 
 ### Monogram — `sl-monogram`
 Where even the lockup is too wide to read: a social avatar, a square tile. `s.` in the wordmark's cut (`--sl-font-brand`, Fraunces), the letter in the text colour and the period in the accent, on a full-bleed square of the surface. Substrate: **R** IDE/App/Page.
