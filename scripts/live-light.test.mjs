@@ -108,6 +108,50 @@ test("the canvas reaches as far as PAD says, and the light is gone by its edge",
   assert.ok(0.5 * Math.exp(-pad / 3) < 0.005, `bleed at PAD=${pad} is below 0.5%`);
 });
 
+// ── 0.39.0: the light on the 3px pixel grid (S5, pixel direction D) ─────────
+// The dither's cells (dither-core CELL_PX, origin at the host's padding box)
+// and the light's cells must be one lattice. The shader is source text here,
+// so these read it as such.
+const PAD_PX = Number(/const PAD = (\d+);/.exec(js)[1]);
+const head = js.slice(js.indexOf("const HEAD"), js.indexOf("/** run:"));
+const pFn = head.slice(head.indexOf("vec2 P()"), head.indexOf("float qz("));
+const runFs = js.slice(js.indexOf("const FS_RUN"), js.indexOf("const FS_BUSY"));
+const busyFs = js.slice(js.indexOf("const FS_BUSY"), js.indexOf("const live = new Map"));
+
+test("pixel light: the cell size is the dither's CELL_PX, imported, not a literal 3", () => {
+  assert.match(js, /import \{ CELL_PX \} from "\.\/dither-core\.js";/);
+  assert.match(head, /const float CELL=\$\{CELL_PX\}\.;/, "the shader's cell comes from the import");
+  assert.doesNotMatch(head, /CELL=3/);
+});
+
+test("pixel light: the shading position is the floored cell's centre, in CSS px", () => {
+  assert.match(pFn, /gl_FragCoord\.xy\/uDpr/, "CSS px, so a cell is CELL_PX x dpr device px");
+  assert.match(pFn, /\(floor\(css\/CELL\)\+\.5\)\*CELL/, "the centre of the cell holding the fragment");
+});
+
+test("pixel light: the lattice is counted from the host's padding box, past the canvas inset", () => {
+  assert.match(pFn, /full\.y-fc\.y\)-uPad/, "the canvas corner is shifted by the inset before the floor");
+  assert.ok(pFn.indexOf("-uPad") < pFn.indexOf("floor("), "the offset comes before the floor");
+  assert.ok(PAD_PX % 3 !== 0, "the inset is not a multiple of the cell, so the offset matters");
+  assert.match(css, /\.sl-fx-dither\s*\{\s*position:\s*absolute;\s*inset:\s*0;/, "the dither layer starts at the padding box");
+});
+
+test("pixel light: the final intensity is cut into LEVELS steps, after the soft fade, with no noise", () => {
+  assert.match(head, /float qz\(float a\)\{return floor\(a\*LV\+\.5\)\/LV;\}/);
+  assert.match(head, /const float LV=\$\{LEVELS\}\.;/);
+  const levels = Number(/const LEVELS = (\d+);/.exec(js)[1]);
+  assert.ok(levels >= 3 && levels <= 6, `a few steps (${levels})`);
+  for (const [name, fs] of [["run", runFs], ["busy", busyFs]]) {
+    assert.match(fs, /a=qz\(a\);/, `${name}: quantised`);
+    assert.match(fs, /gl_FragColor=vec4\([^;]*\*a,a\);/, `${name}: the written alpha is the quantised one`);
+    assert.doesNotMatch(fs, /dz|hash\(gl_FragCoord/, `${name}: no per-pixel noise inside a cell`);
+    assert.ok(fs.indexOf("a=qz(a);") < fs.lastIndexOf("gl_FragColor"), `${name}: quantised before it is written`);
+  }
+  // smoothstep still shapes the input (the fade to zero at uPad), but nothing
+  // smooth is applied to the value after it is quantised.
+  assert.ok(runFs.indexOf("smoothstep(uPad*.5,uPad,d)") < runFs.indexOf("a=qz(a);"));
+});
+
 // ── 0.18.0: data-sl-fx-still ─────────────────────────────────────────────────
 // spexr pauses decorative motion while its window is unfocused or idle; this
 // loop was the one per-frame requester left, at ~50% GPU on an idle window.
