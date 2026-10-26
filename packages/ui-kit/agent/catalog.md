@@ -410,6 +410,13 @@ A single measured figure with its caption. Substrate: **R** App/Page, **N/A** ID
 ```
 Consumes: `--slc-text`, `--slc-text-muted`. The label is a micro label (mono, uppercase, `--sl-text-micro`). The value is Geist Pixel Square (`--sl-font-pixel`) at `--sl-text-px-4` (50px, 4px cells) since 0.39 (L1; owner amendment, 2026-10-26, direction D, replacing the 2026-09-13 "stays mono" ruling). Do: keep it on a whole-cell size (`--sl-text-px-1…4`, multiples of 12.5px). Do: set `font-family: var(--sl-font-mono)` on a value that changes in place or sits in an aligned column: the pixel face is proportional and has no `tnum`. Don't: track it, upper-case it or embolden it (one weight). Don't: set a stat you have not measured.
 
+### Signal strip — `sl-signal` (`--muted`)
+A decorative dithered ramp on a canvas, empty at the left and solid at the right, in 3px cells (`dither-core.js`). It sits beside a pixel stat numeral and a mono label (`SIGNAL ▒▒▓▓██ 1-BIT`). Needs `mountSignals()` from `@sondalab/ui-kit/signal.js`; without it the canvas is empty. Substrate: **R** App/Page, **A** IDE.
+```html
+<canvas class="sl-signal" data-sl-signal data-sl-signal-level="0.6" aria-hidden="true"></canvas>
+```
+Consumes: `--slc-accent-text`, `--slc-text-muted`. The ink is the canvas's computed `color`: the accent by default, the muted ink with `sl-signal--muted`, or whatever an ancestor sets, so a strip on an inversion band follows the band. The off cells are transparent; the strip never paints a ground. 12px tall (four cells), full width by default. `data-sl-signal-level` (0..1, default 1) is how much of the width the ramp fills. It does not animate, so reduced motion and `data-sl-fx-still` change nothing; under forced colours nothing is drawn and the canvas is a solid `CanvasText` bar. Do: keep it `aria-hidden="true"`, and put the number it stands for in text beside it. Don't: use it as a progress bar or carry a state in it; it is not a meter.
+
 ## App structure
 
 ### Sidebar nav — `sl-nav` (`__group` · `__item` · `__count`)

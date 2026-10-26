@@ -639,6 +639,14 @@
                   <span class="sl-stat__label">R findings</span>
                 </div>
               </div>
+              <div style="display:flex;align-items:flex-end;gap:1.5rem">
+                <div class="sl-stat">
+                  <span class="sl-stat__value">1-bit</span>
+                  <span class="sl-stat__label">Signal</span>
+                </div>
+                <canvas class="sl-signal" data-sl-signal data-sl-signal-level="0.8" aria-hidden="true" style="flex:1;min-width:0"></canvas>
+                <canvas class="sl-signal sl-signal--muted" data-sl-signal aria-hidden="true" style="width:6rem"></canvas>
+              </div>
             </div>
           </div>
 
@@ -835,6 +843,10 @@
     </div>
   </footer>
 
+  <script type="module">
+    import { mountSignals } from "../packages/ui-kit/signal.js";
+    mountSignals();
+  </script>
   <script>
     // A mixed box is a DOM property, not markup: there is no indeterminate attribute.
     document.getElementById("demo-mixed").indeterminate = true;

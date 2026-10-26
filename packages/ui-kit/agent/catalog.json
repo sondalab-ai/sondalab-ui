@@ -1033,6 +1033,18 @@
       "kind": "effect",
       "classes": [],
       "roleVars": []
+    },
+    {
+      "id": "signal",
+      "kind": "primitive",
+      "classes": [
+        "sl-signal",
+        "sl-signal--muted"
+      ],
+      "roleVars": [
+        "--slc-accent-text",
+        "--slc-text-muted"
+      ]
     }
   ]
 }
