@@ -15,7 +15,7 @@
 
 // The 8x8 Bayer wipe and the cell size are the kit's pure dither maths.
 import {
-  CELL_PX, wipeFrame, CHECK_CELLS, TICK_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
+  CELL_PX, CONTROL_CELL_PX, CHECK_INSET, CHECK_BOX_CELLS, wipeFrame, CHECK_CELLS, TICK_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
 } from "./dither-core.js";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
@@ -922,8 +922,9 @@ function ensurePixel(host, kind) {
   const canvas = document.createElement("canvas");
   layer.append(canvas);
   host.prepend(layer);
-  const grid = kind === "switch" ? { cols: SWITCH_CELLS.cols, rows: SWITCH_CELLS.rows } : { cols: CHECK_CELLS, rows: CHECK_CELLS };
-  d = { host, kind, layer, canvas, ctx: canvas.getContext("2d"), grid, p: 0, dir: 0, ms: PIXEL_MS[kind], fill: "", on: "", dpr: 0, knob: 0, keep: false, settle: false };
+  const grid = kind === "switch" ? { cols: SWITCH_CELLS.cols, rows: SWITCH_CELLS.rows } : { cols: CHECK_BOX_CELLS, rows: CHECK_BOX_CELLS };
+  const cellPx = kind === "switch" ? CELL_PX : CONTROL_CELL_PX;
+  d = { host, kind, layer, canvas, ctx: canvas.getContext("2d"), grid, cellPx, p: 0, dir: 0, ms: PIXEL_MS[kind], fill: "", on: "", dpr: 0, knob: 0, keep: false, settle: false };
   pixels.set(host, d);
   return d;
 }
@@ -935,17 +936,20 @@ function sizePixel(d) {
   const dpr = Math.min(PIXEL_DPR_CAP, window.devicePixelRatio || 1);
   if (dpr === d.dpr) return;
   d.dpr = dpr;
-  d.canvas.width = Math.round(d.grid.cols * CELL_PX * dpr);
-  d.canvas.height = Math.round(d.grid.rows * CELL_PX * dpr);
+  d.canvas.width = Math.round(d.grid.cols * d.cellPx * dpr);
+  d.canvas.height = Math.round(d.grid.rows * d.cellPx * dpr);
 }
 
 /** Fill the given cells in the canvas's current fillStyle.
  *  @param {object} d a control's pixel state
- *  @param {Iterable<readonly [number, number]>} cells [column, row] pairs */
-function putPixelCells(d, cells) {
-  const cell = CELL_PX * d.dpr;
+ *  @param {Iterable<readonly [number, number]>} cells [column, row] pairs
+ *  @param {number} [inset] cells added to both coordinates (a mark's margin in its box) */
+function putPixelCells(d, cells, inset = 0) {
+  const cell = d.cellPx * d.dpr;
   d.ctx.beginPath();
-  for (const [i, j] of cells) {
+  for (const [ci, cj] of cells) {
+    const i = ci + inset;
+    const j = cj + inset;
     const x = Math.round(i * cell);
     const y = Math.round(j * cell);
     d.ctx.rect(x, y, Math.round((i + 1) * cell) - x, Math.round((j + 1) * cell) - y);
@@ -975,7 +979,7 @@ function drawPixel(d) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "transparent";
     ctx.fillStyle = d.on;
-    putPixelCells(d, DOT_FRAMES[f - 1]);
+    putPixelCells(d, DOT_FRAMES[f - 1], CHECK_INSET);
     return;
   }
   let origin = { x: grid.cols / 2, y: grid.rows / 2 };
@@ -995,7 +999,7 @@ function drawPixel(d) {
     if (n < 1) return;
     ctx.fillStyle = "transparent";
     ctx.fillStyle = d.on;
-    putPixelCells(d, TICK_CELLS.slice(0, n));
+    putPixelCells(d, TICK_CELLS.slice(0, n), CHECK_INSET);
   }
 }
 

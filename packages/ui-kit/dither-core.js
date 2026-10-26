@@ -94,8 +94,19 @@ function covered(i, j, origin, t, maxD, spread) {
    offsets (scripts/pixel-controls.test.mjs pins the two to this one list), and
    effects.js draws the same cells, so the last canvas frame is the CSS frame. */
 
-/** A check or radio box holds CHECK_CELLS x CHECK_CELLS cells (18px, padding box). */
+/** The check and radio marks are CHECK_CELLS x CHECK_CELLS cells, centred in a
+ *  box of CHECK_BOX_CELLS per side: CHECK_INSET cells of margin all round. */
 export const CHECK_CELLS = 6;
+export const CHECK_INSET = 1;
+export const CHECK_BOX_CELLS = CHECK_CELLS + 2 * CHECK_INSET;
+
+/** The check and radio marks, and the fill that dithers in behind them, are
+ *  CONTROL_CELL_PX squares, not CELL_PX: on 3px cells the 6 x 6 mark needs an
+ *  18px box, which the owner found a tad large (2026-10-26). On 2px cells the
+ *  same shapes measure 12px in a 16px box (the pre-pixel size). 2px is a whole
+ *  number of device pixels at DPR 1, 1.5 and 2, so the cells stay crisp. The
+ *  switch keeps CELL_PX. */
+export const CONTROL_CELL_PX = 2;
 
 const cells = (list) => Object.freeze(list.map((c) => Object.freeze(c)));
 

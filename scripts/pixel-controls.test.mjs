@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import {
-  CELL_PX, wipeFrame, CHECK_CELLS, TICK_CELLS, DASH_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
+  CELL_PX, CONTROL_CELL_PX, CHECK_INSET, CHECK_BOX_CELLS, wipeFrame, CHECK_CELLS, TICK_CELLS, DASH_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
 } from "../packages/ui-kit/dither-core.js";
 
 // Pixel direction D, S10: the check, radio and switch draw their final frames
@@ -34,26 +34,32 @@ const px = (b, prop) => {
 function cellsOf(rule) {
   const left = px(rule, "left");
   const top = px(rule, "top");
-  assert.equal(px(rule, "width"), CELL_PX);
-  assert.equal(px(rule, "height"), CELL_PX);
+  assert.equal(px(rule, "width"), CONTROL_CELL_PX);
+  assert.equal(px(rule, "height"), CONTROL_CELL_PX);
   const out = [[left, top]];
   const sh = rule.match(/box-shadow:([^;]*);/)[1];
   for (const m of sh.matchAll(/(-?\d+)(?:px)? (-?\d+)(?:px)? 0 var\(--_sl-on-fill\)/g)) out.push([left + Number(m[1]), top + Number(m[2])]);
   for (const [x, y] of out) {
-    assert.equal(x % CELL_PX, 0, `cell x ${x} off the lattice`);
-    assert.equal(y % CELL_PX, 0, `cell y ${y} off the lattice`);
+    assert.equal(x % CONTROL_CELL_PX, 0, `cell x ${x} off the lattice`);
+    assert.equal(y % CONTROL_CELL_PX, 0, `cell y ${y} off the lattice`);
   }
-  return out.map(([x, y]) => [x / CELL_PX, y / CELL_PX]);
+  // the offsets are the box's, the lists are the mark's: the mark sits CHECK_INSET cells in
+  return out.map(([x, y]) => [x / CONTROL_CELL_PX - CHECK_INSET, y / CONTROL_CELL_PX - CHECK_INSET]);
 }
 const sorted = (cells) => cells.map((c) => c.join(",")).sort();
 
-test("the check and radio box hold whole 3px cells, and CSS and JS name the same lattice", () => {
+test("the check and radio box hold whole 2px cells, 16px inside and 18 outside, and CSS and JS name the same lattice", () => {
   const box = body(css, ".sl-check__box,\n.sl-radio__box");
-  assert.equal(px(box, "width"), CHECK_CELLS * CELL_PX);
-  assert.equal(px(box, "height"), CHECK_CELLS * CELL_PX);
-  assert.equal((CHECK_CELLS * CELL_PX) % 3, 0);
-  assert.equal(CHECK_CELLS, 6, "owner, 2026-10-26: 18px, 6 x 6 cells");
-  assert.equal(px(box, "width"), 18);
+  assert.equal(CONTROL_CELL_PX, 2);
+  assert.equal(CHECK_BOX_CELLS, CHECK_CELLS + 2 * CHECK_INSET);
+  assert.equal(px(box, "width"), CHECK_BOX_CELLS * CONTROL_CELL_PX);
+  assert.equal(px(box, "height"), CHECK_BOX_CELLS * CONTROL_CELL_PX);
+  assert.equal(px(box, "width"), 16);
+  assert.equal(px(box, "width") + 2, 18, "18px outside with the 1px border");
+  assert.match(box, /border: 1px solid/);
+  assert.equal(CHECK_CELLS, 6, "owner, 2026-10-26: the 6 x 6 shapes, 12px on 2px cells");
+  assert.equal(CHECK_CELLS * CONTROL_CELL_PX, 12);
+  assert.ok(CONTROL_CELL_PX * 1.5 % 1 === 0 && CONTROL_CELL_PX * 2 % 1 === 0, "whole device pixels at DPR 1, 1.5 and 2");
   assert.match(box, /box-sizing: content-box;/, "the cells' 18px is the padding box under any page reset");
 });
 
@@ -66,10 +72,10 @@ test("the CSS tick, dash and dot cells are exactly dither-core's lists, on the l
   assert.equal(DOT_FRAMES[1].length, 12);
   for (const cell of DOT_FRAMES[0]) assert.ok(DOT_FRAMES[1].some((c) => c.join() === cell.join()), "frame 2 contains frame 1");
   const dashRule = body(css, ".sl-check__input:indeterminate + .sl-check__box::after");
-  const left = px(dashRule, "left") / CELL_PX;
-  const row = px(dashRule, "top") / CELL_PX;
-  const w = px(dashRule, "width") / CELL_PX;
-  const h = px(dashRule, "height") / CELL_PX;
+  const left = px(dashRule, "left") / CONTROL_CELL_PX - CHECK_INSET;
+  const row = px(dashRule, "top") / CONTROL_CELL_PX - CHECK_INSET;
+  const w = px(dashRule, "width") / CONTROL_CELL_PX;
+  const h = px(dashRule, "height") / CONTROL_CELL_PX;
   const dash = [];
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) dash.push([left + i, row + j]);
   assert.deepEqual(sorted(dash), sorted(DASH_CELLS));
@@ -186,10 +192,10 @@ function rig({ reduced = false, dpr = 2 } = {}) {
     querySelectorAll: () => env.inputs ?? [],
   };
   const window = { devicePixelRatio: dpr, matchMedia: () => ({ matches: env.reduced }) };
-  const api = new Function("CELL_PX", "wipeFrame", "CHECK_CELLS", "TICK_CELLS", "DOT_FRAMES", "SWITCH_CELLS", "TICK_START", "tickCount", "dotFrame", "knobCells",
+  const api = new Function("CELL_PX", "CONTROL_CELL_PX", "CHECK_INSET", "CHECK_BOX_CELLS", "wipeFrame", "CHECK_CELLS", "TICK_CELLS", "DOT_FRAMES", "SWITCH_CELLS", "TICK_START", "tickCount", "dotFrame", "knobCells",
     "suppressed", "REDUCE", "document", "window", "Element", "motionMs", "getComputedStyle", "requestAnimationFrame", "performance",
     `${SECTION}\nreturn { onPixelChange, seedPixel, prunePixels, pixels, pixeling };`)(
-    CELL_PX, (grid, origin, t, spread) => { env.origins.push(origin); return wipeFrame(grid, origin, t, spread); }, CHECK_CELLS, TICK_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
+    CELL_PX, CONTROL_CELL_PX, CHECK_INSET, CHECK_BOX_CELLS, (grid, origin, t, spread) => { env.origins.push(origin); return wipeFrame(grid, origin, t, spread); }, CHECK_CELLS, TICK_CELLS, DOT_FRAMES, SWITCH_CELLS, TICK_START, tickCount, dotFrame, knobCells,
     () => env.suppressed, "(reduce)", document, window, FakeEl, () => 100,
     (el) => (el.layerLike ? { color: "FILL", borderTopColor: "ON" } : {}),
     (cb) => { env.queue.push(cb); return env.queue.length; }, { now: () => env.now });
@@ -221,7 +227,7 @@ function rig({ reduced = false, dpr = 2 } = {}) {
 
 /** The cells of the last frame whose fill is `colour`, as [col,row]. */
 const lastCells = (canvas, colour, dpr = 2) =>
-  canvas.frame.filter((r) => !r.full && r.fill === colour).map((r) => [r.x / (CELL_PX * dpr), r.y / (CELL_PX * dpr)]);
+  canvas.frame.filter((r) => !r.full && r.fill === colour).map((r) => [r.x / (CONTROL_CELL_PX * dpr) - CHECK_INSET, r.y / (CONTROL_CELL_PX * dpr) - CHECK_INSET]);
 
 test("nothing is built before a change: no canvas, no layer", () => {
   const { env, api } = rig();
@@ -239,7 +245,7 @@ test("checking a box: the layer goes live, the fill and then the tick are plotte
   assert.equal(env.canvases.length, 1);
   assert.ok(box.layer.classes.has("is-live"));
   const c = env.canvases[0];
-  assert.equal(c.width, CHECK_CELLS * CELL_PX * 2, "whole cells at the device ratio");
+  assert.equal(c.width, CHECK_BOX_CELLS * CONTROL_CELL_PX * 2, "the whole 16px box in whole 2px cells at the device ratio");
   assert.equal(env.queue.length, 1, "one rAF");
   let sawPartialTick = false;
   const seen = [];
@@ -470,7 +476,7 @@ test("a non-pixel change and a detached host are ignored or pruned; the device r
   const { input, box } = env.control("check");
   input.checked = true;
   api.onPixelChange(env.ev(input));
-  assert.equal(env.canvases[0].width, CHECK_CELLS * CELL_PX * 2, "dpr 3 is capped to 2");
+  assert.equal(env.canvases[0].width, CHECK_BOX_CELLS * CONTROL_CELL_PX * 2, "dpr 3 is capped to 2");
   box.isConnected = false;
   api.prunePixels();
   assert.equal(api.pixels.size, 0);
