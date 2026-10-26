@@ -145,6 +145,14 @@
       "term":          ["TERM"],
       "colorTerm":     ["COLORTERM"],
       "ascii":         ["SONDALAB_ASCII"]
+    },
+    "header": {
+      "mark":          ["▄█▄ ▄▄", "▀█▀ ▀▀", "▄▄▄▄▄▄"],
+      "markAccent":    ["aaa...", "aaa...", "......"],
+      "compact":       "●■",
+      "compactAccent": "a.",
+      "accentRole":    "prompt",
+      "gap":           2
     }
   }
 }

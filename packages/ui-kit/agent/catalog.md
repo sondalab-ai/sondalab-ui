@@ -618,6 +618,20 @@ Six spans for the six terminal roles, each a class on a `<span>` inside `sl-term
 ```
 Consumes: `--slc-accent-text`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`, `--slc-text-muted`, `--slc-text`, `--slc-raised`, `--slc-sunken`. The glyph column is the `tui` glyph set: each glyph has a Unicode and an ASCII form and the role it is painted with, as the block lists them. Colour only repeats the glyph and the word, so under forced colours, where the spans take the user's ink, and with `NO_COLOR` the output says the same thing. Two more spans serve the full screen: `sl-term-block__inverse`, a run of cells in inverse video (the primary ink as the ground, the block's own fill as the ink: the inversion band in one line, L3), and `sl-term-block__sel`, a selected row (below). Do: paint the glyph, not the label. A step's label and detail stay in the output's ink. Don't: paint a failure with a success glyph, or colour a word that has no glyph or role of its own.
 
+### Header — `sl-term-block` (`__prompt` · `__dim`)
+The header an interactive launch opens with (a TUI screen, a prompt loop, an installer, a bare launch, `--help`): the mark on the left, 3 lines and 6 columns (`tui.header.mark`), then `sonda/lab` with the slash in prompt, the name and version, and the description in dim. The mark's circle is its one accent shape, in prompt like the slash (the accent as text); the square and the bar keep the output's ink. A one-shot subcommand gets the compact header instead: the 2-column mark `●■`, then `sonda/lab <name>` in dim and a blank line. Either size falls back to the one-line lockup `sonda/lab <name> <version>` on a non-TTY stdout, `TERM=dumb`, accessible or ASCII mode and a terminal narrower than the header, and prints nothing for `--json` or `--plain`. Python: `term.header()` in palette-py 0.8.0.
+```html
+<article class="sl-term-block" aria-label="Terminal header">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> cld</span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">▄█▄</span> ▄▄  sonda<span class="sl-term-block__prompt">/</span>lab
+<span class="sl-term-block__prompt">▀█▀</span> ▀▀  cld 0.9.0
+▄▄▄▄▄▄  <span class="sl-term-block__dim">Manage Claude Code loadouts.</span></pre>
+</article>
+```
+Consumes the role spans above. Do: cut a long description at the line cap (100 columns). Don't: wrap it under the mark, print the header on `--version`, or draw any other banner.
+
 ### Step list and summary — `sl-term-block` (`__ok` · `__warn` · `__err` · `__dim`)
 One line per step: two columns of indent, the glyph in its role, the label padded to `labelWidth` (28 columns), then the detail. A running step is a present participle and a finished one past tense, in sentence case with no trailing period. After one blank line the summary gives four counts in a fixed order (ok, fixed, warn, failed), each in its role and joined by the `separator` glyph in dim; a zero count is dim. A success says what changed and the next step, `Next:` in dim on a continuation line.
 ```html

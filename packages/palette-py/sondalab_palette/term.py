@@ -11,7 +11,7 @@ import os
 import sys
 from typing import Mapping, Optional, Sequence
 
-from . import DECODE, ENV, GLYPHS, LAYOUT, PROGRESS, RAMP, SPINNER
+from . import DECODE, ENV, GLYPHS, HEADER, LAYOUT, PROGRESS, RAMP, ROLES, SPINNER
 
 __all__ = [
     "accessible",
@@ -24,6 +24,7 @@ __all__ = [
     "progress_bar",
     "decode_frames",
     "step_line",
+    "header",
 ]
 
 _TRUECOLOR = ("truecolor", "24bit")
@@ -292,3 +293,98 @@ def step_line(glyph_name: str, label: str, detail: str = "", ascii: bool = False
     if not detail:
         return head + label[:width]
     return head + label[: width - 1].ljust(width) + detail
+
+
+def _sgr(text: str, role: str, mode: str) -> str:
+    """`text` in `role`'s named-ANSI SGR, or unchanged when `mode` is 'none'.
+
+    The header has no truecolor opt-in, so any mode but 'none' paints ANSI 16.
+    Built here rather than with paint(), which reads os.environ, not `env`.
+    """
+    if mode == "none" or not text:
+        return text
+    return f"\033[{ROLES[role][0]}m{text}\033[0m"
+
+
+def _columns(env: Mapping[str, str]) -> int:
+    """The terminal width: COLUMNS in `env`, else stdout's size, else the cap.
+
+    Not shutil.get_terminal_size(): it reads COLUMNS from os.environ, so an
+    explicit `env` would not decide the width.
+    """
+    try:
+        return int(env["COLUMNS"])
+    except (KeyError, ValueError):
+        pass
+    try:
+        return os.get_terminal_size(sys.stdout.fileno()).columns
+    except (AttributeError, OSError, ValueError):
+        return LAYOUT["maxWidth"]
+
+
+def _masked(cells: str, mask: str, mode: str) -> str:
+    """`cells` with each run marked "a" in `mask` painted HEADER["accentRole"]."""
+    out, i = [], 0
+    while i < len(cells):
+        j = i
+        while j < len(cells) and (mask[j] == "a") == (mask[i] == "a"):
+            j += 1
+        run = cells[i:j]
+        out.append(_sgr(run, HEADER["accentRole"], mode) if mask[i] == "a" else run)
+        i = j
+    return "".join(out)
+
+
+def _lockup(text: str, mode: str) -> str:
+    """`sonda/lab` with the slash in `prompt`, then `text`; plain text otherwise."""
+    return "sonda" + _sgr("/", "prompt", mode) + "lab" + text
+
+
+def header(
+    name: str,
+    version: str,
+    description: str,
+    *,
+    compact: bool = False,
+    machine: bool = False,
+    env: Optional[Mapping[str, str]] = None,
+    isatty: Optional[bool] = None,
+) -> str:
+    """The TUI header for an interactive launch; "" means print nothing.
+
+    Full: the HEADER mark beside `sonda/lab`, `name version` and the
+    description in `dim`, every line cut at LAYOUT["maxWidth"]. `compact`:
+    the 2-column mark and `sonda/lab name` in `dim`, then a blank line.
+    `machine` (--json, --plain) gives "". A non-TTY stdout (`isatty` None
+    reads sys.stdout.isatty()), TERM=dumb, accessible or ASCII mode, or a
+    terminal narrower than the header gives the lockup `sonda/lab name
+    version`. Colour follows color_mode(); NO_COLOR keeps the shapes.
+    """
+    if machine:
+        return ""
+    env = _env(env)
+    if isatty is None:
+        isatty = sys.stdout.isatty()
+    mode = color_mode(env, isatty=isatty)
+    cap = LAYOUT["maxWidth"]
+    lockup = f" {name} {version}"[: cap - len("sonda/lab")]
+    if not isatty or _term_dumb(env) or accessible(env) or ascii_mode(env):
+        return _lockup(lockup, mode) + "\n"
+    if compact:
+        mark = HEADER["compact"]
+        text = f"sonda/lab {name}"[: cap - len(mark) - 1]
+        if _columns(env) < len(mark) + 1 + len(text):
+            return _lockup(lockup, mode) + "\n"
+        return _masked(mark, HEADER["compactAccent"], mode) + " " + _sgr(text, "dim", mode) + "\n\n"
+    rows = HEADER["mark"]
+    gap = " " * HEADER["gap"]
+    room = cap - len(rows[0]) - len(gap)
+    texts = ["sonda/lab", f"{name} {version}"[:room], description[:room]]
+    if _columns(env) < len(rows[0]) + len(gap) + max(len(x) for x in texts):
+        return _lockup(lockup, mode) + "\n"
+    painted = [_lockup("", mode), texts[1], _sgr(texts[2], "dim", mode)]
+    lines = [
+        (_masked(row, mask, mode) + (gap + text if text else "")).rstrip(" ")
+        for row, mask, text in zip(rows, HEADER["markAccent"], painted)
+    ]
+    return "\n".join(lines) + "\n"

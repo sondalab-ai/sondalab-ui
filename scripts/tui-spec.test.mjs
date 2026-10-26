@@ -44,6 +44,8 @@ function unicodeGlyphs() {
   tui.ramp.unicode.forEach((g, i) => out.push([`ramp.unicode[${i}]`, g]));
   tui.spinner.frames.forEach((g, i) => out.push([`spinner.frames[${i}]`, g]));
   tui.decode.glyphs.forEach((g, i) => out.push([`decode.glyphs[${i}]`, g]));
+  tui.header.mark.forEach((row, r) => [...row].forEach((g, c) => out.push([`header.mark[${r}][${c}]`, g])));
+  [...tui.header.compact].forEach((g, c) => out.push([`header.compact[${c}]`, g]));
   return out;
 }
 
@@ -141,7 +143,7 @@ test("tui-patterns.md has the six spec sections and Sources, in order", () => {
   const at = order.map((h) => DOC.indexOf(`\n## ${h}\n`));
   at.forEach((i, k) => assert.ok(i > 0, `missing section: ## ${order[k]}`));
   assert.deepEqual([...at].sort((a, b) => a - b), at, "sections out of order");
-  for (const h of ["Glyphs", "Layout", "Step list", "Confirmation", "Summary", "Error block", "Did you mean",
+  for (const h of ["Glyphs", "Layout", "Header", "Step list", "Confirmation", "Summary", "Error block", "Did you mean",
     "Success with next step", "Progress", "Spinner", "Decode"]) {
     assert.ok(DOC.includes(`\n### ${h}\n`), `missing subsection: ### ${h}`);
   }
@@ -182,6 +184,9 @@ test("tui-patterns.md cites each token value it uses (number drift guard)", () =
     `\`${box.horizontal.unicode}\` and \`${box.vertical.unicode}\``,
     `ASCII: \`${["topLeft", "topRight", "bottomLeft", "bottomRight", "horizontal", "vertical"].map((k) => box[k].ascii).join(" ")}\``,
     `\`${box.seam.unicode}\` (\`box.seam\`, ASCII \`${box.seam.ascii}\`)`,
+    `${tui.header.mark.length} lines, ${[...tui.header.mark[0]].length} columns, \`header.gap\` ${tui.header.gap} columns from the text`,
+    `painted \`${tui.header.accentRole}\` (\`header.accentRole\`)`,
+    `the ${[...tui.header.compact].length}-column mark \`header.compact\``,
   ];
   for (const c of cites) assert.ok(DOC.includes(c), `tui-patterns.md does not cite: ${c}`);
 });
@@ -244,4 +249,45 @@ test("every progress example draws a bar of exactly progress.cells cells", () =>
     assert.equal(bar.replace(/ +$/, "").replace(/[▓▒░]/g, "").length, full, `filled run is not floor(done/total*cells): ${l}`);
     assert.equal(l.slice(-percentWidth).trimStart(), pct, `percent field is not ${percentWidth} columns: ${l}`);
   }
+});
+
+test("the header mark: 3 rows of at most 6 columns, an accent mask of the same shape, one accent region", () => {
+  const { mark, markAccent, compact, compactAccent, gap } = tui.header;
+  assert.equal(mark.length, 3);
+  const w = [...mark[0]].length;
+  assert.ok(w <= 6, `mark is ${w} columns`);
+  for (const [i, row] of mark.entries()) {
+    assert.equal([...row].length, w, `mark row ${i} is not ${w} columns`);
+    assert.match(markAccent[i], new RegExp(`^[a.]{${w}}$`), `markAccent row ${i}`);
+    [...row].forEach((g, c) => assert.ok(g !== " " || markAccent[i][c] === ".", `accent on a blank cell at ${i},${c}`));
+  }
+  const cells = markAccent.flatMap((row, r) => [...row].flatMap((m, c) => (m === "a" ? [`${r},${c}`] : [])));
+  const seen = new Set();
+  const todo = [cells[0]];
+  while (todo.length) {
+    const k = todo.pop();
+    if (seen.has(k) || !cells.includes(k)) continue;
+    seen.add(k);
+    const [r, c] = k.split(",").map(Number);
+    todo.push(`${r + 1},${c}`, `${r - 1},${c}`, `${r},${c + 1}`, `${r},${c - 1}`);
+  }
+  assert.equal(seen.size, cells.length, "the accent cells are not one shape");
+  assert.equal([...compact].length, 2);
+  assert.match(compactAccent, /^(a\.|\.a)$/);
+  assert.ok(Number.isInteger(gap) && gap > 0);
+});
+
+test("tui-patterns.md draws the header and the compact header from the tokens", () => {
+  const { mark, compact, gap } = tui.header;
+  const full = mark.map((row, i) => `${row}${" ".repeat(gap)}${["sonda/lab", "cld 0.9.0", "Manage Claude Code loadouts."][i]}`);
+  const blocks = fencedBlocks().map((b) => b.join("\n"));
+  assert.ok(blocks.includes(full.join("\n")), `no header example:\n${full.join("\n")}`);
+  assert.ok(blocks.includes(`${compact} sonda/lab cld`), "no compact header example");
+});
+
+test("tui-patterns.md allows the header on interactive launch only and keeps --version one line", () => {
+  assert.doesNotMatch(DOC, /No ASCII-art banner, on start or on `--version`\./);
+  assert.ok(DOC.includes("`--version` prints the one-line lockup"));
+  assert.ok(DOC.includes("on interactive launch only"));
+  assert.ok(DOC.includes("are for data only"));
 });
