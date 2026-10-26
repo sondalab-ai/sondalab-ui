@@ -206,13 +206,22 @@ test("the switch knob is a pill that stretches toward where it will travel, neve
   assert.match(track.body, /width:\s*35px/);
   const on = R.find((r) => r.selector === ".sl-switch__input:checked + .sl-switch__track::after");
   assert.match(on.body, /translateX\(15px\)/);
-  assert.equal(35 - 2 - 3 - 12 - 15, 3, "on, the knob sits 3px in from the right as it sits 3px in from the left");
-  assert.equal(35 - 2 - 3 - 13 - 14, 3, "held on, it grows leftward and keeps that 3px");
-  const held = R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*13px/.test(r.body));
+  const n = (body, re) => Number(body.match(re)[1]);
+  const trackW = n(track.body, /width:\s*(\d+)px/);
+  const knobW = n(knob.body, /width:\s*(\d+)px/);
+  const inset = n(knob.body, /left:\s*(\d+)px/);
+  const travel = n(on.body, /translateX\((\d+)px\)/);
+  const border = n(track.body, /border:\s*(\d+)px/);
+  const inner = trackW - 2 * border;
+  assert.equal(inner - inset - knobW - travel, inset, "on, the knob sits as far in from the right as it sits from the left");
+  const heldW = n(R.find((r) => r.selector.includes(".sl-switch:active") && /width:\s*\d+px/.test(r.body)).body, /width:\s*(\d+)px/);
+  const heldTravel = n(R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(\d+px\)/.test(r.body)).body, /translateX\((\d+)px\)/);
+  assert.equal(inner - inset - heldW - heldTravel, inset, "held on, it grows leftward and keeps that inset");
+  const held = R.find((r) => r.selector.includes(".sl-switch:active") && new RegExp(`width:\\s*${heldW}px`).test(r.body));
   assert.ok(held, "no held-knob rule");
   assert.match(held.selector, /:not\(:has\(:disabled\)\)/);
-  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && /translateX\(14px\)/.test(r.body));
-  assert.ok(heldOn, "a checked knob must grow leftward (translateX 14px)");
+  const heldOn = R.find((r) => r.selector.includes(".sl-switch:active") && r.selector.includes(":checked") && new RegExp(`translateX\\(${heldTravel}px\\)`).test(r.body));
+  assert.ok(heldOn, "a checked knob must grow leftward");
   assert.match(heldOn.selector, /:not\(:has\(:disabled\)\)/);
   for (const r of [held, heldOn]) {
     assert.match(r.body, FAST, "a held knob goes down on fast");

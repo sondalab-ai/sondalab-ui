@@ -94,20 +94,26 @@ function covered(i, j, origin, t, maxD, spread) {
    offsets (scripts/pixel-controls.test.mjs pins the two to this one list), and
    effects.js draws the same cells, so the last canvas frame is the CSS frame. */
 
-/** A check or radio box holds CHECK_CELLS x CHECK_CELLS cells (15px, padding box). */
-export const CHECK_CELLS = 5;
+/** A check or radio box holds CHECK_CELLS x CHECK_CELLS cells (18px, padding box). */
+export const CHECK_CELLS = 6;
 
-/** The tick, in plotting order, as [column, row]. None sits in a corner cell:
- *  the layer clips at the box's radius and the CSS pixel does not. */
-export const TICK_CELLS = Object.freeze([[0, 2], [1, 3], [2, 2], [3, 1], [4, 1]].map((c) => Object.freeze(c)));
+const cells = (list) => Object.freeze(list.map((c) => Object.freeze(c)));
 
-/** The mixed state's dash, as [column, row]. */
-export const DASH_CELLS = Object.freeze([[1, 2], [2, 2], [3, 2]].map((c) => Object.freeze(c)));
+/** The tick, in plotting order, as [column, row]: a V, short arm down, long arm
+ *  up. None sits in a corner cell: the layer clips at the box's radius and the
+ *  CSS pixel does not. */
+export const TICK_CELLS = cells([[0, 2], [1, 3], [2, 4], [3, 3], [4, 2], [5, 1]]);
 
-/** The radio dot in two frames: one cell, then a plus (reads round at this size). */
+/** The mixed state's dash, as [column, row]: 4 x 2 cells, centred on the 6 x 6 grid. */
+export const DASH_CELLS = cells([[1, 2], [2, 2], [3, 2], [4, 2], [1, 3], [2, 3], [3, 3], [4, 3]]);
+
+/** The radio dot in two frames, both centred on the even grid: the 2 x 2 core,
+ *  then the core with a one-cell arm on each of its eight sides (12 cells, a
+ *  "fat plus" with no corners, which reads round). A 5-cell plus cannot be
+ *  centred on an even grid. */
 export const DOT_FRAMES = Object.freeze([
-  Object.freeze([[2, 2]].map((c) => Object.freeze(c))),
-  Object.freeze([[2, 1], [1, 2], [2, 2], [3, 2], [2, 3]].map((c) => Object.freeze(c))),
+  cells([[2, 2], [3, 2], [2, 3], [3, 3]]),
+  cells([[2, 1], [3, 1], [1, 2], [2, 2], [3, 2], [4, 2], [1, 3], [2, 3], [3, 3], [4, 3], [2, 4], [3, 4]]),
 ]);
 
 /** The switch track's padding box in cells (33 x 18px), the knob's width in
@@ -137,6 +143,6 @@ export function dotFrame(t) {
  * value until its slice is done, so the position is floor(p * N) of N.
  */
 export function knobCells(p, from, to) {
-  const k = Math.floor(Math.min(1, Math.max(0, p)) * SWITCH_CELLS.steps) / SWITCH_CELLS.steps;
-  return (from + (to - from) * k) * SWITCH_CELLS.steps;
+  const k = Math.floor(Math.min(1, Math.max(0, p)) * SWITCH_CELLS.steps);
+  return from * SWITCH_CELLS.steps + (to - from) * k;
 }
