@@ -10,7 +10,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { bayerAt } from "../packages/ui-kit/dither-core.js";
+import { CELL_PX, bayerAt } from "../packages/ui-kit/dither-core.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CSS_PATH = resolve(HERE, "../packages/ui-kit/components.css");
@@ -21,16 +21,29 @@ export const END = "/* @gen-art:end */";
 export const PITCH = 5;
 /** The molnar stroke tile, in slots (it repeats). */
 const STROKE_SLOTS = 12;
-/** The molnar void's three steps, in cells: the fully erased zone each
- *  step clears from the box's top-left corner. A step serves boxes narrower
- *  than its own zone, so the zone spans the message's whole line: S below
- *  S's width, M from S's width, L from M's width. Multiples of PITCH, so the
- *  void erases whole strokes. A narrow box wraps the message onto more
- *  lines, so the narrower zones are the taller ones. */
-export const VOID = { s: { w: 100, h: 50 }, m: { w: 140, h: 45 }, l: { w: 200, h: 40 } };
+/** The molnar void's three steps, in cells: the fully erased zone, a
+ *  superellipse centred on the box, so strokes surround the message on all
+ *  four sides. The container query picks a step by the box's width
+ *  (voidThreshold). A narrow box wraps the message onto more lines, so the
+ *  narrowest zone is the tallest. */
+export const VOID = { s: { w: 70, h: 50 }, m: { w: 95, h: 40 }, l: { w: 120, h: 40 } };
 /** The void image of one step, in cells: the zone plus the reach of its
- *  dithered edge (a quarter of the zone), rounded up to whole slots. */
-export const voidImage = ({ w, h }) => ({ w: Math.ceil((w * 1.25) / PITCH) * PITCH, h: Math.ceil((h * 1.25) / PITCH) * PITCH });
+ *  dithered edge (a quarter of the zone), rounded up to an EVEN number of
+ *  slots. Centred like the stroke tile (60 cells, 6 slots each side of its
+ *  centre), it then starts and ends on a slot boundary, so it erases whole
+ *  strokes. */
+export const voidImage = ({ w, h }) => ({ w: Math.ceil((w * 1.25) / (2 * PITCH)) * 2 * PITCH, h: Math.ceil((h * 1.25) / (2 * PITCH)) * 2 * PITCH });
+/** The box width, in px, from which a step applies: its image plus one
+ *  stroke column on each side, so strokes always frame the void. */
+export const voidThreshold = (zone) => (voidImage(zone).w + 2 * PITCH) * CELL_PX;
+/** The probe's coverage tones (lab/art-bauhaus.html), which the owner
+ *  approved. Pieces that never sit under text keep them at full paint. */
+export const TONES = {
+  mark: { disc: 1, bar: 1 },
+  shapes: { first: 1, rest: 0.5, fade: 0.8 },
+  weave: [0.75, 0.45, 0.2, 0.45],
+  empty: { circle: 0.5, square: 1, triangle: 0.25 },
+};
 
 const circle = (cx, cy, r) => (x, y) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
 const rect = (x0, y0, w, h) => (x, y) => x >= x0 && x < x0 + w && y >= y0 && y < y0 + h;
@@ -94,8 +107,8 @@ const uri = (markup) => `url('data:image/svg+xml,${markup.replace(/%/g, "%25").r
 /** The eyebrow mark: an accent quarter disc (cells 0-3) and a bar (cell 5). */
 function mark() {
   const g = grid(6, 4);
-  shade(g, quarter(0, 4, 4, 1, -1), 1);
-  return shade(g, rect(5, 0, 1, 4), 1);
+  shade(g, quarter(0, 4, 4, 1, -1), TONES.mark.disc);
+  return shade(g, rect(5, 0, 1, 4), TONES.mark.bar);
 }
 
 /** The shapes rule: quarter disc, square, triangle every 8 cells, the first
@@ -103,7 +116,8 @@ function mark() {
 function shapes() {
   const cols = 96, g = grid(cols, 4);
   for (let k = 0; k * 8 < cols; k++) {
-    const x = k * 8, tone = k === 0 ? 1 : 1 - (x / cols) * 0.8;
+    const x = k * 8, { first, rest, fade } = TONES.shapes;
+    const tone = k === 0 ? first : rest * (1 - (x / cols) * fade);
     const form = [quarter(x, 4, 4, 1, -1), rect(x, 0, 4, 4), tri(x, 0, 4)][k % 3];
     shade(g, form, tone);
   }
@@ -116,7 +130,7 @@ function weave() {
   const g = grid(96, 8);
   for (let j = 0; j < g.rows; j++) for (let i = 0; i < g.cols; i++) {
     if (((i + j) >> 1) % 4 >= 2) continue;
-    if ([0.75, 0.45, 0.2, 0.45][Math.floor(i / 24) % 4] > bayerAt(i, j)) g.put(i, j);
+    if (TONES.weave[Math.floor(i / 24) % 4] > bayerAt(i, j)) g.put(i, j);
   }
   return g;
 }
@@ -155,14 +169,14 @@ function molnar() {
   return g;
 }
 
-/** One void step: every slot inside a quarter superellipse on the top-left
- *  corner erased, and past it an edge dithered slot by slot through the
- *  matrix, so no stroke is left inside the zone and none is cut in half. */
+/** One void step: every slot inside a superellipse centred on the image
+ *  erased, and past it an edge dithered slot by slot through the matrix,
+ *  so no stroke is left inside the zone and none is cut in half. */
 function voidStep(zone) {
   const { w, h } = voidImage(zone), g = grid(w, h);
   for (let tj = 0; tj * PITCH < h; tj++) for (let ti = 0; ti * PITCH < w; ti++) {
-    const x = (ti + 0.5) * PITCH, y = (tj + 0.5) * PITCH;
-    const d = ((x / zone.w) ** 4 + (y / zone.h) ** 4) ** 0.25;
+    const x = (ti + 0.5) * PITCH - w / 2, y = (tj + 0.5) * PITCH - h / 2;
+    const d = (Math.abs((2 * x) / zone.w) ** 3 + Math.abs((2 * y) / zone.h) ** 3) ** (1 / 3);
     if (d - 1 >= bayerAt(ti, tj) * 0.25) continue;
     for (let b = 0; b < PITCH; b++) for (let a = 0; a < PITCH; a++) g.put(ti * PITCH + a, tj * PITCH + b);
   }
@@ -173,9 +187,9 @@ function voidStep(zone) {
  *  outline (cells 22-37) and a dithered triangle inside it. */
 function empty() {
   const g = grid(40, 24);
-  shade(g, circle(11, 12, 10), 1);
-  shade(g, (x, y) => rect(22, 4, 16, 16)(x, y) && !rect(23, 5, 14, 14)(x, y), 1);
-  return shade(g, tri(24, 6, 12), 0.5);
+  shade(g, circle(11, 12, 10), TONES.empty.circle);
+  shade(g, (x, y) => rect(22, 4, 16, 16)(x, y) && !rect(23, 5, 14, 14)(x, y), TONES.empty.square);
+  return shade(g, tri(24, 6, 12), TONES.empty.triangle);
 }
 
 /** The generated block, markers included: one :root rule of mask URIs. */
