@@ -51,3 +51,4 @@ Index of project memory entries. One line per memory, oldest first; the linked f
 - [Geist Pixel cell is 0.08em](geist-pixel-cell-is-0-08em.md) — crisp sizes are multiples of 12.5px; at 24–36px it reads as a smooth sans; await `fonts.load` by name, not `fonts.ready`.
 - [The dither layer sits over the glass tint](the-dither-layer-sits-over-the-glass-tint.md) — under `__tint` a glass primary's hover was almost invisible (the tint is the accent at 0.9 alpha); the owner moved the layer to z -2, after the tint, on 2026-10-26.
 - [`env=os.environ` default leaks secrets](env-os-environ-default-leaks-secrets.md) — help()/inspect.signature() of a palette `term` helper prints the whole environment; default to `env=None`, never print those signatures.
+- [Fresh release lag: npm ~1 min, uv stale cache](fresh-release-lag-npm-and-uv-cache.md) — after a publish re-query npm with `--prefer-online`; `uv lock --refresh` when uv says the new palette does not exist.
