@@ -83,16 +83,16 @@ term.error_block("Could not reach origin", "git ls-remote timed out after 10s (e
                  "git remote -v", link="sondalab.eu/e/T102", mode=err_mode)
 term.heading("Config", mode=mode)              # 'CONFIG' in dim
 term.kv_line("Profile", "work")                # '    Profile                     work'
-term.key_hints([(term.arrows(ascii), "move"), ("q", "back")], ascii=ascii, mode=mode)
+term.key_hints([(term.arrows(ascii=ascii), "move"), ("q", "back")], ascii=ascii, mode=mode)
 term.width()                                   # terminal columns, capped at LAYOUT["maxWidth"]
-term.wrap(text, indent=4)                      # prose wrapped at width(), words kept whole
+term.wrap(text, indent=4)                      # prose wrapped at width() (stdout's), words kept whole
 ```
 
 Prompts go to stderr and never run without a terminal:
 
 ```python
 try:
-    if term.require_tty_or_flag("--yes", args.yes, what="Could not install the hook", command="cld hook install"):
+    if term.needs_prompt("--yes", given=args.yes, what="Could not install the hook", command="cld hook install"):
         if not term.confirm("Install the hook into ~/.config/git?"):        # '? … [y/N] '
             return
     install()
@@ -105,17 +105,21 @@ i = term.choose("Open which probe?", ["q-8f2a  ok", "q-71c0  live"])     # acces
 
 `parse_yes_no(answer, default)` and `parse_choice(answer, count)` are the pure parsers behind them: `None` means the answer was not recognised. An unrecognised answer asks again, `ROBUSTNESS["promptRetries"]` times in all, then raises `NoValidAnswer`; end of input raises at once and never takes the default.
 
-`term.enable_vt(stream)` turns on VT processing on a Windows console and returns `False` when it cannot; the caller then writes plain text (no colour, no motion, ASCII glyphs). Off Windows it returns `True` and does nothing.
+`needs_prompt` returns `True` when the caller must ask and `False` when the flag already answered; off a TTY without the flag it raises `MissingFlag`. `TermError` and its subclasses pickle and copy. `error_block` cuts the what line at `LAYOUT["maxWidth"]`, wraps the why at `width()`, and never cuts or wraps the fix.
+
+`mode` is keyword-only everywhere except `paint(text, role, mode)` and `lockup(name, version, mode)`; `ascii` is keyword-only on the 0.9.0 helpers.
+
+`term.enable_vt(stream)` turns on VT processing on a Windows console; pass the stream you draw on (`sys.stderr` for spinners and prompts). It returns `False` when it cannot; the caller then writes plain text (no colour, no motion, ASCII glyphs). Off Windows it returns `True` and does nothing.
 
 There is no spinner runner: one needs a thread and a clock, and the palette stays pure. The caller draws `step_line(spinner_frame(i), …)` and `progress_bar()` on its own timer.
 
 ### The top-level `paint()` is legacy
 
-`sondalab_palette.paint()` predates the Term spec and is kept unchanged for existing callers. It does not follow the spec: it ignores the `--color` flag, `FORCE_COLOR`, TTY detection and `TERM=dumb`, and upgrades to truecolor whenever `COLORTERM` allows, without an opt-in. Use `term.paint(text, role, term.color_mode())`, the spec-compliant one.
+`sondalab_palette.paint()` predates the Term spec and is kept unchanged for existing callers. It does not follow the spec: it ignores the `--color` flag, `FORCE_COLOR`, TTY detection and `TERM=dumb`, and upgrades to truecolor whenever `COLORTERM` allows, without an opt-in. Use `term.paint(text, role, term.color_mode())`, the spec-compliant one. `term.paint` is left out of `term.__all__`, so `from sondalab_palette.term import *` never shadows the legacy `paint`; reach it as `term.paint`.
 
 ### Changelog
 
-- **0.9.0:** the terminal helpers: `term.paint` (spec colour precedence, ANSI 16 floor, truecolor on opt-in), `term.lockup`, `term.confirm`/`term.choose` with `parse_yes_no`/`parse_choice` and the retry cap, `term.require_tty_or_flag` with `MissingFlag`/`NoValidAnswer` (both `TermError`), `term.summary`, `term.width`/`term.wrap`, `term.error_block`, `term.next_line`, `term.key_hints`/`term.arrows`, `term.heading`/`term.kv_line` (the spec's new Report lines pattern) and `term.enable_vt`; `step_line` takes `mode=` to paint its glyph. **Behaviour change:** `term.header()` returns `""` on a non-TTY stdout and in accessible mode, where it returned the lockup; use `term.lockup()` for `--version`.
+- **0.9.0:** the terminal helpers: `term.paint` (spec colour precedence, ANSI 16 floor, truecolor on opt-in), `term.lockup`, `term.confirm`/`term.choose` with `parse_yes_no`/`parse_choice` and the retry cap, `term.needs_prompt` with `MissingFlag`/`NoValidAnswer` (both `TermError`), `term.summary`, `term.width`/`term.wrap`, `term.error_block`, `term.next_line`, `term.key_hints`/`term.arrows`, `term.heading`/`term.kv_line` (the spec's new Report lines pattern) and `term.enable_vt`; `step_line` takes `mode=` to paint its glyph. **Behaviour change:** `term.header()` returns `""` on a non-TTY stdout and in accessible mode, where it returned the lockup; use `term.lockup()` for `--version`.
 - **0.8.0:** `term.header()`, the Term spec's header pattern, and the `HEADER` tokens (the mark, its accent mask, the compact mark and the gap).
 - **0.7.1:** every `term` helper defaults to `env=None` and reads `os.environ` at call time. Before, the default was `os.environ` itself, kept in the signature, so `help()` or `inspect.signature()` printed the whole environment, secrets included. No call changes.
 - **0.7.0:** public `term.accessible()`, `term.reduced_motion()` and `term.switch_on(name)`, the spec's environment switch rule; `motion_enabled` and `ascii_mode` now use them.

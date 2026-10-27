@@ -28,7 +28,6 @@ __all__ = [
     "decode_frames",
     "step_line",
     "header",
-    "paint",
     "lockup",
     "TermError",
     "NoValidAnswer",
@@ -37,7 +36,7 @@ __all__ = [
     "parse_choice",
     "confirm",
     "choose",
-    "require_tty_or_flag",
+    "needs_prompt",
     "summary",
     "width",
     "wrap",
@@ -50,6 +49,8 @@ __all__ = [
     "enable_vt",
 ]
 
+# `paint` is public as term.paint but left out of __all__: a star-import of
+# term would otherwise shadow the legacy top-level sondalab_palette.paint.
 _TRUECOLOR = ("truecolor", "24bit")
 _T = TypeVar("_T")
 
@@ -464,12 +465,17 @@ class TermError(Exception):
     """
 
     def __init__(self, what: str, why: str = "", fix: str = "") -> None:
-        super().__init__(f"{what}: {why}" if why else what)
+        super().__init__(what, why, fix)
         self.what, self.why, self.fix = what, why, fix
 
-    def block(self, *, ascii: bool = False, mode: str = "none") -> str:
+    def __str__(self) -> str:
+        return f"{self.what}: {self.why}" if self.why else self.what
+
+    def block(
+        self, *, env: Optional[Mapping[str, str]] = None, ascii: bool = False, mode: str = "none"
+    ) -> str:
         """This error as error_block() lines, for stderr."""
-        return error_block(self.what, self.why, self.fix, ascii=ascii, mode=mode)
+        return error_block(self.what, self.why, self.fix, env=env, ascii=ascii, mode=mode)
 
 
 class NoValidAnswer(TermError):
@@ -482,6 +488,7 @@ class NoValidAnswer(TermError):
 
     def __init__(self, question: str, why: str) -> None:
         super().__init__(f"No valid answer to: {question}", why)
+        self.args = (question, why)  # so pickle and copy rebuild it through __init__
         self.question = question
 
 
@@ -496,6 +503,7 @@ class MissingFlag(TermError):
     def __init__(self, flag: str, what: str = "", command: str = "") -> None:
         why = f"stdin is not a terminal, so nothing can be asked, and {flag} was not passed"
         super().__init__(what or f"Missing {flag}", why, f"{command} {flag}".strip())
+        self.args = (flag, what, command)  # so pickle and copy rebuild it through __init__
         self.flag = flag
 
 
@@ -552,8 +560,9 @@ def _ask(
     """Write `prompt` and parse a line, up to ROBUSTNESS["promptRetries"] times.
 
     Returns the first non-None parse. End of input ("" from read, or
-    EOFError) raises NoValidAnswer at once; so does the last unrecognised
-    answer. `read` None reads sys.stdin.readline at call time.
+    EOFError) ends the prompt line with a newline and raises NoValidAnswer
+    at once; so does the last unrecognised answer. `read` None reads
+    sys.stdin.readline at call time.
     """
     tries = ROBUSTNESS["promptRetries"]
     for _ in range(tries):
@@ -563,6 +572,7 @@ def _ask(
         except EOFError:
             line = ""
         if line == "":
+            write("\n")
             raise NoValidAnswer(question, "input ended before an answer")
         got = parse(line)
         if got is not None:
@@ -579,8 +589,8 @@ def _prompt_mode(mode: Optional[str], env: Optional[Mapping[str, str]]) -> str:
 
 def confirm(
     question: str,
-    default: bool = False,
     *,
+    default: bool = False,
     read: Optional[Callable[[], str]] = None,
     write: Optional[Callable[[str], None]] = None,
     env: Optional[Mapping[str, str]] = None,
@@ -591,7 +601,7 @@ def confirm(
     `read` returns one line with its newline, as readline() does, and ""
     at end of input; `write` defaults to stderr. Unrecognised input asks
     again, ROBUSTNESS["promptRetries"] times in all, then raises
-    NoValidAnswer. Guard a non-TTY stdin first with require_tty_or_flag().
+    NoValidAnswer. Guard a non-TTY stdin first with needs_prompt().
     """
     mode = _prompt_mode(mode, env)
     marks = "[Y/n]" if default else "[y/N]"
@@ -627,17 +637,19 @@ def choose(
     return _ask(question, "> ", lambda a: parse_choice(a, len(options)), read, write)
 
 
-def require_tty_or_flag(
+def needs_prompt(
     flag: str,
-    given: bool,
     *,
+    given: bool,
     what: str = "",
     command: str = "",
     isatty: Optional[bool] = None,
 ) -> bool:
-    """Whether to prompt: False when `flag` was given, True on a TTY stdin.
+    """True when the caller must prompt; False when `flag` already answered.
 
-    Otherwise raises MissingFlag naming `flag` (TP "Non-TTY: no prompts"):
+    `given` is whether the caller passed `flag` (e.g. --yes). Without it, a
+    TTY stdin means prompt; otherwise this raises MissingFlag naming `flag`
+    (TP "Non-TTY: no prompts"):
     without a terminal the program never takes a default on its own.
     `isatty` None reads sys.stdin.isatty(); `what` and `command` shape the
     error's what line and `Try:` command.
@@ -686,14 +698,15 @@ def summary(ok: int, fixed: int, warn: int, failed: int, *, mode: str = "none", 
 def width(env: Optional[Mapping[str, str]] = None) -> int:
     """The width to wrap prose at: the terminal's, capped at LAYOUT["maxWidth"].
 
-    Reads COLUMNS in `env`, then stdout's size; when neither is known (or
-    is 0 or less) the cap is used. Labels are cut, never wrapped: this is
+    The width is stdout's: COLUMNS in `env`, then sys.stdout's terminal
+    size, even for text bound for stderr; when neither is known (or is 0
+    or less) the cap is used. Labels are cut, never wrapped: this is
     for prose only.
     """
     return min(_columns(_env(env)), LAYOUT["maxWidth"])
 
 
-def wrap(text: str, env: Optional[Mapping[str, str]] = None, indent: int = 0) -> str:
+def wrap(text: str, env: Optional[Mapping[str, str]] = None, *, indent: int = 0) -> str:
     """`text` as prose wrapped at width(env), every line starting `indent` spaces in.
 
     Whitespace runs collapse to one space; words are kept whole, so a word
@@ -713,22 +726,25 @@ def error_block(
     fix: str = "",
     *,
     link: str = "",
+    env: Optional[Mapping[str, str]] = None,
     ascii: bool = False,
     mode: str = "none",
 ) -> str:
     """The error block: `✗ what`, why in dim, `Try: fix` (TP Error block).
 
-    `what` is not cut at labelWidth (there is no detail column), only at
-    LAYOUT["maxWidth"]. An empty `why` or `fix` omits its line; `link` (a
-    docs URL with an error code) follows the fix after the dim separator.
-    Lines joined by newlines, no trailing newline, for stderr.
+    `what` is one line cut at LAYOUT["maxWidth"], not labelWidth (no detail
+    column). `why` is prose wrapped at width(env) from the label column.
+    `fix` and `link` are never cut or wrapped: they are copy-paste. In ASCII
+    `…` becomes `...` in `what` and `why` before the cut or the wrap. An
+    empty `why` or `fix` omits its line. No trailing newline; for stderr.
     """
     if ascii:
-        what = what.replace("…", "...")
+        what, why = what.replace("…", "..."), why.replace("…", "...")
+    col = LAYOUT["indent"] + 2
     head = " " * LAYOUT["indent"] + paint(_glyph("failed", ascii), GLYPHS["failed"][2], mode) + " "
-    lines = [head + what[: LAYOUT["maxWidth"] - LAYOUT["indent"] - 2]]
+    lines = [head + what[: LAYOUT["maxWidth"] - col]]
     if why:
-        lines.append(_cont(paint(why, "dim", mode)))
+        lines += [_cont(paint(line[col:], "dim", mode)) for line in wrap(why, env, indent=col).split("\n")]
     if fix:
         tail = _sep(ascii, mode) + paint(link, "dim", mode) if link else ""
         lines.append(_cont(f"{paint('Try:', 'prompt', mode)} {fix}{tail}"))
@@ -744,7 +760,7 @@ def next_line(command: str, *, mode: str = "none") -> str:
     return _cont(f"{paint('Next:', 'dim', mode)} {command}")
 
 
-def arrows(ascii: bool = False) -> str:
+def arrows(*, ascii: bool = False) -> str:
     """The movement keys for a key hint: `↑↓`, or `up/dn` in ASCII.
 
     Built from KEYS["up"] and KEYS["down"]; pass it as the key of a
@@ -778,7 +794,8 @@ def kv_line(key: str, value: str) -> str:
 
     The key starts in the label column and is padded like a step label,
     so values line up with step details; the glyph cell stays blank.
-    A long key is cut at labelWidth - 1, never wrapped. Uncoloured.
+    A long key is cut at labelWidth - 1 when a value follows, at
+    labelWidth when the value is empty; never wrapped. Uncoloured.
     """
     return " " * (LAYOUT["indent"] + 2) + _label(key, value)
 
@@ -791,24 +808,31 @@ _VT_PROCESSING = 0x0004  # ENABLE_VIRTUAL_TERMINAL_PROCESSING
 def enable_vt(stream=None) -> bool:
     """Turn on VT processing for `stream`'s console; False means plain text.
 
-    A no-op returning True off Windows. On Windows it sets
-    ENABLE_VIRTUAL_TERMINAL_PROCESSING on the console handle of `stream`
-    (None: sys.stdout); False when that fails, and the caller then writes
-    no escape sequences, no motion and ASCII glyphs (TP Windows).
+    Pass the stream you draw on: spinners, progress and prompts draw on
+    sys.stderr; None means sys.stdout. A no-op returning True off Windows.
+    On Windows it sets ENABLE_VIRTUAL_TERMINAL_PROCESSING on that console
+    handle; False when that fails, and the caller then writes no escape
+    sequences, no motion and ASCII glyphs (TP Windows).
     """
     if os.name != "nt":
         return True
     try:
         import ctypes
         import msvcrt
-
-        handle = msvcrt.get_osfhandle((stream or sys.stdout).fileno())  # type: ignore[attr-defined]
-        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
-        current = ctypes.c_ulong()
-        if not kernel32.GetConsoleMode(handle, ctypes.byref(current)):
+        from ctypes import wintypes
+    except ImportError:
+        return False
+    try:
+        handle = msvcrt.get_osfhandle((sys.stdout if stream is None else stream).fileno())  # type: ignore[attr-defined]
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)  # type: ignore[attr-defined]
+        get_mode, set_mode = kernel32.GetConsoleMode, kernel32.SetConsoleMode
+        get_mode.argtypes, get_mode.restype = (wintypes.HANDLE, wintypes.LPDWORD), wintypes.BOOL
+        set_mode.argtypes, set_mode.restype = (wintypes.HANDLE, wintypes.DWORD), wintypes.BOOL
+        current = wintypes.DWORD()
+        if not get_mode(handle, ctypes.byref(current)):
             return False
         if current.value & _VT_PROCESSING:
             return True
-        return bool(kernel32.SetConsoleMode(handle, current.value | _VT_PROCESSING))
-    except (ImportError, AttributeError, OSError, ValueError):
+        return bool(set_mode(handle, current.value | _VT_PROCESSING))
+    except (AttributeError, OSError, ValueError, ctypes.ArgumentError):
         return False

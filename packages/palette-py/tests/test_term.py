@@ -387,7 +387,7 @@ def test_decode_is_deterministic_and_ends_on_value():
 
 
 ENV_HELPERS = [t.switch_on, t.accessible, t.reduced_motion, t.motion_enabled, t.ascii_mode, t.color_mode, t.header,
-               t.confirm, t.choose, t.width, t.wrap]
+               t.confirm, t.choose, t.width, t.wrap, t.error_block]
 
 
 @pytest.mark.parametrize("fn", ENV_HELPERS, ids=lambda f: f.__name__)
