@@ -1,5 +1,5 @@
-/* The Bauhaus pixel art (ui-kit 0.41.0, 0.42.0): every piece drawn on the dither
-   cell and shaded through the kit's Bayer matrix, written into
+/* The Bauhaus pixel art (ui-kit 0.41.0, 0.42.0): every piece drawn on the
+   dither cell and shaded through the kit's Bayer matrix, written into
    components.css as SVG data URIs between the two markers below. Ported
    from the probe lab/art-bauhaus.html. A mask carries alpha only (the SVG
    default black fill); the colour is painted by the hand rules from role
