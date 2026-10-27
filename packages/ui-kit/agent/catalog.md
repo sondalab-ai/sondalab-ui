@@ -618,6 +618,20 @@ Six spans for the six terminal roles, each a class on a `<span>` inside `sl-term
 ```
 Consumes: `--slc-accent-text`, `--slc-success`, `--slc-warning`, `--slc-danger`, `--slc-info`, `--slc-text-muted`, `--slc-text`, `--slc-raised`, `--slc-sunken`. The glyph column is the `tui` glyph set: each glyph has a Unicode and an ASCII form and the role it is painted with, as the block lists them. Colour only repeats the glyph and the word, so under forced colours, where the spans take the user's ink, and with `NO_COLOR` the output says the same thing. Two more spans serve the full screen: `sl-term-block__inverse`, a run of cells in inverse video (the primary ink as the ground, the block's own fill as the ink: the inversion band in one line, L3), and `sl-term-block__sel`, a selected row (below). Do: paint the glyph, not the label. A step's label and detail stay in the output's ink. Don't: paint a failure with a success glyph, or colour a word that has no glyph or role of its own.
 
+### Header — `sl-term-block` (`__prompt` · `__dim`)
+The header an interactive launch opens with (a TUI screen, a prompt loop, an installer, a bare launch, `--help`): the mark on the left, 3 lines and 6 columns (`tui.header.mark`), then `sonda/lab` with the slash in prompt, the name and version, and the description in dim. The mark's circle is its one accent shape, in prompt like the slash (the accent as text); the square and the bar keep the output's ink. A one-shot subcommand gets the compact header instead: the 2-column mark `●■`, then `sonda/lab <name>` in dim and a blank line. Either size falls back to the one-line lockup `sonda/lab <name> <version>` on a non-TTY stdout, `TERM=dumb`, accessible or ASCII mode and a terminal narrower than the header, and prints nothing for `--json` or `--plain`. Python: `term.header()` in palette-py 0.8.0.
+```html
+<article class="sl-term-block" aria-label="Terminal header">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> cld</span>
+  </header>
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">▄█▄</span> ▄▄  sonda<span class="sl-term-block__prompt">/</span>lab
+<span class="sl-term-block__prompt">▀█▀</span> ▀▀  cld 0.9.0
+▄▄▄▄▄▄  <span class="sl-term-block__dim">Manage Claude Code loadouts.</span></pre>
+</article>
+```
+Consumes the role spans above. Do: cut a long description at the line cap (100 columns). Don't: wrap it under the mark, print the header on `--version`, or draw any other banner.
+
 ### Step list and summary — `sl-term-block` (`__ok` · `__warn` · `__err` · `__dim`)
 One line per step: two columns of indent, the glyph in its role, the label padded to `labelWidth` (28 columns), then the detail. A running step is a present participle and a finished one past tense, in sentence case with no trailing period. After one blank line the summary gives four counts in a fixed order (ok, fixed, warn, failed), each in its role and joined by the `separator` glyph in dim; a zero count is dim. A success says what changed and the next step, `Next:` in dim on a continuation line.
 ```html
@@ -1108,6 +1122,26 @@ A word or phrase of a display heading painted in the spectrum ink (Prism). **Opt
 <h1 class="sl-anchor">Everything measured, <span class="sl-spectral">nothing asserted.</span></h1>
 ```
 Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-contrast and forced colours. Do: display sizes only (`sl-anchor`, `h1`, `h2`). Don't: body text — the ink clears 3:1, not 4.5.
+
+### Art — `sl-eyebrow--mark` · `sl-rule--shapes` · `sl-rule--weave` · `sl-art-corner` · `sl-art-field` · `sl-empty--void` · `sl-empty--shapes`
+Bauhaus shapes (quarter disc, square, triangle, bar) drawn on the 3px dither cell and shaded through the kit's Bayer matrix, so they share the dither hover's grid (0.41). **Opt-in only**: the kit never adds one. Each piece is a generated mask (`scripts/gen-art.mjs`, the `--sl-art-*` properties) painted on a pseudo-element from the ink and the accent text: static, `pointer-events: none`, decorative. It follows the theme and `sl-invert`; it paints nothing in high contrast and forced colours. Substrate: **A** Page/App/IDE.
+```html
+<div class="sl-eyebrow sl-eyebrow--mark">§ 02 — Signals</div>
+<hr class="sl-rule sl-rule--shapes">
+<hr class="sl-rule sl-rule--weave">
+<article class="sl-card sl-art-corner"> … </article>
+<section class="sl-art-field"> … </section>
+<div class="sl-empty sl-empty--shapes">
+  <p class="sl-empty__title">Nothing here yet</p>
+  <p class="sl-empty__body">Start a run and its traces land in this panel.</p>
+</div>
+```
+- `sl-eyebrow--mark`: the glyph before the eyebrow text (`::before`), a quarter disc in the accent and a bar in the ink. The eyebrow's text moves right by 27px; the content it heads does not move.
+- `sl-rule--shapes`: a 288px strip of shapes that fades along the rule, the first in the accent, the rest in the ink at half coverage. `sl-rule--weave`: a 2/2 twill strip in the ink at 45%, 24px high, across the whole rule, its first band in the accent. Both draw into the rule's margin and keep its 1px box; where they paint nothing (high contrast, forced colours) the hairline comes back. Not with `sl-rule--labeled`.
+- `sl-art-corner`: nested quarter discs fading into the top-right corner (`::after`, 102px). `sl-art-field`: a truchet field of quarter arcs behind the content (`::before`), the faintest tone. Both make the host `position: relative` at zero specificity, so a host's own position wins.
+- `sl-empty--void`: a Molnár field of strokes around the message, with an erased zone centred on the box in three steps by the box's width (S below 390px, M from 390px, L from 480px); it centres the message in the zone. A message longer than the zone may touch strokes at its edge. It makes the box a size container (`container-type: inline-size`): give it a width where it is a shrink-to-fit item. `sl-empty--shapes`: a 120 × 72px composition above the title, a disc in the accent, a square outline and a dithered triangle in the ink. Use one of the two on a box, not both. In high contrast and forced colours the eyebrow glyph and the composition are removed, leaving no blank space.
+
+Consumes: `--slc-text`, `--slc-accent-text`. The pieces that can sit under text (field 7%, corner 22%, void 22% of the ink) are tested to keep secondary text at 4.5:1 on a solid cell of their paint, over the host's own fill, on the canvas and the surface, both themes, every registered product in Tier A and in the site's product subtree (`scripts/art.test.mjs`). Tier B is not covered: a Tier B page maps its own secondary text, which the kit cannot read. The marks beside text (eyebrow glyph, both rules, the composition) are not bound by it and keep full paint. Do: one or two pieces per screen, where there is room. Don't: put a piece where a number or a label must be found at a glance, or change its tone in a product (the contrast test holds the kit's shares, not yours).
 
 ## Rules of use (all components)
 

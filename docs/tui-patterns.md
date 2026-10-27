@@ -104,8 +104,8 @@ The four frames are drawn on one line; they are stacked here to show them.
 ### Pixel text
 
 - **The dither ramp** is `░▒▓█` (`ramp.unicode`), lightest to darkest, with the ASCII fallback `. : # #` (`ramp.ascii`; `▓` and `█` both fall back to `#`). Only the signal strip and the progress bar use it.
-- **The lockup is text:** `sonda/lab`, with the slash in `prompt`. No ASCII-art banner, on start or on `--version`.
-- **Pixel graphics** (half blocks `▀▄`, sextants, braille, sixel, kitty images) are for data only, such as a sparkline, and only behind a capability check, with a text fallback.
+- **The lockup is text:** `sonda/lab`, with the slash in `prompt`. `--version` prints the one-line lockup. No ASCII-art banner, with one exception: the [Header](#header), on interactive launch only.
+- **Pixel graphics** (half blocks `▀▄`, sextants, braille, sixel, kitty images) are for data only, such as a sparkline, and only behind a capability check, with a text fallback. The header's mark is the one exception, and it falls back to the lockup.
 - **Every glyph is one column wide.** No emoji. See [Width](#width).
 
 ```
@@ -134,6 +134,28 @@ Each glyph has a Unicode form, an ASCII form and the colour role it is painted w
 ### Layout
 
 `indent` 2 columns, `labelWidth` 28 columns, `blankBeforeSummary` 1 line, `maxWidth` 100 columns.
+
+### Header
+
+An interactive launch (a TUI screen, a prompt loop, an installer, a bare launch, `--help`) opens with the header: the mark on the left, then `sonda/lab` with the slash in `prompt`, the name and version, and the description in `dim`. The mark is `header.mark`: 3 lines, 6 columns, `header.gap` 2 columns from the text. Its circle is the one accent shape, painted `prompt` (`header.accentRole`), the accent as text like the slash; the square and the bar stay in the default ink.
+
+```
+▄█▄ ▄▄  sonda/lab
+▀█▀ ▀▀  cld 0.9.0
+▄▄▄▄▄▄  Manage Claude Code loadouts.
+```
+
+A one-shot subcommand that prints a result and exits opens with the compact header instead: the 2-column mark `header.compact`, its circle in `prompt`, a space, `sonda/lab <name>` in `dim`, then one blank line before the result.
+
+```
+●■ sonda/lab cld
+```
+
+- **Never wrapped.** Each text line is cut at `layout.maxWidth` columns, so a long description is cut, never carried under the mark.
+- **Falls back to the lockup** `sonda/lab <name> <version>` on one line, in either size: when stdout is not a TTY, with `TERM=dumb`, in accessible mode, in ASCII mode (`SONDALAB_ASCII=1`, `--ascii` or a non-UTF-8 locale), and when the terminal is narrower than the mark, the gap and the longest text line.
+- **Nothing in machine output.** `--json` and `--plain` print no header and no lockup.
+- **`NO_COLOR` keeps the shapes** and drops the colour; colour otherwise follows [Colour](#colour).
+- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` in `sondalab_palette` 0.8.0.
 
 ### Step list
 
@@ -351,7 +373,7 @@ To learn the background, query it with OSC 11 (`OSC 11 ; ? ST`) with a 100ms tim
 
 - Wrap prose at the terminal width, capped at 100 columns (`layout.maxWidth`). When the width is unknown, use the cap.
 - Cut labels at `labelWidth`; never wrap them.
-- **Every glyph in `tui` is one column wide:** one code point, East Asian Width neither W nor F, not an emoji, no combining mark. Several glyphs are East Asian Width A, ambiguous: `▒▓█`, `▌`, `●○·`, the box set, `…` and `↑↓`. The spec assumes the terminal renders ambiguous width as narrow, its default outside CJK locales. On a terminal set to render ambiguous width as wide (a CJK setup), `--ascii` or `SONDALAB_ASCII=1` is the override: every glyph takes its ASCII form.
+- **Every glyph in `tui` is one column wide:** one code point, East Asian Width neither W nor F, not an emoji, no combining mark. Several glyphs are East Asian Width A, ambiguous: `▒▓█`, `▌`, `▀▄` and `■` (the header mark), `●○·`, the box set, `…` and `↑↓`. The spec assumes the terminal renders ambiguous width as narrow, its default outside CJK locales. On a terminal set to render ambiguous width as wide (a CJK setup), `--ascii` or `SONDALAB_ASCII=1` is the override: every glyph takes its ASCII form.
 
 ### Windows
 

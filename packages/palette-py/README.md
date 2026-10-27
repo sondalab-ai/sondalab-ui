@@ -16,7 +16,7 @@ Roles: `prompt`, `ok`, `warn`, `err`, `dim`, `accent`.
 
 ## Term tokens and the reference helper (0.6.0)
 
-The Term spec's numbers are constants, so a CLI never re-derives them: `GLYPHS`, `LAYOUT`, `RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS` and `ENV`.
+The Term spec's numbers are constants, so a CLI never re-derives them: `GLYPHS`, `LAYOUT`, `RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV` and `HEADER` (0.8.0).
 
 `sondalab_palette.term` builds the spec's strings and reads its environment rules. It writes nothing and keeps no time: redraw and timing are the caller's (`SPINNER["intervalMs"]`, `DECODE["frameMs"]`, `MOTION["maxFps"]`).
 
@@ -48,10 +48,25 @@ term.switch_on("ci")             # any switch purpose in ENV: reducedMotion, acc
 
 `switch_on` reads `SONDALAB_*` as on only when it equals `1`, and `CI`/`ACCESSIBLE` as on whenever set; a purpose that is not a switch raises `KeyError`. `motion_enabled` and `ascii_mode` are built on these.
 
+The header an interactive launch opens with (0.8.0), on stdout:
+
+```python
+sys.stdout.write(term.header("cld", "0.9.0", "Manage Claude Code loadouts.", machine=args.json or args.plain))
+# ▄█▄ ▄▄  sonda/lab
+# ▀█▀ ▀▀  cld 0.9.0
+# ▄▄▄▄▄▄  Manage Claude Code loadouts.
+sys.stdout.write(term.header("cld", "0.9.0", "", compact=True))   # a one-shot subcommand
+# ●■ sonda/lab cld
+#
+```
+
+It returns the one-line lockup `sonda/lab cld 0.9.0` on a non-TTY stdout, `TERM=dumb`, accessible or ASCII mode and a terminal narrower than the header, and `""` for `machine=True`. The mark's cells are `HEADER`. Unlike the other helpers it paints its own colour, following `color_mode()`.
+
 `paint()` predates the Term spec and does not consult `color_mode`: it ignores the flag, `FORCE_COLOR` and TTY detection, and upgrades to truecolor whenever `COLORTERM` allows it. A caller that follows the spec's colour precedence builds the SGR itself from `ROLES`, based on the mode.
 
 ### Changelog
 
+- **0.8.0:** `term.header()`, the Term spec's header pattern, and the `HEADER` tokens (the mark, its accent mask, the compact mark and the gap).
 - **0.7.1:** every `term` helper defaults to `env=None` and reads `os.environ` at call time. Before, the default was `os.environ` itself, kept in the signature, so `help()` or `inspect.signature()` printed the whole environment, secrets included. No call changes.
 - **0.7.0:** public `term.accessible()`, `term.reduced_motion()` and `term.switch_on(name)`, the spec's environment switch rule; `motion_enabled` and `ascii_mode` now use them.
 - **0.6.0:** Term tokens (`RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV`) and the `term` reference helper.

@@ -39,7 +39,7 @@ const inSpec = (lines) => SPEC_BLOCKS.some((b) => b.some((_, i) => lines.every((
 test("the Terminal section sits after the terminal block and holds the spec's patterns", () => {
   assert.ok(start > CATALOG.indexOf("### Terminal block — `sl-term-block`"), "after the terminal block entry");
   assert.deepEqual(ENTRIES.map((e) => e.title), [
-    "Roles and glyphs", "Step list and summary", "Error block and did you mean", "Confirmation",
+    "Roles and glyphs", "Header", "Step list and summary", "Error block and did you mean", "Confirmation",
     "Terminal progress", "Spinner", "Decode", "Full-screen view", "Plain and accessible output",
   ]);
   for (const e of ENTRIES) assert.ok(e.fences.length > 0, `${e.title}: no html block`);
@@ -52,6 +52,7 @@ test("every non-ASCII character in a Terminal block is a tui token (or the runni
   for (const g of Object.values(tui.box)) allowed.add(g.unicode);
   for (const g of Object.values(tui.keys)) allowed.add(g.unicode);
   for (const g of [...tui.ramp.unicode, ...tui.spinner.frames, ...tui.decode.glyphs]) allowed.add(g);
+  for (const g of [...tui.header.mark.join(""), ...tui.header.compact]) allowed.add(g);
   for (const f of FENCES) for (const ch of decode(f.replace(/<[^>]+>/g, ""))) {
     if (ch.codePointAt(0) <= 0x7e) continue;
     assert.ok(allowed.has(ch), `${JSON.stringify(ch)} is not a tui token`);
@@ -131,4 +132,14 @@ test("the full-screen view keeps its geometry and marks focus, selection and key
 test("the showcase draws every Terminal block, verbatim", () => {
   for (const f of FENCES) assert.ok(SHOWCASE.includes(f), `missing from showcase/index.html:\n${f.slice(0, 160)}`);
   assert.match(SHOWCASE, /<link rel="stylesheet" href="\.\.\/packages\/ui-kit\/workbench\.css">/, "the showcase loads workbench.css");
+});
+
+test("the header block paints only the mark's accent cells in accent, the slash in prompt and the description in dim", () => {
+  const f = ENTRIES.find((e) => e.title === "Header").fences[0];
+  const { mark, markAccent, gap } = tui.header;
+  const pre = f.match(/<pre class="sl-term-block__out">([\s\S]*?)<\/pre>/)[1].split("\n");
+  const text = ['sonda<span class="sl-term-block__prompt">/</span>lab', "cld 0.9.0", '<span class="sl-term-block__dim">Manage Claude Code loadouts.</span>'];
+  const paint = (row, mask) => [...row].map((g, i) => (mask[i] === "a" ? `\u0000${g}` : g)).join("")
+    .replace(/(\u0000.)+/g, (run) => `<span class="sl-term-block__${tui.header.accentRole}">${run.replace(/\u0000/g, "")}</span>`);
+  mark.forEach((row, i) => assert.equal(pre[i], `${paint(row, markAccent[i])}${" ".repeat(gap)}${text[i]}`, `header row ${i}`));
 });

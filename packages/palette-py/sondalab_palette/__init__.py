@@ -104,6 +104,16 @@ ENV = {
     "ascii": ("SONDALAB_ASCII",),
 }
 
+# TUI header: mark rows, accent mask ("a" paints accentRole), compact mark, columns between mark and text
+HEADER = {
+    "mark": ("▄█▄ ▄▄", "▀█▀ ▀▀", "▄▄▄▄▄▄"),
+    "markAccent": ("aaa...", "aaa...", "......"),
+    "compact": "●■",
+    "compactAccent": "a.",
+    "accentRole": "prompt",
+    "gap": 2,
+}
+
 
 def _no_color() -> bool:
     return bool(os.environ.get("NO_COLOR"))

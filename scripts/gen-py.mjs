@@ -54,6 +54,7 @@ function main() {
   for (const part of ["spinner", "progress"]) {
     if (!Object.hasOwn(t.terminal, t.tui[part].role)) throw new Error(`tui ${part}: unknown role ${t.tui[part].role}`);
   }
+  if (!Object.hasOwn(t.terminal, t.tui.header.accentRole)) throw new Error(`tui header: unknown role ${t.tui.header.accentRole}`);
 
   const source = `# GENERATED from sondalab.tokens.json — do not edit.
 """Sondalab terminal palette: semantic roles, named-ANSI floor + truecolor opt-in."""
@@ -117,6 +118,11 @@ ${table(t.tui.robustness, "tui.robustness")}
 # setting -> the environment variables that control it
 ENV = {
 ${table(t.tui.env, "tui.env")}
+}
+
+# TUI header: mark rows, accent mask ("a" paints accentRole), compact mark, columns between mark and text
+HEADER = {
+${table(t.tui.header, "tui.header")}
 }
 
 
