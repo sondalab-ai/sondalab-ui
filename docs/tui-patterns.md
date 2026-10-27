@@ -152,10 +152,11 @@ A one-shot subcommand that prints a result and exits opens with the compact head
 ```
 
 - **Never wrapped.** Each text line is cut at `layout.maxWidth` columns, so a long description is cut, never carried under the mark.
-- **Falls back to the lockup** `sonda/lab <name> <version>` on one line, in either size: when stdout is not a TTY, with `TERM=dumb`, in accessible mode, in ASCII mode (`SONDALAB_ASCII=1`, `--ascii` or a non-UTF-8 locale), and when the terminal is narrower than the mark, the gap and the longest text line.
+- **Nothing off a terminal.** When stdout is not a TTY, or in accessible mode, the header prints nothing, in either size, so piped output stays byte-identical to the result alone. The one-line lockup belongs to `--version`. (Owner amendment, 2026-10-27: before, both cases printed the lockup.)
+- **Falls back to the lockup** `sonda/lab <name> <version>` on one line, in either size, on a terminal that cannot draw the mark: with `TERM=dumb`, in ASCII mode (`SONDALAB_ASCII=1`, `--ascii` or a non-UTF-8 locale), and when the terminal is narrower than the mark, the gap and the longest text line.
 - **Nothing in machine output.** `--json` and `--plain` print no header and no lockup.
 - **`NO_COLOR` keeps the shapes** and drops the colour; colour otherwise follows [Colour](#colour).
-- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` in `sondalab_palette` 0.8.0.
+- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` in `sondalab_palette` 0.8.0, printing nothing off a TTY and in accessible mode since 0.9.0; `term.lockup(name, version, mode)` (0.9.0) is the `--version` line.
 
 ### Step list
 
@@ -178,7 +179,7 @@ A line under a step (an error's why and fix, a next step, a progress bar) is a c
 ? Install the hook into ~/.config/git? [y/N]
 ```
 
-`? <question> [Y/n]`. The capital letter marks the default, which Enter accepts. The default is no (`[y/N]`) for any action outside the working directory; inside it, the default may be yes (`[Y/n]`). The `?` is the `question` glyph in the `prompt` role. An empty answer takes the default. Any other unrecognised input is never read as a choice: the prompt asks again, at most 3 times in all (`robustness.promptRetries`), and then fails with "no valid answer".
+`? <question> [Y/n]`. The capital letter marks the default, which Enter accepts. The default is no (`[y/N]`) for any action outside the working directory; inside it, the default may be yes (`[Y/n]`). The `?` is the `question` glyph in the `prompt` role. An empty answer takes the default. Any other unrecognised input is never read as a choice: the prompt asks again, at most 3 times in all (`robustness.promptRetries`), and then fails with "no valid answer". End of input is not an answer: it fails at once and never takes the default. Python: `term.confirm()`, and `term.choose()` for the numbered list of [Accessible mode](#accessible-mode) (0.9.0).
 
 ### Summary
 
@@ -189,6 +190,25 @@ Summary  1 ok · 1 fixed · 1 warn · 1 failed
 ```
 
 `Summary`, two spaces, then four counts in the order ok, fixed, warn, failed, joined by the `separator` glyph (` · `, or ` | ` in ASCII). Each count is painted with its role (`ok`, `ok`, `warn`, `err`); a zero count is painted `dim`. The four counts are always all present.
+
+### Report lines
+
+A command that reports state rather than running checks (a status, an info or a config dump) prints key-value lines, grouped under section headings.
+
+```
+CHECKS
+  ✓ Check git repository        clean, on main
+  ! Check signing key           not loaded
+
+CONFIG
+    Profile                     work
+    Hooks                       3 installed
+```
+
+- **A key-value line is a fact, not a check:** it has no glyph. The key starts in the label column, `indent` + 2 columns from the left, and is padded to `labelWidth` like a step label, so values line up with step details. A long key is cut at `labelWidth` − 1 columns, never wrapped. Key and value stay in the default ink; a value that says something is absent ("none", "not set") may use `dim`.
+- **A section heading** is the micro label (L1): uppercase, in `dim`, from column 0, with no colon and no rule under it. It names the group of step lines or key-value lines below it. One blank line comes before every heading but the first.
+- A value that is a state with a glyph (ok, failed) is a step line, not a key-value line.
+- Python: `term.kv_line(key, value)` and `term.heading(text, mode=…)` (0.9.0).
 
 ### Error block
 
@@ -250,7 +270,7 @@ A determinate step draws a bar on the continuation line under its running step l
 ### Rules
 
 - **A failure never uses a success glyph.** `failed` is `✗` in `err`; `✓` is only for `done` and `fixed`. A step that did not do its job is `failed` or `warn`, never `done`.
-- **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag.
+- **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag, as an [error block](#error-block) whose fix is the command with that flag. Python: `term.require_tty_or_flag()` (0.9.0).
 - **`NO_COLOR`: glyphs stay, color goes.** With `NO_COLOR` set the output is the same text with no escape sequences, unless a `--color` flag overrides it ([Colour](#colour)). Meaning is carried by the glyph and the word, never by colour alone.
 - **ASCII fallback.** When the locale is not UTF-8, `TERM=dumb`, the `--ascii` flag is passed or `SONDALAB_ASCII=1` is set, use the `ascii` form of every glyph, including the summary separator. Layout widths are unchanged: every Unicode glyph is one column wide, as is its ASCII form.
 

@@ -144,7 +144,7 @@ test("tui-patterns.md has the six spec sections and Sources, in order", () => {
   at.forEach((i, k) => assert.ok(i > 0, `missing section: ## ${order[k]}`));
   assert.deepEqual([...at].sort((a, b) => a - b), at, "sections out of order");
   for (const h of ["Glyphs", "Layout", "Header", "Step list", "Confirmation", "Summary", "Error block", "Did you mean",
-    "Success with next step", "Progress", "Spinner", "Decode"]) {
+    "Success with next step", "Progress", "Spinner", "Decode", "Report lines"]) {
     assert.ok(DOC.includes(`\n### ${h}\n`), `missing subsection: ### ${h}`);
   }
 });
