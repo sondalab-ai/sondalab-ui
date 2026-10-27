@@ -397,7 +397,7 @@ To learn the background, query it with OSC 11 (`OSC 11 ; ? ST`) with a 100ms tim
 
 ### Windows
 
-Enable `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on the console handle. If that fails, fall back to plain text: no escape sequences, no motion, ASCII glyphs. Python: `term.enable_vt(stream)`. Node needs no helper and `term.js` has none: Node's console streams (libuv) handle escape sequences on Windows themselves.
+Enable `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on the console handle. If that fails, fall back to plain text: no escape sequences, no motion, ASCII glyphs. Python: `term.enable_vt(stream)`. `term.js` has no such helper: Node's console streams handle escape sequences on Windows 10 and later. This is not verified on legacy consoles, and the plain-text fallback above has no Node hook; no Windows host was tested.
 
 ### Streams and machine output
 
