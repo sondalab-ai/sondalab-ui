@@ -17,17 +17,6 @@
    it is complete on its own. Under reduced motion one still frame is drawn
    and the loop never starts. High contrast takes every canvas away.
 
-   PIXEL GRID (0.39, owner decision 2026-10-26): the light is drawn on the
-   dither's CELL_PX cells. Each fragment takes the SDF, the travelling bodies
-   and the smoke at the centre of the cell that holds it, and the intensity is
-   cut into LEVELS steps, so the glow reads as pixels, not a gradient. The
-   host's silhouette stays smooth; only the light is stepped. The lattice is
-   anchored at the host's PADDING box, which is where .sl-fx-dither
-   (position:absolute; inset:0) puts its own origin, and is also this canvas's
-   origin plus PAD: the 16px inset is not a multiple of 3, so the cells are
-   counted from uPad, never from the canvas corner. The old per-pixel noise
-   that hid banding is gone: flat cells are the point.
-
    STILL: data-sl-fx-still on <html> holds the light where it is. The frame
    that sees the flag is drawn and none is asked for after it; canvases and
    contexts stay, showing that frame. A host that attaches or resizes meanwhile
@@ -40,7 +29,6 @@
    or a product override that remaps them is followed. */
 
 import { roleColour } from "./colour.js";
-import { CELL_PX } from "./dither-core.js";
 
 const HOSTS = '.sl-fx-aurora:is([data-sl-fx-live="busy"], [data-sl-fx-live="run"])';
 /** Canvases beyond this fall back to the CSS arc: a WebGL context each, and
@@ -52,8 +40,6 @@ const MAX_LIVE = 8;
 const PAD = 16;
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const STILL = "data-sl-fx-still";
-/** Steps the light's intensity is cut into: 0, 1/4, 1/2, 3/4 and full. */
-const LEVELS = 4;
 
 const VS = "attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
 const HEAD = `precision highp float;
@@ -62,12 +48,7 @@ float sd(vec2 p){vec2 q=abs(p)-uSize*.5+uR;return length(max(q,0.))+min(max(q.x,
 float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
-const float CELL=${CELL_PX}.; const float LV=${LEVELS}.;
-vec2 P(){vec2 fc=gl_FragCoord.xy/uDpr; vec2 full=uSize+2.*uPad;
-  vec2 css=vec2(fc.x,full.y-fc.y)-uPad;
-  css=(floor(css/CELL)+.5)*CELL;
-  return css-uSize*.5;}
-float qz(float a){return floor(a*LV+.5)/LV;}
+vec2 P(){vec2 fc=gl_FragCoord.xy/uDpr; vec2 full=uSize+2.*uPad; return vec2(fc.x-full.x*.5, full.y*.5-fc.y);}
 float perim(vec2 p){ float a=atan(p.y/uSize.y, p.x/uSize.x); return fract(a/6.2831853+.625); }
 `;
 /** run: two bodies of light travelling the edge, accent receding to depth. */
@@ -83,9 +64,9 @@ const FS_RUN = HEAD + `void main(){
   }
   float smoke=.8+.4*vn(p*.022+vec2(uT*.25,-uT*.2));
   float a=clamp((band+bleed)*light*smoke,0.,1.)*(1.-smoothstep(uPad*.5,uPad,d))*(uDark>.5?.95:.8);
-  a=qz(a);
   vec3 c=light>0.?acc/max(light,1e-3):uA;
-  gl_FragColor=vec4(c*a,a);
+  float dz=(hash(gl_FragCoord.xy+uT)-.5)/255.;
+  gl_FragColor=vec4(c*a+dz,a);
 }`;
 /** busy: the edge breathes light inward, never visibly looping. */
 const FS_BUSY = HEAD + `void main(){
@@ -94,8 +75,8 @@ const FS_BUSY = HEAD + `void main(){
   float reach=6.+3.*sin(2.*s+uT*.9)+2.2*sin(3.*s-uT*1.3)+1.4*sin(5.*s+uT*1.7)+1.*sin(7.*s-uT*2.3);
   float x=max(-d,0.)/max(reach,1.);
   float a=exp(-x*x*2.2)*(uDark>.5?.32:.28)*(.75+.25*sin(uT*.9));
-  a=qz(a);
-  gl_FragColor=vec4(uA*a,a);
+  float dz=(hash(gl_FragCoord.xy+uT)-.5)/255.;
+  gl_FragColor=vec4(uA*a+dz,a);
 }`;
 
 const live = new Map();
