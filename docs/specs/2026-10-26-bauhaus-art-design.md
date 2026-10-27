@@ -137,7 +137,7 @@ The work fails, even if it renders, when any of these is true:
 ## Resolved after the builder check (agent's calls unless marked)
 
 - **Size rules.** truchet, weave and the stroke field of molnar are repeating tiles (`mask-repeat: repeat`). The corner is one anchored tile (`mask-position: top right; mask-repeat: no-repeat`), so it fits any panel. The molnar erased zone is a second mask layer, pre-dithered, in three size steps (S, M, L) chosen by a container query on the `.sl-empty` box. The message must fit inside the largest step; longer copy gets the L step and may touch strokes at the edge. That is acceptable.
-- **Payload budget:** the masks add at most 24 KB to `components.css`, uncompressed. A test enforces it.
+- **Payload budget:** the masks add at most 32 KB to `components.css`, uncompressed. A test enforces it. It was 24 KB in 0.41; it was raised to 32 KB in 0.42 for the variants (the eyebrow glyphs, the fields and the poster's primitives), when the block reached 24445 bytes before the poster.
 - **Device pixel ratio:** the masks use `shape-rendering="crispEdges"`. The acceptance check is DPR 1 and DPR 2 in Chrome, with no half cells. Fractional ratios are not gated.
 - **Contrast basis:** the test takes each piece's paint colour (its role, at its tone, composited on `--slc-canvas` and on `--slc-surface`) as a solid cell, in both themes. Body text (`--slc-text-secondary`) must reach 4.5:1 against that cell. Coverage density does not soften the test. The aurora showcase is a visual check only.
 - **Tones (starting points from the probe):** truchet at 7% ink, molnar strokes at 30% ink, corner at 22% ink fading to 0, rules at 50% ink fading. The builder may lower them. Raising them needs the contrast test to pass.
