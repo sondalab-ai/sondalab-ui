@@ -152,11 +152,11 @@ A one-shot subcommand that prints a result and exits opens with the compact head
 ```
 
 - **Never wrapped.** Each text line is cut at `layout.maxWidth` columns, so a long description is cut, never carried under the mark.
-- **Nothing off a terminal.** When stdout is not a TTY, or in accessible mode, the header prints nothing, in either size, so piped output stays byte-identical to the result alone. The one-line lockup belongs to `--version`. (Owner amendment, 2026-10-27: before, both cases printed the lockup.)
+- **Nothing off a terminal.** When stdout is not a TTY, or in accessible mode, the header prints nothing, in either size, so piped output stays byte-identical to the result alone. The one-line lockup belongs to `--version`.
 - **Falls back to the lockup** `sonda/lab <name> <version>` on one line, in either size, on a terminal that cannot draw the mark: with `TERM=dumb`, in ASCII mode (`SONDALAB_ASCII=1`, `--ascii` or a non-UTF-8 locale), and when the terminal is narrower than the mark, the gap and the longest text line.
 - **Nothing in machine output.** `--json` and `--plain` print no header and no lockup.
 - **`NO_COLOR` keeps the shapes** and drops the colour; colour otherwise follows [Colour](#colour).
-- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` in `sondalab_palette` 0.8.0, printing nothing off a TTY and in accessible mode since 0.9.0; `term.lockup(name, version, mode)` (0.9.0) is the `--version` line.
+- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` since `sondalab_palette` 0.8.0; off a TTY and in accessible mode it prints nothing since 0.9.0. `term.lockup(name, version, mode)` (0.9.0) is the `--version` line.
 
 ### Step list
 
@@ -205,7 +205,7 @@ CONFIG
     Hooks                       3 installed
 ```
 
-- **A key-value line is a fact, not a check:** it has no glyph. The key starts in the label column, `indent` + 2 columns from the left, and is padded to `labelWidth` like a step label, so values line up with step details. A long key is cut at `labelWidth` − 1 columns, never wrapped. Key and value stay in the default ink; a value that says something is absent ("none", "not set") may use `dim`.
+- **A key-value line is a fact, not a check:** it has no glyph. The key starts in the label column, `indent` + 2 columns from the left, and is padded to `labelWidth` like a step label, so values line up with step details. A long key is cut at `labelWidth` − 1 columns when a value follows, so one space always separates them, and at `labelWidth` when the value is empty; it is never wrapped. Key and value stay in the default ink; a value that says something is absent ("none", "not set") may use `dim`.
 - **A section heading** is the micro label (L1): uppercase, in `dim`, from column 0, with no colon and no rule under it. It names the group of step lines or key-value lines below it. One blank line comes before every heading but the first.
 - A value that is a state with a glyph (ok, failed) is a step line, not a key-value line.
 - Python: `term.kv_line(key, value)` and `term.heading(text, mode=…)` (0.9.0).
@@ -220,9 +220,9 @@ Three lines: what, why, fix.
     Try: git remote -v · sondalab.eu/e/T102
 ```
 
-- **What:** the step line, with the `failed` glyph and a past-tense or "Could not" label. No detail column.
-- **Why:** a continuation line in `dim`, naming the cause and the exit code or the timeout.
-- **Fix:** a continuation line: `Try:` in `prompt`, then a command in the default ink. An optional docs link with an error code follows the `separator` glyph, in `dim`.
+- **What:** the step line, with the `failed` glyph and a past-tense or "Could not" label. No detail column, so the what line is cut at `maxWidth`, not `labelWidth`.
+- **Why:** a continuation line in `dim`, naming the cause and the exit code or the timeout. A long why is prose: it wraps at the [width](#width), each line starting in the label column.
+- **Fix:** a continuation line: `Try:` in `prompt`, then a command in the default ink. An optional docs link with an error code follows the `separator` glyph, in `dim`. The fix is never cut or wrapped: it is copied and pasted.
 
 The process exits non-zero. An unexpected failure prints the same three lines; its fix is `Try: <command> --debug`.
 
@@ -270,7 +270,7 @@ A determinate step draws a bar on the continuation line under its running step l
 ### Rules
 
 - **A failure never uses a success glyph.** `failed` is `✗` in `err`; `✓` is only for `done` and `fixed`. A step that did not do its job is `failed` or `warn`, never `done`.
-- **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag, as an [error block](#error-block) whose fix is the command with that flag. Python: `term.require_tty_or_flag()` (0.9.0).
+- **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag, as an [error block](#error-block) whose fix is the command with that flag. Python: `term.needs_prompt()` (0.9.0).
 - **`NO_COLOR`: glyphs stay, color goes.** With `NO_COLOR` set the output is the same text with no escape sequences, unless a `--color` flag overrides it ([Colour](#colour)). Meaning is carried by the glyph and the word, never by colour alone.
 - **ASCII fallback.** When the locale is not UTF-8, `TERM=dumb`, the `--ascii` flag is passed or `SONDALAB_ASCII=1` is set, use the `ascii` form of every glyph, including the summary separator. Layout widths are unchanged: every Unicode glyph is one column wide, as is its ASCII form.
 
