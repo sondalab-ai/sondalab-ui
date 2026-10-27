@@ -1,17 +1,20 @@
 """Reference helper for the Term spec (docs/tui-patterns.md in sondalab-ui).
 
-Pure string builders and environment checks. Nothing here writes to a
-terminal, starts a thread or sleeps: the caller owns redraw and timing
-(SPINNER["intervalMs"], SPINNER["delayMs"], DECODE["frameMs"], MOTION["maxFps"]).
+Pure string builders and environment checks. Nothing here starts a thread or
+sleeps: the caller owns redraw and timing (SPINNER["intervalMs"],
+SPINNER["delayMs"], DECODE["frameMs"], MOTION["maxFps"]). The only helpers
+that do I/O are confirm() and choose(), through injectable read/write
+callables, and enable_vt(), which sets the Windows console mode.
 """
 from __future__ import annotations
 
 import codecs
 import os
 import sys
-from typing import Mapping, Optional, Sequence
+import textwrap
+from typing import Callable, Iterable, Mapping, Optional, Sequence, Tuple, TypeVar
 
-from . import DECODE, ENV, GLYPHS, HEADER, LAYOUT, PROGRESS, RAMP, ROLES, SPINNER
+from . import DECODE, ENV, GLYPHS, HEADER, KEYS, LAYOUT, PROGRESS, RAMP, ROBUSTNESS, ROLES, SPINNER
 
 __all__ = [
     "accessible",
@@ -25,9 +28,30 @@ __all__ = [
     "decode_frames",
     "step_line",
     "header",
+    "paint",
+    "lockup",
+    "TermError",
+    "NoValidAnswer",
+    "MissingFlag",
+    "parse_yes_no",
+    "parse_choice",
+    "confirm",
+    "choose",
+    "require_tty_or_flag",
+    "summary",
+    "width",
+    "wrap",
+    "error_block",
+    "next_line",
+    "key_hints",
+    "arrows",
+    "heading",
+    "kv_line",
+    "enable_vt",
 ]
 
 _TRUECOLOR = ("truecolor", "24bit")
+_T = TypeVar("_T")
 
 # How each switch variable in ENV reads, per docs/tui-patterns.md, Robustness >
 # Environment: "one" is on only when it equals "1" (SONDALAB_*), "set" is on
@@ -268,58 +292,84 @@ def decode_frames(value: str, rng, ascii: bool = False) -> list:
     return out
 
 
-def step_line(glyph_name: str, label: str, detail: str = "", ascii: bool = False) -> str:
+def step_line(glyph_name: str, label: str, detail: str = "", ascii: bool = False, *, mode: str = "none") -> str:
     """One step-list line: indent, glyph, label padded to labelWidth, detail.
 
     `glyph_name` is a GLYPHS key, or a spinner frame (SPINNER frames/ascii).
     With a detail the label is cut at labelWidth - 1, so a space always
     separates them; without one it is cut at labelWidth, with no trailing
     padding. Never wrapped. In ASCII, `…` becomes `...`.
-    Uncoloured: paint the glyph with GLYPHS[name][2] (done/fixed ok, failed
-    err, warn warn, active/question prompt, pending/skipped/separator dim;
-    a spinner frame prompt), label and detail in the default ink.
+    `mode` (a color_mode() result, 0.9.0) paints the glyph only, with
+    GLYPHS[name][2] or SPINNER["role"] for a spinner frame; the default
+    'none' is uncoloured. Label and detail stay in the default ink.
     """
     if glyph_name in GLYPHS:
-        uni, asc, _role = GLYPHS[glyph_name]
+        uni, asc, role = GLYPHS[glyph_name]
         glyph = asc if ascii else uni
     elif glyph_name in SPINNER["frames"] + SPINNER["ascii"]:
         glyph = _to_ascii(glyph_name) if ascii else glyph_name
+        role = str(SPINNER["role"])
     else:
         raise ValueError(f"unknown glyph {glyph_name!r}")
     if ascii:
         label = label.replace("…", "...")
-    width = LAYOUT["labelWidth"]
-    head = " " * LAYOUT["indent"] + glyph + " "
-    if not detail:
-        return head + label[:width]
-    return head + label[: width - 1].ljust(width) + detail
+    head = " " * LAYOUT["indent"] + paint(glyph, role, mode) + " "
+    return head + _label(label, detail)
 
 
-def _sgr(text: str, role: str, mode: str) -> str:
-    """`text` in `role`'s named-ANSI SGR, or unchanged when `mode` is 'none'.
+def _label(label: str, detail: str) -> str:
+    """`label` cut and padded to LAYOUT["labelWidth"], then `detail`.
 
-    The header has no truecolor opt-in, so any mode but 'none' paints ANSI 16.
-    Built here rather than with paint(), which reads os.environ, not `env`.
+    With a detail the label is cut at labelWidth - 1 so one space always
+    separates them; without one it is cut at labelWidth and not padded.
+    Shared by step_line() and kv_line() so the two columns line up.
     """
+    width = LAYOUT["labelWidth"]
+    if not detail:
+        return label[:width]
+    return label[: width - 1].ljust(width) + detail
+
+
+_MODES = ("none", "ansi16", "truecolor")
+
+
+def paint(text: str, role: str, mode: str) -> str:
+    """`text` in `role`'s colour for `mode`, the spec-compliant painter (0.9.0).
+
+    `mode` is a color_mode() result: 'none' returns `text` unchanged,
+    'ansi16' uses the role's named-ANSI code (the floor; `dim` is
+    bright_black, never SGR 2), 'truecolor' its brand hue. Empty text stays
+    empty; an unknown role or mode raises ValueError.
+    """
+    if role not in ROLES:
+        raise ValueError(f"unknown role {role!r}")
+    if mode not in _MODES:
+        raise ValueError(f"unknown colour mode {mode!r}")
     if mode == "none" or not text:
         return text
-    return f"\033[{ROLES[role][0]}m{text}\033[0m"
+    code, (r, g, b) = ROLES[role]
+    sgr = f"38;2;{r};{g};{b}" if mode == "truecolor" else str(code)
+    return f"\033[{sgr}m{text}\033[0m"
 
 
 def _columns(env: Mapping[str, str]) -> int:
     """The terminal width: COLUMNS in `env`, else stdout's size, else the cap.
 
     Not shutil.get_terminal_size(): it reads COLUMNS from os.environ, so an
-    explicit `env` would not decide the width.
+    explicit `env` would not decide the width. A COLUMNS or size of 0 or
+    less counts as unknown.
     """
     try:
-        return int(env["COLUMNS"])
+        cols = int(env["COLUMNS"])
     except (KeyError, ValueError):
-        pass
+        cols = 0
+    if cols > 0:
+        return cols
     try:
-        return os.get_terminal_size(sys.stdout.fileno()).columns
+        cols = os.get_terminal_size(sys.stdout.fileno()).columns
     except (AttributeError, OSError, ValueError):
-        return LAYOUT["maxWidth"]
+        cols = 0
+    return cols if cols > 0 else LAYOUT["maxWidth"]
 
 
 def _masked(cells: str, mask: str, mode: str) -> str:
@@ -330,14 +380,24 @@ def _masked(cells: str, mask: str, mode: str) -> str:
         while j < len(cells) and (mask[j] == "a") == (mask[i] == "a"):
             j += 1
         run = cells[i:j]
-        out.append(_sgr(run, HEADER["accentRole"], mode) if mask[i] == "a" else run)
+        out.append(paint(run, HEADER["accentRole"], mode) if mask[i] == "a" else run)
         i = j
     return "".join(out)
 
 
 def _lockup(text: str, mode: str) -> str:
     """`sonda/lab` with the slash in `prompt`, then `text`; plain text otherwise."""
-    return "sonda" + _sgr("/", "prompt", mode) + "lab" + text
+    return "sonda" + paint("/", "prompt", mode) + "lab" + text
+
+
+def lockup(name: str, version: str, mode: str = "none") -> str:
+    """The one-line lockup `sonda/lab <name> <version>`, for `--version`.
+
+    The slash is painted `prompt` per `mode` (a color_mode() result); the
+    line is cut at LAYOUT["maxWidth"] and carries no newline. header() uses
+    the same line as its fallback on a TTY that cannot draw the mark.
+    """
+    return _lockup(f" {name} {version}"[: LAYOUT["maxWidth"] - len("sonda/lab")], mode)
 
 
 def header(
@@ -355,36 +415,400 @@ def header(
     Full: the HEADER mark beside `sonda/lab`, `name version` and the
     description in `dim`, every line cut at LAYOUT["maxWidth"]. `compact`:
     the 2-column mark and `sonda/lab name` in `dim`, then a blank line.
-    `machine` (--json, --plain) gives "". A non-TTY stdout (`isatty` None
-    reads sys.stdout.isatty()), TERM=dumb, accessible or ASCII mode, or a
-    terminal narrower than the header gives the lockup `sonda/lab name
-    version`. Colour follows color_mode(); NO_COLOR keeps the shapes.
+    `machine` (--json, --plain), a non-TTY stdout (`isatty` None reads
+    sys.stdout.isatty()) and accessible mode give "", so piped output stays
+    byte-identical (0.9.0). On a TTY, TERM=dumb, ASCII mode or a terminal
+    narrower than the header gives lockup(). Colour follows color_mode().
     """
     if machine:
         return ""
     env = _env(env)
     if isatty is None:
         isatty = sys.stdout.isatty()
+    if not isatty or accessible(env):
+        return ""
     mode = color_mode(env, isatty=isatty)
     cap = LAYOUT["maxWidth"]
-    lockup = f" {name} {version}"[: cap - len("sonda/lab")]
-    if not isatty or _term_dumb(env) or accessible(env) or ascii_mode(env):
-        return _lockup(lockup, mode) + "\n"
+    fallback = lockup(name, version, mode) + "\n"
+    if _term_dumb(env) or ascii_mode(env):
+        return fallback
     if compact:
         mark = HEADER["compact"]
         text = f"sonda/lab {name}"[: cap - len(mark) - 1]
         if _columns(env) < len(mark) + 1 + len(text):
-            return _lockup(lockup, mode) + "\n"
-        return _masked(mark, HEADER["compactAccent"], mode) + " " + _sgr(text, "dim", mode) + "\n\n"
+            return fallback
+        return _masked(mark, HEADER["compactAccent"], mode) + " " + paint(text, "dim", mode) + "\n\n"
     rows = HEADER["mark"]
     gap = " " * HEADER["gap"]
     room = cap - len(rows[0]) - len(gap)
     texts = ["sonda/lab", f"{name} {version}"[:room], description[:room]]
     if _columns(env) < len(rows[0]) + len(gap) + max(len(x) for x in texts):
-        return _lockup(lockup, mode) + "\n"
-    painted = [_lockup("", mode), texts[1], _sgr(texts[2], "dim", mode)]
+        return fallback
+    painted = [_lockup("", mode), texts[1], paint(texts[2], "dim", mode)]
     lines = [
         (_masked(row, mask, mode) + (gap + text if text else "")).rstrip(" ")
         for row, mask, text in zip(rows, HEADER["markAccent"], painted)
     ]
     return "\n".join(lines) + "\n"
+
+
+# --- errors -----------------------------------------------------------------
+
+
+class TermError(Exception):
+    """A failure the caller reports as the spec's three-line error block.
+
+    `what`, `why` and `fix` are the block's three parts, uncoloured; `fix`
+    is a command (or "" when only the caller knows it). block() renders
+    them through error_block(), so the exception and the block never drift.
+    """
+
+    def __init__(self, what: str, why: str = "", fix: str = "") -> None:
+        super().__init__(f"{what}: {why}" if why else what)
+        self.what, self.why, self.fix = what, why, fix
+
+    def block(self, *, ascii: bool = False, mode: str = "none") -> str:
+        """This error as error_block() lines, for stderr."""
+        return error_block(self.what, self.why, self.fix, ascii=ascii, mode=mode)
+
+
+class NoValidAnswer(TermError):
+    """A prompt got no valid answer: the retry cap was reached or input ended.
+
+    Raised by confirm() and choose() after ROBUSTNESS["promptRetries"]
+    unrecognised answers, or at end of input, which never takes the default.
+    `fix` is empty: the caller knows the flag that answers without a prompt.
+    """
+
+    def __init__(self, question: str, why: str) -> None:
+        super().__init__(f"No valid answer to: {question}", why)
+        self.question = question
+
+
+class MissingFlag(TermError):
+    """No TTY on stdin and the flag that answers without a prompt was not passed.
+
+    TP "Non-TTY: no prompts": the program never takes a default on its own.
+    `what` defaults to "Missing <flag>"; `fix` is `<command> <flag>`, or the
+    flag alone when no command is given.
+    """
+
+    def __init__(self, flag: str, what: str = "", command: str = "") -> None:
+        why = f"stdin is not a terminal, so nothing can be asked, and {flag} was not passed"
+        super().__init__(what or f"Missing {flag}", why, f"{command} {flag}".strip())
+        self.flag = flag
+
+
+# --- prompts -----------------------------------------------------------------
+
+_YES = ("y", "yes")
+_NO = ("n", "no")
+
+
+def parse_yes_no(answer: str, default: bool) -> Optional[bool]:
+    """Read a `[y/N]` answer: True, False, or None when it is not recognised.
+
+    Surrounding whitespace and case are ignored. An empty answer (Enter)
+    takes `default`; y/yes is True, n/no is False; anything else is None,
+    never a choice, so the caller asks again.
+    """
+    text = answer.strip().lower()
+    if not text:
+        return default
+    if text in _YES:
+        return True
+    if text in _NO:
+        return False
+    return None
+
+
+def parse_choice(answer: str, count: int) -> Optional[int]:
+    """Read a numbered-list answer: the 0-based index, or None if not recognised.
+
+    Only an ASCII number from 1 to `count` is a choice; surrounding
+    whitespace is ignored. Empty input, 0, out-of-range numbers and anything
+    else give None.
+    """
+    text = answer.strip()
+    if not (text.isascii() and text.isdigit()):
+        return None
+    n = int(text)
+    return n - 1 if 1 <= n <= count else None
+
+
+def _stderr_write(text: str) -> None:
+    """Write `text` to sys.stderr and flush, the default prompt writer."""
+    sys.stderr.write(text)
+    sys.stderr.flush()
+
+
+def _ask(
+    question: str,
+    prompt: str,
+    parse: Callable[[str], Optional[_T]],
+    read: Optional[Callable[[], str]],
+    write: Callable[[str], None],
+) -> _T:
+    """Write `prompt` and parse a line, up to ROBUSTNESS["promptRetries"] times.
+
+    Returns the first non-None parse. End of input ("" from read, or
+    EOFError) raises NoValidAnswer at once; so does the last unrecognised
+    answer. `read` None reads sys.stdin.readline at call time.
+    """
+    tries = ROBUSTNESS["promptRetries"]
+    for _ in range(tries):
+        write(prompt)
+        try:
+            line = (read or sys.stdin.readline)()
+        except EOFError:
+            line = ""
+        if line == "":
+            raise NoValidAnswer(question, "input ended before an answer")
+        got = parse(line)
+        if got is not None:
+            return got
+    raise NoValidAnswer(question, f"no recognised answer in {tries} tries")
+
+
+def _prompt_mode(mode: Optional[str], env: Optional[Mapping[str, str]]) -> str:
+    """`mode`, or color_mode() for stderr, where prompts are written."""
+    if mode is not None:
+        return mode
+    return color_mode(_env(env), isatty=sys.stderr.isatty())
+
+
+def confirm(
+    question: str,
+    default: bool = False,
+    *,
+    read: Optional[Callable[[], str]] = None,
+    write: Optional[Callable[[str], None]] = None,
+    env: Optional[Mapping[str, str]] = None,
+    mode: Optional[str] = None,
+) -> bool:
+    """Ask `? <question> [y/N] ` (or `[Y/n]` when `default`) and return the answer.
+
+    `read` returns one line with its newline, as readline() does, and ""
+    at end of input; `write` defaults to stderr. Unrecognised input asks
+    again, ROBUSTNESS["promptRetries"] times in all, then raises
+    NoValidAnswer. Guard a non-TTY stdin first with require_tty_or_flag().
+    """
+    mode = _prompt_mode(mode, env)
+    marks = "[Y/n]" if default else "[y/N]"
+    prompt = f"{paint(GLYPHS['question'][0], GLYPHS['question'][2], mode)} {question} {marks} "
+    return _ask(question, prompt, lambda a: parse_yes_no(a, default), read, write or _stderr_write)
+
+
+def choose(
+    question: str,
+    options: Sequence[str],
+    *,
+    read: Optional[Callable[[], str]] = None,
+    write: Optional[Callable[[str], None]] = None,
+    env: Optional[Mapping[str, str]] = None,
+    mode: Optional[str] = None,
+) -> int:
+    """Ask the numbered-list question of accessible mode; return the 0-based index.
+
+    Writes `? <question> Type a number, then Enter`, one `  n  option` row
+    each, then `> `. The palette has no key reader, so this is always the
+    numbered form. I/O, retries and NoValidAnswer are as in confirm();
+    empty `options` raises ValueError.
+    """
+    if not options:
+        raise ValueError("choose() needs at least one option")
+    mode = _prompt_mode(mode, env)
+    write = write or _stderr_write
+    q = paint(GLYPHS["question"][0], GLYPHS["question"][2], mode)
+    w = len(str(len(options)))
+    pad = " " * LAYOUT["indent"]
+    rows = "".join(f"{pad}{n:>{w}}  {opt}\n" for n, opt in enumerate(options, 1))
+    write(f"{q} {question} Type a number, then Enter\n{rows}")
+    return _ask(question, "> ", lambda a: parse_choice(a, len(options)), read, write)
+
+
+def require_tty_or_flag(
+    flag: str,
+    given: bool,
+    *,
+    what: str = "",
+    command: str = "",
+    isatty: Optional[bool] = None,
+) -> bool:
+    """Whether to prompt: False when `flag` was given, True on a TTY stdin.
+
+    Otherwise raises MissingFlag naming `flag` (TP "Non-TTY: no prompts"):
+    without a terminal the program never takes a default on its own.
+    `isatty` None reads sys.stdin.isatty(); `what` and `command` shape the
+    error's what line and `Try:` command.
+    """
+    if given:
+        return False
+    if isatty is None:
+        isatty = sys.stdin.isatty()
+    if isatty:
+        return True
+    raise MissingFlag(flag, what, command)
+
+
+# --- line patterns --------------------------------------------------------------
+
+
+def _glyph(name: str, ascii: bool) -> str:
+    """GLYPHS[name] in its Unicode or ASCII form, uncoloured."""
+    uni, asc, _role = GLYPHS[name]
+    return asc if ascii else uni
+
+
+def _sep(ascii: bool, mode: str) -> str:
+    """The separator glyph in `dim` with a space each side: ` · ` or ` | `."""
+    return f" {paint(_glyph('separator', ascii), GLYPHS['separator'][2], mode)} "
+
+
+def _cont(text: str) -> str:
+    """A continuation line: `text` from the label column, indent + 2."""
+    return " " * (LAYOUT["indent"] + 2) + text
+
+
+def summary(ok: int, fixed: int, warn: int, failed: int, *, mode: str = "none", ascii: bool = False) -> str:
+    """The summary line: `Summary  1 ok · 1 fixed · 1 warn · 1 failed`.
+
+    All four counts, always, joined by the separator (` | ` in ASCII).
+    Each count is painted ok, ok, warn, err, and a zero count dim. No
+    newline; print LAYOUT["blankBeforeSummary"] blank lines before it.
+    """
+    parts = []
+    for count, word, role in ((ok, "ok", "ok"), (fixed, "fixed", "ok"), (warn, "warn", "warn"), (failed, "failed", "err")):
+        parts.append(paint(f"{count} {word}", role if count else "dim", mode))
+    return "Summary  " + _sep(ascii, mode).join(parts)
+
+
+def width(env: Optional[Mapping[str, str]] = None) -> int:
+    """The width to wrap prose at: the terminal's, capped at LAYOUT["maxWidth"].
+
+    Reads COLUMNS in `env`, then stdout's size; when neither is known (or
+    is 0 or less) the cap is used. Labels are cut, never wrapped: this is
+    for prose only.
+    """
+    return min(_columns(_env(env)), LAYOUT["maxWidth"])
+
+
+def wrap(text: str, env: Optional[Mapping[str, str]] = None, indent: int = 0) -> str:
+    """`text` as prose wrapped at width(env), every line starting `indent` spaces in.
+
+    Whitespace runs collapse to one space; words are kept whole, so a word
+    longer than the line stands on its own. Returns the lines joined by
+    newlines, with no trailing newline; "" for empty text.
+    """
+    pad = " " * indent
+    return textwrap.fill(
+        " ".join(text.split()), width(env), initial_indent=pad, subsequent_indent=pad,
+        break_long_words=False, break_on_hyphens=False,
+    )
+
+
+def error_block(
+    what: str,
+    why: str = "",
+    fix: str = "",
+    *,
+    link: str = "",
+    ascii: bool = False,
+    mode: str = "none",
+) -> str:
+    """The error block: `✗ what`, why in dim, `Try: fix` (TP Error block).
+
+    `what` is not cut at labelWidth (there is no detail column), only at
+    LAYOUT["maxWidth"]. An empty `why` or `fix` omits its line; `link` (a
+    docs URL with an error code) follows the fix after the dim separator.
+    Lines joined by newlines, no trailing newline, for stderr.
+    """
+    if ascii:
+        what = what.replace("…", "...")
+    head = " " * LAYOUT["indent"] + paint(_glyph("failed", ascii), GLYPHS["failed"][2], mode) + " "
+    lines = [head + what[: LAYOUT["maxWidth"] - LAYOUT["indent"] - 2]]
+    if why:
+        lines.append(_cont(paint(why, "dim", mode)))
+    if fix:
+        tail = _sep(ascii, mode) + paint(link, "dim", mode) if link else ""
+        lines.append(_cont(f"{paint('Try:', 'prompt', mode)} {fix}{tail}"))
+    return "\n".join(lines)
+
+
+def next_line(command: str, *, mode: str = "none") -> str:
+    """The `Next:` continuation line under a success step, `Next:` in dim.
+
+    Names the follow-up command; it starts in the label column. Print it
+    only when a follow-up exists. No newline.
+    """
+    return _cont(f"{paint('Next:', 'dim', mode)} {command}")
+
+
+def arrows(ascii: bool = False) -> str:
+    """The movement keys for a key hint: `↑↓`, or `up/dn` in ASCII.
+
+    Built from KEYS["up"] and KEYS["down"]; pass it as the key of a
+    key_hints() pair.
+    """
+    up, down = KEYS["up"], KEYS["down"]
+    return f"{up[1]}/{down[1]}" if ascii else f"{up[0]}{down[0]}"
+
+
+def key_hints(pairs: Iterable[Tuple[str, str]], *, ascii: bool = False, mode: str = "none") -> str:
+    """The full-screen footer: `key verb` pairs joined by the separator glyph.
+
+    Keys are painted `accent`, verbs `dim`, the separator `dim` (` · `, or
+    ` | ` in ASCII). Shared keys: `/` filter, `:` command, `?` help, `q`/`esc`
+    back, `ctrl-c` quit; arrows() names the movement keys.
+    """
+    return _sep(ascii, mode).join(f"{paint(k, 'accent', mode)} {paint(v, 'dim', mode)}" for k, v in pairs)
+
+
+def heading(text: str, *, mode: str = "none") -> str:
+    """A section heading over a group of step or report lines (TP Report lines).
+
+    The micro label: `text` uppercase, in `dim`, from column 0. Print one
+    blank line before every heading but the first. No newline.
+    """
+    return paint(text.upper(), "dim", mode)
+
+
+def kv_line(key: str, value: str) -> str:
+    """A key-value report line: a fact, not a check (TP Report lines).
+
+    The key starts in the label column and is padded like a step label,
+    so values line up with step details; the glyph cell stays blank.
+    A long key is cut at labelWidth - 1, never wrapped. Uncoloured.
+    """
+    return " " * (LAYOUT["indent"] + 2) + _label(key, value)
+
+
+# --- Windows ------------------------------------------------------------------
+
+_VT_PROCESSING = 0x0004  # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+
+
+def enable_vt(stream=None) -> bool:
+    """Turn on VT processing for `stream`'s console; False means plain text.
+
+    A no-op returning True off Windows. On Windows it sets
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING on the console handle of `stream`
+    (None: sys.stdout); False when that fails, and the caller then writes
+    no escape sequences, no motion and ASCII glyphs (TP Windows).
+    """
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+        import msvcrt
+
+        handle = msvcrt.get_osfhandle((stream or sys.stdout).fileno())  # type: ignore[attr-defined]
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        current = ctypes.c_ulong()
+        if not kernel32.GetConsoleMode(handle, ctypes.byref(current)):
+            return False
+        if current.value & _VT_PROCESSING:
+            return True
+        return bool(kernel32.SetConsoleMode(handle, current.value | _VT_PROCESSING))
+    except (ImportError, AttributeError, OSError, ValueError):
+        return False

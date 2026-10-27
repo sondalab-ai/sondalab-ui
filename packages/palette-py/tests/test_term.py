@@ -386,7 +386,8 @@ def test_decode_is_deterministic_and_ends_on_value():
     assert len(a) == 4 and a[-1] == "sha 9c41e0b"
 
 
-ENV_HELPERS = [t.switch_on, t.accessible, t.reduced_motion, t.motion_enabled, t.ascii_mode, t.color_mode, t.header]
+ENV_HELPERS = [t.switch_on, t.accessible, t.reduced_motion, t.motion_enabled, t.ascii_mode, t.color_mode, t.header,
+               t.confirm, t.choose, t.width, t.wrap]
 
 
 @pytest.mark.parametrize("fn", ENV_HELPERS, ids=lambda f: f.__name__)
@@ -436,18 +437,33 @@ def test_header_machine_prints_nothing():
     "env,isatty",
     [
         (TTY, False),
-        ({**TTY, "TERM": "dumb"}, True),
+        ({**TTY, "TERM": "dumb"}, False),
+        ({**TTY, "FORCE_COLOR": "1"}, False),
         ({**TTY, "SONDALAB_ACCESSIBLE": "1"}, True),
         ({**TTY, "ACCESSIBLE": ""}, True),
-        ({**TTY, "SONDALAB_ASCII": "1"}, True),
-        ({**TTY, "LANG": "C"}, True),
-        ({**TTY, "COLUMNS": "12"}, True),
+        ({**TTY, "SONDALAB_ACCESSIBLE": "1", "TERM": "dumb"}, True),
     ],
 )
 @pytest.mark.parametrize("compact", [False, True])
-def test_header_falls_back_to_the_lockup(env, isatty, compact):
-    out = _header(env, isatty, compact=compact)
+def test_header_prints_nothing_off_a_tty_or_in_accessible_mode(env, isatty, compact):
+    # 0.9.0: piped output stays byte-identical; the lockup is for --version.
+    assert _header(env, isatty, compact=compact) == ""
+
+
+@pytest.mark.parametrize(
+    "env",
+    [
+        {**TTY, "TERM": "dumb"},
+        {**TTY, "SONDALAB_ASCII": "1"},
+        {**TTY, "LANG": "C"},
+        {**TTY, "COLUMNS": "12"},
+    ],
+)
+@pytest.mark.parametrize("compact", [False, True])
+def test_header_falls_back_to_the_lockup_on_a_tty(env, compact):
+    out = _header(env, True, compact=compact)
     assert _plain(out) == "sonda/lab cld 0.9.0\n"
+    assert out == t.lockup("cld", "0.9.0", t.color_mode(env, True)) + "\n"
 
 
 def test_header_full_is_three_lines_mark_then_text():
@@ -510,7 +526,8 @@ def test_header_no_color_keeps_the_shapes(compact):
 
 
 def test_header_lockup_paints_the_slash_when_colour_is_forced():
-    out = _header({**TTY, "FORCE_COLOR": "1"}, isatty=False)
+    # TERM=dumb forces the lockup; FORCE_COLOR beats TERM=dumb for colour.
+    out = _header({**TTY, "TERM": "dumb", "FORCE_COLOR": "1"}, isatty=True)
     assert out == "sonda\x1b[%dm/\x1b[0mlab cld 0.9.0\n" % p.ROLES["prompt"][0]
 
 

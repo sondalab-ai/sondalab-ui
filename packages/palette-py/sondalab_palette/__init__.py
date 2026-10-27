@@ -124,7 +124,7 @@ def supports_truecolor() -> bool:
 
 
 def paint(text: str, role: str, *, err: bool = False) -> str:
-    """Wrap text in role's SGR; NO_COLOR and COLORTERM only. Spec callers: term.color_mode."""
+    """Wrap text in role's SGR; NO_COLOR and COLORTERM only. Legacy: spec callers use term.paint(text, role, term.color_mode())."""
     if _no_color() or role not in ROLES:
         return text
     code, (r, g, b) = ROLES[role]
