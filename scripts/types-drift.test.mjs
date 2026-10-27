@@ -12,6 +12,7 @@ const KIT = resolve(HERE, "../packages/ui-kit");
    and a one-file change. The cost of that choice is drift, and this is what
    pays it — every runtime export must be declared, and nothing may be declared
    that is not exported. */
+const INTERNAL = new Set(["term-tokens"]);
 const MODULES = ["effects", "goo-field", "geom", "glass-text", "dither-core", "halftone-core", "halftone", "signal", "term", "term-tokens"];
 
 /** Every name a module exports at runtime. */
@@ -50,6 +51,9 @@ test("every declared module is shipped and resolvable", () => {
     // A TypeScript consumer resolves `foo.d.ts` beside `foo.js` only if the
     // file is in the tarball. It is not enough for it to exist in the repo.
     assert.ok(pkg.files.includes(`${name}.d.ts`), `package.json "files" must ship ${name}.d.ts`);
-    assert.ok(pkg.exports[`./${name}.js`], `package.json "exports" must expose ./${name}.js`);
+    assert.ok(pkg.files.includes(`${name}.js`), `package.json "files" must ship ${name}.js`);
+    // term-tokens.js is reached only through term.js, which re-exports it.
+    if (INTERNAL.has(name)) assert.equal(pkg.exports[`./${name}.js`], undefined, `./${name}.js is internal`);
+    else assert.ok(pkg.exports[`./${name}.js`], `package.json "exports" must expose ./${name}.js`);
   }
 });

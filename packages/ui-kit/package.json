@@ -24,6 +24,9 @@
     "access": "public"
   },
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
     "sl-audit": "./agent/sl-audit.mjs"
   },
@@ -46,7 +49,6 @@
     "./halftone.js": "./halftone.js",
     "./signal.js": "./signal.js",
     "./term.js": "./term.js",
-    "./term-tokens.js": "./term-tokens.js",
     "./themes/light.css": "./themes/light.css",
     "./themes/dark.css": "./themes/dark.css",
     "./themes/high-contrast.css": "./themes/high-contrast.css",
