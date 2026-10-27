@@ -1123,10 +1123,11 @@ A word or phrase of a display heading painted in the spectrum ink (Prism). **Opt
 ```
 Consumes: `--slc-spectral-ink`, `--slc-spectral-fill`. Plain text in dark, high-contrast and forced colours. Do: display sizes only (`sl-anchor`, `h1`, `h2`). Don't: body text — the ink clears 3:1, not 4.5.
 
-### Art — `sl-eyebrow--mark` · `sl-rule--shapes` · `sl-rule--weave` · `sl-art-corner` · `sl-art-field` · `sl-empty--void` · `sl-empty--shapes`
+### Art — `sl-eyebrow--mark` (`-square` · `-tri` · `-circle` · `-half` · `-stair`) · `sl-rule--shapes` · `sl-rule--weave` · `sl-art-corner` · `sl-art-field` · `sl-empty--void` · `sl-empty--shapes`
 Bauhaus shapes (quarter disc, square, triangle, bar) drawn on the 3px dither cell and shaded through the kit's Bayer matrix, so they share the dither hover's grid (0.41). **Opt-in only**: the kit never adds one. Each piece is a generated mask (`scripts/gen-art.mjs`, the `--sl-art-*` properties) painted on a pseudo-element from the ink and the accent text: static, `pointer-events: none`, decorative. It follows the theme and `sl-invert`; it paints nothing in high contrast and forced colours. Substrate: **A** Page/App/IDE.
 ```html
 <div class="sl-eyebrow sl-eyebrow--mark">§ 02 — Signals</div>
+<div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 03 — Traces</div>
 <hr class="sl-rule sl-rule--shapes">
 <hr class="sl-rule sl-rule--weave">
 <article class="sl-card sl-art-corner"> … </article>
@@ -1136,7 +1137,7 @@ Bauhaus shapes (quarter disc, square, triangle, bar) drawn on the 3px dither cel
   <p class="sl-empty__body">Start a run and its traces land in this panel.</p>
 </div>
 ```
-- `sl-eyebrow--mark`: the glyph before the eyebrow text (`::before`), a quarter disc in the accent and a bar in the ink. The eyebrow's text moves right by 27px; the content it heads does not move.
+- `sl-eyebrow--mark`: the glyph before the eyebrow text (`::before`), a quarter disc in the accent and a bar in the ink, 6 × 4 cells. The eyebrow's text moves right by 9 cells (27px at the default cell); the content it heads does not move. Five more glyphs on the same frame, each worn **with** `sl-eyebrow--mark` (the modifier only swaps the mask, so the paint and the high-contrast and forced-colours removal stay): `sl-eyebrow--mark-square` (a square and an ink dot), `sl-eyebrow--mark-tri` (a triangle and a bar), `sl-eyebrow--mark-circle` (a disc and a short bar), `sl-eyebrow--mark-half` (two stacked half discs and a bar), `sl-eyebrow--mark-stair` (a two-step stair and a short bar). Vary them across the sections of one page. `--sl-art-mark-cell` (default `3px`, set on the eyebrow or any ancestor) sizes the glyph in whole cells for a larger label: keep it a whole px (`4px` gives 24 × 16px) or the cells blur.
 - `sl-rule--shapes`: a 288px strip of shapes that fades along the rule, the first in the accent, the rest in the ink at half coverage. `sl-rule--weave`: a 2/2 twill strip in the ink at 45%, 24px high, across the whole rule, its first band in the accent. Both draw into the rule's margin and keep its 1px box; where they paint nothing (high contrast, forced colours) the hairline comes back. Not with `sl-rule--labeled`.
 - `sl-art-corner`: nested quarter discs fading into the top-right corner (`::after`, 102px). `sl-art-field`: a truchet field of quarter arcs behind the content (`::before`), the faintest tone. Both make the host `position: relative` at zero specificity, so a host's own position wins.
 - `sl-empty--void`: a Molnár field of strokes around the message, with an erased zone centred on the box in three steps by the box's width (S below 390px, M from 390px, L from 480px); it centres the message in the zone. A message longer than the zone may touch strokes at its edge. It makes the box a size container (`container-type: inline-size`): give it a width where it is a shrink-to-fit item. `sl-empty--shapes`: a 120 × 72px composition above the title, a disc in the accent, a square outline and a dithered triangle in the ink. Use one of the two on a box, not both. In high contrast and forced colours the eyebrow glyph and the composition are removed, leaving no blank space.

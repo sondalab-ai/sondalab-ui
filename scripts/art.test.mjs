@@ -5,9 +5,9 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { REGISTRY, THEMES, ratio, rulesFor } from "./lib/primary-matrix.mjs";
-import { parseSheet, el, cascaded, customs, longhand, splitList } from "./lib/cascade.mjs";
+import { parseSheet, el, cascaded, customs, longhand, splitList, px } from "./lib/cascade.mjs";
 import { evaluate, toSrgb, fromSrgb, toHex } from "./lib/css-color.mjs";
-import { VOID, PITCH, TONES, voidImage, voidThreshold, START, END } from "./gen-art.mjs";
+import { VOID, PITCH, TONES, GLYPHS, glyph, voidImage, voidThreshold, START, END } from "./gen-art.mjs";
 import { CELL_PX } from "../packages/ui-kit/dither-core.js";
 
 // The Bauhaus pixel art (ui-kit 0.41.0): masks drawn on the dither cell by
@@ -36,6 +36,8 @@ const PAINTS = ["--_sl-art-paint", "--_sl-art-accent"];
 const UNDERLAY = ["sl-art-field", "sl-art-corner", "sl-empty--void"];
 /** The in-flow marks: they take space, so where they paint nothing they go. */
 const IN_FLOW = ["sl-eyebrow--mark", "sl-empty--shapes"];
+/** The eyebrow glyph modifiers, each worn with sl-eyebrow--mark. */
+const GLYPH_MODIFIERS = Object.keys(GLYPHS).filter((k) => k !== "mark").map((k) => `sl-eyebrow--mark-${k}`);
 
 const block = (() => {
   const a = raw.indexOf(START), b = raw.indexOf(END);
@@ -191,7 +193,8 @@ test("the marks beside text keep the probe's tones, from role vars only", () => 
   for (const cls of ["sl-eyebrow--mark", "sl-rule--shapes", "sl-empty--shapes"]) {
     const got = paintOf(cls);
     assert.deepEqual({ "--_sl-art-paint": got["--_sl-art-paint"], "--_sl-art-accent": got["--_sl-art-accent"] }, solid, cls);
-    assert.match(got.background, /var\(--_sl-art-accent\) \d+px, var\(--_sl-art-paint\) 0/, `${cls} splits accent and ink`);
+    const at = cls === "sl-eyebrow--mark" ? "calc\\(4 \\* var\\(--_sl-art-cell\\)\\)" : "\\d+px";
+    assert.match(got.background, new RegExp(`var\\(--_sl-art-accent\\) ${at}, var\\(--_sl-art-paint\\) 0`), `${cls} splits accent and ink`);
   }
   const weave = paintOf("sl-rule--weave");
   assert.equal(weave["--_sl-art-paint"], "color-mix(in srgb, var(--slc-text) 45%, transparent)");
@@ -221,6 +224,11 @@ for (const [name, opts] of [["the high-contrast theme", { theme: "high-contrast"
       const got = painted(cls, p, opts);
       if (IN_FLOW.includes(cls)) assert.equal(got.display, "none", cls);
       else assert.equal(got.background, "none", cls);
+    }
+    for (const mod of GLYPH_MODIFIERS) {
+      const p = { host: ["sl-eyebrow", "sl-eyebrow--mark", mod], pseudo: "before" };
+      assert.match(painted(mod, p).background, /var\(--_sl-art-/, `${mod} paints nothing even on dark: the probe is broken`);
+      assert.equal(painted(mod, p, opts).display, "none", mod);
     }
   });
 }
@@ -279,16 +287,90 @@ test("the showcase applies every piece on flat ground, over the field and in a b
   const applied = (chunk) => new Set([...chunk.matchAll(/class="([^"]*)"/g)].flatMap((m) => m[1].split(/\s+/)));
   for (const [ground, chunk] of Object.entries(grounds)) {
     const classes = applied(chunk);
-    for (const cls of Object.keys(PIECES)) assert.ok(classes.has(cls), `${ground}: .${cls} is not applied`);
+    for (const cls of [...Object.keys(PIECES), ...GLYPH_MODIFIERS]) assert.ok(classes.has(cls), `${ground}: .${cls} is not applied`);
+    assert.match(chunk, /class="[^"]*\bsl-eyebrow--mark\b[^"]*\bart-marks__big\b/, `${ground}: no glyph at a larger cell`);
   }
+  assert.match(html, /\.art-marks__big\s*\{[^}]*--sl-art-mark-cell:\s*4px/, "the larger glyph is not at a 4px cell");
 });
 
 test("the catalog lists every new class", () => {
   const index = JSON.parse(readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.json"), "utf8"));
   const listed = new Set(index.components.flatMap((c) => c.classes));
   const md = readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.md"), "utf8");
-  for (const cls of Object.keys(PIECES)) {
+  for (const cls of [...Object.keys(PIECES), ...GLYPH_MODIFIERS]) {
     assert.ok(listed.has(cls), `catalog.json misses ${cls}`);
     assert.ok(md.includes(cls), `catalog.md misses ${cls}`);
+  }
+});
+
+/** A glyph's grid as rows of "#" and ".", for a readable failure. */
+const ascii = (g) => Array.from({ length: g.rows }, (_, j) => Array.from({ length: g.cols }, (_, i) => (g.on[j * g.cols + i] ? "#" : ".")).join("")).join("/");
+
+test("every eyebrow glyph is generated on the 6 × 4 frame, and no two read alike", () => {
+  const names = Object.keys(GLYPHS);
+  assert.deepEqual(names, ["mark", "square", "tri", "circle", "half", "stair"]);
+  for (const k of names) {
+    const prop = k === "mark" ? "--sl-art-mark" : `--sl-art-mark-${k}`;
+    const m = block.match(new RegExp(`${prop}:\\s*url\\('data:image\\/svg\\+xml,([^']*)'\\)`));
+    assert.ok(m, `${prop} is not generated`);
+    assert.match(decodeURIComponent(m[1]), /viewBox="0 0 6 4"/, `${prop} is not on the 6 × 4 frame`);
+  }
+  // At 18 × 12px a glyph is 24 cells: two that differ in a cell or two read
+  // as the same mark, so every pair differs in at least four.
+  for (const [i, a] of names.entries()) for (const b of names.slice(i + 1)) {
+    const A = glyph(a), B = glyph(b);
+    const d = A.on.reduce((n, v, c) => n + (v !== B.on[c]), 0);
+    assert.ok(d >= 4, `${a} (${ascii(A)}) and ${b} (${ascii(B)}) differ in ${d} cells`);
+  }
+});
+
+test("every glyph keeps its accent in cells 0-3 and its ink in cells 4-5", () => {
+  // The hand rule paints the first 4 cells in the accent and the rest in the
+  // ink, for every glyph: a cell on the wrong side takes the wrong colour.
+  for (const [k, { accent, ink }] of Object.entries(GLYPHS)) {
+    const g = glyph(k);
+    let a = 0, b = 0;
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 6; i++) {
+      const x = i + 0.5, y = j + 0.5;
+      if (accent(x, y)) { assert.ok(i < 4, `${k}: accent cell (${i},${j}) past cell 3`); a += g.on[j * 6 + i]; }
+      if (ink(x, y)) { assert.ok(i >= 4, `${k}: ink cell (${i},${j}) inside the accent's cells`); b += g.on[j * 6 + i]; }
+      if (g.on[j * 6 + i]) assert.ok(accent(x, y) || ink(x, y), `${k}: stray cell (${i},${j})`);
+    }
+    assert.ok(a > 0 && b > 0, `${k} has no accent or no ink: ${ascii(g)}`);
+  }
+});
+
+test("a glyph modifier only names its mask; the --mark rule keeps the box", () => {
+  const base = rulesNaming("sl-eyebrow--mark", "before").map((r) => r.body).join(";");
+  assert.match(base, /(?:^|;)\s*mask:\s*var\(--_sl-art-glyph, var\(--sl-art-mark\)\)/, "the base reads the glyph var, the default mark as its fallback");
+  assert.doesNotMatch(base, /(?:^|;)\s*--_sl-art-glyph\s*:/, "the base declares the glyph var");
+  for (const mod of GLYPH_MODIFIERS) {
+    assert.deepEqual(rulesNaming(mod, null), [], `${mod} styles its host`);
+    const rules = rulesNaming(mod, "before");
+    assert.equal(rules.length, 1, `${mod}::before has ${rules.length} rules`);
+    const decls = rules[0].body.split(";").map((d) => d.trim()).filter(Boolean);
+    assert.deepEqual(decls, [`--_sl-art-glyph: var(--sl-art-${mod.slice("sl-eyebrow--".length)})`], mod);
+    assert.equal(css.split(`.${mod}`).length - 1, 1, `${mod} is named outside its one rule`);
+  }
+});
+
+test("--sl-art-mark-cell drives the glyph's box from an ancestor, in whole cells", () => {
+  assert.doesNotMatch(raw, /@property\s+--sl-art-mark-cell\b/, "the cell is a plain custom property");
+  for (const cell of [3, 4, 5]) {
+    const rules = parseSheet(`${raw}\n.probe-cell { --sl-art-mark-cell: ${cell}px; }`);
+    const section = el({ tag: "section", classes: cell === 3 ? [] : ["probe-cell"], parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) }) });
+    const host = el({ classes: ["sl-eyebrow", "sl-eyebrow--mark", "sl-eyebrow--mark-tri"], parent: section });
+    const pseudo = el({ pseudo: "before", parent: host });
+    const won = cascaded(rules, pseudo), env = customs(rules, pseudo);
+    const len = (prop) => px(won.get(prop).value, env);
+    assert.deepEqual([len("width"), len("height"), len("margin-inline-end")], [6 * cell, 4 * cell, 3 * cell], `${cell}px cell`);
+    const split = won.get("background").value.match(/var\(--_sl-art-accent\) (calc\([^)]*\)\)),/)[1];
+    assert.equal(px(split, env), 4 * cell, `${cell}px cell: the gradient splits at 4 cells`);
+    for (const prop of ["mask", "-webkit-mask"]) {
+      const size = won.get(prop).value.match(/\/\s*(calc\([^)]*\)\))\s+(calc\([^)]*\)\))/);
+      assert.ok(size, `${prop} has no size`);
+      assert.deepEqual([px(size[1], env), px(size[2], env)], [6 * cell, 4 * cell], `${cell}px cell: ${prop} size`);
+    }
+    assert.equal(won.get("vertical-align").value, "round(calc(var(--_sl-art-cell) / -3), 1px)", "the offset is a third of a cell, on a whole px");
   }
 });

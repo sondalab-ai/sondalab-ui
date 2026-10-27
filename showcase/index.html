@@ -255,6 +255,9 @@
     .art-row h3 { font-size: 1.05rem; }
     .art-row p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
     .art-row .sl-art-field { padding: 1.2rem 1.3rem; }
+    .art-marks { display: flex; flex-direction: column; gap: 0.6rem; }
+    /* The 4px cell is meant for a larger label, so the pair shows at 0.875rem. */
+    .art-marks__big { --sl-art-mark-cell: 4px; font-size: 0.875rem; }
     .art-row .sl-empty--void { min-height: 13rem; }
     /* The field ground: the hero's glow field with no scrim, so nothing flattens
        it; at half strength, so the page's own text stays readable over its peaks. */
@@ -1067,7 +1070,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
     <section id="art">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">07</span><h2>Art</h2></div>
-        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b>, <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b>, <b>sl-empty--void</b> and <b>sl-empty--shapes</b>. Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. Each sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
+        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b>, <b>sl-empty--void</b> and <b>sl-empty--shapes</b>. Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. Each sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
         <div class="gallery">
           <div class="g-cell g-cell--wide" data-art-ground="flat">
             <span class="g-label">flat ground &middot; the surface</span>
@@ -1080,6 +1083,15 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <p>The next section starts here; the strip fades along the rule.</p>
                 <hr class="sl-rule sl-rule--weave">
                 <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <div class="art-marks">
+                  <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">§ 03 — Triangle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                </div>
               </div>
               <div>
                 <article class="sl-card sl-art-corner">
@@ -1117,6 +1129,15 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <p>The next section starts here; the strip fades along the rule.</p>
                 <hr class="sl-rule sl-rule--weave">
                 <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <div class="art-marks">
+                  <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">§ 03 — Triangle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                </div>
               </div>
               <div>
                 <article class="sl-card sl-art-corner">
@@ -1154,6 +1175,15 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <p>The next section starts here; the strip fades along the rule.</p>
                 <hr class="sl-rule sl-rule--weave">
                 <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <div class="art-marks">
+                  <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">§ 03 — Triangle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                </div>
               </div>
               <div>
                 <article class="sl-card sl-art-corner">
