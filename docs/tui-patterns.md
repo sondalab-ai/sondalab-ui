@@ -1,6 +1,6 @@
 # TUI patterns
 
-Interaction patterns for command-line surfaces (the Term substrate). The six colour roles live in `terminal` in `sondalab.tokens.json`; the glyphs and layout numbers below are the `tui` section beside it (Python: `sondalab_palette.GLYPHS`, `sondalab_palette.LAYOUT`; Node: `GLYPHS`, `LAYOUT` from `@sondalab/ui-kit/term.js`, ui-kit 0.43.0). This file is the grammar; the tokens are the values. Each helper named below as `term.…` for Python has a camelCase twin in `term.js` that gives the same bytes for the same inputs.
+Interaction patterns for command-line surfaces (the Term substrate). The six colour roles live in `terminal` in `sondalab.tokens.json`; the glyphs and layout numbers below are the `tui` section beside it (Python: `sondalab_palette.GLYPHS`, `sondalab_palette.LAYOUT`; Node: `GLYPHS`, `LAYOUT` from `@sondalab/ui-kit/term.js`, ui-kit 0.43.0). This file is the grammar; the tokens are the values. Each helper named below as `term.…` for Python, all but `enable_vt` (see [Windows](#windows)), has a camelCase twin in `term.js` that gives the same bytes for the same inputs.
 
 Since 0.40 this file is the full Term spec, in six parts: Voice, Motion, Effects, Patterns (line output), Patterns (full screen) and Robustness. It applies `design-language.md` L4, L5 and L6 to a grid of character cells. Every number it cites is a `tui` token, named beside the number; a test fails if a token and this text disagree.
 

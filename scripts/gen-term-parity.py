@@ -214,8 +214,26 @@ def cases():
     return out
 
 
+def _no_terminal(fd):
+    raise OSError("no terminal: the cases never depend on the shell's width")
+
+
 def run(c):
-    """Run one case through sondalab_palette.term; return the case with its result."""
+    """Run one case through sondalab_palette.term; return the case with its result.
+
+    os.get_terminal_size is stubbed for the call, so a case with no usable
+    COLUMNS records the cap whatever terminal runs the generator or pytest.
+    """
+    real = term.os.get_terminal_size
+    term.os.get_terminal_size = _no_terminal
+    try:
+        return _run(c)
+    finally:
+        term.os.get_terminal_size = real
+
+
+def _run(c):
+    """run() without the terminal stub."""
     fn, args, kwargs = c["fn"], list(c["args"]), dict(c["kwargs"])
     res = dict(c)
     try:

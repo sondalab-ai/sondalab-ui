@@ -12,6 +12,10 @@ import * as t from "../packages/ui-kit/term.js";
 // them through Python, so a change on either side fails CI. Each case is the
 // Python call; ADAPT maps it onto the camelCase signature.
 
+// The fixture was recorded with no terminal; a case with no usable COLUMNS
+// must not read this shell's width when the file runs outside node --test.
+Object.defineProperty(process.stdout, "isTTY", { value: false, configurable: true });
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CASES = JSON.parse(readFileSync(resolve(HERE, "fixtures/term-parity.json"), "utf8"));
 
