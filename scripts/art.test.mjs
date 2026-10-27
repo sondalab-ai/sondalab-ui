@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { REGISTRY, THEMES, ratio, rulesFor } from "./lib/primary-matrix.mjs";
 import { parseSheet, el, cascaded, customs, longhand, splitList, px } from "./lib/cascade.mjs";
-import { evaluate, toSrgb, fromSrgb, toHex } from "./lib/css-color.mjs";
-import { VOID, PITCH, TONES, GLYPHS, glyph, voidImage, voidThreshold, START, END } from "./gen-art.mjs";
+import { evaluate, substitute, toSrgb, fromSrgb, toHex } from "./lib/css-color.mjs";
+import { createHash } from "node:crypto";
+import { VOID, PITCH, TONES, GLYPHS, FIELDS, glyph, field, voidImage, voidThreshold, START, END } from "./gen-art.mjs";
 import { CELL_PX } from "../packages/ui-kit/dither-core.js";
 
 // The Bauhaus pixel art (ui-kit 0.41.0): masks drawn on the dither cell by
@@ -38,6 +39,12 @@ const UNDERLAY = ["sl-art-field", "sl-art-corner", "sl-empty--void"];
 const IN_FLOW = ["sl-eyebrow--mark", "sl-empty--shapes"];
 /** The eyebrow glyph modifiers, each worn with sl-eyebrow--mark. */
 const GLYPH_MODIFIERS = Object.keys(GLYPHS).filter((k) => k !== "mark").map((k) => `sl-eyebrow--mark-${k}`);
+/** The field modifiers (the truchet is the bare field) and the fades, each
+ *  worn with sl-art-field. */
+const FIELD_MODIFIERS = Object.keys(FIELDS).filter((k) => k !== "truchet").map((k) => `sl-art-field--${k}`);
+const FADES = ["sl-art-field--fade-start", "sl-art-field--fade-end", "sl-art-field--fade-down"];
+/** Every field and fade as a host of its own, for the tests that bind each. */
+const FIELD_HOSTS = Object.fromEntries([...FIELD_MODIFIERS, ...FADES].map((m) => [m, { host: ["sl-art-field", m], pseudo: "before" }]));
 
 const block = (() => {
   const a = raw.indexOf(START), b = raw.indexOf(END);
@@ -149,8 +156,7 @@ for (const wiring of ["tier A", "site subtree"]) for (const id of Object.keys(RE
   test(`${wiring} / ${id} / ${theme}: secondary text reads 4.5:1 on a solid cell of every underlay`, () => {
     const w = rulesFor(wiring, id);
     const low = [];
-    for (const cls of UNDERLAY) {
-      const p = PIECES[cls];
+    for (const [cls, p] of [...UNDERLAY.map((c) => [c, PIECES[c]]), ...Object.entries(FIELD_HOSTS)]) {
       const html = el({ tag: "html", attrs: { [w.themeAttr ?? "data-sl-theme"]: theme, ...w.root } });
       let parent = el({ tag: "body", parent: html });
       if (w.section) parent = el({ tag: "section", parent, attrs: w.section });
@@ -225,6 +231,10 @@ for (const [name, opts] of [["the high-contrast theme", { theme: "high-contrast"
       if (IN_FLOW.includes(cls)) assert.equal(got.display, "none", cls);
       else assert.equal(got.background, "none", cls);
     }
+    for (const [mod, p] of Object.entries(FIELD_HOSTS)) {
+      assert.match(painted(mod, p).background, /var\(--_sl-art-/, `${mod} paints nothing even on dark: the probe is broken`);
+      assert.equal(painted(mod, p, opts).background, "none", mod);
+    }
     for (const mod of GLYPH_MODIFIERS) {
       const p = { host: ["sl-eyebrow", "sl-eyebrow--mark", mod], pseudo: "before" };
       assert.match(painted(mod, p).background, /var\(--_sl-art-/, `${mod} paints nothing even on dark: the probe is broken`);
@@ -293,11 +303,21 @@ test("the showcase applies every piece on flat ground, over the field and in a b
   assert.match(html, /\.art-marks__big\s*\{[^}]*--sl-art-mark-cell:\s*4px/, "the larger glyph is not at a 4px cell");
 });
 
+test("the showcase shows every field, and a field under each fade", () => {
+  const html = readFileSync(resolve(REPO, "showcase/index.html"), "utf8");
+  const cell = html.match(/<div class="[^"]*" data-art-fields>([\s\S]*?)(?=<div class="[^"]*" data-art-ground=)/)?.[1] ?? "";
+  assert.ok(cell, "the Art section has no fields cell before its grounds");
+  const hosts = [...cell.matchAll(/class="([^"]*\bsl-art-field\b[^"]*)"/g)].map((m) => m[1].split(/\s+/));
+  assert.ok(hosts.some((c) => c.length === 1), "the bare field is not shown");
+  for (const mod of FIELD_MODIFIERS) assert.ok(hosts.some((c) => c.includes(mod) && !c.some((x) => FADES.includes(x))), `${mod} is not shown unfaded`);
+  for (const fade of FADES) assert.ok(hosts.some((c) => c.includes(fade)), `${fade} is not shown`);
+});
+
 test("the catalog lists every new class", () => {
   const index = JSON.parse(readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.json"), "utf8"));
   const listed = new Set(index.components.flatMap((c) => c.classes));
   const md = readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.md"), "utf8");
-  for (const cls of [...Object.keys(PIECES), ...GLYPH_MODIFIERS]) {
+  for (const cls of [...Object.keys(PIECES), ...GLYPH_MODIFIERS, ...FIELD_MODIFIERS, ...FADES]) {
     assert.ok(listed.has(cls), `catalog.json misses ${cls}`);
     assert.ok(md.includes(cls), `catalog.md misses ${cls}`);
   }
@@ -372,5 +392,114 @@ test("--sl-art-mark-cell drives the glyph's box from an ancestor, in whole cells
       assert.deepEqual([px(size[1], env), px(size[2], env)], [6 * cell, 4 * cell], `${cell}px cell: ${prop} size`);
     }
     assert.equal(won.get("vertical-align").value, "round(calc(var(--_sl-art-cell) / -3), 1px)", "the offset is a third of a cell, on a whole px");
+  }
+});
+
+test("every field is generated as a tile of whole Bayer periods, on a whole px", () => {
+  assert.deepEqual(Object.keys(FIELDS), ["truchet", "grid", "albers", "stripes"]);
+  for (const [k, { cells }] of Object.entries(FIELDS)) {
+    const prop = k === "truchet" ? "--sl-art-truchet" : `--sl-art-field-${k}`;
+    const m = block.match(new RegExp(`${prop}:\\s*url\\('data:image\\/svg\\+xml,([^']*)'\\)`));
+    assert.ok(m, `${prop} is not generated`);
+    assert.match(decodeURIComponent(m[1]), new RegExp(`viewBox="0 0 ${cells} ${cells}"`), `${prop} is not ${cells} cells square`);
+    assert.equal(cells % 8, 0, `${k}: ${cells} cells is not a whole number of Bayer periods, so the matrix breaks at the seam`);
+    const g = field(k), lit = g.on.reduce((n, v) => n + v, 0);
+    assert.ok(lit > 0 && lit < g.on.length, `${k} is empty or solid`);
+  }
+});
+
+test("every field tiles seamlessly: past each edge the draw goes on as the tile's opposite edge", () => {
+  // The draw reads absolute cells, so a wider grid shows what continues past
+  // the tile's right and bottom edges. A shape cut by an edge, a hash not
+  // seeded by the slot's place in the tile, or a period the matrix does not
+  // share each leave a seam.
+  for (const k of Object.keys(FIELDS)) {
+    const t = field(k), N = t.cols, W = 2 * N + 1, wide = field(k, W, W);
+    const at = (g, i, j) => g.on[j * g.cols + i];
+    const col = (g, i) => Array.from({ length: N }, (_, j) => at(g, i, j));
+    const row = (g, j) => Array.from({ length: N }, (_, i) => at(g, i, j));
+    assert.deepEqual(col(wide, N), col(t, 0), `${k}: the column past the right edge is not the left column`);
+    assert.deepEqual(row(wide, N), row(t, 0), `${k}: the row past the bottom edge is not the top row`);
+    for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+      assert.equal(at(wide, i, j), at(t, i % N, j % N), `${k}: cell (${i},${j}) of a 2 × 2 repeat differs from the tile`);
+    }
+  }
+});
+
+/** The one rule body a modifier owns, as its declarations. */
+const ownDecls = (mod, pseudo) => {
+  assert.deepEqual(rulesNaming(mod, null), [], `${mod} styles its host`);
+  const rules = rulesNaming(mod, pseudo);
+  assert.equal(rules.length, 1, `${mod}::${pseudo} has ${rules.length} rules`);
+  assert.equal(css.split(`.${mod}`).length - 1, 1, `${mod} is named outside its one rule`);
+  return Object.fromEntries(rules[0].body.split(";").map((d) => d.trim()).filter(Boolean).map((d) => [d.slice(0, d.indexOf(":")).trim(), d.slice(d.indexOf(":") + 1).trim()]));
+};
+
+test("a field modifier only names its tile and size; a fade only names its ramp", () => {
+  for (const mod of FIELD_MODIFIERS) {
+    const k = mod.slice("sl-art-field--".length), px = `${FIELDS[k].cells * CELL_PX}px`;
+    assert.deepEqual(ownDecls(mod, "before"), { "--_sl-art-tile": `var(--sl-art-field-${k})`, "--_sl-art-size": `${px} ${px}` }, mod);
+  }
+  for (const mod of FADES) {
+    const decls = ownDecls(mod, "before");
+    assert.deepEqual(Object.keys(decls), ["--_sl-art-fade"], mod);
+    assert.match(decls["--_sl-art-fade"], /^linear-gradient\(.*\btransparent\b.*\)$/, `${mod} is not a ramp to nothing`);
+  }
+  const base = rulesNaming("sl-art-field", "before").filter((r) => r.selector === ".sl-art-field::before").map((r) => r.body).join(";");
+  for (const v of ["--_sl-art-tile", "--_sl-art-size", "--_sl-art-fade", "--_sl-art-end"]) {
+    assert.doesNotMatch(base, new RegExp(`(?:^|;)\\s*${v}\\s*:`), `the base declares ${v}, so a modifier on an ancestor cannot reach it`);
+  }
+});
+
+/** The field's mask on a host wearing `classes`, its vars substituted, and
+ *  `want`: an expected value substituted alike (the tiles are data URIs). */
+function fieldMask(classes) {
+  const rules = parseSheet(raw);
+  const host = el({ classes: ["sl-art-field", ...classes], parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "dark" } }) }) });
+  const pseudo = el({ pseudo: "before", parent: host });
+  const won = cascaded(rules, pseudo), env = customs(rules, pseudo);
+  const out = {};
+  const flat = (v) => substitute(v, env).replace(/\s+/g, " ").trim();
+  for (const prop of ["mask", "-webkit-mask", "mask-composite", "-webkit-mask-composite"]) out[prop] = flat(won.get(prop).value);
+  out.want = flat;
+  return out;
+}
+
+test("the bare field is the truchet as before: the same tile, size and paint, the fade a solid layer", () => {
+  const truchet = block.match(/--sl-art-truchet:[^;]*;/)[0];
+  assert.equal(createHash("sha256").update(truchet).digest("hex").slice(0, 16), "6ea301c6ef566eb6", "the truchet tile's markup changed");
+  const m = fieldMask([]);
+  for (const prop of ["mask", "-webkit-mask"]) {
+    assert.equal(m[prop], m.want("var(--sl-art-truchet) 0 0 / 144px 144px repeat, linear-gradient(black 0 0)"), prop);
+  }
+  assert.equal(m["mask-composite"], "intersect");
+  assert.equal(m["-webkit-mask-composite"], "source-in");
+  const paint = rulesNaming("sl-art-field", "before").map((r) => r.body).join(";");
+  assert.match(paint, /--_sl-art-paint:\s*color-mix\(in srgb, var\(--slc-text\) 7%, transparent\)/);
+});
+
+test("every fade composes with every field, the truchet included", () => {
+  const ramps = {
+    "sl-art-field--fade-start": "linear-gradient(to right, black, transparent)",
+    "sl-art-field--fade-end": "linear-gradient(to right, transparent, black)",
+    "sl-art-field--fade-down": "linear-gradient(black, transparent)",
+  };
+  assert.deepEqual(Object.keys(ramps), FADES);
+  for (const k of Object.keys(FIELDS)) for (const fade of [null, ...FADES]) {
+    const mod = k === "truchet" ? [] : [`sl-art-field--${k}`];
+    const tile = k === "truchet" ? "--sl-art-truchet" : `--sl-art-field-${k}`, px = `${FIELDS[k].cells * CELL_PX}px`;
+    const m = fieldMask(fade ? [...mod, fade] : mod);
+    const want = `var(${tile}) 0 0 / ${px} ${px} repeat, ${fade ? ramps[fade] : "linear-gradient(black 0 0)"}`;
+    for (const prop of ["mask", "-webkit-mask"]) assert.equal(m[prop], m.want(want), `${k} + ${fade}: ${prop}`);
+    assert.equal(m["mask-composite"], "intersect", `${k} + ${fade}`);
+    assert.equal(m["-webkit-mask-composite"], "source-in", `${k} + ${fade}`);
+  }
+});
+
+test("start and end are logical: a right-to-left field turns its ramp", () => {
+  // The cascade lib does not evaluate :dir(), so the rule is read as text.
+  assert.match(css, /\.sl-art-field:dir\(rtl\)::before\s*\{\s*--_sl-art-end:\s*left;\s*\}/);
+  for (const fade of ["sl-art-field--fade-start", "sl-art-field--fade-end"]) {
+    assert.match(ownDecls(fade, "before")["--_sl-art-fade"], /^linear-gradient\(to var\(--_sl-art-end, right\),/, fade);
   }
 });

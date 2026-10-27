@@ -259,6 +259,10 @@
     /* The 4px cell is meant for a larger label, so the pair shows at 0.875rem. */
     .art-marks__big { --sl-art-mark-cell: 4px; font-size: 0.875rem; }
     .art-row .sl-empty--void { min-height: 13rem; }
+    .art-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; }
+    .art-fields .sl-art-field { min-height: 12rem; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
+    .art-fields h3 { font-size: 1.05rem; margin: 0; }
+    .art-fields p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
     /* The field ground: the hero's glow field with no scrim, so nothing flattens
        it; at half strength, so the page's own text stays readable over its peaks. */
     .art-on-field { position: relative; overflow: hidden; }
@@ -1070,8 +1074,48 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
     <section id="art">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">07</span><h2>Art</h2></div>
-        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b>, <b>sl-empty--void</b> and <b>sl-empty--shapes</b>. Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. Each sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
+        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b> (with three more tiles: <b>--grid</b>, <b>--albers</b>, <b>--stripes</b>, and three fades: <b>--fade-start</b>, <b>--fade-end</b>, <b>--fade-down</b>), <b>sl-empty--void</b> and <b>sl-empty--shapes</b>. Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. The field's tiles and fades come first, side by side; then each piece sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
         <div class="gallery">
+          <div class="g-cell g-cell--wide" data-art-fields>
+            <span class="g-label">the fields &middot; four tiles, three fades, one tone</span>
+            <div class="art-fields">
+              <div class="sl-art-field">
+                <div class="sl-eyebrow">Truchet</div>
+                <h3>The bare field</h3>
+                <p>Quarter arcs flipped by a hash, the default tile.</p>
+              </div>
+              <div class="sl-art-field sl-art-field--grid">
+                <div class="sl-eyebrow">--grid</div>
+                <h3>A Bauhaus grid</h3>
+                <p>Disc, square, triangle, quarter disc and outline, one per slot.</p>
+              </div>
+              <div class="sl-art-field sl-art-field--albers">
+                <div class="sl-eyebrow">--albers</div>
+                <h3>Homage to the square</h3>
+                <p>Nested squares set low, each band a step of the matrix.</p>
+              </div>
+              <div class="sl-art-field sl-art-field--stripes">
+                <div class="sl-eyebrow">--stripes</div>
+                <h3>Dithered stripes</h3>
+                <p>A diagonal band falling from solid to nothing in eight steps.</p>
+              </div>
+              <div class="sl-art-field sl-art-field--grid sl-art-field--fade-start">
+                <div class="sl-eyebrow">--grid --fade-start</div>
+                <h3>Strongest at the start</h3>
+                <p>The field recedes toward the end of the line.</p>
+              </div>
+              <div class="sl-art-field sl-art-field--fade-end">
+                <div class="sl-eyebrow">--fade-end</div>
+                <h3>Strongest at the end</h3>
+                <p>The truchet clears the start, where the text begins.</p>
+              </div>
+              <div class="sl-art-field sl-art-field--albers sl-art-field--fade-down">
+                <div class="sl-eyebrow">--albers --fade-down</div>
+                <h3>Strongest at the top</h3>
+                <p>The squares sink away under the paragraph.</p>
+              </div>
+            </div>
+          </div>
           <div class="g-cell g-cell--wide" data-art-ground="flat">
             <span class="g-label">flat ground &middot; the surface</span>
             <div class="art-row">
