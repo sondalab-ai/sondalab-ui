@@ -142,7 +142,8 @@ def cases():
             for ascii in (False, True):
                 out.append(case("summary", *counts, mode=mode, ascii=ascii))
     # width and wrap
-    for cols in ("80", "100", "150", "1", "0", "-1", "abc", "", " 72\n", "+60", "6_0", "_60", "60.0"):
+    for cols in ("80", "100", "150", "1", "0", "-1", "abc", "", " 72\n", "+60", "6_0", "_60", "60.0",
+                 "\u0668\u0660", "\uff16\uff10", "\U0001D7D20", "\u0966_\u0967\u0968", "\u00b2\u00b3"):
         out.append(case("width", {"COLUMNS": cols}))
     prose = "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh"
     for cols in ("80", "30", "20", "12", "5", "1"):

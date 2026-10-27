@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { PassThrough, Writable } from "node:stream";
@@ -127,6 +128,39 @@ test("confirm reads answers that arrive in pieces; end of input never takes the 
   ended.end();
   await assert.rejects(eof, (e) => e instanceof t.NoValidAnswer && e.why === "input ended before an answer");
   assert.equal(output.text(), "? Go? [Y/n] \n");
+});
+
+test("sequential prompts share one stream: buffered lines are kept, a later EOF fails at once", async () => {
+  const input = new PassThrough();
+  input.end("y\nn\n");
+  assert.equal(await t.confirm("A?", { input, output: sink() }), true);
+  assert.equal(await t.confirm("B?", { default: true, input, output: sink() }), false);
+  const output = sink();
+  await assert.rejects(t.confirm("C?", { default: true, input, output }),
+    (e) => e instanceof t.NoValidAnswer && e.why === "input ended before an answer");
+  assert.equal(output.text(), "? C? [Y/n] \n");
+  await assert.rejects(t.choose("D?", ["x"], { input, output: sink() }), t.NoValidAnswer);
+});
+
+test("a prompt on a stream that ended before it was first read fails at once", async () => {
+  const input = new PassThrough();
+  input.end();
+  input.resume();
+  await new Promise((r) => input.on("end", r));
+  await assert.rejects(t.confirm("Go?", { input, output: sink() }), t.NoValidAnswer);
+});
+
+test("a real process with piped stdin answers each prompt in turn and exits", () => {
+  const script = `import { confirm } from ${JSON.stringify(resolve(KIT, "term.js"))};
+for (const q of ["a", "b", "c"]) {
+  try { console.log(await confirm(q, { env: {} })); } catch (e) { console.log(e.name); }
+}`;
+  const run = (stdin) => spawnSync(process.execPath, ["--input-type=module", "-e", script], { input: stdin, encoding: "utf8", timeout: 10000 });
+  for (const [stdin, want] of [["y\nn\n", "true\nfalse\nNoValidAnswer\n"], ["y", "true\nNoValidAnswer\nNoValidAnswer\n"], ["", "NoValidAnswer\n".repeat(3)]]) {
+    const r = run(stdin);
+    assert.equal(r.status, 0, `stdin ${JSON.stringify(stdin)}: exit ${r.status}, ${r.stderr}`);
+    assert.equal(r.stdout, want);
+  }
 });
 
 test("prompt colour follows the output stream when mode is omitted", async () => {

@@ -5987,6 +5987,56 @@
   "out": 100
  },
  {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "٨٠"
+   }
+  ],
+  "kwargs": {},
+  "out": 80
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "６０"
+   }
+  ],
+  "kwargs": {},
+  "out": 60
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "𝟒0"
+   }
+  ],
+  "kwargs": {},
+  "out": 40
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "०_१२"
+   }
+  ],
+  "kwargs": {},
+  "out": 12
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "²³"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
   "fn": "wrap",
   "args": [
    "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",

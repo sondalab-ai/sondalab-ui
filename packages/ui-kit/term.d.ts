@@ -10,7 +10,7 @@ export * from "./term-tokens.js";
 export type ColorMode = "none" | "ansi16" | "truecolor";
 
 /** An environment to read; omitted, the helpers read process.env at call time. */
-export type Env = Readonly<Record<string, string | undefined>>;
+export type Env = Readonly<Record<string, string | undefined>> | null;
 
 /** True when any variable of the ENV switch purpose is on ("reducedMotion", "accessible", "ci", "ascii").
  *  SONDALAB_* count only when "1"; CI and ACCESSIBLE whenever set. Another name throws RangeError. */
@@ -23,15 +23,15 @@ export declare function accessible(env?: Env): boolean;
 export declare function reducedMotion(env?: Env): boolean;
 
 /** Whether motion may run: off for a non-TTY stream (default: stderr), CI, TERM=dumb, reduced motion, accessible. */
-export declare function motionEnabled(options?: { env?: Env; isTTY?: boolean }): boolean;
+export declare function motionEnabled(options?: { env?: Env; isTTY?: boolean | null }): boolean;
 
 /** Whether every glyph takes its ASCII form: a non-UTF-8 locale charset, TERM=dumb or SONDALAB_ASCII=1.
  *  `override` is the --ascii flag; `encoding` replaces the locale charset. */
-export declare function asciiMode(options?: { override?: boolean; env?: Env; encoding?: string }): boolean;
+export declare function asciiMode(options?: { override?: boolean | null; env?: Env; encoding?: string | null }): boolean;
 
 /** The colour precedence: `flag`, NO_COLOR, FORCE_COLOR, then `isTTY` (default: stdout) and TERM.
  *  Truecolor only with `truecolor: true` and COLORTERM truecolor or 24bit. */
-export declare function colorMode(options?: { flag?: boolean; env?: Env; isTTY?: boolean; truecolor?: boolean }): ColorMode;
+export declare function colorMode(options?: { flag?: boolean | null; env?: Env; isTTY?: boolean | null; truecolor?: boolean }): ColorMode;
 
 /** `text` in `role`'s colour for `mode`; "none" and empty text return it unchanged. Throws RangeError on an unknown role or mode. */
 export declare function paint(text: string, role: Role, mode?: ColorMode): string;
@@ -42,7 +42,7 @@ export declare function lockup(name: string, version: string, mode?: ColorMode):
 /** One step-list line. `glyph` is a GLYPHS key or a spinner frame; the label is cut, never wrapped; `mode` paints the glyph. */
 export declare function stepLine(
   glyph: GlyphName | string,
-  label: string,
+  text: string,
   detail?: string,
   options?: { ascii?: boolean; mode?: ColorMode },
 ): string;
@@ -52,7 +52,7 @@ export declare function header(
   name: string,
   version: string,
   description: string,
-  options?: { compact?: boolean; machine?: boolean; env?: Env; isTTY?: boolean },
+  options?: { compact?: boolean; machine?: boolean; env?: Env; isTTY?: boolean | null },
 ): string;
 
 /** The burst spinner's frame at tick `i`. */
@@ -103,15 +103,17 @@ export declare function parseYesNo(answer: string, dflt: boolean): boolean | nul
 export declare function parseChoice(answer: string, count: number): number | null;
 
 /** True when the caller must prompt; throws MissingFlag when stdin is not a TTY and `flag` was not given. */
-export declare function needsPrompt(flag: string, options: { given: boolean; what?: string; command?: string; isTTY?: boolean }): boolean;
+export declare function needsPrompt(flag: string, options: { given: boolean; what?: string; command?: string; isTTY?: boolean | null }): boolean;
 
 interface PromptOptions {
-  /** Default process.stdin. Each call reads through its own readline interface. */
+  /** Default process.stdin. One reader per stream is kept across prompts, so lines piped ahead are
+   *  answered in turn; the stream is paused between prompts, and a prompt after its end fails at once. */
   input?: { on(event: string, listener: (...args: any[]) => void): unknown };
   /** Default process.stderr; its isTTY decides the colour when `mode` is omitted. */
-  output?: { write(chunk: string): unknown; isTTY?: boolean };
+  output?: { write(chunk: string): unknown; isTTY?: boolean | null };
   env?: Env;
-  mode?: ColorMode;
+  /** Omitted or null: colorMode() for `output`. */
+  mode?: ColorMode | null;
 }
 
 /** Ask `? <question> [y/N] `; up to ROBUSTNESS.promptRetries tries, then NoValidAnswer; end of input rejects at once. */

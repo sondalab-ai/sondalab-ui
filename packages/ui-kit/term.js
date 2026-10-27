@@ -7,10 +7,17 @@
  * starts a timer: the caller owns redraw and timing (SPINNER.intervalMs,
  * SPINNER.delayMs, DECODE.frameMs, MOTION.maxFps). Only confirm() and choose()
  * do I/O, on the streams they are given. No CSS, no DOM, no dependencies;
- * Node 18+. No Windows VT helper: Node turns VT processing on for its own
- * console streams on Windows 10 and later.
+ * Node 18+.
  *
- * Lengths and cuts count code points, as Python's str does, not UTF-16 units.
+ * No Windows VT helper: Node's console streams handle escape sequences on
+ * Windows 10 and later. This is not verified on legacy consoles, and the spec's
+ * plain-text fallback has no Node hook; no Windows host was tested.
+ *
+ * Lengths, cuts and wrapping count code points, as Python's str does: not
+ * UTF-16 units, and not display width, so wide (CJK, emoji), combining and
+ * ZWJ characters can misalign a column. Without LANG or LC_* the locale has no
+ * charset and asciiMode() is true. width() reads COLUMNS, then stdout's size,
+ * even for text bound for stderr.
  */
 import { DECODE, ENV, GLYPHS, HEADER, KEYS, LAYOUT, PROGRESS, RAMP, ROBUSTNESS, ROLES, SPINNER } from "./term-tokens.js";
 
@@ -245,10 +252,19 @@ export function paint(text, role, mode = "none") {
   return `\x1b[${ROLES[role][mode]}m${text}\x1b[0m`;
 }
 
-/** Python's int() on a decimal string: whitespace, a sign and single underscores allowed. */
+/** The value of a Unicode decimal digit: Nd digits sit in contiguous runs that start at 0. */
+function digitValue(c) {
+  let cp = c.codePointAt(0);
+  let k = 0;
+  while (/\p{Nd}/u.test(String.fromCodePoint(cp - 1))) { cp--; k++; }
+  return k % 10;
+}
+
+/** Python's int() on a decimal string: whitespace, a sign, single underscores and any Unicode decimal digits. */
 function pyInt(s) {
-  const m = /^([+-]?)(\d+(?:_\d+)*)$/.exec(pyStrip(s));
-  return m ? Number(m[1] + m[2].replaceAll("_", "")) : NaN;
+  const m = /^([+-]?)(\p{Nd}+(?:_\p{Nd}+)*)$/u.exec(pyStrip(s));
+  if (!m) return NaN;
+  return Number(m[1] + cps(m[2].replaceAll("_", "")).map(digitValue).join(""));
 }
 
 /** The terminal width: COLUMNS in `env`, else stdout's columns, else the cap; 0 or less is unknown. */
@@ -373,41 +389,61 @@ export function parseChoice(answer, count) {
   return n >= 1 && n <= count ? n - 1 : null;
 }
 
+// One reader per input stream, kept across prompts: a readline interface
+// closed between prompts would drop the lines it had buffered, and one made on
+// an ended stream would never hear its end.
+const readers = new WeakMap();
+
+/** The line reader for `input`: its interface, queued lines, end state and waiter. */
+async function readerFor(input) {
+  let r = readers.get(input);
+  if (r) return r;
+  const { createInterface } = await import("node:readline");
+  r = { rl: null, lines: [], ended: input.readableEnded === true, wake: null };
+  if (!r.ended) {
+    r.rl = createInterface({ input, terminal: false });
+    r.rl.on("line", (l) => { r.lines.push(l); r.wake?.(); });
+    r.rl.on("close", () => { r.ended = true; r.wake?.(); });
+  }
+  readers.set(input, r);
+  return r;
+}
+
+/**
+ * The next line of `input` without its newline, or null at end of input. A
+ * queued line comes first; an ended input with none resolves null at once.
+ * The input is resumed only while a line is awaited and paused after, so a
+ * process with no prompt pending can exit.
+ */
+async function readLine(input) {
+  const r = await readerFor(input);
+  if (!r.lines.length && !r.ended) {
+    r.rl.resume();
+    while (!r.lines.length && !r.ended) await new Promise((res) => { r.wake = res; });
+    r.wake = null;
+    if (!r.ended) r.rl.pause();
+  }
+  return r.lines.length ? r.lines.shift() : null;
+}
+
 /**
  * Write `prompt` and read a line from `input`, up to ROBUSTNESS.promptRetries
  * times; resolve to the first non-null parse. End of input ends the prompt line
  * and rejects with NoValidAnswer at once, as does the last unrecognised answer.
- * One readline interface per call: closing it drops any lines it buffered.
  */
 async function ask(question, prompt, parse, input, output) {
-  const { createInterface } = await import("node:readline");
-  const rl = createInterface({ input, terminal: false });
-  const lines = [];
-  let ended = false;
-  let wake = null;
-  rl.on("line", (l) => { lines.push(l); wake?.(); });
-  rl.on("close", () => { ended = true; wake?.(); });
-  const next = async () => {
-    while (!lines.length && !ended) await new Promise((r) => { wake = r; });
-    wake = null;
-    return lines.length ? lines.shift() : null;
-  };
-  try {
-    const tries = ROBUSTNESS.promptRetries;
-    for (let i = 0; i < tries; i++) {
-      output.write(prompt);
-      const line = await next();
-      if (line === null) {
-        output.write("\n");
-        throw new NoValidAnswer(question, "input ended before an answer");
-      }
-      const got = parse(line);
-      if (got !== null) return got;
+  const tries = ROBUSTNESS.promptRetries;
+  for (let i = 0; i < tries; i++) {
+    output.write(prompt);
+    const line = await readLine(input);
+    if (line === null) {
+      output.write("\n");
+      throw new NoValidAnswer(question, "input ended before an answer");
     }
-    throw new NoValidAnswer(question, `no recognised answer in ${tries} tries`);
-  } finally {
-    rl.close();
+    const got = parse(line);
+    if (got !== null) return got;
   }
+  throw new NoValidAnswer(question, `no recognised answer in ${tries} tries`);
 }
 
 const promptMode = (mode, env, output) => mode ?? colorMode({ env, isTTY: output.isTTY === true });
