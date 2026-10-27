@@ -1104,7 +1104,11 @@
         "sl-art-field--fade-end",
         "sl-art-field--fade-down",
         "sl-empty--void",
-        "sl-empty--shapes"
+        "sl-empty--shapes",
+        "sl-art-poster",
+        "sl-art-poster--orbit",
+        "sl-art-poster--stair",
+        "sl-art-poster--bleed"
       ],
       "roleVars": [
         "--slc-text",
