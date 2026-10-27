@@ -12,7 +12,7 @@ const KIT = resolve(HERE, "../packages/ui-kit");
    and a one-file change. The cost of that choice is drift, and this is what
    pays it — every runtime export must be declared, and nothing may be declared
    that is not exported. */
-const MODULES = ["effects", "goo-field", "geom", "glass-text", "dither-core", "halftone-core", "halftone", "signal"];
+const MODULES = ["effects", "goo-field", "geom", "glass-text", "dither-core", "halftone-core", "halftone", "signal", "term", "term-tokens"];
 
 /** Every name a module exports at runtime. */
 async function runtimeExports(name) {
@@ -20,12 +20,15 @@ async function runtimeExports(name) {
   return new Set(Object.keys(mod));
 }
 
-/** Every name its .d.ts declares. */
+/** Every name its .d.ts declares, following `export * from "./x.js"` into x.d.ts. */
 function declaredExports(name) {
   const dts = readFileSync(resolve(KIT, `${name}.d.ts`), "utf8");
   const names = new Set();
   for (const m of dts.matchAll(/^export (?:declare )?(?:function|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)) {
     names.add(m[1]);
+  }
+  for (const m of dts.matchAll(/^export \* from "\.\/([\w-]+)\.js";/gm)) {
+    for (const n of declaredExports(m[1])) names.add(n);
   }
   return names;
 }

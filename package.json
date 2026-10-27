@@ -5,7 +5,8 @@
   "description": "Sondalab shared design system: canonical tokens + generators for the CSS kit (@sondalab/ui-kit) and the terminal palette (sondalab-palette).",
   "type": "module",
   "scripts": {
-    "gen:tokens": "node scripts/gen-css.mjs && node scripts/gen-py.mjs && node scripts/gen-agent-docs.mjs",
+    "gen:tokens": "node scripts/gen-css.mjs && node scripts/gen-py.mjs && node scripts/gen-term-js.mjs && node scripts/gen-agent-docs.mjs",
+    "gen:term-js": "node scripts/gen-term-js.mjs",
     "gen:css": "node scripts/gen-css.mjs",
     "gen:py": "node scripts/gen-py.mjs",
     "gen:agent-docs": "node scripts/gen-agent-docs.mjs",

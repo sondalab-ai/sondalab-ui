@@ -1,6 +1,6 @@
 # TUI patterns
 
-Interaction patterns for command-line surfaces (the Term substrate). The six colour roles live in `terminal` in `sondalab.tokens.json`; the glyphs and layout numbers below are the `tui` section beside it (Python: `sondalab_palette.GLYPHS`, `sondalab_palette.LAYOUT`). This file is the grammar; the tokens are the values.
+Interaction patterns for command-line surfaces (the Term substrate). The six colour roles live in `terminal` in `sondalab.tokens.json`; the glyphs and layout numbers below are the `tui` section beside it (Python: `sondalab_palette.GLYPHS`, `sondalab_palette.LAYOUT`; Node: `GLYPHS`, `LAYOUT` from `@sondalab/ui-kit/term.js`, ui-kit 0.43.0). This file is the grammar; the tokens are the values. Each helper named below as `term.…` for Python has a camelCase twin in `term.js` that gives the same bytes for the same inputs.
 
 Since 0.40 this file is the full Term spec, in six parts: Voice, Motion, Effects, Patterns (line output), Patterns (full screen) and Robustness. It applies `design-language.md` L4, L5 and L6 to a grid of character cells. Every number it cites is a `tui` token, named beside the number; a test fails if a token and this text disagree.
 
@@ -156,7 +156,7 @@ A one-shot subcommand that prints a result and exits opens with the compact head
 - **Falls back to the lockup** `sonda/lab <name> <version>` on one line, in either size, on a terminal that cannot draw the mark: with `TERM=dumb`, in ASCII mode (`SONDALAB_ASCII=1`, `--ascii` or a non-UTF-8 locale), and when the terminal is narrower than the mark, the gap and the longest text line.
 - **Nothing in machine output.** `--json` and `--plain` print no header and no lockup.
 - **`NO_COLOR` keeps the shapes** and drops the colour; colour otherwise follows [Colour](#colour).
-- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` since `sondalab_palette` 0.8.0; off a TTY and in accessible mode it prints nothing since 0.9.0. `term.lockup(name, version, mode)` (0.9.0) is the `--version` line.
+- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` since `sondalab_palette` 0.8.0; off a TTY and in accessible mode it prints nothing since 0.9.0. `term.lockup(name, version, mode)` (0.9.0) is the `--version` line. Node: `header(name, version, description, { compact, machine })` and `lockup(name, version, mode)` from `@sondalab/ui-kit/term.js`.
 
 ### Step list
 
@@ -179,7 +179,7 @@ A line under a step (an error's why and fix, a next step, a progress bar) is a c
 ? Install the hook into ~/.config/git? [y/N]
 ```
 
-`? <question> [Y/n]`. The capital letter marks the default, which Enter accepts. The default is no (`[y/N]`) for any action outside the working directory; inside it, the default may be yes (`[Y/n]`). The `?` is the `question` glyph in the `prompt` role. An empty answer takes the default. Any other unrecognised input is never read as a choice: the prompt asks again, at most 3 times in all (`robustness.promptRetries`), and then fails with "no valid answer". End of input is not an answer: it fails at once and never takes the default. Python: `term.confirm()`, and `term.choose()` for the numbered list of [Accessible mode](#accessible-mode) (0.9.0).
+`? <question> [Y/n]`. The capital letter marks the default, which Enter accepts. The default is no (`[y/N]`) for any action outside the working directory; inside it, the default may be yes (`[Y/n]`). The `?` is the `question` glyph in the `prompt` role. An empty answer takes the default. Any other unrecognised input is never read as a choice: the prompt asks again, at most 3 times in all (`robustness.promptRetries`), and then fails with "no valid answer". End of input is not an answer: it fails at once and never takes the default. Python: `term.confirm()`, and `term.choose()` for the numbered list of [Accessible mode](#accessible-mode) (0.9.0). Node: `confirm()` and `choose()` from `@sondalab/ui-kit/term.js`, which return promises.
 
 ### Summary
 
@@ -208,7 +208,7 @@ CONFIG
 - **A key-value line is a fact, not a check:** it has no glyph. The key starts in the label column, `indent` + 2 columns from the left, and is padded to `labelWidth` like a step label, so values line up with step details. A long key is cut at `labelWidth` − 1 columns when a value follows, so one space always separates them, and at `labelWidth` when the value is empty; it is never wrapped. Key and value stay in the default ink; a value that says something is absent ("none", "not set") may use `dim`.
 - **A section heading** is the micro label (L1): uppercase, in `dim`, from column 0, with no colon and no rule under it. It names the group of step lines or key-value lines below it. One blank line comes before every heading but the first.
 - A value that is a state with a glyph (ok, failed) is a step line, not a key-value line.
-- Python: `term.kv_line(key, value)` and `term.heading(text, mode=…)` (0.9.0).
+- Python: `term.kv_line(key, value)` and `term.heading(text, mode=…)` (0.9.0). Node: `kvLine(key, value)` and `heading(text, { mode })` from `@sondalab/ui-kit/term.js`.
 
 ### Error block
 
@@ -270,7 +270,7 @@ A determinate step draws a bar on the continuation line under its running step l
 ### Rules
 
 - **A failure never uses a success glyph.** `failed` is `✗` in `err`; `✓` is only for `done` and `fixed`. A step that did not do its job is `failed` or `warn`, never `done`.
-- **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag, as an [error block](#error-block) whose fix is the command with that flag. Python: `term.needs_prompt()` (0.9.0).
+- **Non-TTY: no prompts.** Without a TTY on stdin the program never asks a question. It never takes a default on its own: an action runs without a prompt only when the caller passed an explicit flag (for example `--yes`); otherwise it stops with an error naming the missing flag, as an [error block](#error-block) whose fix is the command with that flag. Python: `term.needs_prompt()` (0.9.0); Node: `needsPrompt()` from `@sondalab/ui-kit/term.js`.
 - **`NO_COLOR`: glyphs stay, color goes.** With `NO_COLOR` set the output is the same text with no escape sequences, unless a `--color` flag overrides it ([Colour](#colour)). Meaning is carried by the glyph and the word, never by colour alone.
 - **ASCII fallback.** When the locale is not UTF-8, `TERM=dumb`, the `--ascii` flag is passed or `SONDALAB_ASCII=1` is set, use the `ascii` form of every glyph, including the summary separator. Layout widths are unchanged: every Unicode glyph is one column wide, as is its ASCII form.
 
@@ -397,7 +397,7 @@ To learn the background, query it with OSC 11 (`OSC 11 ; ? ST`) with a 100ms tim
 
 ### Windows
 
-Enable `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on the console handle. If that fails, fall back to plain text: no escape sequences, no motion, ASCII glyphs.
+Enable `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on the console handle. If that fails, fall back to plain text: no escape sequences, no motion, ASCII glyphs. Python: `term.enable_vt(stream)`. Node needs no helper and `term.js` has none: Node's console streams (libuv) handle escape sequences on Windows themselves.
 
 ### Streams and machine output
 

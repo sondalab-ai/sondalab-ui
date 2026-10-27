@@ -26,6 +26,25 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
+**0.43.0 — terminal helpers for Node.** A Node CLI can follow the Term spec (`docs/tui-patterns.md`) without re-deriving it: `@sondalab/ui-kit/term.js` is the JavaScript counterpart of `sondalab-palette` 0.9.0's `term`. Additive: no class, token or role is added, removed or renamed, and no stylesheet changes.
+
+```js
+import { colorMode, asciiMode, stepLine, summary, errorBlock, header, needsPrompt, confirm } from "@sondalab/ui-kit/term.js";
+
+const mode = colorMode({ flag: args.color, truecolor: true });   // "none" | "ansi16" | "truecolor"
+const ascii = asciiMode({ override: args.ascii || undefined });   // --ascii forces it; omitted, the locale decides
+process.stdout.write(header("cld", "0.9.0", "Manage Claude Code loadouts.", { machine: args.json }));
+console.log(stepLine("done", "Resolved 128 probes", "2.1s", { ascii, mode }));
+console.log(summary(1, 0, 0, 1, { mode, ascii }));
+if (needsPrompt("--yes", { given: args.yes, command: "cld rm" }) && !(await confirm("Delete 3 files?"))) process.exit(1);
+```
+
+- **The API** mirrors palette 0.9.0 in camelCase: `colorMode`, `asciiMode`, `accessible`, `reducedMotion`, `motionEnabled`, `switchOn`, `paint`, `lockup`, `header`, `stepLine`, `spinnerFrame`, `progressBar`, `decodeFrames`, `summary`, `errorBlock`, `nextLine`, `keyHints`, `arrows`, `heading`, `kvLine`, `width`, `wrap`, `parseYesNo`, `parseChoice`, `needsPrompt`, the errors `TermError`, `NoValidAnswer` and `MissingFlag`, and the async prompts `confirm` and `choose` (stdin and stderr by default, any streams you pass). Keyword arguments become one options object, `isatty` is `isTTY`, `None` is `null`, and a Python `ValueError` or `KeyError` is a `RangeError`. Every `env` defaults to `process.env`, read at call time.
+- **Same bytes as Python.** Cuts and widths count code points, prose wraps as `textwrap.fill` does, whitespace and integers parse as Python reads them. `scripts/fixtures/term-parity.json` holds over 600 cases computed by palette-py; Node asserts `term.js` against them and pytest asserts them against `term.py`, so a change on either side fails CI.
+- **The constants are generated.** `term-tokens.js` (and its `.d.ts`) is written from `sondalab.tokens.json` by `scripts/gen-term-js.mjs` in `npm run gen:tokens`: `ROLES` (each role's SGR parameters, `ansi16` and `truecolor`), `GLYPHS`, `LAYOUT`, `RAMP`, `SPINNER`, `DECODE`, `PROGRESS`, `MOTION`, `BOX`, `KEYS`, `ROBUSTNESS`, `ENV` and `HEADER`, deep-frozen. `term.js` re-exports them.
+- **Node only, no dependencies.** ESM, Node 18 or later, with types (`term.d.ts`). It imports no CSS and touches no DOM; `node:readline` loads only when a prompt runs. There is no counterpart of `enable_vt()`: Node's console streams handle escape sequences on Windows themselves. A prompt reads through its own readline interface, so lines piped ahead of a later prompt can be lost; prompts are for a TTY, which `needsPrompt()` guards.
+- **Consumers.** Pins of `^0.42.x` do not accept 0.43.0; bump explicitly. Nothing changes for a page. `sondalab-palette` is unchanged.
+
 **0.42.1 — the catalog's terminal header matches palette 0.9.** Docs only. The catalog's Header entry said either size falls back to the one-line lockup off a TTY and in accessible mode; since `sondalab-palette` 0.9.0 it prints nothing there, so piped output stays byte-identical, and the lockup is the `--version` line (`term.lockup()`). The spec, `docs/tui-patterns.md`, already said so. No class, token or API changes.
 
 **0.42.0 — more art: glyphs, fields, fades and a poster.** The 0.41 pieces get variants, so the sections and page heads of one site need not repeat a shape, and a new piece composes a page head. Additive: no class, token or role is removed or renamed, every 0.41 piece paints as before, and the kit adds no piece to any page by itself.

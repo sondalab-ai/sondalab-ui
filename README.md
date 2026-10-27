@@ -8,7 +8,10 @@ scripts/
   gen-css.mjs                 -> packages/ui-kit/{tokens.css, themes/*.css, themes/products.css, neutrals.json}
                                  (reads agent/accent-registry.json for each product's neutral tint)
   gen-py.mjs                  -> packages/palette-py/sondalab_palette/__init__.py
+  gen-term-js.mjs             -> packages/ui-kit/term-tokens.{js,d.ts} (the Term constants for term.js)
+  gen-term-parity.py          -> scripts/fixtures/term-parity.json (term.py's output, held by term.js; run by hand)
   lib/tokens.mjs              shared loader (tokens + accent registry)
+  lib/ansi.mjs                named-ANSI -> SGR code, shared by gen-py and gen-term-js
   lib/neutrals.mjs            the neutral ladder: per-product tint, hex, build guards
 packages/
   ui-kit/                     @sondalab/ui-kit   — CSS custom properties (--sl-*), 3 themes

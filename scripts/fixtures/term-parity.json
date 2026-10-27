@@ -1,0 +1,7716 @@
+[
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": ""
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": "0"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "FORCE_COLOR": ""
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "1",
+    "FORCE_COLOR": "1"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb",
+    "FORCE_COLOR": "3"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "24BIT"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "COLORTERM": "256color"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": null,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": false
+  },
+  "out": "ansi16"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": true,
+   "truecolor": true
+  },
+  "out": "truecolor"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": false
+  },
+  "out": "none"
+ },
+ {
+  "fn": "color_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "NO_COLOR": "x",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false,
+   "flag": false,
+   "truecolor": true
+  },
+  "out": "none"
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {}
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {}
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {}
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {}
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {}
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {}
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": true
+  },
+  "out": true
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   },
+   "isatty": true
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": ""
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   },
+   "isatty": true
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "CI": "false"
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   },
+   "isatty": true
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "ACCESSIBLE": ""
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   },
+   "isatty": true
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "1"
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   },
+   "isatty": true
+  },
+  "out": true
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ACCESSIBLE": "true"
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   },
+   "isatty": true
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_REDUCED_MOTION": "1"
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": true
+  },
+  "out": true
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "accessible",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "reduced_motion",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "reducedMotion"
+  ],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "accessible"
+  ],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ci"
+  ],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "ascii"
+  ],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": true
+  },
+  "out": false
+ },
+ {
+  "fn": "motion_enabled",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "noColor"
+  ],
+  "kwargs": {
+   "env": {}
+  },
+  "raises": "KeyError"
+ },
+ {
+  "fn": "switch_on",
+  "args": [
+   "nope"
+  ],
+  "kwargs": {
+   "env": {}
+  },
+  "raises": "KeyError"
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {}
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.UTF-8"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "de_DE.UTF-8@euro"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LC_CTYPE": "UTF-8"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "C"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "POSIX"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.ISO-8859-1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.utf8"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LC_ALL": "C",
+    "LANG": "en_US.UTF-8"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LC_ALL": "",
+    "LANG": "en_US.UTF-8"
+   }
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "TERM": "dumb"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "SONDALAB_ASCII": "1"
+   }
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "UTF-8"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "utf8"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "U8"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "utf"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "UTF_8"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "utf-8-sig"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "cp65001"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "latin1"
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "ascii"
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": ""
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "utf 8"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {},
+   "encoding": "--utf--8--"
+  },
+  "out": false
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "override": true
+  },
+  "out": true
+ },
+ {
+  "fn": "ascii_mode",
+  "args": [],
+  "kwargs": {
+   "env": {
+    "TERM": "dumb"
+   },
+   "override": false
+  },
+  "out": false
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "prompt",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "x y"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "prompt",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "\u001b[93mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "prompt",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "\u001b[38;2;245;168;60mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "ok",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "x y"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "ok",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "\u001b[32mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "ok",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "\u001b[38;2;98;208;148mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "warn",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "x y"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "warn",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "\u001b[33mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "warn",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "\u001b[38;2;245;168;60mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "err",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "x y"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "err",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "\u001b[31mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "err",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "\u001b[38;2;248;113;113mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "dim",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "x y"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "dim",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "\u001b[90mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "dim",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "\u001b[38;2;110;128;136mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "accent",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "x y"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "accent",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "\u001b[36mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x y",
+   "accent",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "\u001b[38;2;53;160;180mx y\u001b[0m"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "",
+   "ok",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": ""
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x",
+   "bold",
+   "none"
+  ],
+  "kwargs": {},
+  "raises": "ValueError"
+ },
+ {
+  "fn": "paint",
+  "args": [
+   "x",
+   "ok",
+   "256"
+  ],
+  "kwargs": {},
+  "raises": "ValueError"
+ },
+ {
+  "fn": "lockup",
+  "args": [
+   "cld",
+   "0.9.0",
+   "none"
+  ],
+  "kwargs": {},
+  "out": "sonda/lab cld 0.9.0"
+ },
+ {
+  "fn": "lockup",
+  "args": [
+   "cld",
+   "0.9.0",
+   "ansi16"
+  ],
+  "kwargs": {},
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0"
+ },
+ {
+  "fn": "lockup",
+  "args": [
+   "cld",
+   "0.9.0",
+   "truecolor"
+  ],
+  "kwargs": {},
+  "out": "sonda\u001b[38;2;245;168;60m/\u001b[0mlab cld 0.9.0"
+ },
+ {
+  "fn": "lockup",
+  "args": [
+   "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+   "1.0.0"
+  ],
+  "kwargs": {},
+  "out": "sonda/lab nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[32m✓\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[32m+\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "fixed",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[32m✓\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "fixed",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[32m+\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "failed",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[31m✗\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "failed",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[31mx\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "warn",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[33m!\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "warn",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[33m!\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "active",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m●\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "active",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m*\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "pending",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[90m○\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "pending",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[90m.\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "skipped",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[90m↷\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "skipped",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[90m-\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "question",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m?\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "question",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m?\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "separator",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[90m·\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "separator",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[90m|\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   " ",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m \u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   " ",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m \u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "░",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m░\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "░",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m.\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "▓",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m▓\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "▓",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m#\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "█",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m█\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "█",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m#\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   ".",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m.\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   ".",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m.\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "#",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m#\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "#",
+   "Resolved 128 probes",
+   "2.1s"
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[93m#\u001b[0m Resolved 128 probes         2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "active",
+   "Checking the configuration of every installed hook…",
+   ""
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "  ● Checking the configuration o"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "active",
+   "Checking the configuration of every installed hook…",
+   ""
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "  * Checking the configuration o"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "active",
+   "Checking the configuration of every installed hook…",
+   "ok"
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "  ● Checking the configuration  ok"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "active",
+   "Checking the configuration of every installed hook…",
+   "ok"
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "  * Checking the configuration  ok"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "d"
+  ],
+  "kwargs": {},
+  "out": "  ✓ xxxxxxxxxxxxxxxxxxxxxxxxxxx d"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "d"
+  ],
+  "kwargs": {},
+  "out": "  ✓ xxxxxxxxxxxxxxxxxxxxxxxxxxx d"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "kwargs": {},
+  "out": "  ✓ xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "Deploy 🚀 rocket to the moon and far beyond it",
+   "d"
+  ],
+  "kwargs": {},
+  "out": "  ✓ Deploy 🚀 rocket to the moon d"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "done",
+   "Resolved",
+   "2.1s"
+  ],
+  "kwargs": {
+   "mode": "truecolor"
+  },
+  "out": "  \u001b[38;2;98;208;148m✓\u001b[0m Resolved                    2.1s"
+ },
+ {
+  "fn": "step_line",
+  "args": [
+   "nope",
+   "x"
+  ],
+  "kwargs": {},
+  "raises": "ValueError"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "NO_COLOR": "1"
+   },
+   "isatty": true
+  },
+  "out": "▄█▄ ▄▄  sonda/lab\n▀█▀ ▀▀  cld 0.9.0\n▄▄▄▄▄▄  Manage Claude Code loadouts.\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "NO_COLOR": "1"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "NO_COLOR": "1"
+   },
+   "isatty": true
+  },
+  "out": "●■ sonda/lab cld\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "NO_COLOR": "1"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "COLORTERM": "truecolor"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "TERM": "dumb"
+   },
+   "isatty": true
+  },
+  "out": "sonda/lab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "TERM": "dumb"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "TERM": "dumb"
+   },
+   "isatty": true
+  },
+  "out": "sonda/lab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "TERM": "dumb"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "COLUMNS": "80"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "COLUMNS": "80"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "ACCESSIBLE": ""
+   },
+   "isatty": true
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "ACCESSIBLE": ""
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "ACCESSIBLE": ""
+   },
+   "isatty": true
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "ACCESSIBLE": ""
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "30"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "30"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "30"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "30"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "15"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "15"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "15"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "15"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "12"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "12"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "12"
+   },
+   "isatty": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "12"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "x"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "x"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "x"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "x"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": " 40 "
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": " 40 "
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": " 40 "
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": " 40 "
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "4_0"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "4_0"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "4_0"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "4_0"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "-5"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "-5"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "-5"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "-5"
+   },
+   "isatty": false
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "machine": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   ""
+  ],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  ],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "200"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+   "1.0",
+   "x"
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "200"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "trailing   "
+  ],
+  "kwargs": {
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mtrailing   \u001b[0m\n"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   0
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": " "
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   0
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": " "
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   1
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "░"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   1
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "."
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   7
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "░"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   7
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "."
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   8
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": " "
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   8
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": " "
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   9
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "░"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   9
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "."
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   -1
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "░"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   -1
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "."
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   -9
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "░"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   -9
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "."
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   100
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "█"
+ },
+ {
+  "fn": "spinner_frame",
+  "args": [
+   100
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "#"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   0,
+   1
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ▓▒░                       0/1    0%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   0,
+   1
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    #:.                       0/1    0%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   1
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ████████████████████████  1/1  100%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   1
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    ########################  1/1  100%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   61,
+   128
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ███████████▓▒░             61/128   48%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   61,
+   128
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    ############:.             61/128   48%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   127,
+   128
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ███████████████████████▓  127/128   99%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   127,
+   128
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    ########################  127/128   99%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   128,
+   128
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ████████████████████████  128/128  100%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   128,
+   128
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    ########################  128/128  100%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   200,
+   128
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ████████████████████████  128/128  100%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   200,
+   128
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    ########################  128/128  100%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   -3,
+   128
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ▓▒░                         0/128    0%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   -3,
+   128
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    #:.                         0/128    0%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   3
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ████████▓▒░               1/3   33%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   3
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    #########:.               1/3   33%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   2,
+   3
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ████████████████▓▒░       2/3   67%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   2,
+   3
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    #################:.       2/3   67%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   200
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ▓▒░                         1/200    1%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   200
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    #:.                         1/200    1%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   199,
+   200
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ███████████████████████▓  199/200   99%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   199,
+   200
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    ########################  199/200   99%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   5,
+   1000
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": "    ▓▒░                          5/1000    1%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   5,
+   1000
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "    #:.                          5/1000    1%"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   0,
+   0
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "raises": "ValueError"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   0,
+   0
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "raises": "ValueError"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   -1
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "raises": "ValueError"
+ },
+ {
+  "fn": "progress_bar",
+  "args": [
+   1,
+   -1
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "raises": "ValueError"
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "sha 9c41e0b"
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": [
+   "sh\" )07>ELS",
+   "sha 9Zahov}",
+   "sha 9c41▞'.",
+   "sha 9c41e0b"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "sha 9c41e0b"
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": [
+   "sh( /6=DKRY",
+   "sha 9`gnu|%",
+   "sha 9c41,3:",
+   "sha 9c41e0b"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   ""
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": [
+   "",
+   "",
+   "",
+   ""
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   ""
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": [
+   "",
+   "",
+   "",
+   ""
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "a"
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": [
+   "\"",
+   ")",
+   "0",
+   "a"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "a"
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": [
+   "(",
+   "/",
+   "6",
+   "a"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "two  spaces"
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": [
+   "tw\"  )07>EL",
+   "two  SZahov",
+   "two  spa}▞'",
+   "two  spaces"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "two  spaces"
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": [
+   "tw(  /6=DKR",
+   "two  Y`gnu|",
+   "two  spa%,3",
+   "two  spaces"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "🚀x"
+  ],
+  "kwargs": {
+   "ascii": false
+  },
+  "out": [
+   "\")",
+   "🚀0",
+   "🚀7",
+   "🚀x"
+  ]
+ },
+ {
+  "fn": "decode_frames",
+  "args": [
+   "🚀x"
+  ],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": [
+   "(/",
+   "🚀6",
+   "🚀=",
+   "🚀x"
+  ]
+ },
+ {
+  "fn": "summary",
+  "args": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": false
+  },
+  "out": "Summary  1 ok · 1 fixed · 1 warn · 1 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": true
+  },
+  "out": "Summary  1 ok | 1 fixed | 1 warn | 1 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[32m1 ok\u001b[0m \u001b[90m·\u001b[0m \u001b[32m1 fixed\u001b[0m \u001b[90m·\u001b[0m \u001b[33m1 warn\u001b[0m \u001b[90m·\u001b[0m \u001b[31m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[32m1 ok\u001b[0m \u001b[90m|\u001b[0m \u001b[32m1 fixed\u001b[0m \u001b[90m|\u001b[0m \u001b[33m1 warn\u001b[0m \u001b[90m|\u001b[0m \u001b[31m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[38;2;98;208;148m1 ok\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;98;208;148m1 fixed\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;245;168;60m1 warn\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;248;113;113m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[38;2;98;208;148m1 ok\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;98;208;148m1 fixed\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;245;168;60m1 warn\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;248;113;113m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": false
+  },
+  "out": "Summary  0 ok · 0 fixed · 0 warn · 0 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": true
+  },
+  "out": "Summary  0 ok | 0 fixed | 0 warn | 0 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[90m0 ok\u001b[0m \u001b[90m·\u001b[0m \u001b[90m0 fixed\u001b[0m \u001b[90m·\u001b[0m \u001b[90m0 warn\u001b[0m \u001b[90m·\u001b[0m \u001b[90m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[90m0 ok\u001b[0m \u001b[90m|\u001b[0m \u001b[90m0 fixed\u001b[0m \u001b[90m|\u001b[0m \u001b[90m0 warn\u001b[0m \u001b[90m|\u001b[0m \u001b[90m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[38;2;110;128;136m0 ok\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136m0 fixed\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136m0 warn\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[38;2;110;128;136m0 ok\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136m0 fixed\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136m0 warn\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   3,
+   0,
+   2,
+   0
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": false
+  },
+  "out": "Summary  3 ok · 0 fixed · 2 warn · 0 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   3,
+   0,
+   2,
+   0
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": true
+  },
+  "out": "Summary  3 ok | 0 fixed | 2 warn | 0 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   3,
+   0,
+   2,
+   0
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[32m3 ok\u001b[0m \u001b[90m·\u001b[0m \u001b[90m0 fixed\u001b[0m \u001b[90m·\u001b[0m \u001b[33m2 warn\u001b[0m \u001b[90m·\u001b[0m \u001b[90m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   3,
+   0,
+   2,
+   0
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[32m3 ok\u001b[0m \u001b[90m|\u001b[0m \u001b[90m0 fixed\u001b[0m \u001b[90m|\u001b[0m \u001b[33m2 warn\u001b[0m \u001b[90m|\u001b[0m \u001b[90m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   3,
+   0,
+   2,
+   0
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[38;2;98;208;148m3 ok\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136m0 fixed\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;245;168;60m2 warn\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   3,
+   0,
+   2,
+   0
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[38;2;98;208;148m3 ok\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136m0 fixed\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;245;168;60m2 warn\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136m0 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   12,
+   1,
+   0,
+   1
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": false
+  },
+  "out": "Summary  12 ok · 1 fixed · 0 warn · 1 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   12,
+   1,
+   0,
+   1
+  ],
+  "kwargs": {
+   "mode": "none",
+   "ascii": true
+  },
+  "out": "Summary  12 ok | 1 fixed | 0 warn | 1 failed"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   12,
+   1,
+   0,
+   1
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[32m12 ok\u001b[0m \u001b[90m·\u001b[0m \u001b[32m1 fixed\u001b[0m \u001b[90m·\u001b[0m \u001b[90m0 warn\u001b[0m \u001b[90m·\u001b[0m \u001b[31m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   12,
+   1,
+   0,
+   1
+  ],
+  "kwargs": {
+   "mode": "ansi16",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[32m12 ok\u001b[0m \u001b[90m|\u001b[0m \u001b[32m1 fixed\u001b[0m \u001b[90m|\u001b[0m \u001b[90m0 warn\u001b[0m \u001b[90m|\u001b[0m \u001b[31m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   12,
+   1,
+   0,
+   1
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": false
+  },
+  "out": "Summary  \u001b[38;2;98;208;148m12 ok\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;98;208;148m1 fixed\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136m0 warn\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;248;113;113m1 failed\u001b[0m"
+ },
+ {
+  "fn": "summary",
+  "args": [
+   12,
+   1,
+   0,
+   1
+  ],
+  "kwargs": {
+   "mode": "truecolor",
+   "ascii": true
+  },
+  "out": "Summary  \u001b[38;2;98;208;148m12 ok\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;98;208;148m1 fixed\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136m0 warn\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;248;113;113m1 failed\u001b[0m"
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "80"
+   }
+  ],
+  "kwargs": {},
+  "out": 80
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "100"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "150"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "1"
+   }
+  ],
+  "kwargs": {},
+  "out": 1
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "0"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "-1"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "abc"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": ""
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": " 72\n"
+   }
+  ],
+  "kwargs": {},
+  "out": 72
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "+60"
+   }
+  ],
+  "kwargs": {},
+  "out": 60
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "6_0"
+   }
+  ],
+  "kwargs": {},
+  "out": 60
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "_60"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "width",
+  "args": [
+   {
+    "COLUMNS": "60.0"
+   }
+  ],
+  "kwargs": {},
+  "out": 100
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "80"
+   }
+  ],
+  "kwargs": {
+   "indent": 0
+  },
+  "out": "git ls-remote timed out after 10s (exit 128) while reaching origin over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "80"
+   }
+  ],
+  "kwargs": {
+   "indent": 4
+  },
+  "out": "    git ls-remote timed out after 10s (exit 128) while reaching origin over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "30"
+   }
+  ],
+  "kwargs": {
+   "indent": 0
+  },
+  "out": "git ls-remote timed out after\n10s (exit 128) while reaching\norigin over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "30"
+   }
+  ],
+  "kwargs": {
+   "indent": 4
+  },
+  "out": "    git ls-remote timed out\n    after 10s (exit 128) while\n    reaching origin over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "20"
+   }
+  ],
+  "kwargs": {
+   "indent": 0
+  },
+  "out": "git ls-remote timed\nout after 10s (exit\n128) while reaching\norigin over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "20"
+   }
+  ],
+  "kwargs": {
+   "indent": 4
+  },
+  "out": "    git ls-remote\n    timed out after\n    10s (exit 128)\n    while reaching\n    origin over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "12"
+   }
+  ],
+  "kwargs": {
+   "indent": 0
+  },
+  "out": "git\nls-remote\ntimed out\nafter 10s\n(exit 128)\nwhile\nreaching\norigin over\nssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "12"
+   }
+  ],
+  "kwargs": {
+   "indent": 4
+  },
+  "out": "    git\n    ls-remote\n    timed\n    out\n    after\n    10s\n    (exit\n    128)\n    while\n    reaching\n    origin\n    over ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "5"
+   }
+  ],
+  "kwargs": {
+   "indent": 0
+  },
+  "out": "git\nls-remote\ntimed\nout\nafter\n10s\n(exit\n128)\nwhile\nreaching\norigin\nover\nssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "5"
+   }
+  ],
+  "kwargs": {
+   "indent": 4
+  },
+  "out": "    git\n    ls-remote\n    timed\n    out\n    after\n    10s\n    (exit\n    128)\n    while\n    reaching\n    origin\n    over\n    ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "1"
+   }
+  ],
+  "kwargs": {
+   "indent": 0
+  },
+  "out": "git\nls-remote\ntimed\nout\nafter\n10s\n(exit\n128)\nwhile\nreaching\norigin\nover\nssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "git ls-remote timed out after 10s (exit 128) while   reaching\torigin\n over ssh",
+   {
+    "COLUMNS": "1"
+   }
+  ],
+  "kwargs": {
+   "indent": 4
+  },
+  "out": "    git\n    ls-remote\n    timed\n    out\n    after\n    10s\n    (exit\n    128)\n    while\n    reaching\n    origin\n    over\n    ssh"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "",
+   {
+    "COLUMNS": "40"
+   }
+  ],
+  "kwargs": {},
+  "out": ""
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "  \t ",
+   {
+    "COLUMNS": "40"
+   }
+  ],
+  "kwargs": {},
+  "out": ""
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "a bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb c",
+   {
+    "COLUMNS": "20"
+   }
+  ],
+  "kwargs": {
+   "indent": 2
+  },
+  "out": "  a\n  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n  c"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "x\u001cyz w　v﻿u",
+   {
+    "COLUMNS": "40"
+   }
+  ],
+  "kwargs": {},
+  "out": "x y z w v﻿u"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "Deploy 🚀 rocket to the moon and far beyond it",
+   {
+    "COLUMNS": "20"
+   }
+  ],
+  "kwargs": {},
+  "out": "Deploy 🚀 rocket to\nthe moon and far\nbeyond it"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+   {
+    "COLUMNS": "200"
+   }
+  ],
+  "kwargs": {},
+  "out": "word word word word word word word word word word word word word word word word word word word word\nword word word word word word word word word word word word word word word word word word word word"
+ },
+ {
+  "fn": "wrap",
+  "args": [
+   "exactly ten chars here",
+   {
+    "COLUMNS": "10"
+   }
+  ],
+  "kwargs": {},
+  "out": "exactly\nten chars\nhere"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "link": "sondalab.eu/e/T102",
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": false,
+   "mode": "none"
+  },
+  "out": "  ✗ Could not reach origin\n    git ls-remote timed out after 10s (exit 128)\n    Try: git remote -v · sondalab.eu/e/T102"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "link": "sondalab.eu/e/T102",
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": true,
+   "mode": "none"
+  },
+  "out": "  x Could not reach origin\n    git ls-remote timed out after 10s (exit 128)\n    Try: git remote -v | sondalab.eu/e/T102"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "link": "sondalab.eu/e/T102",
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[31m✗\u001b[0m Could not reach origin\n    \u001b[90mgit ls-remote timed out after 10s (exit 128)\u001b[0m\n    \u001b[93mTry:\u001b[0m git remote -v \u001b[90m·\u001b[0m \u001b[90msondalab.eu/e/T102\u001b[0m"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "link": "sondalab.eu/e/T102",
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "  \u001b[31mx\u001b[0m Could not reach origin\n    \u001b[90mgit ls-remote timed out after 10s (exit 128)\u001b[0m\n    \u001b[93mTry:\u001b[0m git remote -v \u001b[90m|\u001b[0m \u001b[90msondalab.eu/e/T102\u001b[0m"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "link": "sondalab.eu/e/T102",
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": false,
+   "mode": "truecolor"
+  },
+  "out": "  \u001b[38;2;248;113;113m✗\u001b[0m Could not reach origin\n    \u001b[38;2;110;128;136mgit ls-remote timed out after 10s (exit 128)\u001b[0m\n    \u001b[38;2;245;168;60mTry:\u001b[0m git remote -v \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;110;128;136msondalab.eu/e/T102\u001b[0m"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "link": "sondalab.eu/e/T102",
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": true,
+   "mode": "truecolor"
+  },
+  "out": "  \u001b[38;2;248;113;113mx\u001b[0m Could not reach origin\n    \u001b[38;2;110;128;136mgit ls-remote timed out after 10s (exit 128)\u001b[0m\n    \u001b[38;2;245;168;60mTry:\u001b[0m git remote -v \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;110;128;136msondalab.eu/e/T102\u001b[0m"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "30"
+   }
+  },
+  "out": "  ✗ Could not reach origin\n    git ls-remote timed out\n    after 10s (exit 128)\n    Try: git remote -v"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "1"
+   }
+  },
+  "out": "  ✗ Could not reach origin\n    git\n    ls-remote\n    timed\n    out\n    after\n    10s\n    (exit\n    128)\n    Try: git remote -v"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "",
+   ""
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "80"
+   }
+  },
+  "out": "  ✗ Could not reach origin"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "git ls-remote timed out after 10s (exit 128)",
+   ""
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "80"
+   }
+  },
+  "out": "  ✗ Could not reach origin\n    git ls-remote timed out after 10s (exit 128)"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "80"
+   }
+  },
+  "out": "  ✗ Could not reach origin\n    Try: git remote -v"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Could not reach origin",
+   "   ",
+   "git remote -v"
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "80"
+   }
+  },
+  "out": "  ✗ Could not reach origin\n    \n    Try: git remote -v"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+   "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+   "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  ],
+  "kwargs": {
+   "link": "llllllllllllllllllllllllllllllllllllllllllllllllll",
+   "env": {
+    "COLUMNS": "60"
+   }
+  },
+  "out": "  ✗ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n    yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\n    Try: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff · llllllllllllllllllllllllllllllllllllllllllllllllll"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Stopped…",
+   "waited… then gave up",
+   "retry…"
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "80"
+   },
+   "ascii": true
+  },
+  "out": "  x Stopped...\n    waited... then gave up\n    Try: retry…"
+ },
+ {
+  "fn": "error_block",
+  "args": [
+   "Deploy 🚀 rocket to the moon and far beyond itDeploy 🚀 rocket to the moon and far beyond itDeploy 🚀 rocket to the moon and far beyond it",
+   "Deploy 🚀 rocket to the moon and far beyond it",
+   "x"
+  ],
+  "kwargs": {
+   "env": {
+    "COLUMNS": "40"
+   }
+  },
+  "out": "  ✗ Deploy 🚀 rocket to the moon and far beyond itDeploy 🚀 rocket to the moon and far beyond itDeploy\n    Deploy 🚀 rocket to the moon and far\n    beyond it\n    Try: x"
+ },
+ {
+  "fn": "next_line",
+  "args": [
+   "smartctx doctor --fix"
+  ],
+  "kwargs": {
+   "mode": "none"
+  },
+  "out": "    Next: smartctx doctor --fix"
+ },
+ {
+  "fn": "heading",
+  "args": [
+   "Config straße"
+  ],
+  "kwargs": {
+   "mode": "none"
+  },
+  "out": "CONFIG STRASSE"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   [
+    [
+     "↑↓",
+     "move"
+    ],
+    [
+     "q",
+     "back"
+    ],
+    [
+     "/",
+     "filter"
+    ]
+   ]
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "none"
+  },
+  "out": "↑↓ move · q back · / filter"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   [
+    [
+     "↑↓",
+     "move"
+    ],
+    [
+     "q",
+     "back"
+    ],
+    [
+     "/",
+     "filter"
+    ]
+   ]
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "none"
+  },
+  "out": "↑↓ move | q back | / filter"
+ },
+ {
+  "fn": "next_line",
+  "args": [
+   "smartctx doctor --fix"
+  ],
+  "kwargs": {
+   "mode": "ansi16"
+  },
+  "out": "    \u001b[90mNext:\u001b[0m smartctx doctor --fix"
+ },
+ {
+  "fn": "heading",
+  "args": [
+   "Config straße"
+  ],
+  "kwargs": {
+   "mode": "ansi16"
+  },
+  "out": "\u001b[90mCONFIG STRASSE\u001b[0m"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   [
+    [
+     "↑↓",
+     "move"
+    ],
+    [
+     "q",
+     "back"
+    ],
+    [
+     "/",
+     "filter"
+    ]
+   ]
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "\u001b[36m↑↓\u001b[0m \u001b[90mmove\u001b[0m \u001b[90m·\u001b[0m \u001b[36mq\u001b[0m \u001b[90mback\u001b[0m \u001b[90m·\u001b[0m \u001b[36m/\u001b[0m \u001b[90mfilter\u001b[0m"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   [
+    [
+     "↑↓",
+     "move"
+    ],
+    [
+     "q",
+     "back"
+    ],
+    [
+     "/",
+     "filter"
+    ]
+   ]
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "ansi16"
+  },
+  "out": "\u001b[36m↑↓\u001b[0m \u001b[90mmove\u001b[0m \u001b[90m|\u001b[0m \u001b[36mq\u001b[0m \u001b[90mback\u001b[0m \u001b[90m|\u001b[0m \u001b[36m/\u001b[0m \u001b[90mfilter\u001b[0m"
+ },
+ {
+  "fn": "next_line",
+  "args": [
+   "smartctx doctor --fix"
+  ],
+  "kwargs": {
+   "mode": "truecolor"
+  },
+  "out": "    \u001b[38;2;110;128;136mNext:\u001b[0m smartctx doctor --fix"
+ },
+ {
+  "fn": "heading",
+  "args": [
+   "Config straße"
+  ],
+  "kwargs": {
+   "mode": "truecolor"
+  },
+  "out": "\u001b[38;2;110;128;136mCONFIG STRASSE\u001b[0m"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   [
+    [
+     "↑↓",
+     "move"
+    ],
+    [
+     "q",
+     "back"
+    ],
+    [
+     "/",
+     "filter"
+    ]
+   ]
+  ],
+  "kwargs": {
+   "ascii": false,
+   "mode": "truecolor"
+  },
+  "out": "\u001b[38;2;53;160;180m↑↓\u001b[0m \u001b[38;2;110;128;136mmove\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;53;160;180mq\u001b[0m \u001b[38;2;110;128;136mback\u001b[0m \u001b[38;2;110;128;136m·\u001b[0m \u001b[38;2;53;160;180m/\u001b[0m \u001b[38;2;110;128;136mfilter\u001b[0m"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   [
+    [
+     "↑↓",
+     "move"
+    ],
+    [
+     "q",
+     "back"
+    ],
+    [
+     "/",
+     "filter"
+    ]
+   ]
+  ],
+  "kwargs": {
+   "ascii": true,
+   "mode": "truecolor"
+  },
+  "out": "\u001b[38;2;53;160;180m↑↓\u001b[0m \u001b[38;2;110;128;136mmove\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;53;160;180mq\u001b[0m \u001b[38;2;110;128;136mback\u001b[0m \u001b[38;2;110;128;136m|\u001b[0m \u001b[38;2;53;160;180m/\u001b[0m \u001b[38;2;110;128;136mfilter\u001b[0m"
+ },
+ {
+  "fn": "key_hints",
+  "args": [
+   []
+  ],
+  "kwargs": {},
+  "out": ""
+ },
+ {
+  "fn": "arrows",
+  "args": [],
+  "kwargs": {},
+  "out": "↑↓"
+ },
+ {
+  "fn": "arrows",
+  "args": [],
+  "kwargs": {
+   "ascii": true
+  },
+  "out": "up/dn"
+ },
+ {
+  "fn": "kv_line",
+  "args": [
+   "Profile",
+   "work"
+  ],
+  "kwargs": {},
+  "out": "    Profile                     work"
+ },
+ {
+  "fn": "kv_line",
+  "args": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "v"
+  ],
+  "kwargs": {},
+  "out": "    xxxxxxxxxxxxxxxxxxxxxxxxxxx v"
+ },
+ {
+  "fn": "kv_line",
+  "args": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   ""
+  ],
+  "kwargs": {},
+  "out": "    xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "fn": "kv_line",
+  "args": [
+   "Key",
+   ""
+  ],
+  "kwargs": {},
+  "out": "    Key"
+ },
+ {
+  "fn": "kv_line",
+  "args": [
+   "Deploy 🚀 rocket to the moon and far beyond it",
+   "v"
+  ],
+  "kwargs": {},
+  "out": "    Deploy 🚀 rocket to the moon v"
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "",
+   false
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "\n",
+   false
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "\n",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "  \n",
+   false
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "  \n",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "y",
+   false
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "y",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "Y",
+   false
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "Y",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "yes",
+   false
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "yes",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   " YES \n",
+   false
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   " YES \n",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "n",
+   false
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "n",
+   true
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "No",
+   false
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "No",
+   true
+  ],
+  "kwargs": {},
+  "out": false
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "nope",
+   false
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "nope",
+   true
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "yy",
+   false
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "yy",
+   true
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "1",
+   false
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "1",
+   true
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "\u001cy",
+   false
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "\u001cy",
+   true
+  ],
+  "kwargs": {},
+  "out": true
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "﻿y",
+   false
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_yes_no",
+  "args": [
+   "﻿y",
+   true
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "1",
+   3
+  ],
+  "kwargs": {},
+  "out": 0
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "3",
+   3
+  ],
+  "kwargs": {},
+  "out": 2
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "4",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "0",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   " 2 \n",
+   3
+  ],
+  "kwargs": {},
+  "out": 1
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "02",
+   3
+  ],
+  "kwargs": {},
+  "out": 1
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "-1",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "+1",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "1.0",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "٣",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "x",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "parse_choice",
+  "args": [
+   "99999999999999999999",
+   3
+  ],
+  "kwargs": {},
+  "out": null
+ },
+ {
+  "fn": "needs_prompt",
+  "args": [
+   "--yes"
+  ],
+  "kwargs": {
+   "given": true,
+   "isatty": false
+  },
+  "out": false
+ },
+ {
+  "fn": "needs_prompt",
+  "args": [
+   "--yes"
+  ],
+  "kwargs": {
+   "given": false,
+   "isatty": true
+  },
+  "out": true
+ },
+ {
+  "fn": "needs_prompt",
+  "args": [
+   "--yes"
+  ],
+  "kwargs": {
+   "given": false,
+   "isatty": false
+  },
+  "raises": "MissingFlag",
+  "out": {
+   "str": "Missing --yes: stdin is not a terminal, so nothing can be asked, and --yes was not passed",
+   "what": "Missing --yes",
+   "why": "stdin is not a terminal, so nothing can be asked, and --yes was not passed",
+   "fix": "--yes"
+  }
+ },
+ {
+  "fn": "needs_prompt",
+  "args": [
+   "--force"
+  ],
+  "kwargs": {
+   "given": false,
+   "what": "Refusing to overwrite",
+   "command": "cld apply",
+   "isatty": false
+  },
+  "raises": "MissingFlag",
+  "out": {
+   "str": "Refusing to overwrite: stdin is not a terminal, so nothing can be asked, and --force was not passed",
+   "what": "Refusing to overwrite",
+   "why": "stdin is not a terminal, so nothing can be asked, and --force was not passed",
+   "fix": "cld apply --force"
+  }
+ },
+ {
+  "fn": "TermError",
+  "args": [
+   "Bad config",
+   "line 3 is not TOML",
+   "cld config --edit"
+  ],
+  "kwargs": {},
+  "out": {
+   "str": "Bad config: line 3 is not TOML",
+   "what": "Bad config",
+   "why": "line 3 is not TOML",
+   "fix": "cld config --edit",
+   "block": "  ✗ Bad config\n    line 3 is not TOML\n    Try: cld config --edit",
+   "block_ansi": "  \u001b[31mx\u001b[0m Bad config\n    \u001b[90mline 3 is not TOML\u001b[0m\n    \u001b[93mTry:\u001b[0m cld config --edit"
+  }
+ },
+ {
+  "fn": "TermError",
+  "args": [
+   "Bad config"
+  ],
+  "kwargs": {},
+  "out": {
+   "str": "Bad config",
+   "what": "Bad config",
+   "why": "",
+   "fix": "",
+   "block": "  ✗ Bad config",
+   "block_ansi": "  \u001b[31mx\u001b[0m Bad config"
+  }
+ },
+ {
+  "fn": "NoValidAnswer",
+  "args": [
+   "Continue?",
+   "input ended before an answer"
+  ],
+  "kwargs": {},
+  "out": {
+   "str": "No valid answer to: Continue?: input ended before an answer",
+   "what": "No valid answer to: Continue?",
+   "why": "input ended before an answer",
+   "fix": "",
+   "block": "  ✗ No valid answer to: Continue?\n    input ended before an answer",
+   "block_ansi": "  \u001b[31mx\u001b[0m No valid answer to: Continue?\n    \u001b[90minput ended before an answer\u001b[0m"
+  }
+ },
+ {
+  "fn": "MissingFlag",
+  "args": [
+   "--yes"
+  ],
+  "kwargs": {},
+  "out": {
+   "str": "Missing --yes: stdin is not a terminal, so nothing can be asked, and --yes was not passed",
+   "what": "Missing --yes",
+   "why": "stdin is not a terminal, so nothing can be asked, and --yes was not passed",
+   "fix": "--yes",
+   "block": "  ✗ Missing --yes\n    stdin is not a terminal, so nothing can be asked, and --yes was not passed\n    Try: --yes",
+   "block_ansi": "  \u001b[31mx\u001b[0m Missing --yes\n    \u001b[90mstdin is not a terminal, so nothing\u001b[0m\n    \u001b[90mcan be asked, and --yes was not\u001b[0m\n    \u001b[90mpassed\u001b[0m\n    \u001b[93mTry:\u001b[0m --yes"
+  }
+ },
+ {
+  "fn": "MissingFlag",
+  "args": [
+   "--yes",
+   "Refusing",
+   "cld rm"
+  ],
+  "kwargs": {},
+  "out": {
+   "str": "Refusing: stdin is not a terminal, so nothing can be asked, and --yes was not passed",
+   "what": "Refusing",
+   "why": "stdin is not a terminal, so nothing can be asked, and --yes was not passed",
+   "fix": "cld rm --yes",
+   "block": "  ✗ Refusing\n    stdin is not a terminal, so nothing can be asked, and --yes was not passed\n    Try: cld rm --yes",
+   "block_ansi": "  \u001b[31mx\u001b[0m Refusing\n    \u001b[90mstdin is not a terminal, so nothing\u001b[0m\n    \u001b[90mcan be asked, and --yes was not\u001b[0m\n    \u001b[90mpassed\u001b[0m\n    \u001b[93mTry:\u001b[0m cld rm --yes"
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Delete 3 files?: input ended before an answer",
+   "written": "? Delete 3 files? [y/N] \n"
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Delete 3 files?: input ended before an answer",
+   "written": "? Delete 3 files? [Y/n] \n"
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "y\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "y\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": false,
+   "written": "? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "maybe\n",
+    "n\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": false,
+   "written": "? Delete 3 files? [y/N] ? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "maybe\n",
+    "n\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": false,
+   "written": "? Delete 3 files? [Y/n] ? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "a\n",
+    "b\n",
+    "c\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Delete 3 files?: no recognised answer in 3 tries",
+   "written": "? Delete 3 files? [y/N] ? Delete 3 files? [y/N] ? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "a\n",
+    "b\n",
+    "c\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Delete 3 files?: no recognised answer in 3 tries",
+   "written": "? Delete 3 files? [Y/n] ? Delete 3 files? [Y/n] ? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "a\n",
+    "b\n",
+    "yes\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [y/N] ? Delete 3 files? [y/N] ? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "a\n",
+    "b\n",
+    "yes\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [Y/n] ? Delete 3 files? [Y/n] ? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "y"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "y"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "  \n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": false,
+   "written": "? Delete 3 files? [y/N] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "  \n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": true,
+   "written": "? Delete 3 files? [Y/n] "
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": false,
+   "lines": [
+    "x\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Delete 3 files?: input ended before an answer",
+   "written": "? Delete 3 files? [y/N] ? Delete 3 files? [y/N] \n"
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete 3 files?"
+  ],
+  "kwargs": {
+   "default": true,
+   "lines": [
+    "x\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Delete 3 files?: input ended before an answer",
+   "written": "? Delete 3 files? [Y/n] ? Delete 3 files? [Y/n] \n"
+  }
+ },
+ {
+  "fn": "confirm",
+  "args": [
+   "Delete?"
+  ],
+  "kwargs": {
+   "lines": [
+    "y\n"
+   ],
+   "mode": "ansi16"
+  },
+  "out": {
+   "value": true,
+   "written": "\u001b[93m?\u001b[0m Delete? [y/N] "
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick one",
+   [
+    "alpha",
+    "beta",
+    "gamma"
+   ]
+  ],
+  "kwargs": {
+   "lines": [],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Pick one: input ended before an answer",
+   "written": "? Pick one Type a number, then Enter\n  1  alpha\n  2  beta\n  3  gamma\n> \n"
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick one",
+   [
+    "alpha",
+    "beta",
+    "gamma"
+   ]
+  ],
+  "kwargs": {
+   "lines": [
+    "2\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": 1,
+   "written": "? Pick one Type a number, then Enter\n  1  alpha\n  2  beta\n  3  gamma\n> "
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick one",
+   [
+    "alpha",
+    "beta",
+    "gamma"
+   ]
+  ],
+  "kwargs": {
+   "lines": [
+    "0\n",
+    "4\n",
+    "3\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": 2,
+   "written": "? Pick one Type a number, then Enter\n  1  alpha\n  2  beta\n  3  gamma\n> > > "
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick one",
+   [
+    "alpha",
+    "beta",
+    "gamma"
+   ]
+  ],
+  "kwargs": {
+   "lines": [
+    "x\n",
+    "y\n",
+    "z\n"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "raises": "NoValidAnswer",
+   "str": "No valid answer to: Pick one: no recognised answer in 3 tries",
+   "written": "? Pick one Type a number, then Enter\n  1  alpha\n  2  beta\n  3  gamma\n> > > "
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick one",
+   [
+    "alpha",
+    "beta",
+    "gamma"
+   ]
+  ],
+  "kwargs": {
+   "lines": [
+    "1"
+   ],
+   "mode": "none"
+  },
+  "out": {
+   "value": 0,
+   "written": "? Pick one Type a number, then Enter\n  1  alpha\n  2  beta\n  3  gamma\n> "
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick",
+   [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11"
+   ]
+  ],
+  "kwargs": {
+   "lines": [
+    "11\n"
+   ],
+   "mode": "ansi16"
+  },
+  "out": {
+   "value": 10,
+   "written": "\u001b[93m?\u001b[0m Pick Type a number, then Enter\n   1  1\n   2  2\n   3  3\n   4  4\n   5  5\n   6  6\n   7  7\n   8  8\n   9  9\n  10  10\n  11  11\n> "
+  }
+ },
+ {
+  "fn": "choose",
+  "args": [
+   "Pick",
+   []
+  ],
+  "kwargs": {
+   "lines": [],
+   "mode": "none"
+  },
+  "raises": "ValueError"
+ }
+]
