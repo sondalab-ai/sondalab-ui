@@ -4903,6 +4903,232 @@
   "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mtrailing   \u001b[0m\n"
  },
  {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true,
+   "ascii": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": true,
+   "ascii": false
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true,
+   "mode": "none"
+  },
+  "out": "▄█▄ ▄▄  sonda/lab\n▀█▀ ▀▀  cld 0.9.0\n▄▄▄▄▄▄  Manage Claude Code loadouts.\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "mode": "ansi16"
+  },
+  "out": "\u001b[93m▄█▄\u001b[0m ▄▄  sonda\u001b[93m/\u001b[0mlab\n\u001b[93m▀█▀\u001b[0m ▀▀  cld 0.9.0\n▄▄▄▄▄▄  \u001b[90mManage Claude Code loadouts.\u001b[0m\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": false,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": false,
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": ""
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true,
+   "ascii": true
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "SONDALAB_ASCII": "1"
+   },
+   "isatty": true,
+   "ascii": false
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": true,
+   "mode": "none"
+  },
+  "out": "●■ sonda/lab cld\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "NO_COLOR": "1"
+   },
+   "isatty": true,
+   "mode": "ansi16"
+  },
+  "out": "\u001b[93m●\u001b[0m■ \u001b[90msonda/lab cld\u001b[0m\n\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80",
+    "TERM": "dumb"
+   },
+   "isatty": true,
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": "sonda\u001b[93m/\u001b[0mlab cld 0.9.0\n"
+ },
+ {
+  "fn": "header",
+  "args": [
+   "cld",
+   "0.9.0",
+   "Manage Claude Code loadouts."
+  ],
+  "kwargs": {
+   "compact": true,
+   "env": {
+    "LANG": "en_US.UTF-8",
+    "COLUMNS": "80"
+   },
+   "isatty": false,
+   "ascii": false,
+   "mode": "ansi16"
+  },
+  "out": ""
+ },
+ {
   "fn": "spinner_frame",
   "args": [
    0

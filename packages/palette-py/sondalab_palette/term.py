@@ -410,6 +410,8 @@ def header(
     machine: bool = False,
     env: Optional[Mapping[str, str]] = None,
     isatty: Optional[bool] = None,
+    ascii: Optional[bool] = None,
+    mode: Optional[str] = None,
 ) -> str:
     """The TUI header for an interactive launch; "" means print nothing.
 
@@ -420,6 +422,8 @@ def header(
     sys.stdout.isatty()) and accessible mode give "", so piped output stays
     byte-identical (0.9.0). On a TTY, TERM=dumb, ASCII mode or a terminal
     narrower than the header gives lockup(). Colour follows color_mode().
+    `ascii` and `mode` override ascii_mode() and color_mode(), so --ascii,
+    --color and --no-color reach the header (0.9.1).
     """
     if machine:
         return ""
@@ -428,10 +432,13 @@ def header(
         isatty = sys.stdout.isatty()
     if not isatty or accessible(env):
         return ""
-    mode = color_mode(env, isatty=isatty)
+    if mode is None:
+        mode = color_mode(env, isatty=isatty)
+    if ascii is None:
+        ascii = ascii_mode(env)
     cap = LAYOUT["maxWidth"]
     fallback = lockup(name, version, mode) + "\n"
-    if _term_dumb(env) or ascii_mode(env):
+    if _term_dumb(env) or ascii:
         return fallback
     if compact:
         mark = HEADER["compact"]

@@ -125,6 +125,16 @@ def cases():
         case("header", "n" * 150, "1.0", "x", compact=True, env=dict(UTF8, COLUMNS="200"), isatty=True),
         case("header", "cld", "0.9.0", "trailing   ", env=UTF8, isatty=True),
     ]
+    # header overrides: --ascii, --color, --no-color reach the header
+    for compact in (False, True):
+        out += [
+            case("header", *full, compact=compact, env=UTF8, isatty=True, ascii=True),
+            case("header", *full, compact=compact, env=dict(UTF8, SONDALAB_ASCII="1"), isatty=True, ascii=False),
+            case("header", *full, compact=compact, env=UTF8, isatty=True, mode="none"),
+            case("header", *full, compact=compact, env=dict(UTF8, NO_COLOR="1"), isatty=True, mode="ansi16"),
+            case("header", *full, compact=compact, env=dict(UTF8, TERM="dumb"), isatty=True, ascii=False, mode="ansi16"),
+            case("header", *full, compact=compact, env=UTF8, isatty=False, ascii=False, mode="ansi16"),
+        ]
     # spinner, progress, decode
     for i in (0, 1, 7, 8, 9, -1, -9, 100):
         for ascii in (False, True):

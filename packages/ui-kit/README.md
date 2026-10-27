@@ -26,6 +26,8 @@ Sondalab design tokens as CSS custom properties (`--sl-*`), a CSS-only component
 
 **Light theme: Prism (0.21).** The light theme's ground was a cool near-white (`#F4F4F8`) until 0.29, when the neutrals became tinted per product (below). It also declares a six-hue spectrum (`--sl-spectrum-0..5`, and a darkened ink set `--sl-spectrum-ink-0..4` for anything seen as text or a dot). The spectrum is not an accent: it is the same in every product and never marks state. Dark and high-contrast reset it to `initial`.
 
+**0.43.1 — the terminal header honours the output flags.** `header()` in `term.js` takes `ascii` and `mode` options, so a CLI's `--ascii`, `--color` and `--no-color` reach the header instead of being read only from the environment; unset, it reads `asciiMode()` and `colorMode()` as before. `sondalab-palette` 0.9.1 adds the same `ascii=`/`mode=` keywords, and the parity fixture covers them. No class, token or role changes.
+
 **0.43.0 — terminal helpers for Node.** A Node CLI can follow the Term spec (`docs/tui-patterns.md`) without re-deriving it: `@sondalab/ui-kit/term.js` is the JavaScript counterpart of `sondalab-palette` 0.9.0's `term`. Additive: no class, token or role is added, removed or renamed, and no stylesheet changes.
 
 ```js

@@ -304,15 +304,16 @@ export function lockup(name, version, mode = "none") {
  * mode or a terminal narrower than the header give lockup(). `compact` is the
  * 2-column mark and `sonda/lab name` in dim, then a blank line.
  */
-export function header(name, version, description, { compact = false, machine = false, env, isTTY } = {}) {
+export function header(name, version, description, { compact = false, machine = false, env, isTTY, ascii, mode } = {}) {
   if (machine) return "";
   env = envOf(env);
   if (isTTY === undefined || isTTY === null) isTTY = process.stdout.isTTY === true;
   if (!isTTY || accessible(env)) return "";
-  const mode = colorMode({ env, isTTY });
+  if (mode === undefined || mode === null) mode = colorMode({ env, isTTY });
+  if (ascii === undefined || ascii === null) ascii = asciiMode({ env });
   const cap = LAYOUT.maxWidth;
   const fallback = lockup(name, version, mode) + "\n";
-  if (termDumb(env) || asciiMode({ env })) return fallback;
+  if (termDumb(env) || ascii) return fallback;
   if (compact) {
     const mark = HEADER.compact;
     const text = cut(`sonda/lab ${name}`, 0, cap - len(mark) - 1);

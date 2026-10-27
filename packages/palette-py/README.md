@@ -62,7 +62,7 @@ sys.stdout.write(term.header("cld", "0.9.0", "", compact=True))   # a one-shot s
 #
 ```
 
-It returns `""` for `machine=True`, a non-TTY stdout and accessible mode, so piped output stays byte-identical (0.9.0). On a TTY it returns the one-line lockup `sonda/lab cld 0.9.0` with `TERM=dumb`, in ASCII mode and on a terminal narrower than the header. The mark's cells are `HEADER`. Unlike the other helpers it paints its own colour, following `color_mode()`.
+It returns `""` for `machine=True`, a non-TTY stdout and accessible mode, so piped output stays byte-identical (0.9.0). On a TTY it returns the one-line lockup `sonda/lab cld 0.9.0` with `TERM=dumb`, in ASCII mode and on a terminal narrower than the header. The mark's cells are `HEADER`. Unlike the other helpers it paints its own colour, following `color_mode()`. Pass `ascii=` and `mode=` (0.9.1) so a CLI's `--ascii`, `--color` and `--no-color` reach the header: `term.header(..., ascii=ascii, mode=mode)`.
 
 ## Terminal helpers (0.9.0)
 
@@ -119,6 +119,7 @@ There is no spinner runner: one needs a thread and a clock, and the palette stay
 
 ### Changelog
 
+- **0.9.1:** `term.header()` takes keyword-only `ascii=` and `mode=` overrides, so `--ascii`, `--color` and `--no-color` reach the header; unset, it reads `ascii_mode()` and `color_mode()` as before.
 - **0.9.0:** the terminal helpers: `term.paint` (spec colour precedence, ANSI 16 floor, truecolor on opt-in), `term.lockup`, `term.confirm`/`term.choose` with `parse_yes_no`/`parse_choice` and the retry cap, `term.needs_prompt` with `MissingFlag`/`NoValidAnswer` (both `TermError`), `term.summary`, `term.width`/`term.wrap`, `term.error_block`, `term.next_line`, `term.key_hints`/`term.arrows`, `term.heading`/`term.kv_line` (the spec's new Report lines pattern) and `term.enable_vt`; `step_line` takes `mode=` to paint its glyph. **Behaviour change:** `term.header()` returns `""` on a non-TTY stdout and in accessible mode, where it returned the lockup; use `term.lockup()` for `--version`.
 - **0.8.0:** `term.header()`, the Term spec's header pattern, and the `HEADER` tokens (the mark, its accent mask, the compact mark and the gap).
 - **0.7.1:** every `term` helper defaults to `env=None` and reads `os.environ` at call time. Before, the default was `os.environ` itself, kept in the signature, so `help()` or `inspect.signature()` printed the whole environment, secrets included. No call changes.

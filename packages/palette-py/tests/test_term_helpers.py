@@ -658,3 +658,18 @@ def test_keyword_only_parameters(fn, name):
 def test_new_helpers_have_a_docstring(name):
     doc = inspect.getdoc(getattr(t, name))
     assert doc and len(doc.splitlines()) >= 2
+
+
+@pytest.mark.parametrize("compact", [False, True])
+def test_header_ascii_and_mode_overrides_reach_the_header(compact):
+    utf8 = {"LANG": "en_US.UTF-8", "COLUMNS": "100"}
+    lockup_plain = "sonda/lab cld 0.9.1\n"
+    # --ascii: the lockup, even in a UTF-8 locale
+    assert t.header("cld", "0.9.1", "d", compact=compact, env=utf8, isatty=True, ascii=True, mode="none") == lockup_plain
+    # --no-color: no escapes, even with FORCE_COLOR
+    out = t.header("cld", "0.9.1", "d", compact=compact, env=dict(utf8, FORCE_COLOR="1"), isatty=True, mode="none")
+    assert "\x1b[" not in out and out
+    # --color: escapes, even with NO_COLOR
+    assert "\x1b[" in t.header("cld", "0.9.1", "d", compact=compact, env=dict(utf8, NO_COLOR="1"), isatty=True, mode="ansi16")
+    # still nothing off a TTY, whatever the overrides say
+    assert t.header("cld", "0.9.1", "d", compact=compact, env=utf8, isatty=False, ascii=False, mode="ansi16") == ""

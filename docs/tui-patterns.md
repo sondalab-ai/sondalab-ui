@@ -156,7 +156,7 @@ A one-shot subcommand that prints a result and exits opens with the compact head
 - **Falls back to the lockup** `sonda/lab <name> <version>` on one line, in either size, on a terminal that cannot draw the mark: with `TERM=dumb`, in ASCII mode (`SONDALAB_ASCII=1`, `--ascii` or a non-UTF-8 locale), and when the terminal is narrower than the mark, the gap and the longest text line.
 - **Nothing in machine output.** `--json` and `--plain` print no header and no lockup.
 - **`NO_COLOR` keeps the shapes** and drops the colour; colour otherwise follows [Colour](#colour).
-- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` since `sondalab_palette` 0.8.0; off a TTY and in accessible mode it prints nothing since 0.9.0. `term.lockup(name, version, mode)` (0.9.0) is the `--version` line. Node: `header(name, version, description, { compact, machine })` and `lockup(name, version, mode)` from `@sondalab/ui-kit/term.js`.
+- The header goes to stdout. Python: `term.header(name, version, description, compact=…, machine=…)` since `sondalab_palette` 0.8.0; off a TTY and in accessible mode it prints nothing since 0.9.0. `ascii=` and `mode=` (0.9.1) carry `--ascii`, `--color` and `--no-color` into it. `term.lockup(name, version, mode)` (0.9.0) is the `--version` line. Node: `header(name, version, description, { compact, machine, ascii, mode })` (`ascii`/`mode` since 0.43.1) and `lockup(name, version, mode)` from `@sondalab/ui-kit/term.js`.
 
 ### Step list
 

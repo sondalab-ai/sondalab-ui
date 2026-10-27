@@ -47,12 +47,15 @@ export declare function stepLine(
   options?: { ascii?: boolean; mode?: ColorMode },
 ): string;
 
-/** The TUI header for an interactive launch, newline-terminated; "" for `machine`, a non-TTY stdout or accessible mode. */
+/**
+ * The TUI header for an interactive launch, newline-terminated; "" for `machine`, a non-TTY stdout or accessible mode.
+ * `ascii` and `mode` override asciiMode() and colorMode(), so --ascii, --color and --no-color reach the header (0.43.1).
+ */
 export declare function header(
   name: string,
   version: string,
   description: string,
-  options?: { compact?: boolean; machine?: boolean; env?: Env; isTTY?: boolean | null },
+  options?: { compact?: boolean; machine?: boolean; env?: Env; isTTY?: boolean | null; ascii?: boolean | null; mode?: ColorMode | null },
 ): string;
 
 /** The burst spinner's frame at tick `i`. */
