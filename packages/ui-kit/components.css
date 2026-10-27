@@ -2279,7 +2279,7 @@ textarea.sl-field__input { resize: vertical; min-height: 4.5rem; line-height: va
 .sl-art-field--grid::before { --_sl-art-tile: var(--sl-art-field-grid); --_sl-art-size: 144px 144px; }
 .sl-art-field--albers::before { --_sl-art-tile: var(--sl-art-field-albers); --_sl-art-size: 96px 96px; }
 .sl-art-field--stripes::before { --_sl-art-tile: var(--sl-art-field-stripes); --_sl-art-size: 96px 96px; }
-/* The fades: the field recedes where the text sits. Start and end are
+/* The fades: the field is strongest at one edge and gone at the other, so it can recede toward the text. Start and end are
    logical, so the ramp's direction flips in a right-to-left box. */
 .sl-art-field--fade-start::before { --_sl-art-fade: linear-gradient(to var(--_sl-art-end, right), black, transparent); }
 .sl-art-field--fade-end::before { --_sl-art-fade: linear-gradient(to var(--_sl-art-end, right), transparent, black); }

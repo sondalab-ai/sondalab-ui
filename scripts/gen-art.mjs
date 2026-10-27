@@ -229,7 +229,7 @@ function albers(g) {
 }
 
 /** The stripes: a 45° band every 32 diagonal cells, its tone falling from
- *  solid to nothing in 8 steps of 2 cells through the matrix, then 16 cells
+ *  solid to its faintest step in 8 steps of 2 cells through the matrix, then 16 cells
  *  of ground. */
 function stripes(g) {
   const N = 32;
