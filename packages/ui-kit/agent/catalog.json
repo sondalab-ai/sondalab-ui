@@ -1097,6 +1097,12 @@
         "sl-rule--weave",
         "sl-art-corner",
         "sl-art-field",
+        "sl-art-field--grid",
+        "sl-art-field--albers",
+        "sl-art-field--stripes",
+        "sl-art-field--fade-start",
+        "sl-art-field--fade-end",
+        "sl-art-field--fade-down",
         "sl-empty--void",
         "sl-empty--shapes"
       ],

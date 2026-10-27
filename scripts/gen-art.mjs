@@ -159,16 +159,84 @@ function corner() {
   return g;
 }
 
-/** The truchet field: 6 × 6 tiles of 8 cells, each a pair of quarter arcs
- *  on opposite corners, flipped by a hash. The tile repeats. */
-function truchet() {
-  const T = 8, K = 6, g = grid(T * K, T * K);
-  for (let tj = 0; tj < K; tj++) for (let ti = 0; ti < K; ti++) {
+/** The fields: tiles that repeat behind a section, one tone each. Every
+ *  field draws on a grid of any extent from absolute cell coordinates, its
+ *  hash seeded by the slot's place in the tile, so a shape that crossed the
+ *  tile's edge would show in a wider draw and fail the seam test. `cells` is
+ *  the tile's side, a multiple of the 8-cell Bayer period, so the matrix
+ *  repeats with it. */
+export const FIELDS = {
+  truchet: { cells: 48, draw: truchet },
+  grid: { cells: 48, draw: bauhausGrid },
+  albers: { cells: 32, draw: albers },
+  stripes: { cells: 32, draw: stripes },
+};
+
+/** One field drawn on cols × rows cells: its tile by default. */
+export const field = (name, cols = FIELDS[name].cells, rows = cols) => FIELDS[name].draw(grid(cols, rows));
+
+/** The truchet: 6 × 6 slots of 8 cells, each a pair of quarter arcs on
+ *  opposite corners, flipped by a hash. */
+function truchet(g) {
+  const T = 8, K = 6;
+  for (let tj = 0; tj * T < g.rows; tj++) for (let ti = 0; ti * T < g.cols; ti++) {
     const x0 = ti * T, y0 = tj * T;
-    const arcs = hash(ti, tj) > 0.5 ? [[x0, y0], [x0 + T, y0 + T]] : [[x0 + T, y0], [x0, y0 + T]];
+    const arcs = hash(ti % K, tj % K) > 0.5 ? [[x0, y0], [x0 + T, y0 + T]] : [[x0 + T, y0], [x0, y0 + T]];
     shade(g, (x, y) => rect(x0, y0, T, T)(x, y) && arcs.some(([cx, cy]) => Math.abs(Math.hypot(x - cx, y - cy) - T / 2) < 0.75), 1);
   }
   return g;
+}
+
+/** The Bauhaus grid: 6 × 6 slots of 8 cells, each holding one primitive of
+ *  6 cells (a disc, a square, a triangle, a quarter disc, a square outline)
+ *  or nothing, and turned a quarter at a time, both picked by a hash. The
+ *  1-cell margin round every primitive is the grid's gutter. */
+function bauhausGrid(g) {
+  const S = 8, K = 6;
+  for (let tj = 0; tj * S < g.rows; tj++) for (let ti = 0; ti * S < g.cols; ti++) {
+    const x = ti * S, y = tj * S, box = rect(x + 1, y + 1, 6, 6);
+    const kind = Math.floor(hash((ti % K) + 11, (tj % K) + 5) * 6), turn = Math.floor(hash((tj % K) + 2, (ti % K) + 9) * 4);
+    const [sx, sy] = [[1, 1], [-1, 1], [-1, -1], [1, -1]][turn];
+    const form = [
+      circle(x + 4, y + 4, 3),
+      box,
+      (px, py) => box(px, py) && (turn & 1 ? px - x >= py - y : px - x + (py - y) >= S),
+      quarter(sx > 0 ? x + 1 : x + 7, sy > 0 ? y + 1 : y + 7, 6, sx, sy),
+      (px, py) => box(px, py) && !rect(x + 2, y + 2, 4, 4)(px, py),
+      null,
+    ][kind];
+    if (form) shade(g, form, 1);
+  }
+  return g;
+}
+
+/** The Albers tones, ground first: the nested squares step through the
+ *  matrix toward a solid core. */
+const ALBERS = [0, 0.25, 0.5, 1];
+
+/** Homage to the Square: four nested squares on a 32-cell tile, each 8
+ *  cells narrower than the last, centred across and set low (6 cells above,
+ *  2 below, Albers' 3:1), at the ALBERS tones. The ground's margins make an
+ *  even 8-cell gutter between repeats. */
+function albers(g) {
+  const N = 32;
+  return shade(g, () => true, (x, y) => {
+    const u = x % N, v = y % N;
+    let k = 0;
+    for (let s = 1; s < ALBERS.length; s++) if (u >= 4 * s && u < N - 4 * s && v >= 6 * s && v < N - 2 * s) k = s;
+    return ALBERS[k];
+  });
+}
+
+/** The stripes: a 45° band every 32 diagonal cells, its tone falling from
+ *  solid to nothing in 8 steps of 2 cells through the matrix, then 16 cells
+ *  of ground. */
+function stripes(g) {
+  const N = 32;
+  return shade(g, () => true, (x, y) => {
+    const d = (Math.floor(x) + Math.floor(y)) % N;
+    return d < 16 ? 1 - Math.floor(d / 2) / 8 : 0;
+  });
 }
 
 /** The molnar strokes: one 3-cell stroke per slot, one of four directions,
@@ -211,7 +279,8 @@ export function block() {
   const masks = [
     ...Object.keys(GLYPHS).map((k) => [k === "mark" ? "mark" : `mark-${k}`, glyph(k)]),
     ["shapes", shapes()], ["weave", weave()], ["corner", corner()],
-    ["truchet", truchet()], ["molnar", molnar()],
+    ...Object.keys(FIELDS).map((k) => [k === "truchet" ? "truchet" : `field-${k}`, field(k)]),
+    ["molnar", molnar()],
     ["void-s", voidStep(VOID.s)], ["void-m", voidStep(VOID.m)], ["void-l", voidStep(VOID.l)],
     ["empty", empty()],
   ];
