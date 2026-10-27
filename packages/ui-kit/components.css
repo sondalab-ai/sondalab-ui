@@ -467,6 +467,7 @@
   width: calc(6 * var(--_sl-art-cell));
   height: calc(4 * var(--_sl-art-cell));
   margin-inline-end: calc(3 * var(--_sl-art-cell));
+  vertical-align: -1px;
   vertical-align: round(calc(var(--_sl-art-cell) / -3), 1px);
   background: linear-gradient(90deg, var(--_sl-art-accent) calc(4 * var(--_sl-art-cell)), var(--_sl-art-paint) 0);
   -webkit-mask: var(--_sl-art-glyph, var(--sl-art-mark)) 0 0 / calc(6 * var(--_sl-art-cell)) calc(4 * var(--_sl-art-cell)) no-repeat;
