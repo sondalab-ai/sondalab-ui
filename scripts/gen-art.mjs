@@ -104,11 +104,25 @@ function svg(g) {
  *  specially are escaped, so the payload stays near the raw markup. */
 const uri = (markup) => `url('data:image/svg+xml,${markup.replace(/%/g, "%25").replace(/</g, "%3C").replace(/>/g, "%3E").replace(/'/g, "%27")}')`;
 
-/** The eyebrow mark: an accent quarter disc (cells 0-3) and a bar (cell 5). */
-function mark() {
-  const g = grid(6, 4);
-  shade(g, quarter(0, 4, 4, 1, -1), TONES.mark.disc);
-  return shade(g, rect(5, 0, 1, 4), TONES.mark.bar);
+/** The eyebrow glyphs, on one 6 × 4 frame: the accent shape fills cells
+ *  0-3, cell 4 stays empty and the ink detail sits in cell 5, so the hand
+ *  rule's gradient splits them at 4 cells for every glyph. `mark` is the
+ *  default; the rest are its modifiers. The ink varies with the shape (a
+ *  full bar, a short one, a dot), so no two glyphs read alike at 18 × 12px. */
+export const GLYPHS = {
+  mark: { accent: quarter(0, 4, 4, 1, -1), ink: rect(5, 0, 1, 4) },
+  square: { accent: rect(0, 0, 4, 4), ink: rect(5, 3, 1, 1) },
+  tri: { accent: (x, y) => rect(0, 0, 4, 4)(x, y) && x >= y, ink: rect(5, 0, 1, 4) },
+  circle: { accent: circle(2, 2, 2), ink: rect(5, 1, 1, 2) },
+  half: { accent: (x, y) => circle(2, 2, 2)(x, y % 2), ink: rect(5, 0, 1, 4) },
+  stair: { accent: (x, y) => rect(0, 2, 4, 2)(x, y) || rect(2, 0, 2, 2)(x, y), ink: rect(5, 2, 1, 2) },
+};
+
+/** One eyebrow glyph's grid, both parts at the mark's full tones. */
+export function glyph(name) {
+  const g = grid(6, 4), { accent, ink } = GLYPHS[name];
+  shade(g, accent, TONES.mark.disc);
+  return shade(g, ink, TONES.mark.bar);
 }
 
 /** The shapes rule: quarter disc, square, triangle every 8 cells, the first
@@ -195,7 +209,8 @@ function empty() {
 /** The generated block, markers included: one :root rule of mask URIs. */
 export function block() {
   const masks = [
-    ["mark", mark()], ["shapes", shapes()], ["weave", weave()], ["corner", corner()],
+    ...Object.keys(GLYPHS).map((k) => [k === "mark" ? "mark" : `mark-${k}`, glyph(k)]),
+    ["shapes", shapes()], ["weave", weave()], ["corner", corner()],
     ["truchet", truchet()], ["molnar", molnar()],
     ["void-s", voidStep(VOID.s)], ["void-m", voidStep(VOID.m)], ["void-l", voidStep(VOID.l)],
     ["empty", empty()],

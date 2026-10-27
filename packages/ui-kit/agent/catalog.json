@@ -1088,6 +1088,11 @@
       "kind": "signature",
       "classes": [
         "sl-eyebrow--mark",
+        "sl-eyebrow--mark-square",
+        "sl-eyebrow--mark-tri",
+        "sl-eyebrow--mark-circle",
+        "sl-eyebrow--mark-half",
+        "sl-eyebrow--mark-stair",
         "sl-rule--shapes",
         "sl-rule--weave",
         "sl-art-corner",
