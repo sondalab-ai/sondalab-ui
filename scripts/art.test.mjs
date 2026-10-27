@@ -8,10 +8,10 @@ import { REGISTRY, THEMES, ratio, rulesFor } from "./lib/primary-matrix.mjs";
 import { parseSheet, el, cascaded, customs, longhand, splitList, px } from "./lib/cascade.mjs";
 import { evaluate, substitute, toSrgb, fromSrgb, toHex } from "./lib/css-color.mjs";
 import { createHash } from "node:crypto";
-import { VOID, PITCH, TONES, GLYPHS, FIELDS, glyph, field, voidImage, voidThreshold, START, END } from "./gen-art.mjs";
-import { CELL_PX } from "../packages/ui-kit/dither-core.js";
+import { VOID, PITCH, TONES, GLYPHS, FIELDS, POSTER, glyph, field, posterPrimitive, voidImage, voidThreshold, START, END } from "./gen-art.mjs";
+import { CELL_PX, bayerAt } from "../packages/ui-kit/dither-core.js";
 
-// The Bauhaus pixel art (ui-kit 0.41.0): masks drawn on the dither cell by
+// The Bauhaus pixel art (ui-kit 0.41.0, 0.42.0): masks drawn on the dither cell by
 // scripts/gen-art.mjs, painted from role vars by hand rules beside the
 // elements they decorate. Each test below reads the committed CSS, so a
 // hand edit to a rule or a stale generated block fails here.
@@ -22,7 +22,8 @@ const CSS_PATH = resolve(REPO, "packages/ui-kit/components.css");
 const raw = readFileSync(CSS_PATH, "utf8");
 const css = raw.replace(/\/\*[\s\S]*?\*\//g, "");
 
-/** Every piece: its host classes and the pseudo-element that paints it. */
+/** Every piece: its host classes and the pseudo-element that paints it;
+ *  `also` names the second one of a piece painted on both. */
 const PIECES = {
   "sl-eyebrow--mark": { host: ["sl-eyebrow", "sl-eyebrow--mark"], pseudo: "before" },
   "sl-rule--shapes": { host: ["sl-rule", "sl-rule--shapes"], pseudo: "before", tag: "hr" },
@@ -31,7 +32,10 @@ const PIECES = {
   "sl-art-field": { host: ["sl-art-field"], pseudo: "before" },
   "sl-empty--void": { host: ["sl-empty", "sl-empty--void"], pseudo: "after" },
   "sl-empty--shapes": { host: ["sl-empty", "sl-empty--shapes"], pseudo: "before" },
+  "sl-art-poster": { host: ["sl-art-poster"], pseudo: "after", also: "before" },
 };
+/** Every pseudo-element a piece paints on. */
+const pseudosOf = (p) => [p.pseudo, p.also].filter(Boolean);
 const PAINTS = ["--_sl-art-paint", "--_sl-art-accent"];
 /** The pieces that can sit under text: the contrast test binds these. */
 const UNDERLAY = ["sl-art-field", "sl-art-corner", "sl-empty--void"];
@@ -43,6 +47,9 @@ const GLYPH_MODIFIERS = Object.keys(GLYPHS).filter((k) => k !== "mark").map((k) 
  *  worn with sl-art-field. */
 const FIELD_MODIFIERS = Object.keys(FIELDS).filter((k) => k !== "truchet").map((k) => `sl-art-field--${k}`);
 const FADES = ["sl-art-field--fade-start", "sl-art-field--fade-end", "sl-art-field--fade-down"];
+/** The poster's variants (the horizon is the bare poster), each worn with
+ *  sl-art-poster. */
+const POSTER_MODIFIERS = ["sl-art-poster--orbit", "sl-art-poster--stair", "sl-art-poster--bleed"];
 /** Every field and fade as a host of its own, for the tests that bind each. */
 const FIELD_HOSTS = Object.fromEntries([...FIELD_MODIFIERS, ...FADES].map((m) => [m, { host: ["sl-art-field", m], pseudo: "before" }]));
 
@@ -96,18 +103,20 @@ test("no mask carries a colour: alpha only, from the default black fill", () => 
   }
 });
 
-test("the generated block stays within the 24 KB payload budget", () => {
+test("the generated block stays within the 32 KB payload budget", () => {
+  // 24 KB in 0.41; raised to 32 KB for the 0.42 variants (marks, fields,
+  // poster), see the bauhaus-art spec.
   const bytes = Buffer.byteLength(block, "utf8");
-  assert.ok(bytes <= 24576, `generated block is ${bytes} bytes`);
+  assert.ok(bytes <= 32768, `generated block is ${bytes} bytes`);
 });
 
 test("every piece paints through a static, inert pseudo-element", () => {
-  for (const [cls, p] of Object.entries(PIECES)) {
-    const rules = rulesNaming(cls, p.pseudo);
-    assert.ok(rules.length, `${cls}::${p.pseudo} has no rule`);
+  for (const [cls, p] of Object.entries(PIECES)) for (const pseudo of pseudosOf(p)) {
+    const rules = rulesNaming(cls, pseudo);
+    assert.ok(rules.length, `${cls}::${pseudo} has no rule`);
     const all = rules.map((r) => r.body).join(";");
-    assert.match(all, /pointer-events:\s*none/, `${cls}::${p.pseudo} takes pointer events`);
-    assert.match(all, /mask(-image)?:[^;]*var\(--sl-art-/, `${cls}::${p.pseudo} is not masked by a generated mask`);
+    assert.match(all, /pointer-events:\s*none/, `${cls}::${pseudo} takes pointer events`);
+    assert.match(all, /mask(-image)?:[^;]*var\(--sl-art-/, `${cls}::${pseudo} is not masked by a generated mask`);
     for (const r of [...rules, ...rulesNaming(cls, null)]) {
       assert.doesNotMatch(r.body, /(^|;)\s*(animation|transition)(-[\w-]+)?\s*:/, `${r.selector} animates`);
     }
@@ -127,8 +136,8 @@ test("a modifier leaves its host's box alone (review focus 5)", () => {
 test("each piece's paint reads only roles the inversion band re-derives (review focus 1)", () => {
   const band = css.match(/\.sl-invert > \*\s*\{([^}]*)\}/)[1];
   const rebound = new Set([...band.matchAll(/(--slc-[\w-]+)\s*:/g)].map((m) => m[1]));
-  for (const [cls, p] of Object.entries(PIECES)) {
-    for (const r of rulesNaming(cls, p.pseudo)) {
+  for (const [cls, p] of Object.entries(PIECES)) for (const pseudo of pseudosOf(p)) {
+    for (const r of rulesNaming(cls, pseudo)) {
       for (const m of r.body.matchAll(/(--_sl-art-(?:paint|accent))\s*:\s*([^;]+)/g)) {
         const reads = [...m[2].matchAll(/var\(\s*(--[\w-]+)/g)].map((v) => v[1]);
         assert.ok(reads.length, `${cls} ${m[1]} reads no role`);
@@ -206,6 +215,22 @@ test("the marks beside text keep the probe's tones, from role vars only", () => 
   assert.equal(weave["--_sl-art-paint"], "color-mix(in srgb, var(--slc-text) 45%, transparent)");
   assert.equal(weave["--_sl-art-accent"], "var(--slc-accent-text)");
   assert.match(weave.background, /var\(--_sl-art-accent\) 72px, var\(--_sl-art-paint\) 0/, "one accent band of 24 cells");
+
+});
+
+test("the poster is a mark beside text: the accent in full, the ink at 75%, on two layers", () => {
+  // It never sits under text (the hero-field is out, design-language.md),
+  // so the underlay contrast test does not bind it; its paints are pinned
+  // here instead, from role vars only.
+  assert.ok(!UNDERLAY.includes("sl-art-poster"));
+  const rules = parseSheet(raw);
+  const host = el({ classes: ["sl-art-poster"], parent: el({ tag: "body", parent: el({ tag: "html", attrs: { "data-sl-theme": "light" } }) }) });
+  const accent = cascaded(rules, el({ pseudo: "before", parent: host }));
+  const ink = cascaded(rules, el({ pseudo: "after", parent: host }));
+  assert.equal(accent.get("--_sl-art-accent").value, "var(--slc-accent-text)");
+  assert.equal(accent.get("background").value, "var(--_sl-art-accent)");
+  assert.equal(ink.get("--_sl-art-paint").value, "color-mix(in srgb, var(--slc-text) 75%, transparent)");
+  assert.equal(ink.get("background").value, "var(--_sl-art-paint)");
 });
 
 /** The cascaded declarations of a piece's pseudo-element and its host
@@ -225,11 +250,17 @@ function painted(cls, p, { flags = {}, theme = "dark" } = {}) {
 
 for (const [name, opts] of [["the high-contrast theme", { theme: "high-contrast" }], ["forced colours", { flags: { forcedColors: true } }]]) {
   test(`every piece paints nothing under ${name}, and an in-flow mark leaves no box`, () => {
-    for (const [cls, p] of Object.entries(PIECES)) {
-      assert.match(painted(cls, p).background, /var\(--_sl-art-/, `${cls} paints nothing even on dark: the probe is broken`);
+    for (const [cls, piece] of Object.entries(PIECES)) for (const pseudo of pseudosOf(piece)) {
+      const p = { ...piece, pseudo };
+      assert.match(painted(cls, p).background, /var\(--_sl-art-/, `${cls}::${pseudo} paints nothing even on dark: the probe is broken`);
       const got = painted(cls, p, opts);
       if (IN_FLOW.includes(cls)) assert.equal(got.display, "none", cls);
-      else assert.equal(got.background, "none", cls);
+      else assert.equal(got.background, "none", `${cls}::${pseudo}`);
+    }
+    for (const mod of POSTER_MODIFIERS) for (const pseudo of ["before", "after"]) {
+      const p = { host: ["sl-art-poster", mod], pseudo };
+      assert.match(painted(mod, p).background, /var\(--_sl-art-/, `${mod}::${pseudo} paints nothing even on dark: the probe is broken`);
+      assert.equal(painted(mod, p, opts).background, "none", `${mod}::${pseudo}`);
     }
     for (const [mod, p] of Object.entries(FIELD_HOSTS)) {
       assert.match(painted(mod, p).background, /var\(--_sl-art-/, `${mod} paints nothing even on dark: the probe is broken`);
@@ -317,7 +348,7 @@ test("the catalog lists every new class", () => {
   const index = JSON.parse(readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.json"), "utf8"));
   const listed = new Set(index.components.flatMap((c) => c.classes));
   const md = readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.md"), "utf8");
-  for (const cls of [...Object.keys(PIECES), ...GLYPH_MODIFIERS, ...FIELD_MODIFIERS, ...FADES]) {
+  for (const cls of [...Object.keys(PIECES), ...GLYPH_MODIFIERS, ...FIELD_MODIFIERS, ...FADES, ...POSTER_MODIFIERS]) {
     assert.ok(listed.has(cls), `catalog.json misses ${cls}`);
     assert.ok(md.includes(cls), `catalog.md misses ${cls}`);
   }
@@ -503,3 +534,192 @@ test("start and end are logical: a right-to-left field turns its ramp", () => {
     assert.match(ownDecls(fade, "before")["--_sl-art-fade"], /^linear-gradient\(to var\(--_sl-art-end, right\),/, fade);
   }
 });
+
+test("every poster primitive is generated, and each tone tile is the matrix's own level", () => {
+  assert.deepEqual(Object.keys(POSTER), ["disc", "dot", "quarter", "tri", "tone", "tone-light"]);
+  let bytes = 0;
+  for (const [k, { cols, rows }] of Object.entries(POSTER)) {
+    const line = block.match(new RegExp(`  --sl-art-poster-${k}: url\\('data:image\\/svg\\+xml,([^']*)'\\);`));
+    assert.ok(line, `--sl-art-poster-${k} is not generated`);
+    assert.match(decodeURIComponent(line[1]), new RegExp(`viewBox="0 0 ${cols} ${rows}"`), k);
+    bytes += Buffer.byteLength(line[0]) + 1;
+    const g = posterPrimitive(k), lit = g.on.reduce((n, v) => n + v, 0);
+    assert.ok(lit > 0 && lit < g.on.length, `${k} is empty or solid`);
+  }
+  // A composition is layers over these few masks, not an image per variant.
+  assert.ok(bytes <= 2048, `the poster's primitives cost ${bytes} bytes`);
+  // The 50% and 25% levels of the 8 × 8 matrix repeat every two cells, so a
+  // 2 × 2 tile repeated is the matrix at that level, phase included.
+  for (const k of ["tone", "tone-light"]) {
+    const g = posterPrimitive(k);
+    for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) {
+      assert.equal(g.on[(j % 2) * 2 + (i % 2)], Number(POSTER[k].tone > bayerAt(i, j)), `${k}: cell (${i},${j})`);
+    }
+  }
+});
+
+/** The poster's design, in poster cells. */
+const FRAME = { w: 48, h: 32 };
+/** A poster cell count as the CSS writes it: 0 or calc(n * var(--_sl-art-u)). */
+const cells = (v) => {
+  if (v === "0") return 0;
+  const m = v.match(/^calc\((-?\d+) \* var\(--_sl-art-u\)\)$/);
+  assert.ok(m, `${v} is not a whole number of poster cells`);
+  return Number(m[1]);
+};
+/** Splits on the separator at paren depth 0. */
+const topSplit = (str, sep) => {
+  const out = [];
+  let depth = 0, cur = "";
+  for (const ch of str) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === sep && depth === 0) { out.push(cur.trim()); cur = ""; } else cur += ch;
+  }
+  return [...out, cur.trim()].filter(Boolean);
+};
+const HATCH = "repeating-linear-gradient(black 0 var(--_sl-art-u), transparent 0 calc(2 * var(--_sl-art-u)))";
+
+/** One mask layer list of the poster, parsed: every layer's image and its
+ *  place and size in poster cells, and its compositing operator. */
+function layers(list) {
+  return topSplit(list.replace(/\s+/g, " "), ",").map((layer) => {
+    const t = topSplit(layer, " ");
+    const [image, x, y, slash, w, h, repeat, op = "add"] = t;
+    assert.equal(slash, "/", layer);
+    assert.ok(t.length <= 8, layer);
+    const prim = image.match(/^var\(--sl-art-poster-([\w-]+)\)$/)?.[1];
+    assert.ok(prim ? prim in POSTER : ["linear-gradient(black 0 0)", HATCH].includes(image), `${image} is not a primitive, a bar or the hatch`);
+    assert.match(repeat, /^(no-repeat|repeat)$/, layer);
+    assert.match(op, /^(add|intersect)$/, layer);
+    return { prim: prim ?? (image === HATCH ? "hatch" : "bar"), x: cells(x), y: cells(y), w: cells(w), h: cells(h), repeat, op };
+  });
+}
+
+/** The cells of the 48 × 32 frame a layer list covers, composited bottom up
+ *  as a browser does: 1 where the mask is opaque. */
+function cover(list) {
+  const L = layers(list);
+  const draw = ({ prim, x, y, w, h, repeat }) => {
+    const out = new Uint8Array(FRAME.w * FRAME.h);
+    for (let j = 0; j < FRAME.h; j++) for (let i = 0; i < FRAME.w; i++) {
+      let u = i - x, v = j - y;
+      if (repeat === "repeat") { u = ((u % w) + w) % w; v = ((v % h) + h) % h; } else if (u < 0 || v < 0 || u >= w || v >= h) continue;
+      if (prim === "bar") out[j * FRAME.w + i] = 1;
+      else if (prim === "hatch") out[j * FRAME.w + i] = v % 2 === 0 ? 1 : 0;
+      else {
+        const g = posterPrimitive(prim);
+        out[j * FRAME.w + i] = g.on[Math.floor((v * g.rows) / h) * g.cols + Math.floor((u * g.cols) / w)];
+      }
+    }
+    return out;
+  };
+  let acc = draw(L.at(-1));
+  for (const l of L.slice(0, -1).reverse()) {
+    const d = draw(l);
+    acc = acc.map((a, k) => (l.op === "intersect" ? a & d[k] : a | d[k]));
+  }
+  return acc;
+}
+
+/** Every composition's two layer lists: the bare poster's from the base
+ *  rules' fallbacks, each variant's from its one rule. */
+function compositions() {
+  const fallback = (pseudo, v) => {
+    const body = rulesNaming("sl-art-poster", pseudo).filter((r) => r.selector === `.sl-art-poster::${pseudo}`).map((r) => r.body).join(";");
+    const m = body.match(new RegExp(`(?:^|;)\\s*mask:\\s*var\\(${v},([\\s\\S]*)\\)\\s*(;|$)`));
+    assert.ok(m, `.sl-art-poster::${pseudo} does not read ${v} with the bare composition as its fallback`);
+    return m[1];
+  };
+  const out = { "sl-art-poster": { accent: fallback("before", "--_sl-art-poster-accent"), ink: fallback("after", "--_sl-art-poster-ink") } };
+  for (const mod of POSTER_MODIFIERS) {
+    const d = Object.fromEntries(rulesNaming(mod, "before")[0].body.split(";").map((x) => x.trim()).filter(Boolean).map((x) => [x.slice(0, x.indexOf(":")).trim(), x.slice(x.indexOf(":") + 1).trim()]));
+    out[mod] = { accent: d["--_sl-art-poster-accent"], ink: d["--_sl-art-poster-ink"] };
+  }
+  return out;
+}
+
+test("a poster variant only names its two layer lists, on both pseudo-elements", () => {
+  for (const mod of POSTER_MODIFIERS) {
+    assert.deepEqual(rulesNaming(mod, null), [], `${mod} styles its host`);
+    const rules = rulesNaming(mod, "before");
+    assert.equal(rules.length, 1, `${mod} has ${rules.length} rules`);
+    assert.deepEqual(splitList(rules[0].selector), [`.${mod}::before`, `.${mod}::after`], mod);
+    assert.equal(css.split(`.${mod}`).length - 1, 2, `${mod} is named outside its one rule`);
+    const decls = rules[0].body.split(";").map((d) => d.trim()).filter(Boolean).map((d) => d.slice(0, d.indexOf(":")).trim());
+    assert.deepEqual(decls, ["--_sl-art-poster-accent", "--_sl-art-poster-ink"], mod);
+  }
+  const base = rulesNaming("sl-art-poster", null).concat(rulesNaming("sl-art-poster", "before"), rulesNaming("sl-art-poster", "after")).map((r) => r.body).join(";");
+  assert.doesNotMatch(base, /(?:^|;)\s*--_sl-art-poster-(accent|ink)\s*:/, "the base declares a variant's list");
+});
+
+test("the poster's cell is the box's width over 48, a whole px, and the frame is 48 × 32 cells on whole px", () => {
+  const shared = rulesNaming("sl-art-poster", "before").find((r) => /::after/.test(r.selector) && /::before/.test(r.selector));
+  assert.ok(shared, "no rule shared by both pseudo-elements");
+  const d = Object.fromEntries(shared.body.split(";").map((x) => x.trim()).filter(Boolean).map((x) => [x.slice(0, x.indexOf(":")).trim(), x.slice(x.indexOf(":") + 1).trim()]));
+  assert.equal(d["--_sl-art-u"], `max(${CELL_PX}px, round(down, 100cqi / ${FRAME.w}, 1px))`);
+  assert.equal(d.width, `calc(${FRAME.w} * var(--_sl-art-u))`);
+  assert.equal(d.height, `calc(${FRAME.h} * var(--_sl-art-u))`);
+  assert.equal(d.left, `round(down, (100% - ${FRAME.w} * var(--_sl-art-u)) / 2, 1px)`);
+  assert.equal(d.top, `round(down, (100% - ${FRAME.h} * var(--_sl-art-u)) / 2, 1px)`);
+  assert.equal(d["pointer-events"], "none");
+  const host = rulesNaming("sl-art-poster", null).map((r) => r.body).join(";");
+  for (const decl of [/position:\s*relative/, /isolation:\s*isolate/, /container-type:\s*inline-size/, /pointer-events:\s*none/]) assert.match(host, decl);
+  assert.ok(rulesNaming("sl-art-poster", null).every((r) => r.selector.startsWith(":where(")), "the host's rules are not at zero specificity");
+});
+
+test("every poster layer lands on whole cells, and every primitive keeps whole cells", () => {
+  for (const [name, comp] of Object.entries(compositions())) for (const [side, list] of Object.entries(comp)) {
+    const L = layers(list);
+    const tones = L.filter((l) => l.op === "intersect");
+    assert.ok(tones.length <= 1, `${name} ${side}: more than one tone`);
+    for (const l of L) {
+      if (l.op === "intersect") {
+        assert.deepEqual([l.prim.startsWith("tone"), l.x, l.y, l.w, l.h, l.repeat], [true, 0, 0, 2, 2, "repeat"], `${name} ${side}: a tone is a 2 × 2 tile from the frame's origin`);
+        assert.equal(L.indexOf(l), L.length - 2, `${name} ${side}: a tone must sit on its region, the last layer`);
+        continue;
+      }
+      assert.equal(l.repeat, "no-repeat", `${name} ${side}: ${l.prim} repeats`);
+      assert.ok(!l.prim.startsWith("tone"), `${name} ${side}: a tone outside an intersect`);
+      if (l.prim in POSTER) {
+        const { cols, rows } = POSTER[l.prim];
+        assert.ok(l.w % cols === 0 && l.h % rows === 0 && l.w / cols === l.h / rows, `${name} ${side}: ${l.prim} at ${l.w} × ${l.h} is not a whole multiple of its ${cols} × ${rows} cells`);
+      }
+    }
+    assert.ok(L.some((l) => l.x < FRAME.w && l.y < FRAME.h && l.x + l.w > 0 && l.y + l.h > 0), `${name} ${side}: nothing in the frame`);
+  }
+});
+
+test("the poster's compositions differ, each asymmetric, its accent and ink apart", () => {
+  const all = Object.entries(compositions()).map(([name, c]) => ({ name, accent: cover(c.accent), ink: cover(c.ink) }));
+  assert.equal(all.length, 4);
+  const n = FRAME.w * FRAME.h;
+  for (const c of all) {
+    const lit = (g) => g.reduce((a, v) => a + v, 0);
+    assert.ok(lit(c.accent) >= n * 0.05, `${c.name}: the accent covers ${lit(c.accent)} cells`);
+    assert.ok(lit(c.ink) >= n * 0.1, `${c.name}: the ink covers ${lit(c.ink)} cells`);
+    // Ink at 75% over the accent tints it: the two never overlap.
+    assert.equal(c.accent.reduce((a, v, k) => a + (v & c.ink[k]), 0), 0, `${c.name}: accent and ink overlap`);
+    // Bauhaus balance is asymmetric: the mirror of a composition is another.
+    const both = c.accent.map((v, k) => v * 2 + c.ink[k]);
+    const flip = (g, f) => g.reduce((a, v, k) => a + (v !== g[f(k)]), 0);
+    const lr = flip(both, (k) => Math.floor(k / FRAME.w) * FRAME.w + (FRAME.w - 1 - (k % FRAME.w)));
+    const tb = flip(both, (k) => (FRAME.h - 1 - Math.floor(k / FRAME.w)) * FRAME.w + (k % FRAME.w));
+    assert.ok(lr >= n * 0.2 && tb >= n * 0.2, `${c.name} is near symmetric: ${lr} and ${tb} cells change in a mirror`);
+  }
+  for (const [i, a] of all.entries()) for (const b of all.slice(i + 1)) {
+    const d = a.accent.reduce((s, v, k) => s + (v !== b.accent[k]) + (a.ink[k] !== b.ink[k]), 0);
+    assert.ok(d >= n * 0.3, `${a.name} and ${b.name} differ in ${d} of ${n} cells`);
+  }
+});
+
+test("the showcase shows every poster beside a head", () => {
+  const html = readFileSync(resolve(REPO, "showcase/index.html"), "utf8");
+  const cell = html.match(/<div class="[^"]*" data-art-posters>([\s\S]*?)(?=<div class="[^"]*" data-art-ground=)/)?.[1] ?? "";
+  assert.ok(cell, "the Art section has no posters cell before its grounds");
+  const posters = [...cell.matchAll(/<div class="([^"]*\bsl-art-poster\b[^"]*)" aria-hidden="true"><\/div>/g)].map((m) => m[1].split(/\s+/));
+  assert.ok(posters.some((c) => c.length === 1), "the bare poster is not shown");
+  for (const mod of POSTER_MODIFIERS) assert.ok(posters.some((c) => c.includes(mod)), `${mod} is not shown`);
+  assert.match(cell, /<h[12]\b/, "no head beside the posters");
+});
+

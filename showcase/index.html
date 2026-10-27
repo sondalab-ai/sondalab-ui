@@ -263,6 +263,10 @@
     .art-fields .sl-art-field { min-height: 12rem; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
     .art-fields h3 { font-size: 1.05rem; margin: 0; }
     .art-fields p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
+    .art-heads { display: grid; grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr)); gap: 1rem; }
+    .art-head { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: center; padding: 1.2rem 1.3rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
+    .art-head h2 { font-size: 1.5rem; margin: 0.4rem 0; }
+    .art-head p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
     /* The field ground: the hero's glow field with no scrim, so nothing flattens
        it; at half strength, so the page's own text stays readable over its peaks. */
     .art-on-field { position: relative; overflow: hidden; }
@@ -1074,7 +1078,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
     <section id="art">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">07</span><h2>Art</h2></div>
-        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b> (with three more tiles: <b>--grid</b>, <b>--albers</b>, <b>--stripes</b>, and three fades: <b>--fade-start</b>, <b>--fade-end</b>, <b>--fade-down</b>), <b>sl-empty--void</b> and <b>sl-empty--shapes</b>. Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. The field's tiles and fades come first, side by side; then each piece sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
+        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b> (with three more tiles: <b>--grid</b>, <b>--albers</b>, <b>--stripes</b>, and three fades: <b>--fade-start</b>, <b>--fade-end</b>, <b>--fade-down</b>), <b>sl-empty--void</b>, <b>sl-empty--shapes</b> and <b>sl-art-poster</b> (a composition beside a page head, with three more: <b>--orbit</b>, <b>--stair</b>, <b>--bleed</b>). Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. The field's tiles and fades come first, side by side, then the posters beside their heads; then each piece sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
         <div class="gallery">
           <div class="g-cell g-cell--wide" data-art-fields>
             <span class="g-label">the fields &middot; four tiles, three fades, one tone</span>
@@ -1113,6 +1117,43 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <div class="sl-eyebrow">--albers --fade-down</div>
                 <h3>Strongest at the top</h3>
                 <p>The squares sink away under the paragraph.</p>
+              </div>
+            </div>
+          </div>
+          <div class="g-cell g-cell--wide" data-art-posters>
+            <span class="g-label">the posters &middot; four compositions, each beside its head, never under it</span>
+            <div class="art-heads">
+              <div class="art-head">
+                <div>
+                  <div class="sl-eyebrow sl-eyebrow--mark">Product</div>
+                  <h2>Everything measured</h2>
+                  <p>The bare poster: a horizon, the accent disc beside a post and a dithered block.</p>
+                </div>
+                <div class="sl-art-poster" aria-hidden="true"></div>
+              </div>
+              <div class="art-head">
+                <div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">Blog</div>
+                  <h2>Notes from the lab</h2>
+                  <p>--orbit: circles, a dithered disc and a solid dot round the accent, crossed lines.</p>
+                </div>
+                <div class="sl-art-poster sl-art-poster--orbit" aria-hidden="true"></div>
+              </div>
+              <div class="art-head">
+                <div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">Design system</div>
+                  <h2>One kit, every surface</h2>
+                  <p>--stair: the accent quarter disc against a stair of blocks under a sparse tone.</p>
+                </div>
+                <div class="sl-art-poster sl-art-poster--stair" aria-hidden="true"></div>
+              </div>
+              <div class="art-head">
+                <div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">Apparel</div>
+                  <h2>Wear the grid</h2>
+                  <p>--bleed: a large accent arc cut by the corner, a triangle, a hatch and a dithered dot.</p>
+                </div>
+                <div class="sl-art-poster sl-art-poster--bleed" aria-hidden="true"></div>
               </div>
             </div>
           </div>
@@ -1158,6 +1199,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <p class="sl-empty__title">No results</p>
                   <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
                 </div>
+                <div class="sl-art-poster" aria-hidden="true"></div>
               </div>
             </div>
           </div>
@@ -1204,6 +1246,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <p class="sl-empty__title">No results</p>
                   <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
                 </div>
+                <div class="sl-art-poster sl-art-poster--orbit" aria-hidden="true"></div>
               </div>
             </div>
           </div>
@@ -1250,6 +1293,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <p class="sl-empty__title">No results</p>
                   <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
                 </div>
+                <div class="sl-art-poster sl-art-poster--bleed" aria-hidden="true"></div>
               </div>
             </div>
             </div>
