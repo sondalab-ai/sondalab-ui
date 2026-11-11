@@ -22,9 +22,14 @@ work published in 1925 or before is in the public domain, which covers three of
 the four; Several Circles is from 1926, and a work published that year entered
 the public domain there on 1 January 2022.
 
-These dates were not checked against the licence tag on each Commons page
-when the files were added (2026-11-11). Check the four pages before a
-release that must rely on them.
+Checked on 2026-11-11 through the Commons API (`prop=imageinfo`,
+`iiprop=extmetadata`): each of the four files reports the licence "Public
+domain" and "Copyrighted: False", and carries the tags `PD-Art
+(PD-old-auto-expired)` and `PD-old-80-expired`. The tags say that the author
+died more than 80 years ago and that the United States term has expired, and
+that a faithful photograph of a two-dimensional public-domain work gets no
+copyright of its own. A tag on Commons is a volunteer's statement, not legal
+advice.
 
 ## How a file was made
 
