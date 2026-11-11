@@ -3,7 +3,8 @@
    components.css as SVG data URIs between the two markers below. Ported
    from the probe lab/art-bauhaus.html. A mask carries alpha only (the SVG
    default black fill); the colour is painted by the hand rules from role
-   vars, so a mask can never carry a theme.
+   vars, so a mask can never carry a theme. The posters (0.44) are the
+   exception: an 8-bit colour image and an ink mask each, see POSTERS.
 
      node scripts/gen-art.mjs           rewrite the generated block
      node scripts/gen-art.mjs --check   exit 1 when the committed block differs */
@@ -11,9 +12,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { CELL_PX, bayerAt } from "../packages/ui-kit/dither-core.js";
+import { png } from "./lib/png.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CSS_PATH = resolve(HERE, "../packages/ui-kit/components.css");
+const SOURCES = resolve(HERE, "art-sources");
 export const START = "/* @gen-art:start */";
 export const END = "/* @gen-art:end */";
 
@@ -40,7 +43,7 @@ export const voidThreshold = (zone) => (voidImage(zone).w + 2 * PITCH) * CELL_PX
  *  approved. Pieces that never sit under text keep them at full paint. */
 export const TONES = {
   mark: { disc: 1, bar: 1 },
-  shapes: { first: 1, rest: 0.5, fade: 0.8 },
+  shapes: 1,
   weave: [0.75, 0.45, 0.2, 0.45],
   empty: { circle: 0.5, square: 1, triangle: 0.25 },
 };
@@ -125,16 +128,17 @@ export function glyph(name) {
   return shade(g, ink, TONES.mark.bar);
 }
 
-/** The shapes rule: quarter disc, square, triangle every 8 cells, the first
- *  in the accent (cells 0-3), the rest fading out along the strip. */
-function shapes() {
-  const cols = 96, g = grid(cols, 4);
-  for (let k = 0; k * 8 < cols; k++) {
-    const x = k * 8, { first, rest, fade } = TONES.shapes;
-    const tone = k === 0 ? first : rest * (1 - (x / cols) * fade);
-    const form = [quarter(x, 4, 4, 1, -1), rect(x, 0, 4, 4), tri(x, 0, 4)][k % 3];
-    shade(g, form, tone);
-  }
+/** The side of one form of the shapes rule, in cells: 18px. At 4 cells
+ *  (12px) the owner found the forms too small (2026-11-11). */
+export const SHAPE_CELLS = 6;
+
+/** The shapes rule: a quarter disc, a square and a triangle, each whole and
+ *  one form's side apart. The first sits in the accent; past the third the
+ *  hand rule draws the hairline. Until 0.44 the strip was twelve forms, each
+ *  later one dithered thinner, and its tail read as stray pixels. */
+export function shapes() {
+  const S = SHAPE_CELLS, g = grid(5 * S, S);
+  for (const form of [quarter(0, S, S, 1, -1), rect(2 * S, 0, S, S), tri(4 * S, 0, S)]) shade(g, form, TONES.shapes);
   return g;
 }
 
@@ -171,6 +175,21 @@ export const FIELDS = {
   albers: { cells: 32, draw: albers },
   stripes: { cells: 32, draw: stripes },
 };
+
+/** The dissolves a field recedes through (0.44): a band that goes from
+ *  empty to solid through the matrix, so every cell is on or off and none is
+ *  grey. `in` is solid at its far end, `out` at its near end and `down` at
+ *  its top; each repeats across on one Bayer period. */
+export const DISSOLVE = { in: { cols: 80, rows: 8 }, out: { cols: 80, rows: 8 }, down: { cols: 8, rows: 48 } };
+
+/** One dissolve's grid. The tone is the squared distance from the empty
+ *  end, so the first third stays almost clear for the copy, and it passes 1
+ *  just before the solid end. */
+export function dissolve(name) {
+  const { cols, rows } = DISSOLVE[name];
+  const along = { in: (x) => x / cols, out: (x) => 1 - x / cols, down: (x, y) => 1 - y / rows }[name];
+  return shade(grid(cols, rows), () => true, (x, y) => along(x, y) ** 2 * 1.05);
+}
 
 /** One field drawn on cols × rows cells: its tile by default. */
 export const field = (name, cols = FIELDS[name].cells, rows = cols) => FIELDS[name].draw(grid(cols, rows));
@@ -274,38 +293,146 @@ function empty() {
   return shade(g, tri(24, 6, 12), TONES.empty.triangle);
 }
 
-/** The poster's primitives: a few shapes the CSS places, sizes and repeats
- *  as mask layers, so a composition costs layers, not an image. The solids
- *  are drawn once at a moderate size; a bar or a block is a gradient in the
- *  CSS, and the tones are 2 × 2 tiles of the matrix (its 50% and 25%
- *  levels repeat every two cells) that the CSS intersects with a region. */
-export const POSTER = {
-  disc: { cols: 24, rows: 24, inside: circle(12, 12, 12), tone: 1 },
-  dot: { cols: 12, rows: 12, inside: circle(6, 6, 6), tone: 1 },
-  quarter: { cols: 24, rows: 24, inside: quarter(0, 24, 24, 1, -1), tone: 1 },
-  tri: { cols: 24, rows: 24, inside: tri(0, 0, 24), tone: 1 },
-  tone: { cols: 2, rows: 2, inside: () => true, tone: 0.5 },
-  "tone-light": { cols: 2, rows: 2, inside: () => true, tone: 0.25 },
+/* ── THE POSTERS (0.44, owner 2026-11-11) ────────────────────────────────
+   Four paintings by Wassily Kandinsky from his Bauhaus years, each made a
+   mark that blends into the page: the painting's own ground is transparent,
+   so the page shows through, and the edges dissolve, so the piece has no
+   frame. A form keeps its colour, which is why a poster is the art's
+   exception to two rules: its cell is 2px at the design size (126 cells
+   across 252px), and its colours are a fixed house palette. Every cell is
+   still on or off.
+
+   The pipeline, per poster:
+     1. the vendored source (scripts/art-sources/<source>.bmp), already
+        cropped to the frame and reduced to one pixel per cell;
+     2. the ground: the median colour of a border three cells deep. A cell
+        is part of a form by its distance from that colour in OKLab; a
+        narrow band at a form's rim dithers, the rest is solid;
+     3. the dissolve: nothing on the frame's border, everything 16 cells in
+        (12 from the top and the bottom), through the Bayer matrix;
+     4. the colour: a cell's colour is graded, then it takes ONE palette
+        entry. The two entries that best bracket it are found in OKLab, and
+        the matrix picks between them;
+     5. two outputs. The colour cells are an indexed PNG with a transparent
+        ground, from scripts/lib/png.mjs (the same bytes on every machine).
+        The cells of the darkest entry are not in it: they are a mask the
+        page's own text colour paints, so a black line is dark on a light
+        ground and light on a dark one. */
+
+/** The poster frame, in cells: a golden rectangle (126 / 78 = 1.615). */
+export const POSTER_COLS = 126, POSTER_ROWS = 78;
+
+/** The house palette of every poster: a cream, pastels, vivid inks. */
+export const PRINT_PALETTE = ["#FBEBD8", "#FFFFFF", "#FFC9A8", "#FF8FA3", "#FF5A36", "#FFC93C", "#9FE3C4", "#58E6B5", "#BFD4FF", "#B8A9FF", "#3D6BFF", "#2743B8"];
+/** What a dark cell is matched against. It is never painted: the cells
+ *  that land on it are the ink mask. POSTER_INK is their cell value. */
+const DARK = "#1E1B3A";
+export const POSTER_INK = PRINT_PALETTE.length;
+
+/** The posters: the vendored source of each and the painting it is. `cut`
+ *  is how far from the ground a cell must be to count as a form, as a share
+ *  of the painting's own range; a painting with a soft coloured ground
+ *  needs a higher one, or it keeps a haze. */
+export const POSTERS = {
+  composition: { source: "comp8", title: "Composition 8", year: 1923, cut: 0.1 },
+  circles: { source: "circles", title: "Several Circles", year: 1926, cut: 0.1 },
+  primary: { source: "yrb", title: "Yellow-Red-Blue", year: 1925, cut: 0.36 },
+  orbit: { source: "incircle", title: "Circles in a Circle", year: 1923, cut: 0.1 },
 };
 
-/** One poster primitive's grid. */
-export function posterPrimitive(name) {
-  const { cols, rows, inside, tone } = POSTER[name];
-  return shade(grid(cols, rows), inside, tone);
+const rgbOf = (hex) => [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
+const toLinear = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+/** sRGB bytes as OKLab, where a distance is close to a seen difference. */
+function oklab([r, g, b]) {
+  const R = toLinear(r), G = toLinear(g), B = toLinear(b);
+  const l = Math.cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B), m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B), s = Math.cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B);
+  return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
 }
 
-/** The generated block, markers included: one :root rule of mask URIs. */
+/** A vendored source: a 24-bit BMP of the frame's size, as RGB rows from
+ *  the top. A BMP stores its rows bottom-up, padded to 4 bytes, in BGR. */
+function source(name) {
+  const file = readFileSync(resolve(SOURCES, `${name}.bmp`)), at = file.readUInt32LE(10), w = file.readInt32LE(18), h = file.readInt32LE(22);
+  if (w !== POSTER_COLS || h !== POSTER_ROWS || file.readUInt16LE(28) !== 24) throw new Error(`gen-art: ${name}.bmp is not ${POSTER_COLS} × ${POSTER_ROWS} at 24 bits`);
+  const row = Math.ceil((w * 3) / 4) * 4, rgb = new Uint8Array(w * h * 3);
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) for (let c = 0; c < 3; c++) rgb[(j * w + i) * 3 + c] = file[at + (h - 1 - j) * row + i * 3 + 2 - c];
+  return rgb;
+}
+
+const GRADE = { contrast: 1.15, chroma: 1.4 };
+/** How deep the dissolve is, in cells, from the sides and from the top and
+ *  the bottom; and the share of a painting's cells taken as its range. */
+const DISSOLVE_IN = { x: 16, y: 12 }, RANGE = 0.97, RIM = 0.14;
+const cellsOf = new Map();
+
+/**
+ * One poster as a value per cell: -1 where the page shows, 0..11 a palette
+ * entry, POSTER_INK where the page's text colour paints. See the pipeline
+ * above.
+ * @param {string} name a key of POSTERS @returns {Int8Array}
+ */
+export function posterCells(name) {
+  if (cellsOf.has(name)) return cellsOf.get(name);
+  const src = source(POSTERS[name].source), n = POSTER_COLS * POSTER_ROWS;
+  const lab = Array.from({ length: n }, (_, k) => oklab([src[k * 3], src[k * 3 + 1], src[k * 3 + 2]]));
+  const border = lab.filter((_, k) => { const i = k % POSTER_COLS, j = Math.floor(k / POSTER_COLS); return i < 3 || j < 3 || i >= POSTER_COLS - 3 || j >= POSTER_ROWS - 3; });
+  const ground = [0, 1, 2].map((c) => border.map((v) => v[c]).sort((a, b) => a - b)[border.length >> 1]);
+  const far = lab.map((v) => Math.hypot(v[0] - ground[0], v[1] - ground[1], v[2] - ground[2]));
+  const range = far.slice().sort((a, b) => a - b)[Math.floor(n * RANGE)];
+  const pal = [...PRINT_PALETTE, DARK].map(rgbOf).map(oklab), out = new Int8Array(n).fill(-1);
+  for (let j = 0; j < POSTER_ROWS; j++) for (let i = 0; i < POSTER_COLS; i++) {
+    const k = j * POSTER_COLS + i;
+    const form = Math.min(1, Math.max(0, (far[k] / range - POSTERS[name].cut) / RIM));
+    const fade = Math.min(1, Math.min(i, POSTER_COLS - 1 - i) / DISSOLVE_IN.x, Math.min(j, POSTER_ROWS - 1 - j) / DISSOLVE_IN.y);
+    if (form * fade ** 0.8 <= bayerAt(i, j)) continue;
+    const grey = 0.299 * src[k * 3] + 0.587 * src[k * 3 + 1] + 0.114 * src[k * 3 + 2];
+    const c = oklab([0, 1, 2].map((ch) => Math.min(255, Math.max(0, (grey + (src[k * 3 + ch] - grey) * GRADE.chroma - 128) * GRADE.contrast + 128))));
+    // Among all pairs of entries, the one whose segment passes nearest the
+    // cell; a long segment pays a little, so two near colours are preferred.
+    let best = null;
+    for (let a = 0; a < pal.length; a++) for (let b = a; b < pal.length; b++) {
+      const A = pal[a], d = [pal[b][0] - A[0], pal[b][1] - A[1], pal[b][2] - A[2]], len = d[0] ** 2 + d[1] ** 2 + d[2] ** 2;
+      const t = len ? Math.min(1, Math.max(0, ((c[0] - A[0]) * d[0] + (c[1] - A[1]) * d[1] + (c[2] - A[2]) * d[2]) / len)) : 0;
+      const miss = (c[0] - A[0] - t * d[0]) ** 2 + (c[1] - A[1] - t * d[1]) ** 2 + (c[2] - A[2] - t * d[2]) ** 2 + len * 0.08;
+      if (!best || miss < best.miss) best = { miss, a, b, t };
+    }
+    out[k] = best.t > bayerAt(i, j) ? best.b : best.a;
+  }
+  cellsOf.set(name, out);
+  return out;
+}
+
+/** One poster's colour cells as an indexed PNG: entry 0 is the transparent
+ *  ground, then the house palette. An ink cell is transparent here. */
+export function posterPng(name) {
+  const cells = posterCells(name);
+  return png(Uint8Array.from(cells, (v) => (v < 0 || v === POSTER_INK ? 0 : v + 1)), [[0, 0, 0], ...PRINT_PALETTE.map(rgbOf)], POSTER_COLS, POSTER_ROWS, true);
+}
+
+/** One poster's ink cells as a mask for the page's text colour: a 1-bit
+ *  PNG, opaque where the ink is. As an SVG path its scattered cells cost
+ *  about 7 KB a poster; as an image, a few hundred bytes. */
+export function posterInkPng(name) {
+  return png(Uint8Array.from(posterCells(name), (v) => (v === POSTER_INK ? 1 : 0)), [[0, 0, 0], [0, 0, 0]], POSTER_COLS, POSTER_ROWS, true);
+}
+
+/** The generated block, markers included: one :root rule of mask URIs,
+ *  and each poster as a PNG data URI with the mask of its ink. */
 export function block() {
   const masks = [
     ...Object.keys(GLYPHS).map((k) => [k === "mark" ? "mark" : `mark-${k}`, glyph(k)]),
     ["shapes", shapes()], ["weave", weave()], ["corner", corner()],
     ...Object.keys(FIELDS).map((k) => [k === "truchet" ? "truchet" : `field-${k}`, field(k)]),
+    ...Object.keys(DISSOLVE).map((k) => [`dissolve-${k}`, dissolve(k)]),
     ["molnar", molnar()],
     ["void-s", voidStep(VOID.s)], ["void-m", voidStep(VOID.m)], ["void-l", voidStep(VOID.l)],
     ["empty", empty()],
-    ...Object.keys(POSTER).map((k) => [`poster-${k}`, posterPrimitive(k)]),
   ];
   const lines = masks.map(([name, g]) => `  --sl-art-${name}: ${uri(svg(g))};`);
+  for (const k of Object.keys(POSTERS)) {
+    lines.push(`  --sl-art-poster-${k}: url('data:image/png;base64,${Buffer.from(posterPng(k)).toString("base64")}');`);
+    lines.push(`  --sl-art-poster-${k}-ink: url('data:image/png;base64,${Buffer.from(posterInkPng(k)).toString("base64")}');`);
+  }
   return `${START}\n/* GENERATED by scripts/gen-art.mjs from dither-core.js -- do not edit. Run \`npm run gen:art\`. */\n:root {\n${lines.join("\n")}\n}\n${END}`;
 }
 
