@@ -182,3 +182,31 @@ test("light paints no spectrum: every effect colour resolves as if the spectrum 
     }
   }
 });
+
+// The run light's tail (owner, 2026-11-11, lab/run-light-paper, pick A). The
+// depth companion as declared is dark on the light theme, and a dark colour
+// at an alpha over paper darkens it: the tail read as a smear, not as light.
+// The tail keeps the companion's hue with its lightness floored at 0.76, and
+// pays the lift in chroma, capped where sRGB still holds it.
+test("the run light's tail is a light on every theme, inside sRGB, in the companion's hue", () => {
+  const registry = JSON.parse(readFileSync(resolve(KIT, "agent/accent-registry.json"), "utf8")).products;
+  const cascade = declarations(effects, [":root", "[data-sl-fx-live]"]);
+  for (const theme of ["light", "dark"]) {
+    // Every colour a depth companion can be: the theme's own, and each
+    // registered accent, which is the companion of a product that declares none.
+    const sources = [THEMES[theme].get("--sl-accent-depth"), ...Object.values(registry).map((p) => p[theme]).filter(Boolean)];
+    for (const source of sources) {
+      const e = new Map(THEMES[theme]);
+      e.set("--sl-accent-depth", source);
+      for (const [k, v] of cascade) e.set(k, v);
+      const tail = evaluate("var(--slfx-light-b)", e);
+      const [l, c, h] = toOklch(tail);
+      const [l0, c0, h0] = toOklch(fromHex(source));
+      const at = `${theme} ${source}`;
+      assert.ok(gamutExcess(tail) <= GAMUT_TOLERANCE, `${at}: outside sRGB by ${gamutExcess(tail)}`);
+      assert.ok(Math.abs(l - Math.max(l0, 0.76)) < 1e-3, `${at}: L ${l} is the companion's, floored at 0.76`);
+      assert.ok(c <= 0.11 + 1e-3 && c >= Math.min(c0, 0.11) - 1e-3, `${at}: chroma ${c} from ${c0}`);
+      assert.ok(Math.abs(((h - h0 + 540) % 360) - 180) < 0.5, `${at}: hue ${h} from ${h0}`);
+    }
+  }
+});

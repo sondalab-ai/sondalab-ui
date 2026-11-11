@@ -60,10 +60,17 @@
    depth companion, on every theme. On light they were two spectrum stops
    until the spectrum stopped painting effects (owner, 2026-10-02). Declared
    on the live host, not on :root, so a subtree that re-sets --slc-accent
-   gets its own. */
+   gets its own.
+   THE TAIL IS A LIGHT (owner, 2026-11-11, lab/run-light-paper, pick A). The
+   companion as declared is dark on the light theme, and a dark colour at an
+   alpha over paper darkens it: the tail read as a smear. It keeps the
+   companion's hue with its lightness floored at 0.76; the lift is paid in
+   chroma, capped at 0.11, which sRGB holds at that lightness for every
+   registered hue (effects-gamut.test.mjs). No theme branch: on ink the
+   companion is already near the floor. */
 [data-sl-fx-live] {
   --slfx-light-a: var(--slc-accent, var(--sl-accent-default));
-  --slfx-light-b: var(--slfx-depth);
+  --slfx-light-b: oklch(from var(--slfx-depth) max(l, 0.76) min(calc(c * 1.2), 0.11) h);
 }
 
 :root {

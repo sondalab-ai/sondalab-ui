@@ -983,7 +983,9 @@ test("effects.css reads no spectrum token", () => {
 
 test("the run light, the press light and glitch take the accent and its depth companion", () => {
   assert.match(effects, /--slfx-light-a:\s*var\(--slc-accent, var\(--sl-accent-default\)\);/);
-  assert.match(effects, /--slfx-light-b:\s*var\(--slfx-depth\);/);
+  // The tail is the depth companion's hue, floored in lightness (owner,
+  // 2026-11-11, lab/run-light-paper, pick A): see effects-gamut.test.mjs.
+  assert.match(effects, /--slfx-light-b:\s*oklch\(from var\(--slfx-depth\) max\(l, 0\.76\) min\(calc\(c \* 1\.2\), 0\.11\) h\);/);
   assert.match(effects, /--slfx-press-light:[^;]*82%, var\(--slc-accent, var\(--sl-accent-default\)\)\);/);
   const channel = (side) => RULES.find((r) => r.selector === `.sl-fx-glitch.is-glitching::${side}`)?.body ?? "";
   assert.match(channel("before"), /color:\s*var\(--slc-accent, var\(--sl-accent-default\)\)/);
