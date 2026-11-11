@@ -439,6 +439,27 @@ test("every curtain measurement is a fraction of one pitch", () => {
   }
 });
 
+test("the curtains are the accent and its depth companion, low in the pane, on every theme", () => {
+  // Owner, 2026-11-11 (lab/curtains-next, pick A "horizon"): white curtains on
+  // ink read as grey smudges behind the copy, and the ink curtains on paper
+  // read as dirt. Sheet A is the accent, sheet B its depth companion, and the
+  // light takes its contrast from colour, so one binding serves ink and paper.
+  const bind = blockAt(css, css.lastIndexOf("{", css.indexOf("--slfx-pillar-a:")) - 1);
+  assert.match(bind, /--slfx-pillar-a:\s*var\(--slfx-accent-vivid, var\(--slc-accent, var\(--sl-accent-default\)\)\);/, "sheet A is the accent");
+  assert.match(bind, /--slfx-pillar-b:\s*var\(--slfx-depth\);/, "sheet B is the depth companion");
+  assert.equal(css.split("--slfx-pillar-a:").length, 2, "bound once: no theme re-binds the curtains");
+  assert.doesNotMatch(css, /\[data-sl-theme[^{]*data-sl-fx-pillars/, "and no curtain rule branches on the theme");
+  assert.doesNotMatch(pillarsPaint + bind, /--slfx-glint|--slc-text/, "neither the white pole nor the ink paints a curtain");
+  // The fade ends at 62% of the sheet, so the title and the first lines of
+  // the copy sit on clean glass. The old fade ran to the top of the pane.
+  const fades = [...bind.matchAll(/linear-gradient\(to top, black 0%, black (\d+)%, transparent (\d+)%\)/g)];
+  assert.equal(fades.length, 2, "the prefixed mask and the standard one");
+  for (const [, hold, end] of fades) {
+    assert.equal(hold, "10", "full strength only at the foot");
+    assert.equal(end, "62", "gone before the copy");
+  }
+});
+
 test("a page that never mounts keeps the pattern it was fitted with", () => {
   // The pitch comes from seatGlow(), so Tier 0 has to carry the measured value
   // itself or a consumer without JS loses the curtains' shape entirely.

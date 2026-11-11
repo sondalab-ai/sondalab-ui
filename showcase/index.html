@@ -263,8 +263,8 @@
     .art-fields .sl-art-field { min-height: 12rem; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
     .art-fields h3 { font-size: 1.05rem; margin: 0; }
     .art-fields p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
-    .art-heads { display: grid; grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr)); gap: 1rem; }
-    .art-head { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: center; padding: 1.2rem 1.3rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
+    .art-heads { display: grid; grid-template-columns: repeat(auto-fill, minmax(34rem, 1fr)); gap: 1rem; }
+    .art-head { display: grid; grid-template-columns: 1fr 252px; gap: 1.2rem; align-items: center; padding: 1.2rem 1.3rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
     .art-head h2 { font-size: 1.5rem; margin: 0.4rem 0; }
     .art-head p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
     /* The field ground: the hero's glow field with no scrim, so nothing flattens
@@ -1127,7 +1127,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark">Product</div>
                   <h2>Everything measured</h2>
-                  <p>The bare poster: a horizon, the accent disc beside a post and a dithered block.</p>
+                  <p>The bare poster: Kandinsky, Composition 8, 1923. Its ground is the card.</p>
                 </div>
                 <div class="sl-art-poster" aria-hidden="true"></div>
               </div>
@@ -1135,25 +1135,25 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">Blog</div>
                   <h2>Notes from the lab</h2>
-                  <p>--orbit: circles, a dithered disc and a solid dot round the accent, crossed lines.</p>
+                  <p>--circles: Several Circles, 1926. The dark disc takes the page's ink.</p>
                 </div>
-                <div class="sl-art-poster sl-art-poster--orbit" aria-hidden="true"></div>
+                <div class="sl-art-poster sl-art-poster--circles" aria-hidden="true"></div>
               </div>
               <div class="art-head">
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">Design system</div>
                   <h2>One kit, every surface</h2>
-                  <p>--stair: the accent quarter disc against a stair of blocks under a sparse tone.</p>
+                  <p>--primary: Yellow-Red-Blue, 1925. Its soft ground is cut away.</p>
                 </div>
-                <div class="sl-art-poster sl-art-poster--stair" aria-hidden="true"></div>
+                <div class="sl-art-poster sl-art-poster--primary" aria-hidden="true"></div>
               </div>
               <div class="art-head">
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">Apparel</div>
                   <h2>Wear the grid</h2>
-                  <p>--bleed: a large accent arc cut by the corner, a triangle, a hatch and a dithered dot.</p>
+                  <p>--orbit: Circles in a Circle, 1923. The ring leaves the frame.</p>
                 </div>
-                <div class="sl-art-poster sl-art-poster--bleed" aria-hidden="true"></div>
+                <div class="sl-art-poster sl-art-poster--orbit" aria-hidden="true"></div>
               </div>
             </div>
           </div>
@@ -1165,7 +1165,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <h3>Signal strip</h3>
                 <p>A ramp that thickens along its length, on flat ground.</p>
                 <hr class="sl-rule sl-rule--shapes">
-                <p>The next section starts here; the strip fades along the rule.</p>
+                <p>The next section starts here; three shapes open the rule, then the hairline.</p>
                 <hr class="sl-rule sl-rule--weave">
                 <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
                 <div class="art-marks">
@@ -1212,7 +1212,54 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <h3>Signal strip</h3>
                 <p>A ramp that thickens along its length, over the field.</p>
                 <hr class="sl-rule sl-rule--shapes">
-                <p>The next section starts here; the strip fades along the rule.</p>
+                <p>The next section starts here; three shapes open the rule, then the hairline.</p>
+                <hr class="sl-rule sl-rule--weave">
+                <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <div class="art-marks">
+                  <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">§ 03 — Triangle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                </div>
+              </div>
+              <div>
+                <article class="sl-card sl-art-corner">
+                  <div class="sl-eyebrow">Run 0418</div>
+                  <h3 class="sl-card__title">Latency budget</h3>
+                  <p>p95 held under 120 ms for the full window. Two spikes, both during deploy.</p>
+                </article>
+                <div class="sl-art-field">
+                  <div class="sl-eyebrow">Overview</div>
+                  <h3>Three probes, one session</h3>
+                  <p>The field stays one shape and one tone, so the paragraph keeps the page.</p>
+                </div>
+              </div>
+              <div>
+                <div class="sl-empty sl-empty--void">
+                  <p class="sl-empty__title">Nothing here yet</p>
+                  <p class="sl-empty__body">Start a run and its traces land in this panel.</p>
+                </div>
+                <div class="sl-empty sl-empty--shapes">
+                  <p class="sl-empty__title">No results</p>
+                  <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
+                </div>
+                <div class="sl-art-poster sl-art-poster--circles" aria-hidden="true"></div>
+              </div>
+            </div>
+          </div>
+          <div class="g-cell g-cell--wide" style="padding:0">
+            <div class="sl-invert art-band" data-art-ground="band">
+              <span class="sl-eyebrow">In the band &middot; the pieces paint from the band's own roles</span>
+            <div class="art-row">
+              <div>
+                <div class="sl-eyebrow sl-eyebrow--mark">§ 02 — Signals</div>
+                <h3>Signal strip</h3>
+                <p>A ramp that thickens along its length, in the band.</p>
+                <hr class="sl-rule sl-rule--shapes">
+                <p>The next section starts here; three shapes open the rule, then the hairline.</p>
                 <hr class="sl-rule sl-rule--weave">
                 <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
                 <div class="art-marks">
@@ -1247,53 +1294,6 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
                 </div>
                 <div class="sl-art-poster sl-art-poster--orbit" aria-hidden="true"></div>
-              </div>
-            </div>
-          </div>
-          <div class="g-cell g-cell--wide" style="padding:0">
-            <div class="sl-invert art-band" data-art-ground="band">
-              <span class="sl-eyebrow">In the band &middot; the pieces paint from the band's own roles</span>
-            <div class="art-row">
-              <div>
-                <div class="sl-eyebrow sl-eyebrow--mark">§ 02 — Signals</div>
-                <h3>Signal strip</h3>
-                <p>A ramp that thickens along its length, in the band.</p>
-                <hr class="sl-rule sl-rule--shapes">
-                <p>The next section starts here; the strip fades along the rule.</p>
-                <hr class="sl-rule sl-rule--weave">
-                <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
-                <div class="art-marks">
-                  <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">§ 03 — Triangle</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
-                </div>
-              </div>
-              <div>
-                <article class="sl-card sl-art-corner">
-                  <div class="sl-eyebrow">Run 0418</div>
-                  <h3 class="sl-card__title">Latency budget</h3>
-                  <p>p95 held under 120 ms for the full window. Two spikes, both during deploy.</p>
-                </article>
-                <div class="sl-art-field">
-                  <div class="sl-eyebrow">Overview</div>
-                  <h3>Three probes, one session</h3>
-                  <p>The field stays one shape and one tone, so the paragraph keeps the page.</p>
-                </div>
-              </div>
-              <div>
-                <div class="sl-empty sl-empty--void">
-                  <p class="sl-empty__title">Nothing here yet</p>
-                  <p class="sl-empty__body">Start a run and its traces land in this panel.</p>
-                </div>
-                <div class="sl-empty sl-empty--shapes">
-                  <p class="sl-empty__title">No results</p>
-                  <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
-                </div>
-                <div class="sl-art-poster sl-art-poster--bleed" aria-hidden="true"></div>
               </div>
             </div>
             </div>

@@ -1106,9 +1106,9 @@
         "sl-empty--void",
         "sl-empty--shapes",
         "sl-art-poster",
-        "sl-art-poster--orbit",
-        "sl-art-poster--stair",
-        "sl-art-poster--bleed"
+        "sl-art-poster--circles",
+        "sl-art-poster--primary",
+        "sl-art-poster--orbit"
       ],
       "roleVars": [
         "--slc-text",
