@@ -13,7 +13,7 @@ const KIT = resolve(HERE, "../packages/ui-kit");
    pays it — every runtime export must be declared, and nothing may be declared
    that is not exported. */
 const INTERNAL = new Set(["term-tokens"]);
-const MODULES = ["effects", "goo-field", "geom", "glass-text", "dither-core", "halftone-core", "halftone", "signal", "term", "term-tokens"];
+const MODULES = ["effects", "goo-field", "geom", "glass-text", "dither-core", "halftone-core", "halftone", "signal", "art-core", "art", "term", "term-tokens"];
 
 /** Every name a module exports at runtime. */
 async function runtimeExports(name) {

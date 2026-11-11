@@ -256,8 +256,8 @@
     .art-row p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
     .art-row .sl-art-field { padding: 1.2rem 1.3rem; }
     .art-marks { display: flex; flex-direction: column; gap: 0.6rem; }
-    /* The 4px cell is meant for a larger label, so the pair shows at 0.875rem. */
-    .art-marks__big { --sl-art-mark-cell: 4px; font-size: 0.875rem; }
+    /* The 3px cell is meant for a larger label, so the pair shows at 0.875rem. */
+    .art-marks__big { --sl-art-mark-cell: 3px; font-size: 0.875rem; }
     .art-row .sl-empty--void { min-height: 13rem; }
     .art-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; }
     .art-fields .sl-art-field { min-height: 12rem; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
@@ -267,6 +267,15 @@
     .art-head { display: grid; grid-template-columns: 1fr 252px; gap: 1.2rem; align-items: center; padding: 1.2rem 1.3rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); }
     .art-head h2 { font-size: 1.5rem; margin: 0.4rem 0; }
     .art-head p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
+    .art-seeds { display: grid; grid-template-columns: repeat(auto-fill, 252px); gap: 1rem; margin-top: 0.4rem; }
+    .art-seeds > div { display: flex; flex-direction: column; gap: 0.4rem; }
+    /* The horizon is 200px tall and its top 88px dissolve: the section's own
+       bottom padding keeps the copy above it. */
+    .art-horizons { display: grid; gap: 1rem; }
+    .art-horizons .sl-art-horizon { padding: 1.8rem 2rem 12.5rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); overflow: hidden; }
+    .art-horizons h2 { font-size: 1.7rem; margin: 0.4rem 0; }
+    .art-horizons p { margin: 0; color: var(--slc-text-secondary); font-size: 0.92rem; }
+    .art-row .sl-art-horizon { padding: 1.2rem 1.3rem 12.5rem; border: 1px solid var(--slc-border); border-radius: var(--sl-radius-md, 8px); overflow: hidden; }
     /* The field ground: the hero's glow field with no scrim, so nothing flattens
        it; at half strength, so the page's own text stays readable over its peaks. */
     .art-on-field { position: relative; overflow: hidden; }
@@ -1078,7 +1087,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
     <section id="art">
       <div class="wrap">
         <div class="sec-head"><span class="sec-idx">07</span><h2>Art</h2></div>
-        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on the 3px dither cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b> (with three more tiles: <b>--grid</b>, <b>--albers</b>, <b>--stripes</b>, and three fades: <b>--fade-start</b>, <b>--fade-end</b>, <b>--fade-down</b>), <b>sl-empty--void</b>, <b>sl-empty--shapes</b> and <b>sl-art-poster</b> (a composition beside a page head, with three more: <b>--orbit</b>, <b>--stair</b>, <b>--bleed</b>). Opt-in, static and decorative, painted from the ink and the accent only; high contrast removes every piece and the rules keep their hairline. The field's tiles and fades come first, side by side, then the posters beside their heads; then each piece sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
+        <p class="cap">Bauhaus shapes (quarter disc, square, triangle, bar) on a 2px cell, shaded through the kit's Bayer matrix: <b>sl-eyebrow--mark</b> (with five more glyphs: <b>-square</b>, <b>-tri</b>, <b>-circle</b>, <b>-half</b>, <b>-stair</b>, and <b>--sl-art-mark-cell</b> to grow it by whole cells), <b>sl-rule--shapes</b>, <b>sl-rule--weave</b>, <b>sl-art-corner</b>, <b>sl-art-field</b> (with three more tiles: <b>--grid</b>, <b>--albers</b>, <b>--stripes</b>, and three fades: <b>--fade-start</b>, <b>--fade-end</b>, <b>--fade-down</b>), <b>sl-empty--void</b>, <b>sl-empty--shapes</b>, <b>sl-art-poster</b> (a print beside a page head, with three more: <b>--overprint</b>, <b>--hills</b>, <b>--orbit</b>) and <b>sl-art-horizon</b> (a scene at a section's foot, with <b>--dawn</b>). Opt-in, static and decorative; the pieces paint from the ink and the accent only, and the posters and horizons in fixed palettes of their own. The posters and horizons are procedural: <b>data-sl-art-seed</b> and <b>mountArt()</b> give each its own picture. High contrast removes every piece and the rules keep their hairline. The field's tiles and fades come first, side by side, then the posters beside their heads and the horizons behind their sections; then each piece sits beside real text three times: on flat ground, over the glow field, and in an <b>sl-invert</b> band.</p>
         <div class="gallery">
           <div class="g-cell g-cell--wide" data-art-fields>
             <span class="g-label">the fields &middot; four tiles, three fades, one tone</span>
@@ -1121,13 +1130,13 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
             </div>
           </div>
           <div class="g-cell g-cell--wide" data-art-posters>
-            <span class="g-label">the posters &middot; four compositions, each beside its head, never under it</span>
+            <span class="g-label">the posters &middot; four prints, each beside its head, never under it</span>
             <div class="art-heads">
               <div class="art-head">
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark">Product</div>
                   <h2>Everything measured</h2>
-                  <p>The bare poster: Kandinsky, Composition 8, 1923. Its ground is the card.</p>
+                  <p>The bare poster: a dawn over the sea, on cream paper.</p>
                 </div>
                 <div class="sl-art-poster" aria-hidden="true"></div>
               </div>
@@ -1135,25 +1144,47 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">Blog</div>
                   <h2>Notes from the lab</h2>
-                  <p>--circles: Several Circles, 1926. The dark disc takes the page's ink.</p>
+                  <p>--overprint: three inks, and a new colour where two cross.</p>
                 </div>
-                <div class="sl-art-poster sl-art-poster--circles" aria-hidden="true"></div>
+                <div class="sl-art-poster sl-art-poster--overprint" aria-hidden="true"></div>
               </div>
               <div class="art-head">
                 <div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">Design system</div>
                   <h2>One kit, every surface</h2>
-                  <p>--primary: Yellow-Red-Blue, 1925. Its soft ground is cut away.</p>
+                  <p>--hills: rolling hills, a sun and two plants.</p>
                 </div>
-                <div class="sl-art-poster sl-art-poster--primary" aria-hidden="true"></div>
+                <div class="sl-art-poster sl-art-poster--hills" aria-hidden="true"></div>
               </div>
               <div class="art-head">
                 <div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">Apparel</div>
-                  <h2>Wear the grid</h2>
-                  <p>--orbit: Circles in a Circle, 1923. The ring leaves the frame.</p>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri">Platform</div>
+                  <h2>Agents in orbit</h2>
+                  <p>--orbit: a ringed planet and its moons.</p>
                 </div>
                 <div class="sl-art-poster sl-art-poster--orbit" aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="g-label">the same scenes from other seeds &middot; data-sl-art-seed and mountArt()</span>
+            <div class="art-seeds">
+              <div><span class="g-label">dawn &middot; seed 3</span><div class="sl-art-poster" data-sl-art-seed="3" aria-hidden="true"></div></div>
+              <div><span class="g-label">overprint &middot; seed 5</span><div class="sl-art-poster sl-art-poster--overprint" data-sl-art-seed="5" aria-hidden="true"></div></div>
+              <div><span class="g-label">hills &middot; seed 2</span><div class="sl-art-poster sl-art-poster--hills" data-sl-art-seed="2" aria-hidden="true"></div></div>
+              <div><span class="g-label">orbit &middot; seed 4</span><div class="sl-art-poster sl-art-poster--orbit" data-sl-art-seed="4" aria-hidden="true"></div></div>
+            </div>
+          </div>
+          <div class="g-cell g-cell--wide" data-art-horizons>
+            <span class="g-label">the horizons &middot; a scene at the section's foot; the page is its sky and the copy stays above it</span>
+            <div class="art-horizons">
+              <div class="sl-art-horizon">
+                <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">Research</div>
+                <h2>Field studies</h2>
+                <p>The bare horizon: hills and plants. The plants are the page's ink.</p>
+              </div>
+              <div class="sl-art-horizon sl-art-horizon--dawn" data-sl-art-seed="2">
+                <div class="sl-eyebrow sl-eyebrow--mark">Blog</div>
+                <h2>Notes from the lab</h2>
+                <p>--dawn, from seed 2: a sun on the sea between two ranges.</p>
               </div>
             </div>
           </div>
@@ -1167,7 +1198,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <hr class="sl-rule sl-rule--shapes">
                 <p>The next section starts here; three shapes open the rule, then the hairline.</p>
                 <hr class="sl-rule sl-rule--weave">
-                <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <p>0.41.0 brings the Bauhaus pieces on the pixel grid.</p>
                 <div class="art-marks">
                   <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
@@ -1175,7 +1206,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 3px cell</div>
                 </div>
               </div>
               <div>
@@ -1188,6 +1219,11 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <div class="sl-eyebrow">Overview</div>
                   <h3>Three probes, one session</h3>
                   <p>The field stays one shape and one tone, so the paragraph keeps the page.</p>
+                </div>
+                <div class="sl-art-horizon">
+                  <div class="sl-eyebrow">Horizon</div>
+                  <h3>A scene at the foot</h3>
+                  <p>The copy stays above the hills.</p>
                 </div>
               </div>
               <div>
@@ -1214,7 +1250,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <hr class="sl-rule sl-rule--shapes">
                 <p>The next section starts here; three shapes open the rule, then the hairline.</p>
                 <hr class="sl-rule sl-rule--weave">
-                <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <p>0.41.0 brings the Bauhaus pieces on the pixel grid.</p>
                 <div class="art-marks">
                   <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
@@ -1222,7 +1258,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 3px cell</div>
                 </div>
               </div>
               <div>
@@ -1236,6 +1272,11 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <h3>Three probes, one session</h3>
                   <p>The field stays one shape and one tone, so the paragraph keeps the page.</p>
                 </div>
+                <div class="sl-art-horizon">
+                  <div class="sl-eyebrow">Horizon</div>
+                  <h3>A scene at the foot</h3>
+                  <p>The copy stays above the hills.</p>
+                </div>
               </div>
               <div>
                 <div class="sl-empty sl-empty--void">
@@ -1246,7 +1287,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <p class="sl-empty__title">No results</p>
                   <p class="sl-empty__body">Try a wider query, or clear the filters.</p>
                 </div>
-                <div class="sl-art-poster sl-art-poster--circles" aria-hidden="true"></div>
+                <div class="sl-art-poster sl-art-poster--hills" aria-hidden="true"></div>
               </div>
             </div>
           </div>
@@ -1261,7 +1302,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                 <hr class="sl-rule sl-rule--shapes">
                 <p>The next section starts here; three shapes open the rule, then the hairline.</p>
                 <hr class="sl-rule sl-rule--weave">
-                <p>0.41.0 brings the Bauhaus pieces on the dither cell.</p>
+                <p>0.41.0 brings the Bauhaus pieces on the pixel grid.</p>
                 <div class="art-marks">
                   <div class="sl-eyebrow sl-eyebrow--mark">§ 01 — Quarter</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-square">§ 02 — Square</div>
@@ -1269,7 +1310,7 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 04 — Circle</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-half">§ 05 — Half discs</div>
                   <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-stair">§ 06 — Stair</div>
-                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 4px cell</div>
+                  <div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-tri art-marks__big">§ 07 — At a 3px cell</div>
                 </div>
               </div>
               <div>
@@ -1282,6 +1323,11 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
                   <div class="sl-eyebrow">Overview</div>
                   <h3>Three probes, one session</h3>
                   <p>The field stays one shape and one tone, so the paragraph keeps the page.</p>
+                </div>
+                <div class="sl-art-horizon">
+                  <div class="sl-eyebrow">Horizon</div>
+                  <h3>A scene at the foot</h3>
+                  <p>The copy stays above the hills.</p>
                 </div>
               </div>
               <div>
@@ -1311,7 +1357,9 @@ q-0d9e   <span class="sl-term-block__err">✗</span> err    5m</pre>
 
   <script type="module">
     import { mountSignals } from "../packages/ui-kit/signal.js";
+    import { mountArt } from "../packages/ui-kit/art.js";
     mountSignals();
+    mountArt();
   </script>
   <script>
     // A mixed box is a DOM property, not markup: there is no indeterminate attribute.

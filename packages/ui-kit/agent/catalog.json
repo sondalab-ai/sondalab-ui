@@ -1106,9 +1106,11 @@
         "sl-empty--void",
         "sl-empty--shapes",
         "sl-art-poster",
-        "sl-art-poster--circles",
-        "sl-art-poster--primary",
-        "sl-art-poster--orbit"
+        "sl-art-poster--overprint",
+        "sl-art-poster--hills",
+        "sl-art-poster--orbit",
+        "sl-art-horizon",
+        "sl-art-horizon--dawn"
       ],
       "roleVars": [
         "--slc-text",
