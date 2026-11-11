@@ -35,6 +35,7 @@ function fakePage() {
       this.style = { setProperty: (k, v) => style.set(k, v), removeProperty: (k) => style.delete(k), get: (k) => style.get(k), has: (k) => style.has(k) };
     }
     getAttribute(n) { return n in this.attrs ? this.attrs[n] : null; }
+    get nodeType() { return 1; }
     append(c) { c.parent = this; this.children.push(c); }
     matches(sel) { return matches(this, sel); }
     querySelectorAll(sel) {
@@ -72,6 +73,9 @@ function fakePage() {
   page.add = (classes, attrs = {}, width = 0) => { const e = new Element("div", classes, attrs); e.clientWidth = width; doc.body.append(e); return e; };
   page.attr = (el, name, value) => { if (value === null) delete el.attrs[name]; else el.attrs[name] = value; page.observers[0].cb([{ type: "attributes", target: el, attributeName: name }]); };
   page.resize = (el, width) => { el.clientWidth = width; page.ro[0].cb([{ target: el }]); };
+  page.reclass = (el, drop, add) => { for (const c of drop) el.classList.remove(c); for (const c of add) el.classList.add(c); page.observers[0].cb([{ type: "attributes", target: el, attributeName: "class" }]); };
+  page.remove = (el) => { el.isConnected = false; page.observers[0].cb([{ type: "childList", addedNodes: [], removedNodes: [el] }]); };
+  page.noCanvas = () => { doc.createElement = () => ({ getContext: () => null }); };
   page.doc = doc;
   page.forget = () => { for (const [k, d] of Object.entries(saved)) d ? Object.defineProperty(globalThis, k, d) : delete globalThis[k]; };
   return page;
@@ -163,12 +167,77 @@ test("elements added later are drawn, and stop() disconnects every observer", ()
     const wrap = page.add([]);
     const late = new globalThis.Element("div", ["sl-art-poster"], { "data-sl-art-seed": "9" });
     wrap.append(late);
-    page.observers[0].cb([{ type: "childList", addedNodes: [wrap] }]);
+    page.observers[0].cb([{ type: "childList", addedNodes: [wrap], removedNodes: [] }]);
     assert.equal(late.style.get("--_sl-art-live"), urlOf(renderPoster("dawn", 9), "colour"));
     handle.stop();
     assert.ok(page.observers.every((o) => o.off) && page.ro.every((o) => o.off));
     const after = page.add(["sl-art-poster"], { "data-sl-art-seed": "5" });
-    page.observers[0].cb([{ type: "childList", addedNodes: [after] }]);
+    page.observers[0].cb([{ type: "childList", addedNodes: [after], removedNodes: [] }]);
     assert.equal(after.style.has("--_sl-art-live"), false, "a stopped mount draws nothing");
+  } finally { page.forget(); }
+});
+
+test("seed 0 on a poster is the stylesheet's picture: nothing is drawn", () => {
+  const page = fakePage();
+  try {
+    const zero = page.add(["sl-art-poster", "sl-art-poster--hills"], { "data-sl-art-seed": "0" });
+    const empty = page.add(["sl-art-poster"], { "data-sl-art-seed": "" });
+    const handle = mountArt(page.doc);
+    assert.equal(page.canvases, 0);
+    assert.equal(zero.style.has("--_sl-art-live"), false);
+    assert.equal(empty.style.has("--_sl-art-live"), false);
+    handle.stop();
+  } finally { page.forget(); }
+});
+
+test("an element that changes kind gives back what it held, and follows its new kind", () => {
+  const page = fakePage();
+  try {
+    const el = page.add(["sl-art-poster"], { "data-sl-art-seed": "3" }, 640);
+    const handle = mountArt(page.doc), ro = page.ro[0];
+    assert.ok(el.style.has("--_sl-art-live") && !ro.targets.has(el));
+    page.reclass(el, ["sl-art-poster"], ["sl-art-horizon"]);
+    assert.equal(el.style.has("--_sl-art-live"), false, "the poster's picture is given back");
+    assert.ok(el.style.has("--_sl-art-live-bg") && el.style.has("--_sl-art-live-ink"));
+    assert.ok(ro.targets.has(el), "a horizon is observed for its width");
+    page.resize(el, 1300);
+    assert.match(el.style.get("--_sl-art-live-bg"), / 1312px 200px no-repeat$/);
+    page.reclass(el, ["sl-art-horizon"], ["sl-art-poster"]);
+    assert.ok(!el.style.has("--_sl-art-live-bg") && !el.style.has("--_sl-art-live-ink"), "the horizon's layers are given back");
+    assert.equal(el.style.get("--_sl-art-live"), urlOf(renderPoster("dawn", 3), "colour"));
+    assert.ok(!ro.targets.has(el), "a poster is not observed");
+    page.resize(el, 900);
+    assert.equal(el.style.has("--_sl-art-live-bg"), false, "a resize does not draw a horizon on a poster");
+    page.reclass(el, ["sl-art-poster"], []);
+    assert.equal(el.style.has("--_sl-art-live"), false, "an element with no art class holds nothing");
+    handle.stop();
+  } finally { page.forget(); }
+});
+
+test("an element removed from the page is forgotten and no longer observed", () => {
+  const page = fakePage();
+  try {
+    const el = page.add(["sl-art-horizon"], {}, 640);
+    const handle = mountArt(page.doc), ro = page.ro[0];
+    assert.ok(ro.targets.has(el));
+    page.remove(el);
+    assert.ok(!ro.targets.has(el));
+    const before = page.canvases;
+    page.resize(el, 1300);
+    assert.equal(page.canvases, before, "a forgotten element is not redrawn");
+    handle.stop();
+  } finally { page.forget(); }
+});
+
+test("where no canvas can encode a picture, nothing is set and the stylesheet's picture stays", () => {
+  const page = fakePage();
+  try {
+    page.noCanvas();
+    const poster = page.add(["sl-art-poster"], { "data-sl-art-seed": "4" });
+    const horizon = page.add(["sl-art-horizon"], {}, 640);
+    const handle = mountArt(page.doc);
+    assert.equal(poster.style.has("--_sl-art-live"), false);
+    assert.ok(!horizon.style.has("--_sl-art-live-bg") && !horizon.style.has("--_sl-art-live-ink"));
+    handle.stop();
   } finally { page.forget(); }
 });

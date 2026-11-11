@@ -14,9 +14,8 @@ export type ArtPut = (
   over?: Record<number, number> | null,
 ) => void;
 
-/** What a scene varies by: its seed, a seeded value in a range, a cell hash. */
+/** What a scene varies by: a seeded value in a range, a cell hash. */
 export interface ArtVary {
-  seed: number;
   pick(lo: number, hi: number, canon: number): number;
   h(i: number, j: number): number;
 }
@@ -50,9 +49,9 @@ export declare const HORIZONS: Record<"hills" | "dawn", ArtScene>;
 /** A seed from an attribute value: a whole number, a hash of other text, 0 for none. */
 export declare function seedOf(value: string | number | null | undefined): number;
 /** One poster; seed 0 is the picture components.css ships. */
-export declare function renderPoster(name: keyof typeof POSTERS, seed?: number): ArtPicture;
+export declare function renderPoster(name: keyof typeof POSTERS, seed?: number, clip?: boolean): ArtPicture;
 /** One horizon of `cols` cells; its left edge continues its right one. */
-export declare function renderHorizon(name: keyof typeof HORIZONS, cols: number, seed?: number): ArtPicture;
+export declare function renderHorizon(name: keyof typeof HORIZONS, cols: number, seed?: number, clip?: boolean): ArtPicture;
 /** The 8-cell strip a horizon continues with past its sides, or null. */
 export declare function renderHorizonStrip(name: keyof typeof HORIZONS): ArtPicture | null;
 /** A picture's colour layer, or its ink as an opaque mask, as RGBA bytes. */

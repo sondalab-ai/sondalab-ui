@@ -20,7 +20,7 @@ export const ART_CELL_PX = 2;
 /** The poster frame, in cells: a golden rectangle (126 / 78 = 1.615). */
 export const POSTER_COLS = 126, POSTER_ROWS = 78;
 /** A horizon's height, in cells (200px), and the rows from its top through
- *  which it dissolves into the page. */
+ *  which it dissolves into the page (44 rows, 88px). */
 export const HORIZON_ROWS = 100;
 const HORIZON_FADE = 44;
 
@@ -49,7 +49,7 @@ const orbit = (cx, cy, a, b, phi, w, half = 0) => {
     const u = (x - cx) * c + (y - cy) * s, v = -(x - cx) * s + (y - cy) * c;
     if (half && v * half < 0) return false;
     return Math.abs(Math.hypot(u / a, v / b) - 1) * Math.min(a, b) < (w / 2) * (1 + 0.2 * Math.abs(u / a));
-  }, [cx - a - w, cy - a - w, cx + a + w, cy + a + w]);
+  }, [cx - a * (1 + (0.6 * w) / Math.min(a, b)) - 1, cy - a * (1 + (0.6 * w) / Math.min(a, b)) - 1, cx + a * (1 + (0.6 * w) / Math.min(a, b)) + 1, cy + a * (1 + (0.6 * w) / Math.min(a, b)) + 1]);
 };
 /** A leaf: two arcs that meet in a point at each end, turned by `phi`. */
 const leaf = (cx, cy, len, wid, phi) => {
@@ -69,11 +69,13 @@ const sparkle = (x, y) => or(rect(x - 2.5, y - 0.5, 5, 1), rect(x - 0.5, y - 2.5
  * every cell whose centre is inside the shape and whose tone (0..1, or a
  * function of the centre) beats the Bayer threshold. A later form stands in
  * front; `over` maps the index under it to the one the two inks make together.
+ * A shape's box only saves work: with `clip` false every cell is tested, and
+ * the picture must be the same (scripts/art.test.mjs).
  */
-function sheet(cols, rows) {
+function sheet(cols, rows, clip = true) {
   const cells = new Uint8Array(cols * rows);
   const put = (c, inside, tone = 1, over = null) => {
-    const b = boxOf(inside);
+    const b = clip ? boxOf(inside) : ALL;
     const i0 = Math.max(0, Math.floor(b[0])), i1 = Math.min(cols, Math.ceil(b[2])), j0 = Math.max(0, Math.floor(b[1])), j1 = Math.min(rows, Math.ceil(b[3]));
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
       const x = i + 0.5, y = j + 0.5;
@@ -98,7 +100,7 @@ function rng(seed) {
  *  seeded value in lo..hi otherwise; `h` is the cell hash, moved by the seed. */
 function vary(seed) {
   const r = rng(seed);
-  return { seed, pick: (lo, hi, canon) => (seed ? lo + (hi - lo) * r() : canon), h: (i, j) => hash(i + seed * 131, j + seed * 71) };
+  return { pick: (lo, hi, canon) => (seed ? lo + (hi - lo) * r() : canon), h: (i, j) => hash(i + seed * 131, j + seed * 71) };
 }
 
 /** A plant: a swaying stem in `ink`, leaves in pairs, a bud in `bud`. */
@@ -162,9 +164,9 @@ export const POSTERS = {
       const x0 = bx + br - 4;
       put(2, shape((x, y) => {
         const u = x - x0, gx = Math.floor(u / 4), gy = Math.floor(y / 4);
-        if (u - gx * 4 >= 2 || y - gy * 4 >= 2) return false;
+        if (u < 0 || u - gx * 4 >= 2 || y - gy * 4 >= 2) return false;
         return v.h(gx, gy) < 0.62 * Math.max(0, 1 - u / 26) * Math.max(0, 1 - Math.abs(y - by) / (br + 2));
-      }, [x0, by - br, W, by + br]));
+      }, [x0, by - br - 2, W, by + br + 2]));
     },
   },
   hills: {
@@ -282,10 +284,13 @@ export function seedOf(value) {
  * One poster, POSTER_COLS × POSTER_ROWS. Seed 0 is the picture components.css
  * ships; another seed moves the scene's parts and may mirror it.
  * @param {string} name a key of POSTERS @param {number} [seed]
+ * @param {boolean} [clip] false tests every cell of every shape: slower, the same picture
  */
-export function renderPoster(name, seed = 0) {
+export function renderPoster(name, seed = 0, clip = true) {
+  // The first draw decides the mirror: a change in the order of the draws
+  // changes every seeded poster a site already shows.
   const scene = POSTERS[name], v = vary(seed >>> 0), mirror = v.pick(0, 1, 0) >= 0.5;
-  const { cells, put } = sheet(POSTER_COLS, POSTER_ROWS);
+  const { cells, put } = sheet(POSTER_COLS, POSTER_ROWS, clip);
   scene.draw(put, POSTER_COLS, POSTER_ROWS, v);
   if (mirror) for (let j = 0; j < POSTER_ROWS; j++) cells.subarray(j * POSTER_COLS, (j + 1) * POSTER_COLS).reverse();
   return { cols: POSTER_COLS, rows: POSTER_ROWS, cells, palette: scene.palette, ink: -1 };
@@ -295,9 +300,10 @@ export function renderPoster(name, seed = 0) {
  * One horizon, `cols` × HORIZON_ROWS, dissolving into the page over its top
  * rows. Its left edge continues its right one, so it can repeat.
  * @param {string} name a key of HORIZONS @param {number} cols @param {number} [seed]
+ * @param {boolean} [clip] false tests every cell of every shape: slower, the same picture
  */
-export function renderHorizon(name, cols, seed = 0) {
-  const scene = HORIZONS[name], { cells, put } = sheet(cols, HORIZON_ROWS);
+export function renderHorizon(name, cols, seed = 0, clip = true) {
+  const scene = HORIZONS[name], { cells, put } = sheet(cols, HORIZON_ROWS, clip);
   scene.draw(put, cols, HORIZON_ROWS, vary(seed >>> 0));
   // The dissolve: the colour thins toward the top through the matrix. A plant
   // on a hilltop (the ink and its bud) stays whole, or it would read as

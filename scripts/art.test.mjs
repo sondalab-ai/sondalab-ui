@@ -724,6 +724,17 @@ test("a seed gives its own picture, and the same one every time", () => {
   assert.equal(digest(renderPoster("hills", 7).cells), "ae4345c1994e755e", "seed 7 of the hills changed");
 });
 
+test("a shape's box only saves work: a picture is the same with every cell tested", () => {
+  // A box tighter than its shape clips cells (the orbit's ring tips did, on
+  // one seed in five), and a shape that is only right inside its box hides it.
+  for (const k of names) for (let seed = 0; seed <= 40; seed++) {
+    assert.equal(differ(renderPoster(k, seed), renderPoster(k, seed, false)), 0, `${k} seed ${seed}: a box clips its shape`);
+  }
+  for (const k of horizons) for (const seed of [0, 1, 2, 3]) {
+    assert.equal(differ(renderHorizon(k, 240, seed), renderHorizon(k, 240, seed, false)), 0, `${k} seed ${seed}: a box clips its shape`);
+  }
+});
+
 test("seedOf reads a whole number as itself, hashes other text, and takes nothing as 0", () => {
   assert.deepEqual([seedOf(null), seedOf(undefined), seedOf(""), seedOf("  "), seedOf("0")], [0, 0, 0, 0, 0]);
   assert.deepEqual([seedOf("12"), seedOf(12), seedOf(" 7 ")], [12, 12, 7]);
