@@ -1,0 +1,37 @@
+id: CDR-0001
+type: docs
+title: 'docs(ui-kit): add the Sondalab flavour contract (agent/flavour.md)'
+intent: |-
+  Create packages/ui-kit/agent/flavour.md, a one-page list of the brand traits that make the kit recognizable. Later design work uses it as a gate, so patterns borrowed from external references do not erase the brand. Add a row for it to the file table in packages/ui-kit/agent/README.md. It has three parts.
+
+  (1) About 12 traits, one line each, each naming its source layer (L1-L6) in design-language.md: the `sondalab.` wordmark in Fraunces with the accent period; mono uppercase micro labels (eyebrows); Geist and Geist Mono for UI, and Geist Pixel Square for display numerals at whole-cell sizes; 1px hairline structure and the hairline grid; depth as lightness (tile, key and well recipes); the inversion band; the Bayer dither hover on the pixel cell; the checkerboard for disabled; pixel check, radio and switch; the four effect families with one meaning each; one accent per product from the accent registry; precise technical voice. The one-accent rule lives in Decision 2, not in L1-L6, so cite Decision 2 for it.
+
+  (2) The bezel card, chosen by the owner on 2026-11-27: a frame on the surface rung holding a darker stage; concentric kit radii (stage r6 + inset 8 = frame r14); edges drawn as alpha hairlines (lit top, faint ring, shaded bottom) with no CSS border; a caption row on the frame. Mark it as chosen, not yet shipped.
+
+  (3) A do-not-converge list of generic dev-tool traits the kit must not adopt, each with the rule it breaks: pill-shaped chips and tags (L2 radii, r6); Inter or other non-Geist UI faces (L1); blur and soft colour glow as transition material (owner decision 2026-11-27: the dither dissolve replaces blur); hover lifts (L2: hover never lifts); page-load choreography in the kit (L4); figurative art (owner ruling).
+rationale: The traits are spread across a long design-language.md, mostly in L1-L6. The agent core has no short list that design work can be checked against, and flavour.md does not exist yet. The bezel card and the 2026-11-27 dissolve-over-blur decision come from the request as owner decisions. The part of design-language.md that was read states neither, so flavour.md should attribute them to the owner and the date, not to a layer.
+scope:
+  - packages/ui-kit/agent/flavour.md
+  - packages/ui-kit/agent/README.md
+constraints:
+  - Read docs/design-language.md and packages/ui-kit/agent/README.md first.
+  - Cite rules; do not restate them at length. Keep the file to about one page.
+  - 'Docs only: no CSS or token change, and no new --sl-* tokens.'
+  - Do not edit docs/design-language.md.
+  - Describe the bezel card as chosen, not yet shipped.
+acceptance_criteria:
+  - All CSS files, JavaScript files and token sources (including sondalab.tokens.json) stay unchanged, and no new --sl-* token is defined.
+  - docs/design-language.md stays unchanged.
+  - The existing rows of the file table in packages/ui-kit/agent/README.md and the rest of that README keep their content; the only change allowed there is the added flavour.md row.
+  - sl-audit reports the same findings for the same surface, product and substrate.
+  - The existing test suite has the same pass results, and the package.json exports, files list and version stay the same.
+risk:
+  declared: trivial
+requires: []
+relates_to:
+  - text:be72b1031ddb
+side_effects:
+  - none
+rollback_plan: Revert the commit. This removes flavour.md and its row in agent/README.md; no code, tokens or data depend on them.
+author: assessor
+created_at: "2026-11-26T23:51:34.544Z"
