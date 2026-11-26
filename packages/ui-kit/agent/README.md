@@ -18,6 +18,7 @@ The design system has always had the *rules* (`design-language.md`) and the *val
 | `workflows/author.md` | The ordered author procedure (greenfield), built on the catalog. |
 | `workflows/adopt.md` | The ordered adopt procedure (one component into an existing app). |
 | `catalog.md` + `catalog.json` | Copy-paste component catalog (primitives, opt-in effects, and signature patterns) with markup, role-vars, and substrate; its machine index. Effects are a separate opt-in import (`effects.css`, plus `effects.js` for Tier 1) — not part of `components.css`; so is the workbench chrome (`workbench.css`, after `components.css`, since 0.33). Snippets are audited clean. |
+| `flavour.md` | The flavour contract: the brand traits that make the kit recognizable (each citing its `design-language.md` layer), the chosen bezel card, and a do-not-converge list. A gate for design work that borrows from external references. |
 | `HANDOFF.md` | What the audit does **not** check mechanically, and how to judge those cases (deferred spacing/border/recipe checks). Read before a job. |
 
 Everything else — the actual rules, why they exist, the compliance philosophy — stays in `design-language.md`. This core **references** it; it never forks it.
