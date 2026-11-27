@@ -1,0 +1,60 @@
+id: CDR-0003
+type: feature
+title: Generate the agent-readable packages/ui-kit/agent/DESIGN.md from the repository sources
+intent: |-
+  Add a Node generator, scripts/gen-design-md.mjs, and an npm script, gen:design-md, that build packages/ui-kit/agent/DESIGN.md, and commit its output. The file uses the DESIGN.md format (token, rule and reason in the same file), so design agents can scaffold on-system Sondalab UI.
+
+  Sections, in this order:
+  1. Brand summary and voice.
+  2. Colour roles per theme, with values and what each role is for, plus the per-product accent registry.
+  3. Typography roles and scale.
+  4. Spacing, radii and control height.
+  5. Depth recipes.
+  6. Signature components: wordmark, eyebrow, tag, inversion band, keycap, tile, and the bezel card, marked as chosen but not shipped.
+  7. Motion tokens and rules.
+  8. Effect families, each with its one meaning.
+  9. Do and do-not lists from flavour.md.
+
+  Add a DESIGN.md row to the file table in packages/ui-kit/agent/README.md.
+rationale: No DESIGN.md or generator exists. Values are in sondalab.tokens.json, rules in docs/design-language.md (mixed with dated history and owner rulings), and brand traits and the do-not-converge list in flavour.md. No single file gives an agent each token with its current rule and reason. packages/ui-kit/package.json already ships all of `agent/` and exports `./agent/*`, so a file placed there ships without a manifest change.
+scope:
+  - scripts/gen-design-md.mjs
+  - scripts/lib/design-md*.mjs
+  - scripts/design-md*.test.mjs
+  - package.json
+  - packages/ui-kit/agent/DESIGN.md
+  - packages/ui-kit/agent/README.md
+constraints:
+  - The primary sources are sondalab.tokens.json, docs/design-language.md and packages/ui-kit/agent/flavour.md. Values come from the sources at build time and are never typed into the generator, including values that exist only in prose, such as the 32px control height.
+  - The token file holds only the neutral ladder and the default accent. Get the baked per-theme neutrals from the existing derivation (scripts/lib/neutrals.mjs) or its generated neutrals.json, and the per-product accents from agent/accent-registry.json. Do not reimplement the colour maths or copy values by hand.
+  - State each rule in its current form only, with no dates, owner-ruling or amendment notes, or 'until/since version' history. This also applies to text taken from flavour.md. Keep each rule's reason beside it in one short sentence.
+  - The output is deterministic (no timestamps, absolute paths or environment-dependent text). If source content the generator relies on is missing, it fails instead of silently writing an empty or stale value.
+  - Follow the scripts/gen-*.mjs conventions. The file name does not end in .test.mjs. The module exports a function, buildDesignMd(), that returns the full file text without writing. It writes the file only when run directly, so a test can rebuild it in memory.
+  - Adding the generator to the gen:tokens chain is allowed, so that token regeneration also refreshes DESIGN.md.
+  - Where flavour.md and design-language.md disagree, design-language.md wins. Blur is banned only as transition material; blur as a standing material stays. Do not use the L3 Art text as a source for the no-figurative-art rule.
+  - Every file matching scripts/**/*.test.mjs belongs to the test author. The implementer creates and edits no such file.
+  - No CSS change, no token change and no new --sl-* tokens. Do not edit the source documents to suit the generator.
+acceptance_criteria:
+  - buildDesignMd(), exported by scripts/gen-design-md.mjs, returns text byte-for-byte equal to the committed packages/ui-kit/agent/DESIGN.md. Importing the module writes no file.
+  - The root package.json has a gen:design-md script that runs scripts/gen-design-md.mjs. Running it on a clean checkout leaves DESIGN.md unchanged.
+  - 'DESIGN.md has these sections in this order: brand summary and voice; colour roles and accent registry; typography; spacing, radii and control height; depth recipes; signature components; motion; effect families; do and do-not lists.'
+  - The colour section gives values and a purpose for the colour roles in light, dark and high-contrast. The values match those from sondalab.tokens.json and the generated neutrals. Every product in accent-registry.json appears with its accent.
+  - The typography section lists the five font roles and the type scale. The spacing section lists the space scale, the radii and the 32px control height. Token values match sondalab.tokens.json.
+  - The depth section covers the tile, flat tile, island, key, sunk, float and cast recipes.
+  - The signature components section covers the wordmark, eyebrow, tag, inversion band, keycap, tile and bezel card, and marks the bezel card as chosen but not shipped.
+  - The motion section gives the motion durations and easing curves with values matching sondalab.tokens.json, together with the motion rules.
+  - The effects section lists glitch, aurora, glass and goo, each with its one meaning.
+  - The do-not list includes every trait in the do-not-converge table of flavour.md, and the do list reflects its brand traits.
+  - DESIGN.md contains no YYYY-MM-DD date and no owner-ruling or owner-amendment annotation.
+  - The file table in packages/ui-kit/agent/README.md has a DESIGN.md row.
+  - The files list in packages/ui-kit/package.json covers agent/DESIGN.md.
+risk:
+  declared: low
+requires: []
+relates_to:
+  - text:793f8454f55d
+side_effects:
+  - none
+rollback_plan: Revert the commit. This removes the generator, the npm script, DESIGN.md and its README row. No CSS, token or runtime behaviour depends on them.
+author: assessor
+created_at: "2026-11-27T09:01:26.347Z"
