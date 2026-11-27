@@ -47,7 +47,7 @@ Index of project memory entries. One line per memory, oldest first; the linked f
 - [Electron macOS hiddenInset title bar facts](electron-macos-hiddeninset-titlebar-facts.md) — drag-region clicks never reach the page (Electron 23+); y=(H-16)/2 sizes the AppKit bar to H; Theia has no full-screen event
 - [currentColor in a custom property resolves on the using element](currentcolor-in-a-custom-property-resolves-on-the-using-element.md) — a band role on currentColor dilutes on muted-ink controls; build it on a named role and measure in Chrome
 - [Owner tests only at the end](owner-tests-only-when-development-is-done.md) — converge everything on integration/lumen, no mid-way checks or questions
-- [Solo epics land as one merge](solo-epics-land-as-one-merge.md) — integration branch + per-slice PRs into it, reviewed; one merge to main; no stacking
+- [Solo epics land as one merge](solo-epics-land-as-one-merge.md) — since 2026-11-27 the repo uses ads: no integration branch, each slice is its own ads change on main
 - [Geist Pixel cell is 0.08em](geist-pixel-cell-is-0-08em.md) — crisp sizes are multiples of 12.5px; at 24–36px it reads as a smooth sans; await `fonts.load` by name, not `fonts.ready`.
 - [The dither layer sits over the glass tint](the-dither-layer-sits-over-the-glass-tint.md) — under `__tint` a glass primary's hover was almost invisible (the tint is the accent at 0.9 alpha); the owner moved the layer to z -2, after the tint, on 2026-10-26.
 - [`env=os.environ` default leaks secrets](env-os-environ-default-leaks-secrets.md) — help()/inspect.signature() of a palette `term` helper prints the whole environment; default to `env=None`, never print those signatures.
