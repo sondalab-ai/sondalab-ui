@@ -1,9 +1,11 @@
 ---
 name: solo-epics-land-as-one-merge
-description: "Owner works alone: land a multi-slice epic as one merge of the tested integration branch, not as stacked per-slice PRs squash-merged in order"
+description: "Since 2026-11-27 sondalab-ui uses ads: no integration branch, each slice is its own ads change on main. Before that: one merge of a tested integration branch, no stacked PRs"
 metadata:
   type: feedback
 ---
+
+**Status 2026-11-27:** sondalab-ui uses `ads` (`fd19da4 chore(ads): initialize ads`). `ads work` has no base-branch option and always lands on `main`, so slice PRs into an epic branch cannot run through `ads` (owner, 2026-11-27). Do not open an integration branch. Run each slice as its own `ads` change. Each change lands on `main` alone. The rest of this note is history from before `ads`.
 
 On 2026-10-11 the owner approved landing the Lumen epic as **one merge of the integration PR** (spexr #99). They also asked whether very granular stacked PRs are needed at all, given that they work alone with agents.
 
