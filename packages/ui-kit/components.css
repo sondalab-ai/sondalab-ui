@@ -3621,3 +3621,39 @@ a.sl-breadcrumb__item:hover { color: var(--slc-accent-text); }
     outline-color: CanvasText !important;
   }
 }
+
+/* THE BEZEL CARD (sl-card--bezel). A frame on the surface rung (the plain
+   card's own fill) holding a darker stage on the sunken rung, with a caption
+   row on the frame under it. The radii are concentric: the stage is
+   --sl-radius-sm, the frame's padding is the 8px inset, and the frame is
+   --sl-radius-lg, so stage radius + inset = frame radius. The frame draws no
+   CSS border: its edges are alpha hairlines from the line roles -- a lit top,
+   a faint ring and a shaded bottom -- so the ground shows through them. High
+   contrast trades the three for one solid 1px ring in the strong line, which
+   is opaque there. Every rule goes through sl-card--bezel or its elements,
+   so the plain card is untouched. */
+.sl-card.sl-card--bezel {
+  border: 0;
+  border-radius: var(--sl-radius-lg, 14px);
+  padding: var(--sl-space-2, 0.5rem);
+  box-shadow:
+    inset 0 1px 0 var(--slc-lit),
+    0 0 0 1px var(--slc-border-subtle),
+    inset 0 -1px 0 var(--slc-border);
+}
+.sl-card--bezel > .sl-card__stage {
+  margin: 0;
+  padding: var(--sl-space-4, 1rem);
+  background: var(--slc-sunken);
+  border-radius: var(--sl-radius-sm, 6px);
+}
+.sl-card--bezel > .sl-card__caption {
+  margin: 0;
+  padding: var(--sl-space-2, 0.5rem) var(--sl-space-2, 0.5rem) 0;
+  font-family: var(--sl-font-mono, ui-monospace, monospace);
+  font-size: var(--sl-text-micro, 0.65625rem);
+  color: var(--slc-text-muted);
+}
+[data-sl-theme="high-contrast"] .sl-card.sl-card--bezel {
+  box-shadow: 0 0 0 1px var(--slc-border-strong);
+}

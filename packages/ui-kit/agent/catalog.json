@@ -116,13 +116,21 @@
       "classes": [
         "sl-card",
         "sl-card__title",
-        "sl-card__body"
+        "sl-card__body",
+        "sl-card--bezel",
+        "sl-card__stage",
+        "sl-card__caption"
       ],
       "roleVars": [
         "--slc-surface",
         "--slc-border-subtle",
         "--slc-text",
-        "--slc-text-secondary"
+        "--slc-text-secondary",
+        "--slc-sunken",
+        "--slc-lit",
+        "--slc-border",
+        "--slc-border-strong",
+        "--slc-text-muted"
       ]
     },
     {

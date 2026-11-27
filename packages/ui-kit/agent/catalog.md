@@ -94,6 +94,18 @@ Surface panel. Substrate: **R** App.
 ```
 Consumes: `--slc-surface`, `--slc-border-subtle`, `--slc-text`, `--slc-text-secondary`. Don't: make a `rounded-lg` card grid the primary layout — prefer the hairline grid (below).
 
+**Bezel card — `sl-card--bezel` (`__stage` · `__caption`).** The card as a bezel: a frame on the surface rung holding a darker stage on the sunken rung, with a caption row on the frame under it. The radii are concentric: the stage is `--sl-radius-sm`, the frame inset around it is 8px and the frame is `--sl-radius-lg`. The frame draws no CSS border; its edges are alpha hairlines (a lit top, a faint ring, a shaded bottom). Under high contrast they become one solid 1px edge in the strong line.
+```html
+<article class="sl-card sl-card--bezel">
+  <div class="sl-card__stage">
+    <h3 class="sl-card__title">Migration report</h3>
+    <div class="sl-card__body">2 R-violations resolved, 1 blessed.</div>
+  </div>
+  <div class="sl-card__caption">Run 42 · 3 min ago</div>
+</article>
+```
+Consumes: `--slc-surface`, `--slc-sunken`, `--slc-lit`, `--slc-border-subtle`, `--slc-border`, `--slc-border-strong`, `--slc-text-muted`. Don't: give the frame or the stage a border of its own, or nest a bezel in a bezel.
+
 ### Field — `sl-field` (`__label` · `__input` · `__control` · `__hint` · `__error`)
 Label + input/textarea/select, with an optional hint or error line under it. The label is read with the control, so it is sentence case in the sans, in the secondary ink (L1; it was a mono uppercase micro label before 0.30). Substrate: **R** App.
 ```html
