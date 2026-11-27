@@ -4,7 +4,8 @@
 //
 // Values are read at build time from sondalab.tokens.json, the generated
 // packages/ui-kit/neutrals.json (the default product's baked neutrals), the
-// accent registry, the component catalog (agent/catalog.json), the kit README
+// accent registry, the component catalog (agent/catalog.json, and the first
+// html example of each component in agent/catalog.md), the kit README
 // (the stylesheets and their import order), docs/design-language.md (the
 // control height, the measure, the effect meanings and the settings screen
 // rule) and packages/ui-kit/agent/flavour.md (the traits, the bezel card and
@@ -31,6 +32,7 @@ const REGISTRY = "packages/ui-kit/agent/accent-registry.json";
 const LANGUAGE = "docs/design-language.md";
 const FLAVOUR = "packages/ui-kit/agent/flavour.md";
 const CATALOG = "packages/ui-kit/agent/catalog.json";
+const CATALOG_MD = "packages/ui-kit/agent/catalog.md";
 const README = "packages/ui-kit/README.md";
 
 function fail(message) {
@@ -82,6 +84,7 @@ function loadSources() {
     language: readText(LANGUAGE),
     flavour: readText(FLAVOUR),
     catalog: readJson(CATALOG),
+    catalogMd: readText(CATALOG_MD),
     readme: readText(README),
   };
 }
@@ -270,6 +273,36 @@ function componentRows(catalog) {
   });
 }
 
+// Catalog components that ship no markup of their own: halftone is a script
+// mount, and compositions are page layouts with no class in the catalog.
+const NO_MARKUP = new Set(["fx-halftone", "compositions"]);
+const FENCE = "```";
+
+/**
+ * The first `html` example under each catalog.md heading, keyed by every
+ * `sl-*` class the heading names. A component's markup is the example of the
+ * first heading that names its first class. Throws when a component outside
+ * NO_MARKUP has no example, so a catalog edit cannot drop one silently.
+ */
+function componentMarkup(catalog, catalogMd) {
+  const heads = [...catalogMd.matchAll(/^### (.*)$/gm)];
+  const byClass = new Map();
+  heads.forEach((h, i) => {
+    const body = catalogMd.slice(h.index, i + 1 < heads.length ? heads[i + 1].index : catalogMd.length);
+    const m = body.match(new RegExp(`${FENCE}html\\n([\\s\\S]*?)${FENCE}`));
+    for (const [, cls] of h[1].matchAll(/`(sl-[\w-]+)`/g)) if (!byClass.has(cls)) byClass.set(cls, m ? m[1].trimEnd() : null);
+  });
+  const out = [];
+  for (const c of need(catalog, "components", CATALOG)) {
+    if (NO_MARKUP.has(c.id)) continue;
+    const html = c.classes.length ? byClass.get(c.classes[0]) : null;
+    if (!html) fail(`${CATALOG_MD} has no html example for catalog component ${c.id}`);
+    out.push(`#### ${code(c.id)}`, "", `${FENCE}html`, html, FENCE, "");
+  }
+  for (const id of NO_MARKUP) if (!need(catalog, "components", CATALOG).some((c) => c.id === id)) fail(`catalog component ${id} is gone from ${CATALOG}`);
+  return out.slice(0, -1);
+}
+
 function useKit(src) {
   const imports = kitImports(src.readme);
   return [
@@ -280,11 +313,18 @@ function useKit(src) {
     ...imports.map((f, n) => `${n + 1}. ${code(f.file)}${f.optional ? " (optional)" : ""}`),
     "",
     "- **Theme on the root.** Set `data-sl-theme` on the root element (`light`, `dark` or `high-contrast`). A product other than the default also loads `themes/products.css` and sets `data-sl-product=\"<id>\"` on the same root, its id from the accent registry. Why: every role resolves under these two attributes, and without `data-sl-product` the page gets the default product's neutrals.",
-    "- **Never rebuild a shipped component; use its class.** Every part in the table below ships in the kit's stylesheets: write its markup with its `.sl-*` classes (`agent/catalog.md` has the markup), and put an `.sl-fx-*` effect class on top of it, never in its place. Why: a hand-built copy drifts from the tokens, the states and the themes the class already carries.",
+    "- **A product sets its accent on the root.** `themes/products.css` gives a product its neutrals and, where the registry names one, its labelled fill; it does not set the accent. The product sets `--sl-accent-default` on the root to its registry accent, one value per theme (under `[data-sl-theme=\"light\"]` and `[data-sl-theme=\"dark\"]`), and the kit derives hover, subtle, the text reading and the label on the fill from it. Why: every accent step is derived from that one property, so setting it alone re-colours the whole family.",
+    "- **Never rebuild a shipped component; use its class.** Every part in the table below ships in the kit's stylesheets: write its markup as in the examples under Markup, with its `.sl-*` classes on the same elements, and put an `.sl-fx-*` effect class on top of it, never in its place. Why: a hand-built copy drifts from the tokens, the states and the themes the class already carries.",
     "",
     "### Components",
     "",
     ...table(["Component", "Kind", "Classes", "Purpose"], componentRows(src.catalog)),
+    "",
+    "### Markup",
+    "",
+    "One example per component, the first in `agent/catalog.md`; that file holds the variants and states. Copy the element structure and the classes, and replace the text.",
+    "",
+    ...componentMarkup(src.catalog, src.catalogMd),
   ];
 }
 
@@ -457,7 +497,7 @@ function colour(src) {
     "",
     "### Accent registry",
     "",
-    "One accent per product, from `agent/accent-registry.json`; the default's comes from `sondalab.tokens.json`. A product other than the default loads `themes/products.css` and sets `data-sl-product=\"<id>\"` beside `data-sl-theme`, so its neutrals take its hue. Changing an accent re-tints the product's neutrals, so it is a token change.",
+    "One accent per product, from `agent/accent-registry.json`; the default's comes from `sondalab.tokens.json`. A product other than the default loads `themes/products.css` and sets `data-sl-product=\"<id>\"` beside `data-sl-theme`, so its neutrals take its hue, and sets `--sl-accent-default` on the root to the accent below for each theme. Changing an accent re-tints the product's neutrals, so it is a token change.",
     "",
     ...table(
       ["Product (`data-sl-product`)", "Accent, light theme", "Accent, dark theme", "Depth companion, labelled fill or inheritance"],
@@ -699,7 +739,7 @@ function header() {
     "# Sondalab DESIGN.md",
     "",
     "> **What this file is:** the Sondalab design system in one file for design agents: each token with its rule and the reason for it, so a new surface is on-system from its first line.",
-    "> **Generated** by `scripts/gen-design-md.mjs` from `sondalab.tokens.json`, `neutrals.json`, `agent/accent-registry.json`, `agent/catalog.json`, the kit's `README.md`, `design-language.md` and `agent/flavour.md`. Do not edit it by hand; run `npm run gen:design-md`.",
+    "> **Generated** by `scripts/gen-design-md.mjs` from `sondalab.tokens.json`, `neutrals.json`, `agent/accent-registry.json`, `agent/catalog.json`, `agent/catalog.md`, the kit's `README.md`, `design-language.md` and `agent/flavour.md`. Do not edit it by hand; run `npm run gen:design-md`.",
     "> **Authority:** `design-language.md` holds the full rules; L1 to L6 and Decision 2 name its sections.",
   ];
 }
