@@ -192,13 +192,19 @@ test("depth covers the seven recipes", () => {
   });
 });
 
-test("signature components are covered, the bezel card as chosen and not shipped", () => {
+test("signature components are covered, the bezel card as shipped only once the catalog ships it", () => {
   const found = entries(section("components"), {
     wordmark: "wordmark", eyebrow: "eyebrow", tag: "tag", band: "inversion band",
     keycap: "keycap", tile: "tile", bezel: "bezel card",
   });
-  assert.match(found.bezel, /chosen/i);
-  assert.match(plain(found.bezel), /not (yet )?(been )?shipped/);
+  const catalog = JSON.parse(readFileSync(resolve(REPO, "packages/ui-kit/agent/catalog.json"), "utf8"));
+  const shipped = catalog.components.some((c) => c.classes.some((cls) => /bezel/.test(cls)));
+  if (shipped) {
+    assert.doesNotMatch(plain(found.bezel), /not (yet )?(been )?shipped/, "the bezel card ships but reads as not shipped");
+  } else {
+    assert.match(found.bezel, /chosen/i);
+    assert.match(plain(found.bezel), /not (yet )?(been )?shipped/);
+  }
   for (const [key, text] of Object.entries(found)) {
     if (key !== "bezel") assert.doesNotMatch(plain(text), /not (yet )?(been )?shipped/, `${key} is shipped`);
   }
