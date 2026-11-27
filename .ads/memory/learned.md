@@ -1,1 +1,2 @@
 - design-language.md L3 Art still describes figurative 0.45 posters (hills, plants), so do not cite it for the no-figurative-art ruling. [ads:CDR-0001 2026-11-27]
+- design-language.md keeps blur as a material (sticky header, palette); the 2026-11-27 ban applies only to blur used as a transition. [ads:CDR-0001 2026-11-27]
