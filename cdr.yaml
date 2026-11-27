@@ -1,0 +1,48 @@
+id: CDR-0004
+type: feature
+title: 'DESIGN.md: tell design agents to use the kit, print final values, and add the layout and pixel-face rules'
+intent: |-
+  Make six fixes in scripts/gen-design-md.mjs and regenerate packages/ui-kit/agent/DESIGN.md.
+  1. Near the top, add a section on using @sondalab/ui-kit: the CSS files to import and their order, data-sl-theme and data-sl-product on the root, a table of every shipped component class and its purpose, driven by agent/catalog.json, and the rule: never rebuild a shipped component, use its class.
+  2. Print final values per theme. Resolve --sl-text-on-accent from the existing derivation. Print the real --sl-shadow-inset and --sl-measure values. Throw if a printed value still holds var() of a private property.
+  3. Add the header product-name rule from the Title bar entry of docs/design-language.md: display face, weight 700, accent dot. The sondalab wordmark in the brand face stays the brand alone.
+  4. Give every accent registry column a descriptive header. Explain spexr's labelled fill in one sentence from accent-registry.json.
+  5. Add this rule to the layout part (L2) of docs/design-language.md, marked owner-approved on 2026-11-27, and carry it into DESIGN.md. Settings and form screens: a sidebar nav (sl-nav) beside one main pane. The pane opens with a head: eyebrow, title, one-line lede, and any scope switch on the right. Each section is one row of two columns: title and one-line description left, controls right, at most two control columns wide. 1px hairlines split sections, never cards. Pending edits collect in one action bar at the foot of the pane: a note of what changed, then Discard and the primary Save.
+  6. Carry the full Geist Pixel Square list from docs/design-language.md: section index, card folio, step number, stat value, compact lockup, one emphasised heading word. Include the note that the rule is about role, not size, so a micro section index stays mono.
+rationale: DESIGN.md has no section on consuming the kit and no component class table; it names only some classes in passing. It prints --sl-text-on-accent on light as oklch(from var(--sl-accent-default) var(--_sl-on)). It names --sl-shadow-inset and --sl-measure without values. It has no product-name rule and no settings or form layout rule. The accent table headers are Product, Light, Dark and Note, and 'labelled fill' is unexplained. The pixel face is summarised only as display numerals, the lockup and one display word. catalog.json holds ids, kinds, classes and role-vars but no purpose text, so the purposes need a source tied to its ids. A test agent given only this file rebuilt components by hand and guessed values.
+scope:
+  - scripts/gen-design-md.mjs
+  - scripts/*design-md*.test.mjs
+  - packages/ui-kit/agent/DESIGN.md
+  - packages/ui-kit/agent/catalog.json
+  - docs/design-language.md
+constraints:
+  - Values come from the sources at build time, including the derivation's pole and threshold, the shadow, the measure and the CSS file names where a source states them. Fail rather than write when a needed source is missing.
+  - The output is deterministic.
+  - DESIGN.md rules carry no dates, owner annotations or amendment history; the existing banned-pattern check stays. The 2026-11-27 owner approval is recorded only in docs/design-language.md.
+  - The accent-registry.json fill note includes history and owner text. Carry only the current explanation into DESIGN.md.
+  - The component table takes its entries and classes from catalog.json. catalog.json has no purpose text, so add it there or key it by component id so the generator fails on a missing or stale id.
+  - Fluid clamp() sizes and easing functions that are token values themselves stay as they are in the sources. The final-value rule targets derivations and unresolved private properties.
+  - Do not edit DESIGN.md by hand.
+acceptance_criteria:
+  - Near the top, before the colour section, DESIGN.md has a section naming @sondalab/ui-kit, the CSS files to import in order, data-sl-theme and data-sl-product on the root, and the rule never to rebuild a shipped component but to use its class.
+  - Every class listed in packages/ui-kit/agent/catalog.json appears in DESIGN.md's component table, each entry with a non-empty purpose.
+  - The --sl-text-on-accent row holds a final colour for light, dark and high contrast, matching the existing derivation applied to each theme's accent or the theme's literal. It has no 'oklch(from' and no 'var('.
+  - No value printed in DESIGN.md contains var(--_...), and no --_sl- private property appears in the file.
+  - The generator throws, and writes nothing, when a value it would print still holds var() of a private custom property.
+  - DESIGN.md prints the values of --sl-shadow-inset (per theme where the sources differ) and --sl-measure, matching the sources.
+  - DESIGN.md states that a product name in a header is set in the display face at weight 700 with an accent dot, and that the brand-face sondalab wordmark stays the brand alone.
+  - Every column of the accent registry table has a header saying what it holds. One sentence, based on agent/accent-registry.json, explains spexr's labelled fill.
+  - 'The layout part of docs/design-language.md holds the settings and form screen rule, marked owner-approved on 2026-11-27. DESIGN.md carries all its parts: sl-nav sidebar and one main pane; pane head; two-column section rows with at most two control columns; 1px hairlines and no cards; one foot action bar with change note, Discard and primary Save.'
+  - DESIGN.md lists all six Geist Pixel Square uses (section index, card folio, step number, stat value, compact lockup, one emphasised heading word) and states that the rule is about role, not size, so a micro section index stays mono.
+  - The committed DESIGN.md equals the output of buildDesignMd(), two builds give identical text, and the text has no date, owner annotation or amendment history.
+risk:
+  declared: low
+requires: []
+relates_to:
+  - text:460d93ad2795
+side_effects:
+  - none
+rollback_plan: Revert the commit. It changes only the generator, its tests, the generated DESIGN.md, the design language doc and possibly catalog.json, with no data or migration.
+author: assessor
+created_at: "2026-11-27T11:40:27.439Z"
