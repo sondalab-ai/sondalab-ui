@@ -1,0 +1,54 @@
+id: CDR-0005
+type: feature
+title: Ship the bezel card as sl-card--bezel in @sondalab/ui-kit
+intent: |-
+  Ship the card look in packages/ui-kit/agent/flavour.md section 2 as a real variant, sl-card--bezel, with elements sl-card__stage and sl-card__caption. flavour.md and scripts/gen-design-md.mjs still call it chosen and not shipped.
+
+  1. Component: in packages/ui-kit/components.css, build the variant on the existing sl-card. It is a frame on the surface rung holding a darker stage. The radii are concentric: the stage is --sl-radius-sm, the inset is 8px, and the frame is --sl-radius-lg. Edges are alpha hairlines (lit top, faint ring, shaded bottom) with no CSS border. A caption row sits on the frame. Use only kit tokens and role-vars, in light, dark and high contrast. In high contrast the hairlines become a solid 1px edge.
+
+  2. Catalog: add the variant and its elements to packages/ui-kit/agent/catalog.md, with one html example, and to catalog.json.
+
+  3. flavour.md: change the section 2 heading and first paragraph to say the bezel card ships as sl-card--bezel. The heading must still contain "bezel card", because gen-design-md.mjs finds the section by that text.
+
+  4. DESIGN.md: in scripts/gen-design-md.mjs, replace the chosen-not-shipped bezel line with one that names the class. Then regenerate DESIGN.md with npm run gen:tokens.
+
+  5. Showcase: show the bezel card in showcase/index.html next to the plain card.
+rationale: The owner chose this card look, but flavour.md and the DESIGN.md generator still record it as not shipped and tell readers to use the plain card. lab/look-bezel.html is a throwaway probe. Read it for the measured recipe, then rewrite it under the kit gates without copying its values or code.
+scope:
+  - packages/ui-kit/components.css
+  - packages/ui-kit/agent/**
+  - scripts/gen-design-md.mjs
+  - scripts/*.test.mjs
+  - showcase/index.html
+constraints:
+  - Add no new --sl- tokens and make no change to sondalab.tokens.json.
+  - The bezel styles use only kit tokens and role-vars. Do not copy values or code from lab/look-bezel.html, and do not edit that file.
+  - sl-audit stays clean.
+  - The plain sl-card does not change. Every new style applies only through sl-card--bezel and its use of sl-card__stage and sl-card__caption.
+  - Do not bump the package version and do not publish.
+  - Edit DESIGN.md only by regenerating it with npm run gen:tokens.
+  - The catalog.md example for the existing card component stays the first html example that DESIGN.md prints for it, unless the generator's markup rules require otherwise.
+acceptance_criteria:
+  - components.css has rules for .sl-card--bezel, .sl-card__stage and .sl-card__caption.
+  - The .sl-card--bezel frame has radius var(--sl-radius-lg), the stage has radius var(--sl-radius-sm), and the inset between them is 8px.
+  - The bezel frame is painted from the surface rung, and the stage from a darker rung, through kit tokens or role-vars. This holds in light and dark.
+  - 'In light and dark the bezel card draws no CSS border. Its edges are alpha hairlines: a lit top, a faint ring and a shaded bottom.'
+  - Under data-sl-theme="high-contrast" the bezel card has a solid 1px edge in place of the alpha hairlines.
+  - The new bezel rules have no literal colour values and use no --sl- token that did not exist before. sondalab.tokens.json is unchanged.
+  - Every existing declaration that applies to a plain .sl-card stays the same.
+  - catalog.md documents sl-card--bezel with one html example that uses sl-card__stage and sl-card__caption. catalog.json lists sl-card--bezel, sl-card__stage and sl-card__caption. The catalog audit tests pass and the example audits clean.
+  - In flavour.md, the section 2 heading and first paragraph say the bezel card ships as sl-card--bezel and no longer say it is not shipped.
+  - The DESIGN.md bezel card entry names sl-card--bezel and does not say it is chosen but not shipped.
+  - The committed DESIGN.md matches the generator's output after npm run gen:tokens.
+  - showcase/index.html shows a card with sl-card--bezel, a stage and a caption next to the plain card.
+  - sl-audit reports no findings, npm test passes, and the ui-kit package version is unchanged.
+risk:
+  declared: low
+requires: []
+relates_to:
+  - text:81abb29355ca
+side_effects:
+  - none
+rollback_plan: Revert the change's commit. The variant is additive and opt-in, with no token, version or publish change, so reverting removes it and restores the earlier docs, generator line, DESIGN.md and showcase.
+author: assessor
+created_at: "2026-11-27T13:13:37.894Z"
