@@ -140,6 +140,8 @@ test("colour roles carry the light, dark and high-contrast values and a purpose"
     const row = rows.find((r) => re.test(r.name));
     assert.ok(row, `no colour role row for --sl-${role}`);
     for (const [theme, value] of Object.entries(byTheme)) {
+      // A source value over a private var() is printed resolved; design-md.cdr0004.test.mjs checks it.
+      if (/var\(--_/.test(value)) continue;
       assert.ok(tight(row[theme]).includes(tight(value)), `--sl-${role} ${theme}: expected ${value}, got "${row[theme]}"`);
     }
     assert.match(row.purpose, /[A-Za-z]{3,}/, `--sl-${role} has no purpose`);
