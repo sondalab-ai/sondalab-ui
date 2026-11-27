@@ -1,0 +1,44 @@
+id: CDR-0002
+type: feature
+title: 'feat(ui-kit): generate agent/DESIGN.md for design agents, with a drift test'
+intent: 'Add `scripts/gen-design-md.mjs`, which builds `packages/ui-kit/agent/DESIGN.md`, and commit its output. Add an npm script (for example `gen:design-md`) following the existing `gen-*.mjs` conventions; also running it from the `gen:tokens` chain keeps it current after token or doc edits. The file follows the DESIGN.md format (token, rule and reason in the same file) so design agents such as Claude Design can scaffold on-system Sondalab UI. Sections, in order: (1) brand summary and voice; (2) colour roles per theme (light, dark, high contrast) with values and what each role is for, plus the per-product accent registry; (3) typography roles and scale; (4) spacing, radii, control height; (5) depth recipes; (6) signature components: wordmark, eyebrow, tag, inversion band, keycap, tile, and the bezel card marked as chosen but not shipped; (7) motion tokens and rules; (8) effect families, each with its one meaning; (9) do and do-not lists from `flavour.md`. List DESIGN.md in the `packages/ui-kit/agent/README.md` file table. Add `scripts/design-md-drift.test.mjs`, which rebuilds the file in memory and compares it with the committed copy.'
+rationale: '`packages/ui-kit/agent/` has no single file holding values, rules and reasons together. Values are in `sondalab.tokens.json`, rules are in `design-language.md` (mixed with dated history and owner rulings), and brand traits are in `flavour.md`. `gen-agent-docs.mjs` only copies `design-language.md` byte for byte. The package''s `files` list already has `agent/` and `exports` has `./agent/*`, so a file placed there ships without a manifest change.'
+scope:
+  - scripts/gen-design-md.mjs
+  - scripts/design-md-drift.test.mjs
+  - scripts/lib/*.mjs
+  - packages/ui-kit/agent/DESIGN.md
+  - packages/ui-kit/agent/README.md
+  - package.json
+constraints:
+  - 'Sources: `sondalab.tokens.json` (values), `docs/design-language.md` (rules), `packages/ui-kit/agent/flavour.md` (brand traits and the do-not-converge list).'
+  - Values are read or derived from sources at build time, never typed by hand in the generator, including numbers inside rule sentences.
+  - The token JSON holds only the neutral ladder or expressions for some roles. Get baked per-theme values through the existing generator logic (`scripts/lib/`) or its generated outputs, and the accent registry from `agent/accent-registry.json`. A value in none of the three named sources (for example a depth recipe or the control height) is extracted at build time from its authoritative repository source, such as the shipped CSS or the rule text.
+  - 'State each rule only in its current form: no dates, owner-ruling annotations or version history, including in text taken from `flavour.md`. Keep each rule''s reason next to it in one short sentence.'
+  - 'Do not take art rules from the L3 Art entry of `design-language.md`: it still describes figurative posters, which conflicts with the no-figurative-art item in `flavour.md`.'
+  - The blur ban covers blur as transition material only; blur as a standing material stays allowed.
+  - No CSS change, no token change, no new `--sl-*` token. Do not edit `docs/design-language.md` or `flavour.md`.
+  - The output is deterministic (no timestamps or machine-specific paths), and the test can import the build function without writing any file.
+acceptance_criteria:
+  - '`packages/ui-kit/agent/DESIGN.md` exists and equals, byte for byte, what the generator''s build function returns in memory from the current sources.'
+  - A `node --test` file under `scripts/` fails when the committed DESIGN.md differs from the in-memory build and passes when they match; running it writes no file.
+  - The root `package.json` has an npm script that runs the generator; running it on an unchanged tree leaves the tree unchanged.
+  - 'DESIGN.md has these sections in this order: brand summary and voice; colour roles; typography; spacing, radii and control height; depth recipes; signature components; motion; effect families; do and do-not.'
+  - The colour section covers light, dark and high contrast, gives each role's value and purpose, and lists every product in `accent-registry.json` with its accent.
+  - The typography, spacing, radius and motion values in DESIGN.md equal those in `sondalab.tokens.json`, and changing one in the build input changes the output.
+  - The signature components section covers the wordmark, eyebrow, tag, inversion band, keycap, tile and bezel card, and marks the bezel card as chosen but not shipped.
+  - The effect families section names glitch, aurora, glass and goo, each with one meaning.
+  - The do-not list includes every row of the do-not-converge table in `flavour.md`.
+  - DESIGN.md contains no ISO date, owner-ruling annotation or versioned history, and each rule has a short reason next to it.
+  - The file table in `packages/ui-kit/agent/README.md` has a DESIGN.md row, and the `files` list of `packages/ui-kit/package.json` covers `agent/DESIGN.md`.
+  - No CSS file or `sondalab.tokens.json` changes, and the existing tests still pass.
+risk:
+  declared: low
+requires: []
+relates_to:
+  - text:cee5be6f1e1b
+side_effects:
+  - none
+rollback_plan: Revert the commit. This removes the generator, the drift test, DESIGN.md, the npm script and the README row. No CSS, token or runtime behaviour is affected.
+author: assessor
+created_at: "2026-11-27T08:38:31.821Z"
