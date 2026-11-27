@@ -1,7 +1,7 @@
 # Sondalab DESIGN.md
 
 > **What this file is:** the Sondalab design system in one file for design agents: each token with its rule and the reason for it, so a new surface is on-system from its first line.
-> **Generated** by `scripts/gen-design-md.mjs` from `sondalab.tokens.json`, `neutrals.json`, `agent/accent-registry.json`, `agent/catalog.json`, the kit's `README.md`, `design-language.md` and `agent/flavour.md`. Do not edit it by hand; run `npm run gen:design-md`.
+> **Generated** by `scripts/gen-design-md.mjs` from `sondalab.tokens.json`, `neutrals.json`, `agent/accent-registry.json`, `agent/catalog.json`, `agent/catalog.md`, the kit's `README.md`, `design-language.md` and `agent/flavour.md`. Do not edit it by hand; run `npm run gen:design-md`.
 > **Authority:** `design-language.md` holds the full rules; L1 to L6 and Decision 2 name its sections.
 
 ## 1. Use the kit
@@ -18,7 +18,8 @@ Build every surface on `@sondalab/ui-kit`, the CSS kit that ships these tokens a
 8. `@sondalab/ui-kit/fonts.css` (optional)
 
 - **Theme on the root.** Set `data-sl-theme` on the root element (`light`, `dark` or `high-contrast`). A product other than the default also loads `themes/products.css` and sets `data-sl-product="<id>"` on the same root, its id from the accent registry. Why: every role resolves under these two attributes, and without `data-sl-product` the page gets the default product's neutrals.
-- **Never rebuild a shipped component; use its class.** Every part in the table below ships in the kit's stylesheets: write its markup with its `.sl-*` classes (`agent/catalog.md` has the markup), and put an `.sl-fx-*` effect class on top of it, never in its place. Why: a hand-built copy drifts from the tokens, the states and the themes the class already carries.
+- **A product sets its accent on the root.** `themes/products.css` gives a product its neutrals and, where the registry names one, its labelled fill; it does not set the accent. The product sets `--sl-accent-default` on the root to its registry accent, one value per theme (under `[data-sl-theme="light"]` and `[data-sl-theme="dark"]`), and the kit derives hover, subtle, the text reading and the label on the fill from it. Why: every accent step is derived from that one property, so setting it alone re-colours the whole family.
+- **Never rebuild a shipped component; use its class.** Every part in the table below ships in the kit's stylesheets: write its markup as in the examples under Markup, with its `.sl-*` classes on the same elements, and put an `.sl-fx-*` effect class on top of it, never in its place. Why: a hand-built copy drifts from the tokens, the states and the themes the class already carries.
 
 ### Components
 
@@ -92,6 +93,644 @@ Build every surface on `@sondalab/ui-kit`, the CSS kit that ships these tokens a
 | `signal` | primitive | `.sl-signal`, `.sl-signal--muted` | A decorative dithered signal strip, drawn by `mountSignals()`. |
 | `art` | signature | `.sl-eyebrow--mark`, `.sl-eyebrow--mark-square`, `.sl-eyebrow--mark-tri`, `.sl-eyebrow--mark-circle`, `.sl-eyebrow--mark-half`, `.sl-eyebrow--mark-stair`, `.sl-rule--shapes`, `.sl-rule--weave`, `.sl-art-corner`, `.sl-art-field`, `.sl-art-field--grid`, `.sl-art-field--albers`, `.sl-art-field--stripes`, `.sl-art-field--fade-start`, `.sl-art-field--fade-end`, `.sl-art-field--fade-down`, `.sl-empty--void`, `.sl-empty--shapes`, `.sl-art-poster`, `.sl-art-poster--overprint`, `.sl-art-poster--hills`, `.sl-art-poster--orbit`, `.sl-art-horizon`, `.sl-art-horizon--dawn` | Opt-in static art on the pixel cell: eyebrow marks, rule strips, a card corner, fields, empty-state pieces, posters and horizons. |
 
+### Markup
+
+One example per component, the first in `agent/catalog.md`; that file holds the variants and states. Copy the element structure and the classes, and replace the text.
+
+#### `eyebrow`
+
+```html
+<p class="sl-eyebrow">System status</p>
+```
+
+#### `tag`
+
+```html
+<span class="sl-tag">Delivered</span>
+<span class="sl-tag sl-tag--plain">Draft</span>
+```
+
+#### `chip`
+
+```html
+<div class="sl-chips" role="group" aria-label="Event kinds">
+  <button class="sl-chip" aria-pressed="true">Tool <span class="sl-chip__count">42</span></button>
+  <button class="sl-chip" aria-pressed="false">Spawn <span class="sl-chip__count">3</span></button>
+  <button class="sl-chip" aria-pressed="true">Result</button>
+</div>
+```
+
+#### `button`
+
+```html
+<button class="sl-btn sl-btn--primary">Save changes</button>
+<button class="sl-btn sl-btn--ghost">Cancel</button>
+<button class="sl-btn">Skip</button>
+<button class="sl-btn sl-btn--primary sl-btn--sm">Add</button>
+```
+
+#### `link`
+
+```html
+<a class="sl-link" href="/specs">read the spec</a>
+```
+
+#### `badge`
+
+```html
+<span class="sl-badge sl-badge--success">Passing</span>
+<span class="sl-badge sl-badge--danger">Failed</span>
+```
+
+#### `card`
+
+```html
+<article class="sl-card">
+  <h3 class="sl-card__title">Migration report</h3>
+  <div class="sl-card__body">2 R-violations resolved, 1 blessed.</div>
+</article>
+```
+
+#### `field`
+
+```html
+<label class="sl-field">
+  <span class="sl-field__label">Product</span>
+  <input class="sl-field__input" type="text" placeholder="introspect">
+</label>
+```
+
+#### `callout`
+
+```html
+<div class="sl-callout sl-callout--info">
+  <p class="sl-callout__title">Tier B</p>
+  <div class="sl-callout__body">Every colour must resolve to a Sondalab value.</div>
+</div>
+```
+
+#### `rule`
+
+```html
+<hr class="sl-rule">
+<div class="sl-rule sl-rule--labeled">Earlier runs</div>
+```
+
+#### `table`
+
+```html
+<div style="overflow-x:auto">
+  <table class="sl-table sl-table--numeric">
+    <thead><tr><th>Product</th><th>R-violations</th></tr></thead>
+    <tbody><tr><td>daos</td><td>2</td></tr></tbody>
+  </table>
+</div>
+```
+
+#### `tabs`
+
+```html
+<div class="sl-tabs">
+  <div class="sl-tabs__list" role="tablist">
+    <button class="sl-tabs__tab" aria-selected="true">Tokens</button>
+    <button class="sl-tabs__tab">Components</button>
+  </div>
+</div>
+```
+
+#### `tooltip`
+
+```html
+<span class="sl-tooltip" data-sl-tooltip="Measured on the canvas ground" tabindex="0">4.89:1</span>
+<button class="sl-icon-btn sl-tooltip" data-sl-tooltip="Re-run the audit" aria-label="Re-run the audit">↻</button>
+```
+
+#### `kbd`
+
+```html
+Press <kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">K</kbd>, then run <code class="sl-code">sl-audit</code>.
+```
+
+#### `dialog`
+
+```html
+<dialog class="sl-dialog">
+  <h2 class="sl-dialog__title">Discard changes?</h2>
+  <div class="sl-dialog__body">This cannot be undone.</div>
+  <div class="sl-dialog__actions">
+    <button class="sl-btn sl-btn--ghost">Keep</button>
+    <button class="sl-btn sl-btn--primary">Discard</button>
+  </div>
+</dialog>
+```
+
+#### `toast`
+
+```html
+<div class="sl-toast-stack">
+  <div class="sl-toast-stack__live" aria-live="polite"><div class="sl-toast sl-toast--success">
+      <span class="sl-toast__mark" aria-hidden="true"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+      <div class="sl-toast__content">
+        <p class="sl-toast__title">Probe saved</p>
+        <p class="sl-toast__body">q-8f2a re-runs in 14 days</p>
+      </div>
+      <button class="sl-btn sl-btn--sm">Undo</button>
+      <button class="sl-icon-btn sl-toast__dismiss" aria-label="Dismiss">×</button>
+      <div class="sl-progress sl-toast__timer" role="progressbar" aria-label="Time left" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" style="--sl-progress: 62%"><span class="sl-progress__bar"></span></div>
+    </div></div>
+  <div class="sl-toast-stack__live" role="alert"></div>
+</div>
+```
+
+#### `fx-glass`
+
+```html
+<article class="sl-card sl-fx-glass sl-fx-glass--wide">…</article>
+<label class="sl-field">
+  <span class="sl-field__label">Product</span>
+  <span class="sl-field__control sl-fx-glass sl-fx-glass--field">
+    <input class="sl-field__input" type="text">
+  </span>
+</label>
+```
+
+#### `fx-aurora`
+
+```html
+<button class="sl-btn sl-btn--ghost sl-fx-aurora">Run audit</button>
+<button class="sl-btn sl-btn--primary sl-fx-aurora sl-fx-aurora--rim" data-sl-fx-live="busy" aria-busy="true" disabled>Saving…</button>
+<span class="sl-field__control sl-fx-aurora sl-fx-aurora--field"><input class="sl-field__input" type="text"></span>
+<article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy" aria-busy="true">…</article>
+<article class="sl-card sl-fx-aurora sl-fx-aurora--wide" data-sl-fx-live="busy"
+         role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
+         style="--slfx-progress: .62">…</article>
+```
+
+#### `fx-goo`
+
+```html
+<div class="sl-fx-goo sl-fx-goo--drift" style="display:flex; gap:.75rem; padding:2.5rem; --slfx-goo-weld: 20px">
+  <div class="sl-callout sl-callout--warning sl-fx-goo__member">daos</div>
+  <div class="sl-callout sl-callout--info sl-fx-goo__member" style="margin-top:1.25rem">introspect</div>
+</div>
+```
+
+#### `fx-press`
+
+```html
+<div style="display:flex; gap:0.6rem">
+  <button class="sl-btn sl-btn--primary sl-fx-press">Run probe</button>
+  <button class="sl-btn sl-btn--ghost sl-fx-press">Cancel</button>
+</div>
+```
+
+#### `fx-glitch`
+
+```html
+<button class="sl-btn sl-btn--primary">
+  <span class="sl-fx-glitch" data-text="Delete branch">Delete branch</span>
+</button>
+```
+
+#### `sticky-header`
+
+```html
+<header class="sl-header">
+  <div class="sl-wrap"> … </div>
+</header>
+```
+
+#### `inversion-band`
+
+```html
+<section class="sl-invert">
+  <div class="sl-wrap"> … </div>
+</section>
+```
+
+#### `hairline-grid`
+
+```html
+<div class="sl-hgrid">
+  <div>…</div>
+  <div>…</div>
+  <div>…</div>
+</div>
+```
+
+#### `section-index`
+
+```html
+<section class="sl-section">
+  <div class="sl-section__head">
+    <span class="sl-section__idx">03</span>
+    <h2>Signature components</h2>
+  </div>
+</section>
+```
+
+#### `oversized-anchor`
+
+```html
+<h1 class="sl-anchor">Everything measured, nothing asserted.</h1>
+```
+
+#### `haze`
+
+```html
+<section class="sl-haze"> … </section>
+```
+
+#### `spectral-text`
+
+```html
+<h1 class="sl-anchor">Everything measured, <span class="sl-spectral">nothing asserted.</span></h1>
+```
+
+#### `checkbox`
+
+```html
+<label class="sl-check">
+  <input class="sl-check__input" type="checkbox">
+  <span class="sl-check__box"></span>
+  <span class="sl-check__label">Run the audit on save</span>
+</label>
+```
+
+#### `radio`
+
+```html
+<label class="sl-radio">
+  <input class="sl-radio__input" type="radio" name="tier">
+  <span class="sl-radio__box"></span>
+  <span class="sl-radio__label">Tier A — full theme selector</span>
+</label>
+```
+
+#### `switch`
+
+```html
+<label class="sl-switch">
+  <input class="sl-switch__input" type="checkbox" role="switch">
+  <span class="sl-switch__track"></span>
+  <span class="sl-switch__label">Tier 2 GPU effects</span>
+</label>
+```
+
+#### `select`
+
+```html
+<label class="sl-field">
+  <span class="sl-field__label">Substrate</span>
+  <span class="sl-field__control sl-select">
+    <select class="sl-field__input">
+      <option>App</option>
+      <option>IDE</option>
+      <option>Page</option>
+    </select>
+  </span>
+</label>
+```
+
+#### `wrap`
+
+```html
+<div class="sl-wrap"> … </div>
+```
+
+#### `prose`
+
+```html
+<div class="sl-prose"> <p>…</p> </div>
+```
+
+#### `breadcrumb`
+
+```html
+<nav class="sl-breadcrumb" aria-label="Breadcrumb">
+  <a class="sl-breadcrumb__item" href="/">Specs</a>
+  <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+  <a class="sl-breadcrumb__item" href="/specs/ds">Design system</a>
+  <span class="sl-breadcrumb__sep" aria-hidden="true">/</span>
+  <span class="sl-breadcrumb__item" aria-current="page">Base element set</span>
+</nav>
+```
+
+#### `button-group`
+
+```html
+<div class="sl-btn-group">
+  <button class="sl-btn sl-btn--ghost">Audit</button>
+  <button class="sl-btn sl-btn--ghost">Migrate</button>
+  <button class="sl-btn sl-btn--ghost">Adopt</button>
+</div>
+```
+
+#### `segmented`
+
+```html
+<div class="sl-segmented" role="tablist">
+  <button class="sl-segmented__item" role="tab" aria-selected="true">Light</button>
+  <button class="sl-segmented__item" role="tab" aria-selected="false">Dark</button>
+  <button class="sl-segmented__item" role="tab" aria-selected="false">Contrast</button>
+</div>
+```
+
+#### `progress`
+
+```html
+<div class="sl-progress" role="progressbar" aria-label="Spec steps" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" style="--sl-progress: 60%">
+  <span class="sl-progress__bar"></span>
+</div>
+```
+
+#### `slider`
+
+```html
+<input class="sl-slider" type="range" min="0" max="100" value="40" aria-label="Volume"
+       style="--sl-slider-value: 40%"
+       oninput="this.style.setProperty('--sl-slider-value',
+               (this.value - this.min) / (this.max - this.min) * 100 + '%')">
+```
+
+#### `icon-button`
+
+```html
+<button class="sl-icon-btn" aria-label="Re-run the audit">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  </svg>
+</button>
+<button class="sl-icon-btn sl-icon-btn--round" aria-label="Add a product">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  </svg>
+</button>
+```
+
+#### `pagination`
+
+```html
+<nav class="sl-pagination" aria-label="Pagination">
+  <a class="sl-pagination__item" href="?p=1">1</a>
+  <a class="sl-pagination__item" href="?p=2" aria-current="page">2</a>
+  <a class="sl-pagination__item" href="?p=3">3</a>
+</nav>
+```
+
+#### `empty-state`
+
+```html
+<div class="sl-empty">
+  <span class="sl-eyebrow">No findings</span>
+  <p class="sl-empty__title">The audit found nothing to report.</p>
+  <p class="sl-empty__body">4 surfaces read, 0 R-violations, 0 blessed deviations.</p>
+</div>
+```
+
+#### `skeleton`
+
+```html
+<div class="sl-skeleton" style="height: 1rem; width: 60%"></div>
+```
+
+#### `stat`
+
+```html
+<div class="sl-stat">
+  <span class="sl-stat__value">268</span>
+  <span class="sl-stat__label">Tests green</span>
+</div>
+```
+
+#### `nav`
+
+```html
+<nav class="sl-nav" aria-label="Sections">
+  <div class="sl-nav__group">Observe</div>
+  <a class="sl-nav__item" href="/live" aria-current="page">Live <span class="sl-nav__count">12</span></a>
+  <a class="sl-nav__item" href="/sessions">Sessions <span class="sl-nav__count">340</span></a>
+</nav>
+```
+
+#### `list`
+
+```html
+<div class="sl-list" role="listbox" aria-label="Sessions">
+  <button class="sl-list__row" role="option" aria-selected="true">Refactor the audit<span class="sl-list__meta">2m ago · 14 tools</span></button>
+  <button class="sl-list__row" role="option" aria-selected="false">Prism light theme<span class="sl-list__meta">1h ago · 212 tools</span></button>
+</div>
+```
+
+#### `disclosure`
+
+```html
+<button class="sl-disclosure" aria-expanded="false" aria-controls="raw-1">Raw payload</button>
+<pre id="raw-1" hidden>…</pre>
+```
+
+#### `kv`
+
+```html
+<dl class="sl-kv">
+  <dt>Model</dt><dd>claude-opus-5-5</dd>
+  <dt>Started</dt><dd>Today, 17:52</dd>
+</dl>
+```
+
+#### `resizer`
+
+```html
+<div class="sl-resizer" role="separator" aria-orientation="vertical" aria-label="Resize the list" aria-valuenow="320" aria-valuemin="200" aria-valuemax="640" tabindex="0"></div>
+```
+
+#### `titlebar`
+
+```html
+<header class="sl-titlebar">
+  <div class="sl-titlebar__l">
+    <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__menu" aria-label="Menu">…</button>
+    <span class="sl-titlebar__mark">spexr<span class="sl-titlebar__dot" aria-hidden="true"></span></span>
+    <span class="sl-titlebar__crumb">probe-engine<span class="sl-titlebar__sep" aria-hidden="true">/</span>src</span>
+  </div>
+  <button class="sl-titlebar__cmd" type="button" aria-keyshortcuts="Meta+P">
+    <span class="sl-titlebar__cmd-text">Search files, run a command</span>
+    <span class="sl-titlebar__keys" aria-hidden="true"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">P</kbd></span>
+  </button>
+  <div class="sl-titlebar__r">
+    <button class="sl-icon-btn sl-titlebar__btn" aria-label="Toggle the right panel">…</button>
+    <button class="sl-icon-btn sl-titlebar__btn sl-titlebar__btn--dot" aria-label="Notifications, 3 unread">…</button>
+  </div>
+</header>
+```
+
+#### `pane`
+
+```html
+<div style="display: flex; gap: var(--sl-space-2); padding: var(--sl-space-2); background: var(--slc-canvas)">
+  <aside class="sl-pane" aria-label="Explorer">…</aside>
+  <main class="sl-pane" data-lit aria-label="Editor">…</main>
+</div>
+```
+
+#### `statusbar`
+
+```html
+<footer class="sl-statusbar" aria-label="Status">
+  <span class="sl-statusbar__item"><span class="sl-statusbar__value">feat/K6-workbench</span> ↑2</span>
+  <span class="sl-statusbar__sep" aria-hidden="true"></span>
+  <span class="sl-statusbar__item"><span class="sl-statusbar__dot" aria-hidden="true"></span>2 agents running</span>
+  <span class="sl-statusbar__spacer"></span>
+  <span class="sl-statusbar__item">Ln 42, Col 18</span>
+  <span class="sl-statusbar__item">UTF-8</span>
+  <span class="sl-statusbar__item">Opus · <span class="sl-statusbar__value">1.2k</span> tok/s</span>
+</footer>
+```
+
+#### `activitybar`
+
+```html
+<nav class="sl-activitybar" aria-label="Views">
+  <button class="sl-activitybar__item" aria-label="Explorer" aria-current="true"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><path d="M4 1.75h5l3.25 3.25v9H4Z"/></svg></button>
+  <button class="sl-activitybar__item" aria-label="Search"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="7" cy="7" r="4.25"/></svg></button>
+  <button class="sl-activitybar__item" aria-label="Source control, 3 changes"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="4.5" cy="3.5" r="1.5"/></svg><span class="sl-activitybar__badge" aria-hidden="true">3</span></button>
+</nav>
+```
+
+#### `tree`
+
+```html
+<ul class="sl-tree sl-tree--guides" role="tree" aria-label="Files">
+  <li class="sl-tree__row" role="treeitem" aria-level="1" aria-setsize="1" aria-posinset="1" aria-expanded="true" aria-selected="false" tabindex="-1">
+    <span class="sl-tree__twisty" aria-hidden="true"></span><span class="sl-tree__label">src</span></li>
+  <li class="sl-tree__row" role="treeitem" aria-level="2" aria-setsize="2" aria-posinset="1" aria-selected="true" tabindex="0">
+    <span class="sl-tree__twisty" aria-hidden="true"></span><span class="sl-tree__label">resolve.ts</span></li>
+  <li class="sl-tree__row" role="treeitem" aria-level="2" aria-setsize="2" aria-posinset="2" aria-selected="false" tabindex="-1">
+    <span class="sl-tree__twisty" aria-hidden="true"></span><span class="sl-tree__label">cache.ts</span></li>
+</ul>
+```
+
+#### `palette`
+
+```html
+<div class="sl-palette" role="dialog" aria-label="Command palette">
+  <div class="sl-palette__head">
+    <input class="sl-field__input sl-palette__input" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="pal-list" aria-activedescendant="pal-1" aria-label="Command" value="run probe">
+  </div>
+  <div class="sl-palette__list" id="pal-list" role="listbox" aria-label="Results" tabindex="-1">
+    <div role="group" aria-labelledby="pal-g1">
+      <div class="sl-palette__group" id="pal-g1" role="presentation">Commands</div>
+      <div class="sl-palette__row" id="pal-1" role="option" aria-selected="true">
+        <span class="sl-palette__label"><mark>Run</mark> <mark>probe</mark> q-8f2a</span>
+        <span class="sl-palette__meta">resolve.ts</span>
+        <span class="sl-palette__keys"><kbd class="sl-kbd">⌘</kbd><kbd class="sl-kbd">⏎</kbd></span>
+      </div>
+    </div>
+  </div>
+  <div class="sl-palette__foot"><span><kbd class="sl-kbd">esc</kbd> close</span></div>
+</div>
+```
+
+#### `term-block`
+
+```html
+<article class="sl-term-block" data-exit="1">
+  <header class="sl-term-block__head">
+    <span class="sl-term-block__cmd"><span class="sl-term-block__prompt">$</span> pnpm sl-audit</span>
+    <span class="sl-term-block__meta"><time>14:02:19</time><span>0.8 s</span><span class="sl-term-block__exit">exit 1</span></span>
+  </header>
+  <pre class="sl-term-block__out">R  components.css:412  raw colour literal outside the role vars</pre>
+</article>
+```
+
+#### `term-output`
+
+```html
+<article class="sl-term-block" aria-label="Terminal roles and glyphs">
+  <pre class="sl-term-block__out"><span class="sl-term-block__prompt">prompt</span>  <span class="sl-term-block__ok">ok</span>  <span class="sl-term-block__warn">warn</span>  <span class="sl-term-block__err">err</span>  <span class="sl-term-block__dim">dim</span>  <span class="sl-term-block__accent">accent</span>
+
+  <span class="sl-term-block__ok">✓</span> done       +  ok
+  <span class="sl-term-block__ok">✓</span> fixed      +  ok
+  <span class="sl-term-block__err">✗</span> failed     x  err
+  <span class="sl-term-block__warn">!</span> warn       !  warn
+  <span class="sl-term-block__prompt">●</span> active     *  prompt
+  <span class="sl-term-block__dim">○</span> pending    .  dim
+  <span class="sl-term-block__dim">↷</span> skipped    -  dim
+  <span class="sl-term-block__prompt">?</span> question   ?  prompt
+  <span class="sl-term-block__dim">·</span> separator  |  dim</pre>
+</article>
+```
+
+#### `wordmark`
+
+```html
+<span class="sl-wordmark">sondalab<span class="sl-wordmark__dot">.</span></span>
+```
+
+#### `lockup`
+
+```html
+<span class="sl-lockup">sonda<span class="sl-lockup__sep">/</span>lab</span>
+```
+
+#### `pixel-word`
+
+```html
+<h2>Measured, not <span class="sl-px">guessed</span></h2>
+```
+
+#### `monogram`
+
+```html
+<span class="sl-monogram" role="img" aria-label="Sondalab">s</span>
+```
+
+#### `figure`
+
+```html
+<figure class="sl-figure">
+  <div class="sl-figure__media" style="aspect-ratio: 16 / 9">
+    <img src="/contact-1k.jpg" alt="Glass pane, GPU tier, dark theme">
+  </div>
+  <figcaption class="sl-figure__caption">Contact 1k — the GPU glass pane</figcaption>
+</figure>
+```
+
+#### `avatar`
+
+```html
+<span class="sl-avatar"><img src="/avatar.png" alt=""></span>
+<span class="sl-avatar sl-avatar--sm"><span class="sl-monogram" role="img" aria-label="Sondalab">s</span></span>
+<span class="sl-avatar sl-avatar--lg"><span class="sl-monogram" role="img" aria-label="Sondalab">s</span></span>
+```
+
+#### `signal`
+
+```html
+<canvas class="sl-signal" data-sl-signal data-sl-signal-level="0.6" aria-hidden="true"></canvas>
+```
+
+#### `art`
+
+```html
+<div class="sl-eyebrow sl-eyebrow--mark">§ 02 — Signals</div>
+<div class="sl-eyebrow sl-eyebrow--mark sl-eyebrow--mark-circle">§ 03 — Traces</div>
+<hr class="sl-rule sl-rule--shapes">
+<hr class="sl-rule sl-rule--weave">
+<article class="sl-card sl-art-corner"> … </article>
+<section class="sl-art-field"> … </section>
+<section class="sl-art-field sl-art-field--albers sl-art-field--fade-end"> … </section>
+<div class="sl-empty sl-empty--shapes">
+  <p class="sl-empty__title">Nothing here yet</p>
+  <p class="sl-empty__body">Start a run and its traces land in this panel.</p>
+</div>
+<header>
+  <div> <h1>…</h1> <p>…</p> </div>
+  <div class="sl-art-poster sl-art-poster--hills" data-sl-art-seed="7" aria-hidden="true"></div>
+</header>
+<section class="sl-art-horizon" style="padding-bottom: 12.5rem"> <h2>…</h2> <p>…</p> </section>
+```
+
 ## 2. Brand and voice
 
 Sondalab is a family of developer tools that read as one suite. The look is editorial modernism for an IDE: hairline structure, mono micro labels, oversized display type, inversion bands and real content over marketing copy. Products share the whole grammar and differ only in their accent hue.
@@ -144,7 +783,7 @@ Roles are `--sl-*` custom properties set per theme by `data-sl-theme` on the roo
 
 ### Accent registry
 
-One accent per product, from `agent/accent-registry.json`; the default's comes from `sondalab.tokens.json`. A product other than the default loads `themes/products.css` and sets `data-sl-product="<id>"` beside `data-sl-theme`, so its neutrals take its hue. Changing an accent re-tints the product's neutrals, so it is a token change.
+One accent per product, from `agent/accent-registry.json`; the default's comes from `sondalab.tokens.json`. A product other than the default loads `themes/products.css` and sets `data-sl-product="<id>"` beside `data-sl-theme`, so its neutrals take its hue, and sets `--sl-accent-default` on the root to the accent below for each theme. Changing an accent re-tints the product's neutrals, so it is a token change.
 
 | Product (`data-sl-product`) | Accent, light theme | Accent, dark theme | Depth companion, labelled fill or inheritance |
 | --- | --- | --- | --- |

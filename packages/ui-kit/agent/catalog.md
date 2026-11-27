@@ -191,7 +191,7 @@ Consumes: `--slc-surface`, `--slc-accent`, `--slc-success`, `--slc-warning`, `--
 Hairline divider; `--labeled` centres a micro-label caption (mono, uppercase, `--sl-text-micro`) over the line. Substrate: **R** App/Page.
 ```html
 <hr class="sl-rule">
-<div class="sl-rule sl-rule--labeled">since 0.2.0</div>
+<div class="sl-rule sl-rule--labeled">Earlier runs</div>
 ```
 Consumes: `--slc-border`. Weight is always 1px — never thicken a separator.
 
@@ -458,7 +458,7 @@ A `<dl>` of labelled facts on a two-column grid; labels in the muted ink, values
 ```html
 <dl class="sl-kv">
   <dt>Model</dt><dd>claude-opus-5-5</dd>
-  <dt>Started</dt><dd>2026-09-30 17:52</dd>
+  <dt>Started</dt><dd>Today, 17:52</dd>
 </dl>
 ```
 Consumes: `--slc-text-muted`, `--slc-text`. Don't: nest a table in a value; a fact that needs columns is not a fact.
