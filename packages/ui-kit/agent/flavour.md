@@ -20,9 +20,9 @@
 | 11 | One accent per product, from the accent registry (`accent-registry.json`). | Decision 2 |
 | 12 | Precise, technical voice: real figures and real output, never marketing. | L5 |
 
-## 2 — The bezel card (chosen, not yet shipped)
+## 2 — The bezel card (ships as `sl-card--bezel`)
 
-Chosen by the owner on 2026-11-27. It is not in `components.css` or `catalog.md` yet; until it ships, the shipped card stays the one to use.
+Chosen by the owner on 2026-11-27, it ships in `components.css` as `sl-card--bezel` on `sl-card`, with the elements `sl-card__stage` and `sl-card__caption`; `catalog.md` gives its markup. High contrast trades its hairlines for one solid 1px edge.
 
 - **Frame and stage:** a frame on the surface rung holding a darker stage.
 - **Concentric radii:** stage r6 (`--sl-radius-sm`) + inset 8 = frame r14 (`--sl-radius-lg`), all kit radii.

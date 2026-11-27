@@ -637,7 +637,7 @@ function components(src) {
     "- **Inversion band** — a full-width block flipped to the strongest neutral (ink ground, paper text) that punctuates the rhythm and marks the thesis or the primary call to action; at least one per long page (`.sl-invert`). A control in a band rests on the band's own hairline and takes the band's control edge on hover. Why: the recurring inversion is a core motif.",
     "- **Keycap** — every shortcut is a small physical key, `.sl-kbd`, in `--sl-font-mono`, one cap per key, wearing the key recipe. Inside a button it is a child `<kbd class=\"sl-kbd\" aria-hidden=\"true\">` and the button names the shortcut with `aria-keyshortcuts`. Why: `::after` belongs to glass, and the cap never reads weaker than the label beside it.",
     "- **Tile** — selection is a raised tile plus a seam: a short line inside its leading edge, or above its bottom edge in a tab or a segment, in the accent while its container holds the focus and in the muted ink otherwise. Why: the tile alone barely separates from its ground, and the seam carries the state at 3:1.",
-    "- **Bezel card** — chosen, not yet shipped: it is not in `components.css` or `catalog.md`, so until it ships the shipped card is the one to use.",
+    "- **Bezel card** — the card as a bezel, `.sl-card.sl-card--bezel` with a `.sl-card__stage` and a `.sl-card__caption` (markup in `agent/catalog.md`); high contrast trades its hairlines for one solid 1px edge. Why: the stage sits in the frame like a screen in its bezel.",
     ...parts.map((l) => `  ${l}`),
   ];
 }

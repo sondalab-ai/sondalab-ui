@@ -31,7 +31,7 @@ Build every surface on `@sondalab/ui-kit`, the CSS kit that ships these tokens a
 | `button` | primitive | `.sl-btn`, `.sl-btn--primary`, `.sl-btn--ghost`, `.sl-btn--sm`, `.sl-btn--danger` | The text button: primary, secondary (ghost), small, and the danger tone. |
 | `link` | primitive | `.sl-link` | An inline link in the accent. |
 | `badge` | primitive | `.sl-badge`, `.sl-badge--success`, `.sl-badge--warning`, `.sl-badge--danger`, `.sl-badge--info`, `.sl-badge--live` | A small status mark in a line of text; `--live` breathes while its state lasts. |
-| `card` | primitive | `.sl-card`, `.sl-card__title`, `.sl-card__body` | A bounded surface with a title and a body. |
+| `card` | primitive | `.sl-card`, `.sl-card__title`, `.sl-card__body`, `.sl-card--bezel`, `.sl-card__stage`, `.sl-card__caption` | A bounded surface with a title and a body. |
 | `field` | primitive | `.sl-field`, `.sl-field__label`, `.sl-field__input`, `.sl-field__control`, `.sl-field__hint`, `.sl-field__error` | A labelled input with its hint and its error line. |
 | `callout` | primitive | `.sl-callout`, `.sl-callout--success`, `.sl-callout--warning`, `.sl-callout--danger`, `.sl-callout--info`, `.sl-callout__title`, `.sl-callout__body` | A block note in a status tone, with a title and a body. |
 | `rule` | primitive | `.sl-rule`, `.sl-rule--labeled` | A 1px structural divider, optionally labelled. |
@@ -902,7 +902,7 @@ These recurring parts carry the family look. A surface need not use all of them,
 - **Inversion band** — a full-width block flipped to the strongest neutral (ink ground, paper text) that punctuates the rhythm and marks the thesis or the primary call to action; at least one per long page (`.sl-invert`). A control in a band rests on the band's own hairline and takes the band's control edge on hover. Why: the recurring inversion is a core motif.
 - **Keycap** — every shortcut is a small physical key, `.sl-kbd`, in `--sl-font-mono`, one cap per key, wearing the key recipe. Inside a button it is a child `<kbd class="sl-kbd" aria-hidden="true">` and the button names the shortcut with `aria-keyshortcuts`. Why: `::after` belongs to glass, and the cap never reads weaker than the label beside it.
 - **Tile** — selection is a raised tile plus a seam: a short line inside its leading edge, or above its bottom edge in a tab or a segment, in the accent while its container holds the focus and in the muted ink otherwise. Why: the tile alone barely separates from its ground, and the seam carries the state at 3:1.
-- **Bezel card** — chosen, not yet shipped: it is not in `components.css` or `catalog.md`, so until it ships the shipped card is the one to use.
+- **Bezel card** — the card as a bezel, `.sl-card.sl-card--bezel` with a `.sl-card__stage` and a `.sl-card__caption` (markup in `agent/catalog.md`); high contrast trades its hairlines for one solid 1px edge. Why: the stage sits in the frame like a screen in its bezel.
   - **Frame and stage:** a frame on the surface rung holding a darker stage.
   - **Concentric radii:** stage r6 (`--sl-radius-sm`) + inset 8 = frame r14 (`--sl-radius-lg`), all kit radii.
   - **Edges:** drawn as alpha hairlines (lit top, faint ring, shaded bottom), with no CSS border.
