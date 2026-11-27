@@ -1,0 +1,1 @@
+- design-language.md L3 Art still describes figurative 0.45 posters (hills, plants), so do not cite it for the no-figurative-art ruling. [ads:CDR-0001 2026-11-27]
