@@ -2,6 +2,8 @@ version: 1
 trunk: main
 checks:
   setup: "npm ci --prefer-offline --no-audit --no-fund"
+  test_runner: "node --test"
+  test_paths: ["scripts/**/*.test.mjs"]
   by_risk:
     trivial: [test]
   commands:
